@@ -15,7 +15,7 @@ module.exports = {
             message.channel.send(
                 `Beleza, tirei a última música da fila`
             );
-            console.log(dj.musicQueue, dj.musicQueue.length);
+            dj.musicQueue.splice(dj.musicQueue.length - 1, 1);
             return;
         }
         position = parseInt(args[0]);
