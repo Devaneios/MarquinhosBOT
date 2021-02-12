@@ -21,6 +21,7 @@ module.exports = {
             ) {
                 console.log("Tocando agora");
                 dj.musicQueue.push(result);
+                dj.seek = 0;
                 dj.playMusic(newUserChannel, 0);
                 manage.nowPlaying = criarEmbed("Tocando agora");
                 manage.nowPlaying.addField(result.title, result.duration);
