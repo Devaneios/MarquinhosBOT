@@ -4,6 +4,7 @@ const dj = require("./../utils/dj").dj;
 const Discord = require("discord.js");
 module.exports = {
     name: "play",
+    aliases: ["p"],
     description: "Executa uma música",
     async execute(message, args) {
         let newUserChannel = message.member.voice.channel;

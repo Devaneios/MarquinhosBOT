@@ -4,6 +4,7 @@ const dj = require("./../utils/dj").dj;
 const Discord = require("discord.js");
 module.exports = {
     name: "search",
+    aliases: ["s"],
     description: "Eu procuro a música que tu tá querendo",
     async execute(message, args) {
         if (args.length == 0) return message.channel.send("Digite um termo de busca");
@@ -22,7 +23,7 @@ module.exports = {
 
             }
         }
-        const collector = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id, { time: 10000 });
+        const collector = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id, { time: 25000 });
         collector.on('collect', async message => {
             let choice = parseInt(message.content);
             console.log(choice);
