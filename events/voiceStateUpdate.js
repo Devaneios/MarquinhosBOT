@@ -1,6 +1,7 @@
 const Discord = require("discord.js");
 const manage = require("./../utils/management").manage;
 const player = require("./../utils/player");
+const rank = require("./../commands/rank");
 module.exports = async (client, oldState, newState) => {
     let newStateChannel = newState.channel;
     //console.log(newUserChannel);
@@ -48,7 +49,7 @@ module.exports = async (client, oldState, newState) => {
                 randint = Math.floor(Math.random() * 2);
                 if (randint === 1)
                     filepath = "./resources/sounds/quintafeiradaledale.mp3";
-                else 
+                else
                     filepath = "./resources/sounds/sextaanao.mp3";
                 player.execute("", filepath, newStateChannel);
                 break;
@@ -57,5 +58,7 @@ module.exports = async (client, oldState, newState) => {
                 player.execute("", filepath, newStateChannel);
                 break;
         }
+
+        rank.count(newState.client, newState.member);
     }
 };
