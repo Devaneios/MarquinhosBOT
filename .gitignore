@@ -3,6 +3,7 @@
 .env
 
 node_modules/
+.idea/
 /out
 .env
 
