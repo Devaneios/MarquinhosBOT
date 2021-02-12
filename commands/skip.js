@@ -13,6 +13,7 @@ module.exports = {
         }else if(dj.musicQueue.length == 0 && !dj.playingMusic){
             message.channel.send("```Não possui mídia sendo executada```")
         }else{
+            dj.seek = 0;
             dj.playMusic(newUserChannel, 0);
         }
     },
