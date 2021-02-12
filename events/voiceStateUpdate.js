@@ -1,11 +1,16 @@
 const Discord = require("discord.js");
 const manage = require("./../utils/management").manage;
 const player = require("./../utils/player");
+const dj = require("./../utils/dj").dj;
 const rank = require("./../commands/rank");
+const clock = require("../utils/clock");
 module.exports = async (client, oldState, newState) => {
     let newStateChannel = newState.channel;
     //console.log(newUserChannel);
     let oldStateChannel = oldState.channel;
+    if(newStateChannel == null && oldState.member.user.id == client.user.id){
+        dj.start();
+    }
     // Every time that someone enters a voice channel, we check if that person its arrested.
     if (manage.idPreso.length > 0) {
         // It's inside a try/catch so if the person disconnect, marquinhos don't break
@@ -31,21 +36,13 @@ module.exports = async (client, oldState, newState) => {
     if (
         oldState.channel === null &&
         newState.channel !== null &&
-        !newState.member.bot &&
-        !(newState.member.id == "598992394616307807")
+        !newState.member.user.bot
     ) {
         let filepath;
-        let hoje = new Date();
-        let today = hoje.getDay();
+        let weekDay = clock.getLongWeekdayWithTimeZone('pt-BR', 'America/Recife');
 
-        // Condition to switch to GMT -3
-        if(hoje.getHours() >= 21)
-            today -= 1;
-        if(today < 0)
-            today = 6;
-
-        switch (today) {
-            case 4:
+        switch (weekDay) {
+            case "quinta-feira":
                 randint = Math.floor(Math.random() * 2);
                 if (randint === 1)
                     filepath = "./resources/sounds/quintafeiradaledale.mp3";
@@ -53,12 +50,12 @@ module.exports = async (client, oldState, newState) => {
                     filepath = "./resources/sounds/sextaanao.mp3";
                 player.execute("", filepath, newStateChannel);
                 break;
-            case 5:
+            case "sexta-feira":
                 filepath = "./resources/sounds/sextafeirasim.mp3";
                 player.execute("", filepath, newStateChannel);
                 break;
         }
 
-        rank.count(newState.client, newState.member);
+        // rank.count(newState.client, newState.member);
     }
 };

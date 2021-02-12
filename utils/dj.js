@@ -11,6 +11,10 @@ class Dj {
     music;
     volume;
     constructor() {
+        this.start();
+    }
+
+    start(){
         this.playingMusic = false;
         this.playingAudio = false;
         this.titlePlaying = "";
@@ -20,7 +24,7 @@ class Dj {
         this.audioDispatcher = null;
         this.music;
         this.seek = 0;
-        this.volume = 0.4;
+        this.volume = 0.5;
     }
 
     playMusic(newUserChannel, seek) {
