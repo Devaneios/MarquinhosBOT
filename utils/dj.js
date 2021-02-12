@@ -1,5 +1,5 @@
 const ytdl = require("ytdl-core");
-const manage = require("./management").manage
+const manage = require("./management").manage;
 const Discord = require("discord.js");
 class Dj {
     musicQueue;
@@ -25,25 +25,31 @@ class Dj {
 
     playMusic(newUserChannel, seek) {
         if (this.musicQueue.length == 0) return;
-        
+
         newUserChannel
             .join()
-            .then( async (connection) => {
+            .then(async (connection) => {
                 const video_id = this.musicQueue[0].link;
                 this.music = this.musicQueue[0];
+                console.log(`Seeking music to ${seek}`);
                 this.musicDispatcher = connection.play(
                     await ytdl(video_id, {
                         filter: "audioonly",
                         quality: "highestaudio",
                         highWaterMark: 1024 * 1024 * 10,
-                    }, {seek:seek})
+                    }),
+                    { seek: seek/1000 }
                 );
                 this.playingMusic = true;
                 manage.nowPlaying = criarEmbed("Tocando agora");
-                manage.nowPlaying.addField(this.musicQueue[0].title, this.musicQueue[0].duration);
+                manage.nowPlaying.addField(
+                    this.musicQueue[0].title,
+                    this.musicQueue[0].duration
+                );
                 manage.nowPlayingRef.delete();
-                manage.nowPlayingRef = await manage.nowPlayingRef.channel.send(manage.nowPlaying);
-                this.seek = 0;
+                manage.nowPlayingRef = await manage.nowPlayingRef.channel.send(
+                    manage.nowPlaying
+                );
                 this.musicDispatcher.setVolume(this.volume);
                 this.titlePlaying = this.musicQueue[0].title;
                 this.musicQueue.shift();
@@ -52,10 +58,12 @@ class Dj {
                     setTimeout(() => {
                         console.log("Finished playing music");
                         if (this.musicQueue.length == 0) {
+                            this.seek = 0;
                             this.playingMusic = false;
                             newUserChannel.leave();
                             //this.musicDispatcher.destroy();
                         } else {
+                            this.seek = 0;
                             this.playMusic(newUserChannel, 0);
                         }
                     }, 1500);
@@ -74,21 +82,19 @@ class Dj {
     }
 
     async playAudio(channel, chaos) {
-        let seek;
         if (this.playingMusic) {
             console.log("Pausing music");
             this.musicDispatcher.pause();
             this.musicQueue.unshift(this.music);
-            seek =
-                this.musicDispatcher.player.dispatcher.pausedSince / 1000 -
-                this.musicDispatcher.player.dispatcher.startTime / 1000;
+            let seek = this.musicDispatcher.player.dispatcher.streamTime;
             this.seek += seek;
-            console.log(seek);
         }
         return await channel
             .join()
             .then(async (connection) => {
-                this.audioDispatcher = await connection.play(this.audioQueue[0]);
+                this.audioDispatcher = await connection.play(
+                    this.audioQueue[0]
+                );
                 this.playingAudio = true;
                 this.audioQueue.shift();
                 if (chaos) return;
@@ -115,7 +121,6 @@ class Dj {
                 channel.leave();
             });
     }
-    
 }
 
 function criarEmbed(title) {
