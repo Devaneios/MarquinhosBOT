@@ -5,7 +5,7 @@ const Discord = require("discord.js");
 module.exports = {
     name: "play",
     aliases: ["p"],
-    description: "Executa uma música",
+    description: "Eu toco uma música",
     async execute(message, args) {
         let newUserChannel = message.member.voice.channel;
         if (args.length == 0)
