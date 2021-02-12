@@ -4,7 +4,7 @@ const searcher = require("./../utils/youtubeSearch");
 const Discord = require("discord.js");
 module.exports = {
     name: "play-next",
-    description: "Adiciona uma música ao topo da fila",
+    description: "Eu coloco uma música ao topo da fila",
     async execute(message, args) {
         let newUserChannel = message.member.voice.channel;
         let searchTerm = args.join(" ");

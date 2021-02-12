@@ -1,9 +1,24 @@
 const dj = require("./../utils/dj").dj;
 module.exports = {
     name: "remove",
+    aliases: ["r"],
     description: "Move a posição das músicas na fila",
     execute(message, args) {
-        let position = parseInt(args[0]);
+        if(dj.musicQueue.length == 0){
+            message.channel.send(
+                `Man, a fila tá vazia`
+            );
+            return;
+        }
+        let position = args[0];
+        if(position == "l" || position == "last"){
+            message.channel.send(
+                `Beleza, tirei a última música da fila`
+            );
+            console.log(dj.musicQueue, dj.musicQueue.length);
+            return;
+        }
+        position = parseInt(args[0]);
         if (isNaN(position) || position - 1 < 0 || position - 1 > dj.musicQueue.length - 1) {
             message.channel.send("Você deve informar uma posição válida!");
         } else {

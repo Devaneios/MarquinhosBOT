@@ -32,7 +32,7 @@ class Dj {
                 const video_id = this.musicQueue[0].link;
                 this.music = this.musicQueue[0];
                 this.musicDispatcher = connection.play(
-                    await ytdl(video_url, {
+                    await ytdl(video_id, {
                         filter: "audioonly",
                         quality: "highestaudio",
                         highWaterMark: 1024 * 1024 * 10,
