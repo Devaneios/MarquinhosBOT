@@ -3,7 +3,7 @@ module.exports = {
         bichos = [
             "Easter egg",
             "Avestruz",
-            "Àguia",
+            "Águia",
             "Burro",
             "Borboleta",
             "Cachorro",
@@ -52,7 +52,9 @@ module.exports = {
         ];
         randint = Math.floor(Math.random() * 99) + 1;
         randCeil = Math.ceil(randint / 4);
+        //Macho
         if (machos.includes(randCeil)) return `no ${bichos[randCeil]} ${randint}`;
+        //Femea
         return `na ${bichos[randCeil]} ${randint}`;
     }
 };
