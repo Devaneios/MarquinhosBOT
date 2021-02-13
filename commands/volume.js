@@ -6,8 +6,8 @@ module.exports = {
         let command = args[0];
         if(!command){
             message.channel.send(`Volume atual: ${Math.round(dj.volume*100)}%`);
-        }else if(command == "up" && dj.volume >= 1.0){
-            message.channel.send(`Volume máximo atingido`);
+        }else if(command == "up" && dj.volume >= 0.9){
+            message.channel.send(`Perai porra tás surdo é`);
         }else if(command == "down" && dj.volume < 0.1){
             message.channel.send(`Volume mínimo atingido`);
         }else if(command == "up"){
