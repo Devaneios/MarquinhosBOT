@@ -37,24 +37,34 @@ module.exports = async (client, oldState, newState) => {
         newStateChannel !== null) &&
         !newState.member.user.bot
     ) {
-        let filepath;
-        let weekDay = clock.getLongWeekdayWithTimeZone('pt-BR', 'America/Recife');
-
-        switch (weekDay) {
-            case "quinta-feira":
-                randint = Math.floor(Math.random() * 2);
-                if (randint === 1)
-                    filepath = "./resources/sounds/quintafeiradaledale.mp3";
-                else
-                    filepath = "./resources/sounds/sextaanao.mp3";
-                player.execute("", filepath, newStateChannel);
-                break;
-            case "sexta-feira":
-                filepath = "./resources/sounds/sextafeirasim.mp3";
-                player.execute("", filepath, newStateChannel);
-                break;
+        //Cooldown condition
+        if(manage.vStateUpdateTimestamp + manage.vStateUpdateCD - Date.now() > 0){
+            //Cooldown recieves - 15 minutes
+            manage.vStateUpdateCD -= 900000;
+        }else{
+            let filepath;
+            let weekDay = clock.getLongWeekdayWithTimeZone('pt-BR', 'America/Recife');
+            switch (weekDay) {
+                case "quinta-feira":
+                    randint = Math.floor(Math.random() * 2);
+                    if (randint === 1)
+                        filepath = "./resources/sounds/quintafeiradaledale.mp3";
+                    else
+                        filepath = "./resources/sounds/sextaanao.mp3";
+                    player.execute("", filepath, newStateChannel);
+                    break;
+                case "sexta-feira":
+                    filepath = "./resources/sounds/sextafeirasim.mp3";
+                    player.execute("", filepath, newStateChannel);
+                    break;
+            }
+            //Timestamp resets
+            manage.vStateUpdateTimestamp = Date.now();
+            //Cooldown Resets
+            manage.vStateUpdateCD = 3600 * 1000;
         }
-
+        
+        
         // rank.count(newState.client, newState.member);
     }
 };

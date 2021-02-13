@@ -4,12 +4,17 @@ class Manager{
     debug;
     nowPlaying;
     nowPlayingRef;
+    vStateUpdateTimestamp;
+    vStateUpdateCD;
     constructor(){
         this.isReady = true;
         this.idPreso = [];
         this.debug = false;
         this.nowPlaying = null;
         this.nowPlayingRef = null;
+        this.vStateUpdateTimestamp = undefined;
+        //Cooldown of 3600000ms (1 hour)
+        this.vStateUpdateCD = 3600 * 1000;
     }
 }
 
