@@ -7,9 +7,9 @@ module.exports = {
         if(!command){
             message.channel.send(`Volume atual: ${Math.round(dj.volume*100)}%`);
         }else if(command == "up" && dj.volume >= 0.9){
-            message.channel.send(`Perai porra tás surdo é`);
+            message.channel.send(`Tá bom vei, pra que tu quer que eu cante mais alto?`);
         }else if(command == "down" && dj.volume < 0.1){
-            message.channel.send(`Volume mínimo atingido`);
+            message.channel.send(`Eu já tô sussurando mais que a Billie Eilish...`);
         }else if(command == "up"){
             dj.volume += 0.1;
             dj.musicDispatcher.setVolume(dj.volume);
@@ -17,7 +17,7 @@ module.exports = {
         }else if(command == "down" && dj.volume >= 0.1){
             dj.volume -= 0.1;
             dj.musicDispatcher.setVolume(dj.volume);
-            message.channel.send(`Volume diminuido para: ${Math.round(dj.volume*100)}%`);
+            message.channel.send(`Diminuído pra ${Math.round(dj.volume*100)}%`);
         }else{
             message.channel.send("Volume só vai pra cima ou pra baixo");
         }
