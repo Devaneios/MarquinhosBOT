@@ -24,7 +24,7 @@ class Dj {
         this.audioDispatcher = null;
         this.music;
         this.seek = 0;
-        this.volume = 0.5;
+        this.volume = 0.4;
     }
 
     playMusic(newUserChannel, seek) {
