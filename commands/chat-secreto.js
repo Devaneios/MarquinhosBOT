@@ -6,23 +6,25 @@ module.exports = {
     usage: "!chat-secreto <duração em minutos>",
     async execute(message, args) {
 
+        message.delete();
 
         // Anti-troll (Guilh*rm*) parse
         const parsed = Number.parseInt(args[0], 10);
         
         if (Number.isNaN(parsed) || (parsed <= 0) || (parsed > 10)) {
-            message.channel.send('E isso é tempo útil, bixo (entre 1 e 10 minutos, né...)');
+            message.channel.send('E isso é tempo útil, bixo (entre 1 e 10 minutos, né...)')
+            .then(msg => {msg.delete({ timeout: 10000})}); // It deletes the message after 10 seconds, to keep it secret :x;
             return;
         }
         
-        message.delete();
+        
         
         if(manage.chatSecreto.canal != undefined){
             message.channel.send(`Já tá ligado vei, ${
                 manage.chatSecreto.canal == message.channel ? 
                 'aqui nesse canal mesmo, fala teus podre aí' : `lá no ${manage.chatSecreto.canal}. Fala teus podre lá.`
             }`)
-            .then(msg => {msg.delete({ timeout: 10000})}); // It deletes the message after 10 seconds, to keep it secret :x
+            .then(msg => {msg.delete({ timeout: 10000})}); // It deletes the message, again, to keep it secret
             return;
         }
 
