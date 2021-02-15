@@ -2,18 +2,17 @@ const Discord = require("discord.js");
 const manage = require("./../utils/management").manage;
 const player = require("./../utils/player");
 const dj = require("./../utils/dj").dj;
-const rank = require("./../commands/rank");
+//const rank = require("./../commands/rank");
 const clock = require("../utils/clock");
 module.exports = async (client, oldState, newState) => {
     let newStateChannel = newState.channel;
-    //console.log(newUserChannel);
     let oldStateChannel = oldState.channel;
     if(newStateChannel == null && oldState.member.user.id == client.user.id){
         dj.start();
     }
     // Every time that someone enters a voice channel, we check if that person its arrested.
     if (manage.idPreso.length > 0) {
-        // It's inside a try/catch so if the person disconnect, marquinhos don't break
+        // It's inside a try/catch so if the person disconnect, Marquinhos don't break
         try {
             // We check if the person that joined the voice channel it's arrested AND if the arrested person
             // didn't just joined the arrested channel (it prevents that the person from being moved infinitely)
@@ -34,28 +33,38 @@ module.exports = async (client, oldState, newState) => {
     }
     // User Joins a voice channel and wasn't already in one
     if (
-        oldState.channel === null &&
-        newState.channel !== null &&
+        (oldStateChannel === null &&
+        newStateChannel !== null) &&
         !newState.member.user.bot
     ) {
-        let filepath;
-        let weekDay = clock.getLongWeekdayWithTimeZone('pt-BR', 'America/Recife');
-
-        switch (weekDay) {
-            case "quinta-feira":
-                randint = Math.floor(Math.random() * 2);
-                if (randint === 1)
-                    filepath = "./resources/sounds/quintafeiradaledale.mp3";
-                else
-                    filepath = "./resources/sounds/sextaanao.mp3";
-                player.execute("", filepath, newStateChannel);
-                break;
-            case "sexta-feira":
-                filepath = "./resources/sounds/sextafeirasim.mp3";
-                player.execute("", filepath, newStateChannel);
-                break;
+        //Cooldown condition
+        if(manage.vStateUpdateTimestamp + manage.vStateUpdateCD - Date.now() > 0){
+            //Cooldown recieves - 15 minutes
+            manage.vStateUpdateCD -= 900000;
+        }else{
+            let filepath;
+            let weekDay = clock.getLongWeekdayWithTimeZone('pt-BR', 'America/Recife');
+            switch (weekDay) {
+                case "quinta-feira":
+                    randint = Math.floor(Math.random() * 2);
+                    if (randint === 1)
+                        filepath = "./resources/sounds/quintafeiradaledale.mp3";
+                    else
+                        filepath = "./resources/sounds/sextaanao.mp3";
+                    player.execute("", filepath, newStateChannel);
+                    break;
+                case "sexta-feira":
+                    filepath = "./resources/sounds/sextafeirasim.mp3";
+                    player.execute("", filepath, newStateChannel);
+                    break;
+            }
+            //Timestamp resets
+            manage.vStateUpdateTimestamp = Date.now();
+            //Cooldown Resets
+            manage.vStateUpdateCD = 3600 * 1000;
         }
-
+        
+        
         // rank.count(newState.client, newState.member);
     }
 };

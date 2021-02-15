@@ -1,11 +1,8 @@
+const manage = require('../utils/management').manage;
+
 require('dotenv').config();
 module.exports = async (client, message) => {
     if (message.author.bot) return;
-    re = new RegExp(/b*.dia/gi);
-    re2 = new RegExp(/(^[Pp]arab[ée]ns.*[Mm]arquinhos)/gi);
-    //if (message.content.indexOf(config.prefix) !== 0) return;
-
-    //if (!cmd) return;
 
     const args = message.content.slice(process.env.PREFIX.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
@@ -27,6 +24,11 @@ module.exports = async (client, message) => {
             message.reply("quebrei! :(");
         }
     } else {
+        // Bom dia and Parabéns replies
+
+        let re = new RegExp(/b*.dia/gi);
+        let re2 = new RegExp(/(^[Pp]arab[ée]ns.*[Mm]arquinhos)/gi);
+        
         if (re.test(message.content)) {
             message.delete();
             message_sent = await message.channel.send(`${message.content} é o caralho.`);
@@ -36,8 +38,10 @@ module.exports = async (client, message) => {
         } else if(re2.test(message.content)){
             await message.reply("parabéns pra VOCÊ! Você é incrível! :)");
         }
-        // In case the message was sent in the wrong channel
-        channel = message.channel;
+        // Commands out of the proper channel cases
+        let channel = message.channel;
+
+        // For bots commands
         if (
             channel.id != process.env.BOT_CHANNEL_ID &&
             message.content.charAt(0).match("[-;]")
@@ -46,13 +50,30 @@ module.exports = async (client, message) => {
                 "Este não é o canal apropriado para comandos de bots."
             );
             message.delete();
+
+            return;
         }
+        // For links outside of the links channel
         if (
             channel.id == process.env.LINKS_CHANNEL_ID &&
             !message.content.startsWith("http")
         ) {
             message.author.send("Esse canal é para enviar links! >:(");
             message.delete();
+
+            return;
+        }
+        // For the chat-secreto feature
+        if(manage.chatSecreto != {}){
+            if( manage.chatSecreto.inicio + manage.chatSecreto.duracao > Date.now() ){
+                if(manage.chatSecreto.canal == message.channel.id){
+                    setTimeout(() => {
+                        message.delete();
+                    }, 20 * 1000); // That's 20 seconds for proper reading
+                }
+            }else{
+                manage.chatSecreto = {};
+            }
         }
     }
 };
