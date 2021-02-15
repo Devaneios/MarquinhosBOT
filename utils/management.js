@@ -6,6 +6,7 @@ class Manager{
     nowPlayingRef;
     vStateUpdateTimestamp;
     vStateUpdateCD;
+    chatSecreto;
     constructor(){
         this.isReady = true;
         this.idPreso = [];
@@ -17,6 +18,7 @@ class Manager{
         this.vStateUpdateTimestamp = undefined;
         //Cooldown of 3600000ms (1 hour)
         this.vStateUpdateCD = 3600 * 1000;
+        this.chatSecreto = {};
     }
 }
 
