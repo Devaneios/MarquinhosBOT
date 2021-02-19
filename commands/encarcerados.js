@@ -3,6 +3,7 @@ module.exports = {
     name: "encarcerados",
     aliases: ["presos"],
     description: "Te dou uma lista de encarcerados",
+    usage: "!encarcerados|!presos",
     execute(message, args) {
         lista = "";
         for (x = 0; x < manage.idPreso.length; x++) lista += manage.idPreso[x] + "\n";

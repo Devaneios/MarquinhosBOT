@@ -3,6 +3,7 @@ const manage = require("./../utils/management").manage;
 module.exports = {
     name: "chaos",
     description: "Instaura o CHAOS nos canais de voz",
+    usage: "!chaos <quantidade>",
     execute(message, args) {
         let num = parseInt(args[0]);
         if (isNaN(num) || num > 25) {
