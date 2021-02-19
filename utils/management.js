@@ -2,6 +2,7 @@ class Manager{
     isReady;
     idPreso;
     debug;
+    debugChannel;
     nowPlaying;
     nowPlayingRef;
     vStateUpdateTimestamp;
@@ -11,6 +12,7 @@ class Manager{
         this.isReady = true;
         this.idPreso = [];
         this.debug = false;
+        this.debugChannel = null;
         this.nowPlaying = null;
         this.nowPlayingRef = null;
         this.volumeEmbed = null;

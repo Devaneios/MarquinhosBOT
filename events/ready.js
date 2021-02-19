@@ -14,6 +14,7 @@ module.exports = (client) => {
     }, 100 * 1000);
     var counter = 0;
     let guild = client.guilds.cache.find((guild) => guild.name === process.env.GUILD_NAME);
+    deleteDebugChannelOnStart(guild);
     setInterval(async function () {
         try {
             await roleta.roulette(counter, guild);
@@ -24,3 +25,11 @@ module.exports = (client) => {
     }, 6 * 3600000);
     // 6 hours * 1 hour in milliseconds
 };
+
+async function deleteDebugChannelOnStart(server){
+    let category = await server.channels.cache.find(c => c.name == "devs" && c.type == "category"),
+    channel = await server.channels.cache.find(c => c.name == "marquinhos-debug" && c.type == "text");
+    if(channel){
+        channel.delete();
+    }
+}
