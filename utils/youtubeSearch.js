@@ -3,21 +3,27 @@ module.exports = {
     name: "play",
     description: "Executa uma música",
     async search(onlyOne, searchTerm) {
-		const { results } = await scraper(searchTerm);
+		try {
+			const { results } = await scraper(searchTerm);
+			if (!onlyOne) {
+				try {
+					return results.map(parseVideoContentList);
+				} catch (error) {
+					throw error;
+				}
+			} else {
+				try {
+					return parseVideoContent(results);
+				} catch (error) {
+					throw error;
+				}
+			}
+		} catch (error) {
+			throw error;
+		}
+		
 		//console.log(results);
-        if (!onlyOne) {
-			try {
-				return results.map(parseVideoContentList);
-			} catch (error) {
-				return;
-			}
-        } else {
-			try {
-				return parseVideoContent(results);
-			} catch (error) {
-				return;
-			}
-        }
+        
     },
 };
 
