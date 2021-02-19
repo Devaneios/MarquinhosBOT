@@ -3,6 +3,7 @@ const clock = require("../utils/clock");
 module.exports = {
     name: "horario",
     description: "Te digo o horário. Apenas.",
+    usage: "!horario",
     execute(message, args) {
         
         let recifeHourAndMinute = clock.getHoursAndMinutesWithTimeZone('pt-BR', 'America/Recife');
