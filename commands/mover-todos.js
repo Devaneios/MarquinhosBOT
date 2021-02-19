@@ -3,7 +3,7 @@ const { Console } = require("console");
 module.exports = {
     name: "mover-todos",
     description: "Eu arrasto TODO MUNDO pra outro canal :O",
-    usage: "<nome do canal>",
+    usage: "!mover-todos <nome do canal>",
     async execute(message, args) {
         if(message.member.hasPermission('MOVE_MEMBERS')){
             let newChannelName = args.join(' ');

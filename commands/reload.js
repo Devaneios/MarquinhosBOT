@@ -4,6 +4,7 @@ module.exports = {
     name: "reload",
     description: "comando de admin",
     hide: true,
+    usage: "!reload",
     execute(message, args, commands) {
         if (!args || args.length == 0) {
             message.reply("Diga aí o comando, man ;D");

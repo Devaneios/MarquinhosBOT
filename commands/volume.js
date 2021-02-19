@@ -4,6 +4,7 @@ const Discord = require("discord.js");
 module.exports = {
     name: "volume",
     description: "Meu volume, né..",
+    usage: "!volume",
     async execute(message, args) {
         let command = args[0];
         let newUserChannel = message.member.voice.channel;

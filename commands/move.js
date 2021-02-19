@@ -2,6 +2,7 @@ const dj = require("./../utils/dj").dj;
 module.exports = {
     name: "move",
     description: "Move a posição das músicas na fila",
+    usage: "!move <posição origem> <posição destino>",
     execute(message, args) {
         let origin = parseInt(args[0]);
         let destiny = parseInt(args[1]);

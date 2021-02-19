@@ -6,6 +6,7 @@ module.exports = {
     name: "play",
     aliases: ["p"],
     description: "Eu toco uma música",
+    usage: "!play | !p",
     async execute(message, args) {
         let newUserChannel = message.member.voice.channel;
         if (args.length == 0)
@@ -18,7 +19,13 @@ module.exports = {
                 "Você deve estar em um canal de voz para usar esse comando!"
             );
         } else {
-            let result = await searcher.search(true, searchTerm);
+            let result;
+            try {
+                 result = await searcher.search(true, searchTerm);
+            } catch (error) {
+                throw error;
+            }
+            
             if (
                 dj.musicQueue.length == 0 &&
                 !dj.playingMusic &&
