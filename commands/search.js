@@ -4,8 +4,9 @@ const dj = require("./../utils/dj").dj;
 const Discord = require("discord.js");
 module.exports = {
     name: "search",
-    aliases: ["s"],
+    aliases: ["s", "pesquisa"],
     description: "Eu procuro a música que tu tá querendo",
+    usage: "!search | !s | !pesquisa <termo a ser buscado>",
     async execute(message, args) {
         if (args.length == 0) return message.channel.send("Digite um termo de busca");
         let searchTerm = args.join(" ");

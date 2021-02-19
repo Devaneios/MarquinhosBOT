@@ -4,6 +4,7 @@ module.exports = {
     name: "queue",
     aliases: ["q", "fila"],
     description: "Mostra fila de músicas que vão ser tocadas",
+    usage: "!queue | !q | !fila",
     execute(message, args) {
         let embed = new Discord.MessageEmbed().setTitle("Fila").setColor("#0099ff");
         if(dj.playingMusic){

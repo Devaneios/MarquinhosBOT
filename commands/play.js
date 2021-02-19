@@ -6,6 +6,7 @@ module.exports = {
     name: "play",
     aliases: ["p"],
     description: "Eu toco uma música",
+    usage: "!play | !p",
     async execute(message, args) {
         let newUserChannel = message.member.voice.channel;
         if (args.length == 0)
