@@ -5,6 +5,7 @@ module.exports = {
     name: "user",
     description: "admin only.",
     hide: true,
+    usage: "!user",
     async execute(message, args) {
         message.delete();
         getLyrics("Gabrielle Aplin", "Dear Happy");

@@ -2,6 +2,7 @@ const dj = require('./../utils/dj').dj;
 module.exports = {
     name: "resume",
     description: "Retomo a música",
+    usage: "!resume",
     execute(message, args) {
         dj.musicDispatcher.resume();
         console.log(dj.titlePlaying);
