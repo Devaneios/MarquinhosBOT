@@ -2,6 +2,7 @@ module.exports = {
     name: "moeda",
     aliases: ["coin"],
     description: "Tiro cara ou coroa numa moeda semi-viciada.",
+    usage: "!moeda | !coin",
     execute(message, args) {
         // Just a function that gets a random number between 0 or 1
         randint = Math.floor(Math.random() * 2);

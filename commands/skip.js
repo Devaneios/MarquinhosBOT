@@ -3,6 +3,7 @@ const ytdl = require("ytdl-core");
 module.exports = {
     name: "skip",
     description: "Passo pra próxima música",
+    usage: "!skip",
     execute(message, args) {
         let newUserChannel = message.member.voice.channel;
         if (dj.musicQueue.length == 0 && dj.playingMusic){

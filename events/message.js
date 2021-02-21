@@ -1,4 +1,5 @@
 const manage = require('../utils/management').manage;
+const utils = require('./../utils/utils');
 
 require('dotenv').config();
 module.exports = async (client, message) => {
@@ -20,13 +21,17 @@ module.exports = async (client, message) => {
             console.log(`Executando ${commandName}`);
             command.execute(message, args, client.commands);
         } catch (error) {
-            console.error(error);
             message.reply("quebrei! :(");
+            if(manage.debug){
+                manage.debugChannel.send("```"+`${error}`+"```");
+            }else{
+                console.log(error);
+            }
         }
     } else {
         // Bom dia and Parabéns replies
-
-        let re = new RegExp(/b*.dia/gi);
+        try {
+            let re = new RegExp(/\b(bom dia)\b/gi);
         let re2 = new RegExp(/(^[Pp]arab[ée]ns.*[Mm]arquinhos)/gi);
         
         if (re.test(message.content)) {
@@ -49,17 +54,17 @@ module.exports = async (client, message) => {
             message.author.send(
                 "Este não é o canal apropriado para comandos de bots."
             );
-            message.delete();
+            message.delete({timeout: 10000});
 
             return;
         }
         // For links outside of the links channel
         if (
             channel.id == process.env.LINKS_CHANNEL_ID &&
-            !message.content.startsWith("http")
+            !utils.stringIsAValidUrl(message.content)
         ) {
-            message.author.send("Esse canal é para enviar links! >:(");
-            message.delete();
+            await message.author.send("Esse canal é para enviar links! >:(");
+            message.delete({timeout: 2000});
 
             return;
         }
@@ -75,5 +80,10 @@ module.exports = async (client, message) => {
                 manage.chatSecreto = {};
             }
         }
+        } catch (error) {
+            manage.debugChannel.send("```"+`${error}`+"```");
+            console.log(error);
+        }
+        
     }
 };

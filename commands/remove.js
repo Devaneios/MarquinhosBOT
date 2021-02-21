@@ -3,6 +3,7 @@ module.exports = {
     name: "remove",
     aliases: ["r"],
     description: "Move a posição das músicas na fila",
+    usage: "!remove | !r",
     execute(message, args) {
         if(dj.musicQueue.length == 0){
             message.channel.send(

@@ -3,7 +3,7 @@ module.exports = {
     name: "importunar",
     aliases: "",
     description: "Eu vou lá atazanar a vida de quem tu quiser.",
-    usage: " <nome da pessoa>",
+    usage: "!importunar <nome da pessoa>",
     execute(message, args) {
         //
         randint = Math.floor(Math.random() * 3);

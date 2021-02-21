@@ -3,6 +3,7 @@ const dj = require("./../utils/dj").dj;
 module.exports = {
     name: "clear-queue",
     description: "Limpa fila de músicas que vão ser tocadas",
+    usage: "!clear-queue",
     execute(message, args) {
         dj.musicQueue = [];
         let embed = new Discord.MessageEmbed().setTitle("Fila esvaziada").setColor("#0099ff");
