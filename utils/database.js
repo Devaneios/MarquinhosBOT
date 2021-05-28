@@ -43,35 +43,30 @@ class Database {
 		await users.update({ coin: 0 });
 	}
 
-	async getUserTime(guildId, userId) {
-		const userTime = this.db.collection(guildId).doc(userId);
+    async getUserData(guildId, userId, field){
+        const userTime = this.db.collection(guildId).doc(userId);
 		const doc = await userTime.get();
 		if (!doc.exists) {
-			console.log("No such document!");
-			return -1;
+			await this.addNewUser(guildId, userId);
+			const auxDoc = await userTime.get();
+            return doc.data()[field];
 		} else {
-			return doc.data().time;
+			return doc.data()[field];
 		}
-	}
+    }
 
-	async getTopTime(guildId) {
+    async getDataOrdered(guildId, field, order, size) {
 		const users = this.db.collection(guildId);
-		const topTime = await users.orderBy("time", "desc").limit(10).get();
-		const response = topTime.docs.map((doc) => {
-			return { id: doc.id, time: doc.data().time };
+		const orderedData = await users.orderBy(field, order).limit(size).get();
+		const response = orderedData.docs.map((doc) => {
+			return { id: doc.id, [field]: doc.data()[field] };
 		});
 		return response;
 	}
 
-	async updateUserTime(guildId, userId, userCurrentTime) {
-		const timers = this.db.collection(guildId).doc(userId);
-		await timers.update({ time: userCurrentTime });
-	}
-
-	async getUsersTime(guildId) {
-		const guildTimers = this.db.collection(guildId);
-		const usersTime = await guildTimers.get();
-		return usersTime.docs();
+	async updateUserData(guildId, userId, field, newValue) {
+		const snapshot = this.db.collection(guildId).doc(userId);
+		await snapshot.update({ [field]: newValue });
 	}
 }
 
