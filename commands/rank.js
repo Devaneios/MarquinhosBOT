@@ -7,7 +7,7 @@ module.exports = {
 		"Tabelinha dos sem vida pra mostrar quem passa mais tempo virado em call",
 	usage: "!rank",
 	async execute(message, args) {
-		let usersTime = await database.getTopTime(message.guild.id);
+		let usersTime = await database.getDataOrdered(message.guild.id, "time", "desc", 10);
 		topUsersEmbed = criarEmbed("Top 10 Clientes");
 		for (let index = 0; index < usersTime.length; index++) {
 			const user = usersTime[index];
@@ -24,7 +24,6 @@ module.exports = {
 			} else if (position == "#3") {
 				position = ":third_place:";
 			}
-            console.log(position, userDisplayName);
 			topUsersEmbed.addField(`${position} \u2022 ${userTime}`, userDisplayName, false);
 		}
 		message.channel.send(topUsersEmbed);
