@@ -18,7 +18,6 @@ module.exports = {
         }
         
         
-        
         if(manage.chatSecreto.canal != undefined){
             message.channel.send(`Já tá ligado vei, ${
                 manage.chatSecreto.canal == message.channel ? 
@@ -37,11 +36,12 @@ module.exports = {
         setTimeout(async () => {
             message.channel.send('Tô desligando o chat-secreto em 10 segundos, viu')
             .then(msg => {msg.delete({ timeout: 10000})});
-        }, (args[0] * 60 * 1000) - 10000); // It sends a warning 10 seconds before it deactivates itself
+        }, (parsed * 60 * 1000) - 10000); // It sends a warning 10 seconds before it deactivates itself
         
 
         setTimeout(() => {
             ligado_msg.delete();
-        }, (args[0] * 60 * 1000)); // After the deactivation, deletes the turn on warning itself
+            manage.chatSecreto = {};
+        }, (parsed * 60 * 1000)); // At last, the feature deactivates itself, and deletes the turn on message, of course
     },
 };
