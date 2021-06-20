@@ -1,9 +1,11 @@
 const fileEdit = require("./../utils/fileEdit");
 const animalLottery = require("./../utils/animalLottery");
 const roleta = require('./../utils/adminRoulette');
+const database = require('../utils/database').database;
 require('dotenv').config();
 module.exports = (client) => {
     console.log("logged");
+    database.updateServers(client);
     client.user.setActivity(animalLottery.get_bicho());
     //client.user.setAvatar('./resources/images/marquinhosnatal.png');
     //client.user.setAvatar('./resources/images/marquinhoshead.jpg');

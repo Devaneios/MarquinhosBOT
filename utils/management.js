@@ -21,6 +21,7 @@ class Manager{
         //Cooldown of 3600000ms (1 hour)
         this.vStateUpdateCD = 3600 * 1000;
         this.chatSecreto = {};
+        this.timer = {};
     }
 }
 

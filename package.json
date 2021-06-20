@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "watch": "nodemon index.js"
   },
   "author": "",
   "license": "ISC",
@@ -16,6 +17,8 @@
     "enmap": "^5.3.1",
     "ffmpeg": "0.0.4",
     "ffmpeg-static": "^4.2.7",
+    "firebase": "^8.5.0",
+    "firebase-admin": "^9.7.0",
     "fluent-ffmpeg": "^2.1.2",
     "node": "^12.12.0",
     "node-gyp": "^6.0.0",
@@ -24,7 +27,13 @@
     "rebuild": "^0.1.2",
     "watch": "^1.0.2",
     "winston": "^3.3.3",
-    "ytdl-core": "^4.4.5",
-    "youtube-scrape": "git+https://github.com/Guilhermeasper/youtube-scrape.git"
+    "youtube-scrape": "git+https://github.com/Guilhermeasper/youtube-scrape.git",
+    "ytdl-core": "^4.4.5"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "*.json"
+    ],
+    "delay": "2500"
   }
 }
