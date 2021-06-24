@@ -4,6 +4,11 @@ const utils = require('./../utils/utils');
 require('dotenv').config();
 module.exports = async (client, message) => {
     if (message.author.bot) return;
+    re = new RegExp(/^b*.dia/gi);
+    re2 = new RegExp(/(^[Pp]arab[ée]ns.*[Mm]arquinhos)/gi);
+    //if (message.content.indexOf(config.prefix) !== 0) return;
+
+    //if (!cmd) return;
 
     const args = message.content.slice(process.env.PREFIX.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
