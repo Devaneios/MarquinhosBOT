@@ -1,14 +1,13 @@
 const fileEdit = require("./../utils/fileEdit");
 const animalLottery = require("./../utils/animalLottery");
 const roleta = require('./../utils/adminRoulette');
-const database = require('../utils/database').database;
 require('dotenv').config();
 module.exports = (client) => {
     console.log("logged");
-    database.updateServers(client);
     client.user.setActivity(animalLottery.get_bicho());
+    //client.user.setActivity('Jogos especiais para que todo mundo tenha um feliz ano novo ✨!')
     //client.user.setAvatar('./resources/images/marquinhosnatal.png');
-    //client.user.setAvatar('./resources/images/marquinhoshead.jpg');
+    client.user.setAvatar('./resources/images/marquinhoshead.jpg');
     //client.user.setActivity("NADA PORQUE ESTOU EM MODO DEVELOPMENT");
     fileEdit.edit("isReady", true);
     setInterval(function () {
@@ -16,7 +15,6 @@ module.exports = (client) => {
     }, 100 * 1000);
     var counter = 0;
     let guild = client.guilds.cache.find((guild) => guild.name === process.env.GUILD_NAME);
-    deleteDebugChannelOnStart(guild);
     setInterval(async function () {
         try {
             await roleta.roulette(counter, guild);
@@ -27,11 +25,3 @@ module.exports = (client) => {
     }, 6 * 3600000);
     // 6 hours * 1 hour in milliseconds
 };
-
-async function deleteDebugChannelOnStart(server){
-    let category = await server.channels.cache.find(c => c.name == "devs" && c.type == "category"),
-    channel = await server.channels.cache.find(c => c.name == "marquinhos-debug" && c.type == "text");
-    if(channel){
-        channel.delete();
-    }
-}
