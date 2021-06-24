@@ -34,7 +34,7 @@ module.exports = {
 							newEmbed.setColor(jsonEmbed.color);
                             newEmbed.fields = jsonEmbed.fields;
 							newEmbed.setFooter(jsonEmbed.footer);
-							newEmbed.setFooter(jsonEmbed.image);
+							newEmbed.setImage(jsonEmbed.image);
 							newEmbed.setThumbnail(jsonEmbed.thumbnail);
 							channelFound.send(newEmbed);
 							message.delete();
