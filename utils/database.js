@@ -1,11 +1,17 @@
 const admin = require("firebase-admin");
 
 const serviceAccount = require("../key.json");
+const developmentServiceAccount = require("../key-dev.json");
 
 class Database {
 	db;
 	constructor() {
+        if(process.env.MODE == "DEVELOPMENT")
 		admin.initializeApp({
+			credential: admin.credential.cert(developmentServiceAccount),
+		});
+        else
+        admin.initializeApp({
 			credential: admin.credential.cert(serviceAccount),
 		});
 
@@ -19,16 +25,21 @@ class Database {
 
 	async eachServer(server) {
 		const serverFromFirebase = await this.db.collection(server.id).get();
-		let users = await server.members.fetch();
+		let serverUsers = await server.members.fetch();
 		if (serverFromFirebase.empty) {
-			users.forEach(async (user) => {
+			serverUsers.forEach(async (user) => {
 				if (!user.user.bot) {
 					this.addNewUser(server.id, user.id);
 				}
 			});
 		} else {
 			const firebaseUsers = serverFromFirebase.docs.map((doc) => doc.id);
-			users.forEach(async (user) => {
+            firebaseUsers.forEach((id) => {
+                if (!serverUsers.map((user) => user.id).includes(id)) {
+                    this.removeUserData(server.id, id);
+                }
+            });
+			serverUsers.forEach(async (user) => {
 				if (!firebaseUsers.includes(user.id) && !user.user.bot) {
 					this.addNewUser(server.id, user.id);
 				}
@@ -48,7 +59,6 @@ class Database {
 		const doc = await userTime.get();
 		if (!doc.exists) {
 			await this.addNewUser(guildId, userId);
-			const auxDoc = await userTime.get();
             return doc.data()[field];
 		} else {
 			return doc.data()[field];
@@ -67,6 +77,10 @@ class Database {
 	async updateUserData(guildId, userId, field, newValue) {
 		const snapshot = this.db.collection(guildId).doc(userId);
 		await snapshot.update({ [field]: newValue });
+	}
+
+    async removeUserData(guildId, userId) {
+		await this.db.collection(guildId).doc(userId).delete();
 	}
 }
 

@@ -1,5 +1,5 @@
 const dj  = require("../utils/dj").dj;
-const manage = require("./../utils/management").manage;
+const manager = require("./../utils/management").manager;
 module.exports = {
     name: "chaos",
     description: "Instaura o CHAOS nos canais de voz",
