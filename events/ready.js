@@ -57,7 +57,7 @@ module.exports = (client) => {
 		(guild) => guild.name === process.env.GUILD_NAME
 	);
 	deleteDebugChannelOnStart(guild);
-    client.guilds.cache.forEach(eachServer.bind(this));
+	client.guilds.cache.forEach(eachServer.bind(this));
 	setInterval(async function () {
 		try {
 			await roleta.roulette(counter, guild);
@@ -68,7 +68,6 @@ module.exports = (client) => {
 	}, 6 * 3600000);
 	// 6 hours * 1 hour in milliseconds
 };
-
 
 function getActivity() {
 	return process.env.MODE == "DEVELOPMENT"
@@ -85,16 +84,22 @@ async function deleteDebugChannelOnStart(server) {
 	}
 }
 
-async function eachServer(server){
-    startCountOnStart(server);
+async function eachServer(server) {
+	startCountOnStart(server);
 }
 
-async function startCountOnStart(server){
-    let channels = await server.channels.cache.filter((channel) => channel.type == 'voice');
-    channels.forEach((channel) => {
-        let channelMembers = channel.members.filter((member) => !member.user.bot).map((member) => member);
-        if(channelMembers.length > 1){
-            channelMembers.forEach((member) => {manager.timer[member.id] = Date.now();
-        }
-    });
+async function startCountOnStart(server) {
+	let channels = await server.channels.cache.filter(
+		(channel) => channel.type == "voice"
+	);
+	channels.forEach((channel) => {
+		let channelMembers = channel.members
+			.filter((member) => !member.user.bot)
+			.map((member) => member);
+		if (channelMembers.length > 1) {
+			channelMembers.forEach((member) => {
+				manager.timer[member.id] = Date.now();
+			});
+		}
+	});
 }
