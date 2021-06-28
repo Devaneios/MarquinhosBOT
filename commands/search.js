@@ -1,5 +1,5 @@
 const searcher = require("./../utils/youtubeSearch");
-const manage = require("./../utils/management").manage;
+const manager = require("./../utils/management").manager;
 const dj = require("./../utils/dj").dj;
 const Discord = require("discord.js");
 module.exports = {
@@ -43,9 +43,9 @@ module.exports = {
                 ) {
                     dj.musicQueue.push(choosed);
                     dj.playMusic(newUserChannel, 0);
-                    manage.nowPlaying = criarEmbed("Tocando agora");
-                    manage.nowPlaying.addField(choosed.title, choosed.duration);
-                    manage.nowPlayingRef = await message.channel.send(manage.nowPlaying);
+                    manager.nowPlaying = criarEmbed("Tocando agora");
+                    manager.nowPlaying.addField(choosed.title, choosed.duration);
+                    manager.nowPlayingRef = await message.channel.send(manager.nowPlaying);
                     collector.stop();
                 } else {
                     dj.musicQueue.push(choosed);

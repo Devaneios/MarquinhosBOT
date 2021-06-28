@@ -25,4 +25,4 @@ class Manager{
     }
 }
 
-module.exports.manage = new Manager();
+module.exports.manager = new Manager();
