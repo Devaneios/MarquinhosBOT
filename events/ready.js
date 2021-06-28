@@ -95,7 +95,6 @@ async function startCountOnStart(server){
         let channelMembers = channel.members.filter((member) => !member.user.bot).map((member) => member);
         if(channelMembers.length > 1){
             channelMembers.forEach((member) => {manager.timer[member.id] = Date.now();
-                console.log(`Started count time for ${member.nickname}`);})
         }
     });
 }
