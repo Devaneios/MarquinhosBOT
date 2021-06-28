@@ -1,4 +1,4 @@
-const manage = require("./../utils/management").manage;
+const manager = require("./../utils/management").manager;
 module.exports = {
     name: "prender",
     description:
@@ -26,16 +26,16 @@ module.exports = {
         }
         preso = presoCollection.first();
         if (preso.user.username == "MarquinhosBOT") {
-            manage.idPreso.push(message.author.id);
+            manager.idPreso.push(message.author.id);
             message.channel.send("Trouxa, eu sou filho do Rei :P");
             return;
         }
         if (!preso) {
             message.channel.send("Não pude achar essa pessoa no servidor!");
         } else {
-            if (!manage.idPreso.includes(preso.id)) {
+            if (!manager.idPreso.includes(preso.id)) {
                 // Then the id its assigned for the person who'll be arrested
-                manage.idPreso.push(preso.id);
+                manager.idPreso.push(preso.id);
                 // Here we warn to the sent message's channel that the person will be arrested
                 message.channel.send(
                     message.author.username +

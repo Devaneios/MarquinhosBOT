@@ -1,4 +1,4 @@
-const manage = require('../utils/management').manage;
+const manager = require('../utils/management').manager;
 
 module.exports = {
     name: "default",
@@ -11,8 +11,8 @@ module.exports = {
             message.channel.send("Favor digitar um comando válido.");
         } catch (error) {
             message.reply("quebrei! :(");
-            if(manage.debug){
-                manage.debugChannel.send("```"+`${error.message}\n${error.stack}`+"```");
+            if(manager.debug){
+                manager.debugChannel.send("```"+`${error.message}\n${error.stack}`+"```");
             }else{
                 console.log(error);
             }

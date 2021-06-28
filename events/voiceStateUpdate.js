@@ -1,9 +1,10 @@
 const Discord = require("discord.js");
-const manage = require("./../utils/management").manage;
+const manager = require("./../utils/management").manager;
 const player = require("./../utils/player");
 const dj = require("./../utils/dj").dj;
 const database = require("../utils/database").database;
 const clock = require("../utils/clock");
+
 module.exports = async (client, oldState, newState) => {
 	let newStateChannel = newState.channel;
 	let oldStateChannel = oldState.channel;
@@ -23,22 +24,20 @@ module.exports = async (client, oldState, newState) => {
 		newStateChannel !== null &&
 		oldStateChannel.id === newStateChannel.id
 	) {
-		userChangedVoiceState(client, oldStateChannel, newState);
+		userChangedVoiceState(client, oldState, newState);
 	}
 };
 
 //User Joins a voice channel and wasn't already in one
 async function userJoinedVoiceChannel(client, oldState, newState) {
 	if (newState.member.user.bot) return;
-	console.log(await isUserArrested(newState));
 	if (await isUserArrested(newState)) await arrestUser(newState);
-
 	if (!(await isUserAlone(newState))) await startCountTime(newState);
 
 	// Cooldown condition
-	if (manage.vStateUpdateTimestamp + manage.vStateUpdateCD - Date.now() > 0) {
+	if (manager.vStateUpdateTimestamp + manager.vStateUpdateCD - Date.now() > 0) {
 		//Cooldown recieves - 15 minutes
-		manage.vStateUpdateCD -= 900000;
+		manager.vStateUpdateCD -= 900000;
 	} else {
 		let filepath;
 		let weekDay = clock.getLongWeekdayWithTimeZone(
@@ -51,17 +50,17 @@ async function userJoinedVoiceChannel(client, oldState, newState) {
 				if (randint === 1)
 					filepath = "./resources/sounds/quintafeiradaledale.mp3";
 				else filepath = "./resources/sounds/sextaanao.mp3";
-				player.execute("", filepath, newStateChannel);
+				player.execute("", filepath, newState.channel);
 				break;
 			case "sexta-feira":
 				filepath = "./resources/sounds/sextafeirasim.mp3";
-				player.execute("", filepath, newStateChannel);
+				player.execute("", filepath, newState.channel);
 				break;
 		}
 		//Timestamp resets
-		manage.vStateUpdateTimestamp = Date.now();
+		manager.vStateUpdateTimestamp = Date.now();
 		//Cooldown Resets
-		manage.vStateUpdateCD = 3600 * 1000;
+		manager.vStateUpdateCD = 3600 * 1000;
 	}
 }
 
@@ -74,12 +73,14 @@ async function userLeftVoiceChannel(client, oldState, newState) {
 async function userChangedVoiceChannel(client, oldState, newState) {
 	if (newState.member.user.bot) return;
 	if (await isUserArrested(newState)) await arrestUser(newState);
-    await stopCountTime(oldState);
-    if (!(await isUserAlone(newState))) await startCountTime(newState);
+	await stopCountTime(oldState);
+	if (!(await isUserAlone(newState))) await startCountTime(newState);
 }
 
 async function userChangedVoiceState(client, oldState, newState) {
 	if (newState.member.user.bot) return;
+	if (newState.member.voice.selfDeaf) stopCountTime(oldState);
+	else if (!(await isUserAlone(newState))) await startCountTime(newState);
 }
 
 // We check if the person that joined the voice channel it's arrested AND if the arrested person
@@ -87,7 +88,7 @@ async function userChangedVoiceState(client, oldState, newState) {
 // to the arrested channel.
 async function isUserArrested(newState) {
 	return (
-		manage.idPreso.includes(newState.member.id) &&
+		manager.idPreso.includes(newState.member.id) &&
 		newState.channel &&
 		newState.channel.id != newState.member.guild.afkChannelID
 	);
@@ -105,59 +106,58 @@ async function arrestUser(newState) {
 
 async function isUserAlone(newState) {
 	const channel = newState.channel;
-	const members = channel.members
-		.filter((member) => !member.user.bot)
-		.map((member) => member);
-	if (members.length > 1) return false;
-	return true;
+	const members = await findValidUsersIds(channel);
+	return members.length < 2;
 }
 
 async function startCountTime(newState) {
-	console.log(manage.timer);
 	const channel = newState.channel;
-	const members = channel.members
-		.filter((member) => !member.user.bot)
-		.map((member) => member.id);
-	console.log("Linha 118", members);
+	const members = await findValidUsersIds(channel);
 	for (const id of members) {
-		if (!manage.timer[id]) {
-			manage.timer[id] = Date.now();
+		if (!manager.timer[id]) {
+			manager.timer[id] = Date.now();
 		}
 	}
-	console.log(manage.timer);
 }
 
 async function stopCountTime(oldState) {
-	console.log(manage.timer);
 	const channel = oldState.channel;
-	let membersLeft = channel.members
-		.filter((member) => !member.user.bot)
-		.map((member) => member.id);
+    let currentUser = oldState.member.user.id;
+	let membersLeft = await findValidUsersIds(channel);
+    console.log(membersLeft);
 	if (membersLeft.length == 1) {
 		membersLeft.push(oldState.member.user.id);
-	} else {
-		membersLeft = [oldState.member.user.id];
+        for (const member of membersLeft) {
+            await updateUserTime(
+                oldState.guild.id, 
+                member, 
+                Date.now() - parseInt(manager.timer[member]));
+        }
+	} else if(membersLeft.length == 0){
+        await updateUserTime(
+            oldState.guild.id, 
+            currentUser, 
+            Date.now() - parseInt(manager.timer[currentUser]));
 	}
-	console.log(membersLeft);
-	const membersTime = membersLeft.map((id) => {
-		if (manage.timer[id])
-			return { id: id, time: Date.now() - parseInt(manage.timer[id]) };
-	});
-	for (const member of membersTime) {
-		if (!member) continue;
-		let userCurrentTime = await database.getUserData(
-			oldState.guild.id,
-			member.id,
-			"time"
-		);
-		console.log(member.time);
-		manage.timer[member.id] = null;
-		await database.updateUserData(
-			oldState.guild.id,
-			member.id,
-			"time",
-			userCurrentTime + member.time
-		);
-	}
-	console.log(manage.timer);
+}
+
+async function updateUserTime(guildId, memberId, time){
+    let userCurrentTime = await database.getUserData(
+        guildId,
+        memberId,
+        "time"
+    );
+    manager.timer[memberId] = null;
+    await database.updateUserData(
+        guildId,
+        memberId,
+        "time",
+        userCurrentTime + time
+    );
+}
+
+async function findValidUsersIds(channel) {
+	return channel.members
+		.filter((member) => !member.user.bot && !member.voice.selfDeaf)
+		.map((member) => member.id);
 }
