@@ -23,7 +23,7 @@ class movieTheaterService {
 		this.creatingSessionUsers[sessionId] = null;
 	}
 
-	async setupSessionMovie(
+	async addMovieToSession(
 		sessionId,
 		movieName,
 		movieDescription,
@@ -40,7 +40,7 @@ class movieTheaterService {
         return null;
 	}
 
-    async setupSessionDateTime(sessionId, datetime){
+    async addDateToSession(sessionId, datetime){
         if (this.creatingSessionUsers[sessionId]) {
 			this.creatingSessionUsers[sessionId]["datetime"] = datetime;
             return this.creatingSessionUsers[sessionId]["datetime"];
