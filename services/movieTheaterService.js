@@ -1,69 +1,71 @@
 const { nanoid } = require('nanoid');
-
-class movieTheaterService {
+const moment = require('moment');
+const MovieSessionRepository = require("../repositories/movieSessionRepository");
+class MovieTheaterService {
 	constructor() {
-		this.creatingSessionUsers = {};
-		this.sessions = {};
+        this.repositories = {};
+		this.movieSessions = [];
 	}
 
-	async startCreateSession(userId) {
-        let sessionId = nanoid(13);
-        if(!this.creatingSessionUsers[sessionId]){
-            this.creatingSessionUsers[sessionId] = {"createdBy": userId, "invited":[userId]};
-            return sessionId;
+    async getRepositoryReference(serverId) {
+        if (!this.repositories[serverId]) {
+            this.repositories[serverId] = new MovieSessionRepository(serverId);
         }
-        return null;
-	}
-
-    async getMovieSession(sessionId){
-        return this.creatingSessionUsers[sessionId];
+        return this.repositories[serverId];
     }
 
-	async cancelCreateSession(sessionId) {
-		this.creatingSessionUsers[sessionId] = null;
-	}
-
-	async addMovieToSession(
-		sessionId,
-		movieName,
-		movieDescription,
-		movieThumbnail
-	) {
-		if (this.creatingSessionUsers[sessionId]) {
-			this.creatingSessionUsers[sessionId]["movie"] = {
-				name: movieName,
-				description: movieDescription,
-				thumbnail: movieThumbnail,
-			};
-            return this.creatingSessionUsers[sessionId]["movie"];
-		}
-        return null;
-	}
-
-    async addDateToSession(sessionId, datetime){
-        if (this.creatingSessionUsers[sessionId]) {
-			this.creatingSessionUsers[sessionId]["datetime"] = datetime;
-            return this.creatingSessionUsers[sessionId]["datetime"];
-		}
-        return null;
+    async loadMovieSessionsFromDB(serverId, date) {
+        let repository = await this.getRepositoryReference(serverId);
+        let movieSessions = await repository.getMovieSessionsAfter(date);
+        this.movieSessions = this.movieSessions.concat(movieSessions);
     }
 
-    async addUserToSession(sessionId, userId){
-        if (this.creatingSessionUsers[sessionId] && !this.creatingSessionUsers[sessionId]["invited"].includes(userId)) {
-            this.creatingSessionUsers[sessionId]["invited"].push(userId);
-            return userId;
-        }
-        return null;
+	async getNewSessionId() {
+        return nanoid(13);
+	}
+
+    async saveSession(serverId, session){
+        let repository = await this.getRepositoryReference(serverId);
+        this.movieSessions.push(session);
+        await repository.createMovieSession(session);
     }
 
-    async removeUserFromSession(sessionId, userId){
-        if (this.creatingSessionUsers[sessionId] && this.creatingSessionUsers[sessionId]["invited"].includes(userId)) {
-            let index = this.creatingSessionUsers[sessionId]["invited"].findIndex(userId);
-            this.creatingSessionUsers[sessionId]["invited"].splice(index);
-            return userId;
+    async getMovieSessions() {
+        return await this.db.getMovieSessions();
+    }
+
+    async getStartingSessions(){
+        let startingSessions = [];
+        let now = moment();
+        for (const session of this.movieSessions) {
+            let currentTime = now.toDate().toLocaleString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false,
+                timeZone: "America/Recife",
+            });
+
+            let sessionTenMinutesBefore = new Date(session.date.toDate() - 600000).toLocaleString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false,
+                timeZone: "America/Recife",
+            });
+
+            if (currentTime == sessionTenMinutesBefore){
+                startingSessions.push(session);
+            }
         }
-        return null;
+        return startingSessions;
     }
 }
 
-module.exports.movieTheaterService = new movieTheaterService();
+module.exports.movieTheaterService = new MovieTheaterService();
