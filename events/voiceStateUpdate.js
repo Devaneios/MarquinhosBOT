@@ -2,7 +2,6 @@ const Discord = require("discord.js");
 const manager = require("./../utils/management").manager;
 const player = require("./../utils/player");
 const dj = require("./../utils/dj").dj;
-const database = require("../utils/database").database;
 const clock = require("../utils/clock");
 
 module.exports = async (client, oldState, newState) => {
