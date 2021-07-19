@@ -24,7 +24,7 @@ module.exports = async (client, message) => {
         }
         try {
             console.log(`Executando ${commandName}`);
-            command.execute(message, args, client.commands);
+            command.execute(message, args, client);
         } catch (error) {
             message.reply("quebrei! :(");
             if(manager.debug){
