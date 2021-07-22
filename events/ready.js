@@ -1,8 +1,11 @@
 const animalLottery = require("./../utils/animalLottery");
 const roleta = require("./../utils/adminRoulette");
-const database = require("../utils/database").database;
 const manager = require("./../utils/management").manager;
-const Canvas = require("canvas");
+const timeEnum = require("../utils/timeEnum").timeEnum;
+const movieTheaterService =
+	require("./../services/movieTheaterService").movieTheaterService;
+const moment = require("moment");
+const Discord = require("discord.js");
 
 const welcome_message = ` __  __                       _       _               ____   ____ _______ 
 |  \\/  |                     (_)     | |             |  _ \\ / __ \\__   __|
@@ -11,40 +14,38 @@ const welcome_message = ` __  __                       _       _               _
 | |  | | (_| | | | (_| | |_| | | | | | | | | (_) \\__ \\ |_) | |__| | | |   
 |_|  |_|\\__,_|_|  \\__, |\\__,_|_|_| |_|_| |_|\\___/|___/____/ \\____/  |_|   
                      | |          
-                     |_|         `;
+                     |_|`;
 
-const marquinhos = `                                                                                                              
-              ██████████████████████████████████████████████████████████    
-              ███▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀███    
-     ████████████                                                    ███    
-     ████████████                                                    ███    
-     ████████████                                                    ███    
-     ████████████      ████████████                ███████████▌      ███    
-     ████████████      ████████████                ███████████▌      ███    
-     ████████████      ████████████                ███████████▌      ███    
-     ████████████      ████████████                ███████████▌      ███    
-▐████████████████      ████████████                ███████████▌      ███    
-▐████████████████      ████████████                ███████████▌      ███    
-▐████████████████                                                    ███    
-▐████████████████                                                    ███    
-     ████████████               ███             ███                  ███    
-     ████████████               ███             ███                  ███    
-     ████████████               ███████████████████                  ███    
-     ████████████               ███████████████████                  ███    
-     ████████████                                                    ███    
-     ████████████                                                    ███    
-     ████████████                                                    ███    
-     ████████████                                                    ███    
-              ██████████████████████████████████████████████████████████    
-              ██████████████████████████████████████████████████████████    
-`;
-require("dotenv").config();
-module.exports = (client) => {
+const marquinhos = `
+              ██████████████████████████████████████████████████████████
+              ███▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀███
+     ████████████                                                    ███
+     ████████████                                                    ███
+     ████████████                                                    ███
+     ████████████      ████████████                ███████████▌      ███
+     ████████████      ████████████                ███████████▌      ███
+     ████████████      ████████████                ███████████▌      ███
+     ████████████      ████████████                ███████████▌      ███
+▐████████████████      ████████████                ███████████▌      ███
+▐████████████████      ████████████                ███████████▌      ███
+▐████████████████                                                    ███
+▐████████████████                                                    ███
+     ████████████               ███             ███                  ███
+     ████████████               ███             ███                  ███
+     ████████████               ███████████████████                  ███
+     ████████████               ███████████████████                  ███
+     ████████████                                                    ███
+     ████████████                                                    ███
+     ████████████                                    MarquinhosBOT   ███
+     ████████████                                                    ███
+              ██████████████████████████████████████████████████████████
+              ██████████████████████████████████████████████████████████`;
+
+module.exports = async (client) => {
 	console.log(marquinhos);
-	console.log(welcome_message);
-
+	//console.log(welcome_message);
 	client.user.setActivity(getActivity());
-	database.updateServers(client);
+	//updateServers(client);
 	//client.user.setActivity('Jogos especiais para que todo mundo tenha um feliz ano novo ✨!')
 	//client.user.setAvatar('./resources/images/marquinhosnatal.png');
 	//client.user.setAvatar('./resources/images/marquinhoshead.jpg');
@@ -56,8 +57,6 @@ module.exports = (client) => {
 	let guild = client.guilds.cache.find(
 		(guild) => guild.name === process.env.GUILD_NAME
 	);
-	deleteDebugChannelOnStart(guild);
-	client.guilds.cache.forEach(eachServer.bind(this));
 	setInterval(async function () {
 		try {
 			await roleta.roulette(counter, guild);
@@ -65,9 +64,46 @@ module.exports = (client) => {
 			console.log(error);
 		}
 		counter = (counter + 1) % 5;
-	}, 6 * 3600000);
-	// 6 hours * 1 hour in milliseconds
+	}, 6 * timeEnum.HOUR);
+	
+    await loadMovieSessionsFromDB(client);
+    
+	setInterval(
+		sendMovieSessionsNotification.bind(this, client),
+		timeEnum.SECOND
+	);
 };
+
+async function sendMovieSessionsNotification(client) {
+	let startingSessions = await movieTheaterService.getStartingSessions();
+	for (const session of startingSessions) {
+        let server = await client.guilds.cache.get(session.serverRef);
+		let users = await getUsersFromSession(server, session);
+		let embed = createNotificationEmbed(server, session);
+		for (const user of users) {
+			await user.send(embed);
+		}
+	}
+}
+
+async function getUsersFromSession(server, session) {
+	let oldMessage = await server.channels.cache
+		.get(session.channelRef)
+		.messages.fetch(session.messageRef);
+	let reactions = await oldMessage.reactions.cache.get("🍿");
+	let users = await reactions.users.fetch();
+	return users.map((user) => user).filter((user) => !user.bot);
+}
+
+function createNotificationEmbed(server, session){
+    return new Discord.MessageEmbed()
+    .setTitle(
+        `A sua sessão no ${server.name} vai começar em 10 minutos`
+    )
+    .setColor("#0099ff")
+    .setThumbnail(session.movie.thumbnail)
+    .addField(session.movie.title, session.movie.description);
+}
 
 function getActivity() {
 	return process.env.MODE == "DEVELOPMENT"
@@ -75,31 +111,13 @@ function getActivity() {
 		: animalLottery.get_bicho();
 }
 
-async function deleteDebugChannelOnStart(server) {
-	let channel = await server.channels.cache.find(
-		(c) => c.name == "marquinhos-debug" && c.type == "text"
-	);
-	if (channel) {
-		channel.delete();
+async function loadMovieSessionsFromDB(client){
+    const servers = client.guilds.cache.map((guild) => guild);
+	let now = moment();
+	for (const server of servers) {
+		await movieTheaterService.loadMovieSessionsFromDB(
+			server.id,
+			now.toDate()
+		);
 	}
-}
-
-async function eachServer(server) {
-	startCountOnStart(server);
-}
-
-async function startCountOnStart(server) {
-	let channels = await server.channels.cache.filter(
-		(channel) => channel.type == "voice"
-	);
-	channels.forEach((channel) => {
-		let channelMembers = channel.members
-			.filter((member) => !member.user.bot)
-			.map((member) => member);
-		if (channelMembers.length > 1) {
-			channelMembers.forEach((member) => {
-				manager.timer[member.id] = Date.now();
-			});
-		}
-	});
 }
