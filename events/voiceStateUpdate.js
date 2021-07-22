@@ -2,7 +2,6 @@ const Discord = require("discord.js");
 const manager = require("./../utils/management").manager;
 const player = require("./../utils/player");
 const dj = require("./../utils/dj").dj;
-const database = require("../utils/database").database;
 const clock = require("../utils/clock");
 
 module.exports = async (client, oldState, newState) => {
@@ -126,6 +125,7 @@ async function stopCountTime(oldState) {
 	let membersLeft = await findValidUsersIds(channel);
     console.log(membersLeft);
 	if (membersLeft.length == 1) {
+        console.log("Stopping time for users", membersLeft);
 		membersLeft.push(oldState.member.user.id);
         for (const member of membersLeft) {
             await updateUserTime(
@@ -134,6 +134,7 @@ async function stopCountTime(oldState) {
                 Date.now() - parseInt(manager.timer[member]));
         }
 	} else if(membersLeft.length == 0){
+        console.log("Stopping time for users", membersLeft);
         await updateUserTime(
             oldState.guild.id, 
             currentUser, 
@@ -142,13 +143,13 @@ async function stopCountTime(oldState) {
 }
 
 async function updateUserTime(guildId, memberId, time){
-    let userCurrentTime = await database.getUserData(
+    let userCurrentTime = await database.getCollectionDocumentField(
         guildId,
         memberId,
         "time"
     );
     manager.timer[memberId] = null;
-    await database.updateUserData(
+    await database.updateCollectionDocumentField(
         guildId,
         memberId,
         "time",
