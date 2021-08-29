@@ -1,17 +1,19 @@
+const Discord = require("discord.js");
 module.exports = {
     name: "moeda",
     aliases: ["coin"],
     description: "Tiro cara ou coroa numa moeda semi-viciada.",
     usage: "!moeda | !coin",
-    execute(message, args) {
+    async execute(message, args) {
         // Just a function that gets a random number between 0 or 1
         randint = Math.floor(Math.random() * 2);
-        // If the random number is 1, print CARA!
+        // If the random number is 1, send a HEAD embed!
         if(randint === 1){
-            message.channel.send('CARA!');
+            message.channel.send({files: ["./resources/images/coin_head.png"]});
         }else{
-        // Just print COROA!
-            message.channel.send('COROA!');
+        // Tails!
+            message.channel.send({files: ["./resources/images/coin_tail.png"]});
         }
     },
 };
+

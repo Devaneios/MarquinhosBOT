@@ -7,7 +7,7 @@ module.exports = (client) => {
     client.user.setActivity(animalLottery.get_bicho());
     //client.user.setActivity('Jogos especiais para que todo mundo tenha um feliz ano novo ✨!')
     //client.user.setAvatar('./resources/images/marquinhosnatal.png');
-    client.user.setAvatar('./resources/images/marquinhoshead.jpg');
+    //client.user.setAvatar('./resources/images/marquinhoshead.jpg');
     //client.user.setActivity("NADA PORQUE ESTOU EM MODO DEVELOPMENT");
     fileEdit.edit("isReady", true);
     setInterval(function () {

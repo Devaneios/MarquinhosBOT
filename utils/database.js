@@ -1,4 +1,4 @@
-const admin = require("firebase-admin");
+/* //const admin = require("firebase-admin");
 
 const serviceAccount = require("../key.json");
 
@@ -71,3 +71,4 @@ class Database {
 }
 
 module.exports.database = new Database();
+ */
