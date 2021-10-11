@@ -1,5 +1,5 @@
 const fetch = require('node-fetch');
-const manage = require("./../utils/management").manage;
+const manager = require("./../utils/management").manager;
 const dj = require("./../utils/dj").dj;
 module.exports = {
     name: "user",

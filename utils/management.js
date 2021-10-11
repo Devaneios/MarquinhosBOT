@@ -8,6 +8,7 @@ class Manager{
     vStateUpdateTimestamp;
     vStateUpdateCD;
     chatSecreto;
+    teste;
     constructor(){
         this.isReady = true;
         this.idPreso = [];
@@ -22,7 +23,8 @@ class Manager{
         this.vStateUpdateCD = 3600 * 1000;
         this.chatSecreto = {};
         this.timer = {};
+        this.teste;
     }
 }
 
-module.exports.manage = new Manager();
+module.exports.manager = new Manager();

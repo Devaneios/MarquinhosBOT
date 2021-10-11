@@ -1,5 +1,5 @@
 const ytdl = require("ytdl-core");
-const manage = require("./management").manage;
+const manager = require("./management").manager;
 const Discord = require("discord.js");
 class Dj {
     musicQueue;
@@ -45,14 +45,14 @@ class Dj {
                     { seek: seek/1000 }
                 );
                 this.playingMusic = true;
-                manage.nowPlaying = criarEmbed("Tocando agora");
-                manage.nowPlaying.addField(
+                manager.nowPlaying = criarEmbed("Tocando agora");
+                manager.nowPlaying.addField(
                     this.musicQueue[0].title,
                     this.musicQueue[0].duration
                 );
-                manage.nowPlayingRef.delete();
-                manage.nowPlayingRef = await manage.nowPlayingRef.channel.send(
-                    manage.nowPlaying
+                manager.nowPlayingRef.delete();
+                manager.nowPlayingRef = await manager.nowPlayingRef.channel.send(
+                    manager.nowPlaying
                 );
                 this.musicDispatcher.setVolume(this.volume);
                 this.titlePlaying = this.musicQueue[0].title;

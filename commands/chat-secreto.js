@@ -1,4 +1,4 @@
-const manage = require('../utils/management').manage;
+const manager = require('../utils/management').manager;
 
 module.exports = {
     name: "chat-secreto",
@@ -18,10 +18,10 @@ module.exports = {
         }
         
         
-        if(manage.chatSecreto.canal != undefined){
+        if(manager.chatSecreto.canal != undefined){
             message.channel.send(`Já tá ligado vei, ${
-                manage.chatSecreto.canal == message.channel ? 
-                'aqui nesse canal mesmo, fala teus podre aí' : `lá no ${manage.chatSecreto.canal}. Fala teus podre lá.`
+                manager.chatSecreto.canal == message.channel ? 
+                'aqui nesse canal mesmo, fala teus podre aí' : `lá no ${manager.chatSecreto.canal}. Fala teus podre lá.`
             }`)
             .then(msg => {msg.delete({ timeout: 10000})}); // It deletes the message, again, to keep it secret
             return;
@@ -29,9 +29,9 @@ module.exports = {
 
         let ligado_msg = await message.channel.send(`Ok, liguei o modo secreto por ${parsed} ${parsed=='1' ? 'minuto' : 'minutos'}`);
 
-        manage.chatSecreto.canal = message.channel;
-        manage.chatSecreto.inicio = Date.now();
-        manage.chatSecreto.duracao = args[0] * 60 * 1000;
+        manager.chatSecreto.canal = message.channel;
+        manager.chatSecreto.inicio = Date.now();
+        manager.chatSecreto.duracao = args[0] * 60 * 1000;
 
         setTimeout(async () => {
             message.channel.send('Tô desligando o chat-secreto em 10 segundos, viu')
@@ -41,7 +41,7 @@ module.exports = {
 
         setTimeout(() => {
             ligado_msg.delete();
-            manage.chatSecreto = {};
+            manager.chatSecreto = {};
         }, (parsed * 60 * 1000)); // At last, the feature deactivates itself, and deletes the turn on message, of course
     },
 };
