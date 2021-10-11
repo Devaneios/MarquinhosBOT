@@ -1,5 +1,5 @@
 const dj = require("./../utils/dj").dj;
-const manage = require("./../utils/management").manage;
+const manager = require("./../utils/management").manager;
 const Discord = require("discord.js");
 module.exports = {
     name: "volume",
@@ -14,20 +14,20 @@ module.exports = {
             );
         }
 
-        if (manage.volumeRef) await manage.volumeRef.delete();
+        if (manager.volumeRef) await manager.volumeRef.delete();
 
-        manage.volumeEmbed = criarEmbed("Volume");
-        manage.volumeEmbed.setDescription(
+        manager.volumeEmbed = criarEmbed("Volume");
+        manager.volumeEmbed.setDescription(
             `Volume atual: ${Math.round(dj.volume * 100)}%`
         );
-        manage.volumeEmbed.setFooter("Reaja para aumentar ou abaixar o volume");
+        manager.volumeEmbed.setFooter("Reaja para aumentar ou abaixar o volume");
 
-        manage.volumeRef = await message.channel.send(manage.volumeEmbed);
-        await manage.volumeRef.react("⬆");
-        await manage.volumeRef.react("⬇");
+        manager.volumeRef = await message.channel.send(manager.volumeEmbed);
+        await manager.volumeRef.react("⬆");
+        await manager.volumeRef.react("⬇");
 
         const reactionCollector = new Discord.ReactionCollector(
-            manage.volumeRef,
+            manager.volumeRef,
             (newReaction, user) =>
                 !user.bot &&
                 (newReaction.emoji.name === "⬆" ||
@@ -41,27 +41,27 @@ module.exports = {
                 if (dj.volume <= 0.9) {
                     dj.volume += 0.1;
                     if(dj.playingMusic) dj.musicDispatcher.setVolume(dj.volume);
-                    manage.volumeEmbed.setDescription(
+                    manager.volumeEmbed.setDescription(
                         `Volume atual: ${Math.round(dj.volume * 100)}%`
                     );
-                    manage.volumeRef.edit(manage.volumeEmbed);
+                    manager.volumeRef.edit(manager.volumeEmbed);
                 }
             } else if (newReaction.emoji.name === "⬇") {
                 newReaction.users.remove(user.id);
                 if (dj.volume >= 0.1) {
                     dj.volume -= 0.1;
                     if(dj.playingMusic) dj.musicDispatcher.setVolume(dj.volume);
-                    manage.volumeEmbed.setDescription(
+                    manager.volumeEmbed.setDescription(
                         `Volume atual: ${Math.round(dj.volume * 100)}%`
                     );
-                    manage.volumeRef.edit(manage.volumeEmbed);
+                    manager.volumeRef.edit(manager.volumeEmbed);
                 }
             }
         });
 
         reactionCollector.on("end", async (newReaction, user) => {
-            manage.volumeRef.delete();
-            manage.volumeRef = null;
+            manager.volumeRef.delete();
+            manager.volumeRef = null;
         });
         // if(!command){
         //     message.channel.send(`Volume atual: ${Math.round(dj.volume*100)}%`);

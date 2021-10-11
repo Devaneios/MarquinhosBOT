@@ -1,4 +1,4 @@
-const manage = require('../utils/management').manage;
+const manager = require('../utils/management').manager;
 const utils = require('./../utils/utils');
 
 require('dotenv').config();
@@ -24,11 +24,11 @@ module.exports = async (client, message) => {
         }
         try {
             console.log(`Executando ${commandName}`);
-            command.execute(message, args, client.commands);
+            command.execute(message, args, client);
         } catch (error) {
             message.reply("quebrei! :(");
-            if(manage.debug){
-                manage.debugChannel.send("```"+`${error}`+"```");
+            if(manager.debug){
+                manager.debugChannel.send("```"+`${error}`+"```");
             }else{
                 console.log(error);
             }
@@ -74,19 +74,19 @@ module.exports = async (client, message) => {
             return;
         }
         // For the chat-secreto feature
-        if(manage.chatSecreto != {}){
-            if( manage.chatSecreto.inicio + manage.chatSecreto.duracao > Date.now() ){
-                if(manage.chatSecreto.canal == message.channel.id){
+        if(manager.chatSecreto != {}){
+            if( manager.chatSecreto.inicio + manager.chatSecreto.duracao > Date.now() ){
+                if(manager.chatSecreto.canal == message.channel.id){
                     setTimeout(() => {
                         message.delete();
                     }, 20 * 1000); // That's 20 seconds for proper reading
                 }
             }else{
-                manage.chatSecreto = {};
+                manager.chatSecreto = {};
             }
         }
         } catch (error) {
-            manage.debugChannel.send("```"+`${error}`+"```");
+            manager.debugChannel.send("```"+`${error}`+"```");
             console.log(error);
         }
         

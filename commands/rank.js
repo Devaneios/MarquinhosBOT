@@ -1,4 +1,3 @@
-const database = require("../utils/database").database;
 const Discord = require("discord.js");
 
 module.exports = {
@@ -7,6 +6,7 @@ module.exports = {
 		"Tabelinha dos sem vida pra mostrar quem passa mais tempo virado em call",
 	usage: "!rank",
 	async execute(message, args) {
+        return message.reply("Esse comando está em manutenção");
 		let usersTime = await database.getDataOrdered(message.guild.id, "time", "desc", 10);
 		topUsersEmbed = criarEmbed("Top 10 Clientes");
 		for (let index = 0; index < usersTime.length; index++) {

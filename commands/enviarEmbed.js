@@ -1,4 +1,4 @@
-const manage = require("../utils/management").manage;
+const manager = require("../utils/management").manager;
 const Discord = require("discord.js");
 const fs = require("fs");
 var request = require("request");
@@ -53,8 +53,8 @@ module.exports = {
 			}
 		} catch (error) {
 			message.reply("quebrei! :(");
-			if (manage.debug) {
-				manage.debugChannel.send(
+			if (manager.debug) {
+				manager.debugChannel.send(
 					"```" + `${error.message}\n${error.stack}` + "```"
 				);
 			} else {
