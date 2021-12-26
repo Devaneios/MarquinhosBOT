@@ -4,19 +4,23 @@ const utils = require('./../utils/utils');
 require('dotenv').config();
 module.exports = async (client, message) => {
     if (message.author.bot) return;
-    re = new RegExp(/^b*.dia/gi);
-    re2 = new RegExp(/(^[Pp]arab[ée]ns.*[Mm]arquinhos)/gi);
+
     //if (message.content.indexOf(config.prefix) !== 0) return;
 
     //if (!cmd) return;
 
     const args = message.content.slice(process.env.PREFIX.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
+
+    // This is about messages that is just "!!!"
+    if (!commandName) return;
+
     const command =
         client.commands.get(commandName) ||
         client.commands.find(
             (cmd) => cmd.aliases && cmd.aliases.includes(commandName)
         );
+        
     if (message.content.startsWith(process.env.PREFIX)) {
         if(!command){
             message.reply(" esse comando não existe! Digite !help para uma lista de comandos.");
@@ -36,8 +40,8 @@ module.exports = async (client, message) => {
     } else {
         // Bom dia and Parabéns replies
         try {
-            let re = new RegExp(/\b(bom dia)\b/gi);
-        let re2 = new RegExp(/(^[Pp]arab[ée]ns.*[Mm]arquinhos)/gi);
+            const re = new RegExp(/\b(bom dia)\b/gi);
+            const re2 = new RegExp(/(^[Pp]arab[ée]ns.*[Mm]arquinhos)/gi);
         
         if (re.test(message.content)) {
             message.delete();
@@ -49,12 +53,12 @@ module.exports = async (client, message) => {
             await message.reply("parabéns pra VOCÊ! Você é incrível! :)");
         }
         // Commands out of the proper channel cases
-        let channel = message.channel;
+        const channel = message.channel;
 
         // For bots commands
         if (
             channel.id != process.env.BOT_CHANNEL_ID &&
-            message.content.charAt(0).match("[-;]")
+            message.content.charAt(0).match("[-;>]")
         ) {
             message.author.send(
                 "Este não é o canal apropriado para comandos de bots."
