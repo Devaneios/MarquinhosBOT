@@ -2,8 +2,7 @@ const animalLottery = require("./../utils/animalLottery");
 const roleta = require("./../utils/adminRoulette");
 const manager = require("./../utils/management").manager;
 const timeEnum = require("../utils/timeEnum").timeEnum;
-const movieTheaterService =
-	require("./../services/movieTheaterService").movieTheaterService;
+const movieTheaterService = require("./../services/movieTheaterService").movieTheaterService;
 const moment = require("moment");
 const Discord = require("discord.js");
 
@@ -43,20 +42,33 @@ const marquinhos = `
 
 module.exports = async (client) => {
 	console.log(marquinhos);
-	//console.log(welcome_message);
-	client.user.setActivity(getActivity());
+	
+    //console.log(welcome_message);
+	
+    client.user.setActivity(getActivity());
+    
+    // #TODO: Clear that
 	//updateServers(client);
 	//client.user.setActivity('Jogos especiais para que todo mundo tenha um feliz ano novo ✨!')
 	//client.user.setAvatar('./resources/images/marquinhosnatal.png');
 	//client.user.setAvatar('./resources/images/marquinhoshead.jpg');
+    //client.user.setAvatar('./resources/images/marquinhos_halloween.png');
 	//client.user.setActivity("NADA PORQUE ESTOU EM MODO DEVELOPMENT");
+
+
+    // Heartbeat // Animal Lottery or Development mode
 	setInterval(function () {
 		client.user.setActivity(getActivity());
 	}, 100 * 1000);
-	var counter = 0;
+
+    // For the future, when we have multiple guilds
 	let guild = client.guilds.cache.find(
 		(guild) => guild.name === process.env.GUILD_NAME
 	);
+
+    // Aux to admin roulette
+    var counter = 0;
+    // Admin Roulette
 	setInterval(async function () {
 		try {
 			await roleta.roulette(counter, guild);
@@ -66,9 +78,9 @@ module.exports = async (client) => {
 		counter = (counter + 1) % 5;
 	}, 6 * timeEnum.HOUR);
 	
+    // Cineminha feature
     await loadMovieSessionsFromDB(client);
-    
-	setInterval(
+    setInterval(
 		sendMovieSessionsNotification.bind(this, client),
 		timeEnum.SECOND
 	);
