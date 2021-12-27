@@ -34,7 +34,7 @@
     "youtube-scrape": "git+https://github.com/Guilhermeasper/youtube-scrape.git",
     "ytdl-core": "^4.4.5"
   },
-    "engines": {
+  "engines": {
     "node": "14.x"
   },
   "nodemonConfig": {
