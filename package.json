@@ -31,7 +31,7 @@
     "rebuild": "^0.1.2",
     "watch": "^0.13.0",
     "winston": "^3.3.3",
-    "youtube-scrape": "git+https://github.com/Guilhermeasper/youtube-scrape.git",
+    "youtube-scrape": "github:Guilhermeasper/youtube-scrape",
     "ytdl-core": "^4.4.5"
   },
   "engines": {
