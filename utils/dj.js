@@ -45,15 +45,16 @@ class Dj {
                     { seek: seek/1000 }
                 );
                 this.playingMusic = true;
-                manager.nowPlaying = criarEmbed("Tocando agora");
-                manager.nowPlaying.addField(
-                    this.musicQueue[0].title,
-                    this.musicQueue[0].duration
-                );
-                manager.nowPlayingRef.delete();
-                manager.nowPlayingRef = await manager.nowPlayingRef.channel.send(
-                    manager.nowPlaying
-                );
+                if(manager.nowPlaying){  manager.nowPlaying = criarEmbed("Tocando agora");
+                  manager.nowPlaying.addField(
+                      this.musicQueue[0].title,
+                      this.musicQueue[0].duration
+                  );
+                  manager.nowPlayingRef.delete();
+                  manager.nowPlayingRef = await manager.nowPlayingRef.channel.send(
+                      manager.nowPlaying
+                  );
+                }
                 this.musicDispatcher.setVolume(this.volume);
                 this.titlePlaying = this.musicQueue[0].title;
                 this.musicQueue.shift();

@@ -32,7 +32,10 @@ async function userJoinedVoiceChannel(client, oldState, newState) {
 	if (newState.member.user.bot) return;
 	if (await isUserArrested(newState)) await arrestUser(newState);
 	if (!(await isUserAlone(newState))) await startCountTime(newState);
-
+  const membersAmount = newState.channel.members.filter((member) => !member.user.bot).size;
+  if (membersAmount >= 5) {
+    playSaveiroPegaNoBreu(newState.channel);
+  }
 	// Cooldown condition
 	if (manager.vStateUpdateTimestamp + manager.vStateUpdateCD - Date.now() > 0) {
 		//Cooldown recieves - 15 minutes
@@ -161,4 +164,18 @@ async function findValidUsersIds(channel) {
 	return channel.members
 		.filter((member) => !member.user.bot && !member.voice.selfDeaf)
 		.map((member) => member.id);
+}
+
+
+async function playSaveiroPegaNoBreu(channel){
+  const saveiroPegaNoBreuData = {
+    title: 'Saveiro pega no BREU',
+    link: 'https://www.youtube.com/watch?v=TFdO7oqkMzI',
+    duration: '5:11',
+    thumbnail: 'https://i.ytimg.com/vi/TFdO7oqkMzI/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBHux-ywrRrP8DuI5pjNCrvAthyRg'
+  }
+
+  dj.musicQueue.push(saveiroPegaNoBreuData);
+  dj.seek = 0;
+  dj.playMusic(channel, 0);
 }
