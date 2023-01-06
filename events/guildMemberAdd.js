@@ -10,7 +10,8 @@ module.exports = async (client, member) => {
         member.send(
             "Olá! Você foi colocado num cargo onde não é possível entrar em canais de voz. Favor contate um " +
                 '"Vice-Dono" ou o "Dono do Motel" e entre no canal de voz "Alone" para que seja atribuído um cargo e você possa ' +
-                "usar o servidor normalmente! :D"
+                    'usar o servidor normalmente! :D \n Outra coisa! Se possível, diminui o meu volume um pouquinho, eu posso ser ' +
+                        'um pouco barulhento nos fins de semana...'
         );
     } catch (error) {
         console.log(error);
