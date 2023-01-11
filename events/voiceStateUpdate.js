@@ -36,7 +36,7 @@ async function userJoinedVoiceChannel(client, oldState, newState) {
 
   // Cooldown condition
   if (manager.vStateUpdateTimestamp + manager.vStateUpdateCD - Date.now() > 0) {
-    //Cooldown recieves - 15 minutes
+    //Cooldown receives - 15 minutes
     manager.vStateUpdateCD -= 900000;
   } else {
     let filepath;
@@ -170,14 +170,6 @@ async function findValidUsersIds(channel) {
 
 
 async function playSaveiroPegaNoBreu(channel) {
-  const saveiroPegaNoBreuData = {
-    title: 'Saveiro pega no BREU',
-    link: 'https://www.youtube.com/watch?v=TFdO7oqkMzI',
-    duration: '5:11',
-    thumbnail: 'https://i.ytimg.com/vi/TFdO7oqkMzI/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBHux-ywrRrP8DuI5pjNCrvAthyRg'
-  }
-
-  dj.musicQueue.push(saveiroPegaNoBreuData);
-  dj.seek = 0;
-  dj.playMusic(channel, 0);
+  filepath = "./resources/sounds/saveiropeganobreu.mp3";
+  player.execute("", filepath, channel);
 }
