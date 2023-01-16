@@ -148,18 +148,7 @@ async function stopCountTime(oldState) {
 }
 
 async function updateUserTime(guildId, memberId, time) {
-  let userCurrentTime = await database.getCollectionDocumentField(
-    guildId,
-    memberId,
-    "time"
-  );
   manager.timer[memberId] = null;
-  await database.updateCollectionDocumentField(
-    guildId,
-    memberId,
-    "time",
-    userCurrentTime + time
-  );
 }
 
 async function findValidUsersIds(channel) {
