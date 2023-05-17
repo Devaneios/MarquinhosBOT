@@ -2,6 +2,7 @@
 
 const fs = require("fs");
 const Discord = require("discord.js");
+const { Intents } = require('discord.js');
 require('dotenv').config();
 
 /**
@@ -17,7 +18,7 @@ var main = function () {
      * @name client
      * @type {Discord Client}
      */
-    const client = new Discord.Client();
+    const client = new Discord.Client(Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES);
 
     /**
      * An array of event files under the events folder
