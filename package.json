@@ -10,37 +10,43 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@discordjs/opus": "^0.1.0",
-    "axios": "^0.21.1",
-    "canvas": "^2.8.0",
-    "clear-module": "^4.1.1",
-    "discord.js": "^12.2.0",
-    "dotenv": "^8.2.0",
-    "enmap": "^5.3.1",
+    "@discordjs/opus": "^0.9.0",
+    "axios": "^1.4.0",
+    "canvas": "^2.11.2",
+    "clear-module": "^4.1.2",
+    "discord.js": "^14.11.0",
+    "dotenv": "^16.0.3",
+    "enmap": "^5.9.5",
     "ffmpeg": "0.0.4",
-    "ffmpeg-static": "^4.2.7",
-    "firebase": "^8.5.0",
-    "firebase-admin": "^9.7.0",
+    "ffmpeg-static": "^5.1.0",
+    "firebase": "^9.22.0",
+    "firebase-admin": "^11.8.0",
     "fluent-ffmpeg": "^2.1.2",
-    "moment": "^2.29.1",
-    "nanoid": "^3.1.23",
-    "node": "^14.16.0",
-    "node-gyp": "^6.0.0",
-    "opusscript": "0.0.7",
+    "moment": "^2.29.4",
+    "nanoid": "^4.0.2",
+    "node": "^20.1.0",
+    "node-gyp": "^9.3.1",
+    "opusscript": "0.1.0",
     "path": "^0.12.7",
     "rebuild": "^0.1.2",
-    "watch": "^0.13.0",
-    "winston": "^3.3.3",
+    "watch": "^1.0.2",
+    "winston": "^3.8.2",
     "youtube-scrape": "github:Guilhermeasper/youtube-scrape",
-    "ytdl-core": "^4.4.5"
+    "ytdl-core": "^4.11.4"
   },
   "engines": {
-    "node": "14.x"
+    "node": "20.x"
   },
   "nodemonConfig": {
     "ignore": [
       "*.json"
     ],
     "delay": "2500"
+  },
+  "devDependencies": {
+    "@types/node": "^20.1.5",
+    "eslint": "^8.40.0",
+    "node-ts": "^6.0.0",
+    "typescript": "^5.0.4"
   }
 }
