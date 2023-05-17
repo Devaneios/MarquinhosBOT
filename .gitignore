@@ -1,6 +1,7 @@
 /node_modules
 /out
 
+.env
 node_modules/
 .idea/
 /out
