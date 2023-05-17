@@ -4,8 +4,9 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"start": "npx tsc && node ./dist/index.js",
-		"watch": "nodemon index.js"
+		"build": "rimraf ./dist && tsc",
+		"start": "npm run build && node ./dist/index.js",
+		"watch": "nodemon"
 	},
 	"author": "",
 	"license": "ISC",
@@ -47,6 +48,9 @@
 		"@types/node": "^20.1.5",
 		"eslint": "^8.40.0",
 		"node-ts": "^6.0.0",
+		"nodemon": "^2.0.22",
+		"rimraf": "^5.0.0",
+		"ts-node": "^10.9.1",
 		"typescript": "^5.0.4"
 	}
 }
