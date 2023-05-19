@@ -1,10 +1,11 @@
 import { Interaction } from "discord.js";
-import { BotEvent } from "../types";
+import { BotEvent, SafeAny } from "../types";
 import { logger } from "../utils/logger";
+import BotError from "../utils/botError";
 
 const event: BotEvent = {
 	name: "interactionCreate",
-	execute: (interaction: Interaction) => {
+	execute: async (interaction: Interaction) => {
 		if (interaction.isChatInputCommand()) {
 			const timedMessageDuration = 10000;
 			const command = interaction.client.slashCommands.get(
@@ -42,25 +43,36 @@ const event: BotEvent = {
 					Date.now() + command.cooldown * 1000
 				);
 			}
+			logger.info(
+				`${interaction.user.username} executing command: ${
+					interaction.commandName
+				} ${
+					interaction.options
+						? interaction.options.data.join(" ")
+						: ""
+				}`
+			);
 			command.execute(interaction);
 		} else if (interaction.isAutocomplete()) {
 			const command = interaction.client.slashCommands.get(
 				interaction.commandName
 			);
 			if (!command) {
-				logger.error(
-					`⛔ No command matching ${interaction.commandName} was found.`
+				throw new BotError(
+					`No command matching ${interaction.commandName} was found.`,
+					interaction as SafeAny,
+					"error"
 				);
-				return;
 			}
 			try {
 				if (!command.autocomplete) return;
 				command.autocomplete(interaction);
 			} catch (error) {
-				logger.error(
-					`⛔ An error occurred while executing the autocomplete for ${interaction.commandName}.`
+				throw new BotError(
+					`An error occurred while executing the autocomplete for ${interaction.commandName}.`,
+					interaction as SafeAny,
+					"error"
 				);
-				logger.error(error);
 			}
 		}
 	},

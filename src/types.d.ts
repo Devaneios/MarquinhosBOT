@@ -39,6 +39,10 @@ export interface BotEvent {
 	execute: (...args) => void;
 }
 
+export type SafeAny = any;
+
+export type BotErrorLogLevel = "error" | "warn" | "info";
+
 declare global {
 	namespace NodeJS {
 		interface ProcessEnv {
