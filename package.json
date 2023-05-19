@@ -23,6 +23,7 @@
 		"firebase": "^9.22.0",
 		"firebase-admin": "^11.8.0",
 		"fluent-ffmpeg": "^2.1.2",
+		"fuzzy-search": "^3.2.1",
 		"moment": "^2.29.4",
 		"nanoid": "^4.0.2",
 		"node": "^18.16.0",
@@ -45,6 +46,7 @@
 		"delay": "2500"
 	},
 	"devDependencies": {
+		"@types/fuzzy-search": "^2.1.2",
 		"@types/node": "^20.1.5",
 		"eslint": "^8.40.0",
 		"node-ts": "^6.0.0",
