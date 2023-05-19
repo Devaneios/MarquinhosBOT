@@ -1,4 +1,4 @@
-import { Message, PermissionFlagsBits, TextChannel } from "discord.js";
+import { Message, TextChannel } from "discord.js";
 import { Command } from "../types";
 import BotError from "../utils/botError";
 import { sendTimedMessage } from "../utils/discord";
