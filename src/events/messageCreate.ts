@@ -25,16 +25,16 @@ const event: BotEvent = {
 			);
 			if (commandFromAlias) command = commandFromAlias;
 			else {
-				const mapedCommands = commandList.map((command) => {
-					return { name: command.name };
-				});
-				const searcher = new FuzzySearch(mapedCommands, ["name"], {
+				const mapedCommands = commandList.map(
+					(command) => command.name
+				);
+				const searcher = new FuzzySearch(mapedCommands, undefined, {
 					sort: true,
 				});
-				const result = searcher.search(command);
+				const result = searcher.search(args[0]);
 				if (result.length > 0) {
 					message.channel.send(
-						`Você quis dizer: **${prefix}${result[0].name}** ?`
+						`Você quis dizer: **${prefix}${result[0]}** ?`
 					);
 				}
 				throw new BotError("Command not found", message, "info");
