@@ -3,6 +3,7 @@ import { checkPermissions, sendTimedMessage } from "../utils/discord";
 import { BotEvent } from "../types";
 import { logger } from "../utils/logger";
 import BotError from "../utils/botError";
+import FuzzySearch from "fuzzy-search";
 
 const event: BotEvent = {
 	name: "messageCreate",
@@ -18,11 +19,24 @@ const event: BotEvent = {
 		let command = message.client.commands.get(args[0]);
 
 		if (!command) {
-			let commandFromAlias = message.client.commands.find((command) =>
+			const commandList = message.client.commands;
+			let commandFromAlias = commandList.find((command) =>
 				command.aliases.includes(args[0])
 			);
 			if (commandFromAlias) command = commandFromAlias;
 			else {
+				const mapedCommands = commandList.map((command) => {
+					return { name: command.name };
+				});
+				const searcher = new FuzzySearch(mapedCommands, ["name"], {
+					sort: true,
+				});
+				const result = searcher.search(command);
+				if (result.length > 0) {
+					message.channel.send(
+						`Você quis dizer: **${prefix}${result[0].name}** ?`
+					);
+				}
 				throw new BotError("Command not found", message, "info");
 			}
 		}
