@@ -10,6 +10,7 @@ import { BotEvent, Command, SlashCommand } from "./types";
 import { readdirSync } from "fs";
 import { join } from "path";
 import { logger } from "./utils/logger";
+import { safeExecute } from "./utils/errorHandling";
 
 const { Guilds, MessageContent, GuildMessages, GuildMembers } =
 	GatewayIntentBits;
@@ -42,7 +43,7 @@ class Bot {
 				this.client.slashCommands.set(command.command.name, command);
 
 				logger.info(
-					`✅ Successfully read command ${command.command.name}`
+					`Successfully read command ${command.command.name}`
 				);
 			} catch (error) {
 				logger.error(`Error reading command ${file}`);
@@ -63,10 +64,10 @@ class Bot {
 					require(`${this.commandsDir}/${file}`).default;
 				commands.push(command);
 				this.client.commands.set(command.name, command);
-				logger.info(`✅ Successfully read command ${command.name}`);
+				logger.info(`Successfully read command ${command.name}`);
 			} catch (error) {
 				logger.error(
-					`❌ Error loading command ${file.replace(".js", "")}`
+					`Error loading command ${file.replace(".js", "")}`
 				);
 				logger.error(error);
 			}
@@ -78,13 +79,13 @@ class Bot {
 			if (!file.endsWith(".js")) return;
 			let event: BotEvent = require(`${this.eventsDir}/${file}`).default;
 			event.once
-				? this.client.once(event.name, (...args) =>
-						event.execute(...args)
-				  )
-				: this.client.on(event.name, (...args) =>
-						event.execute(...args)
-				  );
-			logger.info(`✅ Successfully loaded event ${event.name}`);
+				? this.client.once(event.name, (...args) => {
+						safeExecute(event.execute, ...args)();
+				  })
+				: this.client.on(event.name, (...args) => {
+						safeExecute(event.execute, ...args)();
+				  });
+			logger.info(`Successfully loaded event ${event.name}`);
 		});
 	}
 
@@ -100,15 +101,15 @@ class Bot {
 		})
 			.then((data: any) => {
 				if (!data.length) {
-					logger.warn("⚠️ No slash commands loaded");
+					logger.warn("No slash commands loaded");
 					return;
 				}
 				logger.info(
-					`✅ Successfully loaded ${data.length} slash command(s)`
+					`Successfully loaded ${data.length} slash command(s)`
 				);
 			})
 			.catch((e) => {
-				logger.error("❌ Error loading slash commands");
+				logger.error("Error loading slash commands");
 				logger.error(e);
 			});
 	}

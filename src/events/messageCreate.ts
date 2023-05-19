@@ -1,6 +1,8 @@
 import { ChannelType, Message } from "discord.js";
 import { checkPermissions, sendTimedMessage } from "../utils/discord";
 import { BotEvent } from "../types";
+import { logger } from "../utils/logger";
+import BotError from "../utils/botError";
 
 const event: BotEvent = {
 	name: "messageCreate",
@@ -20,7 +22,9 @@ const event: BotEvent = {
 				command.aliases.includes(args[0])
 			);
 			if (commandFromAlias) command = commandFromAlias;
-			else return;
+			else {
+				throw new BotError("Command not found", message, "info");
+			}
 		}
 
 		let cooldown = message.client.cooldowns.get(
@@ -30,8 +34,8 @@ const event: BotEvent = {
 			message.member,
 			command.permissions
 		);
-		if (neededPermissions !== null)
-			return sendTimedMessage(
+		if (neededPermissions !== null) {
+			sendTimedMessage(
 				`
             Você não tem permissão para usar esse comando. 
             \n Permissões necessárias: ${neededPermissions.join(", ")}
@@ -39,6 +43,12 @@ const event: BotEvent = {
 				message.channel,
 				timedMessageDuration
 			);
+			throw new BotError(
+				`${message.member?.user.username} missed permissions`,
+				message,
+				"warn"
+			);
+		}
 
 		if (command.cooldown && cooldown) {
 			if (Date.now() < cooldown) {
@@ -49,7 +59,11 @@ const event: BotEvent = {
 					message.channel,
 					timedMessageDuration
 				);
-				return;
+				throw new BotError(
+					`${message.member?.user.username} exceed cooldown`,
+					message,
+					"warn"
+				);
 			}
 			message.client.cooldowns.set(
 				`${command.name}-${message.member.user.username}`,
@@ -66,7 +80,11 @@ const event: BotEvent = {
 				Date.now() + command.cooldown * 1000
 			);
 		}
-
+		logger.info(
+			`${message.member?.user.username} executing command: ${
+				args ? args.join(" ") : ""
+			}`
+		);
 		command.execute(message, args);
 	},
 };
