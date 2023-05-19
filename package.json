@@ -4,9 +4,10 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"build": "rimraf ./dist && tsc",
+		"build": "rimraf ./dist && npm run copy-assets && tsc",
 		"start": "npm run build && node ./dist/index.js",
-		"watch": "nodemon"
+		"watch": "nodemon",
+		"copy-assets": "copyfiles --all --up 1 ./src/resources/** ./dist"
 	},
 	"author": "",
 	"license": "ISC",
@@ -48,6 +49,7 @@
 	"devDependencies": {
 		"@types/fuzzy-search": "^2.1.2",
 		"@types/node": "^20.1.5",
+		"copyfiles": "^2.4.1",
 		"eslint": "^8.40.0",
 		"node-ts": "^6.0.0",
 		"nodemon": "^2.0.22",
