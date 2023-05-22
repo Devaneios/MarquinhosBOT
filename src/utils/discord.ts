@@ -1,9 +1,17 @@
+import { AudioPlayerStatus, joinVoiceChannel } from "@discordjs/voice";
 import {
+	CommandInteraction,
 	GuildMember,
+	Message,
 	PermissionFlagsBits,
 	PermissionResolvable,
 	TextChannel,
+	VoiceChannel,
 } from "discord.js";
+import { join } from "path";
+import { SafeAny } from "../types";
+import BotError from "./botError";
+import BotAudioPlayer from "./botAudioPlayer";
 
 export const checkPermissions = (
 	member: GuildMember,
@@ -39,4 +47,45 @@ export const sendTimedMessage = (
 			)
 		);
 	return;
+};
+
+export const voiceChannelPresence = (message: SafeAny): VoiceChannel | null => {
+	const channel = message.member?.voice.channel as VoiceChannel;
+	if (!channel) {
+		message.reply("Você precisa estar em um canal de voz!");
+		throw new BotError("User not in voice channel", message, "warn");
+	}
+	return channel;
+};
+
+export enum AudioPlayerDisconnectEvent {
+	Disconnect = "disconnect",
+}
+
+export const playAudio = (
+	message: Message | CommandInteraction,
+	channel: VoiceChannel | null,
+	filename: string
+) => {
+	if (!channel) {
+		throw new BotError("Invalid channel", message, "warn");
+	}
+
+	const audioPlayer = BotAudioPlayer.getInstance();
+
+	const connection = joinVoiceChannel({
+		channelId: channel.id,
+		guildId: channel.guild.id,
+		adapterCreator: channel.guild.voiceAdapterCreator,
+	});
+
+	connection.subscribe(audioPlayer.player);
+	audioPlayer.player.on(
+		AudioPlayerDisconnectEvent.Disconnect as unknown as AudioPlayerStatus,
+		() => {
+			if (connection.state.status === "destroyed") return;
+			connection.destroy();
+		}
+	);
+	audioPlayer.play(join(__dirname, `../resources/sounds/${filename}.mp3`));
 };
