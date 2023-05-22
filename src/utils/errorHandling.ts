@@ -12,22 +12,18 @@ const commandErrorHandler = (error: BotError) => {
 	switch (error.logLevel) {
 		case "error":
 			logger.error(
-				`[ERROR] ${error} while running ${error.discordMessage}\n${error.stack} `
+				`${error} while running ${error.discordMessage}\n${error.stack} `
 			);
 			break;
 		case "warn":
-			logger.warn(
-				`[WARN] ${error} while running ${error.discordMessage}`
-			);
+			logger.warn(`${error} while running ${error.discordMessage}`);
 			break;
 		case "info":
-			logger.info(
-				`[INFO] ${error} while running ${error.discordMessage}`
-			);
+			logger.info(`${error} while running ${error.discordMessage}`);
 			break;
 		default:
 			logger.error(
-				`[ERROR] ${error} while running ${error.discordMessage}\n${error.stack} `
+				`${error} while running ${error.discordMessage}\n${error.stack} `
 			);
 			break;
 	}
