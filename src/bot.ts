@@ -24,15 +24,15 @@ const {
 } = GatewayIntentBits;
 
 class Bot {
-  private client: Client;
-  private readonly slashCommandsDir = join(__dirname, './slashCommands');
-  private readonly commandsDir = join(__dirname, './commands/');
-  private readonly audiosDir = join(__dirname, './resources/sounds/');
-  private readonly eventsDir = join(__dirname, './events');
-  private readonly slashCommands: SlashCommandBuilder[] = [];
+  private _client: Client;
+  private readonly _slashCommandsDir = join(__dirname, './slashCommands');
+  private readonly _commandsDir = join(__dirname, './commands/');
+  private readonly _audiosDir = join(__dirname, './resources/sounds/');
+  private readonly _eventsDir = join(__dirname, './events');
+  private readonly _slashCommands: SlashCommandBuilder[] = [];
 
   constructor() {
-    this.client = new Client({
+    this._client = new Client({
       intents: [
         Guilds,
         MessageContent,
@@ -41,21 +41,30 @@ class Bot {
         GuildVoiceStates,
       ],
     });
-    this.client.slashCommands = new Collection<string, SlashCommand>();
-    this.client.commands = new Collection<string, Command>();
-    this.client.cooldowns = new Collection<string, number>();
-    this.client.secretChannels = new Collection<string, SecretChannelData>();
+    this._client.slashCommands = new Collection<string, SlashCommand>();
+    this._client.commands = new Collection<string, Command>();
+    this._client.cooldowns = new Collection<string, number>();
+    this._client.secretChannels = new Collection<string, SecretChannelData>();
   }
 
-  loadSlashCommands() {
-    readdirSync(this.slashCommandsDir).forEach((file) => {
+  start() {
+    this._loadTextCommands();
+    this._loadAudioCommands();
+    this._loadSlashCommands();
+    this._sendSlashCommands();
+    this._loadEvents();
+    this._client.login(process.env.TOKEN);
+  }
+
+  private _loadSlashCommands() {
+    readdirSync(this._slashCommandsDir).forEach((file) => {
       try {
         if (!file.endsWith('.js')) return;
 
         const command: SlashCommand =
-          require(`${this.slashCommandsDir}/${file}`).default;
-        this.slashCommands.push(command.command);
-        this.client.slashCommands.set(command.command.name, command);
+          require(`${this._slashCommandsDir}/${file}`).default;
+        this._slashCommands.push(command.command);
+        this._client.slashCommands.set(command.command.name, command);
 
         logger.info(`Successfully read command ${command.command.name}`);
       } catch (error) {
@@ -65,15 +74,15 @@ class Bot {
     });
   }
 
-  loadTextCommands() {
+  private _loadTextCommands() {
     const commands: Command[] = [];
 
-    readdirSync(this.commandsDir).forEach((file) => {
+    readdirSync(this._commandsDir).forEach((file) => {
       try {
         if (!file.endsWith('.js')) return;
-        let command: Command = require(`${this.commandsDir}/${file}`).default;
+        let command: Command = require(`${this._commandsDir}/${file}`).default;
         commands.push(command);
-        this.client.commands.set(command.name, command);
+        this._client.commands.set(command.name, command);
         logger.info(`Successfully read command ${command.name}`);
       } catch (error) {
         logger.error(`Error loading command ${file.replace('.js', '')}`);
@@ -82,8 +91,8 @@ class Bot {
     });
   }
 
-  loadAudioCommands() {
-    readdirSync(this.audiosDir).forEach((file) => {
+  private _loadAudioCommands() {
+    readdirSync(this._audiosDir).forEach((file) => {
       try {
         if (!file.endsWith('.mp3')) return;
         const command: Command = {
@@ -114,9 +123,9 @@ class Bot {
           },
           cooldown: 10,
         };
-        this.slashCommands.push(slashCommand.command);
-        this.client.commands.set(command.name, command);
-        this.client.slashCommands.set(slashCommand.command.name, slashCommand);
+        this._slashCommands.push(slashCommand.command);
+        this._client.commands.set(command.name, command);
+        this._client.slashCommands.set(slashCommand.command.name, slashCommand);
         logger.info(`Successfully read command ${command.name}`);
       } catch (error) {
         logger.error(`Error loading command ${file.replace('.js', '')}`);
@@ -125,31 +134,27 @@ class Bot {
     });
   }
 
-  loadEvents() {
-    readdirSync(this.eventsDir).forEach((file) => {
+  private _loadEvents() {
+    readdirSync(this._eventsDir).forEach((file) => {
       if (!file.endsWith('.js')) return;
-      let event: BotEvent = require(`${this.eventsDir}/${file}`).default;
+      let event: BotEvent = require(`${this._eventsDir}/${file}`).default;
       event.once
-        ? this.client.once(event.name, (...args) => {
+        ? this._client.once(event.name, (...args) => {
             safeExecute(event.execute, ...args)();
           })
-        : this.client.on(event.name, (...args) => {
+        : this._client.on(event.name, (...args) => {
             safeExecute(event.execute, ...args)();
           });
       logger.info(`Successfully loaded event ${event.name}`);
     });
   }
 
-  start() {
-    this.client.login(process.env.TOKEN);
-  }
-
-  sendSlashCommands() {
+  private _sendSlashCommands() {
     const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
     rest
       .put(Routes.applicationCommands(process.env.CLIENT_ID), {
-        body: this.slashCommands.map((command) => command.toJSON()),
+        body: this._slashCommands.map((command) => command.toJSON()),
       })
       .then((data: any) => {
         if (!data.length) {
