@@ -8,7 +8,7 @@ import {
 	Message,
 	EmbedBuilder,
 } from "discord.js";
-import { BotEvent, Command, SlashCommand } from "./types";
+import { BotEvent, Command, SecretChannelData, SlashCommand } from "./types";
 import { readdirSync } from "fs";
 import { join } from "path";
 import { logger } from "./utils/logger";
@@ -44,6 +44,10 @@ class Bot {
 		this.client.slashCommands = new Collection<string, SlashCommand>();
 		this.client.commands = new Collection<string, Command>();
 		this.client.cooldowns = new Collection<string, number>();
+		this.client.secretChannels = new Collection<
+			string,
+			SecretChannelData
+		>();
 	}
 
 	loadSlashCommands() {
