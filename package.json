@@ -1,63 +1,64 @@
 {
-	"name": "marquinhosbot",
-	"version": "2.0.0",
-	"description": "",
-	"main": "index.js",
-	"scripts": {
-		"build": "rimraf ./dist && npm run copy-assets && tsc",
-		"start": "npm run build && node ./dist/index.js",
-		"watch": "nodemon",
-		"copy-assets": "copyfiles --all --up 1 ./src/resources/** ./dist"
-	},
-	"author": "",
-	"license": "ISC",
-	"dependencies": {
-		"@discordjs/opus": "^0.9.0",
-		"@discordjs/voice": "^0.16.0",
-		"axios": "^1.4.0",
-		"canvas": "^2.11.2",
-		"clear-module": "^4.1.2",
-		"discord.js": "^14.11.0",
-		"dotenv": "^16.0.3",
-		"enmap": "^5.9.5",
-		"ffmpeg": "0.0.4",
-		"ffmpeg-static": "^5.1.0",
-		"firebase": "^9.22.0",
-		"firebase-admin": "^11.8.0",
-		"fluent-ffmpeg": "^2.1.2",
-		"fuzzy-search": "^3.2.1",
-		"libsodium-wrappers": "^0.7.11",
-		"moment": "^2.29.4",
-		"nanoid": "^4.0.2",
-		"node": "^18.16.0",
-		"node-gyp": "^9.3.1",
-		"opusscript": "0.1.0",
-		"path": "^0.12.7",
-		"rebuild": "^0.1.2",
-		"rxjs": "^7.8.1",
-		"watch": "^1.0.2",
-		"winston": "^3.8.2",
-		"youtube-scrape": "github:Guilhermeasper/youtube-scrape",
-		"ytdl-core": "^4.11.4"
-	},
-	"engines": {
-		"node": "18.x"
-	},
-	"nodemonConfig": {
-		"ignore": [
-			"*.json"
-		],
-		"delay": "2500"
-	},
-	"devDependencies": {
-		"@types/fuzzy-search": "^2.1.2",
-		"@types/node": "^20.1.5",
-		"copyfiles": "^2.4.1",
-		"eslint": "^8.40.0",
-		"node-ts": "^6.0.0",
-		"nodemon": "^2.0.22",
-		"rimraf": "^5.0.0",
-		"ts-node": "^10.9.1",
-		"typescript": "^5.0.4"
-	}
+  "name": "marquinhosbot",
+  "version": "2.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "rimraf ./dist && npm run copy-assets && tsc",
+    "start": "npm run build && node ./dist/index.js",
+    "watch": "nodemon",
+    "copy-assets": "copyfiles --all --up 1 ./src/resources/** ./dist",
+    "prettier": "npx prettier --write \"src/**/*.ts\""
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@discordjs/opus": "^0.9.0",
+    "@discordjs/voice": "^0.16.0",
+    "axios": "^1.4.0",
+    "canvas": "^2.11.2",
+    "clear-module": "^4.1.2",
+    "discord.js": "^14.11.0",
+    "dotenv": "^16.0.3",
+    "enmap": "^5.9.5",
+    "ffmpeg": "0.0.4",
+    "ffmpeg-static": "^5.1.0",
+    "firebase": "^9.22.0",
+    "firebase-admin": "^11.8.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "fuzzy-search": "^3.2.1",
+    "libsodium-wrappers": "^0.7.11",
+    "moment": "^2.29.4",
+    "nanoid": "^4.0.2",
+    "node": "^18.16.0",
+    "node-gyp": "^9.3.1",
+    "opusscript": "0.1.0",
+    "path": "^0.12.7",
+    "rebuild": "^0.1.2",
+    "rxjs": "^7.8.1",
+    "watch": "^1.0.2",
+    "winston": "^3.8.2",
+    "youtube-scrape": "github:Guilhermeasper/youtube-scrape",
+    "ytdl-core": "^4.11.4"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "*.json"
+    ],
+    "delay": "2500"
+  },
+  "devDependencies": {
+    "@types/fuzzy-search": "^2.1.2",
+    "@types/node": "^20.1.5",
+    "copyfiles": "^2.4.1",
+    "eslint": "^8.40.0",
+    "node-ts": "^6.0.0",
+    "nodemon": "^2.0.22",
+    "rimraf": "^5.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+  }
 }
