@@ -4,7 +4,7 @@ import { Command, SafeAny, SecretChannelData } from '../../types';
 import { sendTimedMessage } from '../../utils/discord';
 import { coerceNumberProperty } from '../../utils/coercion';
 
-export const chatSecreto: Command = {
+export const secretChat: Command = {
   name: 'chat-secreto',
   execute: (message: Message, args: string[]) => {
     const incommingChannel = message.channel as TextChannel;
