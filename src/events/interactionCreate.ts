@@ -3,7 +3,7 @@ import { BotEvent, SafeAny } from '../types';
 import { logger } from '../utils/logger';
 import BotError from '../utils/botError';
 
-const event: BotEvent = {
+export const interactionCreate: BotEvent = {
   name: 'interactionCreate',
   execute: async (interaction: Interaction) => {
     if (interaction.isChatInputCommand()) {
@@ -70,5 +70,3 @@ const event: BotEvent = {
     }
   },
 };
-
-export default event;

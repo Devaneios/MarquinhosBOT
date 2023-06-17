@@ -2,7 +2,7 @@ import { Client } from 'discord.js';
 import { BotEvent } from '../types';
 import { logger } from '../utils/logger';
 
-const event: BotEvent = {
+export const ready: BotEvent = {
   name: 'ready',
   once: true,
   execute: (client: Client) => {
@@ -10,5 +10,3 @@ const event: BotEvent = {
     logger.info(`Marquinhos™ is online!`);
   },
 };
-
-export default event;
