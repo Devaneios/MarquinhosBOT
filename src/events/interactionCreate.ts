@@ -2,6 +2,7 @@ import { Interaction } from 'discord.js';
 import { BotEvent, SafeAny } from '../types';
 import { logger } from '../utils/logger';
 import BotError from '../utils/botError';
+import { safeExecute } from '../utils/errorHandling';
 
 export const interactionCreate: BotEvent = {
   name: 'interactionCreate',
@@ -45,7 +46,7 @@ export const interactionCreate: BotEvent = {
           interaction.commandName
         } ${interaction.options ? interaction.options.data.join(' ') : ''}`
       );
-      command.execute(interaction);
+      safeExecute(command.execute, interaction)();
     } else if (interaction.isAutocomplete()) {
       const command = interaction.client.slashCommands.get(
         interaction.commandName

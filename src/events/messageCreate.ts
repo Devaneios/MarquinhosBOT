@@ -4,6 +4,7 @@ import { BotEvent } from '../types';
 import { logger } from '../utils/logger';
 import BotError from '../utils/botError';
 import FuzzySearch from 'fuzzy-search';
+import { safeExecute } from '../utils/errorHandling';
 
 export const messageCreate: BotEvent = {
   name: 'messageCreate',
@@ -98,7 +99,7 @@ export const messageCreate: BotEvent = {
         args ? args.join(' ') : ''
       }`
     );
-    command.execute(message, args);
+    safeExecute(command.execute, message, args)();
   },
 };
 
