@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import { SlashCommand } from '../types';
+import { SlashCommand } from '../../types';
 
-const command: SlashCommand = {
+export const ping: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('ping')
     .setDescription("Shows the bot's ping"),
@@ -19,5 +19,3 @@ const command: SlashCommand = {
   },
   cooldown: 10,
 };
-
-export default command;

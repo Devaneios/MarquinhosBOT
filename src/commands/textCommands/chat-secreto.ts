@@ -1,10 +1,10 @@
 import { Client, Message, TextChannel } from 'discord.js';
 import { Subject, delay } from 'rxjs';
-import { Command, SafeAny, SecretChannelData } from '../types';
-import { sendTimedMessage } from '../utils/discord';
-import { coerceNumberProperty } from '../utils/coercion';
+import { Command, SafeAny, SecretChannelData } from '../../types';
+import { sendTimedMessage } from '../../utils/discord';
+import { coerceNumberProperty } from '../../utils/coercion';
 
-const command: Command = {
+export const chatSecreto: Command = {
   name: 'chat-secreto',
   execute: (message: Message, args: string[]) => {
     const incommingChannel = message.channel as TextChannel;
@@ -131,5 +131,3 @@ const scheduleSecretChannelDeactivation = (
     secretChannels.delete(authorId);
   }, durationInMinutes * 60 * 1000); // At last, the feature deactivates itself
 };
-
-export default command;

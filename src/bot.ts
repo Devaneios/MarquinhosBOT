@@ -14,6 +14,7 @@ import { join } from 'path';
 import { logger } from './utils/logger';
 import { safeExecute } from './utils/errorHandling';
 import { playAudio, voiceChannelPresence } from './utils/discord';
+import * as commands from './commands';
 
 const {
   Guilds,
@@ -25,8 +26,6 @@ const {
 
 class Bot {
   private _client: Client;
-  private readonly _slashCommandsDir = join(__dirname, './slashCommands');
-  private readonly _commandsDir = join(__dirname, './commands/');
   private readonly _audiosDir = join(__dirname, './resources/sounds/');
   private readonly _eventsDir = join(__dirname, './events');
   private readonly _slashCommands: SlashCommandBuilder[] = [];
@@ -57,35 +56,34 @@ class Bot {
   }
 
   private _loadSlashCommands() {
-    readdirSync(this._slashCommandsDir).forEach((file) => {
+    const slashCommands = Array.from(Object.values(commands.slashCommands)).map(
+      (command) => command
+    );
+
+    slashCommands.forEach((command: SlashCommand) => {
+      const commandName = command.command.name;
       try {
-        if (!file.endsWith('.js')) return;
-
-        const command: SlashCommand =
-          require(`${this._slashCommandsDir}/${file}`).default;
         this._slashCommands.push(command.command);
-        this._client.slashCommands.set(command.command.name, command);
-
-        logger.info(`Successfully read command ${command.command.name}`);
+        this._client.slashCommands.set(commandName, command);
+        logger.info(`Successfully loaded slash command ${commandName}`);
       } catch (error) {
-        logger.error(`Error reading command ${file}`);
+        logger.error(`Error loading slash command ${commandName}`);
         logger.error(error);
       }
     });
   }
 
   private _loadTextCommands() {
-    const commands: Command[] = [];
-
-    readdirSync(this._commandsDir).forEach((file) => {
+    const textCommands = Array.from(Object.values(commands.textCommands)).map(
+      (command: Command) => command
+    );
+    textCommands.forEach((command) => {
+      const commandName = command.name;
       try {
-        if (!file.endsWith('.js')) return;
-        let command: Command = require(`${this._commandsDir}/${file}`).default;
-        commands.push(command);
-        this._client.commands.set(command.name, command);
-        logger.info(`Successfully read command ${command.name}`);
+        this._client.commands.set(commandName as string, command);
+        logger.info(`Successfully loaded text command ${commandName}`);
       } catch (error) {
-        logger.error(`Error loading command ${file.replace('.js', '')}`);
+        logger.error(`Error loading text command ${commandName}`);
         logger.error(error);
       }
     });
@@ -126,9 +124,9 @@ class Bot {
         this._slashCommands.push(slashCommand.command);
         this._client.commands.set(command.name, command);
         this._client.slashCommands.set(slashCommand.command.name, slashCommand);
-        logger.info(`Successfully read command ${command.name}`);
+        logger.info(`Successfully loaded audio command ${command.name}`);
       } catch (error) {
-        logger.error(`Error loading command ${file.replace('.js', '')}`);
+        logger.error(`Error loading audio command ${file.replace('.js', '')}`);
         logger.error(error);
       }
     });
