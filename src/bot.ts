@@ -5,15 +5,13 @@ import {
   REST,
   Routes,
   SlashCommandBuilder,
-  Message,
-  EmbedBuilder,
 } from 'discord.js';
 import { BotEvent, Command, SecretChannelData, SlashCommand } from './types';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 import { logger } from './utils/logger';
 import { safeExecute } from './utils/errorHandling';
-import { playAudio, voiceChannelPresence } from './utils/discord';
+import { audioCommandBuilder } from './commands/audioCommands/audioCommandBuilder';
 import * as commands from './commands';
 
 const {
@@ -93,38 +91,12 @@ class Bot {
     readdirSync(this._audiosDir).forEach((file) => {
       try {
         if (!file.endsWith('.mp3') || file.startsWith('_')) return;
-        const command: Command = {
-          name: file.replace('.mp3', ''),
-          execute: (message: Message, args: string[]) => {
-            const channel = voiceChannelPresence(message);
-            playAudio(message, channel, file.replace('.mp3', ''));
-          },
-          cooldown: 10,
-          aliases: [],
-          permissions: [],
-        };
+        const { slashCommand, textCommand } = audioCommandBuilder(file);
 
-        const slashCommand: SlashCommand = {
-          command: new SlashCommandBuilder()
-            .setName(file.replace('.mp3', ''))
-            .setDescription(`Playing ${file.replace('.mp3', '')}`),
-          execute: (interaction) => {
-            const channel = voiceChannelPresence(interaction);
-            playAudio(interaction, channel, file.replace('.mp3', ''));
-            interaction.reply({
-              embeds: [
-                new EmbedBuilder().setDescription(
-                  `Playing ${file.replace('.mp3', '')}`
-                ),
-              ],
-            });
-          },
-          cooldown: 10,
-        };
         this._slashCommands.push(slashCommand.command);
-        this._client.commands.set(command.name, command);
+        this._client.commands.set(textCommand.name, textCommand);
         this._client.slashCommands.set(slashCommand.command.name, slashCommand);
-        logger.info(`Successfully loaded audio command ${command.name}`);
+        logger.info(`Successfully loaded audio command ${textCommand.name}`);
       } catch (error) {
         logger.error(`Error loading audio command ${file.replace('.js', '')}`);
         logger.error(error);
