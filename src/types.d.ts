@@ -23,6 +23,11 @@ export interface Command {
   cooldown?: number;
 }
 
+export interface AudioCommandBuilder {
+  slashCommand: SlashCommand;
+  textCommand: Command;
+}
+
 interface GuildOptions {
   prefix: string;
 }
