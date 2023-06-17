@@ -5,7 +5,7 @@ import { logger } from '../utils/logger';
 import BotError from '../utils/botError';
 import FuzzySearch from 'fuzzy-search';
 
-const event: BotEvent = {
+export const messageCreate: BotEvent = {
   name: 'messageCreate',
   execute: async (message: Message) => {
     const prefix = process.env.PREFIX;
@@ -115,5 +115,3 @@ const secretChannelMessageHandler = (message: Message) => {
     }
   }
 };
-
-export default event;

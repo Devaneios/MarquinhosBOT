@@ -13,6 +13,7 @@ import { logger } from './utils/logger';
 import { safeExecute } from './utils/errorHandling';
 import { audioCommandBuilder } from './commands/audioCommands/audioCommandBuilder';
 import * as commands from './commands';
+import * as events from './events';
 
 const {
   Guilds,
@@ -25,7 +26,6 @@ const {
 class Bot {
   private _client: Client;
   private readonly _audiosDir = join(__dirname, './resources/sounds/');
-  private readonly _eventsDir = join(__dirname, './events');
   private readonly _slashCommands: SlashCommandBuilder[] = [];
 
   constructor() {
@@ -105,9 +105,11 @@ class Bot {
   }
 
   private _loadEvents() {
-    readdirSync(this._eventsDir).forEach((file) => {
-      if (!file.endsWith('.js')) return;
-      let event: BotEvent = require(`${this._eventsDir}/${file}`).default;
+    const eventsArray = Array.from(Object.values(events)).map(
+      (event: BotEvent) => event
+    );
+
+    eventsArray.forEach((event: BotEvent) => {
       event.once
         ? this._client.once(event.name, (...args) => {
             safeExecute(event.execute, ...args)();
