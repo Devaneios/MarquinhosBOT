@@ -92,7 +92,7 @@ class Bot {
   private _loadAudioCommands() {
     readdirSync(this._audiosDir).forEach((file) => {
       try {
-        if (!file.endsWith('.mp3')) return;
+        if (!file.endsWith('.mp3') || file.startsWith('_')) return;
         const command: Command = {
           name: file.replace('.mp3', ''),
           execute: (message: Message, args: string[]) => {
