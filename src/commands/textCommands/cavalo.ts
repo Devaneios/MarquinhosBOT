@@ -1,8 +1,8 @@
 import { Message, TextChannel } from 'discord.js';
-import { Command } from '../types';
+import { Command } from '../../types';
 import { join } from 'path';
 
-const command: Command = {
+export const cavalo: Command = {
   name: 'cavalo',
   execute: (message: Message, args: string[]) => {
     message.channel.send({
@@ -19,5 +19,3 @@ const command: Command = {
   aliases: [],
   permissions: [],
 };
-
-export default command;

@@ -4,11 +4,11 @@ import {
   Message,
   TextChannel,
 } from 'discord.js';
-import { Command } from '../types';
-import { sendTimedMessage } from '../utils/discord';
-import BotError from '../utils/botError';
+import { Command } from '../../types';
+import { sendTimedMessage } from '../../utils/discord';
+import BotError from '../../utils/botError';
 
-const command: Command = {
+export const anom: Command = {
   name: 'anom',
   execute: (message: Message, args: string[]) => {
     const incommingChannel = message.channel as TextChannel;
@@ -73,5 +73,3 @@ const searchChannel = (
   );
   return null;
 };
-
-export default command;
