@@ -1,23 +1,23 @@
-import { Client, GuildMember, Message, TextChannel } from 'discord.js';
+import { Client, GuildMember, Message } from 'discord.js';
 import { Command } from '../../types';
 
 export const allowMember: Command = {
   name: 'permitir',
   execute: async (message: Message, args: string[]) => {
-    const client = message.guild?.client as Client;
+    const { BASE_ROLE_NAME, EXTERNAL_ROLE_NAME } = message.guild
+      ?.client as Client;
+    const { baseRole, outsidersRole } = await getRoles(message);
+    if (!baseRole || !outsidersRole) return;
 
     const targetUser = await getTargetUserIfValid(message, args);
     if (!targetUser) return;
 
-    const { mainRole, outsidersRole } = await getRoles(message);
-    if (!mainRole || !outsidersRole) return;
-
-    await targetUser.roles.add(mainRole);
+    await targetUser.roles.add(baseRole);
     await targetUser.roles.remove(outsidersRole);
 
     if (
-      userHasRole(targetUser, client.BASE_ROLE_NAME) &&
-      !userHasRole(targetUser, client.EXTERNAL_ROLE_NAME)
+      userHasRole(targetUser, BASE_ROLE_NAME) &&
+      !userHasRole(targetUser, EXTERNAL_ROLE_NAME)
     ) {
       return message.reply('Permissão concedida com sucesso');
     }
@@ -119,20 +119,18 @@ const userAlreadyHasPermissions = async (
 const getRoles = async (message: Message) => {
   const client = message.guild?.client as Client;
 
-  const mainRole = message.guild?.roles.cache.find(
+  const baseRole = message.guild?.roles.cache.find(
     (role) => role.name === client.BASE_ROLE_NAME
   );
   const outsidersRole = message.guild?.roles.cache.find(
     (role) => role.name === client.EXTERNAL_ROLE_NAME
   );
 
-  if (!mainRole) {
+  if (!baseRole) {
     await message.reply('Parece que não existe um cargo base');
-  }
-
-  if (!outsidersRole) {
+  } else if (!outsidersRole) {
     await message.reply('Parece que não existe um cargo de outsiders');
   }
 
-  return { mainRole, outsidersRole };
+  return { baseRole, outsidersRole };
 };
