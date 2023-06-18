@@ -5,6 +5,7 @@ import {
   PermissionResolvable,
   Message,
   AutocompleteInteraction,
+  TextChannel,
 } from 'discord.js';
 import { Subject } from 'rxjs';
 
