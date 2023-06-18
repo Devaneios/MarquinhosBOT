@@ -72,5 +72,8 @@ declare module 'discord.js' {
     commands: Collection<string, Command>;
     cooldowns: Collection<string, number>;
     secretChannels: Collection<string, SecretChannelData>;
+    VIP_ROLE_NAME: string;
+    BASE_ROLE_NAME: string;
+    EXTERNAL_ROLE_NAME: string;
   }
 }
