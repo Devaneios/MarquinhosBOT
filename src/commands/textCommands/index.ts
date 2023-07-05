@@ -4,3 +4,4 @@ export { chaos } from './chaos';
 export { secretChat } from './secretChat';
 export { disconnectAll } from './disconnectAll';
 export { clone } from './clone';
+export { time } from './time';
