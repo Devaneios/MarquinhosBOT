@@ -31,9 +31,13 @@ export interface AudioCommandBuilder {
 
 interface GuildOptions {
   prefix: string;
+  vipRoleId: string;
+  baseRoleId: string;
+  externalRoleId: string;
+  joinedAt: Date;
 }
 
-export interface IGuild {
+export interface IGuild extends mongoose.Document {
   guildID: string;
   options: GuildOptions;
   joinedAt: Date;
@@ -73,8 +77,5 @@ declare module 'discord.js' {
     commands: Collection<string, Command>;
     cooldowns: Collection<string, number>;
     secretChannels: Collection<string, SecretChannelData>;
-    VIP_ROLE_NAME: string;
-    BASE_ROLE_NAME: string;
-    EXTERNAL_ROLE_NAME: string;
   }
 }
