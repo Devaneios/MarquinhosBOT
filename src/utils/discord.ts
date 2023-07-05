@@ -6,6 +6,7 @@ import {
   PermissionFlagsBits,
   PermissionResolvable,
   TextChannel,
+  VoiceBasedChannel,
   VoiceChannel,
 } from 'discord.js';
 import { join } from 'path';
@@ -63,7 +64,7 @@ export enum AudioPlayerDisconnectEvent {
 
 export const playAudio = (
   message: Message | CommandInteraction,
-  channel: VoiceChannel | null,
+  channel: VoiceChannel | VoiceBasedChannel,
   filename: string
 ) => {
   if (!channel) {
