@@ -14,6 +14,7 @@ import { safeExecute } from './utils/errorHandling';
 import { audioCommandBuilder } from './commands/audioCommands/audioCommandBuilder';
 import * as commands from './commands';
 import * as events from './events';
+import { mongoConnection } from './utils/mongo';
 
 const {
   Guilds,
@@ -50,7 +51,12 @@ class Bot {
     this._loadSlashCommands();
     this._sendSlashCommands();
     this._loadEvents();
+    this._startMongo();
     this._client.login(process.env.TOKEN);
+  }
+
+  private _startMongo() {
+    mongoConnection();
   }
 
   private _loadSlashCommands() {
