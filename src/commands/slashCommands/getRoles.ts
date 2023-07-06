@@ -1,9 +1,4 @@
-import {
-  SlashCommandBuilder,
-  EmbedBuilder,
-  APIApplicationCommandOptionChoice,
-  Client,
-} from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 import { SlashCommand } from '../../types';
 import GuildModel from '../../schemas/guild';
 

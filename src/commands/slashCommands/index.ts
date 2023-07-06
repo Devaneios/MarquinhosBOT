@@ -4,3 +4,4 @@ export { getRoles } from './getRoles';
 export { chaos } from './chaos';
 export { moverTodos } from './moverTodos';
 export { moeda } from './moeda';
+export { checkIn } from './checkIn';
