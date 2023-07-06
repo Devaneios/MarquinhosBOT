@@ -2,15 +2,15 @@ import { Message } from 'discord.js';
 import { Command } from '../../types';
 import { join } from 'path';
 
-export const cavalo: Command = {
-  name: 'cavalo',
+export const olavac: Command = {
+  name: 'olavac',
   execute: (message: Message) => {
     message.channel.send({
       files: [
         {
-          attachment: join(__dirname, '../resources/animations/cavalo.gif'),
-          name: 'cavalo.gif',
-          description: 'CAVALO',
+          attachment: join(__dirname, '../resources/animations/olavac.gif'),
+          name: 'olavac.gif',
+          description: 'Oirártnoc',
         },
       ],
     });
