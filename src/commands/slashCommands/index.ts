@@ -5,3 +5,5 @@ export { chaos } from './chaos';
 export { moverTodos } from './moverTodos';
 export { moeda } from './moeda';
 export { checkIn } from './checkIn';
+export { prender } from './prender';
+export { desprender } from './desprender';

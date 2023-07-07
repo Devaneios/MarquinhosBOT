@@ -29,6 +29,11 @@ export interface AudioCommandBuilder {
   textCommand: Command;
 }
 
+interface IArrested extends mongoose.Document {
+  id: string,
+  tag: string
+}
+
 interface GuildOptions {
   prefix: string;
   vipRoleId: string;
