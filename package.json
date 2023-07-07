@@ -7,7 +7,7 @@
     "build": "rimraf ./dist && npm run copy-assets && tsc",
     "start": "npm run build && node ./dist/index.js",
     "watch": "nodemon",
-    "copy-assets": "copyfiles --all --up 1 ./src/resources/** ./dist",
+    "copy-assets": "copyfiles --all --up 1 \"./src/resources/**\" \"./dist\"",
     "prettier": "npx prettier --write \"src/**/*.ts\""
   },
   "author": "",
