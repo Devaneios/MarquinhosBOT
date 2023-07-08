@@ -1,6 +1,20 @@
 import { SlashCommandBuilder, EmbedBuilder, GuildMember } from 'discord.js';
 import { SlashCommand } from '../../types';
-import { checkInReply } from '../helpers/checkInHelper';
+
+const DATE_LOCALE_CONFIG: Intl.DateTimeFormatOptions = {
+  weekday: 'long',
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+  timeZone: 'America/Recife',
+};
+
+const WEEKDAY_LOCALE_CONFIG: Intl.DateTimeFormatOptions = {
+  weekday: 'long',
+};
 
 export const checkIn: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -16,4 +30,20 @@ export const checkIn: SlashCommand = {
     });
   },
   cooldown: 10,
+};
+
+export const checkInReply = (member: GuildMember, guildName: string) => {
+  const memberJoinedDate = new Date(member.joinedTimestamp);
+  const formatedMemberJoinedTimestamp = memberJoinedDate.toLocaleString(
+    'pt-BR',
+    DATE_LOCALE_CONFIG
+  );
+  const dayOfTheWeekMemberJoined = memberJoinedDate.toLocaleString(
+    'pt-BR',
+    WEEKDAY_LOCALE_CONFIG
+  );
+
+  return `Você entrou no ${guildName} ${
+    ['sábado', 'domingo'].includes(dayOfTheWeekMemberJoined) ? 'no' : 'na'
+  } ${formatedMemberJoinedTimestamp}`;
 };
