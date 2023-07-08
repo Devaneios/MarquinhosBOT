@@ -17,7 +17,10 @@ class BotAudioPlayer {
     this.player = createAudioPlayer();
     this.player.on(AudioPlayerStatus.Idle, () => {
       if (this.queue.length === 0) {
-        this.player.emit(AudioPlayerDisconnectEvent.Disconnect);
+        setTimeout(
+          () => this.player.emit(AudioPlayerDisconnectEvent.Disconnect),
+          500
+        );
         logger.info('Audio player has finished playing!');
       } else {
         this.play(this.queue.shift());
