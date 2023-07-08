@@ -7,6 +7,9 @@ import {
   VoiceBasedChannel,
   VoiceChannel,
 } from 'discord.js';
+import { AudioPlayerStatus } from '@discordjs/voice';
+
+import BotAudioPlayer from '../../utils/botAudioPlayer';
 import { SlashCommand } from '../../types';
 import { coerceNumberProperty } from '../../utils/coercion';
 import { playAudio } from '../../utils/discord';
@@ -25,7 +28,7 @@ export const chaos: SlashCommand = {
   execute: async (interaction) => {
     // Gets the audioPlayer to execute the command only after the audio finishes
     // playing
-    // const audioPlayer = BotAudioPlayer.getInstance();
+    const audioPlayer = BotAudioPlayer.getInstance();
     // Defines the level of chaos, as a number
     const levelOfChaos = coerceNumberProperty(
       interaction.options.get('nivel_do_chaos')?.value,
@@ -48,12 +51,12 @@ export const chaos: SlashCommand = {
     }
     // Plays the audio to start chaos
     playAudio(interaction, currentVoiceChannel, '_caos');
-    
+
     //When the audio finishes playing, call the function
-    //audioPlayer.player.on(AudioPlayerStatus.Idle, () => {
-    chaos2(interaction, levelOfChaos);
-    //});
-    
+    audioPlayer.player.on(AudioPlayerStatus.Idle, () => {
+      setTimeout(() => chaos2(interaction, levelOfChaos), 500);
+    });
+
     interaction.reply('É TILAMBUCOOOOOOO');
     interaction.deleteReply();
   },
