@@ -7,3 +7,4 @@ export { moeda } from './moeda';
 export { checkIn } from './checkIn';
 export { prender } from './prender';
 export { desprender } from './desprender';
+export { disconnectAll } from './disconnectAll';
