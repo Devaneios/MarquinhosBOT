@@ -80,7 +80,7 @@ async function chaos2(interaction: CommandInteraction, limit: number) {
     voiceChannels != undefined &&
     activeUsers != undefined
   ) {
-    chaos3(0, voiceChannel, voiceChannels, activeUsers, limit);
+    chaos3(1, voiceChannel, voiceChannels, activeUsers, limit);
   } else {
     interaction.channel!.send('Desculpe, mas houve um erro na execução.');
     return;

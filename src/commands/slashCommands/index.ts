@@ -2,9 +2,11 @@ export { ping } from './ping';
 export { configRoles } from './configRoles';
 export { getRoles } from './getRoles';
 export { chaos } from './chaos';
-export { moverTodos } from './moverTodos';
-export { moeda } from './moeda';
+export { moveAll } from './moveAll';
+export { coin } from './coin';
 export { checkIn } from './checkIn';
-export { prender } from './prender';
-export { desprender } from './desprender';
+export { arrest } from './arrest';
+export { release } from './release';
+export { arrested } from './arrested'
 export { disconnectAll } from './disconnectAll';
+export { anom } from './anom';

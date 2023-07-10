@@ -2,7 +2,7 @@ import { GuildMember, SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '../../types';
 import ArrestedModel from '../../schemas/arrested';
 
-export const prender: SlashCommand = {
+export const arrest: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('prender')
     .setDescription('EU PRENDO ESSE CRIMINOSO')
@@ -35,7 +35,7 @@ export const prender: SlashCommand = {
 function arrestMember(member: GuildMember) {
   let newArrested = new ArrestedModel({
     id: member.id,
-    tag: member.user.tag
+    tag: member.user.tag,
   });
   newArrested.save();
 }
