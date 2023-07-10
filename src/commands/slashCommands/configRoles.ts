@@ -34,8 +34,6 @@ export const configRoles: SlashCommand = {
     const role = interaction.options.get('cargo');
     const guildId = interaction.guild?.id;
 
-    console.log(roleType, role, guildId);
-
     if (!roleType || !role || !guildId) {
       return interaction.reply({
         embeds: [
