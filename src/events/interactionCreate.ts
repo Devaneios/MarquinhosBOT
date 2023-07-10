@@ -1,4 +1,4 @@
-import { Interaction } from 'discord.js';
+import { GuildMember, Interaction } from 'discord.js';
 import { BotEvent, SafeAny } from '../types';
 import { logger } from '../utils/logger';
 import BotError from '../utils/botError';
@@ -44,7 +44,11 @@ export const interactionCreate: BotEvent = {
       logger.info(
         `${interaction.user.username} executing command: ${
           interaction.commandName
-        } ${interaction.options ? interaction.options.data.join(' ') : ''}`
+        } ${
+          interaction.options
+            ? interaction.options.data.map((option) => option.value).join(' ')
+            : ''
+        }`
       );
       safeExecute(command.execute, interaction)();
     } else if (interaction.isAutocomplete()) {
