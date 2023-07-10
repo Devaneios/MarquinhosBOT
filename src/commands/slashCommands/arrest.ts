@@ -38,4 +38,7 @@ function arrestMember(member: GuildMember) {
     user: member.user.username,
   });
   newArrested.save();
+  if(member.voice.channelId != member.guild.afkChannelId) {
+    member.voice.setChannel(member.guild.afkChannelId);
+  }
 }
