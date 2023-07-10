@@ -12,7 +12,7 @@ export const time: SlashCommand = {
     const currentHour = getParsedTime(true);
     const voiceChannel = member.voice.channel as VoiceChannel;
     // If its midnight, Marquinhos enter the voice channel and ANNOUNCES that it's OLEO DE MACACO TIME
-    if (currentHour == '18') {
+    if (currentHour == '00') {
         interaction.reply({
             files: [
                 {
