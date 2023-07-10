@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, PermissionsBitField, ChannelType, GuildMember, VoiceChannel } from 'discord.js';
 import { SlashCommand } from '../../types';
 
-export const moverTodos: SlashCommand = {
+export const moveAll: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('mover-todos')
     .setDescription('Move todos do canal pra o canal escolhido')

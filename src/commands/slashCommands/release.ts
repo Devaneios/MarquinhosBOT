@@ -2,7 +2,7 @@ import { GuildMember, SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '../../types';
 import ArrestedModel from '../../schemas/arrested';
 
-export const desprender: SlashCommand = {
+export const release: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('desprender')
     .setDescription('Solto o teu preso preferido.')

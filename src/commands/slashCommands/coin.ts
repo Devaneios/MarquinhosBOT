@@ -2,7 +2,7 @@ import { SlashCommandBuilder, AttachmentBuilder } from 'discord.js';
 import { SlashCommand } from '../../types';
 
 
-export const moeda: SlashCommand = {
+export const coin: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('moeda')
     .setDescription('Tiro cara ou coroa numa moeda semi-viciada.'),
