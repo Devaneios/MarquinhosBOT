@@ -44,7 +44,7 @@ async function userChangedVoiceState(member: GuildMember) {
 async function isUserArrested(member: GuildMember) {
   return ArrestedModel.collection.findOne({
     id: member.id,
-    tag: member.user.tag,
+    user: member.user.username,
   });
 }
 

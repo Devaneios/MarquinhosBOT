@@ -14,7 +14,7 @@ export const arrest: SlashCommand = {
     ),
   execute: async (interaction) => {
     const arrested = interaction.options.get('preso').member as GuildMember;
-    if (arrested.user.tag === process.env.BOT_TAG) {
+    if (arrested.user.id === process.env.BOT_ID) {
       arrestMember(interaction.member as GuildMember);
       interaction.reply({ content: 'Tu realmente tentou essa?' });
       return;
@@ -35,7 +35,7 @@ export const arrest: SlashCommand = {
 function arrestMember(member: GuildMember) {
   let newArrested = new ArrestedModel({
     id: member.id,
-    tag: member.user.tag,
+    user: member.user.username,
   });
   newArrested.save();
 }

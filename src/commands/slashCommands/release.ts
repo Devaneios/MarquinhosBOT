@@ -23,7 +23,7 @@ export const release: SlashCommand = {
     }
 
     // Search for the member in the BD
-    const result = await findAndReleaseMember(arrested.id, arrested.user.tag);
+    const result = await findAndReleaseMember(arrested.id, arrested.user.username);
     
     if(result.value) {
         interaction.reply( {content: `Abrindo a cela do ${arrested}.`});
@@ -36,7 +36,7 @@ export const release: SlashCommand = {
   cooldown: 10,
 };
 
-function findAndReleaseMember( id: string, tag: string ) {
+function findAndReleaseMember( id: string, user: string ) {
     // Deletes user from DB. If not found, return object with value property null
-    return ArrestedModel.collection.findOneAndDelete({ id, tag });
+    return ArrestedModel.collection.findOneAndDelete({ id, user });
 }

@@ -31,7 +31,7 @@ export interface AudioCommandBuilder {
 
 interface IArrested extends mongoose.Document {
   id: string,
-  tag: string
+  user: string
 }
 
 interface GuildOptions {
