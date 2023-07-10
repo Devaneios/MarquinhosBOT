@@ -12,3 +12,4 @@ export { disconnectAll } from './disconnectAll';
 export { anom } from './anom';
 export { horse } from './horse';
 export { esroh } from './esroh';
+export { time } from './time';
