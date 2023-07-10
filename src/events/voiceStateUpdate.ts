@@ -10,13 +10,13 @@ export const voiceStateUpdate: BotEvent = {
     const oldChannel = oldState.channel;
     const newChannel = newState.channel;
 
-    if (oldChannel && !newChannel) {
+    if (!oldChannel && newChannel) {
       userJoinedVoiceChannel(member);
-    } else if (!oldChannel && newChannel) {
+    } else if (oldChannel && !newChannel) {
       userLeftVoiceChannel(member);
-    } else if (!oldChannel && !newChannel && newChannel.id !== oldChannel.id) {
+    } else if (oldChannel && newChannel && newChannel.id !== oldChannel.id) {
       userChangedVoiceChannel(member);
-    } else if (!oldChannel && !newChannel && newChannel.id === oldChannel.id) {
+    } else if (oldChannel && newChannel && newChannel.id === oldChannel.id) {
       userChangedVoiceState(member);
     }
   },
