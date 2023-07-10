@@ -10,3 +10,5 @@ export { release } from './release';
 export { arrested } from './arrested'
 export { disconnectAll } from './disconnectAll';
 export { anom } from './anom';
+export { horse } from './horse';
+export { esroh } from './esroh';
