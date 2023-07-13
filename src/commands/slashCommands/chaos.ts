@@ -53,9 +53,11 @@ export const chaos: SlashCommand = {
     playAudio(interaction, currentVoiceChannel, '_caos');
 
     //When the audio finishes playing, call the function
-    audioPlayer.player.on(AudioPlayerStatus.Idle, () => {
+    const chaosFunction = () => {
       setTimeout(() => chaos2(interaction, levelOfChaos), 500);
-    });
+      audioPlayer.player.off(AudioPlayerStatus.Idle, chaosFunction);
+    };
+    audioPlayer.player.on(AudioPlayerStatus.Idle, chaosFunction);
 
     interaction.reply('É TILAMBUCOOOOOOO');
     interaction.deleteReply();
