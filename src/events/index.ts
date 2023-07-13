@@ -3,3 +3,4 @@ export { messageCreate } from './messageCreate';
 export { ready } from './ready';
 export { guildCreate } from './guildCreate';
 export { voiceStateUpdate } from './voiceStateUpdate';
+export { guildMemberAdd } from './guildMemberAdd';
