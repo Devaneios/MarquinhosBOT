@@ -1,3 +1,4 @@
+export { minecraftStatus } from './minecraftStatus';
 export { ping } from './ping';
 export { configRoles } from './configRoles';
 export { getRoles } from './getRoles';
@@ -7,7 +8,7 @@ export { coin } from './coin';
 export { checkIn } from './checkIn';
 export { arrest } from './arrest';
 export { release } from './release';
-export { arrested } from './arrested'
+export { arrested } from './arrested';
 export { disconnectAll } from './disconnectAll';
 export { anom } from './anom';
 export { horse } from './horse';

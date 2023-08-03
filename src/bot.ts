@@ -15,6 +15,7 @@ import { audioCommandBuilder } from './commands/audioCommands/audioCommandBuilde
 import * as commands from './commands';
 import * as events from './events';
 import { mongoConnection } from './utils/mongo';
+import MinecraftServerStatus from './utils/minecraftServerStatus';
 
 const {
   Guilds,
@@ -52,11 +53,18 @@ class Bot {
     this._sendSlashCommands();
     this._loadEvents();
     this._startMongo();
+    this._startMinecraftServer();
     this._client.login(process.env.TOKEN);
   }
 
   private _startMongo() {
     mongoConnection();
+  }
+
+  private _startMinecraftServer() {
+    const minecraftServer = MinecraftServerStatus.getInstance();
+    minecraftServer.init(this._client);
+    minecraftServer.start();
   }
 
   private _loadSlashCommands() {
