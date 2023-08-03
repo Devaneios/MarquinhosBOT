@@ -30,8 +30,16 @@ export interface AudioCommandBuilder {
 }
 
 interface IArrested extends mongoose.Document {
-  id: string,
-  user: string
+  id: string;
+  user: string;
+}
+
+export interface IMinecraftServer extends mongoose.Document {
+  guildID: string;
+  channelID: string;
+  messageID: string;
+  host: string;
+  port: number;
 }
 
 interface GuildOptions {
