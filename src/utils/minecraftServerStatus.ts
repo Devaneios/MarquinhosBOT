@@ -173,8 +173,8 @@ export default class MinecraftServerStatus {
       ':spider_web:',
     ];
 
-    const randomIndex = Math.floor(Math.random() * emojis.length);
+    const randomIndex = () => Math.floor(Math.random() * emojis.length);
 
-    return players.map((player) => `${emojis[randomIndex]} ${player}`);
+    return players.map((player) => `${emojis[randomIndex()]} ${player}`);
   }
 }
