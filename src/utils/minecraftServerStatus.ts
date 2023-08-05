@@ -171,9 +171,10 @@ export default class MinecraftServerStatus {
       ':skull:',
       ':spider:',
       ':spider_web:',
+      ':cavaloemoji:',
     ];
 
-    const randomIndex = () => Math.floor(Math.random() * emojis.length);
+    const randomIndex = () => Math.floor(Math.random() * 1000) % emojis.length;
 
     return players.map((player) => `${emojis[randomIndex()]} ${player}`);
   }
