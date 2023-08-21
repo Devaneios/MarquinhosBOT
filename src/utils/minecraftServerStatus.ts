@@ -90,6 +90,8 @@ export default class MinecraftServerStatus {
 
     const message = await channel.messages.fetch(messageId);
 
+    if (message.author.id !== this._client.user.id) return;
+
     await message.edit({
       embeds: [minecraftStatusEmbed],
     });
