@@ -1,22 +1,54 @@
-import { ChannelType, Client, Message } from 'discord.js';
+import { ChannelType, Client, Message, TextChannel } from 'discord.js';
 import { checkPermissions, sendTimedMessage } from '../utils/discord';
 import { BotEvent } from '../types';
 import { logger } from '../utils/logger';
 import BotError from '../utils/botError';
 import FuzzySearch from 'fuzzy-search';
 import { safeExecute } from '../utils/errorHandling';
+import { TempoDataProvider } from '../services/tempo';
+import dotenv from 'dotenv';
+import { MarquinhosApiService } from '../services/marquinhosApi';
+
+const tempo = new TempoDataProvider();
+const marquinhosApi = new MarquinhosApiService();
+
+dotenv.config();
 
 export const messageCreate: BotEvent = {
   name: 'messageCreate',
   execute: async (message: Message) => {
     const prefix = process.env.PREFIX;
     const timedMessageDuration = 10000;
-    if (!message.member || message.member.user.bot) return;
+
+    if (message.channel instanceof TextChannel && message.author.bot) {
+      if (!tempo.isHandleableMessage(message)) return;
+      const playbackData = await tempo.getPlaybackDataFromMessage(message);
+      if (playbackData) {
+        const response = await marquinhosApi.addToScrobbleQueue(playbackData);
+
+        if (!response) return;
+
+        const { id, trackDurationInMillis } = response.data;
+
+        const fourMinutesInMillis = 240000;
+
+        const timeUntilScrobbling = Math.min(
+          Math.floor(trackDurationInMillis / 2),
+          fourMinutesInMillis
+        );
+
+        setTimeout(() => {
+          marquinhosApi.dispatchScrobbleQueue(id);
+        }, timeUntilScrobbling);
+      }
+    }
+    if (!message.member) return;
     if (!message.guild) return;
     if (!message.content.startsWith(prefix)) {
       secretChannelMessageHandler(message);
       return;
     }
+
     if (message.channel.type !== ChannelType.GuildText) return;
 
     let args = message.content.substring(prefix.length).split(' ');

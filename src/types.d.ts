@@ -74,6 +74,24 @@ export type SafeAny = any;
 
 export type BotErrorLogLevel = 'error' | 'warn' | 'info';
 
+export type PlaybackData = {
+  title: string;
+  url?: string;
+  listeningUsersId: string[];
+  timestamp: Date;
+  guildId: string;
+  channelId: string;
+  providerName: string;
+};
+
+export type Track = {
+  artist: string;
+  name: string;
+  durationInMillis: number;
+  album?: string;
+  coverArtUrl?: string;
+};
+
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
