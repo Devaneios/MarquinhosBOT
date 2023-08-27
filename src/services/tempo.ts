@@ -43,10 +43,8 @@ export class TempoDataProvider {
   async getPlaybackDataFromMessage(message: Message): Promise<PlaybackData> {
     const title = message?.embeds[0]?.title?.slice(this.titlePaddingIndex);
 
-    const voiceChannelId = message.member.voice.channelId;
-    const voiceChannel = (await message.guild.channels.fetch(
-      voiceChannelId
-    )) as BaseGuildVoiceChannel;
+    const voiceChannel =
+      (await message.member.voice.channel.fetch()) as BaseGuildVoiceChannel;
     const listeningUsersId = voiceChannel.members.map((member) => member.id);
 
     return {
