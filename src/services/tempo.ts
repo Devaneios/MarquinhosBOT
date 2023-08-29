@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-import { BaseGuildVoiceChannel, Message, TextChannel } from 'discord.js';
+import { GuildMember, Message } from 'discord.js';
 import dotenv from 'dotenv';
 import { PlaybackData } from 'src/types';
 
@@ -43,14 +43,11 @@ export class TempoDataProvider {
   async getPlaybackDataFromMessage(message: Message): Promise<PlaybackData> {
     const title = message?.embeds[0]?.title?.slice(this.titlePaddingIndex);
 
-    const fetchedMessage = await message.fetch();
-    const fetchedMember = await fetchedMessage.member?.fetch();
-    const fetchedMemberVoiceChannel =
-      await fetchedMember?.voice.channel.fetch();
-
-    const listeningUsersId = fetchedMemberVoiceChannel.members.map(
-      (member) => member.id
-    );
+    const members = (message.member as GuildMember)?.voice.channel?.members;
+    const listeningUsersId: string[] = [];
+    members?.forEach((member: GuildMember) => {
+      listeningUsersId.push(member.id);
+    });
 
     return {
       title,
