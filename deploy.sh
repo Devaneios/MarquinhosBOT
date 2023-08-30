@@ -2,6 +2,8 @@
 
 MAINPID=$(ps -ef | grep node | grep -v grep | awk '{print $2}')
 
+source /etc/marquinhos/marquinhos.conf
+
 service=$(cat << EOF
 [Unit]
 
@@ -22,7 +24,7 @@ Environment="MARQUINHOS_API_URL=$MARQUINHOS_API_URL"
 
 User=guilherme
 
-KillMode=none
+KillMode=control-group
 
 WorkingDirectory=/home/$GITHUB_ACTIONS_USER/github-runners/actions-runner/_work/MarquinhosBOT/MarquinhosBOT/dist
 
