@@ -30,6 +30,8 @@ export const messageCreate: BotEvent = {
 
         const { id, trackDurationInMillis } = response.data;
 
+        console.log(`Added ${playbackData.title} to scrobble queue`);
+
         const fourMinutesInMillis = 240000;
 
         const timeUntilScrobbling = Math.min(
