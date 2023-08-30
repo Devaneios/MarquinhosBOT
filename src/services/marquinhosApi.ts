@@ -1,29 +1,31 @@
-import axios, { AxiosInstance } from 'axios';
+import axios from 'axios';
 import { PlaybackData, Track } from 'src/types';
 
 export class MarquinhosApiService {
-  axios: AxiosInstance;
-
-  constructor() {
-    this.axios = axios.create({
-      baseURL: `${process.env.MARQUINHOS_API_URL}/api/`,
-    });
-  }
-
   async addToScrobbleQueue(playbackData: PlaybackData) {
-    try {
-      const response = await this.axios.post('/scrobble/queue', {
+    const options = {
+      method: 'POST',
+      url: `${process.env.MARQUINHOS_API_URL}/api/scrobble/queue`,
+      headers: { 'Content-Type': 'application/json' },
+      data: {
         playbackData,
-      });
-      return response.data;
+      },
+    };
+    try {
+      const { data } = await axios.request(options);
+      return data;
     } catch (error) {
       console.log(error);
     }
   }
 
   async dispatchScrobbleQueue(id: string) {
+    const options = {
+      method: 'POST',
+      url: `${process.env.MARQUINHOS_API_URL}/api/scrobble/${id}`,
+    };
     try {
-      const { data } = await this.axios.post(`/scrobble/${id}`);
+      const { data } = await axios.request(options);
       return data;
     } catch (error) {
       console.log(error);
