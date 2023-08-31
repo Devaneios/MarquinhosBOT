@@ -1,7 +1,5 @@
 #!/bin/bash
 
-MAINPID=$(ps -ef | grep node | grep -v grep | awk '{print $2}')
-
 source /etc/marquinhos/marquinhos.conf
 
 service=$(cat << EOF
@@ -26,11 +24,9 @@ User=guilherme
 
 KillMode=control-group
 
-WorkingDirectory=/home/$GITHUB_ACTIONS_USER/github-runners/actions-runner/_work/MarquinhosBOT/MarquinhosBOT/dist
+WorkingDirectory=/home/guilherme/github-runners/actions-runner/_work/MarquinhosBOT/MarquinhosBOT/dist
 
-ExecStart=/home/$GITHUB_ACTIONS_USER/.nvm/versions/node/v18.13.0/bin/node ./index.js
-
-ExecStop=/bin/kill -s QUIT $MAINPID
+ExecStart=/home/guilherme/.nvm/versions/node/v18.13.0/bin/node ./index.js
 
 Restart=always
 
