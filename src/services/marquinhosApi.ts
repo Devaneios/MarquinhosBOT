@@ -6,7 +6,10 @@ export class MarquinhosApiService {
     const options = {
       method: 'POST',
       url: `${process.env.MARQUINHOS_API_URL}/api/scrobble/queue`,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.MARQUINHOS_API_TOKEN}`,
+      },
       data: {
         playbackData,
       },
