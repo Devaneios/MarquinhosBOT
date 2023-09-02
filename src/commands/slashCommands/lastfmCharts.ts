@@ -89,7 +89,8 @@ export const lastfmCharts: SlashCommand = {
       images,
       chartNames,
       interaction.user.username,
-      type.value as string
+      type.value as string,
+      period.value as string
     );
 
     await interaction.channel.send({
