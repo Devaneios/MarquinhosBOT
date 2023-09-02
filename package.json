@@ -16,12 +16,15 @@
     "@discordjs/opus": "^0.9.0",
     "@discordjs/voice": "^0.16.0",
     "axios": "^1.4.0",
+    "canvas": "^2.11.2",
+    "color": "^4.2.3",
     "copyfiles": "^2.4.1",
     "discord.js": "^14.11.0",
     "dotenv": "^16.0.3",
     "ffmpeg": "0.0.4",
     "ffmpeg-static": "^5.1.0",
     "fluent-ffmpeg": "^2.1.2",
+    "font-color-contrast": "^11.1.0",
     "fuzzy-search": "^3.2.1",
     "minecraft-server-util": "^5.4.4",
     "mongoose": "^7.3.1",
@@ -30,6 +33,7 @@
     "path": "^0.12.7",
     "rimraf": "^5.0.0",
     "rxjs": "^7.8.1",
+    "sharp": "^0.32.5",
     "winston": "^3.8.2",
     "youtube-scrape": "github:Guilhermeasper/youtube-scrape",
     "ytdl-core": "^4.11.4"
@@ -44,6 +48,7 @@
     "delay": "2500"
   },
   "devDependencies": {
+    "@types/color": "^3.0.3",
     "@types/fuzzy-search": "^2.1.2",
     "@types/node": "^20.1.5",
     "eslint": "^8.40.0",

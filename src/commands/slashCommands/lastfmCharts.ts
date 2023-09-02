@@ -1,10 +1,10 @@
 import { SlashCommandBuilder, AttachmentBuilder } from 'discord.js';
 import { SlashCommand } from '../../types';
 import { MarquinhosApiService } from '../../services/marquinhosApi';
-import { CollageService } from '../../services/collage';
+import { CollageBuilder } from '../../utils/collageBuilder';
 
 const marquinhosApi = new MarquinhosApiService();
-const collageService = new CollageService();
+const collageBuilder = new CollageBuilder();
 
 const chartsFunctions: { [key: string]: Function } = {
   artists: marquinhosApi.getTopArtists.bind(marquinhosApi),
@@ -71,12 +71,12 @@ export const lastfmCharts: SlashCommand = {
       return;
     }
 
-    const imagesBuffers = await collageService.downloadImagesBuffers(
+    const imagesBuffers = await collageBuilder.downloadImagesBuffers(
       response.map((chartData: any) => chartData.coverArtUrl)
     );
     const chartNames = response.map((chartData: any) => chartData.name);
-    const images = await collageService.resizeImages(imagesBuffers);
-    const image = await collageService.createCollage(
+    const images = await collageBuilder.resizeImages(imagesBuffers);
+    const image = await collageBuilder.createCollage(
       images,
       chartNames,
       interaction.user.username,
