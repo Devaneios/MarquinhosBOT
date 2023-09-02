@@ -16,3 +16,4 @@ export { esroh } from './esroh';
 export { time } from './time';
 export { importunate } from './importunate';
 export { lastfm } from './lastfm';
+export { lastfmCharts } from './lastfmCharts';
