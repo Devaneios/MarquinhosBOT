@@ -18,6 +18,15 @@ const chartTypesNames: { [key: string]: string } = {
   tracks: 'músicas',
 };
 
+const chartPeriodsMessages: { [key: string]: string } = {
+  '7day': 'da última semana',
+  '1month': 'do último mês',
+  '3month': 'dos últimos 3 meses',
+  '6month': 'dos últimos 6 meses',
+  '12month': 'do último ano',
+  overall: 'desde o início',
+};
+
 export const lastfmCharts: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('lastfm-charts')
@@ -64,7 +73,7 @@ export const lastfmCharts: SlashCommand = {
 
     const response = await chartsFunctions[type.value as string](
       interaction.user.id,
-      period
+      period.value as string
     );
     if (!response) {
       await interaction.editReply('Something went wrong!');
@@ -87,7 +96,9 @@ export const lastfmCharts: SlashCommand = {
       files: [image],
       content: `${interaction.user.username} aqui estão ${
         type.value == 'tracks' ? 'as suas' : 'os seus'
-      } top ${chartTypesNames[type.value as string]} do Last.fm`,
+      } top ${chartTypesNames[type.value as string]} ${
+        chartPeriodsMessages[period.value as string]
+      }`,
     });
 
     await interaction.editReply('Done!');
