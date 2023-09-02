@@ -195,7 +195,7 @@ export class CollageBuilder {
 
     let x = 45;
     let y = 590;
-    let counter = 1;
+    let counter = 2;
 
     for (let index = 0; index < images.length; index++) {
       const imageBuffer = images[index];
