@@ -92,6 +92,14 @@ export type Track = {
   coverArtUrl?: string;
 };
 
+export type LastfmTopListenedPeriod =
+  | '7day'
+  | '1month'
+  | '3month'
+  | '6month'
+  | '12month'
+  | 'overall';
+
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
@@ -109,4 +117,8 @@ declare module 'discord.js' {
     cooldowns: Collection<string, number>;
     secretChannels: Collection<string, SecretChannelData>;
   }
+}
+
+declare module 'color-contrast' {
+  export default function contrast(color1: string, color2: string): number;
 }
