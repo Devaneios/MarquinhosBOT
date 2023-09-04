@@ -17,3 +17,4 @@ export { time } from './time';
 export { importunate } from './importunate';
 export { lastfm } from './lastfm';
 export { lastfmCharts } from './lastfmCharts';
+export { allowUser } from './allowUser';
