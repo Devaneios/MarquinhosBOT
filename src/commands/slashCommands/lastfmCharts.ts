@@ -60,14 +60,19 @@ export const lastfmCharts: SlashCommand = {
     ),
   execute: async (interaction) => {
     await interaction.deferReply({ ephemeral: true });
+    await interaction.followUp('Fiscal do Last.fm em ação! 👮‍♂️');
     const type = interaction.options.get('tipo');
     if (!type) {
-      await interaction.editReply('Something went wrong!');
+      await interaction.editReply(
+        'Erro de Sintonia: O bot está procurando sua batida interior. 🔍🥁'
+      );
       return;
     }
     const period = interaction.options.get('periodo');
     if (!period) {
-      await interaction.editReply('Something went wrong!');
+      await interaction.editReply(
+        'Erro de Sintonia: O bot está procurando sua batida interior. 🔍🥁'
+      );
       return;
     }
 
@@ -77,7 +82,9 @@ export const lastfmCharts: SlashCommand = {
     );
 
     if (!response) {
-      await interaction.editReply('Something went wrong!');
+      await interaction.editReply(
+        'Erro de Sintonia: O bot está procurando sua batida interior. 🔍🥁'
+      );
       return;
     }
 
@@ -85,7 +92,9 @@ export const lastfmCharts: SlashCommand = {
     const profileName = response.profileName;
 
     if (!topList) {
-      await interaction.editReply('Something went wrong!');
+      await interaction.editReply(
+        'Erro de Sintonia: O bot está procurando sua batida interior. 🔍🥁'
+      );
       return;
     }
 
