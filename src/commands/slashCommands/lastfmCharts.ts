@@ -75,27 +75,36 @@ export const lastfmCharts: SlashCommand = {
       interaction.user.id,
       period.value as string
     );
+
     if (!response) {
       await interaction.editReply('Something went wrong!');
       return;
     }
 
+    const topList = response[type.value as string];
+    const profileName = response.profileName;
+
+    if (!topList) {
+      await interaction.editReply('Something went wrong!');
+      return;
+    }
+
     const imagesBuffers = await collageBuilder.downloadImagesBuffers(
-      response.map((chartData: any) => chartData.coverArtUrl)
+      topList.map((chartData: any) => chartData.coverArtUrl)
     );
-    const chartNames = response.map((chartData: any) => chartData.name);
+    const chartNames = topList.map((chartData: any) => chartData.name);
     const images = await collageBuilder.resizeImages(imagesBuffers);
     const image = await collageBuilder.createCollage(
       images,
       chartNames,
-      interaction.user.username,
+      profileName,
       type.value as string,
       period.value as string
     );
 
     await interaction.channel.send({
       files: [image],
-      content: `${interaction.user.username} aqui estão ${
+      content: `${profileName} aqui estão ${
         type.value == 'tracks' ? 'as suas' : 'os seus'
       } top ${chartTypesNames[type.value as string]} ${
         chartPeriodsMessages[period.value as string]
