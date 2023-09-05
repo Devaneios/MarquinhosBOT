@@ -119,8 +119,6 @@ export const lastfmCharts: SlashCommand = {
         chartPeriodsMessages[period.value as string]
       }`,
     });
-
-    await interaction.editReply('Done!');
   },
   cooldown: 10,
 };
