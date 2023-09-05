@@ -118,6 +118,9 @@ export class CollageBuilder {
     registerFont(join(__dirname, '../resources/fonts/BebasNeueRegular.ttf'), {
       family: "'Bebas Neue', sans-serif",
     });
+    ctx.shadowBlur = 5;
+    ctx.shadowOffsetX = 5;
+    ctx.shadowOffsetY = 5;
     return { ctx, collageCanvas, canvasWidth, canvasHeight };
   }
 
@@ -148,6 +151,9 @@ export class CollageBuilder {
     let color = await this.getColorInfo(firstImageBuffer, 30, 35, 90, 80);
     let textColor = fontColorContrast(color);
     ctx.fillStyle = textColor; // Text color
+    ctx.shadowColor = `rgba(${
+      textColor === '#ffffff' ? '0, 0, 0' : '255, 255, 255'
+    }, 0.5)`;
     ctx.fillText(firtsImageCounter, firtsImageX + 30, firtsImageY + 70);
     ctx.font = '50px Bebas Neue'; // Font size and name
 
@@ -159,6 +165,9 @@ export class CollageBuilder {
       50
     );
     textColor = fontColorContrast(color);
+    ctx.shadowColor = `rgba(${
+      textColor === '#ffffff' ? '0, 0, 0' : '255, 255, 255'
+    }, 0.5)`;
     ctx.fillStyle = textColor; // Text color
     this.textEllipsis(
       ctx,
@@ -208,12 +217,18 @@ export class CollageBuilder {
       ctx.font = '50px Bebas Neue'; // Font size and name
       let color = await this.getColorInfo(imageBuffer, 30, 35, 80, 80);
       let textColor = fontColorContrast(color);
+      ctx.shadowColor = `rgba(${
+        textColor === '#ffffff' ? '0, 0, 0' : '255, 255, 255'
+      }, 0.5)`;
       ctx.fillStyle = textColor; // Text color
       ctx.fillText(cardCounter, x + 30, y + 35);
       ctx.font = '36px Bebas Neue'; // Font size and name
 
       color = await this.getColorInfo(imageBuffer, 30, 250, 250, 50);
       textColor = fontColorContrast(color);
+      ctx.shadowColor = `rgba(${
+        textColor === '#ffffff' ? '0, 0, 0' : '255, 255, 255'
+      }, 0.5)`;
       ctx.fillStyle = textColor; // Text color
 
       this.textEllipsis(ctx, imageName, x + 30, y + 270, 250);
