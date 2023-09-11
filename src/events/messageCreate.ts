@@ -1,4 +1,4 @@
-import { ChannelType, Client, Message, TextChannel } from 'discord.js';
+import { ChannelType, Client, GuildMember, Message, TextChannel } from 'discord.js';
 import { checkPermissions, sendTimedMessage } from '../utils/discord';
 import { BotEvent } from '../types';
 import { logger } from '../utils/logger';
@@ -8,6 +8,7 @@ import { safeExecute } from '../utils/errorHandling';
 import { TempoDataProvider } from '../services/tempo';
 import dotenv from 'dotenv';
 import { MarquinhosApiService } from '../services/marquinhosApi';
+import SilencedModel from 'src/schemas/silenced';
 
 const tempo = new TempoDataProvider();
 const marquinhosApi = new MarquinhosApiService();
@@ -47,7 +48,9 @@ export const messageCreate: BotEvent = {
     if (!message.member) return;
     if (!message.guild) return;
     if (!message.content.startsWith(prefix)) {
+      
       secretChannelMessageHandler(message);
+     
       return;
     }
 
@@ -150,3 +153,19 @@ const secretChannelMessageHandler = (message: Message) => {
     }
   }
 };
+
+async function silencedUserHandler(message: Message) {
+  if(isUserSilenced) {
+    const channel = message.channel;
+    message.delete();
+    const msg = channel.send("Silêncio.");
+    setTimeout( (msg) => msg.delete, 1000);
+  }
+}
+
+async function isUserSilenced(member: GuildMember) {
+  return SilencedModel.collection.findOne({
+    id: member.id,
+    user: member.user.username,
+  });
+}

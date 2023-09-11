@@ -34,6 +34,11 @@ interface IArrested extends mongoose.Document {
   user: string;
 }
 
+interface ISilenced extends mongoose.Document {
+  id: string;
+  user: string;
+}
+
 export interface IMinecraftServer extends mongoose.Document {
   guildID: string;
   channelID: string;
