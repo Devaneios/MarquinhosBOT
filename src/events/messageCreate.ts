@@ -1,4 +1,10 @@
-import { ChannelType, Client, GuildMember, Message, TextChannel } from 'discord.js';
+import {
+  ChannelType,
+  Client,
+  GuildMember,
+  Message,
+  TextChannel,
+} from 'discord.js';
 import { checkPermissions, sendTimedMessage } from '../utils/discord';
 import { BotEvent } from '../types';
 import { logger } from '../utils/logger';
@@ -48,9 +54,8 @@ export const messageCreate: BotEvent = {
     if (!message.member) return;
     if (!message.guild) return;
     if (!message.content.startsWith(prefix)) {
-      
       secretChannelMessageHandler(message);
-     
+      await silencedUserHandler(message);
       return;
     }
 
@@ -155,16 +160,15 @@ const secretChannelMessageHandler = (message: Message) => {
 };
 
 async function silencedUserHandler(message: Message) {
-  if(isUserSilenced) {
+  if (await isUserSilenced(message.member as GuildMember)) {
+    await message.delete();
     const channel = message.channel;
-    message.delete();
-    const msg = channel.send("Silêncio.");
-    setTimeout( (msg) => msg.delete, 1000);
+    sendTimedMessage('Silêncio.', channel as TextChannel, 1000);
   }
 }
 
 async function isUserSilenced(member: GuildMember) {
-  return SilencedModel.collection.findOne({
+  return await SilencedModel.collection.findOne({
     id: member.id,
     user: member.user.username,
   });
