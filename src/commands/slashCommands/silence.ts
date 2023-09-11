@@ -4,7 +4,7 @@ import SilencedModel from '../../schemas/silenced';
 
 export const silence: SlashCommand = {
   command: new SlashCommandBuilder()
-    .setName('prender')
+    .setName('silenciar')
     .setDescription('SILÊNCIO')
     .addUserOption((option) =>
       option
@@ -26,7 +26,7 @@ export const silence: SlashCommand = {
     }
 
     silenceMember(silenced);
-    interaction.reply({ content: `${silenced} você está PRESO!` });
+    interaction.reply({ content: `${silenced} SILÊNCIO!` });
   },
   cooldown: 10,
 };
