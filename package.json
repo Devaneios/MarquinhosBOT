@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "rimraf ./dist && npm run copy-assets && tsc",
-    "start": "npm run build && node ./dist/index.js",
+    "build": "rimraf ./dist && npm run copy-assets && tsc -p tsconfig.json",
+    "start": "node -r tsconfig-paths/register ./dist/index.js",
+    "dev": "npm run build && npm run start",
     "watch": "nodemon",
     "copy-assets": "copyfiles --all --up 1 \"./src/resources/**\" \"./dist\"",
     "prettier": "npx prettier --write \"src/**/*.ts\""
@@ -34,6 +35,7 @@
     "rimraf": "^5.0.0",
     "rxjs": "^7.8.1",
     "sharp": "^0.32.5",
+    "tsconfig-paths": "^4.2.0",
     "winston": "^3.8.2",
     "youtube-scrape": "github:Guilhermeasper/youtube-scrape",
     "ytdl-core": "^4.11.4"

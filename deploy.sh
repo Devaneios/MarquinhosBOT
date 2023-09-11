@@ -26,7 +26,7 @@ KillMode=control-group
 
 WorkingDirectory=/home/guilherme/github-runners/actions-runner/_work/MarquinhosBOT/MarquinhosBOT/dist
 
-ExecStart=/home/guilherme/.nvm/versions/node/v18.13.0/bin/node ./index.js
+ExecStart=/home/guilherme/.nvm/versions/node/v18.13.0/bin/node -r tsconfig-paths/register ./index.js
 
 Restart=always
 
