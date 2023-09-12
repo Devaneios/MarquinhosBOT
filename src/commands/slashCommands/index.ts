@@ -19,3 +19,4 @@ export { lastfm } from './lastfm';
 export { lastfmCharts } from './lastfmCharts';
 export { allowUser } from './allowUser';
 export { silence } from './silence';
+export { unsilence } from './unsilence';
