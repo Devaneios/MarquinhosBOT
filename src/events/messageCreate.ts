@@ -144,8 +144,25 @@ export const messageCreate: BotEvent = {
 
         setTimeout(() => {
           cancelScrobble.setDisabled(true);
-          marquinhosApi.dispatchScrobbleQueue(scrobbleId);
+          row.setComponents([cancelScrobble]);
+          marquinhosApi.dispatchScrobbleQueue(scrobbleId).then(() => {
+            scrobbleEmbed.setDescription(
+              `O scrobble da música **${
+                track.name
+              }** foi feito com sucesso para os seguintes usuários:\n
+        ${scrobblesOnUsers.map((id) => `<@${id}>`).join('\n')}
+        `
+            );
+            scrobbleEmbedRef.edit({
+              embeds: [scrobbleEmbed],
+              components: [row],
+            });
+          });
         }, timeUntilScrobbling);
+
+        setTimeout(() => {
+          scrobbleEmbedRef.delete();
+        }, track.durationInMillis);
       }
     }
     if (!message.member) return;
