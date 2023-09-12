@@ -2,11 +2,15 @@ import {
   ChannelType,
   Client,
   GuildMember,
+  EmbedBuilder,
   Message,
   TextChannel,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
 } from 'discord.js';
 import { checkPermissions, sendTimedMessage } from '../utils/discord';
-import { BotEvent } from '../types';
+import { BotEvent, Track } from '../types';
 import { logger } from '../utils/logger';
 import BotError from '../utils/botError';
 import FuzzySearch from 'fuzzy-search';
@@ -33,21 +37,114 @@ export const messageCreate: BotEvent = {
       if (playbackData) {
         const response = await marquinhosApi.addToScrobbleQueue(playbackData);
 
-        if (!response) return;
+        if (!response) {
+          logger.info(`Couldn't add ${playbackData.title} to scrobble queue`);
+          await message.channel.send({
+            embeds: [
+              new EmbedBuilder()
+                .setTitle('Erro ao adicionar a fila de scrobbling')
+                .setDescription(
+                  `A música **${playbackData.title}** não foi adicionada a fila de scrobbling.`
+                )
+                .setColor('#FF0000'),
+            ],
+          });
+          return;
+        }
 
-        const { id, trackDurationInMillis } = response.data;
+        const scrobbleId = response.data.id;
+        const track: Track = response.data.track;
+        let scrobblesOnUsers: string[] = response.data.scrobblesOnUsers;
 
-        console.log(`Added ${playbackData.title} to scrobble queue`);
+        if (!scrobblesOnUsers || !track || !scrobbleId) {
+          logger.info(`Couldn't add ${playbackData.title} to scrobble queue`);
+          await message.channel.send({
+            embeds: [
+              new EmbedBuilder()
+                .setTitle('Erro ao adicionar a fila de scrobbling')
+                .setDescription(
+                  `A música **${playbackData.title}** não foi adicionada a fila de scrobbling.`
+                )
+                .setColor('#FF0000'),
+            ],
+          });
+          return;
+        }
+
+        logger.info(
+          `Added ${playbackData.title} to scrobble queue to ${scrobblesOnUsers.length} users`
+        );
 
         const fourMinutesInMillis = 240000;
 
         const timeUntilScrobbling = Math.min(
-          Math.floor(trackDurationInMillis / 2),
+          Math.floor(track.durationInMillis / 2),
           fourMinutesInMillis
         );
 
+        const cancelScrobble = new ButtonBuilder()
+          .setCustomId('cancel')
+          .setLabel('Cancelar')
+          .setStyle(ButtonStyle.Danger);
+
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+          cancelScrobble
+        );
+
+        const scrobbleEmbed = new EmbedBuilder()
+          .setTitle('Adicionado a fila de scrobbling')
+          .setDescription(
+            `A música **${
+              track.name
+            }** foi adicionada a fila de scrobbling para os seguintes usuários:\n
+        ${scrobblesOnUsers.map((id) => `<@${id}>`).join('\n')}
+        `
+          )
+          .setThumbnail(track.coverArtUrl)
+          .setFooter({
+            text: `Scrobbling em ${new Date(timeUntilScrobbling).toLocaleString(
+              'pt-BR',
+              {
+                timeZone: 'America/Sao_Paulo',
+                minute: 'numeric',
+                second: '2-digit',
+              }
+            )}`,
+          })
+          .setColor('#1DB954');
+
+        const scrobbleEmbedRef = await message.channel.send({
+          embeds: [scrobbleEmbed],
+          components: [row],
+        });
+
+        let collector = scrobbleEmbedRef.createMessageComponentCollector();
+
+        collector.on('collect', async (i) => {
+          scrobblesOnUsers = scrobblesOnUsers.filter((id) => id !== i.user.id);
+          await marquinhosApi.removeUserFromScrobbleQueue(
+            scrobbleId,
+            i.user.id
+          );
+          scrobbleEmbed.setDescription(
+            `A música **${
+              track.name
+            }** foi adicionada a fila de scrobbling para os seguintes usuários:\n
+        ${scrobblesOnUsers.map((id) => `<@${id}>`).join('\n')}
+        `
+          );
+          await i.deferUpdate();
+          await scrobbleEmbedRef.edit({
+            embeds: [scrobbleEmbed],
+            components: [row],
+          });
+
+          collector = scrobbleEmbedRef.createMessageComponentCollector();
+        });
+
         setTimeout(() => {
-          marquinhosApi.dispatchScrobbleQueue(id);
+          cancelScrobble.setDisabled(true);
+          marquinhosApi.dispatchScrobbleQueue(scrobbleId);
         }, timeUntilScrobbling);
       }
     }
