@@ -146,6 +146,7 @@ export const messageCreate: BotEvent = {
           cancelScrobble.setDisabled(true);
           row.setComponents([cancelScrobble]);
           marquinhosApi.dispatchScrobbleQueue(scrobbleId).then(() => {
+            scrobbleEmbed.setTitle('Scrobble feito com sucesso');
             scrobbleEmbed.setDescription(
               `O scrobble da música **${
                 track.name
