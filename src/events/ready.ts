@@ -1,6 +1,7 @@
 import { Client } from 'discord.js';
 import { BotEvent } from '../types';
 import { logger } from '../utils/logger';
+import { getBicho} from '../utils/bichoGame';
 import GuildModel from '../schemas/guild';
 
 export const ready: BotEvent = {
@@ -9,11 +10,14 @@ export const ready: BotEvent = {
   execute: (client: Client) => {
     logger.info(`Logged in as ${client.user?.tag}`);
     logger.info(`Marquinhos™ is online!`);
+    // Start heartbeat for bicho game
+    startBichoGame(client);
 
+    // Marquinhos for Multiple guilds
     const guilds = client.guilds.cache.map((guild) => guild.id);
-
     guilds.forEach(async (guild) => {
       if (await GuildModel.exists({ guildID: guild })) return;
+      // Config for what before was stored in the env
       let newGuild = new GuildModel({
         guildID: guild,
         options: {
@@ -28,3 +32,10 @@ export const ready: BotEvent = {
     });
   },
 };
+
+async function startBichoGame(client: Client) {
+  client.user.setActivity(getBicho());
+  setInterval(function () {
+		client.user.setActivity(getBicho());
+	}, 5 * 1000);
+}
