@@ -20,3 +20,5 @@ export { lastfmCharts } from './lastfmCharts';
 export { allowUser } from './allowUser';
 export { silence } from './silence';
 export { unsilence } from './unsilence';
+export { toggleAdminRoulette } from './toggleAdminRoulette';
+export { addToRoulette } from './addToRoulette';

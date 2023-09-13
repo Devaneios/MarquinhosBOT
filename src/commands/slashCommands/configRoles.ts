@@ -20,7 +20,8 @@ export const configRoles: SlashCommand = {
         .addChoices(
           { name: 'cargo_vip', value: 'vip' },
           { name: 'cargo_base', value: 'base' },
-          { name: 'cargo_externo', value: 'externo' }
+          { name: 'cargo_externo', value: 'externo' },
+          { name: 'cargo_roleta', value: 'roleta'}
         )
     )
     .addRoleOption((option) =>
@@ -49,6 +50,8 @@ export const configRoles: SlashCommand = {
       await updateRole(guildId, 'baseRoleId', roleId as string);
     } else if (roleType.value === 'vip') {
       await updateRole(guildId, 'vipRoleId', roleId as string);
+    } else if (roleType.value === 'roleta') {
+      await updateRole(guildId, 'rouletteRoleId', roleId as string);
     }
 
     const roleName = interaction.guild?.roles.cache.find(

@@ -52,11 +52,18 @@ interface GuildOptions {
   vipRoleId: string;
   baseRoleId: string;
   externalRoleId: string;
+  rouletteRoleId: string;
   joinedAt: Date;
+}
+
+interface Roulette {
+  isRouletteOn: boolean;
+  rouletteAdmins: string[];
 }
 
 export interface IGuild extends mongoose.Document {
   guildID: string;
+  roulette: Roulette;
   options: GuildOptions;
   joinedAt: Date;
 }

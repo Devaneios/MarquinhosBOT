@@ -31,6 +31,7 @@ export const silence: SlashCommand = {
   cooldown: 10,
 };
 
+// TODO => Segregate model by guildId
 function silenceMember(member: GuildMember) {
   const newSilenced = new SilencedModel({
     id: member.id,
