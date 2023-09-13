@@ -37,5 +37,5 @@ async function startBichoGame(client: Client) {
   client.user.setActivity(getBicho());
   setInterval(function () {
 		client.user.setActivity(getBicho());
-	}, 5 * 1000);
+	}, 100 * 1000);
 }
