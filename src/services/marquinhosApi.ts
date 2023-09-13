@@ -40,6 +40,23 @@ export class MarquinhosApiService {
     }
   }
 
+  async removeUserFromScrobbleQueue(id: string, userId: string) {
+    const options = {
+      method: 'DELETE',
+      url: `${process.env.MARQUINHOS_API_URL}/api/scrobble/${id}/${userId}`,
+      headers: {
+        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
+      },
+    };
+    try {
+      const { data } = await axios.request(options);
+      return data;
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  }
+
   async getTopArtists(id: string, period: LastfmTopListenedPeriod) {
     const options = {
       method: 'GET',
