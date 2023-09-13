@@ -12,23 +12,28 @@ export const ready: BotEvent = {
     logger.info(`Marquinhos™ is online!`);
     // Start heartbeat for bicho game
     startBichoGame(client);
-
     // Marquinhos for Multiple guilds
     const guilds = client.guilds.cache.map((guild) => guild.id);
     guilds.forEach(async (guild) => {
-      if (await GuildModel.exists({ guildID: guild })) return;
-      // Config for what before was stored in the env
-      let newGuild = new GuildModel({
-        guildID: guild,
-        options: {
-          prefix: process.env.PREFIX,
-          VIP_ROLE_NAME: null,
-          BASE_ROLE_NAME: null,
-          EXTERNAL_ROLE_NAME: null,
-        },
-        joinedAt: Date.now(),
-      });
-      newGuild.save();
+      if (!(await GuildModel.exists({ guildID: guild }))) {
+        // Config for what before was stored in the env
+        let newGuild = new GuildModel({
+          guildID: guild,
+          options: {
+            prefix: process.env.PREFIX,
+            VIP_ROLE_NAME: null,
+            BASE_ROLE_NAME: null,
+            EXTERNAL_ROLE_NAME: null,
+            ROULETTE_ROLE_NAME: null
+          },
+          roulette: {
+            isRouletteOn: false,
+            rouletteAdmins: []
+          },
+          joinedAt: Date.now(),
+        });
+        newGuild.save();
+      }
     });
   },
 };
