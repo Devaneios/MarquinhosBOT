@@ -8,11 +8,11 @@ const GuildSchema = new Schema<IGuild>({
     vipRoleId: { type: String },
     baseRoleId: { type: String },
     externalRoleId: { type: String },
-    rouletteRoleId: { type: String }
+    rouletteRoleId: { type: String },
   },
   roulette: {
-    isRouletteOn: { type: Boolean, default: false},
-    rouletteAdmins: { type: Array<String> }
+    isRouletteOn: { type: Boolean, default: false },
+    rouletteAdmins: { type: [String], default: [] },
   },
   joinedAt: { type: Date },
 });
