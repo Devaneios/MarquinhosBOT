@@ -2,12 +2,8 @@ import {
   ChannelType,
   Client,
   GuildMember,
-  EmbedBuilder,
   Message,
   TextChannel,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
 } from 'discord.js';
 import { checkPermissions, sendTimedMessage } from '../utils/discord';
 import { BotEvent, Track } from '../types';
@@ -15,13 +11,9 @@ import { logger } from '../utils/logger';
 import BotError from '../utils/botError';
 import FuzzySearch from 'fuzzy-search';
 import { safeExecute } from '../utils/errorHandling';
-import { TempoDataProvider } from '../services/tempo';
 import dotenv from 'dotenv';
-import { MarquinhosApiService } from '../services/marquinhosApi';
 import SilencedModel from 'src/schemas/silenced';
-
-const tempo = new TempoDataProvider();
-const marquinhosApi = new MarquinhosApiService();
+import { musicBotMessageHandler } from 'src/utils/lastfm';
 
 dotenv.config();
 
@@ -32,139 +24,7 @@ export const messageCreate: BotEvent = {
     const timedMessageDuration = 10000;
 
     if (message.channel instanceof TextChannel && message.author.bot) {
-      if (!tempo.isHandleableMessage(message)) return;
-      const playbackData = await tempo.getPlaybackDataFromMessage(message);
-      if (playbackData) {
-        const response = await marquinhosApi.addToScrobbleQueue(playbackData);
-
-        if (!response) {
-          logger.info(`Couldn't add ${playbackData.title} to scrobble queue`);
-          await message.channel.send({
-            embeds: [
-              new EmbedBuilder()
-                .setTitle('Erro ao adicionar a fila de scrobbling')
-                .setDescription(
-                  `A música **${playbackData.title}** não foi adicionada a fila de scrobbling.`
-                )
-                .setColor('#FF0000'),
-            ],
-          });
-          return;
-        }
-
-        const scrobbleId = response.data.id;
-        const track: Track = response.data.track;
-        let scrobblesOnUsers: string[] = response.data.scrobblesOnUsers;
-
-        if (!scrobblesOnUsers || !track || !scrobbleId) {
-          logger.info(`Couldn't add ${playbackData.title} to scrobble queue`);
-          await message.channel.send({
-            embeds: [
-              new EmbedBuilder()
-                .setTitle('Erro ao adicionar a fila de scrobbling')
-                .setDescription(
-                  `A música **${playbackData.title}** não foi adicionada a fila de scrobbling.`
-                )
-                .setColor('#FF0000'),
-            ],
-          });
-          return;
-        }
-
-        logger.info(
-          `Added ${playbackData.title} to scrobble queue to ${scrobblesOnUsers.length} users`
-        );
-
-        const fourMinutesInMillis = 240000;
-
-        const timeUntilScrobbling = Math.min(
-          Math.floor(track.durationInMillis / 2),
-          fourMinutesInMillis
-        );
-
-        const cancelScrobble = new ButtonBuilder()
-          .setCustomId('cancel')
-          .setLabel('Cancelar')
-          .setStyle(ButtonStyle.Danger);
-
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-          cancelScrobble
-        );
-
-        const scrobbleEmbed = new EmbedBuilder()
-          .setTitle('Adicionado a fila de scrobbling')
-          .setDescription(
-            `A música **${
-              track.name
-            }** foi adicionada a fila de scrobbling para os seguintes usuários:\n
-        ${scrobblesOnUsers.map((id) => `<@${id}>`).join('\n')}
-        `
-          )
-          .setThumbnail(track.coverArtUrl)
-          .setFooter({
-            text: `Scrobbling em ${new Date(timeUntilScrobbling).toLocaleString(
-              'pt-BR',
-              {
-                timeZone: 'America/Sao_Paulo',
-                minute: 'numeric',
-                second: '2-digit',
-              }
-            )}`,
-          })
-          .setColor('#1DB954');
-
-        const scrobbleEmbedRef = await message.channel.send({
-          embeds: [scrobbleEmbed],
-          components: [row],
-        });
-
-        let collector = scrobbleEmbedRef.createMessageComponentCollector();
-
-        collector.on('collect', async (i) => {
-          scrobblesOnUsers = scrobblesOnUsers.filter((id) => id !== i.user.id);
-          await marquinhosApi.removeUserFromScrobbleQueue(
-            scrobbleId,
-            i.user.id
-          );
-          scrobbleEmbed.setDescription(
-            `A música **${
-              track.name
-            }** foi adicionada a fila de scrobbling para os seguintes usuários:\n
-        ${scrobblesOnUsers.map((id) => `<@${id}>`).join('\n')}
-        `
-          );
-          await i.deferUpdate();
-          await scrobbleEmbedRef.edit({
-            embeds: [scrobbleEmbed],
-            components: [row],
-          });
-
-          collector = scrobbleEmbedRef.createMessageComponentCollector();
-        });
-
-        setTimeout(() => {
-          cancelScrobble.setDisabled(true);
-          row.setComponents([cancelScrobble]);
-          marquinhosApi.dispatchScrobbleQueue(scrobbleId).then(() => {
-            scrobbleEmbed.setTitle('Scrobble feito com sucesso');
-            scrobbleEmbed.setDescription(
-              `O scrobble da música **${
-                track.name
-              }** foi feito com sucesso para os seguintes usuários:\n
-        ${scrobblesOnUsers.map((id) => `<@${id}>`).join('\n')}
-        `
-            );
-            scrobbleEmbedRef.edit({
-              embeds: [scrobbleEmbed],
-              components: [row],
-            });
-          });
-        }, timeUntilScrobbling);
-
-        setTimeout(() => {
-          scrobbleEmbedRef.delete();
-        }, track.durationInMillis);
-      }
+      musicBotMessageHandler(message);
     }
     if (!message.member) return;
     if (!message.guild) return;
