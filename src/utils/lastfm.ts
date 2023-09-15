@@ -26,9 +26,7 @@ export const musicBotMessageHandler = async (message: Message) => {
       await message.channel.send({
         embeds: [
           new EmbedBuilder()
-            .setTitle(
-              'Erro ao adicionar a fila de scrobbling <:404:816944521135783936>'
-            )
+            .setTitle('Erro ao adicionar a fila de scrobbling :cry:')
             .setDescription(
               `A música **${playbackData.title}** não foi adicionada a fila de scrobbling.`
             )
@@ -50,9 +48,7 @@ export const musicBotMessageHandler = async (message: Message) => {
       await message.channel.send({
         embeds: [
           new EmbedBuilder()
-            .setTitle(
-              'Erro ao adicionar a fila de scrobbling <:404:816944521135783936>'
-            )
+            .setTitle('Erro ao adicionar a fila de scrobbling :cry:')
             .setDescription(
               `A música **${playbackData.title}** não foi adicionada a fila de scrobbling.`
             )
@@ -83,9 +79,7 @@ export const musicBotMessageHandler = async (message: Message) => {
     );
 
     const scrobbleEmbed = new EmbedBuilder()
-      .setTitle(
-        'Adicionado a fila de scrobbling <:bloblistening:816624815741468694>'
-      )
+      .setTitle('Adicionado a fila de scrobbling :headphones:')
       .setDescription(
         `A música **${
           track.name
