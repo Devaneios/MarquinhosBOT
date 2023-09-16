@@ -9,6 +9,8 @@ const GuildSchema = new Schema<IGuild>({
     baseRoleId: { type: String },
     externalRoleId: { type: String },
     rouletteRoleId: { type: String },
+    newcomersChannelId: { type: String },
+    mainChannelId: { type: String },
   },
   roulette: {
     isRouletteOn: { type: Boolean, default: false },

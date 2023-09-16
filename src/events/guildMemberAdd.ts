@@ -6,9 +6,23 @@ export const guildMemberAdd: BotEvent = {
   name: 'guildMemberAdd',
   execute: async (member: GuildMember) => {
     const guild = await GuildModel.findOne({ guildID: member.guild.id }).exec();
+    if (!guild) {
+      throw new Error('Guild not found');
+    }
+
+    const mainChannelId = guild?.options?.mainChannelId;
+    if (!mainChannelId) {
+      throw new Error('Main channel not configured');
+    }
+
     const defaultChannel = member.guild.channels.cache.get(
-      '680975188581416998' // TODO: add this as config in the database
+      mainChannelId
     ) as TextChannel;
+
+    if (!defaultChannel) {
+      throw new Error('Default channel not found');
+    }
+
     defaultChannel.send(member.user.username + ' agora faz parte do motel!');
     const role = member.guild.roles.cache.find(
       (r) => r.id === guild.options.externalRoleId
@@ -22,20 +36,31 @@ export const guildMemberAdd: BotEvent = {
           'um pouco barulhento nos fins de semana...'
       );
     } catch (error) {
-      console.log(error);
+      throw new Error('Error sending message to user');
     }
 
     const admin = member.guild.members.cache
-      .filter((user) => user.id === member.guild.ownerId)
+      .filter((user) => user.id === member.guild.ownerId) // TODO: Add other admins to the filter
       .first();
+
+    if (!admin) throw new Error('ADMIN NOT FOUND!!!');
 
     admin.send(
       `O usuário ${member.user.username} entrou no servidor e quer se registrar!`
-    );
+    ); // TODO: Improve this with buttons to accept or deny the user
+
+    const newcomersChannelId = guild?.options?.newcomersChannelId;
+    if (!newcomersChannelId) {
+      throw new Error('Newcomers channel not configured');
+    }
 
     const channel = member.guild.channels.cache.get(
-      '739562824178729122' // TODO: add this as config in the database
+      newcomersChannelId
     ) as TextChannel;
+
+    if (!channel) {
+      throw new Error('Newcomers channel not found');
+    }
 
     channel.send({
       embeds: [
