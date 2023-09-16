@@ -53,6 +53,8 @@ interface GuildOptions {
   baseRoleId: string;
   externalRoleId: string;
   rouletteRoleId: string;
+  newcomersChannelId: string;
+  mainChannelId: string;
   joinedAt: Date;
 }
 
