@@ -155,14 +155,14 @@ const millisecondsToFormattedText = (milliseconds: number) => {
   let formattedText = '';
 
   if (minutes > 0) {
-    formattedText += minutes + ' minute' + (minutes !== 1 ? 's' : '');
+    formattedText += minutes + ' minuto' + (minutes !== 1 ? 's' : '');
   }
 
   if (seconds > 0) {
     if (minutes > 0) {
-      formattedText += ' and ';
+      formattedText += ' e ';
     }
-    formattedText += seconds + ' second' + (seconds !== 1 ? 's' : '');
+    formattedText += seconds + ' segundo' + (seconds !== 1 ? 's' : '');
   }
 
   return formattedText;
