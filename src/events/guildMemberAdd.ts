@@ -23,11 +23,18 @@ export const guildMemberAdd: BotEvent = {
       throw new Error('Default channel not found');
     }
 
-    defaultChannel.send(member.user.username + ' agora faz parte do motel!');
-    const role = member.guild.roles.cache.find(
-      (r) => r.id === guild.options.externalRoleId
+    await defaultChannel.send(
+      member.user.username + ' agora faz parte do motel!'
     );
-    member.roles.add(role);
+
+    const externalRoleId = guild?.options?.externalRoleId;
+
+    if (!externalRoleId) {
+      throw new Error('External role not configured');
+    }
+
+    const role = member.guild.roles.cache.find((r) => r.id === externalRoleId);
+    await member.roles.add(role);
     try {
       member.send(
         'Olá! Você foi colocado num cargo onde não é possível entrar em canais de voz. Favor contate um ' +
@@ -39,13 +46,15 @@ export const guildMemberAdd: BotEvent = {
       throw new Error('Error sending message to user');
     }
 
-    const admin = member.guild.members.cache
+    const guildMembers = await member.guild.members.fetch();
+
+    const admin = guildMembers
       .filter((user) => user.id === member.guild.ownerId) // TODO: Add other admins to the filter
       .first();
 
     if (!admin) throw new Error('ADMIN NOT FOUND!!!');
 
-    admin.send(
+    await admin.send(
       `O usuário ${member.user.username} entrou no servidor e quer se registrar!`
     ); // TODO: Improve this with buttons to accept or deny the user
 
