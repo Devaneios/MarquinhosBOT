@@ -7,11 +7,8 @@ import {
   SlashCommandBuilder,
 } from 'discord.js';
 import { BotEvent, Command, SecretChannelData, SlashCommand } from './types';
-import { readdirSync } from 'fs';
-import { join } from 'path';
 import { logger } from './utils/logger';
 import { safeExecute } from './utils/errorHandling';
-import { audioCommandBuilder } from './commands/audioCommands/audioCommandBuilder';
 import * as commands from './commands';
 import * as events from './events';
 import { mongoConnection } from './utils/mongo';
@@ -27,7 +24,6 @@ const {
 
 class Bot {
   private _client: Client;
-  private readonly _audiosDir = join(__dirname, './resources/sounds/');
   private readonly _slashCommands: SlashCommandBuilder[] = [];
 
   constructor() {
@@ -48,7 +44,6 @@ class Bot {
 
   start() {
     this._loadTextCommands();
-    this._loadAudioCommands();
     this._loadSlashCommands();
     this._sendSlashCommands();
     this._loadEvents();
@@ -96,23 +91,6 @@ class Bot {
         logger.info(`Successfully loaded text command ${commandName}`);
       } catch (error) {
         logger.error(`Error loading text command ${commandName}`);
-        logger.error(error);
-      }
-    });
-  }
-
-  private _loadAudioCommands() {
-    readdirSync(this._audiosDir).forEach((file) => {
-      try {
-        if (!file.endsWith('.mp3') || file.startsWith('_')) return;
-        const { slashCommand, textCommand } = audioCommandBuilder(file);
-
-        this._slashCommands.push(slashCommand.command);
-        this._client.commands.set(textCommand.name, textCommand);
-        this._client.slashCommands.set(slashCommand.command.name, slashCommand);
-        logger.info(`Successfully loaded audio command ${textCommand.name}`);
-      } catch (error) {
-        logger.error(`Error loading audio command ${file.replace('.js', '')}`);
         logger.error(error);
       }
     });

@@ -22,3 +22,4 @@ export { silence } from './silence';
 export { unsilence } from './unsilence';
 export { toggleAdminRoulette } from './toggleAdminRoulette';
 export { addToRoulette } from './addToRoulette';
+export { audio } from './audio';
