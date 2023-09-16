@@ -59,7 +59,6 @@ export class CollageBuilder {
     try {
       images = await Promise.all(resizedImages);
     } catch (error) {
-      console.log(error);
       throw new Error('Error resizing images');
     }
 

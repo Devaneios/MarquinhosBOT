@@ -55,7 +55,7 @@ async function arrestUser(member: GuildMember) {
       member.voice.setChannel(member.guild.afkChannelId);
       member.send('Você está preso! :(');
     } catch (error) {
-      console.log(error);
+      throw new Error('Error arresting user');
     }
   } else {
     // User is already in arrested's channel;
