@@ -1,8 +1,8 @@
 import { Client } from 'discord.js';
 import { BotEvent } from '../types';
 import { logger } from '../utils/logger';
-import { getBicho} from '../utils/bichoGame';
-import GuildModel from '../schemas/guild';
+import { getBicho } from '../utils/bichoGame';
+import GuildModel from '../database/schemas/guild';
 
 export const ready: BotEvent = {
   name: 'ready',
@@ -24,11 +24,11 @@ export const ready: BotEvent = {
             VIP_ROLE_NAME: null,
             BASE_ROLE_NAME: null,
             EXTERNAL_ROLE_NAME: null,
-            ROULETTE_ROLE_NAME: null
+            ROULETTE_ROLE_NAME: null,
           },
           roulette: {
             isRouletteOn: false,
-            rouletteAdmins: []
+            rouletteAdmins: [],
           },
           joinedAt: Date.now(),
         });
@@ -41,6 +41,6 @@ export const ready: BotEvent = {
 async function startBichoGame(client: Client) {
   client.user.setActivity(getBicho());
   setInterval(function () {
-		client.user.setActivity(getBicho());
-	}, 100 * 1000);
+    client.user.setActivity(getBicho());
+  }, 100 * 1000);
 }

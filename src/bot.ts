@@ -11,7 +11,7 @@ import { logger } from './utils/logger';
 import { safeExecute } from './utils/errorHandling';
 import * as commands from './commands';
 import * as events from './events';
-import { mongoConnection } from './utils/mongo';
+import { mongoConnection } from './database/mongo';
 import MinecraftServerStatus from './utils/minecraftServerStatus';
 
 const {

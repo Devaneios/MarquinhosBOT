@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 import { SlashCommand } from '../../types';
-import GuildModel from '../../schemas/guild';
+import GuildModel from '../../database/schemas/guild';
 
 export const getRoles: SlashCommand = {
   command: new SlashCommandBuilder()

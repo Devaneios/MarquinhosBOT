@@ -8,7 +8,7 @@ import {
 import { SlashCommand } from '../../types';
 import * as util from 'minecraft-server-util';
 import MinecraftServerStatus from '../../utils/minecraftServerStatus';
-import MinecraftServerModel from '../../schemas/minecraftServers';
+import MinecraftServerModel from '../../database/schemas/minecraftServers';
 
 export const minecraftStatus: SlashCommand = {
   command: new SlashCommandBuilder()

@@ -1,6 +1,6 @@
 import { GuildMember, SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '../../types';
-import SilencedModel from '../../schemas/silenced';
+import SilencedModel from '../../database/schemas/silenced';
 
 export const silence: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -13,7 +13,8 @@ export const silence: SlashCommand = {
         .setRequired(true)
     ),
   execute: async (interaction) => {
-    const silenced = interaction.options.get('silenciado').member as GuildMember;
+    const silenced = interaction.options.get('silenciado')
+      .member as GuildMember;
     if (silenced.user.id === process.env.BOT_ID) {
       silenceMember(interaction.member as GuildMember);
       interaction.reply({ content: 'Po, vei, seja inteligente' });

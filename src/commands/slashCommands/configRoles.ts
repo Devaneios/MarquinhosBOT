@@ -5,7 +5,7 @@ import {
   Client,
 } from 'discord.js';
 import { SlashCommand } from '../../types';
-import GuildModel from '../../schemas/guild';
+import GuildModel from '../../database/schemas/guild';
 
 export const configRoles: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -21,7 +21,7 @@ export const configRoles: SlashCommand = {
           { name: 'cargo_vip', value: 'vip' },
           { name: 'cargo_base', value: 'base' },
           { name: 'cargo_externo', value: 'externo' },
-          { name: 'cargo_roleta', value: 'roleta'}
+          { name: 'cargo_roleta', value: 'roleta' }
         )
     )
     .addRoleOption((option) =>

@@ -1,6 +1,6 @@
-import { Client, EmbedBuilder, GuildMember, TextChannel } from 'discord.js';
+import { EmbedBuilder, GuildMember, TextChannel } from 'discord.js';
 import { BotEvent } from '../types';
-import GuildModel from '../schemas/guild';
+import GuildModel from '../database/schemas/guild';
 
 export const guildMemberAdd: BotEvent = {
   name: 'guildMemberAdd',
@@ -80,7 +80,7 @@ export const guildMemberAdd: BotEvent = {
           .addFields({
             name: `Boas vindas ao ${member.guild?.name}`,
             value:
-              'Leia as regras para não tomar KICK/BAN e mantenha um bom relacionamento com o pessoal :sunglasses: ',
+              'Leia as regras para não tomar KICK/BAN e mantenha um bom relacionamento com o pessoal :sunglasses:',
           })
           .setTimestamp()
           .setFooter({ text: 'Data de entrada' }),
