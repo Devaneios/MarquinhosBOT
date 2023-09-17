@@ -1,5 +1,3 @@
-'use strict';
-
 import { createLogger, transports, format, addColors } from 'winston';
 
 addColors({

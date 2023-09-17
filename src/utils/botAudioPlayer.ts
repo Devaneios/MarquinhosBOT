@@ -4,8 +4,9 @@ import {
   createAudioPlayer,
   createAudioResource,
 } from '@discordjs/voice';
+
 import { logger } from './logger';
-import { SafeAny } from '../types';
+import { SafeAny } from 'src/types';
 import { AudioPlayerDisconnectEvent } from './discord';
 
 class BotAudioPlayer {

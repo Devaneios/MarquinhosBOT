@@ -1,5 +1,6 @@
-import { CommandInteraction, Message, User } from 'discord.js';
-import { BotErrorLogLevel, SafeAny } from '../types';
+import { CommandInteraction, Message } from 'discord.js';
+
+import { BotErrorLogLevel } from 'src/types';
 
 class BotError extends Error {
   discordMessage: Message | CommandInteraction;

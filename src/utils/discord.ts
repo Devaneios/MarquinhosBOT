@@ -10,7 +10,8 @@ import {
   VoiceChannel,
 } from 'discord.js';
 import { join } from 'path';
-import { SafeAny } from '../types';
+
+import { SafeAny } from 'src/types';
 import BotError from './botError';
 import BotAudioPlayer from './botAudioPlayer';
 
