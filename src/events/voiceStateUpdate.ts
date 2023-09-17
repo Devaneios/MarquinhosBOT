@@ -1,5 +1,5 @@
 import { BotEvent } from '../types';
-import ArrestedModel from '../schemas/arrested';
+import ArrestedModel from '../database/schemas/arrested';
 import { GuildMember, VoiceState } from 'discord.js';
 
 // WIP

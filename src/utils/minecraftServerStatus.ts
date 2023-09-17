@@ -6,7 +6,7 @@ import {
 } from 'discord.js';
 import * as util from 'minecraft-server-util';
 import { IMinecraftServer } from '../types';
-import MinecraftServerModel from '../schemas/minecraftServers';
+import MinecraftServerModel from '../database/schemas/minecraftServers';
 import { join } from 'path';
 
 export default class MinecraftServerStatus {

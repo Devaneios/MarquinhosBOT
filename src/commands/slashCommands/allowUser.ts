@@ -4,7 +4,7 @@ import {
   GuildMemberRoleManager,
 } from 'discord.js';
 import { SlashCommand } from '../../types';
-import GuildModel from '../../schemas/guild';
+import GuildModel from '../../database/schemas/guild';
 
 export const allowUser: SlashCommand = {
   command: new SlashCommandBuilder()

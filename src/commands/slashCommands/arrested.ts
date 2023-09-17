@@ -1,6 +1,6 @@
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '../../types';
-import ArrestedModel from '../../schemas/arrested';
+import ArrestedModel from '../../database/schemas/arrested';
 
 export const arrested: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -10,10 +10,14 @@ export const arrested: SlashCommand = {
     const arrested = await (await getArrested()).toArray();
     interaction.reply({
       embeds: [
-        new EmbedBuilder().setDescription(
-          arrested.map(a => a.user).toString().replace(',', '\n')
-        )
-        .setTitle('Segue lista dos criminosos:'),
+        new EmbedBuilder()
+          .setDescription(
+            arrested
+              .map((a) => a.user)
+              .toString()
+              .replace(',', '\n')
+          )
+          .setTitle('Segue lista dos criminosos:'),
       ],
     });
   },

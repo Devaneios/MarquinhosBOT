@@ -1,6 +1,6 @@
 import { GuildMember, SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '../../types';
-import ArrestedModel from '../../schemas/arrested';
+import ArrestedModel from '../../database/schemas/arrested';
 
 export const arrest: SlashCommand = {
   command: new SlashCommandBuilder()

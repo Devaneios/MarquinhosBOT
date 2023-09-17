@@ -1,5 +1,5 @@
 import { Guild } from 'discord.js';
-import GuildModel from '../schemas/guild';
+import GuildModel from '../database/schemas/guild';
 import { BotEvent } from '../types';
 
 export const guildCreate: BotEvent = {

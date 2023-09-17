@@ -12,7 +12,7 @@ import BotError from '../utils/botError';
 import FuzzySearch from 'fuzzy-search';
 import { safeExecute } from '../utils/errorHandling';
 import dotenv from 'dotenv';
-import SilencedModel from 'src/schemas/silenced';
+import SilencedModel from 'src/database/schemas/silenced';
 import { musicBotMessageHandler } from 'src/utils/lastfm';
 
 dotenv.config();
