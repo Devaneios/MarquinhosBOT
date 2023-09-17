@@ -6,7 +6,7 @@ import { SlashCommand } from 'src/types';
 import { logger } from 'src/utils/logger';
 import { playAudio, voiceChannelPresence } from 'src/utils/discord';
 
-const audiosDir = join(__dirname, '../../resources/sounds/');
+const audiosDir = join(__dirname, '../../../resources/sounds/');
 const audios: string[] = [];
 
 readdirSync(audiosDir).forEach((file) => {
