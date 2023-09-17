@@ -2,16 +2,16 @@ import {
   Client,
   GatewayIntentBits,
   Collection,
+  SlashCommandBuilder,
   REST,
   Routes,
-  SlashCommandBuilder,
 } from 'discord.js';
 
-import { BotEvent, Command, SecretChannelData, SlashCommand } from '../types';
-import { logger } from '../utils/logger';
-import { safeExecute } from '../utils/errorHandling';
-import { mongoConnection } from '../database/mongo';
-import MinecraftServerStatus from '../utils/minecraftServerStatus';
+import { BotEvent, Command, SecretChannelData, SlashCommand } from 'src/types';
+import { logger } from 'src/utils/logger';
+import { mongoConnection } from 'src/database/mongo';
+import { safeExecute } from 'src/utils/errorHandling';
+import MinecraftServerStatus from 'src/utils/minecraftServerStatus';
 import * as commands from './commands';
 import * as events from './events';
 
