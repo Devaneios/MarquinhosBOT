@@ -103,13 +103,16 @@ export class Bot {
     );
 
     eventsArray.forEach((event: BotEvent) => {
-      event.once
-        ? this._client.once(event.name, (...args) => {
-            safeExecute(event.execute, ...args)();
-          })
-        : this._client.on(event.name, (...args) => {
-            safeExecute(event.execute, ...args)();
-          });
+      if (event.once) {
+        this._client.once(event.name, (...args) => {
+          safeExecute(event.execute, ...args)();
+        });
+      } else {
+        this._client.on(event.name, (...args) => {
+          safeExecute(event.execute, ...args)();
+        });
+      }
+
       logger.info(`Successfully loaded event ${event.name}`);
     });
   }
