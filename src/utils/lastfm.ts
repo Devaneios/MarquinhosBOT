@@ -7,7 +7,7 @@ import {
 } from 'discord.js';
 
 import { MarquinhosApiService } from 'src/services/marquinhosApi';
-import { TempoDataProvider } from 'src/services/tempo';
+import { TempoDataProvider } from 'src/utils/tempo';
 import { logger } from './logger';
 import { Track } from 'src/types';
 
