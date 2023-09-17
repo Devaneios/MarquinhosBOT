@@ -19,7 +19,7 @@ export const time: SlashCommand = {
           {
             attachment: join(
               __dirname,
-              '../../resources/images/oleodemacaco.png'
+              '../../../resources/images/oleodemacaco.png'
             ),
             name: 'oleodemacaco.png',
             description: 'HORÁRIO OFICIAL',
