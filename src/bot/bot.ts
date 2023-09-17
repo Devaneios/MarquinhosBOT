@@ -69,6 +69,11 @@ export class Bot {
     );
 
     slashCommands.forEach((command: SlashCommand) => {
+      command.command.setName(
+        `${command.command.name}${
+          process.env.NODE_ENV === 'production' ? '' : '-dev'
+        }`
+      );
       const commandName = command.command.name;
       try {
         this._slashCommands.push(command.command);
