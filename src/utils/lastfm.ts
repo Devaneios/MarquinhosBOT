@@ -5,6 +5,7 @@ import {
   EmbedBuilder,
   Message,
 } from 'discord.js';
+
 import { MarquinhosApiService } from 'src/services/marquinhosApi';
 import { TempoDataProvider } from 'src/services/tempo';
 import { logger } from './logger';

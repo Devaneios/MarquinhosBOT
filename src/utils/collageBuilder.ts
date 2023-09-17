@@ -1,8 +1,8 @@
-import axios, { AxiosResponse } from 'axios';
-import fs from 'fs';
-import sharp from 'sharp';
 import { Image, createCanvas, loadImage, registerFont } from 'canvas';
 import { join } from 'path';
+import axios from 'axios';
+import fs from 'fs';
+import sharp from 'sharp';
 import fontColorContrast from 'font-color-contrast';
 
 const FORMAT_CONFIGS = {
