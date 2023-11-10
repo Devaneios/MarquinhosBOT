@@ -37,7 +37,6 @@
     "sharp": "^0.32.5",
     "tsconfig-paths": "^4.2.0",
     "winston": "^3.8.2",
-    "youtube-scrape": "github:Guilhermeasper/youtube-scrape",
     "ytdl-core": "^4.11.4"
   },
   "engines": {
@@ -54,7 +53,7 @@
     "@types/fuzzy-search": "^2.1.2",
     "@types/node": "^20.1.5",
     "eslint": "^8.40.0",
-    "nodemon": "^2.0.22",
+    "nodemon": "^3.0.1",
     "typescript": "^5.0.4"
   }
 }
