@@ -18,7 +18,7 @@ export class MarquinhosApiService {
       const { data } = await axios.request(options);
       return data;
     } catch (error) {
-      throw new Error('Error adding to scrobble queue');
+      throw error;
     }
   }
 
@@ -35,7 +35,7 @@ export class MarquinhosApiService {
       const { data } = await axios.request(options);
       return data;
     } catch (error) {
-      throw new Error('Error dispatching scrobble');
+      throw error;
     }
   }
 
@@ -51,7 +51,7 @@ export class MarquinhosApiService {
       const { data } = await axios.request(options);
       return data;
     } catch (error) {
-      throw new Error('Error removing user from scrobble queue');
+      throw error;
     }
   }
 
@@ -67,7 +67,7 @@ export class MarquinhosApiService {
       const { data } = await axios.request(options);
       return data;
     } catch (error) {
-      throw new Error('Error getting top artists');
+      throw error;
     }
   }
 
@@ -83,7 +83,7 @@ export class MarquinhosApiService {
       const { data } = await axios.request(options);
       return data;
     } catch (error) {
-      throw new Error('Error getting top albums');
+      throw error;
     }
   }
 
@@ -99,7 +99,7 @@ export class MarquinhosApiService {
       const { data } = await axios.request(options);
       return data;
     } catch (error) {
-      throw new Error('Error getting top tracks');
+      throw error;
     }
   }
 }

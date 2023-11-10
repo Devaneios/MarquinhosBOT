@@ -25,7 +25,11 @@ export const messageCreate: BotEvent = {
     const timedMessageDuration = 10000;
 
     if (message.channel instanceof TextChannel && message.author.bot) {
-      musicBotMessageHandler(message);
+      try {
+        await musicBotMessageHandler(message);
+      } catch (error) {
+        throw error;
+      }
     }
     if (!message.member) return;
     if (!message.guild) return;
