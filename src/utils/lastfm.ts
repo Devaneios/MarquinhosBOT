@@ -72,8 +72,8 @@ export const musicBotMessageHandler = async (message: Message) => {
 
     const cancelScrobble = new ButtonBuilder()
       .setCustomId('cancel')
-      .setLabel('Cancelar')
-      .setStyle(ButtonStyle.Danger);
+      .setEmoji({ name: '🚫' })
+      .setStyle(ButtonStyle.Secondary);
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       cancelScrobble
