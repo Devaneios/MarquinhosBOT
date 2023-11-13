@@ -109,7 +109,6 @@ export const musicBotMessageHandler = async (message: Message) => {
     });
 
     collector.on('collect', async (collectedInteraction) => {
-      console.log(collectedInteraction.customId);
       if (collectedInteraction.customId === 'add') {
         if (scrobblesOnUsers.includes(collectedInteraction.user.id)) {
           await collectedInteraction.deferUpdate();
@@ -163,7 +162,7 @@ export const musicBotMessageHandler = async (message: Message) => {
       cancelScrobble.setDisabled(true);
       buttons.setComponents([addScrobble, cancelScrobble]);
       scrobbleEmbed.setFooter({
-        text: '',
+        text: 'O tempo para adicionar a fila de scrobbling acabou!',
       });
       scrobbleEmbedRef.edit({
         embeds: [scrobbleEmbed],
