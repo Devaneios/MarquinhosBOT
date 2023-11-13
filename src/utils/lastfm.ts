@@ -93,7 +93,7 @@ export const musicBotMessageHandler = async (message: Message) => {
       .setDescription(getOngoingScrobbleDescription(track, scrobblesOnUsers))
       .setThumbnail(track.coverArtUrl)
       .setFooter({
-        text: `Scrobbling em ${millisecondsToFormattedText(
+        text: `Scrobbling será feito em ${millisecondsToFormattedText(
           timeUntilScrobbling
         )}`,
       })
@@ -162,6 +162,13 @@ export const musicBotMessageHandler = async (message: Message) => {
       addScrobble.setDisabled(true);
       cancelScrobble.setDisabled(true);
       buttons.setComponents([addScrobble, cancelScrobble]);
+      scrobbleEmbed.setFooter({
+        text: '',
+      });
+      scrobbleEmbedRef.edit({
+        embeds: [scrobbleEmbed],
+        components: [buttons],
+      });
     }, timeUntilScrobbling - tenSecondsInMillis);
 
     setTimeout(() => {
