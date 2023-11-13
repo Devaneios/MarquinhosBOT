@@ -55,6 +55,22 @@ export class MarquinhosApiService {
     }
   }
 
+  async addUserToScrobbleQueue(id: string, userId: string) {
+    const options = {
+      method: 'POST',
+      url: `${process.env.MARQUINHOS_API_URL}/api/scrobble/${id}/${userId}`,
+      headers: {
+        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
+      },
+    };
+    try {
+      const { data } = await axios.request(options);
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async getTopArtists(id: string, period: LastfmTopListenedPeriod) {
     const options = {
       method: 'GET',
