@@ -2,6 +2,7 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ComponentType,
   EmbedBuilder,
   Message,
 } from 'discord.js';
@@ -39,13 +40,10 @@ export const musicBotMessageHandler = async (message: Message) => {
 
     const scrobbleId = response.data.id;
     const track: Track = response.data.track;
-    let scrobblesOnUsers: string[] = response.data.scrobblesOnUsers;
 
-    if (!scrobblesOnUsers || !track || !scrobbleId) {
+    if (!track || !scrobbleId) {
       logger.error(`Couldn't add ${playbackData.title} to scrobble queue`);
-      logger.error(
-        `scrobblesOnUsers: ${!!scrobblesOnUsers}, track: ${!!track}, scrobbleId: ${!!scrobbleId}`
-      );
+      logger.error(`track: ${!!track}, scrobbleId: ${!!scrobbleId}`);
       await message.channel.send({
         embeds: [
           new EmbedBuilder()
@@ -59,11 +57,8 @@ export const musicBotMessageHandler = async (message: Message) => {
       return;
     }
 
-    logger.info(
-      `Added ${playbackData.title} to scrobble queue to ${scrobblesOnUsers.length} users`
-    );
-
     const fourMinutesInMillis = 240000;
+    const tenSecondsInMillis = 10000;
 
     const timeUntilScrobbling = Math.min(
       Math.floor(track.durationInMillis / 2),
@@ -72,22 +67,30 @@ export const musicBotMessageHandler = async (message: Message) => {
 
     const cancelScrobble = new ButtonBuilder()
       .setCustomId('cancel')
-      .setEmoji({ name: '🚫' })
+      .setLabel('Cancelar pra mim')
+      .setEmoji({ name: '❌' })
       .setStyle(ButtonStyle.Secondary);
 
-    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      cancelScrobble
+    const addScrobble = new ButtonBuilder()
+      .setCustomId('add')
+      .setLabel('Adicionar pra mim')
+      .setEmoji({ name: '➕' })
+      .setStyle(ButtonStyle.Primary);
+
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents([
+      addScrobble,
+      cancelScrobble,
+    ]);
+
+    let scrobblesOnUsers: string[] = response.data.scrobblesOnUsers;
+
+    logger.info(
+      `Added ${playbackData.title} to scrobble queue to ${scrobblesOnUsers.length} users`
     );
 
     const scrobbleEmbed = new EmbedBuilder()
       .setTitle('Adicionado a fila de scrobbling :headphones:')
-      .setDescription(
-        `A música **${
-          track.name
-        }** foi adicionada a fila de scrobbling para os seguintes usuários:\n
-      ${scrobblesOnUsers.map((id) => `<@${id}>`).join('\n')}
-      `
-      )
+      .setDescription(getOngoingScrobbleDescription(track, scrobblesOnUsers))
       .setThumbnail(track.coverArtUrl)
       .setFooter({
         text: `Scrobbling em ${millisecondsToFormattedText(
@@ -98,45 +101,78 @@ export const musicBotMessageHandler = async (message: Message) => {
 
     const scrobbleEmbedRef = await message.channel.send({
       embeds: [scrobbleEmbed],
-      components: [row],
+      components: [buttons],
     });
 
-    let collector = scrobbleEmbedRef.createMessageComponentCollector();
+    let collector = scrobbleEmbedRef.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+    });
 
-    collector.on('collect', async (i) => {
-      scrobblesOnUsers = scrobblesOnUsers.filter((id) => id !== i.user.id);
-      await marquinhosApi.removeUserFromScrobbleQueue(scrobbleId, i.user.id);
-      scrobbleEmbed.setDescription(
-        `A música **${
-          track.name
-        }** foi adicionada a fila de scrobbling para os seguintes usuários:\n
-      ${scrobblesOnUsers.map((id) => `<@${id}>`).join('\n')}
-      `
-      );
-      await i.deferUpdate();
-      await scrobbleEmbedRef.edit({
-        embeds: [scrobbleEmbed],
-        components: [row],
-      });
+    collector.on('collect', async (collectedInteraction) => {
+      console.log(collectedInteraction.customId);
+      if (collectedInteraction.customId === 'add') {
+        if (scrobblesOnUsers.includes(collectedInteraction.user.id)) {
+          await collectedInteraction.deferUpdate();
+          return;
+        }
+        if (scrobblesOnUsers.length === 0) {
+          buttons.setComponents([addScrobble, cancelScrobble]);
+        }
+        scrobblesOnUsers.push(collectedInteraction.user.id);
+        await marquinhosApi.addUserToScrobbleQueue(
+          scrobbleId,
+          collectedInteraction.user.id
+        );
+        scrobbleEmbed.setDescription(
+          getOngoingScrobbleDescription(track, scrobblesOnUsers)
+        );
+        await collectedInteraction.deferUpdate();
 
-      collector = scrobbleEmbedRef.createMessageComponentCollector();
+        await scrobbleEmbedRef.edit({
+          embeds: [scrobbleEmbed],
+          components: [buttons],
+        });
+      } else if (collectedInteraction.customId === 'cancel') {
+        if (!scrobblesOnUsers.includes(collectedInteraction.user.id)) {
+          await collectedInteraction.deferUpdate();
+          return;
+        }
+        scrobblesOnUsers = scrobblesOnUsers.filter(
+          (id) => id !== collectedInteraction.user.id
+        );
+        await marquinhosApi.removeUserFromScrobbleQueue(
+          scrobbleId,
+          collectedInteraction.user.id
+        );
+        scrobbleEmbed.setDescription(
+          getOngoingScrobbleDescription(track, scrobblesOnUsers)
+        );
+        await collectedInteraction.deferUpdate();
+        if (scrobblesOnUsers.length === 0) {
+          buttons.setComponents([addScrobble]);
+        }
+        await scrobbleEmbedRef.edit({
+          embeds: [scrobbleEmbed],
+          components: [buttons],
+        });
+      }
     });
 
     setTimeout(() => {
+      addScrobble.setDisabled(true);
       cancelScrobble.setDisabled(true);
-      row.setComponents([cancelScrobble]);
+      buttons.setComponents([addScrobble, cancelScrobble]);
+    }, timeUntilScrobbling - tenSecondsInMillis);
+
+    setTimeout(() => {
       marquinhosApi.dispatchScrobbleQueue(scrobbleId).then(() => {
-        scrobbleEmbed.setTitle('Scrobble feito com sucesso');
+        scrobbleEmbed.setTitle(`O scrobbling de **${track.name}** terminou!`);
         scrobbleEmbed.setDescription(
-          `O scrobble da música **${
-            track.name
-          }** foi feito com sucesso para os seguintes usuários:\n
-      ${scrobblesOnUsers.map((id) => `<@${id}>`).join('\n')}
-      `
+          getFinishedScrobbleDescription(track, scrobblesOnUsers)
         );
         scrobbleEmbedRef.edit({
           embeds: [scrobbleEmbed],
-          components: [row],
+          components: [buttons],
         });
       });
     }, timeUntilScrobbling);
@@ -167,4 +203,30 @@ const millisecondsToFormattedText = (milliseconds: number) => {
   }
 
   return formattedText;
+};
+
+const getOngoingScrobbleDescription = (track: Track, users: string[]) => {
+  if (users.length === 0) {
+    return `A música **${track.name}** está na fila de scrobbling, mas não será feito para nenhum usuário.
+    Clique em **Adicionar pra mim** para adicionar a fila de scrobbling para você.
+      `;
+  } else {
+    return `A música **${
+      track.name
+    }** foi adicionada a fila de scrobbling para os seguintes usuários:\n
+      ${users.map((id) => `<@${id}>`).join('\n')}
+      `;
+  }
+};
+
+const getFinishedScrobbleDescription = (track: Track, users: string[]) => {
+  if (users.length === 0) {
+    return `O scrobble da música **${track.name}** terminou, mas não foi feito para nenhum usuário.`;
+  } else {
+    return `O scrobble da música **${
+      track.name
+    }** foi feito com sucesso para os seguintes usuários:\n
+      ${users.map((id) => `<@${id}>`).join('\n')}
+      `;
+  }
 };
