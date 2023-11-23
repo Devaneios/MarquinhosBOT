@@ -2,6 +2,8 @@
 
 source /etc/marquinhos/marquinhos.conf
 
+DESTINATION_DIR="$1"
+
 service=$(cat << EOF
 [Unit]
 
@@ -25,9 +27,9 @@ User=guilherme
 
 KillMode=control-group
 
-WorkingDirectory=/home/guilherme/github-runners/devaneios-runner/_work/MarquinhosBOT/MarquinhosBOT/dist
+WorkingDirectory=$DESTINATION_DIR
 
-ExecStart=/home/guilherme/.nvm/versions/node/v18.13.0/bin/node -r tsconfig-paths/register ./index.js
+ExecStart=node -r tsconfig-paths/register ./index.js
 
 Restart=always
 

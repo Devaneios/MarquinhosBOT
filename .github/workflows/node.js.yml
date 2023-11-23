@@ -26,5 +26,7 @@ jobs:
     needs: build
     runs-on: [self-hosted, Linux, X64]
     steps:
-      - run: chmod +x ./deploy.sh
-      - run: echo ${{ secrets.DVNS_CLUSTER_PASSWORD }} | sudo -S ./deploy.sh
+      - name: Make deploy.sh executable
+        run: chmod +x ./deploy.sh
+      - name: Execute deploy.sh
+        run: echo "${{ secrets.DVNS_CLUSTER_PASSWORD }}" | sudo -S ./deploy.sh "$(pwd)/dist"
