@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, AttachmentBuilder } from 'discord.js';
 
-import { SlashCommand } from 'src/types';
+import { SlashCommand } from '@marquinhos/types';
 
 export const coin: SlashCommand = {
   command: new SlashCommandBuilder()

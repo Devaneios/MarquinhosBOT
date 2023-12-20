@@ -6,7 +6,7 @@ import {
   VoiceChannel,
 } from 'discord.js';
 
-import { SlashCommand } from 'src/types';
+import { SlashCommand } from '@marquinhos/types';
 
 export const moveAll: SlashCommand = {
   command: new SlashCommandBuilder()

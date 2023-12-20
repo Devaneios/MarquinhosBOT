@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { LastfmTopListenedPeriod, PlaybackData, Track } from 'src/types';
+import { LastfmTopListenedPeriod, PlaybackData } from '@marquinhos/types';
 
 export class MarquinhosApiService {
   async addToScrobbleQueue(playbackData: PlaybackData) {

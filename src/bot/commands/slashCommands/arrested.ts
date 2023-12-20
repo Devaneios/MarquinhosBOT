@@ -1,7 +1,7 @@
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
-import { SlashCommand } from 'src/types';
-import ArrestedModel from 'src/database/schemas/arrested';
+import { SlashCommand } from '@marquinhos/types';
+import ArrestedModel from '@schemas/arrested';
 
 export const arrested: SlashCommand = {
   command: new SlashCommandBuilder()

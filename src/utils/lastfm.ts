@@ -7,10 +7,10 @@ import {
   Message,
 } from 'discord.js';
 
-import { MarquinhosApiService } from 'src/services/marquinhosApi';
-import { TempoDataProvider } from 'src/utils/tempo';
-import { logger } from './logger';
-import { Track } from 'src/types';
+import { MarquinhosApiService } from '@services/marquinhosApi';
+import { TempoDataProvider } from '@utils/tempo';
+import { logger } from '@utils/logger';
+import { Track } from '@marquinhos/types';
 
 const tempo = new TempoDataProvider();
 const marquinhosApi = new MarquinhosApiService();

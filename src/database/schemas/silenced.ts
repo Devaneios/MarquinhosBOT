@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { ISilenced } from 'src/types';
+import { ISilenced } from '@marquinhos/types';
 
 const SilencedSchema = new Schema<ISilenced>({
   id: { required: true, type: String },

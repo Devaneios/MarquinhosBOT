@@ -1,6 +1,6 @@
 import { Message, TextChannel } from 'discord.js';
 
-import { Command } from 'src/types';
+import { Command } from '@marquinhos/types';
 
 export const clone: Command = {
   name: 'clone',

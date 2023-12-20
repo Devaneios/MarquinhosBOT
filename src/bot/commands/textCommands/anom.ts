@@ -5,9 +5,9 @@ import {
   TextChannel,
 } from 'discord.js';
 
-import { Command } from 'src/types';
-import { sendTimedMessage } from 'src/utils/discord';
-import BotError from 'src/utils/botError';
+import { Command } from '@marquinhos/types';
+import { sendTimedMessage } from '@utils/discord';
+import BotError from '@utils/botError';
 
 export const anom: Command = {
   name: 'anom',

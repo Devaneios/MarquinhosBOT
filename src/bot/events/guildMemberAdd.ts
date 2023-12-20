@@ -1,7 +1,7 @@
 import { EmbedBuilder, GuildMember, TextChannel } from 'discord.js';
 
-import { BotEvent } from 'src/types';
-import GuildModel from 'src/database/schemas/guild';
+import { BotEvent } from '@marquinhos/types';
+import GuildModel from '@schemas/guild';
 
 export const guildMemberAdd: BotEvent = {
   name: 'guildMemberAdd',

@@ -5,8 +5,8 @@ import {
   VoiceChannel,
 } from 'discord.js';
 
-import { SlashCommand } from 'src/types';
-import { playAudio } from 'src/utils/discord';
+import { SlashCommand } from '@marquinhos/types';
+import { playAudio } from '@utils/discord';
 
 export const importunate: SlashCommand = {
   command: new SlashCommandBuilder()

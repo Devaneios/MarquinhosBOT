@@ -1,7 +1,7 @@
 import { Message, VoiceChannel } from 'discord.js';
 
-import { Command } from 'src/types';
-import { playAudio } from 'src/utils/discord';
+import { Command } from '@marquinhos/types';
+import { playAudio } from '@utils/discord';
 
 export const time: Command = {
   name: 'horario',

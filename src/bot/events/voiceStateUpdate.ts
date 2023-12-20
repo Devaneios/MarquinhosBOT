@@ -1,7 +1,7 @@
 import { GuildMember, VoiceState } from 'discord.js';
 
-import { BotEvent } from 'src/types';
-import ArrestedModel from 'src/database/schemas/arrested';
+import { BotEvent } from '@marquinhos/types';
+import ArrestedModel from '@schemas/arrested';
 
 // WIP
 export const voiceStateUpdate: BotEvent = {

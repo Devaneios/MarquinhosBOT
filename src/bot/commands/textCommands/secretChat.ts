@@ -1,9 +1,9 @@
 import { Client, Message, TextChannel } from 'discord.js';
 import { Subject, delay } from 'rxjs';
 
-import { Command, SecretChannelData } from 'src/types';
-import { sendTimedMessage } from 'src/utils/discord';
-import { coerceNumberProperty } from 'src/utils/coercion';
+import { Command, SecretChannelData } from '@marquinhos/types';
+import { sendTimedMessage } from '@utils/discord';
+import { coerceNumberProperty } from '@utils/coercion';
 
 export const secretChat: Command = {
   name: 'chat-secreto',

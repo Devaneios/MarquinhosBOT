@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { IMinecraftServer } from 'src/types';
+import { IMinecraftServer } from '@marquinhos/types';
 
 const MinecraftServerSchema = new Schema<IMinecraftServer>({
   guildID: { required: true, type: String },

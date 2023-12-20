@@ -7,13 +7,18 @@ import {
   Routes,
 } from 'discord.js';
 
-import { BotEvent, Command, SecretChannelData, SlashCommand } from 'src/types';
-import { logger } from 'src/utils/logger';
-import { mongoConnection } from 'src/database/mongo';
-import { safeExecute } from 'src/utils/errorHandling';
-import MinecraftServerStatus from 'src/utils/minecraftServerStatus';
-import * as commands from './commands';
-import * as events from './events';
+import {
+  BotEvent,
+  Command,
+  SecretChannelData,
+  SlashCommand,
+} from '@marquinhos/types';
+import { logger } from '@utils/logger';
+import { mongoConnection } from '@database/mongo';
+import { safeExecute } from '@utils/errorHandling';
+import MinecraftServerStatus from '@utils/minecraftServerStatus';
+import * as commands from '@commands';
+import * as events from '@events';
 
 const {
   Guilds,

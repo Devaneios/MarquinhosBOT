@@ -1,7 +1,7 @@
 import { Guild } from 'discord.js';
 
-import GuildModel from 'src/database/schemas/guild';
-import { BotEvent } from 'src/types';
+import GuildModel from '@schemas/guild';
+import { BotEvent } from '@marquinhos/types';
 
 export const guildCreate: BotEvent = {
   name: 'guildCreate',

@@ -1,8 +1,8 @@
 import { GuildMember, SlashCommandBuilder, VoiceChannel } from 'discord.js';
 import { join } from 'path';
 
-import { SlashCommand } from 'src/types';
-import { playAudio } from 'src/utils/discord';
+import { SlashCommand } from '@marquinhos/types';
+import { playAudio } from '@utils/discord';
 
 export const time: SlashCommand = {
   command: new SlashCommandBuilder()
