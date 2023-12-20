@@ -1,6 +1,6 @@
-import { SafeAny } from 'src/types';
-import { logger } from './logger';
-import BotError from './botError';
+import { SafeAny } from '@marquinhos/types';
+import { logger } from '@utils/logger';
+import BotError from '@utils/botError';
 
 export const safeExecute = (fn: Function, ...args: SafeAny) => {
   return function () {

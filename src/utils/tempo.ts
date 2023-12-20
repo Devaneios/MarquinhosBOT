@@ -24,7 +24,7 @@ SOFTWARE.
 
 import { GuildMember, Message } from 'discord.js';
 import dotenv from 'dotenv';
-import { PlaybackData } from 'src/types';
+import { PlaybackData } from '@marquinhos/types';
 
 dotenv.config();
 

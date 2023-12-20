@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 
-import { SlashCommand } from 'src/types';
+import { SlashCommand } from '@marquinhos/types';
 
 export const ping: SlashCommand = {
   command: new SlashCommandBuilder()

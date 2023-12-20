@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { IArrested } from 'src/types';
+import { IArrested } from '@marquinhos/types';
 
 const ArrestedSchema = new Schema<IArrested>({
   id: { required: true, type: String },

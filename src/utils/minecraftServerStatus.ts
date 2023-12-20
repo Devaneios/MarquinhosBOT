@@ -1,8 +1,8 @@
 import { Client, EmbedBuilder, TextChannel } from 'discord.js';
 import * as util from 'minecraft-server-util';
 
-import { IMinecraftServer } from 'src/types';
-import MinecraftServerModel from 'src/database/schemas/minecraftServers';
+import { IMinecraftServer } from '@marquinhos/types';
+import MinecraftServerModel from '@schemas/minecraftServers';
 
 export default class MinecraftServerStatus {
   private static instance: MinecraftServerStatus;

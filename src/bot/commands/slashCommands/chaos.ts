@@ -9,10 +9,10 @@ import {
 } from 'discord.js';
 import { AudioPlayerStatus } from '@discordjs/voice';
 
-import BotAudioPlayer from 'src/utils/botAudioPlayer';
-import { SlashCommand } from 'src/types';
-import { coerceNumberProperty } from 'src/utils/coercion';
-import { playAudio } from 'src/utils/discord';
+import BotAudioPlayer from '@utils/botAudioPlayer';
+import { SlashCommand } from '@marquinhos/types';
+import { coerceNumberProperty } from '@utils/coercion';
+import { playAudio } from '@utils/discord';
 
 export const chaos: SlashCommand = {
   command: new SlashCommandBuilder()

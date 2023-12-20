@@ -7,9 +7,9 @@ import {
 } from 'discord.js';
 import * as util from 'minecraft-server-util';
 
-import { SlashCommand } from 'src/types';
-import MinecraftServerStatus from 'src/utils/minecraftServerStatus';
-import MinecraftServerModel from 'src/database/schemas/minecraftServers';
+import { SlashCommand } from '@marquinhos/types';
+import MinecraftServerStatus from '@utils/minecraftServerStatus';
+import MinecraftServerModel from '@schemas/minecraftServers';
 
 export const minecraftStatus: SlashCommand = {
   command: new SlashCommandBuilder()

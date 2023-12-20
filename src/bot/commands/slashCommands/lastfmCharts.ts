@@ -1,8 +1,8 @@
 import { SlashCommandBuilder } from 'discord.js';
 
-import { SlashCommand } from 'src/types';
-import { MarquinhosApiService } from 'src/services/marquinhosApi';
-import { CollageBuilder } from 'src/utils/collageBuilder';
+import { SlashCommand } from '@marquinhos/types';
+import { MarquinhosApiService } from '@services/marquinhosApi';
+import { CollageBuilder } from '@utils/collageBuilder';
 
 const marquinhosApi = new MarquinhosApiService();
 const collageBuilder = new CollageBuilder();

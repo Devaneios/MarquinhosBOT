@@ -1,11 +1,11 @@
 import { Client } from 'discord.js';
 import { join } from 'path';
 
-import { BotEvent } from 'src/types';
-import { logger } from 'src/utils/logger';
-import { getBicho } from 'src/utils/bichoGame';
-import GuildModel from 'src/database/schemas/guild';
-import { isDateInRange } from 'src/utils/dateRange';
+import { BotEvent } from '@marquinhos/types';
+import { logger } from '@utils/logger';
+import { getBicho } from '@utils/bichoGame';
+import GuildModel from '@schemas/guild';
+import { isDateInRange } from '@utils/dateRange';
 
 export const ready: BotEvent = {
   name: 'ready',

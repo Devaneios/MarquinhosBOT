@@ -8,13 +8,13 @@ import {
 import dotenv from 'dotenv';
 import FuzzySearch from 'fuzzy-search';
 
-import { checkPermissions, sendTimedMessage } from 'src/utils/discord';
-import { BotEvent } from 'src/types';
-import { logger } from 'src/utils/logger';
-import { safeExecute } from 'src/utils/errorHandling';
-import { musicBotMessageHandler } from 'src/utils/lastfm';
-import SilencedModel from 'src/database/schemas/silenced';
-import BotError from 'src/utils/botError';
+import { checkPermissions, sendTimedMessage } from '@utils/discord';
+import { BotEvent } from '@marquinhos/types';
+import { logger } from '@utils/logger';
+import { safeExecute } from '@utils/errorHandling';
+import { musicBotMessageHandler } from '@utils/lastfm';
+import SilencedModel from '@schemas/silenced';
+import BotError from '@utils/botError';
 
 dotenv.config();
 

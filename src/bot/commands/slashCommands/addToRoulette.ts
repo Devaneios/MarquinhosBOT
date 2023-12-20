@@ -4,8 +4,8 @@ import {
   SlashCommandBuilder,
 } from 'discord.js';
 
-import { SlashCommand } from 'src/types';
-import GuildModel from 'src/database/schemas/guild';
+import { SlashCommand } from '@marquinhos/types';
+import GuildModel from '@schemas/guild';
 
 export const addToRoulette: SlashCommand = {
   command: new SlashCommandBuilder()

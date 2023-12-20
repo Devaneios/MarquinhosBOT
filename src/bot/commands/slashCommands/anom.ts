@@ -5,7 +5,7 @@ import {
   TextChannel,
 } from 'discord.js';
 
-import { SlashCommand } from 'src/types';
+import { SlashCommand } from '@marquinhos/types';
 
 export const anom: SlashCommand = {
   command: new SlashCommandBuilder()

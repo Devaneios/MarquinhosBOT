@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
 
-import { SlashCommand } from 'src/types';
+import { SlashCommand } from '@marquinhos/types';
 import { join } from 'path';
 
 export const esroh: SlashCommand = {

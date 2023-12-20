@@ -1,6 +1,6 @@
-export { interactionCreate } from './interactionCreate';
-export { messageCreate } from './messageCreate';
-export { ready } from './ready';
-export { guildCreate } from './guildCreate';
-export { voiceStateUpdate } from './voiceStateUpdate';
-export { guildMemberAdd } from './guildMemberAdd';
+export { interactionCreate } from '@events/interactionCreate';
+export { messageCreate } from '@events/messageCreate';
+export { ready } from '@events/ready';
+export { guildCreate } from '@events/guildCreate';
+export { voiceStateUpdate } from '@events/voiceStateUpdate';
+export { guildMemberAdd } from '@events/guildMemberAdd';

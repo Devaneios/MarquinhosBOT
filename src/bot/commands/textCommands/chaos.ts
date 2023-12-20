@@ -7,9 +7,9 @@ import {
   VoiceChannel,
 } from 'discord.js';
 
-import { Command } from 'src/types';
-import { coerceNumberProperty } from 'src/utils/coercion';
-import { playAudio } from 'src/utils/discord';
+import { Command } from '@marquinhos/types';
+import { coerceNumberProperty } from '@utils/coercion';
+import { playAudio } from '@utils/discord';
 
 export const chaos: Command = {
   name: 'chaos',

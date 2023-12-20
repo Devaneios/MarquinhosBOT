@@ -1,1 +1,1 @@
-export { Bot } from 'src/bot/bot';
+export { Bot } from '@marquinhos/bot/bot';

@@ -1,6 +1,6 @@
 import { GuildMember, SlashCommandBuilder } from 'discord.js';
-import { SlashCommand } from 'src/types';
-import SilencedModel from 'src/database/schemas/silenced';
+import { SlashCommand } from '@marquinhos/types';
+import SilencedModel from '@schemas/silenced';
 
 export const unsilence: SlashCommand = {
   command: new SlashCommandBuilder()

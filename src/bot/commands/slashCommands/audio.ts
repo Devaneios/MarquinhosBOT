@@ -2,9 +2,9 @@ import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 import { join } from 'path';
 import { readdirSync } from 'fs';
 
-import { SlashCommand } from 'src/types';
-import { logger } from 'src/utils/logger';
-import { playAudio, voiceChannelPresence } from 'src/utils/discord';
+import { SlashCommand } from '@marquinhos/types';
+import { logger } from '@utils/logger';
+import { playAudio, voiceChannelPresence } from '@utils/discord';
 
 const audiosDir = join(__dirname, '../../../resources/sounds/');
 const audios: string[] = [];

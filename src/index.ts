@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-import { Bot } from 'src/bot';
+import { Bot } from '@marquinhos/bot';
 config();
 
 const marquinhos = new Bot();

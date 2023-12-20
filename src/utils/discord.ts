@@ -11,9 +11,9 @@ import {
 } from 'discord.js';
 import { join } from 'path';
 
-import { SafeAny } from 'src/types';
-import BotError from './botError';
-import BotAudioPlayer from './botAudioPlayer';
+import { SafeAny } from '@marquinhos/types';
+import BotError from '@utils/botError';
+import BotAudioPlayer from '@utils/botAudioPlayer';
 
 export const checkPermissions = (
   member: GuildMember,

@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { join } from 'path';
 
-import { SlashCommand } from 'src/types';
+import { SlashCommand } from '@marquinhos/types';
 
 export const horse: SlashCommand = {
   command: new SlashCommandBuilder().setName('cavalo').setDescription('CAVALO'),
