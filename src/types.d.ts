@@ -1,10 +1,10 @@
 import {
-  SlashCommandBuilder,
-  CommandInteraction,
-  Collection,
-  PermissionResolvable,
-  Message,
   AutocompleteInteraction,
+  Collection,
+  CommandInteraction,
+  Message,
+  PermissionResolvable,
+  SlashCommandBuilder,
   TextChannel,
 } from 'discord.js';
 import { Subject } from 'rxjs';
@@ -70,6 +70,43 @@ export interface IGuild extends mongoose.Document {
   joinedAt: Date;
 }
 
+export interface ITriviaQuestion extends mongoose.Document {
+  question: string;
+  correctAnswer: string;
+  playersAnswered: string[];
+  lastTimeAsked: Date;
+  timesAsked: number;
+  hints: string[];
+  category: string;
+  difficulty: string;
+  type: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type TriviaPlayer = {
+  id: string;
+  points?: number;
+  globalPoints?: number;
+};
+
+export interface ITriviaGame {
+  players: TriviaPlayer[];
+  category: string;
+  difficulty: TriviaDifficulty;
+  addQuestion(question: TriviaQuestion): Promise<TriviaQuestion>;
+  removeQuestion(question: TriviaQuestion): any;
+  getQuestion(questionId: string): any;
+  getQuestions(category: string, page: number, pageSize: number): any;
+  playerAnswer(answer: string, playerID: string): any;
+  askQuestion(): any;
+  endGame(): any;
+}
+
+export type TriviaCategory = 'general' | 'music' | 'movies' | 'games';
+
+export type TriviaDifficulty = 'easy' | 'medium' | 'hard';
+
 export type GuildOption = keyof GuildOptions;
 export interface BotEvent {
   name: string;
@@ -130,6 +167,7 @@ declare module 'discord.js' {
     commands: Collection<string, Command>;
     cooldowns: Collection<string, number>;
     secretChannels: Collection<string, SecretChannelData>;
+    triviaGames: Collection<string, TriviaGame>;
   }
 }
 
