@@ -2,10 +2,10 @@ import { Client } from 'discord.js';
 import { join } from 'path';
 
 import { BotEvent } from '@marquinhos/types';
-import { logger } from '@utils/logger';
-import { getBicho } from '@utils/bichoGame';
 import GuildModel from '@schemas/guild';
+import { getBicho } from '@utils/bichoGame';
 import { isDateInRange } from '@utils/dateRange';
+import { logger } from '@utils/logger';
 
 export const ready: BotEvent = {
   name: 'ready',
@@ -14,7 +14,11 @@ export const ready: BotEvent = {
     logger.info(`Logged in as ${client.user?.tag}`);
     logger.info(`Marquinhos™ is online!`);
     // Start heartbeat for bicho game
-    startBichoGame(client);
+    if (process.env.NODE_ENV === 'production') {
+      startBichoGame(client);
+    } else {
+      client.user.setActivity(`${getRandomGame()}`);
+    }
     await updateAvatarBasedOnHoliday(client);
     // Marquinhos for Multiple guilds
     const guilds = client.guilds.cache.map((guild) => guild.id);
@@ -86,4 +90,53 @@ function getAvatar(avatarHash: string | null) {
     return null;
   }
   return regularAvatar;
+}
+
+function getRandomGame() {
+  const games = [
+    'Among Us',
+    'Valorant',
+    'League of Legends',
+    'Minecraft',
+    'Counter-Strike: Global Offensive',
+    'Rocket League',
+    'Apex Legends',
+    'Fortnite',
+    'Genshin Impact',
+    'Grand Theft Auto V',
+    'Call of Duty: Warzone',
+    'FIFA 21',
+    'Rust',
+    'Phasmophobia',
+    'Cyberpunk 2077',
+    'Dead by Daylight',
+    'Destiny 2',
+    'Dota 2',
+    'Fall Guys',
+    'Overwatch',
+    'PUBG',
+    'Rainbow Six Siege',
+    'Sea of Thieves',
+    'The Sims 4',
+    'Team Fortress 2',
+    'Terraria',
+    'World of Warcraft',
+    'World of Tanks',
+    'Hearthstone',
+    'Path of Exile',
+    'RuneScape',
+    'Arma 3',
+    'Smite',
+    'Forza Horizon 4',
+    'Brawlhalla',
+    'Mortal Kombat 11',
+    'Starcraft II',
+    'Warframe',
+    'Magic: The Gathering Arena',
+    'Chess',
+    'Halo: The Master Chief Collection',
+    'Farming Simulator 19',
+  ];
+
+  return games[Math.floor(Math.random() * games.length)];
 }

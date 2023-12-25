@@ -72,14 +72,13 @@ export interface IGuild extends mongoose.Document {
 
 export interface ITriviaQuestion extends mongoose.Document {
   question: string;
-  correctAnswer: string;
+  answer: string;
   playersAnswered: string[];
   lastTimeAsked: Date;
   timesAsked: number;
   hints: string[];
   category: string;
   difficulty: string;
-  type: string;
   createdAt: Date;
   updatedAt: Date;
 }

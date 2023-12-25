@@ -1,10 +1,10 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { Client, CommandInteraction } from 'discord.js';
 
-export const endTrivia = {
+export const endTriviaGame = {
   command: new SlashCommandBuilder()
-    .setName('end-trivia')
-    .setDescription('Force end a trivia game'),
+    .setName('finalizar-trivia')
+    .setDescription('Força o fim do jogo de trivia neste canal'),
   execute: async (interaction: CommandInteraction) => {
     const { triviaGames } = interaction.guild?.client as Client;
     const currentGame = triviaGames.get(interaction.channelId);
@@ -16,5 +16,10 @@ export const endTrivia = {
     }
     currentGame.endGame();
     triviaGames.delete(interaction.channelId);
+
+    await interaction.reply({
+      content: 'Jogo de trivia finalizado',
+      ephemeral: true,
+    });
   },
 };

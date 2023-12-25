@@ -1,12 +1,12 @@
-import { TriviaQuestionModel } from '@schemas/triviaQuestion';
 import {
   TriviaDifficulty,
   TriviaPlayer,
   ITriviaQuestion as TriviaQuestion,
 } from '@marquinhos/types';
-import { logger } from '@marquinhos/utils/logger';
 import { levenshteinDistance } from '@marquinhos/utils/levensteinDistance';
+import { logger } from '@marquinhos/utils/logger';
 import { TriviaPlayerModel } from '@schemas/triviaPlayer';
+import { TriviaQuestionModel } from '@schemas/triviaQuestion';
 
 export class TriviaGame {
   private currentQuestion: TriviaQuestion;
@@ -16,75 +16,46 @@ export class TriviaGame {
   category: string;
   difficulty: TriviaDifficulty;
 
-  constructor(category: string, difficulty: TriviaDifficulty) {
-    this.players = [];
-    this.questionsAsked = [];
-    this.category = category;
-    this.difficulty = difficulty;
-  }
-
-  public async addQuestion(question: TriviaQuestion): Promise<boolean> {
-    try {
-      await TriviaQuestionModel.create(question);
-      return true;
-    } catch (error) {
-      logger.error(error);
-      return false;
-    }
-  }
-
-  public async removeQuestion(question: TriviaQuestion): Promise<boolean> {
-    try {
-      await TriviaQuestionModel.deleteOne(question);
-      return true;
-    } catch (error) {
-      logger.error(error);
-      return false;
-    }
-  }
-
-  public async getQuestion(questionId: string): Promise<TriviaQuestion> {
-    return await TriviaQuestionModel.findById(questionId);
-  }
-
-  public async getQuestions(
+  constructor(
     category: string,
-    page: number,
-    pageSize: number
-  ): Promise<TriviaQuestion[]> {
-    const skip = (page - 1) * pageSize;
-    const questions = await TriviaQuestionModel.find({ category })
-      .skip(skip)
-      .limit(pageSize);
-    return questions;
+    difficulty: TriviaDifficulty,
+    playerID: string
+  ) {
+    this.startGame(category, difficulty, playerID);
   }
 
-  public async playerAnswer(answer: string, playerID: string): Promise<void> {
+  public async playerAnswer(
+    answer: string,
+    playerID: string
+  ): Promise<boolean> {
     if (!this.players.find((player) => player.id === playerID)) {
       this.players.push({ id: playerID, points: 0 });
     }
     const player = this.players.find((player) => player.id === playerID);
-
-    if (this.currentQuestion.playersAnswered.includes(playerID)) {
-      return;
+    console.log(this.currentQuestion);
+    if (!this.currentQuestion) {
+      return false;
     }
 
-    const isCorrect = answer === this.currentQuestion.correctAnswer;
+    if (this.currentQuestion.playersAnswered.includes(playerID)) {
+      return false;
+    }
+
+    const isCorrect = answer === this.currentQuestion.answer;
     const similarity =
-      levenshteinDistance(answer, this.currentQuestion.correctAnswer) > 5
-        ? 0
-        : 5;
+      levenshteinDistance(answer, this.currentQuestion.answer) > 3 ? 0 : 5;
     const partialPoints = isCorrect ? 10 : similarity;
 
     player.points += partialPoints;
     this.currentQuestion.playersAnswered.push(playerID);
+    return true;
   }
 
   public async askQuestion(): Promise<TriviaQuestion> {
     const category = this.category;
     const difficulty = this.difficulty;
     const question = await TriviaQuestionModel.aggregate([
-      { $match: { category, difficulty } },
+      { $match: { difficulty } },
       { $sample: { size: 1 } },
     ]);
 
@@ -96,7 +67,7 @@ export class TriviaGame {
     this.currentQuestion = question[0] as TriviaQuestion;
     question[0].timesAsked++;
     question[0].lastTimeAsked = new Date();
-    await question[0].save();
+    await TriviaQuestionModel.updateOne({ _id: question[0]._id }, question[0]);
     return this.currentQuestion;
   }
 
@@ -113,4 +84,57 @@ export class TriviaGame {
     }
     return this.players;
   }
+
+  private async startGame(
+    category: string,
+    difficulty: TriviaDifficulty,
+    playerID: string
+  ): Promise<void> {
+    this.category = category;
+    this.difficulty = difficulty;
+    this.players = [{ id: playerID, points: 0 }];
+    this.questionsAsked = [];
+  }
 }
+
+export const addQuestion = async (
+  question: TriviaQuestion
+): Promise<boolean> => {
+  try {
+    await TriviaQuestionModel.create(question);
+    return true;
+  } catch (error) {
+    logger.error(error);
+    return false;
+  }
+};
+
+export const removeQuestion = async (
+  question: TriviaQuestion
+): Promise<boolean> => {
+  try {
+    await TriviaQuestionModel.deleteOne(question);
+    return true;
+  } catch (error) {
+    logger.error(error);
+    return false;
+  }
+};
+
+export const getQuestion = async (
+  questionId: string
+): Promise<TriviaQuestion> => {
+  return await TriviaQuestionModel.findById(questionId);
+};
+
+export const getQuestions = async (
+  category: string,
+  page: number,
+  pageSize: number
+): Promise<TriviaQuestion[]> => {
+  const skip = (page - 1) * pageSize;
+  const questions = await TriviaQuestionModel.find({ category })
+    .skip(skip)
+    .limit(pageSize);
+  return questions;
+};

@@ -1,24 +1,25 @@
 import {
   Client,
-  GatewayIntentBits,
   Collection,
-  SlashCommandBuilder,
+  GatewayIntentBits,
   REST,
   Routes,
+  SlashCommandBuilder,
 } from 'discord.js';
 
+import * as commands from '@commands';
+import { mongoConnection } from '@database/mongo';
+import * as events from '@events';
 import {
   BotEvent,
   Command,
+  ITriviaGame,
   SecretChannelData,
   SlashCommand,
 } from '@marquinhos/types';
-import { logger } from '@utils/logger';
-import { mongoConnection } from '@database/mongo';
 import { safeExecute } from '@utils/errorHandling';
+import { logger } from '@utils/logger';
 import MinecraftServerStatus from '@utils/minecraftServerStatus';
-import * as commands from '@commands';
-import * as events from '@events';
 
 const {
   Guilds,
@@ -46,6 +47,7 @@ export class Bot {
     this._client.commands = new Collection<string, Command>();
     this._client.cooldowns = new Collection<string, number>();
     this._client.secretChannels = new Collection<string, SecretChannelData>();
+    this._client.triviaGames = new Collection<string, ITriviaGame>();
   }
 
   start() {

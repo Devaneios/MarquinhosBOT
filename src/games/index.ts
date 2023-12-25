@@ -1,1 +1,7 @@
-export { TriviaGame } from './trivia';
+export {
+  TriviaGame,
+  addQuestion,
+  getQuestion,
+  getQuestions,
+  removeQuestion,
+} from '@marquinhos/games/trivia';

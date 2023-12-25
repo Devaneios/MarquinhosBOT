@@ -22,5 +22,11 @@ export { release } from '@slashCommands/release';
 export { silence } from '@slashCommands/silence';
 export { time } from '@slashCommands/time';
 export { toggleAdminRoulette } from '@slashCommands/toggleAdminRoulette';
-export { clearTrivia, endTrivia, startTrivia } from '@slashCommands/triviaGame';
+export {
+  addTriviaQuestion,
+  answerTriviaQuestion,
+  endTriviaGame,
+  explodeTriviaGames,
+  startTriviaGame,
+} from '@slashCommands/triviaGame';
 export { unsilence } from '@slashCommands/unsilence';

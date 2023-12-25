@@ -1,3 +1,5 @@
-export { clearTrivia } from './clearTrivia';
-export { endTrivia } from './endTrivia';
-export { startTrivia } from './startTrivia';
+export { addTriviaQuestion } from './addQuestion';
+export { answerTriviaQuestion } from './answerQuestion';
+export { endTriviaGame } from './endGame';
+export { explodeTriviaGames } from './explodeGames';
+export { startTriviaGame } from './startGame';
