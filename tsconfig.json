@@ -15,7 +15,8 @@
     "forceConsistentCasingInFileNames": true,
     "removeComments": true,
     "typeRoots": ["node_modules/@types"],
-    "sourceMap": false,
+    "sourceMap": true,
+    "declaration": true,
     "baseUrl": ".",
     "paths": {
       "@marquinhos": ["src", "dist"],
