@@ -7,6 +7,7 @@ import {
   SlashCommandBuilder,
   TextChannel,
 } from 'discord.js';
+import { Document } from 'mongoose';
 import { Subject } from 'rxjs';
 
 export interface SlashCommand {
@@ -29,17 +30,17 @@ export interface AudioCommandBuilder {
   textCommand: Command;
 }
 
-interface IArrested extends mongoose.Document {
+interface IArrested extends Document {
   id: string;
   user: string;
 }
 
-interface ISilenced extends mongoose.Document {
+interface ISilenced extends Document {
   id: string;
   user: string;
 }
 
-export interface IMinecraftServer extends mongoose.Document {
+export interface IMinecraftServer extends Document {
   guildID: string;
   channelID: string;
   messageID: string;
@@ -63,14 +64,14 @@ interface Roulette {
   rouletteAdmins: string[];
 }
 
-export interface IGuild extends mongoose.Document {
+export interface IGuild extends Document {
   guildID: string;
   roulette: Roulette;
   options: GuildOptions;
   joinedAt: Date;
 }
 
-export interface ITriviaQuestion extends mongoose.Document {
+export interface ITriviaQuestion extends Document {
   question: string;
   answer: string;
   playersAnswered: string[];
@@ -105,6 +106,12 @@ export interface ITriviaGame {
 export type TriviaCategory = 'general' | 'music' | 'movies' | 'games';
 
 export type TriviaDifficulty = 'easy' | 'medium' | 'hard';
+
+export type TriviaQuestionResponse =
+  | 'answered'
+  | 'questionNotFound'
+  | 'alreadyAnswered'
+  | 'timeOut';
 
 export type GuildOption = keyof GuildOptions;
 export interface BotEvent {
