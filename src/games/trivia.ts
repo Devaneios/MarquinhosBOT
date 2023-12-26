@@ -2,19 +2,25 @@ import {
   TriviaDifficulty,
   TriviaPlayer,
   ITriviaQuestion as TriviaQuestion,
+  TriviaQuestionResponse,
 } from '@marquinhos/types';
 import { levenshteinDistance } from '@marquinhos/utils/levensteinDistance';
 import { logger } from '@marquinhos/utils/logger';
 import { TriviaPlayerModel } from '@schemas/triviaPlayer';
 import { TriviaQuestionModel } from '@schemas/triviaQuestion';
+import { Message } from 'discord.js';
 
 export class TriviaGame {
-  private currentQuestion: TriviaQuestion;
   private questionsAsked: TriviaQuestion[];
+  private questionsAnsweredByPlayers: Map<string, string[]>;
+  private pointsAvailable: number;
 
+  currentQuestion: TriviaQuestion;
   players: TriviaPlayer[];
   category: string;
   difficulty: TriviaDifficulty;
+  currentQuestionEmbed: Message;
+  intervalBetweenQuestions: boolean;
 
   constructor(
     category: string,
@@ -27,28 +33,47 @@ export class TriviaGame {
   public async playerAnswer(
     answer: string,
     playerID: string
-  ): Promise<boolean> {
-    if (!this.players.find((player) => player.id === playerID)) {
-      this.players.push({ id: playerID, points: 0 });
+  ): Promise<TriviaQuestionResponse> {
+    let player = this.players.find((player) => player.id === playerID);
+    if (!player) {
+      player = { id: playerID, points: 0 };
+      this.players.push(player);
     }
-    const player = this.players.find((player) => player.id === playerID);
-    console.log(this.currentQuestion);
-    if (!this.currentQuestion) {
-      return false;
+    if (this.intervalBetweenQuestions) {
+      return 'timeOut';
     }
 
-    if (this.currentQuestion.playersAnswered.includes(playerID)) {
-      return false;
+    if (!this.currentQuestion) {
+      return 'questionNotFound';
+    }
+
+    if (
+      this.questionsAnsweredByPlayers
+        .get(this.currentQuestion._id)
+        ?.includes(playerID)
+    ) {
+      return 'alreadyAnswered';
     }
 
     const isCorrect = answer === this.currentQuestion.answer;
-    const similarity =
-      levenshteinDistance(answer, this.currentQuestion.answer) > 3 ? 0 : 5;
-    const partialPoints = isCorrect ? 10 : similarity;
+    const similarity = levenshteinDistance(answer, this.currentQuestion.answer);
+    let partialPoints = 0;
+    if (isCorrect) {
+      partialPoints = this.pointsAvailable;
+    } else if (similarity <= 2) {
+      partialPoints = Math.floor(this.pointsAvailable / 2);
+    }
 
     player.points += partialPoints;
-    this.currentQuestion.playersAnswered.push(playerID);
-    return true;
+    if (!this.questionsAnsweredByPlayers.has(this.currentQuestion._id)) {
+      this.questionsAnsweredByPlayers.set(this.currentQuestion._id, [playerID]);
+    } else {
+      this.questionsAnsweredByPlayers
+        .get(this.currentQuestion._id)
+        ?.push(playerID);
+    }
+    this.pointsAvailable = Math.max(this.pointsAvailable - 1, 5);
+    return 'answered';
   }
 
   public async askQuestion(): Promise<TriviaQuestion> {
@@ -62,7 +87,7 @@ export class TriviaGame {
     if (this.questionsAsked.includes(question[0])) {
       return await this.askQuestion();
     }
-
+    this.pointsAvailable = 10;
     this.questionsAsked.push(question[0]);
     this.currentQuestion = question[0] as TriviaQuestion;
     question[0].timesAsked++;
@@ -78,11 +103,12 @@ export class TriviaGame {
       if (!triviaPlayer) {
         await TriviaPlayerModel.create(player);
       } else {
+        triviaPlayer.globalPoints = triviaPlayer.globalPoints ?? 0;
         triviaPlayer.globalPoints += player.points;
         await triviaPlayer.save();
       }
     }
-    return this.players;
+    return this.players.sort((a, b) => b.points - a.points);
   }
 
   private async startGame(
@@ -94,6 +120,8 @@ export class TriviaGame {
     this.difficulty = difficulty;
     this.players = [{ id: playerID, points: 0 }];
     this.questionsAsked = [];
+    this.questionsAnsweredByPlayers = new Map();
+    this.intervalBetweenQuestions = false;
   }
 }
 
@@ -113,7 +141,7 @@ export const removeQuestion = async (
   question: TriviaQuestion
 ): Promise<boolean> => {
   try {
-    await TriviaQuestionModel.deleteOne(question);
+    await TriviaQuestionModel.deleteOne({ _id: question._id });
     return true;
   } catch (error) {
     logger.error(error);

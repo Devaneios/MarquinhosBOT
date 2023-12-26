@@ -1,15 +1,15 @@
 import {
-  SlashCommandBuilder,
-  EmbedBuilder,
   ChannelType,
+  EmbedBuilder,
   PermissionsBitField,
+  SlashCommandBuilder,
   TextChannel,
 } from 'discord.js';
 import * as util from 'minecraft-server-util';
 
-import { SlashCommand } from '@marquinhos/types';
-import MinecraftServerStatus from '@utils/minecraftServerStatus';
+import { IMinecraftServer, SlashCommand } from '@marquinhos/types';
 import MinecraftServerModel from '@schemas/minecraftServers';
+import MinecraftServerStatus from '@utils/minecraftServerStatus';
 
 export const minecraftStatus: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -104,7 +104,7 @@ export const minecraftStatus: SlashCommand = {
       messageID: messageEmbed.id,
       host: ip,
       port,
-    });
+    } as IMinecraftServer);
 
     await interaction.reply({
       embeds: [

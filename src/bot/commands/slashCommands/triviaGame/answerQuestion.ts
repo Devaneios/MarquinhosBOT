@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { TriviaGame } from '@marquinhos/games';
-import { Client, CommandInteraction } from 'discord.js';
+import { Client, CommandInteraction, EmbedBuilder } from 'discord.js';
 
 export const answerTriviaQuestion = {
   command: new SlashCommandBuilder()
@@ -21,18 +21,51 @@ export const answerTriviaQuestion = {
       });
     }
     const questionAswered = await currentGame.playerAnswer(
-      interaction.user.id,
-      answer
+      answer,
+      interaction.user.id
     );
-    if (questionAswered) {
-      return interaction.reply({
-        content: 'Resposta enviada com sucesso',
-        ephemeral: true,
-      });
+
+    switch (questionAswered) {
+      case 'questionNotFound':
+        await interaction.reply({
+          content: 'Não existe uma questão sendo feita no momento',
+          ephemeral: true,
+        });
+        break;
+      case 'alreadyAnswered':
+        await interaction.reply({
+          content: 'Você já respondeu essa questão',
+          ephemeral: true,
+        });
+        break;
+      case 'answered':
+        await interaction.reply({
+          content: 'Resposta enviada com sucesso',
+          ephemeral: true,
+        });
+
+        await currentGame.currentQuestionEmbed.edit({
+          embeds: [
+            new EmbedBuilder()
+              .setDescription(
+                `${currentGame.currentQuestionEmbed.embeds[0].description}\n <@${interaction.user.id}>`
+              )
+              .setTitle(currentGame.currentQuestionEmbed.embeds[0].title),
+          ],
+        });
+        break;
+      case 'timeOut':
+        await interaction.reply({
+          content: 'Tempo esgotado',
+          ephemeral: true,
+        });
+        break;
+      default:
+        await interaction.reply({
+          content: 'Erro ao responder a questão',
+          ephemeral: true,
+        });
+        break;
     }
-    return interaction.reply({
-      content: 'Houve um erro ao enviar sua resposta',
-      ephemeral: true,
-    });
   },
 };
