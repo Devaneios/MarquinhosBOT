@@ -75,14 +75,12 @@ export const guildMemberAdd: BotEvent = {
     channel.send({
       embeds: [
         new EmbedBuilder()
-          .setTitle(`Olá ${member.user.username}`)
           .setThumbnail(member.user.avatarURL())
           .setColor('#0099ff')
-          .addFields({
-            name: `Boas vindas ao ${member.guild?.name}`,
-            value:
-              'Leia as regras para não tomar KICK/BAN e mantenha um bom relacionamento com o pessoal :sunglasses:',
-          })
+          .setDescription(
+            `**Boas vindas ao ${member.guild?.name},** <@${member.user.id}>\n
+            Leia as regras para não tomar KICK/BAN e mantenha um bom relacionamento com o pessoal :sunglasses:\n`
+          )
           .setTimestamp()
           .setFooter({ text: 'Data de entrada' }),
       ],
