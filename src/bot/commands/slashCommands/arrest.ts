@@ -14,7 +14,7 @@ export const arrest: SlashCommand = {
         .setRequired(true)
     ),
   execute: async (interaction) => {
-    const arrested = interaction.options.get('preso').member as GuildMember;
+    const arrested = interaction.options.get('preso')?.member as GuildMember;
     if (arrested.user.id === process.env.BOT_ID) {
       arrestMember(interaction.member as GuildMember);
       interaction.reply({ content: 'Tu realmente tentou essa?' });

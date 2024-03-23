@@ -24,7 +24,7 @@ export const moveAll: SlashCommand = {
     const member = interaction.member as GuildMember;
     const voiceChannel = member.voice.channel;
     const newVoiceChannel = interaction.options.get('canal')
-      .channel as VoiceChannel;
+      ?.channel as VoiceChannel;
 
     if (!voiceChannel) {
       await interaction.reply('Mas tu nem tá num canal de voz vei :(');

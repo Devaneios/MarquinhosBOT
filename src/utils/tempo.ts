@@ -36,11 +36,13 @@ export class TempoDataProvider {
   isHandleableMessage(message: Message): boolean {
     return (
       message.author.username.startsWith('Tempo') &&
-      message?.embeds[0]?.title?.startsWith('Playing: ')
+      !!message?.embeds[0]?.title?.startsWith('Playing: ')
     );
   }
 
-  async getPlaybackDataFromMessage(message: Message): Promise<PlaybackData> {
+  async getPlaybackDataFromMessage(
+    message: Message
+  ): Promise<PlaybackData | null> {
     const title = message?.embeds[0]?.title?.slice(this.titlePaddingIndex);
 
     const members = (message.member as GuildMember)?.voice.channel?.members;
@@ -49,11 +51,20 @@ export class TempoDataProvider {
       listeningUsersId.push(member.id);
     });
 
+    if (
+      !title ||
+      !message.guild ||
+      !message.member?.voice.channelId ||
+      !listeningUsersId.length
+    ) {
+      return null;
+    }
+
     return {
       title,
-      guildId: message.guild.id,
+      guildId: message.guild?.id,
       timestamp: new Date(),
-      channelId: message.member.voice.channelId,
+      channelId: message.member?.voice.channelId,
       listeningUsersId,
       providerName: this.providerName,
     };

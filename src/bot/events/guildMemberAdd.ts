@@ -35,6 +35,10 @@ export const guildMemberAdd: BotEvent = {
     }
 
     const role = member.guild.roles.cache.find((r) => r.id === externalRoleId);
+
+    if (!role) {
+      throw new Error('Role not found');
+    }
     await member.roles.add(role);
     try {
       member.send(

@@ -15,7 +15,7 @@ export const silence: SlashCommand = {
     ),
   execute: async (interaction) => {
     const silenced = interaction.options.get('silenciado')
-      .member as GuildMember;
+      ?.member as GuildMember;
     if (silenced.user.id === process.env.BOT_ID) {
       silenceMember(interaction.member as GuildMember);
       interaction.reply({ content: 'Po, vei, seja inteligente' });

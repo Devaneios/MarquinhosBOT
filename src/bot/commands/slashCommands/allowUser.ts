@@ -4,7 +4,7 @@ import {
   GuildMemberRoleManager,
 } from 'discord.js';
 
-import { SlashCommand } from '@marquinhos/types';
+import { Nullable, SlashCommand } from '@marquinhos/types';
 import GuildModel from '@schemas/guild';
 
 export const allowUser: SlashCommand = {
@@ -18,19 +18,28 @@ export const allowUser: SlashCommand = {
         .setRequired(true)
     ),
   execute: async (interaction) => {
-    const userId = interaction.options.get('usuário').value as string;
-    let externalRoleId = '';
-    let baseRoleId = '';
-    let vipRoleId = '';
+    const userId = interaction.options.get('usuário')
+      ?.value as Nullable<string>;
+    const roles = {
+      externalRoleId: null,
+      baseRoleId: null,
+      vipRoleId: null,
+    } as {
+      externalRoleId: Nullable<string>;
+      baseRoleId: Nullable<string>;
+      vipRoleId: Nullable<string>;
+    };
 
     try {
-      const guildRoles = await findRoles(interaction.guild?.id as string);
+      const guildRoles = await findRoles(
+        interaction.guild?.id ?? ('' as string)
+      );
 
-      externalRoleId = guildRoles.externalRoleId;
-      baseRoleId = guildRoles.baseRoleId;
-      vipRoleId = guildRoles.vipRoleId;
+      roles.externalRoleId = guildRoles.externalRoleId;
+      roles.baseRoleId = guildRoles.baseRoleId;
+      roles.vipRoleId = guildRoles.vipRoleId;
 
-      if (!externalRoleId || !baseRoleId || !vipRoleId) {
+      if (!roles.externalRoleId || !roles.baseRoleId || !roles.vipRoleId) {
         throw new Error('Roles not configured');
       }
     } catch (error: unknown) {
@@ -48,7 +57,7 @@ export const allowUser: SlashCommand = {
 
     if (
       !(interaction.member?.roles as GuildMemberRoleManager).cache.has(
-        vipRoleId
+        roles.vipRoleId
       )
     ) {
       await interaction.reply({
@@ -61,7 +70,7 @@ export const allowUser: SlashCommand = {
       throw new Error('User not allowed');
     }
 
-    const member = await interaction.guild?.members.fetch(userId);
+    const member = await interaction.guild?.members.fetch(userId ?? '');
 
     if (!member) {
       await interaction.reply({
@@ -77,9 +86,9 @@ export const allowUser: SlashCommand = {
     const memberRoles = member.roles.cache;
 
     try {
-      if (memberRoles.has(externalRoleId)) {
-        await member.roles.remove(externalRoleId);
-      } else if (memberRoles.has(baseRoleId)) {
+      if (memberRoles.has(roles.externalRoleId)) {
+        await member.roles.remove(roles.externalRoleId);
+      } else if (memberRoles.has(roles.baseRoleId)) {
         await interaction.reply({
           embeds: [
             new EmbedBuilder()
@@ -90,8 +99,8 @@ export const allowUser: SlashCommand = {
         throw new Error('User already allowed');
       }
 
-      if (!memberRoles.has(baseRoleId)) {
-        await member.roles.add(baseRoleId);
+      if (!memberRoles.has(roles.baseRoleId)) {
+        await member.roles.add(roles.baseRoleId);
       }
     } catch (error) {
       await interaction.reply({

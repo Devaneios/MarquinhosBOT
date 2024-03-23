@@ -48,8 +48,7 @@
       "@services/*": ["src/services/*", "dist/services/*"],
       "@utils": ["src/utils", "dist/utils"],
       "@utils/*": ["src/utils/*", "dist/utils/*"]
-    },
-    "strictNullChecks": false
+    }
   },
   "files": ["src/index.ts"],
   "include": ["./src/**/*.ts"],

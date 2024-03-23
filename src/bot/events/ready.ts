@@ -1,7 +1,7 @@
 import { Client } from 'discord.js';
 import { join } from 'path';
 
-import { BotEvent } from '@marquinhos/types';
+import { BotEvent, Nullable } from '@marquinhos/types';
 import { logger } from '@utils/logger';
 import { getBicho } from '@utils/bichoGame';
 import GuildModel from '@schemas/guild';
@@ -43,21 +43,21 @@ export const ready: BotEvent = {
 };
 
 function startBichoGame(client: Client) {
-  client.user.setActivity(getBicho());
+  client.user?.setActivity(getBicho());
   setInterval(function () {
-    client.user.setActivity(getBicho());
+    client.user?.setActivity(getBicho());
   }, 100 * 1000);
 }
 
 async function updateAvatarBasedOnHoliday(client: Client) {
-  const avatar = getAvatar(client?.user.avatar);
+  const avatar = getAvatar(client.user?.avatar);
   if (!avatar) return;
-  await client.user.setAvatar(
+  await client.user?.setAvatar(
     join(__dirname, `../../resources/images/${avatar}`)
   );
 }
 
-function getAvatar(avatarHash: string | null) {
+function getAvatar(avatarHash: Nullable<string>) {
   const regularAvatar = 'marquinhoshead.jpg';
   const regularAvatarHash = '3b124d750ce2a473031e559993179653';
 

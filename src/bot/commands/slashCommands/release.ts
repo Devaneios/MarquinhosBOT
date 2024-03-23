@@ -15,7 +15,7 @@ export const release: SlashCommand = {
     ),
   execute: async (interaction) => {
     // Gets the member chosen to arrest
-    const arrested = interaction.options.get('preso').member as GuildMember;
+    const arrested = interaction.options.get('preso')?.member as GuildMember;
 
     // User cannot releat themselves
     if (interaction.member === arrested) {
@@ -31,7 +31,7 @@ export const release: SlashCommand = {
       arrested.user.username
     );
 
-    if (result.value) {
+    if (result?.value) {
       interaction.reply({ content: `Abrindo a cela do ${arrested}.` });
       return;
     }

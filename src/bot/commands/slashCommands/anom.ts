@@ -27,8 +27,8 @@ export const anom: SlashCommand = {
         .setRequired(true)
     ),
   execute: async (interaction) => {
-    const channel = interaction.options.get('canal').channel as TextChannel;
-    const message = interaction.options.get('mensagem').value as string;
+    const channel = interaction.options.get('canal')?.channel as TextChannel;
+    const message = interaction.options.get('mensagem')?.value as string;
     channel.send({
       embeds: [
         new EmbedBuilder()

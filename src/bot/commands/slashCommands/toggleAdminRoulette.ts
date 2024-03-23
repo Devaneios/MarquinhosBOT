@@ -1,6 +1,6 @@
 import { PermissionsBitField, SlashCommandBuilder } from 'discord.js';
 
-import { SlashCommand } from '@marquinhos/types';
+import { Nullable, SlashCommand } from '@marquinhos/types';
 import GuildModel from '@schemas/guild';
 
 export const toggleAdminRoulette: SlashCommand = {
@@ -15,14 +15,14 @@ export const toggleAdminRoulette: SlashCommand = {
         .setRequired(true)
     ),
   execute: async (interaction) => {
-    const isRouletteOn = await getAdminRouletteValue(interaction.guild.id);
-    const optionValue = interaction.options.get('ligado').value as boolean;
+    const isRouletteOn = await getAdminRouletteValue(interaction.guild?.id);
+    const optionValue = interaction.options.get('ligado')?.value as boolean;
     if (isRouletteOn === optionValue) {
       interaction.reply('Mas já tava assim... Eu não fiz nada de novo..');
       return;
     }
 
-    setAdminRouletteValue(interaction.guild.id, optionValue);
+    setAdminRouletteValue(interaction.guild?.id, optionValue);
     if (!optionValue) {
       interaction.reply('Roleta de admins desligada.');
       return;
@@ -34,12 +34,18 @@ export const toggleAdminRoulette: SlashCommand = {
   cooldown: 10,
 };
 
-async function getAdminRouletteValue(guildID: string) {
+async function getAdminRouletteValue(guildID: Nullable<string>) {
   const guild = await GuildModel.collection.findOne({ guildID });
-  return guild.roulette.isRouletteOn;
+  return guild?.roulette.isRouletteOn;
 }
 
-async function setAdminRouletteValue(guildID: string, value: boolean) {
+async function setAdminRouletteValue(
+  guildID: Nullable<string>,
+  value: boolean
+) {
+  if (!guildID) {
+    return;
+  }
   await GuildModel.updateOne(
     {
       guildID,

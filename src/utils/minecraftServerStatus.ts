@@ -6,10 +6,10 @@ import MinecraftServerModel from '@schemas/minecraftServers';
 
 export default class MinecraftServerStatus {
   private static instance: MinecraftServerStatus;
-  private _client: Client;
-  private minecraftServers: IMinecraftServer[];
+  private _client!: Client;
+  private minecraftServers!: IMinecraftServer[];
   private _status: any;
-  private _interval: NodeJS.Timeout;
+  private _interval!: NodeJS.Timeout;
 
   constructor() {}
 
@@ -75,7 +75,7 @@ export default class MinecraftServerStatus {
     guildId: string,
     channelId: string,
     messageId: string,
-    status: util.FullQueryResponse
+    status: util.FullQueryResponse | null
   ): Promise<void> {
     const minecraftStatusEmbed = this.generateMinecraftStatusEmbed(status);
 
@@ -85,14 +85,14 @@ export default class MinecraftServerStatus {
 
     const message = await channel.messages.fetch(messageId);
 
-    if (message.author.id !== this._client.user.id) return;
+    if (message.author.id !== this._client.user?.id) return;
 
     await message.edit({
       embeds: [minecraftStatusEmbed],
     });
   }
 
-  generateMinecraftStatusEmbed(status: util.FullQueryResponse) {
+  generateMinecraftStatusEmbed(status: util.FullQueryResponse | null) {
     if (!status) {
       return new EmbedBuilder()
         .setTitle(`O servidor está offline!`)

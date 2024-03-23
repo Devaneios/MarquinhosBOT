@@ -21,7 +21,8 @@ export const importunate: SlashCommand = {
         .setRequired(true)
     ),
   execute: async (interaction) => {
-    const member = interaction.options.get('importunado').member as GuildMember;
+    const member = interaction.options.get('importunado')
+      ?.member as GuildMember;
 
     if (member.user.bot) {
       interaction.reply({ content: 'Nunca vou conseguir irritar um bot' });
