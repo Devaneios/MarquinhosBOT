@@ -11,6 +11,10 @@ export const voiceStateUpdate: BotEvent = {
     const oldChannel = oldState.channel;
     const newChannel = newState.channel;
 
+    if (!member) {
+      return;
+    }
+
     if (!oldChannel && newChannel) {
       userJoinedVoiceChannel(member);
     } else if (oldChannel && !newChannel) {
@@ -50,7 +54,7 @@ async function isUserArrested(member: GuildMember) {
 }
 
 async function arrestUser(member: GuildMember) {
-  if (member.voice?.channel.id != member.guild.afkChannelId) {
+  if (member.voice.channel?.id != member.guild.afkChannelId) {
     // a try/catch so if the person disconnect, Marquinhos don't break
     try {
       member.voice.setChannel(member.guild.afkChannelId);

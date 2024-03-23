@@ -34,7 +34,8 @@ export const checkIn: SlashCommand = {
 };
 
 export const checkInReply = (member: GuildMember, guildName: string) => {
-  const memberJoinedDate = new Date(member.joinedTimestamp);
+  if (!member) return 'Você não está em um servidor';
+  const memberJoinedDate = new Date(member?.joinedTimestamp as number);
   const formatedMemberJoinedTimestamp = memberJoinedDate.toLocaleString(
     'pt-BR',
     DATE_LOCALE_CONFIG

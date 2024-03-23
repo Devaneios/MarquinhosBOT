@@ -65,7 +65,7 @@ export enum AudioPlayerDisconnectEvent {
 
 export const playAudio = (
   message: Message | CommandInteraction,
-  channel: VoiceChannel | VoiceBasedChannel,
+  channel: VoiceChannel | VoiceBasedChannel | null,
   filename: string
 ) => {
   if (!channel) {

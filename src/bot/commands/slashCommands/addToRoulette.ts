@@ -1,10 +1,11 @@
 import {
+  CommandInteraction,
   GuildMember,
   PermissionsBitField,
   SlashCommandBuilder,
 } from 'discord.js';
 
-import { SlashCommand } from '@marquinhos/types';
+import { Nullable, SlashCommand } from '@marquinhos/types';
 import GuildModel from '@schemas/guild';
 
 export const addToRoulette: SlashCommand = {
@@ -20,9 +21,9 @@ export const addToRoulette: SlashCommand = {
         .setDescription('Essa é a pessoa que vou adicionar pra a roleta.')
         .setRequired(true)
     ),
-  execute: async (interaction) => {
-    const newMember = interaction.options.get('usuario').member as GuildMember;
-    addMemberToRoulette(interaction.guild.id, newMember.id);
+  execute: async (interaction: CommandInteraction) => {
+    const newMember = interaction.options.get('usuario')?.member as GuildMember;
+    addMemberToRoulette(interaction.guild?.id, newMember.id);
     interaction.reply(
       `Agora adicionei ${newMember} na roleta de admins. Parabéns e tals.`
     );
@@ -30,7 +31,10 @@ export const addToRoulette: SlashCommand = {
 };
 
 // TODO => Check if member already exists in collection's array
-async function addMemberToRoulette(guildID: string, memberId: string) {
+async function addMemberToRoulette(
+  guildID: Nullable<string>,
+  memberId: string
+) {
   GuildModel.collection.updateOne(
     {
       guildID,

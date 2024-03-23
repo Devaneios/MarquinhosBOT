@@ -4,6 +4,7 @@ import {
   ChannelType,
   PermissionsBitField,
   TextChannel,
+  Snowflake,
 } from 'discord.js';
 import * as util from 'minecraft-server-util';
 
@@ -34,8 +35,22 @@ export const minecraftStatus: SlashCommand = {
 
     const minecraftServer = MinecraftServerStatus.getInstance();
 
-    const ip = interaction.options.get('ip').value as string;
-    const port = interaction.options.get('port').value as number;
+    const ip = interaction.options.get('ip')?.value as string;
+    const port = interaction.options.get('port')?.value as number;
+    const guildID = interaction.guildId as string;
+
+    if (!guildID) {
+      await interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle(`Falha ao criar o monitoramento!`)
+            .setDescription(
+              `Não foi possível encontrar o ID do servidor de discord!`
+            ),
+        ],
+      });
+      return;
+    }
 
     try {
       status = await util.queryFull(ip, port);
@@ -59,20 +74,20 @@ export const minecraftStatus: SlashCommand = {
 
     const statusChannel =
       minecraftStatusChannel ??
-      (await interaction.guild.channels.create({
+      (await interaction.guild?.channels.create({
         name: 'minecraft-status',
         type: ChannelType.GuildText,
         topic: 'Status dos servidores de minecraft',
         permissionOverwrites: [
           {
-            id: interaction.guildId,
+            id: interaction.guildId as Snowflake,
             deny: [PermissionsBitField.Flags.SendMessages],
           },
         ],
       }));
 
     const existingServer = await MinecraftServerModel.findOne({
-      guildID: interaction.guildId,
+      guildID,
       channelID: statusChannel.id,
       host: ip,
       port,
@@ -99,7 +114,7 @@ export const minecraftStatus: SlashCommand = {
     });
 
     await minecraftServer.addNewServer({
-      guildID: interaction.guildId,
+      guildID,
       channelID: statusChannel.id,
       messageID: messageEmbed.id,
       host: ip,

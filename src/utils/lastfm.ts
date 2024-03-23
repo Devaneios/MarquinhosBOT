@@ -91,13 +91,13 @@ export const musicBotMessageHandler = async (message: Message) => {
     const scrobbleEmbed = new EmbedBuilder()
       .setTitle('Adicionado a fila de scrobbling :headphones:')
       .setDescription(getOngoingScrobbleDescription(track, scrobblesOnUsers))
-      .setThumbnail(track.coverArtUrl)
       .setFooter({
         text: `Scrobbling será feito em ${millisecondsToFormattedText(
           timeUntilScrobbling
         )}`,
       })
       .setColor('#1DB954');
+    if (track.coverArtUrl) scrobbleEmbed.setThumbnail(track.coverArtUrl);
 
     const scrobbleEmbedRef = await message.channel.send({
       embeds: [scrobbleEmbed],

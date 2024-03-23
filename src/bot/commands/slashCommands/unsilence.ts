@@ -15,7 +15,7 @@ export const unsilence: SlashCommand = {
   execute: async (interaction) => {
     // Gets the member chosen to unsilence
     const unsilenced = interaction.options.get('liberado')
-      .member as GuildMember;
+      ?.member as GuildMember;
 
     // Users cannot unsilence themselves
     if (interaction.member === unsilenced) {
@@ -29,7 +29,7 @@ export const unsilence: SlashCommand = {
       unsilenced.user.username
     );
 
-    if (result.value) {
+    if (result?.value) {
       interaction.reply({ content: `${unsilenced} pode falar novamente.` });
       return;
     }

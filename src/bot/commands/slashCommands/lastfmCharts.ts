@@ -112,7 +112,7 @@ export const lastfmCharts: SlashCommand = {
       period.value as string
     );
 
-    await interaction.channel.send({
+    await interaction.channel?.send({
       files: [image],
       content: `${profileName} aqui estão ${
         type.value == 'tracks' ? 'as suas' : 'os seus'

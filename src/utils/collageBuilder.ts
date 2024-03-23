@@ -179,8 +179,10 @@ export class CollageBuilder {
       this.setupCanvas();
     await this.drawBackground(ctx, canvasWidth, canvasHeight);
     const firstImageBuffer = images.shift();
+    if (!firstImageBuffer) return Buffer.from('');
     const firstImage = await loadImage(firstImageBuffer);
     const firstFooterText = chartNames.shift();
+    if (!firstFooterText) return Buffer.from('');
     await this.drawFirstImage(
       ctx,
       firstImage,

@@ -39,11 +39,11 @@ export const audio: SlashCommand = {
   execute: (interaction) => {
     const channel = voiceChannelPresence(interaction);
     const file = interaction.options.get('audio');
-    playAudio(interaction, channel, file.value as string);
+    playAudio(interaction, channel, file?.value as string);
     interaction.reply({
       embeds: [
         new EmbedBuilder().setDescription(
-          `Reproduzindo ${file.value as string}`
+          `Reproduzindo ${file?.value as string}`
         ),
       ],
     });

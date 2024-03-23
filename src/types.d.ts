@@ -9,6 +9,8 @@ import {
 } from 'discord.js';
 import { Subject } from 'rxjs';
 
+export type Nullable<T> = T | null | undefined;
+
 export interface SlashCommand {
   command: SlashCommandBuilder | any;
   execute: (interaction: CommandInteraction) => void;
