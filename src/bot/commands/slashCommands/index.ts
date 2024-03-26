@@ -23,3 +23,5 @@ export { unsilence } from '@slashCommands/unsilence';
 export { toggleAdminRoulette } from '@slashCommands/toggleAdminRoulette';
 export { addToRoulette } from '@slashCommands/addToRoulette';
 export { audio } from '@slashCommands/audio';
+export { balance } from '@slashCommands/balance';
+export { balanceOperation } from '@slashCommands/balanceOperation';

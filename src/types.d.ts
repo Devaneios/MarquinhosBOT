@@ -116,6 +116,30 @@ export type LastfmTopListenedPeriod =
   | '12month'
   | 'overall';
 
+export type BalanceOperationType = 'add' | 'subtract' | 'set' | 'reset';
+
+export type BalanceChangeStatus = {
+  operationSuccess: boolean;
+  statementCreated: boolean;
+  validAmount: boolean;
+};
+
+export interface IBalance extends mongoose.Document {
+  userId: string;
+  guildId: string;
+  amount: number;
+  lastUpdate: Date;
+}
+
+export interface IBalanceStatement extends mongoose.Document {
+  userId: string;
+  guildId: string;
+  amount: number;
+  executedBy: string;
+  type: BalanceOperationType;
+  date: Date;
+}
+
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
