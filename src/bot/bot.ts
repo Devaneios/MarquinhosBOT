@@ -5,6 +5,7 @@ import {
   SlashCommandBuilder,
   REST,
   Routes,
+  EmbedBuilder,
 } from 'discord.js';
 
 import {
@@ -46,6 +47,11 @@ export class Bot {
     this._client.commands = new Collection<string, Command>();
     this._client.cooldowns = new Collection<string, number>();
     this._client.secretChannels = new Collection<string, SecretChannelData>();
+    this._client.baseEmbed = () =>
+      new EmbedBuilder().setColor('#0099ff').setFooter({
+        text: 'Marquinhos Bot ™️',
+        iconURL: this._client.user?.displayAvatarURL(),
+      });
   }
 
   start() {
