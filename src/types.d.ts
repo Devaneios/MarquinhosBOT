@@ -124,6 +124,14 @@ export type BalanceChangeStatus = {
   validAmount: boolean;
 };
 
+export type FlipCoinResult = {
+  result: string;
+  heads: number;
+  tails: number;
+  count: number;
+  elapsedTime: number;
+};
+
 export interface IBalance extends mongoose.Document {
   userId: string;
   guildId: string;
@@ -156,6 +164,7 @@ declare module 'discord.js' {
     commands: Collection<string, Command>;
     cooldowns: Collection<string, number>;
     secretChannels: Collection<string, SecretChannelData>;
+    baseEmbed: () => EmbedBuilder;
   }
 }
 
