@@ -3,20 +3,43 @@ import {
   AttachmentBuilder,
   Embed,
   EmbedBuilder,
+  CommandInteractionOptionResolver,
 } from 'discord.js';
 
 import { FlipCoinResult, SlashCommand } from '@marquinhos/types';
 import { sleep } from '@marquinhos/utils/sleep';
+import { join } from 'path';
 
 export const coin: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('moeda')
-    .setDescription('Tiro cara ou coroa numa moeda semi-viciada.'),
+    .setDescription('Tiro cara ou coroa numa moeda semi-viciada.')
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('apostar')
+        .setDescription('Aposta no cara ou coroa')
+        .addStringOption((option) =>
+          option
+            .setName('escolha')
+            .setDescription('Escolha entre cara ou coroa')
+            .setRequired(true)
+            .addChoices(
+              { name: 'Cara', value: 'Cara' },
+              { name: 'Coroa', value: 'Coroa' }
+            )
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand.setName('lançar').setDescription('Apenas lança a moeda')
+    ),
   execute: async (interaction) => {
     await interaction.deferReply();
     await interaction.followUp('Lançando a moeda... 🪙');
 
     const flipCoinResult = await flipCoin();
+    const subcommand = (
+      interaction.options as CommandInteractionOptionResolver
+    ).getSubcommand();
 
     if (flipCoinResult.result === null) {
       return interaction.reply({
@@ -26,13 +49,37 @@ export const coin: SlashCommand = {
     }
 
     const attachment = new AttachmentBuilder(
-      `./src/resources/images/coin_${flipCoinResult.result}.png`
+      join(
+        process.env?.ROOT_DIR ?? '.',
+        `/resources/images/coin_${flipCoinResult.result}.png`
+      )
     );
 
     const coinEmbed = buildEmbed(
       interaction.client.baseEmbed(),
       flipCoinResult
     );
+
+    if (subcommand === 'apostar') {
+      const choice = interaction.options.get('escolha')?.value as string;
+      if (choice === flipCoinResult.result) {
+        coinEmbed.setDescription(
+          `Boa! Você acertou!\n\nForam feitas ${
+            flipCoinResult.count
+          } tentativas durante ${(flipCoinResult.elapsedTime / 1000).toFixed(
+            2
+          )}s.`
+        );
+      } else {
+        coinEmbed.setDescription(
+          `Ih! Você errou!\n\nForam feitas ${
+            flipCoinResult.count
+          } tentativas durante ${(flipCoinResult.elapsedTime / 1000).toFixed(
+            2
+          )}s.`
+        );
+      }
+    }
 
     await interaction.editReply({
       content: '',
@@ -77,9 +124,9 @@ function buildEmbed(
     .setTimestamp()
     .setTitle(`Deu ${flipCoinResult.result}!`)
     .setDescription(
-      `A moeda caiu após ${(flipCoinResult.elapsedTime / 1000).toFixed(
-        2
-      )}s. Foram feitas ${flipCoinResult.count} tentativas.`
+      `Foram feitas ${flipCoinResult.count} tentativas durante ${(
+        flipCoinResult.elapsedTime / 1000
+      ).toFixed(2)}s.`
     )
     .addFields(
       {
