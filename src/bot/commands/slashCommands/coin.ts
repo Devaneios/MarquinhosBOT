@@ -51,7 +51,7 @@ export const coin: SlashCommand = {
     const attachment = new AttachmentBuilder(
       join(
         process.env?.ROOT_DIR ?? '.',
-        `/resources/images/coin_${flipCoinResult.result}.png`
+        `/resources/images/coin_${flipCoinResult.result.toLowerCase()}.png`
       )
     );
 
@@ -146,5 +146,7 @@ function buildEmbed(
         inline: true,
       }
     )
-    .setThumbnail(`attachment://coin_${flipCoinResult.result}.png`);
+    .setThumbnail(
+      `attachment://coin_${flipCoinResult.result.toLowerCase()}.png`
+    );
 }
