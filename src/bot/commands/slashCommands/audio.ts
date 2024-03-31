@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder } from 'discord.js';
 import { join } from 'path';
 import { readdirSync } from 'fs';
 
@@ -39,12 +39,11 @@ export const audio: SlashCommand = {
   execute: (interaction) => {
     const channel = voiceChannelPresence(interaction);
     const file = interaction.options.get('audio');
+    const audioEmbed = interaction.client.baseEmbed();
     playAudio(interaction, channel, file?.value as string);
     interaction.reply({
       embeds: [
-        new EmbedBuilder().setDescription(
-          `Reproduzindo ${file?.value as string}`
-        ),
+        audioEmbed.setDescription(`Reproduzindo ${file?.value as string}`),
       ],
     });
   },

@@ -7,9 +7,10 @@ export const lastfm: SlashCommand = {
     .setName('lastfm')
     .setDescription('Mostra informações sobre a integração com o last.fm'),
   execute: (interaction) => {
+    const lastfmEmbed = interaction.client.baseEmbed();
     interaction.reply({
       embeds: [
-        new EmbedBuilder()
+        lastfmEmbed
           .setThumbnail(
             'https://play-lh.googleusercontent.com/VFmAfWqcuV3aReZG8MMQdHRSdKWx85IW22f4RQ5xhR5U-o1_u03P7TVwsnTYa26Q1No'
           )

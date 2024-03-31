@@ -1,9 +1,4 @@
-import {
-  SlashCommandBuilder,
-  EmbedBuilder,
-  ChannelType,
-  TextChannel,
-} from 'discord.js';
+import { SlashCommandBuilder, ChannelType, TextChannel } from 'discord.js';
 
 import { SlashCommand } from '@marquinhos/types';
 
@@ -29,11 +24,10 @@ export const anom: SlashCommand = {
   execute: async (interaction) => {
     const channel = interaction.options.get('canal')?.channel as TextChannel;
     const message = interaction.options.get('mensagem')?.value as string;
+    const anomEmbed = interaction.client.baseEmbed();
     channel.send({
       embeds: [
-        new EmbedBuilder()
-          .setDescription(message)
-          .setTitle('👀 Alguém disse isso:'),
+        anomEmbed.setTitle('👀 Alguém disse isso:').setDescription(message),
       ],
     });
   },

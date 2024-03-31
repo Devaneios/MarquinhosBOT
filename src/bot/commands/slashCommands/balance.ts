@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder, GuildMember } from 'discord.js';
+import { SlashCommandBuilder, GuildMember } from 'discord.js';
 
 import { SlashCommand } from '@marquinhos/types';
 import { getCoinBalance } from '@marquinhos/services/coinBalanceManager';
@@ -13,16 +13,7 @@ export const balance: SlashCommand = {
       interaction.guild?.id ?? ''
     );
 
-    const balanceEmbed = new EmbedBuilder();
-
-    balanceEmbed
-      .setColor('#0099ff')
-      .setThumbnail(interaction.user.displayAvatarURL())
-      .setTimestamp()
-      .setFooter({
-        text: 'Marquinhos Bot ™️',
-        iconURL: interaction.client.user?.displayAvatarURL(),
-      });
+    const balanceEmbed = interaction.client.baseEmbed();
 
     if (balance === null) {
       balanceEmbed

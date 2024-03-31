@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder } from 'discord.js';
 
 import { SlashCommand } from '@marquinhos/types';
 import GuildModel from '@schemas/guild';
@@ -30,12 +30,11 @@ export const configRoles: SlashCommand = {
     const roleType = interaction.options.get('tipo_do_cargo');
     const role = interaction.options.get('cargo');
     const guildId = interaction.guild?.id;
+    const configRolesEmbed = interaction.client.baseEmbed();
 
     if (!roleType || !role || !guildId) {
       return interaction.reply({
-        embeds: [
-          new EmbedBuilder().setDescription(`Falha ao configurar cargo`),
-        ],
+        embeds: [configRolesEmbed.setDescription(`Falha ao configurar cargo`)],
       });
     }
     const roleId = role.value as string;
@@ -56,7 +55,7 @@ export const configRoles: SlashCommand = {
 
     interaction.reply({
       embeds: [
-        new EmbedBuilder().setDescription(
+        configRolesEmbed.setDescription(
           `Cargo ${roleType.value} configurado como ${roleName}`
         ),
       ],

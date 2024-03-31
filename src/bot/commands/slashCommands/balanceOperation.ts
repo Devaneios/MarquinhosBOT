@@ -7,10 +7,8 @@ import {
 } from '@marquinhos/services/coinBalanceManager';
 import { BalanceChangeStatus, BalanceOperationType } from '@marquinhos/types';
 import {
-  BaseInteraction,
   CommandInteraction,
   CommandInteractionOptionResolver,
-  EmbedBuilder,
   PermissionsBitField,
 } from 'discord.js';
 
@@ -88,14 +86,9 @@ export const balanceOperation = {
 
     const amount = interaction.options.get('valor')?.value as number;
 
-    const baseEmbed = new EmbedBuilder()
-      .setColor('#0099ff')
-      .setTitle('Operação no saldo')
-      .setTimestamp()
-      .setFooter({
-        text: 'Marquinhos Bot ™️',
-        iconURL: interaction.client.user?.displayAvatarURL(),
-      });
+    const baseEmbed = interaction.client
+      .baseEmbed()
+      .setTitle('Operação no saldo');
 
     let operationResult: BalanceChangeStatus & {
       operationType: BalanceOperationType | null;
