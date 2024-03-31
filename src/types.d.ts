@@ -132,6 +132,12 @@ export type FlipCoinResult = {
   elapsedTime: number;
 };
 
+export type RolesConfig = {
+  externalRoleId: Nullable<string>;
+  baseRoleId: Nullable<string>;
+  vipRoleId: Nullable<string>;
+};
+
 export interface IGuildUser extends mongoose.Document {
   guildId: string;
   userId: string;
