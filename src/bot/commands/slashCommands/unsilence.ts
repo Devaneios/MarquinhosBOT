@@ -1,6 +1,6 @@
 import { GuildMember, SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
-import SilencedModel from '@schemas/silenced';
+import GuildUserModel from '@marquinhos/database/schemas/guildUser';
 
 export const unsilence: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -24,12 +24,14 @@ export const unsilence: SlashCommand = {
     }
 
     // Search for the member in the BD
-    const result = await findAndUnsilenceMember(
-      unsilenced.id,
-      unsilenced.user.username
-    );
+    const unsilencedGuildUser = await findAndUnsilenceMember(unsilenced);
 
-    if (result?.value) {
+    if (unsilencedGuildUser === null) {
+      interaction.reply({ content: `O ${unsilenced} nunca foi silenciado.` });
+      return;
+    }
+
+    if (unsilencedGuildUser) {
       interaction.reply({ content: `${unsilenced} pode falar novamente.` });
       return;
     }
@@ -41,7 +43,21 @@ export const unsilence: SlashCommand = {
   cooldown: 10,
 };
 
-function findAndUnsilenceMember(id: string, user: string) {
-  // Deletes user from DB. If not found, return object with value property null
-  return SilencedModel.collection.findOneAndDelete({ id, user });
+async function findAndUnsilenceMember(member: GuildMember) {
+  const guildUser = await GuildUserModel.findOne({
+    guildId: member.guild.id,
+    userId: member.id,
+  });
+
+  if (!guildUser) {
+    return null;
+  }
+
+  if (!guildUser.silenced) {
+    return false;
+  }
+
+  guildUser.silenced = false;
+  await guildUser.save();
+  return true;
 }

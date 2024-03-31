@@ -13,8 +13,8 @@ import { BotEvent } from '@marquinhos/types';
 import { logger } from '@utils/logger';
 import { safeExecute } from '@utils/errorHandling';
 import { musicBotMessageHandler } from '@utils/lastfm';
-import SilencedModel from '@schemas/silenced';
 import BotError from '@utils/botError';
+import GuildUserModel from '@marquinhos/database/schemas/guildUser';
 
 dotenv.config();
 
@@ -148,8 +148,14 @@ async function silencedUserHandler(message: Message) {
 }
 
 async function isUserSilenced(member: GuildMember) {
-  return await SilencedModel.collection.findOne({
-    id: member.id,
-    user: member.user.username,
+  const guildUser = await GuildUserModel.findOne({
+    guildId: member.guild.id,
+    userId: member.id,
   });
+
+  if (!guildUser) {
+    return false;
+  }
+
+  return guildUser.silenced;
 }

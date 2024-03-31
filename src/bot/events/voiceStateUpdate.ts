@@ -1,7 +1,7 @@
 import { GuildMember, VoiceState } from 'discord.js';
 
 import { BotEvent } from '@marquinhos/types';
-import ArrestedModel from '@schemas/arrested';
+import GuildUserModel from '@marquinhos/database/schemas/guildUser';
 
 // WIP
 export const voiceStateUpdate: BotEvent = {
@@ -47,10 +47,16 @@ async function userChangedVoiceState(member: GuildMember) {
 }
 
 async function isUserArrested(member: GuildMember) {
-  return ArrestedModel.collection.findOne({
-    id: member.id,
-    user: member.user.username,
+  const guildUser = await GuildUserModel.findOne({
+    guildId: member.guild.id,
+    userId: member.id,
   });
+
+  if (!guildUser) {
+    return false;
+  }
+
+  return guildUser.arrested;
 }
 
 async function arrestUser(member: GuildMember) {

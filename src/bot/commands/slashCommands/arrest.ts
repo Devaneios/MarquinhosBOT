@@ -1,7 +1,7 @@
 import { GuildMember, SlashCommandBuilder } from 'discord.js';
 
 import { SlashCommand } from '@marquinhos/types';
-import ArrestedModel from '@schemas/arrested';
+import GuildUserModel from '@marquinhos/database/schemas/guildUser';
 
 export const arrest: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -15,31 +15,53 @@ export const arrest: SlashCommand = {
     ),
   execute: async (interaction) => {
     const arrested = interaction.options.get('preso')?.member as GuildMember;
-    if (arrested.user.id === process.env.BOT_ID) {
-      arrestMember(interaction.member as GuildMember);
-      interaction.reply({ content: 'Tu realmente tentou essa?' });
+    if (arrested.user.id === interaction.client.user?.id) {
+      await arrestMember(interaction.member as GuildMember);
+      await interaction.reply({ content: 'Tu realmente tentou essa?' });
       return;
     }
 
     if (arrested.user.bot) {
-      interaction.reply({ content: 'Não pode prender meus irmãos bots.' });
+      await interaction.reply({
+        content: 'Não pode prender meus irmãos bots.',
+      });
       return;
     }
 
-    arrestMember(arrested);
+    const arrestResult = await arrestMember(arrested);
+    if (!arrestResult) {
+      await interaction.reply({ content: `${arrested} já está preso!` });
+      return;
+    }
     interaction.reply({ content: `${arrested} você está PRESO!` });
   },
   cooldown: 10,
 };
 
-function arrestMember(member: GuildMember) {
+async function arrestMember(member: GuildMember) {
   const memberChannelId = member.voice.channelId;
-  const newArrested = new ArrestedModel({
-    id: member.id,
-    user: member.user.username,
-  });
-  newArrested.save();
   if (memberChannelId && memberChannelId != member.guild.afkChannelId) {
     member.voice.setChannel(member.guild.afkChannelId);
   }
+
+  const guildUser = await GuildUserModel.findOne({
+    guildId: member.guild.id,
+    userId: member.id,
+  });
+
+  if (!guildUser) {
+    const newGuildUser = new GuildUserModel({
+      guildId: member.guild.id,
+      userId: member.id,
+      arrested: true,
+    });
+    return await newGuildUser.save();
+  }
+
+  if (guildUser.arrested) {
+    return null;
+  }
+
+  guildUser.arrested = true;
+  return await guildUser.save();
 }

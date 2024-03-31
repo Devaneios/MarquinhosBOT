@@ -132,19 +132,13 @@ export type FlipCoinResult = {
   elapsedTime: number;
 };
 
-export interface IBalance extends mongoose.Document {
-  userId: string;
-  guildId: string;
-  amount: number;
-  lastUpdate: Date;
-}
-
 export interface IGuildUser extends mongoose.Document {
   guildId: string;
   userId: string;
   silenced: boolean;
   arrested: boolean;
   coins: number;
+  lastBalanceUpdate: Date;
   lastBonusRedeemed: Date;
   lastBetOnCoinFlip: Date;
   freeCoinFlipCount: number;
