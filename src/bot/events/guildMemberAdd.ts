@@ -6,6 +6,7 @@ import GuildModel from '@schemas/guild';
 export const guildMemberAdd: BotEvent = {
   name: 'guildMemberAdd',
   execute: async (member: GuildMember) => {
+    const guildMemberAddEmbed = member.client.baseEmbed();
     const guild = await GuildModel.findOne({ guildID: member.guild.id }).exec();
     if (!guild) {
       throw new Error('Guild not found');
@@ -78,7 +79,7 @@ export const guildMemberAdd: BotEvent = {
 
     channel.send({
       embeds: [
-        new EmbedBuilder()
+        guildMemberAddEmbed
           .setThumbnail(member.user.avatarURL())
           .setColor('#0099ff')
           .setDescription(

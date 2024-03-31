@@ -10,10 +10,11 @@ export const disconnectAll: SlashCommand = {
   execute: async (interaction) => {
     const member = interaction.member as GuildMember;
     const voiceChannel = member?.voice.channel;
+    const disconnectAllEmbed = interaction.client.baseEmbed();
     if (!voiceChannel) {
       interaction.reply({
         embeds: [
-          new EmbedBuilder().setDescription(
+          disconnectAllEmbed.setDescription(
             'Você precisa estar em um canal de voz para usar esse comando'
           ),
         ],
@@ -28,7 +29,7 @@ export const disconnectAll: SlashCommand = {
 
     interaction.reply({
       embeds: [
-        new EmbedBuilder().setDescription(
+        disconnectAllEmbed.setDescription(
           'Todos os usuários foram desconectados'
         ),
       ],

@@ -16,6 +16,7 @@ const tempo = new TempoDataProvider();
 const marquinhosApi = new MarquinhosApiService();
 
 export const musicBotMessageHandler = async (message: Message) => {
+  const musicEmbed = message.client.baseEmbed();
   if (!tempo.isHandleableMessage(message)) return;
   const playbackData = await tempo.getPlaybackDataFromMessage(message);
   if (playbackData) {
@@ -27,7 +28,7 @@ export const musicBotMessageHandler = async (message: Message) => {
       );
       await message.channel.send({
         embeds: [
-          new EmbedBuilder()
+          musicEmbed
             .setTitle('Erro ao adicionar a fila de scrobbling :cry:')
             .setDescription(
               `A música **${playbackData.title}** não foi adicionada a fila de scrobbling.`
@@ -46,7 +47,7 @@ export const musicBotMessageHandler = async (message: Message) => {
       logger.error(`track: ${!!track}, scrobbleId: ${!!scrobbleId}`);
       await message.channel.send({
         embeds: [
-          new EmbedBuilder()
+          musicEmbed
             .setTitle('Erro ao adicionar a fila de scrobbling :cry:')
             .setDescription(
               `A música **${playbackData.title}** não foi adicionada a fila de scrobbling.`
@@ -88,7 +89,7 @@ export const musicBotMessageHandler = async (message: Message) => {
       `Added ${playbackData.title} to scrobble queue to ${scrobblesOnUsers.length} users`
     );
 
-    const scrobbleEmbed = new EmbedBuilder()
+    const scrobbleEmbed = musicEmbed
       .setTitle('Adicionado a fila de scrobbling :headphones:')
       .setDescription(getOngoingScrobbleDescription(track, scrobblesOnUsers))
       .setFooter({

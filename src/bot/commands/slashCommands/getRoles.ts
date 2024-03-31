@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder } from 'discord.js';
 
 import { SlashCommand } from '@marquinhos/types';
 import GuildModel from '@schemas/guild';
@@ -12,6 +12,7 @@ export const getRoles: SlashCommand = {
     const { externalRoleId, baseRoleId, vipRoleId } = await findRoles(
       interaction.guild?.id as string
     );
+    const getRolesEmbed = interaction.client.baseEmbed();
 
     const externalRoleName = externalRoleId
       ? interaction.guild?.roles.cache.get(externalRoleId)?.name
@@ -24,7 +25,7 @@ export const getRoles: SlashCommand = {
       : 'Não definido';
     interaction.reply({
       embeds: [
-        new EmbedBuilder().setDescription(
+        getRolesEmbed.setDescription(
           `Cargo externo: ${externalRoleName}\n
             Cargo base: ${baseRoleName}\n
             Cargo VIP: ${vipRoleName}`

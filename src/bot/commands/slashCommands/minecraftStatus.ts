@@ -38,11 +38,12 @@ export const minecraftStatus: SlashCommand = {
     const ip = interaction.options.get('ip')?.value as string;
     const port = interaction.options.get('port')?.value as number;
     const guildID = interaction.guildId as string;
+    const minecraftStatusBaseEmbed = interaction.client.baseEmbed();
 
     if (!guildID) {
       await interaction.reply({
         embeds: [
-          new EmbedBuilder()
+          minecraftStatusBaseEmbed
             .setTitle(`Falha ao criar o monitoramento!`)
             .setDescription(
               `Não foi possível encontrar o ID do servidor de discord!`
@@ -57,7 +58,7 @@ export const minecraftStatus: SlashCommand = {
     } catch (error) {
       await interaction.reply({
         embeds: [
-          new EmbedBuilder()
+          minecraftStatusBaseEmbed
             .setTitle(`Falha ao criar o monitoramento!`)
             .setDescription(
               `Não foi possível conectar ao servidor de minecraft!`
@@ -96,7 +97,7 @@ export const minecraftStatus: SlashCommand = {
     if (existingServer) {
       await interaction.reply({
         embeds: [
-          new EmbedBuilder()
+          minecraftStatusBaseEmbed
             .setTitle(`Servidor já está sendo monitorado!`)
             .setDescription(
               `O servidor já tem status em <#${statusChannel.id}>`
@@ -123,7 +124,7 @@ export const minecraftStatus: SlashCommand = {
 
     await interaction.reply({
       embeds: [
-        new EmbedBuilder()
+        minecraftStatusBaseEmbed
           .setTitle(`Monitoramento do servidor de minecraft criado!`)
           .setDescription(
             `Agora você pode ver o status do servidor de minecraft em tempo real em <#${statusChannel.id}>`

@@ -7,9 +7,10 @@ export const ping: SlashCommand = {
     .setName('ping')
     .setDescription("Shows the bot's ping"),
   execute: (interaction) => {
+    const pingEmbed = interaction.client.baseEmbed();
     interaction.reply({
       embeds: [
-        new EmbedBuilder()
+        pingEmbed
           .setAuthor({
             name: interaction.user.username,
             iconURL: interaction.user.avatarURL() ?? undefined,

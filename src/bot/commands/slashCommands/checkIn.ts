@@ -26,7 +26,9 @@ export const checkIn: SlashCommand = {
     const guildName = interaction.guild?.name as string;
     interaction.reply({
       embeds: [
-        new EmbedBuilder().setDescription(checkInReply(member, guildName)),
+        interaction.client
+          .baseEmbed()
+          .setDescription(checkInReply(member, guildName)),
       ],
     });
   },

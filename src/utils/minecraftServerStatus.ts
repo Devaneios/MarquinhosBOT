@@ -93,8 +93,9 @@ export default class MinecraftServerStatus {
   }
 
   generateMinecraftStatusEmbed(status: util.FullQueryResponse | null) {
+    const minecraftStatusBaseEmbed = this._client.baseEmbed();
     if (!status) {
-      return new EmbedBuilder()
+      return minecraftStatusBaseEmbed
         .setTitle(`O servidor está offline!`)
         .setThumbnail('https://i.imgur.com/TSai5Im.png')
         .setColor('#ff0000')
@@ -114,7 +115,7 @@ export default class MinecraftServerStatus {
         ]);
     }
 
-    return new EmbedBuilder()
+    return minecraftStatusBaseEmbed
       .setTitle(`${status?.motd?.clean}`)
       .setThumbnail('https://i.imgur.com/TSai5Im.png')
 
