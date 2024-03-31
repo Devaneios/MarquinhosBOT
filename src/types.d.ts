@@ -139,6 +139,18 @@ export interface IBalance extends mongoose.Document {
   lastUpdate: Date;
 }
 
+export interface IGuildUser extends mongoose.Document {
+  guildId: string;
+  userId: string;
+  silenced: boolean;
+  arrested: boolean;
+  coins: number;
+  lastBonusRedeemed: Date;
+  lastBetOnCoinFlip: Date;
+  freeCoinFlipCount: number;
+  lastBetOnAnimalLottery: Date;
+}
+
 export interface IBalanceStatement extends mongoose.Document {
   userId: string;
   guildId: string;
