@@ -71,6 +71,16 @@ function getAvatar(avatarHash: Nullable<string>) {
   const halloweenStartDate = '24/10';
   const halloweenEndDate = '06/11';
 
+  const developmentAvatar = 'marquinhosneo.png';
+  const developmentAvatarHash = '4bb3b86b9e7e3cd7d3de071a97e468ae';
+
+  if (process.env.NODE_ENV !== 'production') {
+    if (avatarHash === developmentAvatarHash) {
+      return null;
+    }
+    return developmentAvatar;
+  }
+
   if (isDateInRange(halloweenStartDate, halloweenEndDate)) {
     if (avatarHash === halloweenAvatarHash) {
       return null;
