@@ -1,11 +1,9 @@
-import {
-  BalanceModel,
-  BalanceStatementModel,
-} from '@marquinhos/database/schemas/balance';
+import { BalanceStatementModel } from '@marquinhos/database/schemas/balance';
+import GuildUserModel from '@marquinhos/database/schemas/guildUser';
 import {
   BalanceChangeStatus,
-  IBalance,
   IBalanceStatement,
+  IGuildUser,
 } from '@marquinhos/types';
 import { coerceNumberProperty } from '@marquinhos/utils/coercion';
 import { Document } from 'mongoose';
@@ -14,13 +12,13 @@ export async function getCoinBalance(
   userId: string,
   guildId: string
 ): Promise<Number | null> {
-  const userBalance = await BalanceModel.findOne({ userId, guildId }).exec();
+  const userBalance = await GuildUserModel.findOne({ userId, guildId }).exec();
 
   if (!userBalance) {
     return null;
   }
 
-  return coerceNumberProperty(userBalance.amount);
+  return coerceNumberProperty(userBalance.coins);
 }
 
 export async function getBalanceStatement(
@@ -45,7 +43,10 @@ export async function updateCoinBalance(
   let balanceUpdated = false;
 
   if (validAmount) {
-    const userBalance = await BalanceModel.findOne({ userId, guildId }).exec();
+    const userBalance = await GuildUserModel.findOne({
+      userId,
+      guildId,
+    }).exec();
 
     if (!userBalance) {
       balanceUpdated = await createBalance(userId, guildId, coercedAmount);
@@ -80,10 +81,13 @@ export async function addCoins(
   let balanceUpdated = false;
 
   if (validAmount) {
-    const userBalance = await BalanceModel.findOne({ userId, guildId }).exec();
+    const userBalance = await GuildUserModel.findOne({
+      userId,
+      guildId,
+    }).exec();
 
     if (userBalance) {
-      const oldAmount = coerceNumberProperty(userBalance.amount);
+      const oldAmount = coerceNumberProperty(userBalance.coins);
       balanceUpdated = await updateBalance(
         userBalance,
         oldAmount + coercedAmount
@@ -120,10 +124,13 @@ export async function subtractCoins(
   let statementCreated = false;
 
   if (validAmount) {
-    const userBalance = await BalanceModel.findOne({ userId, guildId }).exec();
+    const userBalance = await GuildUserModel.findOne({
+      userId,
+      guildId,
+    }).exec();
 
     if (userBalance) {
-      const oldAmount = coerceNumberProperty(userBalance.amount);
+      const oldAmount = coerceNumberProperty(userBalance.coins);
       const newAmount = oldAmount - coercedAmount;
       if (newAmount >= 0) {
         balanceUpdated = await updateBalance(userBalance, newAmount);
@@ -155,7 +162,7 @@ export async function resetCoins(
   guildId: string,
   executorId: string
 ): Promise<BalanceChangeStatus> {
-  const operationSuccess = !!(await BalanceModel.deleteOne({
+  const operationSuccess = !!(await GuildUserModel.deleteOne({
     userId,
     guildId,
   }).exec());
@@ -174,11 +181,11 @@ export async function resetCoins(
 }
 
 async function updateBalance(
-  userBalance: Document & IBalance,
+  userBalance: Document & IGuildUser,
   amount: number
 ): Promise<boolean> {
-  userBalance.amount = amount;
-  userBalance.lastUpdate = new Date();
+  userBalance.coins = amount;
+  userBalance.lastBalanceUpdate = new Date();
   return !!(await userBalance.save());
 }
 
@@ -187,7 +194,7 @@ async function createBalance(
   guildId: string,
   amount: number
 ): Promise<boolean> {
-  return !!(await BalanceModel.create({
+  return !!(await GuildUserModel.create({
     userId,
     guildId,
     amount,

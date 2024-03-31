@@ -1,7 +1,7 @@
-import { GuildMember, SlashCommandBuilder } from 'discord.js';
+import { Guild, GuildMember, SlashCommandBuilder } from 'discord.js';
 
 import { SlashCommand } from '@marquinhos/types';
-import SilencedModel from '@schemas/silenced';
+import GuildUserModel from '@marquinhos/database/schemas/guildUser';
 
 export const silence: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -16,28 +16,52 @@ export const silence: SlashCommand = {
   execute: async (interaction) => {
     const silenced = interaction.options.get('silenciado')
       ?.member as GuildMember;
-    if (silenced.user.id === process.env.BOT_ID) {
-      silenceMember(interaction.member as GuildMember);
-      interaction.reply({ content: 'Po, vei, seja inteligente' });
+    if (silenced.user.id === interaction.client.user?.id) {
+      await silenceMember(interaction.member as GuildMember);
+      await interaction.reply({ content: 'Po, vei, seja inteligente' });
       return;
     }
 
     if (silenced.user.bot) {
-      interaction.reply({ content: 'Não pode fazer isso com  meus os bots.' });
+      await interaction.reply({
+        content: 'Não pode fazer isso com meus amigos bots.',
+      });
       return;
     }
 
-    silenceMember(silenced);
-    interaction.reply({ content: `${silenced} SILÊNCIO!` });
+    const userSilenced = silenceMember(silenced);
+
+    if (!userSilenced) {
+      await interaction.reply({ content: `${silenced} já está caladinho!` });
+      return;
+    }
+    await interaction.reply({ content: `${silenced} SILÊNCIO!` });
   },
   cooldown: 10,
 };
 
-// TODO => Segregate model by guildId
-function silenceMember(member: GuildMember) {
-  const newSilenced = new SilencedModel({
-    id: member.id,
-    user: member.user.username,
+async function silenceMember(member: GuildMember) {
+  const guildUser = await GuildUserModel.findOne({
+    guildId: member.guild.id,
+    userId: member.id,
   });
-  newSilenced.save();
+
+  if (!guildUser) {
+    const newGuildUser = new GuildUserModel({
+      guildId: member.guild.id,
+      userId: member.id,
+      silenced: true,
+    });
+    await newGuildUser.save();
+    return true;
+  }
+
+  if (guildUser.silenced) {
+    return null;
+  }
+
+  guildUser.silenced = true;
+  await guildUser.save();
+
+  return true;
 }

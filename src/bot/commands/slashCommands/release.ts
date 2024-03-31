@@ -1,7 +1,7 @@
 import { GuildMember, SlashCommandBuilder } from 'discord.js';
 
 import { SlashCommand } from '@marquinhos/types';
-import ArrestedModel from '@schemas/arrested';
+import GuildUserModel from '@marquinhos/database/schemas/guildUser';
 
 export const release: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -14,10 +14,8 @@ export const release: SlashCommand = {
         .setRequired(true)
     ),
   execute: async (interaction) => {
-    // Gets the member chosen to arrest
     const arrested = interaction.options.get('preso')?.member as GuildMember;
 
-    // User cannot releat themselves
     if (interaction.member === arrested) {
       interaction.reply({
         content: `Cara, e desde quando os presos têm a chave da cela?`,
@@ -25,25 +23,41 @@ export const release: SlashCommand = {
       return;
     }
 
-    // Search for the member in the BD
-    const result = await findAndReleaseMember(
-      arrested.id,
-      arrested.user.username
-    );
+    const releaseResult = await findAndReleaseMember(arrested);
 
-    if (result?.value) {
-      interaction.reply({ content: `Abrindo a cela do ${arrested}.` });
-      return;
+    if (releaseResult) {
+      return await interaction.reply({
+        content: `Abrindo a cela do ${arrested}.`,
+      });
+    } else if (releaseResult === null) {
+      return await interaction.reply({
+        content: `O ${arrested} nunca foi preso.`,
+      });
     }
 
     interaction.reply({
-      content: `Não acho que o ${arrested.nickname} tava preso não.`,
+      content: `Não acho que o ${arrested} tava preso não.`,
     });
   },
   cooldown: 10,
 };
 
-function findAndReleaseMember(id: string, user: string) {
-  // Deletes user from DB. If not found, return object with value property null
-  return ArrestedModel.collection.findOneAndDelete({ id, user });
+async function findAndReleaseMember(member: GuildMember) {
+  const guildUser = await GuildUserModel.findOne({
+    guildId: member.guild.id,
+    userId: member.id,
+  });
+
+  if (!guildUser) {
+    return null;
+  }
+
+  if (!guildUser.arrested) {
+    return false;
+  }
+
+  guildUser.arrested = false;
+  await guildUser.save();
+
+  return true;
 }
