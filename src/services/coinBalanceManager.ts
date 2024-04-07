@@ -198,7 +198,7 @@ async function createBalance(
     userId,
     guildId,
     amount,
-    lastUpdate: new Date(),
+    lastBalanceUpdate: new Date(),
   }));
 }
 
