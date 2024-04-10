@@ -40,6 +40,6 @@ async function addMemberToRoulette(
       guildID,
     },
     // Update collection just with the new member
-    { $push: { 'roulette.rouletteAdmins': memberId } }
+    { $addToSet: { 'roulette.rouletteAdmins': memberId } }
   );
 }
