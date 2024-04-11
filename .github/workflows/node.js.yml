@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: [self-hosted, Linux, X64, marquinhos]
 
     strategy:
       matrix:
@@ -24,7 +24,7 @@ jobs:
       - run: npm run build
   deploy:
     needs: build
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: [self-hosted, Linux, X64, marquinhos]
     steps:
       - name: Make deploy.sh executable
         run: chmod +x ./deploy.sh
