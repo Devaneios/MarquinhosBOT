@@ -1,0 +1,17 @@
+[Unit]
+Description=MarquinhosBOT
+After=network.target
+
+[Service]
+EnvironmentFile=/etc/marquinhos/marquinhos.conf
+Environment="NODE_ENV=production"
+User=marquinhos
+WorkingDirectory=%WORKING_DIRECTORY%
+ExecStart=node -r tsconfig-paths/register ./index.js
+Restart=always
+RestartSec=30
+StartLimitInterval=0
+
+
+[Install]
+WantedBy=default.target
