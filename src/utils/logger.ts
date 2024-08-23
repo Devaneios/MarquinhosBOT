@@ -3,7 +3,7 @@ import { createLogger, transports, format, addColors } from 'winston';
 addColors({
   info: 'blue',
   warn: 'yellow',
-  error: 'bold red',
+  error: 'red',
 });
 
 const colorizer = format.colorize();

@@ -121,11 +121,11 @@ export class Bot {
     eventsArray.forEach((event: BotEvent) => {
       if (event.once) {
         this._client.once(event.name, (...args) => {
-          safeExecute(event.execute, ...args)();
+          safeExecute(event.execute, this._client, ...args)();
         });
       } else {
         this._client.on(event.name, (...args) => {
-          safeExecute(event.execute, ...args)();
+          safeExecute(event.execute, this._client, ...args)();
         });
       }
 
