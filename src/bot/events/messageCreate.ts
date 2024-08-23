@@ -121,7 +121,7 @@ export const messageCreate: BotEvent = {
         args ? args.join(' ') : ''
       }`
     );
-    safeExecute(command.execute, message, args)();
+    command.execute(message, args);
   },
 };
 
