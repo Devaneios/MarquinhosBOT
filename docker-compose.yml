@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  marquinhosbot:
+    build: .
+    env_file:
+      - /etc/marquinhos/marquinhos.conf
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
