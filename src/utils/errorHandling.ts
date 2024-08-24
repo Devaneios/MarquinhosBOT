@@ -1,11 +1,10 @@
-import { SafeAny } from '@marquinhos/types';
 import { logger } from '@utils/logger';
 import BotError from '@utils/botError';
 import { Client, TextChannel } from 'discord.js';
 
-export const safeExecute = (fn: Function, client: Client, ...args: SafeAny) => {
+export const safeExecute = (fn: Function, client: Client) => {
   return function () {
-    fn(...args)?.catch((error: BotError) => commandErrorHandler(error, client));
+    fn()?.catch((error: BotError) => commandErrorHandler(error, client));
   };
 };
 
