@@ -11,17 +11,17 @@ import BotError from '@utils/botError';
 
 export const anom: Command = {
   name: 'anom',
-  execute: (message: Message, args: string[]) => {
+  execute: async (message: Message, args: string[]) => {
     const incommingChannel = message.channel as TextChannel;
     const channelName = args[1];
     const channels = message.guild?.channels.cache;
-    if (channelNotProvided(channelName, incommingChannel)) {
+    if (await channelNotProvided(channelName, incommingChannel)) {
       throw new BotError('Channel not specified', message, 'warn');
     }
 
     const parsedMessage = messageHandler(args);
 
-    const desiredChannel = searchChannel(
+    const desiredChannel = await searchChannel(
       channelName,
       channels,
       incommingChannel
@@ -42,12 +42,12 @@ const messageHandler = (args: string[]) => {
   return args.slice(2).join(' ');
 };
 
-const channelNotProvided = (
+const channelNotProvided = async (
   channelName: string,
   incommingChanel: TextChannel
-): boolean => {
+): Promise<boolean> => {
   if (!channelName) {
-    sendTimedMessage(
+    await sendTimedMessage(
       'Você precisa especificar um canal!',
       incommingChanel,
       5000
@@ -57,7 +57,7 @@ const channelNotProvided = (
   return false;
 };
 
-const searchChannel = (
+const searchChannel = async (
   channelName: string,
   channels: Collection<string, GuildBasedChannel> | undefined,
   incommingChannel: TextChannel
@@ -67,7 +67,7 @@ const searchChannel = (
     .filter((channel) => channel.name === channelName)
     .first();
   if (desiredChannel) return desiredChannel;
-  sendTimedMessage(
+  await sendTimedMessage(
     'Desculpe, não consegui achar esse canal! :(',
     incommingChannel,
     5000

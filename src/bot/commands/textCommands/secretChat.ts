@@ -4,23 +4,30 @@ import { Subject, delay } from 'rxjs';
 import { Command, SecretChannelData } from '@marquinhos/types';
 import { sendTimedMessage } from '@utils/discord';
 import { coerceNumberProperty } from '@utils/coercion';
+import { sleep } from '@marquinhos/utils/sleep';
 
 export const secretChat: Command = {
   name: 'chat-secreto',
-  execute: (message: Message, args: string[]) => {
+  execute: async (message: Message, args: string[]) => {
     const incommingChannel = message.channel as TextChannel;
     const authorId = message.author.id;
     const { secretChannels } = message.guild?.client as Client;
     message.delete();
 
-    if (secretChannelAlredyExists(secretChannels, authorId, incommingChannel)) {
+    if (
+      await secretChannelAlredyExists(
+        secretChannels,
+        authorId,
+        incommingChannel
+      )
+    ) {
       return;
     }
 
     // Anti-troll (Guilh*rm*) parse
     const durationInMinutes = coerceNumberProperty(args[1], 0);
 
-    if (!isDurationValid(durationInMinutes, incommingChannel)) {
+    if (!(await isDurationValid(durationInMinutes, incommingChannel))) {
       return;
     }
 
@@ -31,14 +38,14 @@ export const secretChat: Command = {
       durationInMinutes
     );
 
-    scheduleDeactivationNotification(incommingChannel, durationInMinutes);
-    scheduleSecretChannelDeactivation(
+    await scheduleDeactivationNotification(incommingChannel, durationInMinutes);
+    await scheduleSecretChannelDeactivation(
       secretChannels,
       authorId,
       durationInMinutes
     );
 
-    sendTimedMessage(
+    await sendTimedMessage(
       `Ok, liguei o modo secreto por ${durationInMinutes} ${
         durationInMinutes === 1 ? 'minuto' : 'minutos'
       }`,
@@ -51,13 +58,13 @@ export const secretChat: Command = {
   permissions: [],
 };
 
-const secretChannelAlredyExists = (
+const secretChannelAlredyExists = async (
   secretChannels: Map<string, SecretChannelData>,
   authorId: string,
   incommingChannel: TextChannel
 ) => {
   if (secretChannels.get(authorId)) {
-    sendTimedMessage(
+    await sendTimedMessage(
       `Já tá ligado vei, ${
         secretChannels.get(authorId)?.channel === incommingChannel
           ? 'aqui nesse canal mesmo, fala teus podre aí'
@@ -73,12 +80,12 @@ const secretChannelAlredyExists = (
   return false;
 };
 
-const isDurationValid = (
+const isDurationValid = async (
   durationInMinutes: number,
   incommingChannel: TextChannel
 ) => {
   if (durationInMinutes <= 0 || durationInMinutes > 10) {
-    sendTimedMessage(
+    await sendTimedMessage(
       'E isso é tempo útil, bixo (entre 1 e 10 minutos, né...)',
       incommingChannel,
       10000
@@ -109,26 +116,24 @@ const activateSecretChannel = (
     });
 };
 
-const scheduleDeactivationNotification = (
+const scheduleDeactivationNotification = async (
   incommingChannel: TextChannel,
   durationInMinutes: number
 ) => {
-  setTimeout(() => {
-    sendTimedMessage(
-      'Tô desligando o chat-secreto em 10 segundos, viu',
-      incommingChannel,
-      10000
-    );
-  }, durationInMinutes * 60 * 1000 - 10000); // It sends a warning 10 seconds before it deactivates itself
+  await sleep(durationInMinutes * 60 * 1000 - 10000); // It sends a warning 10 seconds before it deactivates itself
+  await sendTimedMessage(
+    'Tô desligando o chat-secreto em 10 segundos, viu',
+    incommingChannel,
+    10000
+  );
 };
 
-const scheduleSecretChannelDeactivation = (
+const scheduleSecretChannelDeactivation = async (
   secretChannels: Map<string, SecretChannelData>,
   authorId: string,
   durationInMinutes: number
 ) => {
-  setTimeout(() => {
-    secretChannels.get(authorId)?.messages.complete();
-    secretChannels.delete(authorId);
-  }, durationInMinutes * 60 * 1000); // At last, the feature deactivates itself
+  await sleep(durationInMinutes * 60 * 1000); // At last, the feature deactivates itself
+  secretChannels.get(authorId)?.messages.complete();
+  secretChannels.delete(authorId);
 };

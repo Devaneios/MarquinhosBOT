@@ -14,6 +14,7 @@ import { join } from 'path';
 import { SafeAny } from '@marquinhos/types';
 import BotError from '@utils/botError';
 import BotAudioPlayer from '@utils/botAudioPlayer';
+import { sleep } from './sleep';
 
 export const checkPermissions = (
   member: GuildMember,
@@ -34,20 +35,18 @@ export const checkPermissions = (
   });
 };
 
-export const sendTimedMessage = (
+export const sendTimedMessage = async (
   message: string,
   channel: TextChannel,
   duration: number
-) => {
-  channel
-    .send(message)
-    .then((m) =>
-      setTimeout(
-        async () => (await channel.messages.fetch(m)).delete(),
-        duration
-      )
-    );
-  return;
+): Promise<void> => {
+  const sentMessage = await channel.send(message);
+  await sleep(duration);
+  try {
+    await (await channel.messages.fetch(sentMessage)).delete();
+  } catch (error) {
+    throw new BotError('Error deleting timed message', sentMessage, 'warn');
+  }
 };
 
 export const voiceChannelPresence = (message: SafeAny): VoiceChannel | null => {
