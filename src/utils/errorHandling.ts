@@ -58,6 +58,8 @@ async function sendErrorMessage(
   description: string
 ) {
   await (
-    client.channels.cache.get(process.env.ERROR_CHANNEL_ID || '') as TextChannel
+    client.channels.cache.get(
+      process.env.MARQUINHOS_ERROR_CHANNEL_ID || ''
+    ) as TextChannel
   )?.send(`### ⚠️⚠️⚠️ ${title} ⚠️⚠️⚠️\n\n\`\`\`ansi\n[2;31m${description}[0m\`\`\``);
 }
