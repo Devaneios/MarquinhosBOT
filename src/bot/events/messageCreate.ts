@@ -71,7 +71,7 @@ export const messageCreate: BotEvent = {
       command.permissions
     );
     if (neededPermissions !== null) {
-      sendTimedMessage(
+      await sendTimedMessage(
         `
             Você não tem permissão para usar esse comando. 
             \n Permissões necessárias: ${neededPermissions.join(', ')}
@@ -88,7 +88,7 @@ export const messageCreate: BotEvent = {
 
     if (command.cooldown && cooldown) {
       if (Date.now() < cooldown) {
-        sendTimedMessage(
+        await sendTimedMessage(
           `Vai com calma! Você pode usar esse comando novamente daqui ${Math.floor(
             Math.abs(Date.now() - cooldown) / 1000
           )} segundos.`,
@@ -121,7 +121,7 @@ export const messageCreate: BotEvent = {
         args ? args.join(' ') : ''
       }`
     );
-    command.execute(message, args);
+    safeExecute(command.execute.bind(this, message, args), message.client)();
   },
 };
 
@@ -143,7 +143,7 @@ async function silencedUserHandler(message: Message) {
   if (await isUserSilenced(message.member as GuildMember)) {
     await message.delete();
     const channel = message.channel;
-    sendTimedMessage('Silêncio.', channel as TextChannel, 1000);
+    await sendTimedMessage('Silêncio.', channel as TextChannel, 1000);
   }
 }
 
