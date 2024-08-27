@@ -34,10 +34,10 @@ jobs:
 
     steps:
       - name: Stop Marquinhos
-        run: docker-compose down
+        run: docker compose down
 
       - name: Build and run Marquinhos
-        run: docker-compose up -d --build
+        run: docker compose up -d --build
 
       - name: Check status
         run: |
