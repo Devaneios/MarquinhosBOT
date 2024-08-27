@@ -2,9 +2,7 @@ name: Node.js CI
 
 on:
   push:
-    branches: ['main']
-  pull_request:
-    branches: ['main']
+    branches: ['ci/add-docker']
 
 jobs:
   build:
@@ -12,21 +10,40 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [20.x]
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      - run: npm ci
-      - run: npm run build
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
   deploy:
     needs: build
     runs-on: [self-hosted, Linux, X64, marquinhos]
+
     steps:
-      - name: Make deploy.sh executable
-        run: chmod +x ./deploy.sh
-      - name: Execute deploy.sh
-        run: echo "${{ secrets.DVNS_CLUSTER_PASSWORD }}" | sudo -S ./deploy.sh "$(pwd)/dist"
+      - name: Stop Marquinhos
+        run: docker-compose down
+
+      - name: Build and run Marquinhos
+        run: docker-compose up -d --build
+
+      - name: Check status
+        run: |
+          if docker ps | grep -q marquinhosbot && docker ps | grep marquinhosbot | grep -q Up; then
+            echo "Marquinhos is running"
+          else
+            echo "Marquinhos is not running"
+            exit 1
+          fi
