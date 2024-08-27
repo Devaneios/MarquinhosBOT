@@ -61,7 +61,7 @@ export class Bot {
     this._loadEvents();
     this._startMongo();
     this._startMinecraftServer();
-    this._client.login(process.env.TOKEN);
+    this._client.login(process.env.MARQUINHOS_TOKEN);
   }
 
   private _startMongo() {
@@ -134,10 +134,12 @@ export class Bot {
   }
 
   private _sendSlashCommands() {
-    const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+    const rest = new REST({ version: '10' }).setToken(
+      process.env.MARQUINHOS_TOKEN
+    );
 
     rest
-      .put(Routes.applicationCommands(process.env.CLIENT_ID), {
+      .put(Routes.applicationCommands(process.env.MARQUINHOS_CLIENT_ID), {
         body: this._slashCommands.map((command) => command.toJSON()),
       })
       .then((data: any) => {

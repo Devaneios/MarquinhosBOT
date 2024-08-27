@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 import { logger } from '@utils/logger';
 
 export const mongoConnection = async () => {
-  const MONGO_URI = process.env.MONGO_URI;
-  const MONGO_DATABASE_NAME = process.env.MONGO_DATABASE_NAME;
+  const MONGO_URI = process.env.MARQUINHOS_MONGO_URI;
+  const MONGO_DATABASE_NAME = process.env.MARQUINHOS_MONGO_DATABASE_NAME;
   if (!MONGO_URI) return logger.info(`Mongo URI not found`);
   if (!MONGO_DATABASE_NAME) return logger.info(`Mongo database name not found`);
   return await mongoose

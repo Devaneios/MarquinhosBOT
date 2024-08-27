@@ -4,7 +4,7 @@ import { IGuild } from '@marquinhos/types';
 const GuildSchema = new Schema<IGuild>({
   guildID: { required: true, type: String },
   options: {
-    prefix: { type: String, default: process.env.PREFIX },
+    prefix: { type: String, default: process.env.MARQUINHOS_PREFIX },
     vipRoleId: { type: String },
     baseRoleId: { type: String },
     externalRoleId: { type: String },
