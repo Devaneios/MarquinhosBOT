@@ -21,7 +21,7 @@ dotenv.config();
 export const messageCreate: BotEvent = {
   name: 'messageCreate',
   execute: async (message: Message) => {
-    const prefix = process.env.PREFIX;
+    const prefix = process.env.MARQUINHOS_PREFIX;
     const timedMessageDuration = 10000;
 
     if (message.channel instanceof TextChannel && message.author.bot) {
