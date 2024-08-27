@@ -7,7 +7,10 @@ services:
       - /etc/marquinhos/marquinhos.conf
     restart: always
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
+    volumes:
+      - /etc/ssl/certificate.pem:/etc/ssl/certificate.pem
+      - /etc/ssl/private.pem:/etc/ssl/private.pem
