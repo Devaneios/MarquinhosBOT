@@ -9,7 +9,7 @@ export const guildCreate: BotEvent = {
     let newGuild = new GuildModel({
       guildID: guild.id,
       options: {
-        prefix: process.env.PREFIX,
+        prefix: process.env.MARQUINHOS_PREFIX,
         VIP_ROLE_NAME: null,
         BASE_ROLE_NAME: null,
         EXTERNAL_ROLE_NAME: null,

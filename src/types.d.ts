@@ -164,9 +164,9 @@ export interface IBalanceStatement extends mongoose.Document {
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      TOKEN: string;
-      CLIENT_ID: string;
-      PREFIX: string;
+      MARQUINHOS_TOKEN: string;
+      MARQUINHOS_CLIENT_ID: string;
+      MARQUINHOS_PREFIX: string;
     }
   }
 }
