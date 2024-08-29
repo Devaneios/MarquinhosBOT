@@ -1,65 +1,80 @@
 import { logger } from '@utils/logger';
 import BotError from '@utils/botError';
-import { Client, TextChannel } from 'discord.js';
+import axios from 'axios';
 
-export const safeExecute = (fn: Function, client: Client) => {
+export function safeExecute(fn: Function) {
   return function () {
-    fn()?.catch((error: BotError) => commandErrorHandler(error, client));
+    try {
+      const result = fn();
+      if (result instanceof Promise) {
+        result.catch((error: BotError) => {
+          commandErrorHandler(error);
+        });
+      }
+    } catch (error) {
+      commandErrorHandler(error as BotError);
+    }
   };
-};
+}
 
-const commandErrorHandler = async (error: BotError, client: Client) => {
+const commandErrorHandler = async (error: BotError) => {
+  await sendErrorMessage(error);
   switch (error.logLevel) {
     case 'warn':
-      logger.warn(`${error} while running ${error.discordMessage}`);
+      logger.warn(`${error?.stack ?? error.message}`);
       break;
     case 'info':
-      logger.info(`${error} while running ${error.discordMessage}`);
+      logger.info(`${error?.stack ?? error.message}`);
       break;
     default:
-      try {
-        const errorStackTraceChunks = error.stack?.match(/.{1,2048}/gs);
-        if (!errorStackTraceChunks?.length) {
-          await sendErrorMessage(
-            client,
-            error.message,
-            'No stack trace available'
-          );
-        } else if (errorStackTraceChunks.length === 1) {
-          await sendErrorMessage(
-            client,
-            error.message,
-            errorStackTraceChunks[0]
-          );
-        } else {
-          for (const [index, chunk] of errorStackTraceChunks.entries()) {
-            await sendErrorMessage(
-              client,
-              `${error.message} ${index + 1}/${errorStackTraceChunks.length}`,
-              chunk
-            );
-          }
-        }
-      } catch (error: any) {
-        logger.error(
-          `Error while trying to send error message to error channel\n${error.stack}`
-        );
-      }
-      logger.error(
-        `${error} while running ${error.discordMessage}\n${error.stack} `
-      );
+      logger.error(`${error?.stack ?? error.message}`);
       break;
   }
 };
 
-async function sendErrorMessage(
-  client: Client,
-  title: string,
-  description: string
-) {
-  await (
-    client.channels.cache.get(
-      process.env.MARQUINHOS_ERROR_CHANNEL_ID || ''
-    ) as TextChannel
-  )?.send(`### ⚠️⚠️⚠️ ${title} ⚠️⚠️⚠️\n\n\`\`\`ansi\n[2;31m${description}[0m\`\`\``);
+async function sendErrorMessage(error: BotError) {
+  const title = error.message;
+  const description = error?.stack || 'No stack trace';
+
+  try {
+    await axios.post(
+      encodeURI(process.env.MARQUINHOS_ERROR_WEBHOOK || ''),
+      {
+        username: 'Marquinhos Error Notifier',
+        avatar_url: 'https://i.imgur.com/M4k2OVe.png',
+        embeds: [
+          {
+            title: `Search error on StackOverflow`,
+            url: `https://www.google.com/search?q=${encodeURI(
+              title
+            )}%20site:stackoverflow.com`,
+            description: `\`\`\`${description.slice(0, 1024)}\`\`\``,
+            color: 0xff0000,
+            footer: {
+              text: 'The operation has failed successfully!',
+            },
+            fields: [
+              {
+                name: 'Level',
+                value: error.logLevel || 'error',
+                inline: true,
+              },
+              {
+                name: 'Origin',
+                value: error.origin || 'Unknown',
+                inline: true,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+  } catch (error) {
+    console.error(error);
+  }
 }
