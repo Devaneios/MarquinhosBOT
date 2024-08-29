@@ -3,7 +3,7 @@ services:
     build: .
     env_file:
       - /etc/marquinhos/marquinhos.conf
-    restart: on-failure[10]
+    restart: on-failure:10
     logging:
       driver: 'json-file'
       options:
