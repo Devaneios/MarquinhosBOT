@@ -51,10 +51,7 @@ export const interactionCreate: BotEvent = {
             : ''
         }`
       );
-      safeExecute(
-        command.execute.bind(this, interaction),
-        interaction.client
-      )();
+      safeExecute(command.execute.bind(this, interaction))();
     } else if (interaction.isAutocomplete()) {
       const command = interaction.client.slashCommands.get(
         interaction.commandName

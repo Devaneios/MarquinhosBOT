@@ -17,7 +17,6 @@ import {
 import { logger } from '@utils/logger';
 import { mongoConnection } from '@database/mongo';
 import { safeExecute } from '@utils/errorHandling';
-import MinecraftServerStatus from '@utils/minecraftServerStatus';
 import * as commands from '@commands';
 import * as events from '@events';
 
@@ -54,24 +53,17 @@ export class Bot {
       });
   }
 
-  start() {
+  async start() {
     this._loadTextCommands();
     this._loadSlashCommands();
-    this._sendSlashCommands();
+    await this._sendSlashCommands();
     this._loadEvents();
-    this._startMongo();
-    this._startMinecraftServer();
+    await this._startMongo();
     this._client.login(process.env.MARQUINHOS_TOKEN);
   }
 
-  private _startMongo() {
-    mongoConnection();
-  }
-
-  private _startMinecraftServer() {
-    const minecraftServer = MinecraftServerStatus.getInstance();
-    minecraftServer.init(this._client);
-    minecraftServer.start();
+  private async _startMongo() {
+    await mongoConnection();
   }
 
   private _loadSlashCommands() {
@@ -121,11 +113,11 @@ export class Bot {
     eventsArray.forEach((event: BotEvent) => {
       if (event.once) {
         this._client.once(event.name, (...args) => {
-          safeExecute(event.execute.bind(this, ...args), this._client)();
+          safeExecute(event.execute.bind(this, ...args))();
         });
       } else {
         this._client.on(event.name, (...args) => {
-          safeExecute(event.execute.bind(this, ...args), this._client)();
+          safeExecute(event.execute.bind(this, ...args))();
         });
       }
 
@@ -133,25 +125,27 @@ export class Bot {
     });
   }
 
-  private _sendSlashCommands() {
+  private async _sendSlashCommands() {
     const rest = new REST({ version: '10' }).setToken(
       process.env.MARQUINHOS_TOKEN
     );
 
-    rest
-      .put(Routes.applicationCommands(process.env.MARQUINHOS_CLIENT_ID), {
-        body: this._slashCommands.map((command) => command.toJSON()),
-      })
-      .then((data: any) => {
-        if (!data.length) {
-          logger.warn('No slash commands loaded');
-          return;
+    try {
+      const data = (await rest.put(
+        Routes.applicationCommands(process.env.MARQUINHOS_CLIENT_ID),
+        {
+          body: this._slashCommands.map((command) => command.toJSON()),
         }
-        logger.info(`Successfully loaded ${data.length} slash command(s)`);
-      })
-      .catch((e) => {
-        logger.error('Error loading slash commands');
-        logger.error(e);
-      });
+      )) as SlashCommandBuilder[];
+
+      if (!data?.length) {
+        logger.warn('No slash commands loaded');
+        return;
+      }
+
+      logger.info(`Successfully loaded ${data.length} slash command(s)`);
+    } catch (error: any) {
+      throw new Error(error);
+    }
   }
 }
