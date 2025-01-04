@@ -30,6 +30,7 @@ export const arrested: SlashCommand = {
     });
   },
   cooldown: 10,
+  disabled: true,
 };
 
 async function getArrested(guildId: string) {

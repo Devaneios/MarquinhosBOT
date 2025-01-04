@@ -14,7 +14,6 @@ import { logger } from '@utils/logger';
 import { safeExecute } from '@utils/errorHandling';
 import { musicBotMessageHandler } from '@utils/lastfm';
 import BotError from '@utils/botError';
-import GuildUserModel from '@marquinhos/database/schemas/guildUser';
 
 dotenv.config();
 
@@ -35,7 +34,6 @@ export const messageCreate: BotEvent = {
     if (!message.guild) return;
     if (!message.content.startsWith(prefix)) {
       secretChannelMessageHandler(message);
-      await silencedUserHandler(message);
       return;
     }
 
@@ -138,24 +136,3 @@ const secretChannelMessageHandler = (message: Message) => {
     }
   }
 };
-
-async function silencedUserHandler(message: Message) {
-  if (await isUserSilenced(message.member as GuildMember)) {
-    await message.delete();
-    const channel = message.channel;
-    await sendTimedMessage('Silêncio.', channel as TextChannel, 1000);
-  }
-}
-
-async function isUserSilenced(member: GuildMember) {
-  const guildUser = await GuildUserModel.findOne({
-    guildId: member.guild.id,
-    userId: member.id,
-  });
-
-  if (!guildUser) {
-    return false;
-  }
-
-  return guildUser.silenced;
-}

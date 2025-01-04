@@ -38,6 +38,7 @@ export const silence: SlashCommand = {
     await interaction.reply({ content: `${silenced} SILÊNCIO!` });
   },
   cooldown: 10,
+  disabled: true,
 };
 
 async function silenceMember(member: GuildMember) {

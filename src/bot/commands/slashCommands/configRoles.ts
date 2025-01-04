@@ -62,6 +62,7 @@ export const configRoles: SlashCommand = {
     });
   },
   cooldown: 10,
+  disabled: true,
 };
 
 const updateRole = async (

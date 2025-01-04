@@ -133,4 +133,5 @@ export const minecraftStatus: SlashCommand = {
     });
   },
   cooldown: 10,
+  disabled: true,
 };

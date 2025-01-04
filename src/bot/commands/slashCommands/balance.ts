@@ -39,6 +39,7 @@ export const balance: SlashCommand = {
     interaction.reply({ embeds: [balanceEmbed] });
   },
   cooldown: 10,
+  disabled: true,
 };
 
 function formatBalance(amount: Number) {

@@ -34,6 +34,7 @@ export const getRoles: SlashCommand = {
     });
   },
   cooldown: 10,
+  disabled: true,
 };
 
 async function findRoles(guildId: string) {

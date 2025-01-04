@@ -36,6 +36,7 @@ export const arrest: SlashCommand = {
     interaction.reply({ content: `${arrested} você está PRESO!` });
   },
   cooldown: 10,
+  disabled: true,
 };
 
 async function arrestMember(member: GuildMember) {

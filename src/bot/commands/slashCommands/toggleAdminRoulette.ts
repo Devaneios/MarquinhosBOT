@@ -32,6 +32,7 @@ export const toggleAdminRoulette: SlashCommand = {
     interaction.reply('Beleza. Liguei a roleta de admins.');
   },
   cooldown: 10,
+  disabled: true,
 };
 
 async function getAdminRouletteValue(guildID: Nullable<string>) {

@@ -85,6 +85,7 @@ export const allowUser: SlashCommand = {
     }
   },
   cooldown: 10,
+  disabled: true,
 };
 
 async function findRoles(guildId: string): Promise<RolesConfig> {

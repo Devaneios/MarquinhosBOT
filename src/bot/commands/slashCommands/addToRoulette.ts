@@ -28,6 +28,7 @@ export const addToRoulette: SlashCommand = {
       `Agora adicionei ${newMember} na roleta de admins. Parabéns e tals.`
     );
   },
+  disabled: true,
 };
 
 // TODO => Check if member already exists in collection's array

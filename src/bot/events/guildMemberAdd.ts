@@ -1,21 +1,12 @@
 import { EmbedBuilder, GuildMember, TextChannel } from 'discord.js';
 
 import { BotEvent } from '@marquinhos/types';
-import GuildModel from '@schemas/guild';
 
 export const guildMemberAdd: BotEvent = {
   name: 'guildMemberAdd',
   execute: async (member: GuildMember) => {
     const guildMemberAddEmbed = member.client.baseEmbed();
-    const guild = await GuildModel.findOne({ guildID: member.guild.id }).exec();
-    if (!guild) {
-      throw new Error('Guild not found');
-    }
-
-    const mainChannelId = guild?.options?.mainChannelId;
-    if (!mainChannelId) {
-      throw new Error('Main channel not configured');
-    }
+    const mainChannelId = '680975188581416998';
 
     const defaultChannel = member.guild.channels.cache.get(
       mainChannelId
@@ -29,11 +20,7 @@ export const guildMemberAdd: BotEvent = {
       member.user.username + ' agora faz parte do motel!'
     );
 
-    const externalRoleId = guild?.options?.externalRoleId;
-
-    if (!externalRoleId) {
-      throw new Error('External role not configured');
-    }
+    const externalRoleId = '696892513390428260';
 
     const role = member.guild.roles.cache.find((r) => r.id === externalRoleId);
 
@@ -64,10 +51,7 @@ export const guildMemberAdd: BotEvent = {
       `O usuário ${member.user.username} entrou no servidor e quer se registrar!`
     ); // TODO: Improve this with buttons to accept or deny the user
 
-    const newcomersChannelId = guild?.options?.newcomersChannelId;
-    if (!newcomersChannelId) {
-      throw new Error('Newcomers channel not configured');
-    }
+    const newcomersChannelId = '739562824178729122';
 
     const channel = member.guild.channels.cache.get(
       newcomersChannelId

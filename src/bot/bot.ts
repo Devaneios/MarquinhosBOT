@@ -15,7 +15,6 @@ import {
   SlashCommand,
 } from '@marquinhos/types';
 import { logger } from '@utils/logger';
-import { mongoConnection } from '@database/mongo';
 import { safeExecute } from '@utils/errorHandling';
 import * as commands from '@commands';
 import * as events from '@events';
@@ -58,35 +57,30 @@ export class Bot {
     this._loadSlashCommands();
     await this._sendSlashCommands();
     this._loadEvents();
-    await this._startMongo();
     await this._client.login(process.env.MARQUINHOS_TOKEN);
   }
 
-  private async _startMongo() {
-    await mongoConnection();
-  }
-
   private _loadSlashCommands() {
-    const slashCommands = Array.from(Object.values(commands.slashCommands)).map(
-      (command) => command
-    );
+    const slashCommands: SlashCommand[] = Object.values(commands.slashCommands);
 
-    slashCommands.forEach((command: SlashCommand) => {
-      command.command.setName(
-        `${command.command.name}${
-          process.env.NODE_ENV === 'production' ? '' : '-dev'
-        }`
-      );
-      const commandName = command.command.name;
-      try {
-        this._slashCommands.push(command.command);
-        this._client.slashCommands.set(commandName, command);
-        logger.info(`Successfully loaded slash command ${commandName}`);
-      } catch (error) {
-        logger.error(`Error loading slash command ${commandName}`);
-        logger.error(error);
-      }
-    });
+    slashCommands
+      .filter((command) => !command.disabled)
+      .forEach((command: SlashCommand) => {
+        command.command.setName(
+          `${command.command.name}${
+            process.env.NODE_ENV === 'production' ? '' : '-dev'
+          }`
+        );
+        const commandName = command.command.name;
+        try {
+          this._slashCommands.push(command.command);
+          this._client.slashCommands.set(commandName, command);
+          logger.info(`Successfully loaded slash command ${commandName}`);
+        } catch (error) {
+          logger.error(`Error loading slash command ${commandName}`);
+          logger.error(error);
+        }
+      });
   }
 
   private _loadTextCommands() {
