@@ -4,7 +4,6 @@ import { join } from 'path';
 import { BotEvent, Nullable } from '@marquinhos/types';
 import { logger } from '@utils/logger';
 import { getBicho } from '@utils/bichoGame';
-import GuildModel from '@schemas/guild';
 import { isDateInRange } from '@utils/dateRange';
 
 export const ready: BotEvent = {
@@ -16,29 +15,6 @@ export const ready: BotEvent = {
     // Start heartbeat for bicho game
     startBichoGame(client);
     await updateAvatarBasedOnHoliday(client);
-    // Marquinhos for Multiple guilds
-    const guilds = client.guilds.cache.map((guild) => guild.id);
-    guilds.forEach(async (guild) => {
-      if (!(await GuildModel.exists({ guildID: guild }))) {
-        // Config for what before was stored in the env
-        let newGuild = new GuildModel({
-          guildID: guild,
-          options: {
-            prefix: process.env.MARQUINHOS_PREFIX,
-            VIP_ROLE_NAME: null,
-            BASE_ROLE_NAME: null,
-            EXTERNAL_ROLE_NAME: null,
-            ROULETTE_ROLE_NAME: null,
-          },
-          roulette: {
-            isRouletteOn: false,
-            rouletteAdmins: [],
-          },
-          joinedAt: Date.now(),
-        });
-        newGuild.save();
-      }
-    });
   },
 };
 

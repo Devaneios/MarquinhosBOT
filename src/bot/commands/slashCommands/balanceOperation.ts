@@ -164,6 +164,7 @@ export const balanceOperation = {
       ephemeral: true,
     });
   },
+  disabled: true,
 };
 
 function operationReply(

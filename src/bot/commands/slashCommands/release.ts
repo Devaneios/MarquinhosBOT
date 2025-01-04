@@ -40,6 +40,7 @@ export const release: SlashCommand = {
     });
   },
   cooldown: 10,
+  disabled: true,
 };
 
 async function findAndReleaseMember(member: GuildMember) {

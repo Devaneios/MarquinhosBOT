@@ -17,6 +17,7 @@ export interface SlashCommand {
   execute: (interaction: CommandInteraction) => void;
   autocomplete?: (interaction: AutocompleteInteraction) => void;
   cooldown?: number; // in seconds
+  disabled?: boolean;
 }
 
 export interface Command {

@@ -41,6 +41,7 @@ export const unsilence: SlashCommand = {
     });
   },
   cooldown: 10,
+  disabled: true,
 };
 
 async function findAndUnsilenceMember(member: GuildMember) {
