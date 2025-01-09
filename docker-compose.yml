@@ -10,5 +10,5 @@ services:
         max-size: '100m'
         max-file: '10'
     volumes:
-      - /etc/ssl/certificate.pem:/etc/ssl/certificate.pem
-      - /etc/ssl/private.pem:/etc/ssl/private.pem
+      - /etc/ssl/dvns-certificate.pem:/etc/ssl/dvns-certificate.pem
+      - /etc/ssl/dvns-private.pem:/etc/ssl/dvns-private.pem
