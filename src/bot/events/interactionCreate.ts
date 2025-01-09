@@ -1,9 +1,9 @@
 import { Interaction } from 'discord.js';
 
 import { BotEvent, SafeAny } from '@marquinhos/types';
-import { logger } from '@utils/logger';
-import { safeExecute } from '@utils/errorHandling';
-import BotError from '@utils/botError';
+import BotError from '@marquinhos/utils/botError';
+import { safeExecute } from '@marquinhos/utils/errorHandling';
+import { logger } from '@marquinhos/utils/logger';
 
 export const interactionCreate: BotEvent = {
   name: 'interactionCreate',

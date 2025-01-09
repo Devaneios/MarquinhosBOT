@@ -2,7 +2,6 @@ import { GuildMember, SlashCommandBuilder, VoiceChannel } from 'discord.js';
 import { join } from 'path';
 
 import { SlashCommand } from '@marquinhos/types';
-import { playAudio } from '@utils/discord';
 
 export const time: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -27,7 +26,7 @@ export const time: SlashCommand = {
         ],
       });
       if (voiceChannel) {
-        playAudio(interaction, voiceChannel, '_macaco');
+        // playAudio(interaction, voiceChannel, '_macaco');
       }
     } else {
       // If its not midnight, Marquinhos send the time in the channel

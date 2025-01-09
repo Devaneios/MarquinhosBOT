@@ -1,4 +1,7 @@
 {
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  },
   "compilerOptions": {
     "target": "ESNext",
     "module": "commonjs",
@@ -18,39 +21,10 @@
     "sourceMap": false,
     "baseUrl": ".",
     "paths": {
-      "@marquinhos": ["src", "dist"],
-      "@marquinhos/*": ["src/*", "dist/*"],
-      "@commands": ["src/bot/commands", "dist/bot/commands"],
-      "@commands/*": ["src/bot/commands/*", "dist/bot/commands/*"],
-      "@events": ["src/bot/events", "dist/bot/events"],
-      "@events/*": ["src/bot/events/*", "dist/bot/events/*"],
-      "@slashCommands": [
-        "src/bot/commands/slashCommands",
-        "dist/bot/commands/slashCommands"
-      ],
-      "@slashCommands/*": [
-        "src/bot/commands/slashCommands/*",
-        "dist/bot/commands/slashCommands/*"
-      ],
-      "@textCommands": [
-        "src/bot/commands/textCommands",
-        "dist/bot/commands/textCommands"
-      ],
-      "@textCommands/*": [
-        "src/bot/commands/textCommands/*",
-        "dist/bot/commands/textCommands/*"
-      ],
-      "@database": ["src/database", "dist/database"],
-      "@database/*": ["src/database/*", "dist/database/*"],
-      "@schemas": ["src/database/schemas", "dist/database/schemas"],
-      "@schemas/*": ["src/database/schemas/*", "dist/database/schemas/*"],
-      "@services": ["src/services", "dist/services"],
-      "@services/*": ["src/services/*", "dist/services/*"],
-      "@utils": ["src/utils", "dist/utils"],
-      "@utils/*": ["src/utils/*", "dist/utils/*"]
+      "@marquinhos/": ["src/", "dist/"],
+      "@marquinhos/*": ["src/*", "dist/*"]
     }
   },
-  "files": ["src/index.ts"],
-  "include": ["./src/**/*.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

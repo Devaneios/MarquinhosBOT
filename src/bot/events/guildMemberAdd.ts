@@ -1,4 +1,4 @@
-import { EmbedBuilder, GuildMember, TextChannel } from 'discord.js';
+import { GuildMember, TextChannel } from 'discord.js';
 
 import { BotEvent } from '@marquinhos/types';
 

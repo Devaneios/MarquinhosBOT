@@ -1,12 +1,12 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { join } from 'path';
 import { readdirSync } from 'fs';
+import { join } from 'path';
 
 import { SlashCommand } from '@marquinhos/types';
-import { logger } from '@utils/logger';
-import { playAudio, voiceChannelPresence } from '@utils/discord';
+import { voiceChannelPresence } from '@marquinhos/utils/discord';
+import { logger } from '@marquinhos/utils/logger';
 
-const audiosDir = join(__dirname, '../../../resources/sounds/');
+const audiosDir = join(__dirname, '../../resources/sounds/');
 const audios: string[] = [];
 
 readdirSync(audiosDir).forEach((file) => {
@@ -40,7 +40,7 @@ export const audio: SlashCommand = {
     const channel = voiceChannelPresence(interaction);
     const file = interaction.options.get('audio');
     const audioEmbed = interaction.client.baseEmbed();
-    playAudio(interaction, channel, file?.value as string);
+    // playAudio(interaction, channel, file?.value as string);
     interaction.reply({
       embeds: [
         audioEmbed.setDescription(`Reproduzindo ${file?.value as string}`),

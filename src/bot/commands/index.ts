@@ -1,2 +1,14 @@
-export * as textCommands from '@textCommands';
-export * as slashCommands from '@slashCommands';
+export { anom } from './anom';
+export { audio } from './audio';
+export { chaos } from './chaos';
+export { checkIn } from './checkIn';
+export { coin } from './coin';
+export { disconnectAll } from './disconnectAll';
+export { esroh } from './esroh';
+export { horse } from './horse';
+export { importunate } from './importunate';
+export { lastfm } from './lastfm';
+export { lastfmCharts } from './lastfmCharts';
+export { moveAll } from './moveAll';
+export { ping } from './ping';
+export { time } from './time';

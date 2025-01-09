@@ -1,9 +1,8 @@
 import {
-  SlashCommandBuilder,
   AttachmentBuilder,
-  Embed,
-  EmbedBuilder,
   CommandInteractionOptionResolver,
+  EmbedBuilder,
+  SlashCommandBuilder,
 } from 'discord.js';
 
 import { FlipCoinResult, SlashCommand } from '@marquinhos/types';

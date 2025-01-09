@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder, GuildMember } from 'discord.js';
+import { GuildMember, SlashCommandBuilder } from 'discord.js';
 
 import { SlashCommand } from '@marquinhos/types';
 

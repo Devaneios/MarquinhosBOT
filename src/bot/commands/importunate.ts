@@ -6,7 +6,6 @@ import {
 } from 'discord.js';
 
 import { SlashCommand } from '@marquinhos/types';
-import { playAudio } from '@utils/discord';
 
 export const importunate: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -47,5 +46,5 @@ function makeNoise(
   interaction: CommandInteraction
 ) {
   const sounds = ['_miau', '_cabra', '_boombam'];
-  playAudio(interaction, voiceChannel, sounds[Math.floor(Math.random() * 3)]);
+  // playAudio(interaction, voiceChannel, sounds[Math.floor(Math.random() * 3)]);
 }

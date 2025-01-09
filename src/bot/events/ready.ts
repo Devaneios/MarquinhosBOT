@@ -2,9 +2,9 @@ import { Client } from 'discord.js';
 import { join } from 'path';
 
 import { BotEvent, Nullable } from '@marquinhos/types';
-import { logger } from '@utils/logger';
-import { getBicho } from '@utils/bichoGame';
-import { isDateInRange } from '@utils/dateRange';
+import { getBicho } from '@marquinhos/utils/bichoGame';
+import { isDateInRange } from '@marquinhos/utils/dateRange';
+import { logger } from '@marquinhos/utils/logger';
 
 export const ready: BotEvent = {
   name: 'ready',

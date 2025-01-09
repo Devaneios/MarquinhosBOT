@@ -1,23 +1,23 @@
 import {
   Client,
-  GatewayIntentBits,
   Collection,
-  SlashCommandBuilder,
+  EmbedBuilder,
+  GatewayIntentBits,
   REST,
   Routes,
-  EmbedBuilder,
+  SlashCommandBuilder,
 } from 'discord.js';
 
+import * as commands from '@marquinhos/bot/commands';
+import * as events from '@marquinhos/bot/events';
 import {
   BotEvent,
   Command,
   SecretChannelData,
   SlashCommand,
 } from '@marquinhos/types';
-import { logger } from '@utils/logger';
-import { safeExecute } from '@utils/errorHandling';
-import * as commands from '@commands';
-import * as events from '@events';
+import { safeExecute } from '@marquinhos/utils/errorHandling';
+import { logger } from '@marquinhos/utils/logger';
 
 const {
   Guilds,
@@ -27,7 +27,7 @@ const {
   GuildVoiceStates,
 } = GatewayIntentBits;
 
-export class Bot {
+export class MarquinhosBot {
   private _client: Client;
   private readonly _slashCommands: SlashCommandBuilder[] = [];
 
@@ -53,7 +53,6 @@ export class Bot {
   }
 
   async start() {
-    this._loadTextCommands();
     this._loadSlashCommands();
     await this._sendSlashCommands();
     this._loadEvents();
@@ -61,7 +60,7 @@ export class Bot {
   }
 
   private _loadSlashCommands() {
-    const slashCommands: SlashCommand[] = Object.values(commands.slashCommands);
+    const slashCommands: SlashCommand[] = Object.values(commands);
 
     slashCommands
       .filter((command) => !command.disabled)
@@ -81,22 +80,6 @@ export class Bot {
           logger.error(error);
         }
       });
-  }
-
-  private _loadTextCommands() {
-    const textCommands = Array.from(Object.values(commands.textCommands)).map(
-      (command: Command) => command
-    );
-    textCommands.forEach((command) => {
-      const commandName = command.name;
-      try {
-        this._client.commands.set(commandName as string, command);
-        logger.info(`Successfully loaded text command ${commandName}`);
-      } catch (error) {
-        logger.error(`Error loading text command ${commandName}`);
-        logger.error(error);
-      }
-    });
   }
 
   private _loadEvents() {
