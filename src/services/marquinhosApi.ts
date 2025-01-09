@@ -1,17 +1,16 @@
+import { LastfmTopListenedPeriod, PlaybackData } from '@marquinhos/types';
 import axios from 'axios';
 import { readFileSync } from 'fs';
 import { Agent } from 'https';
-import { join } from 'path';
-import { LastfmTopListenedPeriod, PlaybackData } from '@marquinhos/types';
 
 const httpsAgent = new Agent({
   cert:
     process.env.NODE_ENV === 'production'
-      ? readFileSync('/etc/ssl/certificate.pem')
+      ? readFileSync('/etc/ssl/dvns-certificate.pem')
       : undefined,
   key:
     process.env.NODE_ENV === 'production'
-      ? readFileSync('/etc/ssl/private.pem')
+      ? readFileSync('/etc/ssl/dvns-private.pem')
       : undefined,
   rejectUnauthorized: process.env.NODE_ENV === 'production',
 });
