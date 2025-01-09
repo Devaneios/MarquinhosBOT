@@ -1,8 +1,8 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { ChannelType, SlashCommandBuilder } from 'discord.js';
 
+import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { SlashCommand } from '@marquinhos/types';
-import { MarquinhosApiService } from '@services/marquinhosApi';
-import { CollageBuilder } from '@utils/collageBuilder';
+import { CollageBuilder } from '@marquinhos/utils/collageBuilder';
 
 const marquinhosApi = new MarquinhosApiService();
 const collageBuilder = new CollageBuilder();
@@ -111,8 +111,10 @@ export const lastfmCharts: SlashCommand = {
       type.value as string,
       period.value as string
     );
+    const textChannel = await interaction.channel?.fetch();
+    if (textChannel?.type !== ChannelType.GuildText) return;
 
-    await interaction.channel?.send({
+    await textChannel?.send({
       files: [image],
       content: `${profileName} aqui estão ${
         type.value == 'tracks' ? 'as suas' : 'os seus'

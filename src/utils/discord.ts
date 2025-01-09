@@ -1,19 +1,13 @@
-import { AudioPlayerStatus, joinVoiceChannel } from '@discordjs/voice';
 import {
-  CommandInteraction,
   GuildMember,
-  Message,
   PermissionFlagsBits,
   PermissionResolvable,
   TextChannel,
-  VoiceBasedChannel,
   VoiceChannel,
 } from 'discord.js';
-import { join } from 'path';
 
 import { SafeAny } from '@marquinhos/types';
-import BotError from '@utils/botError';
-import BotAudioPlayer from '@utils/botAudioPlayer';
+import BotError from '@marquinhos/utils/botError';
 import { sleep } from './sleep';
 
 export const checkPermissions = (
@@ -61,31 +55,3 @@ export const voiceChannelPresence = (message: SafeAny): VoiceChannel | null => {
 export enum AudioPlayerDisconnectEvent {
   Disconnect = 'disconnect',
 }
-
-export const playAudio = (
-  message: Message | CommandInteraction,
-  channel: VoiceChannel | VoiceBasedChannel | null,
-  filename: string
-) => {
-  if (!channel) {
-    throw new BotError('Invalid channel', message, 'warn');
-  }
-
-  const audioPlayer = BotAudioPlayer.getInstance();
-
-  const connection = joinVoiceChannel({
-    channelId: channel.id,
-    guildId: channel.guild.id,
-    adapterCreator: channel.guild.voiceAdapterCreator,
-  });
-
-  connection.subscribe(audioPlayer.player);
-  audioPlayer.player.on(
-    AudioPlayerDisconnectEvent.Disconnect as unknown as AudioPlayerStatus,
-    () => {
-      if (connection.state.status === 'destroyed') return;
-      connection.destroy();
-    }
-  );
-  audioPlayer.play(join(__dirname, `../resources/sounds/${filename}.mp3`));
-};

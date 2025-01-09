@@ -1,5 +1,5 @@
-import { logger } from '@utils/logger';
-import BotError from '@utils/botError';
+import BotError from '@marquinhos/utils/botError';
+import { logger } from '@marquinhos/utils/logger';
 import axios from 'axios';
 
 export function safeExecute(fn: Function) {

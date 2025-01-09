@@ -1,14 +1,13 @@
 import {
-  SlashCommandBuilder,
-  CommandInteraction,
-  Collection,
-  PermissionResolvable,
-  Message,
   AutocompleteInteraction,
-  TextChannel,
+  Collection,
+  CommandInteraction,
   Client as DiscordClient,
+  Message,
+  PermissionResolvable,
+  SlashCommandBuilder,
+  TextChannel,
 } from 'discord.js';
-import { Subject } from 'rxjs';
 
 export type Nullable<T> = T | null | undefined;
 
@@ -33,24 +32,6 @@ export interface AudioCommandBuilder {
   textCommand: Command;
 }
 
-interface IArrested extends mongoose.Document {
-  id: string;
-  user: string;
-}
-
-interface ISilenced extends mongoose.Document {
-  id: string;
-  user: string;
-}
-
-export interface IMinecraftServer extends mongoose.Document {
-  guildID: string;
-  channelID: string;
-  messageID: string;
-  host: string;
-  port: number;
-}
-
 interface GuildOptions {
   prefix: string;
   vipRoleId: string;
@@ -67,25 +48,17 @@ interface Roulette {
   rouletteAdmins: string[];
 }
 
-export interface IGuild extends mongoose.Document {
-  guildID: string;
-  roulette: Roulette;
-  options: GuildOptions;
-  joinedAt: Date;
-}
-
 export type GuildOption = keyof GuildOptions;
 export interface BotEvent {
   name: string;
   once?: boolean | false;
-  execute: (...args) => void;
+  execute: (...args: any[]) => void;
 }
 
 export interface SecretChannelData {
   channel: TextChannel;
   startedAt: Date;
   finishesAt: Date;
-  messages: Subject<Message>;
 }
 
 export type SafeAny = any;
@@ -139,28 +112,6 @@ export type RolesConfig = {
   baseRoleId: Nullable<string>;
   vipRoleId: Nullable<string>;
 };
-
-export interface IGuildUser extends mongoose.Document {
-  guildId: string;
-  userId: string;
-  silenced: boolean;
-  arrested: boolean;
-  coins: number;
-  lastBalanceUpdate: Date;
-  lastBonusRedeemed: Date;
-  lastBetOnCoinFlip: Date;
-  freeCoinFlipCount: number;
-  lastBetOnAnimalLottery: Date;
-}
-
-export interface IBalanceStatement extends mongoose.Document {
-  userId: string;
-  guildId: string;
-  amount: number;
-  executedBy: string;
-  type: BalanceOperationType;
-  date: Date;
-}
 
 declare global {
   namespace NodeJS {

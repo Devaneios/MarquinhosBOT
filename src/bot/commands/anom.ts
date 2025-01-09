@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChannelType, TextChannel } from 'discord.js';
+import { ChannelType, SlashCommandBuilder, TextChannel } from 'discord.js';
 
 import { SlashCommand } from '@marquinhos/types';
 

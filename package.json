@@ -4,58 +4,48 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "rimraf ./dist && npm run copy-assets && tsc -p tsconfig.json",
-    "build:dev": "rimraf ./dist && npm run copy-assets && tsc -p tsconfig.dev.json",
-    "start": "node -r tsconfig-paths/register ./dist/index.js",
-    "dev": "npm run build:dev && npm run start",
-    "watch": "nodemon",
-    "copy-assets": "copyfiles --all --up 1 \"./src/resources/**\" \"./dist\"",
-    "prettier": "npx prettier --write \"src/**/*.ts\""
+    "start": "ts-node -r tsconfig-paths/register src/index.ts",
+    "start:dev": "nodemon",
+    "start:prod": "node -r tsconfig-paths/register ./dist/index.js",
+    "build": "tsc --build && npm run copy-assets",
+    "prettier": "npx prettier --write \"src/**/*.ts\"",
+    "copy-assets": "copyfiles --all --up 1 \"./src/resources/**\" \"./dist\""
   },
   "author": "",
   "license": "GPL-3.0",
   "dependencies": {
-    "@discordjs/opus": "^0.9.0",
-    "@discordjs/voice": "^0.16.1",
+    "@discord-player/extractor": "^7.0.0",
     "axios": "^1.6.8",
     "canvas": "^2.11.2",
     "color": "^4.2.3",
-    "copyfiles": "^2.4.1",
+    "discord-api-types": "^0.37.115",
+    "discord-player": "^7.0.0",
+    "discord-player-deezer": "^2.1.0",
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
-    "ffmpeg": "0.0.4",
-    "ffmpeg-static": "^5.2.0",
-    "fluent-ffmpeg": "^2.1.2",
     "font-color-contrast": "^11.1.0",
-    "fuzzy-search": "^3.2.1",
-    "libsodium-wrappers": "^0.7.13",
-    "minecraft-server-util": "^5.4.4",
-    "mongoose": "^8.3.0",
-    "nanoid": "^5.0.7",
-    "opusscript": "0.1.1",
-    "path": "^0.12.7",
-    "rimraf": "^5.0.5",
-    "rxjs": "^7.8.1",
     "sharp": "^0.33.3",
+    "winston": "^3.13.0"
+  },
+  "devDependencies": {
+    "@types/color": "^3.0.6",
+    "@types/fuzzy-search": "^2.1.5",
+    "@types/node": "^20.12.5",
+    "copyfiles": "^2.4.1",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.57.0",
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "winston": "^3.13.0",
-    "ytdl-core": "^4.11.5"
+    "typescript": "^5.4.4"
   },
   "engines": {
-    "node": "18.x"
+    "node": "20.x"
   },
   "nodemonConfig": {
     "ignore": [
       "*.json"
     ],
     "delay": "2500"
-  },
-  "devDependencies": {
-    "@types/color": "^3.0.6",
-    "@types/fuzzy-search": "^2.1.5",
-    "@types/node": "^20.12.5",
-    "eslint": "^8.57.0",
-    "nodemon": "^3.1.0",
-    "typescript": "^5.4.4"
   }
 }

@@ -1,57 +1,75 @@
 import {
+  ChannelType,
   Collection,
+  CommandInteraction,
   GuildBasedChannel,
   GuildMember,
-  Message,
+  SlashCommandBuilder,
   VoiceBasedChannel,
   VoiceChannel,
 } from 'discord.js';
 
-import { Command } from '@marquinhos/types';
-import { coerceNumberProperty } from '@utils/coercion';
-import { playAudio } from '@utils/discord';
+import { SlashCommand } from '@marquinhos/types';
+import { coerceNumberProperty } from '@marquinhos/utils/coercion';
 
-export const chaos: Command = {
-  name: 'chaos',
-  execute: (message: Message, args: string[]) => {
+export const chaos: SlashCommand = {
+  command: new SlashCommandBuilder()
+    .setName('chaos')
+    .setDescription('Instaura o CHAOS nos canais de voz')
+    .setDefaultMemberPermissions(0)
+    .addStringOption((option) =>
+      option
+        .setName('nivel_do_chaos')
+        .setDescription('O quão caótico você precisa que fique.')
+        .setRequired(false)
+    ),
+  execute: async (interaction) => {
     // Gets the audioPlayer to execute the command only after the audio finishes
     // playing
     // const audioPlayer = BotAudioPlayer.getInstance();
-    const levelOfChaos = coerceNumberProperty(args[1], 10);
+    // Defines the level of chaos, as a number
+    const levelOfChaos = coerceNumberProperty(
+      interaction.options.get('nivel_do_chaos')?.value,
+      10
+    );
+    // Maxes the number to 25, since more would take too much time
     if (levelOfChaos > 25) {
-      message.channel.send(
+      interaction.reply(
         'Não posso fazer isso, vocês não aguentariam tamanho caos!'
       );
       return;
     }
-
-    const currentVoiceChannel = message.member?.voice.channel;
+    // Voice channel to get current voice channel
+    const currentVoiceChannel = (interaction.member as GuildMember).voice
+      .channel;
+    // If the user is not in a voice channel, it doens't work
     if (!currentVoiceChannel) {
-      message.channel.send('Você precisa estar em um canal de voz!');
+      interaction.reply('Você precisa estar em um canal de voz!');
       return;
     }
-
     // Plays the audio to start chaos
-    playAudio(message, currentVoiceChannel, '_caos');
+    // playAudio(interaction, currentVoiceChannel, '_caos');
 
     //When the audio finishes playing, call the function
-    //audioPlayer.player.on(AudioPlayerStatus.Idle, () => {
-    chaos2(message, levelOfChaos);
-    //});
+    // const chaosFunction = () => {
+    //   setTimeout(() => chaos2(interaction, levelOfChaos), 500);
+    //   audioPlayer.player.off(AudioPlayerStatus.Idle, chaosFunction);
+    // };
+    // audioPlayer.player.on(AudioPlayerStatus.Idle, chaosFunction);
+
+    interaction.reply('É TILAMBUCOOOOOOO');
+    interaction.deleteReply();
   },
   cooldown: 10,
-  aliases: [],
-  permissions: [],
 };
 
-async function chaos2(message: Message, limit: number) {
+async function chaos2(interaction: CommandInteraction, limit: number) {
+  // Voice channel enum to filter all available channels
   const voiceChannelEnumNumber = 2;
-  // Delete the message to hide the chaos
-  message.delete();
   // Gets the voice channel that will (primaly) suffer the chaos
-  const voiceChannel = message.member?.voice.channel;
+  const voiceChannel = (interaction.member as GuildMember).voice.channel;
   // Gets the list of all voice channels in the guild
-  const voiceChannels = message.guild?.channels.cache.filter(
+  const voiceChannels = interaction.guild?.channels.cache.filter(
     (channel) => channel.type === voiceChannelEnumNumber
   );
   // Gets the list of all users in the voiceChannel
@@ -62,9 +80,12 @@ async function chaos2(message: Message, limit: number) {
     voiceChannels != undefined &&
     activeUsers != undefined
   ) {
-    chaos3(0, voiceChannel, voiceChannels, activeUsers, limit);
+    chaos3(1, voiceChannel, voiceChannels, activeUsers, limit);
   } else {
-    message.channel.send('Desculpe, mas houve um erro na execução.');
+    const textChannel = await interaction.channel?.fetch();
+    if (textChannel?.type === ChannelType.GuildText) {
+      textChannel.send('Desculpe, mas houve um erro na execução.');
+    }
     return;
   }
 }
@@ -101,7 +122,7 @@ async function chaos3(
       // Check if the user disconnected from a voice channel during the recursivity
       // The recursion itself. We just send the same data with the counter increased
       chaos3(counter, voiceChannel, voiceChannels, activeUsers, limit);
-    }, 1500);
+    }, 1000);
   } else {
     // After the final recursion, this iteration moves everyone to the
     // original channel

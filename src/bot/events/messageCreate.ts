@@ -1,19 +1,11 @@
-import {
-  ChannelType,
-  Client,
-  GuildMember,
-  Message,
-  TextChannel,
-} from 'discord.js';
+import { ChannelType, Message, TextChannel } from 'discord.js';
 import dotenv from 'dotenv';
-import FuzzySearch from 'fuzzy-search';
 
-import { checkPermissions, sendTimedMessage } from '@utils/discord';
 import { BotEvent } from '@marquinhos/types';
-import { logger } from '@utils/logger';
-import { safeExecute } from '@utils/errorHandling';
-import { musicBotMessageHandler } from '@utils/lastfm';
-import BotError from '@utils/botError';
+import BotError from '@marquinhos/utils/botError';
+import { checkPermissions, sendTimedMessage } from '@marquinhos/utils/discord';
+import { safeExecute } from '@marquinhos/utils/errorHandling';
+import { logger } from '@marquinhos/utils/logger';
 
 dotenv.config();
 
@@ -24,18 +16,10 @@ export const messageCreate: BotEvent = {
     const timedMessageDuration = 10000;
 
     if (message.channel instanceof TextChannel && message.author.bot) {
-      try {
-        await musicBotMessageHandler(message);
-      } catch (error) {
-        throw error;
-      }
+      return;
     }
     if (!message.member) return;
     if (!message.guild) return;
-    if (!message.content.startsWith(prefix)) {
-      secretChannelMessageHandler(message);
-      return;
-    }
 
     if (message.channel.type !== ChannelType.GuildText) return;
 
@@ -49,14 +33,6 @@ export const messageCreate: BotEvent = {
       );
       if (commandFromAlias) command = commandFromAlias;
       else {
-        const mapedCommands = commandList.map((command) => command.name);
-        const searcher = new FuzzySearch(mapedCommands, undefined, {
-          sort: true,
-        });
-        const result = searcher.search(args[0]);
-        if (result.length > 0) {
-          message.channel.send(`Você quis dizer: **${prefix}${result[0]}** ?`);
-        }
         throw new BotError('Command not found', message, 'info');
       }
     }
@@ -121,18 +97,4 @@ export const messageCreate: BotEvent = {
     );
     safeExecute(command.execute.bind(this, message, args))();
   },
-};
-
-const secretChannelMessageHandler = (message: Message) => {
-  const { secretChannels } = message.guild?.client as Client;
-  const { id } = message.author;
-  const secretChannel = secretChannels.get(id);
-  if (secretChannel) {
-    if (
-      secretChannel.channel === message.channel &&
-      secretChannel.finishesAt > new Date()
-    ) {
-      secretChannel.messages.next(message);
-    }
-  }
 };
