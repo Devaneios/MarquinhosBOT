@@ -1,6 +1,6 @@
 FROM node:20-alpine
 
-RUN apk add --no-cache ffmpeg
+RUN apk add --no-cache ffmpeg python3 make g++ pkgconfig pixman cairo-dev pango-dev giflib-dev jpeg-dev
 
 WORKDIR /app
 
@@ -14,4 +14,4 @@ RUN npm run build
 
 ENV NODE_ENV=production
 
-CMD ["node", "-r", "tsconfig-paths/register", "./dist/index.js"]
+CMD ["npm", "run", "start:prod"]
