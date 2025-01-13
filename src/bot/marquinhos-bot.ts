@@ -1,13 +1,7 @@
 import {
-  Client,
-  Collection,
-  EmbedBuilder,
-  GatewayIntentBits,
-  REST,
-  Routes,
-  SlashCommandBuilder,
-} from 'discord.js';
-
+  AppleMusicExtractor,
+  SpotifyExtractor,
+} from '@discord-player/extractor';
 import * as commands from '@marquinhos/bot/commands';
 import * as events from '@marquinhos/bot/events';
 import {
@@ -16,8 +10,22 @@ import {
   SecretChannelData,
   SlashCommand,
 } from '@marquinhos/types';
+import { sendTimedMessage } from '@marquinhos/utils/discord';
 import { safeExecute } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
+import { Player } from 'discord-player';
+import { DeezerExtractor } from 'discord-player-deezer';
+import {
+  Client,
+  Collection,
+  EmbedBuilder,
+  GatewayIntentBits,
+  GuildVoiceChannelResolvable,
+  REST,
+  Routes,
+  SlashCommandBuilder,
+  TextChannel,
+} from 'discord.js';
 
 const {
   Guilds,
@@ -54,8 +62,9 @@ export class MarquinhosBot {
 
   async start() {
     this._loadSlashCommands();
-    await this._sendSlashCommands();
     this._loadEvents();
+    await this._sendSlashCommands();
+    await this._initializePlayer();
     await this._client.login(process.env.MARQUINHOS_TOKEN);
   }
 
@@ -63,17 +72,17 @@ export class MarquinhosBot {
     const slashCommands: SlashCommand[] = Object.values(commands);
 
     slashCommands
-      .filter((command) => !command.disabled)
-      .forEach((command: SlashCommand) => {
-        command.command.setName(
-          `${command.command.name}${
+      .filter((slashCommand) => !slashCommand.disabled)
+      .forEach((slashCommand: SlashCommand) => {
+        slashCommand.command.setName(
+          `${slashCommand.command.name}${
             process.env.NODE_ENV === 'production' ? '' : '-dev'
           }`
         );
-        const commandName = command.command.name;
+        const commandName = slashCommand.command.name;
         try {
-          this._slashCommands.push(command.command);
-          this._client.slashCommands.set(commandName, command);
+          this._slashCommands.push(slashCommand.command);
+          this._client.slashCommands.set(commandName, slashCommand);
           logger.info(`Successfully loaded slash command ${commandName}`);
         } catch (error) {
           logger.error(`Error loading slash command ${commandName}`);
@@ -120,9 +129,91 @@ export class MarquinhosBot {
         return;
       }
 
-      logger.info(`Successfully loaded ${data.length} slash command(s)`);
+      logger.info(`Successfully deployed ${data.length} slash command(s)`);
     } catch (error: any) {
       throw new Error(error);
     }
+  }
+
+  private async _initializePlayer() {
+    const player = new Player(this._client);
+
+    player.events.on('playerStart', async (queue, track) => {
+      const { interactionChannel, voiceChannel, addedBy } = queue.metadata as {
+        interactionChannel: TextChannel;
+        voiceChannel: GuildVoiceChannelResolvable;
+        addedBy: string;
+      };
+
+      const playerEmbed = player.client
+        .baseEmbed()
+        .setTitle('Tocando agora')
+        .setDescription(`[${track.title}](${track.url})`)
+        .addFields(
+          {
+            name: 'Autor',
+            value: track.author,
+            inline: true,
+          },
+          {
+            name: 'Duração',
+            value: track.duration,
+            inline: true,
+          },
+          {
+            name: 'Adicionado por',
+            value: `<@${addedBy}>`,
+          }
+        )
+        .setThumbnail(track.thumbnail);
+
+      sendTimedMessage(
+        { embeds: [playerEmbed] },
+        interactionChannel,
+        track.durationMS
+      );
+    });
+
+    player.events.on('audioTrackAdd', (queue, track) => {
+      const { interactionChannel, voiceChannel, addedBy } = queue.metadata as {
+        interactionChannel: TextChannel;
+        voiceChannel: GuildVoiceChannelResolvable;
+        addedBy: string;
+      };
+
+      if (queue.size > 0) {
+        const playerEmbed = player.client
+          .baseEmbed()
+          .setTitle('Adicionada a fila')
+          .setDescription(`[${track.title}](${track.url})`)
+          .addFields(
+            {
+              name: 'Autor',
+              value: track.author,
+              inline: true,
+            },
+            {
+              name: 'Duração',
+              value: track.duration,
+              inline: true,
+            },
+            {
+              name: 'Adicionado por',
+              value: `<@${addedBy}>`,
+            }
+          )
+          .setThumbnail(track.thumbnail);
+
+        interactionChannel.send({
+          embeds: [playerEmbed],
+        });
+      }
+    });
+
+    await player.extractors.register(SpotifyExtractor, {});
+    await player.extractors.register(AppleMusicExtractor, {});
+    await player.extractors.register(DeezerExtractor, {
+      decryptionKey: process.env.MARQUINHOS_DECRIPTION_KEY,
+    });
   }
 }
