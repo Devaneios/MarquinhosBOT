@@ -1,4 +1,5 @@
-import { LastfmTopListenedPeriod, PlaybackData } from '@marquinhos/types';
+import { LastfmTopListenedPeriod } from '@marquinhos/types';
+import { Scrobble } from '@marquinhos/utils/scrobble';
 import axios from 'axios';
 import { readFileSync } from 'fs';
 import { Agent } from 'https';
@@ -18,7 +19,7 @@ const httpsAgent = new Agent({
 axios.defaults.httpsAgent = httpsAgent;
 
 export class MarquinhosApiService {
-  async addToScrobbleQueue(playbackData: PlaybackData) {
+  async addToScrobbleQueue(scrobble: Scrobble) {
     const options = {
       method: 'POST',
       url: `${process.env.MARQUINHOS_API_URL}/api/scrobble/queue`,
@@ -27,7 +28,7 @@ export class MarquinhosApiService {
         Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
       },
       data: {
-        playbackData,
+        playbackData: JSON.stringify(scrobble),
       },
     };
     try {

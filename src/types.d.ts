@@ -14,6 +14,7 @@ export type Nullable<T> = T | null | undefined;
 export interface SlashCommand {
   command: SlashCommandBuilder | any;
   execute: (interaction: CommandInteraction) => void;
+  validators?: ((interaction: CommandInteraction) => Promise<boolean>)[];
   autocomplete?: (interaction: AutocompleteInteraction) => void;
   cooldown?: number; // in seconds
   disabled?: boolean;

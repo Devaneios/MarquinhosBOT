@@ -1,9 +1,9 @@
-import { Interaction } from 'discord.js';
+import { Guild, Interaction } from 'discord.js';
 
 import { BotEvent, SafeAny } from '@marquinhos/types';
 import BotError from '@marquinhos/utils/botError';
-import { safeExecute } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
+import { useMainPlayer } from 'discord-player';
 
 export const interactionCreate: BotEvent = {
   name: 'interactionCreate',
@@ -42,6 +42,7 @@ export const interactionCreate: BotEvent = {
           Date.now() + command.cooldown * 1000
         );
       }
+
       logger.info(
         `${interaction.user.username} executing command: ${
           interaction.commandName
@@ -51,7 +52,19 @@ export const interactionCreate: BotEvent = {
             : ''
         }`
       );
-      safeExecute(command.execute.bind(this, interaction))();
+      if (command.validators?.length) {
+        for (const validator of command.validators) {
+          if (!(await validator(interaction))) return;
+        }
+      }
+
+      const player = useMainPlayer();
+
+      const data = {
+        guild: interaction.guild as Guild,
+      };
+
+      player.context.provide(data, () => command.execute(interaction));
     } else if (interaction.isAutocomplete()) {
       const command = interaction.client.slashCommands.get(
         interaction.commandName

@@ -1,5 +1,7 @@
 import {
   GuildMember,
+  MessageCreateOptions,
+  MessagePayload,
   PermissionFlagsBits,
   PermissionResolvable,
   TextChannel,
@@ -30,7 +32,7 @@ export const checkPermissions = (
 };
 
 export const sendTimedMessage = async (
-  message: string,
+  message: string | MessagePayload | MessageCreateOptions,
   channel: TextChannel,
   duration: number
 ): Promise<void> => {
