@@ -13,6 +13,7 @@ import {
 import { sendTimedMessage } from '@marquinhos/utils/discord';
 import { safeExecute } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
+import { Scrobble } from '@marquinhos/utils/scrobble';
 import { Player } from 'discord-player';
 import { DeezerExtractor } from 'discord-player-deezer';
 import {
@@ -25,6 +26,7 @@ import {
   Routes,
   SlashCommandBuilder,
   TextChannel,
+  VoiceBasedChannel,
 } from 'discord.js';
 
 const {
@@ -137,13 +139,31 @@ export class MarquinhosBot {
 
   private async _initializePlayer() {
     const player = new Player(this._client);
+    const timers: NodeJS.Timeout[] = [];
 
     player.events.on('playerStart', async (queue, track) => {
       const { interactionChannel, voiceChannel, addedBy } = queue.metadata as {
         interactionChannel: TextChannel;
-        voiceChannel: GuildVoiceChannelResolvable;
+        voiceChannel: VoiceBasedChannel;
         addedBy: string;
       };
+
+      timers.forEach((timer) => clearTimeout(timer));
+
+      const scrobble = new Scrobble();
+      scrobble.create(voiceChannel, track).then(() => scrobble.queue());
+
+      const fourMinutesInMillis = 240000;
+
+      const timeUntilScrobbling = Math.min(
+        Math.floor(track.durationMS / 2),
+        fourMinutesInMillis
+      );
+      const dispatchTimer = setTimeout(() => {
+        scrobble.dispatch();
+      }, timeUntilScrobbling);
+
+      timers.push(dispatchTimer);
 
       const playerEmbed = player.client
         .baseEmbed()
