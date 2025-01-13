@@ -1,5 +1,7 @@
 FROM node:20
 
+RUN apk add --no-cache ffmpeg
+
 WORKDIR /app
 
 COPY package*.json ./
