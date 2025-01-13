@@ -1,48 +1,39 @@
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
+import { PlaybackData } from '@marquinhos/types';
 import { Track } from 'discord-player';
 import { VoiceBasedChannel } from 'discord.js';
 
 const marquinhosApi = new MarquinhosApiService();
 
 export class Scrobble {
-  title: string | null = null;
-  url: string | null = null;
-  duration = 0;
-  guildId: string | null = null;
-  timestamp = new Date();
-  channelId: string | null = null;
-  listeningUsersId: string[] = [];
-  providerName = 'Marquinhos';
+  playbackData: PlaybackData | null = null;
+  private scrobbleId = '';
 
   async create(voiceChannel: VoiceBasedChannel, track: Track | null) {
     await voiceChannel.fetch();
     const listeningUsersId =
       voiceChannel.members.map((member) => member.id) ?? [];
 
-    this.title = track?.title ?? null;
-    this.url = track?.url ?? null;
-    this.duration = track?.durationMS ?? 0;
-    this.guildId = voiceChannel.guildId;
-    this.timestamp = new Date();
-    this.channelId = voiceChannel.id;
-    this.listeningUsersId = listeningUsersId;
+    this.playbackData = {
+      title: track?.title ?? '',
+      url: track?.url ?? '',
+      guildId: voiceChannel.guildId,
+      timestamp: new Date(),
+      channelId: voiceChannel.id,
+      listeningUsersId: listeningUsersId,
+      providerName: 'Marquinhos',
+    };
   }
 
   async queue() {
-    if (!this.title || !this.duration || !this.listeningUsersId.length) return;
+    if (!this.playbackData) return;
 
-    const response = await marquinhosApi.addToScrobbleQueue(this);
-    if (response) {
-      const scrobbleId = response.data.id;
-      const fourMinutesInMillis = 240000;
+    const response = await marquinhosApi.addToScrobbleQueue(this.playbackData);
+    if (response) this.scrobbleId = response.data.id;
+  }
 
-      const timeUntilScrobbling = Math.min(
-        Math.floor(this.duration / 2),
-        fourMinutesInMillis
-      );
-      setTimeout(() => {
-        marquinhosApi.dispatchScrobbleQueue(scrobbleId);
-      }, timeUntilScrobbling);
-    }
+  async dispatch() {
+    if (!this.scrobbleId) return;
+    await marquinhosApi.dispatchScrobbleQueue(this.scrobbleId);
   }
 }
