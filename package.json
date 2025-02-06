@@ -16,7 +16,7 @@
   "dependencies": {
     "@discord-player/extractor": "^7.0.0",
     "axios": "^1.6.8",
-    "canvas": "^2.11.2",
+    "canvas": "^3.1.0",
     "color": "^4.2.3",
     "discord-api-types": "^0.37.115",
     "discord-player": "^7.0.0",

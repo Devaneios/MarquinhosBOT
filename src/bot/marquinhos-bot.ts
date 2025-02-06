@@ -14,7 +14,7 @@ import { sendTimedMessage } from '@marquinhos/utils/discord';
 import { safeExecute } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { Scrobble } from '@marquinhos/utils/scrobble';
-import { Player } from 'discord-player';
+import { GuildQueue, Player, Track } from 'discord-player';
 import { DeezerExtractor } from 'discord-player-deezer';
 import {
   Client,
@@ -141,7 +141,7 @@ export class MarquinhosBot {
     const player = new Player(this._client);
     const timers: NodeJS.Timeout[] = [];
 
-    player.events.on('playerStart', async (queue, track) => {
+    const handlePlayStart = async (queue: GuildQueue, track: Track) => {
       const { interactionChannel, voiceChannel, addedBy } = queue.metadata as {
         interactionChannel: TextChannel;
         voiceChannel: VoiceBasedChannel;
@@ -192,7 +192,11 @@ export class MarquinhosBot {
         interactionChannel,
         track.durationMS
       );
-    });
+    };
+
+    player.events.on('playerStart', (queue: GuildQueue, track: Track) =>
+      safeExecute(handlePlayStart.bind(this, queue, track))
+    );
 
     player.events.on('audioTrackAdd', (queue, track) => {
       const { interactionChannel, voiceChannel, addedBy } = queue.metadata as {
