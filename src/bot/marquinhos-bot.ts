@@ -138,7 +138,9 @@ export class MarquinhosBot {
   }
 
   private async _initializePlayer() {
-    const player = new Player(this._client);
+    const player = new Player(this._client, {
+      skipFFmpeg: true,
+    });
     const timers: NodeJS.Timeout[] = [];
 
     const handlePlayStart = async (queue: GuildQueue, track: Track) => {
@@ -197,6 +199,10 @@ export class MarquinhosBot {
     player.events.on('playerStart', (queue: GuildQueue, track: Track) =>
       safeExecute(handlePlayStart.bind(this, queue, track))
     );
+
+    player.events.on('playerError', (queue: GuildQueue, error: Error) => {
+      logger.error(`Error in player: ${error.message}`);
+    });
 
     player.events.on('audioTrackAdd', (queue, track) => {
       const { interactionChannel, voiceChannel, addedBy } = queue.metadata as {
