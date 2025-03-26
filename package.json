@@ -6,7 +6,7 @@
   "scripts": {
     "start": "set NODE_OPTIONS=--openssl-legacy-provider && ts-node -r tsconfig-paths/register src/index.ts",
     "start:dev": "nodemon",
-    "start:prod": "node -r tsconfig-paths/register ./dist/index.js",
+    "start:prod": "node --openssl-legacy-provider -r tsconfig-paths/register ./dist/index.js",
     "build": "tsc --build && npm run copy-assets",
     "prettier": "npx prettier --write \"src/**/*.ts\"",
     "copy-assets": "copyfiles --all --up 1 \"./src/resources/**\" \"./dist\""
