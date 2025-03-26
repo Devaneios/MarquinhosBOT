@@ -1,7 +1,3 @@
-import {
-  AppleMusicExtractor,
-  SpotifyExtractor,
-} from '@discord-player/extractor';
 import * as commands from '@marquinhos/bot/commands';
 import * as events from '@marquinhos/bot/events';
 import {
@@ -15,7 +11,11 @@ import { safeExecute } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { Scrobble } from '@marquinhos/utils/scrobble';
 import { GuildQueue, Player, Track } from 'discord-player';
-import { DeezerExtractor } from 'discord-player-deezer';
+import {
+  DeezerExtractor,
+  DeezerExtractorOptions,
+  NodeDecryptor,
+} from 'discord-player-deezer';
 import {
   Client,
   Collection,
@@ -240,10 +240,10 @@ export class MarquinhosBot {
       }
     });
 
-    await player.extractors.register(SpotifyExtractor, {});
-    await player.extractors.register(AppleMusicExtractor, {});
     await player.extractors.register(DeezerExtractor, {
       decryptionKey: process.env.MARQUINHOS_DECRIPTION_KEY,
-    });
+      arl: process.env.DEEZER_ARL_COOKIE,
+      decryptor: NodeDecryptor,
+    } as unknown as DeezerExtractorOptions);
   }
 }
