@@ -1,5 +1,5 @@
 import { logger } from '@marquinhos/utils/logger';
-import { useMainPlayer, useQueue } from 'discord-player';
+import { QueryType, useMainPlayer, useQueue } from 'discord-player';
 import {
   GuildVoiceChannelResolvable,
   InteractionEditReplyOptions,
@@ -18,7 +18,9 @@ export const handlePlay = async (
     const player = useMainPlayer();
     const queue = useQueue();
 
-    const searchResult = await player.search(query);
+    const searchResult = await player.search(query, {
+      searchEngine: QueryType.SPOTIFY_SONG,
+    });
     if (!searchResult.hasTracks()) {
       return 'Nenhuma música encontrada!';
     }
