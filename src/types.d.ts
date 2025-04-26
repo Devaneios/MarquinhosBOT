@@ -62,6 +62,15 @@ export interface SecretChannelData {
   finishesAt: Date;
 }
 
+export interface BufferedMessage {
+  messageId: string;
+  userId: string;
+  channelId: string;
+  hash: string;
+  timestamp: number;
+  deleted: boolean;
+}
+
 export type SafeAny = any;
 
 export type BotErrorLogLevel = 'error' | 'warn' | 'info';
