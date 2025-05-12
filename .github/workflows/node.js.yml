@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: [self-hosted, Linux, X64, marquinhos]
+    runs-on: [self-hosted, Linux, X64, marquinhos-runner]
 
     strategy:
       matrix:
