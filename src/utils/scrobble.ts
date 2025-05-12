@@ -1,9 +1,6 @@
-import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { PlaybackData } from '@marquinhos/types';
 import { Track } from 'discord-player';
 import { VoiceBasedChannel } from 'discord.js';
-
-const marquinhosApi = new MarquinhosApiService();
 
 export class Scrobble {
   playbackData: PlaybackData | null = null;
@@ -27,13 +24,9 @@ export class Scrobble {
 
   async queue() {
     if (!this.playbackData) return;
-
-    const response = await marquinhosApi.addToScrobbleQueue(this.playbackData);
-    if (response) this.scrobbleId = response.data.id;
   }
 
   async dispatch() {
     if (!this.scrobbleId) return;
-    await marquinhosApi.dispatchScrobbleQueue(this.scrobbleId);
   }
 }
