@@ -1,21 +1,5 @@
 import { LastfmTopListenedPeriod, PlaybackData } from '@marquinhos/types';
 import axios from 'axios';
-import { readFileSync } from 'fs';
-import { Agent } from 'https';
-
-const httpsAgent = new Agent({
-  cert:
-    process.env.NODE_ENV === 'production'
-      ? readFileSync('/etc/ssl/dvns-certificate.pem')
-      : undefined,
-  key:
-    process.env.NODE_ENV === 'production'
-      ? readFileSync('/etc/ssl/dvns-private.pem')
-      : undefined,
-  rejectUnauthorized: process.env.NODE_ENV === 'production',
-});
-
-axios.defaults.httpsAgent = httpsAgent;
 
 export class MarquinhosApiService {
   async addToScrobbleQueue(scrobble: PlaybackData) {
