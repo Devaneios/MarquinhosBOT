@@ -30,7 +30,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: [self-hosted, Linux, X64, marquinhos]
+    runs-on: [self-hosted, Linux, X64, marquinhos-runner]
 
     steps:
       - name: Stop Marquinhos
