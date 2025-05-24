@@ -9,7 +9,8 @@
     "start:prod": "node --openssl-legacy-provider -r tsconfig-paths/register ./dist/index.js",
     "build": "tsc --build && npm run copy-assets",
     "prettier": "npx prettier --write \"src/**/*.ts\"",
-    "copy-assets": "copyfiles --all --up 1 \"./src/resources/**\" \"./dist\""
+    "copy-assets": "copyfiles --all --up 1 \"./src/resources/**\" \"./dist\"",
+    "register-commands": "ts-node -r tsconfig-paths/register src/register-slash-commands.ts"
   },
   "author": "",
   "license": "GPL-3.0",

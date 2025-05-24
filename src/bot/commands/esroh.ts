@@ -11,10 +11,7 @@ export const esroh: SlashCommand = {
     interaction.reply({
       files: [
         {
-          attachment: join(
-            __dirname,
-            '../../../resources/animations/olavac.gif'
-          ),
+          attachment: join(__dirname, '../../resources/animations/olavac.gif'),
           name: 'olavac.gif',
           description: 'CONTRARIO',
         },

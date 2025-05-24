@@ -22,9 +22,6 @@ import {
   EmbedBuilder,
   GatewayIntentBits,
   GuildVoiceChannelResolvable,
-  REST,
-  Routes,
-  SlashCommandBuilder,
   TextChannel,
   VoiceBasedChannel,
 } from 'discord.js';
@@ -39,7 +36,6 @@ const {
 
 export class MarquinhosBot {
   private _client: Client;
-  private readonly _slashCommands: SlashCommandBuilder[] = [];
 
   constructor() {
     this._client = new Client({
@@ -65,7 +61,6 @@ export class MarquinhosBot {
   async start() {
     this._loadSlashCommands();
     this._loadEvents();
-    await this._sendSlashCommands();
     await this._initializePlayer();
     await this._client.login(process.env.MARQUINHOS_TOKEN);
   }
@@ -83,7 +78,6 @@ export class MarquinhosBot {
         );
         const commandName = slashCommand.command.name;
         try {
-          this._slashCommands.push(slashCommand.command);
           this._client.slashCommands.set(commandName, slashCommand);
           logger.info(`Successfully loaded slash command ${commandName}`);
         } catch (error) {
@@ -111,30 +105,6 @@ export class MarquinhosBot {
 
       logger.info(`Successfully loaded event ${event.name}`);
     });
-  }
-
-  private async _sendSlashCommands() {
-    const rest = new REST({ version: '10' }).setToken(
-      process.env.MARQUINHOS_TOKEN as string
-    );
-
-    try {
-      const data = (await rest.put(
-        Routes.applicationCommands(process.env.MARQUINHOS_CLIENT_ID as string),
-        {
-          body: this._slashCommands.map((command) => command.toJSON()),
-        }
-      )) as SlashCommandBuilder[];
-
-      if (!data?.length) {
-        logger.warn('No slash commands loaded');
-        return;
-      }
-
-      logger.info(`Successfully deployed ${data.length} slash command(s)`);
-    } catch (error: any) {
-      throw new Error(error);
-    }
   }
 
   private async _initializePlayer() {
