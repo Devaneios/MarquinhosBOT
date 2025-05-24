@@ -9,10 +9,7 @@ export const horse: SlashCommand = {
     interaction.reply({
       files: [
         {
-          attachment: join(
-            __dirname,
-            '../../../resources/animations/cavalo.gif'
-          ),
+          attachment: join(__dirname, '../../resources/animations/cavalo.gif'),
           name: 'cavalo.gif',
           description: 'CAVALO',
         },
