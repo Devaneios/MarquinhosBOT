@@ -12,8 +12,8 @@ COPY . .
 
 RUN npm run build
 
-ENV NODE_ENV=production
+COPY entrypoint.sh /entrypoint.sh
 
-RUN npm run register-commands
+RUN chmod +x /entrypoint.sh
 
-CMD ["npm", "run", "start:prod"]
+ENTRYPOINT ["/entrypoint.sh"]
