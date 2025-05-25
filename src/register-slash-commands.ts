@@ -7,6 +7,19 @@ import { config } from 'dotenv';
 
 config();
 
+const requiredEnvVars = ['MARQUINHOS_TOKEN', 'MARQUINHOS_CLIENT_ID'];
+const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  logger.error(
+    `Missing required environment variables: ${missingEnvVars.join(', ')}`
+  );
+  logger.error(
+    'Command registration failed. Please check your environment configuration.'
+  );
+  process.exit(1);
+}
+
 async function registerCommands() {
   const slashCommands = Object.values(commands)
     .filter((slashCommand) => !slashCommand.disabled)
