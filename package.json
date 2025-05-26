@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "set NODE_OPTIONS=--openssl-legacy-provider && ts-node -r tsconfig-paths/register src/index.ts",
+    "start": "ts-node -r tsconfig-paths/register src/index.ts",
     "start:dev": "nodemon",
     "start:prod": "node --openssl-legacy-provider -r tsconfig-paths/register ./dist/index.js",
     "build": "tsc --build && npm run copy-assets",
@@ -26,6 +26,7 @@
     "discord.js": "^14.18.0",
     "dotenv": "^16.4.7",
     "font-color-contrast": "^11.1.0",
+    "googleapis": "^149.0.0",
     "sharp": "^0.33.5",
     "winston": "^3.17.0"
   },
@@ -42,7 +43,7 @@
     "typescript": "^5.8.2"
   },
   "engines": {
-    "node": "20.x"
+    "node": "22.x"
   },
   "nodemonConfig": {
     "ignore": [

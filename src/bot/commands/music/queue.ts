@@ -13,15 +13,17 @@ export const queue: SlashCommand = {
     const queue = useQueue();
 
     if (!queue) {
-      return await interaction.reply(
+      await interaction.reply(
         'Este servidor não tem uma sessão de player ativa.'
       );
+      return;
     }
 
     const currentTrack = queue.currentTrack;
 
     if (!currentTrack) {
-      return await interaction.reply('Não há nenhuma faixa tocando.');
+      await interaction.reply('Não há nenhuma faixa tocando.');
+      return;
     }
 
     const upcomingTracks = queue.tracks.toArray().slice(0, 5);
@@ -37,6 +39,6 @@ export const queue: SlashCommand = {
     ].join('\n');
 
     // Send the message
-    return await interaction.reply(message);
+    await interaction.reply(message);
   },
 };
