@@ -1,9 +1,7 @@
 import {
-  SlashCommandBuilder,
   ChannelType,
-  TextChannel,
-  Embed,
-  EmbedBuilder,
+  SlashCommandBuilder,
+  TextChannel
 } from 'discord.js';
 
 import { SlashCommand } from '@marquinhos/types';
@@ -16,7 +14,7 @@ export const test: SlashCommand = {
     ),
   execute: async (interaction) => {
     const channel = interaction.guild?.channels.cache.find(
-      (channel) => channel.type === ChannelType.GuildText
+      (channel: TextChannel) => channel.type === ChannelType.GuildText
     ) as TextChannel;
     if (!channel) {
       return interaction.reply('Não encontrei nenhum canal de texto.');
