@@ -1,5 +1,6 @@
 import * as commands from '@marquinhos/bot/commands';
 import * as events from '@marquinhos/bot/events';
+import { SpreadsheetService } from '@marquinhos/services/spreadsheet';
 import {
   BotEvent,
   Command,
@@ -62,6 +63,7 @@ export class MarquinhosBot {
     this._loadSlashCommands();
     this._loadEvents();
     await this._initializePlayer();
+    SpreadsheetService.getInstance();
     await this._client.login(process.env.MARQUINHOS_TOKEN);
   }
 

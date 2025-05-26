@@ -3,6 +3,7 @@ import {
   Collection,
   CommandInteraction,
   Client as DiscordClient,
+  Interaction,
   Message,
   PermissionResolvable,
   SlashCommandBuilder,
@@ -13,7 +14,9 @@ export type Nullable<T> = T | null | undefined;
 
 export interface SlashCommand {
   command: SlashCommandBuilder | any;
-  execute: (interaction: CommandInteraction) => void;
+  execute: (
+    interaction: Interaction | ChatInputCommandInteraction | CommandInteraction
+  ) => Promise<void> | void;
   validators?: ((interaction: CommandInteraction) => Promise<boolean>)[];
   autocomplete?: (interaction: AutocompleteInteraction) => void;
   cooldown?: number; // in seconds
@@ -69,6 +72,13 @@ export interface BufferedMessage {
   hash: string;
   timestamp: number;
   deleted: boolean;
+}
+
+export interface AvatarConfig {
+  name: string;
+  url: string;
+  startDate: string | null;
+  endDate: string | null;
 }
 
 export type SafeAny = any;

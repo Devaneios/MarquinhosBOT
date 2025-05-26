@@ -1,5 +1,6 @@
 export { anom } from './anom';
 export { audio } from './audio';
+export { avatar } from './avatar';
 export { chaos } from './chaos';
 export { checkIn } from './checkIn';
 export { coin } from './coin';

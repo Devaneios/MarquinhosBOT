@@ -13,11 +13,12 @@ export const clearQueue: SlashCommand = {
     const queue = useQueue();
 
     if (!queue) {
-      return interaction.reply('Não existem músicas na fila.');
+      interaction.reply('Não existem músicas na fila.');
+      return;
     }
 
     queue.clear();
 
-    return interaction.reply('A fila de músicas foi limpa.');
+    interaction.reply('A fila de músicas foi limpa.');
   },
 };

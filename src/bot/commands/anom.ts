@@ -1,4 +1,9 @@
-import { ChannelType, SlashCommandBuilder, TextChannel } from 'discord.js';
+import {
+  ChannelType,
+  ChatInputCommandInteraction,
+  SlashCommandBuilder,
+  TextChannel,
+} from 'discord.js';
 
 import { SlashCommand } from '@marquinhos/types';
 
@@ -21,7 +26,7 @@ export const anom: SlashCommand = {
         .setDescription('O que você quer que eu envie')
         .setRequired(true)
     ),
-  execute: async (interaction) => {
+  execute: async (interaction: ChatInputCommandInteraction) => {
     const channel = interaction.options.get('canal')?.channel as TextChannel;
     const message = interaction.options.get('mensagem')?.value as string;
     const anomEmbed = interaction.client.baseEmbed();

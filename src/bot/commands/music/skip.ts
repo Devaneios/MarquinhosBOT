@@ -17,24 +17,26 @@ export const skip: SlashCommand = {
       const queue = useQueue();
 
       if (!queue) {
-        return interaction.reply(
+        interaction.reply(
           'This server does not have an active player session.'
         );
+        return;
       }
 
       if (!queue.isPlaying()) {
-        return interaction.reply('There is no track playing.');
+        interaction.reply('There is no track playing.');
+        return;
       }
 
       // Skip the current track
       queue.node.skip();
 
       // Send a confirmation message
-      return interaction.reply('The current song has been skipped.');
+      interaction.reply('The current song has been skipped.');
     } catch (error) {
       // Handle any errors that occur
       console.error(error);
-      return interaction.reply('An error occurred while skipping the song!');
+      interaction.reply('An error occurred while skipping the song!');
     }
   },
 };
