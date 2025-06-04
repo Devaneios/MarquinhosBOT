@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node -r tsconfig-paths/register src/index.ts",
+    "start": "set NODE_OPTIONS=--openssl-legacy-provider && ts-node -r tsconfig-paths/register src/index.ts",
     "start:dev": "nodemon",
     "start:prod": "node --openssl-legacy-provider -r tsconfig-paths/register ./dist/index.js",
     "build": "tsc --build && npm run copy-assets",
@@ -16,13 +16,13 @@
   "license": "GPL-3.0",
   "dependencies": {
     "@discord-player/extractor": "^7.1.0",
-    "@evan/opus": "^1.0.3",
     "axios": "^1.8.4",
     "canvas": "^3.1.0",
     "color": "^5.0.0",
     "discord-api-types": "^0.37.119",
     "discord-player": "^7.2.0-dev.2",
     "discord-player-deezer": "^2.5.0-beta.1",
+    "discord-voip": "^7.1.0",
     "discord.js": "^14.18.0",
     "dotenv": "^16.4.7",
     "font-color-contrast": "^11.1.0",
