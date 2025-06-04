@@ -1,4 +1,4 @@
-FROM node:22-alpine
+FROM node:20.19.2-alpine
 
 RUN apk add --no-cache ffmpeg python3 make g++ pkgconfig pixman cairo-dev pango-dev giflib-dev jpeg-dev
 
