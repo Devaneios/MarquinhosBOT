@@ -7,15 +7,17 @@ import {
   Message,
   PermissionResolvable,
   SlashCommandBuilder,
+  type ChatInputCommandInteraction,
   TextChannel,
+  EmbedBuilder,
 } from 'discord.js';
 
 export type Nullable<T> = T | null | undefined;
 
 export interface SlashCommand {
-  command: SlashCommandBuilder | any;
+  command: SlashCommandBuilder;
   execute: (
-    interaction: Interaction | ChatInputCommandInteraction | CommandInteraction
+    interaction: ChatInputCommandInteraction | Interaction | CommandInteraction,
   ) => Promise<void> | void;
   validators?: ((interaction: CommandInteraction) => Promise<boolean>)[];
   autocomplete?: (interaction: AutocompleteInteraction) => void;
@@ -56,7 +58,7 @@ export type GuildOption = keyof GuildOptions;
 export interface BotEvent {
   name: string;
   once?: boolean | false;
-  execute: (...args: any[]) => void;
+  execute: (...args) => void;
 }
 
 export interface SecretChannelData {
@@ -80,8 +82,6 @@ export interface AvatarConfig {
   startDate: string | null;
   endDate: string | null;
 }
-
-export type SafeAny = any;
 
 export type BotErrorLogLevel = 'error' | 'warn' | 'info';
 

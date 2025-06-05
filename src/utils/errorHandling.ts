@@ -1,9 +1,9 @@
+import axios from 'axios';
 import BotError from '@marquinhos/utils/botError';
 import { logger } from '@marquinhos/utils/logger';
-import axios from 'axios';
 
 export function safeExecute(fn: Function) {
-  return function () {
+  return function() {
     try {
       const result = fn();
       if (result instanceof Promise) {
@@ -44,9 +44,9 @@ async function sendErrorMessage(error: BotError) {
         avatar_url: 'https://i.imgur.com/M4k2OVe.png',
         embeds: [
           {
-            title: `Search error on StackOverflow`,
+            title: 'Search error on StackOverflow',
             url: `https://www.google.com/search?q=${encodeURI(
-              title
+              title,
             )}%20site:stackoverflow.com`,
             description: `\`\`\`${description.slice(0, 1024)}\`\`\``,
             color: 0xff0000,
@@ -72,7 +72,7 @@ async function sendErrorMessage(error: BotError) {
         headers: {
           'Content-Type': 'application/json',
         },
-      }
+      },
     );
   } catch (error) {
     console.error(error);

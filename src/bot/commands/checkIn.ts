@@ -1,5 +1,4 @@
 import { GuildMember, SlashCommandBuilder } from 'discord.js';
-
 import { SlashCommand } from '@marquinhos/types';
 
 const DATE_LOCALE_CONFIG: Intl.DateTimeFormatOptions = {
@@ -40,11 +39,11 @@ export const checkInReply = (member: GuildMember, guildName: string) => {
   const memberJoinedDate = new Date(member?.joinedTimestamp as number);
   const formatedMemberJoinedTimestamp = memberJoinedDate.toLocaleString(
     'pt-BR',
-    DATE_LOCALE_CONFIG
+    DATE_LOCALE_CONFIG,
   );
   const dayOfTheWeekMemberJoined = memberJoinedDate.toLocaleString(
     'pt-BR',
-    WEEKDAY_LOCALE_CONFIG
+    WEEKDAY_LOCALE_CONFIG,
   );
 
   return `Você entrou no ${guildName} ${

@@ -1,46 +1,15 @@
-import { Image, createCanvas, loadImage, registerFont } from 'canvas';
+import fs from 'fs';
 import { join } from 'path';
 import axios from 'axios';
-import fs from 'fs';
-import sharp from 'sharp';
+import {
+  Image,
+  createCanvas,
+  loadImage,
+  registerFont,
+  CanvasRenderingContext2D,
+} from 'canvas';
 import fontColorContrast from 'font-color-contrast';
-
-const FORMAT_CONFIGS = {
-  regular: {
-    width: 1100,
-    height: 1400,
-    namePosition: {
-      x: 45,
-      y: 90,
-    },
-    typePosition: {
-      x: 45,
-      y: 150,
-    },
-    firstImagePosition: {
-      x: 550,
-      y: 40,
-    },
-    firstImageWidth: 500,
-    firstImageHeight: 300,
-    imageWidth: 300,
-    imageHeight: 300,
-    imageBorderWidth: 1,
-    imageBorderOffset: 10,
-    imageCounterPosition: {
-      x: 30,
-      y: 35,
-    },
-  },
-  instagramFeed: {
-    width: 1080,
-    height: 1080,
-  },
-  instagramStory: {
-    width: 1080,
-    height: 1920,
-  },
-};
+import sharp from 'sharp';
 
 export class CollageBuilder {
   async resizeImages(imagesBuffers: ArrayBuffer[]): Promise<Buffer[]> {
@@ -58,8 +27,8 @@ export class CollageBuilder {
 
     try {
       images = await Promise.all(resizedImages);
-    } catch (error) {
-      throw new Error('Error resizing images');
+    } catch (error: unknown) {
+      throw new Error((error as Error).message || 'Error resizing images');
     }
 
     return images;
@@ -67,7 +36,7 @@ export class CollageBuilder {
 
   async downloadImagesBuffers(imageUrls: string[]): Promise<ArrayBuffer[]> {
     const imagesPromises = imageUrls.map((url) =>
-      axios.get<ArrayBuffer>(url, { responseType: 'arraybuffer' })
+      axios.get<ArrayBuffer>(url, { responseType: 'arraybuffer' }),
     );
 
     const imageResponses = await Promise.allSettled(imagesPromises);
@@ -79,13 +48,13 @@ export class CollageBuilder {
             response.reason.config.url,
             {
               responseType: 'arraybuffer',
-            }
+            },
           );
           return retryResponse.data;
         }
 
         return response.value.data;
-      }
+      },
     );
 
     const images = await Promise.all(imagesResponsePromises);
@@ -120,23 +89,23 @@ export class CollageBuilder {
     return { ctx, collageCanvas, canvasWidth, canvasHeight };
   }
 
-  async drawBackground(ctx: any, canvasWidth: number, canvasHeight: number) {
+  async drawBackground(ctx: CanvasRenderingContext2D) {
     const background = fs.readFileSync(
-      join(__dirname, '../resources/images/card-background.png')
+      join(__dirname, '../resources/images/card-background.png'),
     );
     const backgroundImg = await loadImage(background);
     ctx.drawImage(backgroundImg, 0, 0);
   }
 
   async drawFirstImage(
-    ctx: any,
+    ctx: CanvasRenderingContext2D,
     firstImage: Image,
     firstImageBuffer: Buffer,
     footerText: string,
     firtsImageX: number,
     firtsImageY: number,
     width: number,
-    height: number
+    height: number,
   ) {
     const imageWithBorder = await this.addBorder(firstImage, width, height);
     this.drawWithEffect(ctx, imageWithBorder, firtsImageX, firtsImageY);
@@ -155,7 +124,7 @@ export class CollageBuilder {
       30,
       410,
       ctx.measureText(firstImageName).width,
-      50
+      50,
     );
     textColor = fontColorContrast(color);
     ctx.fillStyle = textColor; // Text color
@@ -164,7 +133,7 @@ export class CollageBuilder {
       firstImageName,
       firtsImageX + 30,
       firtsImageY + 450,
-      470
+      470,
     );
   }
 
@@ -173,7 +142,7 @@ export class CollageBuilder {
     chartNames: string[],
     name: string,
     type: string,
-    period: string = 'overall'
+    period: string = 'overall',
   ) {
     const { ctx, collageCanvas, canvasWidth, canvasHeight } =
       this.setupCanvas();
@@ -191,7 +160,7 @@ export class CollageBuilder {
       550,
       40,
       500,
-      500
+      500,
     );
 
     let x = 45;
@@ -205,7 +174,7 @@ export class CollageBuilder {
 
       const imageWithBorder = await this.addBorder(image, 300, 300);
       this.drawWithEffect(ctx, imageWithBorder, x, y);
-      const cardCounter = `#${counter < 10 ? '0' + counter++ : counter++}`;
+      const cardCounter = `#${counter < 10 ? `0${counter++}` : counter++}`;
       ctx.font = '50px Bebas Neue'; // Font size and name
       let color = await this.getColorInfo(imageBuffer, 30, 35, 80, 80);
       let textColor = fontColorContrast(color);
@@ -276,7 +245,12 @@ export class CollageBuilder {
     }
   }
 
-  drawWithEffect(ctx: any, image: any, x: number, y: number) {
+  drawWithEffect(
+    ctx: CanvasRenderingContext2D,
+    image: Image,
+    x: number,
+    y: number,
+  ) {
     ctx.drawImage(image, x, y);
     ctx.drawImage(image, x + 10, y - 10);
     ctx.drawImage(image, x + 20, y - 20);
@@ -287,7 +261,7 @@ export class CollageBuilder {
     regionX: number,
     regionY: number,
     regionWidth: number,
-    regionHeight: number
+    regionHeight: number,
   ) {
     const { data, info } = await sharp(imageBuffer)
       .ensureAlpha()
@@ -322,9 +296,15 @@ export class CollageBuilder {
     return [avgR, avgG, avgB];
   }
 
-  textEllipsis(ctx: any, text: string, x: number, y: number, maxWidth: number) {
+  textEllipsis(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    x: number,
+    y: number,
+    maxWidth: number,
+  ) {
     let width = ctx.measureText(text).width;
-    let ellipsis = '...';
+    const ellipsis = '...';
     let characterRemoved = false;
     while (width > maxWidth) {
       characterRemoved = true;

@@ -1,5 +1,4 @@
 import { GuildMember, SlashCommandBuilder } from 'discord.js';
-
 import { SlashCommand } from '@marquinhos/types';
 
 export const disconnectAll: SlashCommand = {
@@ -15,7 +14,7 @@ export const disconnectAll: SlashCommand = {
       interaction.reply({
         embeds: [
           disconnectAllEmbed.setDescription(
-            'Você precisa estar em um canal de voz para usar esse comando'
+            'Você precisa estar em um canal de voz para usar esse comando',
           ),
         ],
       });
@@ -30,7 +29,7 @@ export const disconnectAll: SlashCommand = {
     interaction.reply({
       embeds: [
         disconnectAllEmbed.setDescription(
-          'Todos os usuários foram desconectados'
+          'Todos os usuários foram desconectados',
         ),
       ],
     });

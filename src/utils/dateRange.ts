@@ -17,12 +17,12 @@ export function isDateInRange(startDate: string, endDate: string): boolean {
   const startDateObj = new Date(
     currentDate.getFullYear(),
     startMonth,
-    startDay
+    startDay,
   );
   const endDateObj = new Date(
     currentDate.getFullYear() + (endDateIsNextYear ? 1 : 0),
     endMonth,
-    endDay
+    endDay,
   );
   return currentDate >= startDateObj && currentDate <= endDateObj;
 }

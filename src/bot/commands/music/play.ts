@@ -5,7 +5,6 @@ import {
   MessageFlags,
   SlashCommandBuilder,
 } from 'discord.js';
-
 import {
   canJoinVoiceChannel,
   canSpeakVoiceChannel,
@@ -23,7 +22,7 @@ export const play: SlashCommand = {
       option
         .setName('musica')
         .setDescription('A música a ser tocada')
-        .setRequired(true)
+        .setRequired(true),
     ),
   validators: [
     isUserInVoiceChannel,
@@ -45,7 +44,7 @@ export const play: SlashCommand = {
       musicQuery,
       interaction.channel!,
       voiceChannel,
-      memberId
+      memberId,
     );
 
     await interaction.editReply(response);

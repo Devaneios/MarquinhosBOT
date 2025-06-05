@@ -1,9 +1,7 @@
-import { SlashCommandBuilder } from 'discord.js';
 import { readdirSync } from 'fs';
 import { join } from 'path';
-
+import { SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
-import { voiceChannelPresence } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
 
 const audiosDir = join(__dirname, '../../resources/sounds/');
@@ -32,15 +30,13 @@ export const audio: SlashCommand = {
         .addChoices(
           ...audios.map((audio) => {
             return { name: audio, value: audio };
-          })
-        )
+          }),
+        ),
     ),
 
   execute: (interaction) => {
-    const channel = voiceChannelPresence(interaction);
     const file = interaction.options.get('audio');
     const audioEmbed = interaction.client.baseEmbed();
-    // playAudio(interaction, channel, file?.value as string);
     interaction.reply({
       embeds: [
         audioEmbed.setDescription(`Reproduzindo ${file?.value as string}`),

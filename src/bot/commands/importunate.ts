@@ -1,23 +1,17 @@
-import {
-  CommandInteraction,
-  GuildMember,
-  SlashCommandBuilder,
-  VoiceChannel,
-} from 'discord.js';
-
+import { GuildMember, SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
 
 export const importunate: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('importunar')
     .setDescription(
-      'Eu vou lá no canal de voz atazanar a vida de quem tu quiser.'
+      'Eu vou lá no canal de voz atazanar a vida de quem tu quiser.',
     )
     .addUserOption((option) =>
       option
         .setName('importunado')
         .setDescription('Quem você quer que eu irrite?')
-        .setRequired(true)
+        .setRequired(true),
     ),
   execute: async (interaction) => {
     const member = interaction.options.get('importunado')
@@ -29,8 +23,6 @@ export const importunate: SlashCommand = {
     }
 
     if (member.voice.channel) {
-      const voiceChannel = member.voice.channel as VoiceChannel;
-      makeNoise(voiceChannel, interaction);
       interaction.reply({ content: `${member} AEHOOOOOOOOOOOOOO` });
     } else {
       interaction.reply({
@@ -40,11 +32,3 @@ export const importunate: SlashCommand = {
   },
   cooldown: 10,
 };
-
-function makeNoise(
-  voiceChannel: VoiceChannel,
-  interaction: CommandInteraction
-) {
-  const sounds = ['_miau', '_cabra', '_boombam'];
-  // playAudio(interaction, voiceChannel, sounds[Math.floor(Math.random() * 3)]);
-}

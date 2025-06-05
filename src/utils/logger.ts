@@ -6,7 +6,7 @@ export const logger = createLogger({
     format.timestamp({ format: 'DD/MM/YY HH:mm:ss' }),
     format.simple(),
     format.printf(
-      (msg) => `${msg.timestamp} [${msg.level.toUpperCase()}] ${msg.message}`
-    )
+      (msg) => `${msg.timestamp} [${msg.level.toUpperCase()}] ${msg.message}`,
+    ),
   ),
 });

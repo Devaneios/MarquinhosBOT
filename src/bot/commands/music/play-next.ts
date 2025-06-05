@@ -4,7 +4,6 @@ import {
   GuildMember,
   SlashCommandBuilder,
 } from 'discord.js';
-
 import {
   canJoinVoiceChannel,
   canSpeakVoiceChannel,
@@ -22,12 +21,12 @@ export const playNext: SlashCommand = {
       option
         .setName('musica')
         .setDescription('A música a ser tocada')
-        .setRequired(true)
+        .setRequired(true),
     )
     .addNumberOption((option) =>
       option
         .setName('posicao')
-        .setDescription('A posição que a música deve ser adicionada')
+        .setDescription('A posição que a música deve ser adicionada'),
     ),
   validators: [
     isUserInVoiceChannel,
@@ -50,7 +49,7 @@ export const playNext: SlashCommand = {
       interaction.channel!,
       voiceChannel,
       memberId,
-      true
+      true,
     );
 
     await interaction.editReply(response);

@@ -1,5 +1,5 @@
-import { logger } from '@marquinhos/utils/logger';
 import { google, sheets_v4 } from 'googleapis';
+import { logger } from '@marquinhos/utils/logger';
 
 export class SpreadsheetService {
   private sheets: sheets_v4.Sheets;
@@ -31,12 +31,14 @@ export class SpreadsheetService {
       });
 
       return response.data.values || [];
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error(
         `Failed to read spreadsheet data from ${sheetName}!${range}:`,
-        error
+        error,
       );
-      throw new Error(`Failed to read spreadsheet data: ${error.message}`);
+      throw new Error(
+        `Failed to read spreadsheet data: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -69,9 +71,9 @@ export class SpreadsheetService {
           ?.map((sheet) => sheet.properties?.title || '')
           .filter(Boolean) || []
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Failed to get sheet names:', error);
-      throw new Error(`Failed to get sheet names: ${error.message}`);
+      throw new Error(`Failed to get sheet names: ${(error as Error).message}`);
     }
   }
 
@@ -79,7 +81,7 @@ export class SpreadsheetService {
     sheetName: string,
     searchColumn: number,
     searchValue: string,
-    range?: string
+    range?: string,
   ): Promise<unknown[] | null> {
     const values = await this.getValues<string>(sheetName, range || '');
 

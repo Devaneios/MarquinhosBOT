@@ -1,5 +1,4 @@
 import { Client } from 'discord.js';
-
 import { BotEvent } from '@marquinhos/types';
 import { getBicho } from '@marquinhos/utils/bichoGame';
 import { logger } from '@marquinhos/utils/logger';
@@ -9,7 +8,7 @@ export const ready: BotEvent = {
   once: true,
   execute: async (client: Client) => {
     logger.info(`Logged in as ${client.user?.tag}`);
-    logger.info(`Marquinhos™ is online!`);
+    logger.info('Marquinhos™ is online!');
     // Start heartbeat for bicho game
     startBichoGame(client);
   },
@@ -17,7 +16,7 @@ export const ready: BotEvent = {
 
 function startBichoGame(client: Client) {
   client.user?.setActivity(getBicho());
-  setInterval(function () {
+  setInterval(() => {
     client.user?.setActivity(getBicho());
   }, 100 * 1000);
 }

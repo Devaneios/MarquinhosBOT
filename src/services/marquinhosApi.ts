@@ -1,5 +1,6 @@
-import { LastfmTopListenedPeriod, PlaybackData } from '@marquinhos/types';
 import axios from 'axios';
+import { LastfmTopListenedPeriod, PlaybackData } from '@marquinhos/types';
+import { logger } from '@marquinhos/utils/logger';
 
 export class MarquinhosApiService {
   async addToScrobbleQueue(scrobble: PlaybackData) {
@@ -18,6 +19,9 @@ export class MarquinhosApiService {
       const { data } = await axios.request(options);
       return data;
     } catch (error) {
+      logger.error(
+        `Failed to add playback data to scrobble queue: ${(error as Error).message}`,
+      );
       throw error;
     }
   }
@@ -35,6 +39,9 @@ export class MarquinhosApiService {
       const { data } = await axios.request(options);
       return data;
     } catch (error) {
+      logger.error(
+        `Failed to dispatch scrobble queue for ID ${id}: ${(error as Error).message}`,
+      );
       throw error;
     }
   }
@@ -51,6 +58,9 @@ export class MarquinhosApiService {
       const { data } = await axios.request(options);
       return data;
     } catch (error) {
+      logger.error(
+        `Failed to remove user ${userId} from scrobble queue for ID ${id}: ${(error as Error).message}`,
+      );
       throw error;
     }
   }
@@ -67,6 +77,9 @@ export class MarquinhosApiService {
       const { data } = await axios.request(options);
       return data;
     } catch (error) {
+      logger.error(
+        `Failed to add user ${userId} to scrobble queue for ID ${id}: ${(error as Error).message}`,
+      );
       throw error;
     }
   }
@@ -83,6 +96,9 @@ export class MarquinhosApiService {
       const { data } = await axios.request(options);
       return data;
     } catch (error) {
+      logger.error(
+        `Failed to get top artists for user ID ${id} with period ${period}: ${(error as Error).message}`,
+      );
       throw error;
     }
   }
@@ -99,6 +115,9 @@ export class MarquinhosApiService {
       const { data } = await axios.request(options);
       return data;
     } catch (error) {
+      logger.error(
+        `Failed to get top albums for user ID ${id} with period ${period}: ${(error as Error).message}`,
+      );
       throw error;
     }
   }
@@ -115,6 +134,9 @@ export class MarquinhosApiService {
       const { data } = await axios.request(options);
       return data;
     } catch (error) {
+      logger.error(
+        `Failed to get top tracks for user ID ${id} with period ${period}: ${(error as Error).message}`,
+      );
       throw error;
     }
   }
