@@ -1,8 +1,7 @@
+import { Track, useQueue } from 'discord-player';
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
-
 import { isCurrentlyInVoiceChannel } from '@marquinhos/bot/validators/voice-channel';
 import { SlashCommand } from '@marquinhos/types';
-import { Track, useQueue } from 'discord-player';
 
 export const queue: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -14,7 +13,7 @@ export const queue: SlashCommand = {
 
     if (!queue) {
       await interaction.reply(
-        'Este servidor não tem uma sessão de player ativa.'
+        'Este servidor não tem uma sessão de player ativa.',
       );
       return;
     }
@@ -34,7 +33,7 @@ export const queue: SlashCommand = {
       '**Próximas Faixas:**',
       ...upcomingTracks.map(
         (track: Track, index: number) =>
-          `${index + 1}. ${track.title} - ${track.author}`
+          `${index + 1}. ${track.title} - ${track.author}`,
       ),
     ].join('\n');
 

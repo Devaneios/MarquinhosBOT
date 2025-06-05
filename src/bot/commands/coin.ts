@@ -1,13 +1,12 @@
+import { join } from 'path';
 import {
   AttachmentBuilder,
   CommandInteractionOptionResolver,
   EmbedBuilder,
   SlashCommandBuilder,
 } from 'discord.js';
-
 import { FlipCoinResult, SlashCommand } from '@marquinhos/types';
 import { sleep } from '@marquinhos/utils/sleep';
-import { join } from 'path';
 
 export const coin: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -24,12 +23,12 @@ export const coin: SlashCommand = {
             .setRequired(true)
             .addChoices(
               { name: 'Cara', value: 'Cara' },
-              { name: 'Coroa', value: 'Coroa' }
-            )
-        )
+              { name: 'Coroa', value: 'Coroa' },
+            ),
+        ),
     )
     .addSubcommand((subcommand) =>
-      subcommand.setName('lançar').setDescription('Apenas lança a moeda')
+      subcommand.setName('lançar').setDescription('Apenas lança a moeda'),
     ),
   execute: async (interaction) => {
     await interaction.deferReply();
@@ -50,13 +49,13 @@ export const coin: SlashCommand = {
     const attachment = new AttachmentBuilder(
       join(
         process.env?.ROOT_DIR ?? '.',
-        `/resources/images/coin_${flipCoinResult.result.toLowerCase()}.png`
-      )
+        `/resources/images/coin_${flipCoinResult.result.toLowerCase()}.png`,
+      ),
     );
 
     const coinEmbed = buildEmbed(
       interaction.client.baseEmbed(),
-      flipCoinResult
+      flipCoinResult,
     );
 
     if (subcommand === 'apostar') {
@@ -66,16 +65,16 @@ export const coin: SlashCommand = {
           `Boa! Você acertou!\n\nForam feitas ${
             flipCoinResult.count
           } tentativas durante ${(flipCoinResult.elapsedTime / 1000).toFixed(
-            2
-          )}s.`
+            2,
+          )}s.`,
         );
       } else {
         coinEmbed.setDescription(
           `Ih! Você errou!\n\nForam feitas ${
             flipCoinResult.count
           } tentativas durante ${(flipCoinResult.elapsedTime / 1000).toFixed(
-            2
-          )}s.`
+            2,
+          )}s.`,
         );
       }
     }
@@ -117,7 +116,7 @@ async function flipCoin(): Promise<FlipCoinResult> {
 
 function buildEmbed(
   baseEmbed: EmbedBuilder,
-  flipCoinResult: FlipCoinResult
+  flipCoinResult: FlipCoinResult,
 ): EmbedBuilder {
   return baseEmbed
     .setTimestamp()
@@ -125,7 +124,7 @@ function buildEmbed(
     .setDescription(
       `Foram feitas ${flipCoinResult.count} tentativas durante ${(
         flipCoinResult.elapsedTime / 1000
-      ).toFixed(2)}s.`
+      ).toFixed(2)}s.`,
     )
     .addFields(
       {
@@ -143,9 +142,9 @@ function buildEmbed(
           100
         ).toFixed(2)}%`,
         inline: true,
-      }
+      },
     )
     .setThumbnail(
-      `attachment://coin_${flipCoinResult.result.toLowerCase()}.png`
+      `attachment://coin_${flipCoinResult.result.toLowerCase()}.png`,
     );
 }

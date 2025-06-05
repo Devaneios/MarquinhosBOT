@@ -1,5 +1,5 @@
+import { joinVoiceChannel } from 'discord-player';
 import { GuildMember, SlashCommandBuilder } from 'discord.js';
-
 import {
   canJoinVoiceChannel,
   canSpeakVoiceChannel,
@@ -7,7 +7,6 @@ import {
   isUserInVoiceChannel,
 } from '@marquinhos/bot/validators/voice-channel';
 import { SlashCommand } from '@marquinhos/types';
-import { joinVoiceChannel } from 'discord-player';
 
 export const test: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -33,7 +32,7 @@ export const test: SlashCommand = {
     });
     const addedOnQueueEmbed = interaction.client
       .baseEmbed()
-      .setDescription(`Entrei no canal de voz :)`);
+      .setDescription('Entrei no canal de voz :)');
 
     await interaction.reply({
       embeds: [addedOnQueueEmbed],

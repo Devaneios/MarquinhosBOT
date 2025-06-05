@@ -1,5 +1,4 @@
 import { GuildMember, TextChannel } from 'discord.js';
-
 import { BotEvent } from '@marquinhos/types';
 
 export const guildMemberAdd: BotEvent = {
@@ -9,7 +8,7 @@ export const guildMemberAdd: BotEvent = {
     const mainChannelId = '680975188581416998';
 
     const defaultChannel = member.guild.channels.cache.get(
-      mainChannelId
+      mainChannelId,
     ) as TextChannel;
 
     if (!defaultChannel) {
@@ -17,7 +16,7 @@ export const guildMemberAdd: BotEvent = {
     }
 
     await defaultChannel.send(
-      member.user.username + ' agora faz parte do motel!'
+      `${member.user.username} agora faz parte do motel!`,
     );
 
     const externalRoleId = '696892513390428260';
@@ -33,10 +32,12 @@ export const guildMemberAdd: BotEvent = {
         'Olá! Você foi colocado num cargo onde não é possível entrar em canais de voz. Favor contate um ' +
           '"Vice-Dono" ou o "Dono do Motel" e entre no canal de voz "Alone" para que seja atribuído um cargo e você possa ' +
           'usar o servidor normalmente! :D \n Outra coisa! Se possível, diminui o meu volume um pouquinho, eu posso ser ' +
-          'um pouco barulhento nos fins de semana...'
+          'um pouco barulhento nos fins de semana...',
       );
-    } catch (error) {
-      throw new Error('Error sending message to user');
+    } catch (error: unknown) {
+      throw new Error(
+        `Error sending message to user${(error as Error).message}`,
+      );
     }
 
     const guildMembers = await member.guild.members.fetch();
@@ -48,13 +49,13 @@ export const guildMemberAdd: BotEvent = {
     if (!admin) throw new Error('ADMIN NOT FOUND!!!');
 
     await admin.send(
-      `O usuário ${member.user.username} entrou no servidor e quer se registrar!`
+      `O usuário ${member.user.username} entrou no servidor e quer se registrar!`,
     ); // TODO: Improve this with buttons to accept or deny the user
 
     const newcomersChannelId = '739562824178729122';
 
     const channel = member.guild.channels.cache.get(
-      newcomersChannelId
+      newcomersChannelId,
     ) as TextChannel;
 
     if (!channel) {
@@ -68,7 +69,7 @@ export const guildMemberAdd: BotEvent = {
           .setColor('#0099ff')
           .setDescription(
             `**Boas vindas ao ${member.guild?.name},** <@${member.user.id}>\n
-            Leia as regras para não tomar KICK/BAN e mantenha um bom relacionamento com o pessoal :sunglasses:\n`
+            Leia as regras para não tomar KICK/BAN e mantenha um bom relacionamento com o pessoal :sunglasses:\n`,
           )
           .setTimestamp()
           .setFooter({ text: 'Data de entrada' }),

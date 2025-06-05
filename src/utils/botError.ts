@@ -1,5 +1,4 @@
 import { CommandInteraction, Message } from 'discord.js';
-
 import { BotErrorLogLevel } from '@marquinhos/types';
 
 class BotError extends Error {
@@ -11,7 +10,7 @@ class BotError extends Error {
     message: string,
     discordMessage: Message | CommandInteraction,
     logLevel?: BotErrorLogLevel,
-    origin: string = 'Unknown'
+    origin: string = 'Unknown',
   ) {
     super(message);
     this.name = 'MarquinhosError';

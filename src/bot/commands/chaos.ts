@@ -8,7 +8,6 @@ import {
   VoiceBasedChannel,
   VoiceChannel,
 } from 'discord.js';
-
 import { SlashCommand } from '@marquinhos/types';
 import { coerceNumberProperty } from '@marquinhos/utils/coercion';
 
@@ -21,7 +20,7 @@ export const chaos: SlashCommand = {
       option
         .setName('nivel_do_chaos')
         .setDescription('O quão caótico você precisa que fique.')
-        .setRequired(false)
+        .setRequired(false),
     ),
   execute: async (interaction) => {
     // Gets the audioPlayer to execute the command only after the audio finishes
@@ -30,12 +29,12 @@ export const chaos: SlashCommand = {
     // Defines the level of chaos, as a number
     const levelOfChaos = coerceNumberProperty(
       interaction.options.get('nivel_do_chaos')?.value,
-      10
+      10,
     );
     // Maxes the number to 25, since more would take too much time
     if (levelOfChaos > 25) {
       interaction.reply(
-        'Não posso fazer isso, vocês não aguentariam tamanho caos!'
+        'Não posso fazer isso, vocês não aguentariam tamanho caos!',
       );
       return;
     }
@@ -50,12 +49,8 @@ export const chaos: SlashCommand = {
     // Plays the audio to start chaos
     // playAudio(interaction, currentVoiceChannel, '_caos');
 
-    //When the audio finishes playing, call the function
-    // const chaosFunction = () => {
-    //   setTimeout(() => chaos2(interaction, levelOfChaos), 500);
-    //   audioPlayer.player.off(AudioPlayerStatus.Idle, chaosFunction);
-    // };
-    // audioPlayer.player.on(AudioPlayerStatus.Idle, chaosFunction);
+    // When the audio finishes playing, call the function
+    setTimeout(() => chaos2(interaction, levelOfChaos), 500);
 
     interaction.reply('É TILAMBUCOOOOOOO');
     interaction.deleteReply();
@@ -70,16 +65,12 @@ async function chaos2(interaction: CommandInteraction, limit: number) {
   const voiceChannel = (interaction.member as GuildMember).voice.channel;
   // Gets the list of all voice channels in the guild
   const voiceChannels = interaction.guild?.channels.cache.filter(
-    (channel) => channel.type === voiceChannelEnumNumber
+    (channel) => channel.type === voiceChannelEnumNumber,
   );
   // Gets the list of all users in the voiceChannel
   const activeUsers = voiceChannel?.members.filter((user) => !user.user.bot);
   // Finally, calls the function chaos3, that will move people around and create REAL chaos
-  if (
-    voiceChannel != undefined &&
-    voiceChannels != undefined &&
-    activeUsers != undefined
-  ) {
+  if (!!voiceChannel && !!voiceChannels && !!activeUsers) {
     chaos3(1, voiceChannel, voiceChannels, activeUsers, limit);
   } else {
     const textChannel = await interaction.channel?.fetch();
@@ -96,11 +87,11 @@ async function chaos3(
   voiceChannel: VoiceBasedChannel,
   voiceChannels: Collection<string, GuildBasedChannel>,
   activeUsers: Collection<string, GuildMember>,
-  limit: number
+  limit: number,
 ) {
   // That's how I made it work. Recursively calling the function chaos with a counter that goes from 1 to "limit".
   if (counter <= limit) {
-    setTimeout(function () {
+    setTimeout(() => {
       // First, increment the counter to the next call
       counter++;
       // Create variable usuario
@@ -112,11 +103,11 @@ async function chaos3(
       const randomVoiceChannel = voiceChannels.random();
 
       // Checks if its a valid user key and channel
-      if (userRandomKey != undefined && randomVoiceChannel != undefined) {
+      if (userRandomKey !== undefined && randomVoiceChannel !== undefined) {
         usuario = activeUsers.get(userRandomKey);
       }
       // Checks if it got the user instance
-      if (usuario != undefined) {
+      if (usuario !== undefined) {
         usuario.voice.setChannel(randomVoiceChannel as VoiceChannel);
       }
       // Check if the user disconnected from a voice channel during the recursivity

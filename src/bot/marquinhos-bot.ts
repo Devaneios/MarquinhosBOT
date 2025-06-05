@@ -1,16 +1,3 @@
-import * as commands from '@marquinhos/bot/commands';
-import * as events from '@marquinhos/bot/events';
-import { SpreadsheetService } from '@marquinhos/services/spreadsheet';
-import {
-  BotEvent,
-  Command,
-  SecretChannelData,
-  SlashCommand,
-} from '@marquinhos/types';
-import { sendTimedMessage } from '@marquinhos/utils/discord';
-import { safeExecute } from '@marquinhos/utils/errorHandling';
-import { logger } from '@marquinhos/utils/logger';
-import { Scrobble } from '@marquinhos/utils/scrobble';
 import { GuildQueue, Player, Track } from 'discord-player';
 import {
   DeezerExtractor,
@@ -26,6 +13,19 @@ import {
   TextChannel,
   VoiceBasedChannel,
 } from 'discord.js';
+import * as commands from '@marquinhos/bot/commands';
+import * as events from '@marquinhos/bot/events';
+import { SpreadsheetService } from '@marquinhos/services/spreadsheet';
+import {
+  BotEvent,
+  Command,
+  SecretChannelData,
+  SlashCommand,
+} from '@marquinhos/types';
+import { sendTimedMessage } from '@marquinhos/utils/discord';
+import { safeExecute } from '@marquinhos/utils/errorHandling';
+import { logger } from '@marquinhos/utils/logger';
+import { Scrobble } from '@marquinhos/utils/scrobble';
 
 const {
   Guilds,
@@ -76,7 +76,7 @@ export class MarquinhosBot {
         slashCommand.command.setName(
           `${slashCommand.command.name}${
             process.env.NODE_ENV === 'production' ? '' : '-dev'
-          }`
+          }`,
         );
         const commandName = slashCommand.command.name;
         try {
@@ -91,7 +91,7 @@ export class MarquinhosBot {
 
   private _loadEvents() {
     const eventsArray = Array.from(Object.values(events)).map(
-      (event: BotEvent) => event
+      (event: BotEvent) => event,
     );
 
     eventsArray.forEach((event: BotEvent) => {
@@ -131,7 +131,7 @@ export class MarquinhosBot {
 
       const timeUntilScrobbling = Math.min(
         Math.floor(track.durationMS / 2),
-        fourMinutesInMillis
+        fourMinutesInMillis,
       );
       const dispatchTimer = setTimeout(() => {
         scrobble.dispatch();
@@ -157,19 +157,19 @@ export class MarquinhosBot {
           {
             name: 'Adicionado por',
             value: `<@${addedBy}>`,
-          }
+          },
         )
         .setThumbnail(track.thumbnail);
 
       sendTimedMessage(
         { embeds: [playerEmbed] },
         interactionChannel,
-        track.durationMS
+        track.durationMS,
       );
     };
 
     player.events.on('playerStart', (queue: GuildQueue, track: Track) =>
-      safeExecute(handlePlayStart.bind(this, queue, track))
+      safeExecute(handlePlayStart.bind(this, queue, track)),
     );
 
     player.events.on('playerError', (queue: GuildQueue, error: Error) => {
@@ -177,7 +177,7 @@ export class MarquinhosBot {
     });
 
     player.events.on('audioTrackAdd', (queue, track) => {
-      const { interactionChannel, voiceChannel, addedBy } = queue.metadata as {
+      const { interactionChannel, addedBy } = queue.metadata as {
         interactionChannel: TextChannel;
         voiceChannel: GuildVoiceChannelResolvable;
         addedBy: string;
@@ -202,7 +202,7 @@ export class MarquinhosBot {
             {
               name: 'Adicionado por',
               value: `<@${addedBy}>`,
-            }
+            },
           )
           .setThumbnail(track.thumbnail);
 

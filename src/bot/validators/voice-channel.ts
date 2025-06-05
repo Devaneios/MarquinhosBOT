@@ -5,13 +5,13 @@ import {
 } from 'discord.js';
 
 export const isUserInVoiceChannel = async (
-  interaction: CommandInteraction
+  interaction: CommandInteraction,
 ): Promise<boolean> => {
   const voiceChannel = (interaction.member as GuildMember).voice.channel;
 
   if (!voiceChannel) {
     await interaction.reply(
-      'Você precisa estar em um canal de voz para usar esse comando!'
+      'Você precisa estar em um canal de voz para usar esse comando!',
     );
     return false;
   }
@@ -20,7 +20,7 @@ export const isUserInVoiceChannel = async (
 };
 
 export const isCurrentlyInVoiceChannel = async (
-  interaction: CommandInteraction
+  interaction: CommandInteraction,
 ): Promise<boolean> => {
   const voiceChannel = (interaction.member as GuildMember).voice.channel!;
   if (
@@ -34,7 +34,7 @@ export const isCurrentlyInVoiceChannel = async (
 };
 
 export const canSpeakVoiceChannel = async (
-  interaction: CommandInteraction
+  interaction: CommandInteraction,
 ): Promise<boolean> => {
   const voiceChannel = (interaction.member as GuildMember).voice.channel!;
   if (
@@ -43,7 +43,7 @@ export const canSpeakVoiceChannel = async (
       .has(PermissionsBitField.Flags.Speak)
   ) {
     await interaction.reply(
-      'Eu não tenho permissão para falar nesse canal de voz!'
+      'Eu não tenho permissão para falar nesse canal de voz!',
     );
     return false;
   }
@@ -51,7 +51,7 @@ export const canSpeakVoiceChannel = async (
 };
 
 export const canJoinVoiceChannel = async (
-  interaction: CommandInteraction
+  interaction: CommandInteraction,
 ): Promise<boolean> => {
   const voiceChannel = (interaction.member as GuildMember).voice.channel!;
   if (
@@ -60,7 +60,7 @@ export const canJoinVoiceChannel = async (
       .has(PermissionsBitField.Flags.Connect)
   ) {
     await interaction.reply(
-      'Eu não tenho permissão para entrar nesse canal de voz!'
+      'Eu não tenho permissão para entrar nesse canal de voz!',
     );
     return false;
   }

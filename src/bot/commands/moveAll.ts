@@ -5,7 +5,6 @@ import {
   GuildMember,
   VoiceChannel,
 } from 'discord.js';
-
 import { SlashCommand } from '@marquinhos/types';
 
 export const moveAll: SlashCommand = {
@@ -18,7 +17,7 @@ export const moveAll: SlashCommand = {
         .setName('canal')
         .setDescription('Canal escolhido para os membros serem movidos')
         .setRequired(true)
-        .addChannelTypes(ChannelType.GuildVoice)
+        .addChannelTypes(ChannelType.GuildVoice),
     ),
   execute: async (interaction) => {
     const member = interaction.member as GuildMember;

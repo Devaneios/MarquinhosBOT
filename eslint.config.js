@@ -1,10 +1,10 @@
-const js = require('@eslint/js');
-const tseslint = require('@typescript-eslint/eslint-plugin');
-const tsparser = require('@typescript-eslint/parser');
-const prettier = require('eslint-plugin-prettier');
-const importPlugin = require('eslint-plugin-import');
+import js from '@eslint/js';
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsparser from '@typescript-eslint/parser';
+import importPlugin from 'eslint-plugin-import';
+import prettier from 'eslint-plugin-prettier';
 
-module.exports = [
+export default [
   // Ignore patterns first
   {
     ignores: [
@@ -47,19 +47,17 @@ module.exports = [
         clearInterval: 'readonly',
         setImmediate: 'readonly',
         clearImmediate: 'readonly',
+        NodeJS: true,
       },
     },
     plugins: {
       '@typescript-eslint': tseslint,
-      prettier: prettier,
       import: importPlugin,
+      // prettier: prettier,
     },
     rules: {
       // Base JavaScript rules
       ...js.configs.recommended.rules,
-
-      // Prettier integration
-      'prettier/prettier': 'error',
 
       // TypeScript specific rules
       '@typescript-eslint/no-unused-vars': [
@@ -110,37 +108,7 @@ module.exports = [
       'object-shorthand': 'error',
       'prefer-arrow-callback': 'error',
       'prefer-template': 'error',
-      'eqeqeq': ['error', 'always'],
-      'semi': ['error', 'always'],
-      'quotes': ['error', 'single', { avoidEscape: true }],
-      'comma-dangle': ['error', 'always-multiline'],
-      'object-curly-spacing': ['error', 'always'],
-      'array-bracket-spacing': ['error', 'never'],
-      'indent': ['error', 2, { SwitchCase: 1 }],
-      'max-len': [
-        'error',
-        {
-          code: 100,
-          tabWidth: 2,
-          ignoreUrls: true,
-          ignoreStrings: true,
-          ignoreTemplateLiterals: true,
-        },
-      ],
-      'brace-style': ['error', '1tbs', { allowSingleLine: true }],
-      'keyword-spacing': 'error',
-      'space-before-blocks': 'error',
-      'space-infix-ops': 'error',
-      'no-trailing-spaces': 'error',
-      'eol-last': 'error',
-      'no-multiple-empty-lines': [
-        'error',
-        {
-          max: 1,
-          maxEOF: 0,
-          maxBOF: 0,
-        },
-      ],
+      eqeqeq: ['error', 'always'],
     },
     settings: {
       'import/resolver': {

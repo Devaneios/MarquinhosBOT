@@ -1,5 +1,4 @@
 import { Message, TextChannel } from 'discord.js';
-
 import { BotEvent } from '@marquinhos/types';
 import { handlePotentialSpam } from '../moderation/spam';
 

@@ -41,7 +41,7 @@ export class TempoDataProvider {
   }
 
   async getPlaybackDataFromMessage(
-    message: Message
+    message: Message,
   ): Promise<PlaybackData | null> {
     const title = message?.embeds[0]?.title?.slice(this.titlePaddingIndex);
     const guildMember = await message.guild?.members.cache

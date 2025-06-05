@@ -1,6 +1,6 @@
-import { BufferedMessage } from '@marquinhos/types';
 import crypto from 'crypto';
 import { Message, TextChannel } from 'discord.js';
+import { BufferedMessage } from '@marquinhos/types';
 
 const messageBuffer: BufferedMessage[] = [];
 const BUFFER_EXPIRY_MS = 5000;
@@ -10,7 +10,7 @@ const MOD_ROLE_ID = '598322611877052462';
 setInterval(() => {
   const now = Date.now();
   const expiredIndex = messageBuffer.findIndex(
-    (msg) => now - msg.timestamp > BUFFER_EXPIRY_MS
+    (msg) => now - msg.timestamp > BUFFER_EXPIRY_MS,
   );
 
   if (expiredIndex !== -1) {
@@ -25,7 +25,7 @@ function hashMessage(content: string, userId: string): string {
 async function notifyModeratorAboutSpam(
   message: Message,
   spammerTag: string,
-  spammerId: string
+  spammerId: string,
 ) {
   try {
     const guild = message.guild;
@@ -44,7 +44,7 @@ async function notifyModeratorAboutSpam(
     }
 
     const availableMods = moderators.filter(
-      (mod) => mod.presence?.status && mod.presence.status !== 'offline'
+      (mod) => mod.presence?.status && mod.presence.status !== 'offline',
     );
 
     const modToNotify =
@@ -74,7 +74,7 @@ export function handlePotentialSpam(message: Message) {
       msg.hash === messageHash &&
       msg.userId === userId &&
       msg.channelId !== message.channelId &&
-      now - msg.timestamp <= BUFFER_EXPIRY_MS
+      now - msg.timestamp <= BUFFER_EXPIRY_MS,
   );
 
   if (duplicateMessage) {
@@ -95,7 +95,7 @@ async function handleDuplicateMessage(
   message: Message,
   duplicateMessage: BufferedMessage,
   userId: string,
-  now: number
+  now: number,
 ) {
   try {
     await message.delete();
@@ -103,10 +103,10 @@ async function handleDuplicateMessage(
 
     if (!duplicateMessage.deleted) {
       const originalChannel = message.client.channels.cache.get(
-        duplicateMessage.channelId
+        duplicateMessage.channelId,
       ) as TextChannel;
       const originalMessage = await originalChannel?.messages.fetch(
-        duplicateMessage.messageId
+        duplicateMessage.messageId,
       );
       await originalMessage?.delete();
       duplicateMessage.deleted = true;

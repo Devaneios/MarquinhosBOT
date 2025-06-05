@@ -1,11 +1,10 @@
+import { useQueue } from 'discord-player';
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
-
 import {
   isCurrentlyInVoiceChannel,
   isUserInVoiceChannel,
 } from '@marquinhos/bot/validators/voice-channel';
 import { SlashCommand } from '@marquinhos/types';
-import { useQueue } from 'discord-player';
 
 export const skip: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -18,7 +17,7 @@ export const skip: SlashCommand = {
 
       if (!queue) {
         interaction.reply(
-          'This server does not have an active player session.'
+          'This server does not have an active player session.',
         );
         return;
       }

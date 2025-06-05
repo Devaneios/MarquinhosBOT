@@ -9,11 +9,14 @@
     "start:prod": "node --openssl-legacy-provider -r tsconfig-paths/register ./dist/index.js",
     "build": "tsc --build && npm run copy-assets",
     "prettier": "npx prettier --write \"src/**/*.ts\"",
+    "prettier:check": "npx prettier --check \"src/**/*.ts\"",
     "copy-assets": "copyfiles --all --up 1 \"./src/resources/**\" \"./dist\"",
     "register-commands": "ts-node -r tsconfig-paths/register src/register-slash-commands.ts",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
-    "lint:check": "eslint src/**/*.ts --max-warnings=0"
+    "lint:check": "eslint src/**/*.ts --max-warnings=0",
+    "format": "npm run prettier && npm run lint:fix",
+    "check": "npm run prettier:check && npm run lint:check"
   },
   "author": "",
   "license": "GPL-3.0",
