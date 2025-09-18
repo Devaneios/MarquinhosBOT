@@ -1,0 +1,247 @@
+export enum GameType {
+  // Casino Games
+  BLACKJACK = 'blackjack',
+  SLOTS = 'slots',
+  ROULETTE = 'roulette',
+  DICE = 'dice',
+  LOTTERY = 'lottery',
+  
+  // Knowledge Games
+  MUSIC_QUIZ = 'music_quiz',
+  POP_CULTURE = 'pop_culture',
+  GEOGRAPHY = 'geography',
+  BRAZIL_HISTORY = 'brazil_history',
+  
+  // Word Games
+  SECRET_WORD = 'secret_word',
+  ANAGRAM = 'anagram',
+  RHYME = 'rhyme',
+  TRANSLATE = 'translate',
+  
+  // Strategy Games
+  TIC_TAC_TOE = 'tic_tac_toe',
+  SECRET_CODE = 'secret_code',
+  ROCK_PAPER_SCISSORS = 'rock_paper_scissors',
+  MAZE = 'maze',
+  
+  // Multiplayer Games
+  BATTLE_ROYALE = 'battle_royale',
+  TREASURE_HUNT = 'treasure_hunt',
+  SPEED_MATH = 'speed_math'
+}
+
+export enum GameState {
+  WAITING = 'waiting',
+  ACTIVE = 'active',
+  PAUSED = 'paused',
+  FINISHED = 'finished',
+  CANCELLED = 'cancelled'
+}
+
+export enum PlayerStatus {
+  ACTIVE = 'active',
+  WAITING = 'waiting',
+  ELIMINATED = 'eliminated',
+  DISCONNECTED = 'disconnected'
+}
+
+export interface GamePlayer {
+  userId: string;
+  username: string;
+  score: number;
+  status: PlayerStatus;
+  joinedAt: Date;
+  data?: any; // Game-specific player data
+}
+
+export interface GameConfig {
+  maxPlayers: number;
+  minPlayers: number;
+  timeLimit?: number; // in seconds
+  difficulty?: 'easy' | 'medium' | 'hard';
+  options?: Record<string, any>;
+}
+
+export interface GameReward {
+  xp: number;
+  achievement?: string;
+  badge?: string;
+  bonus?: number;
+}
+
+export interface GameSession {
+  id: string;
+  type: GameType;
+  guildId: string;
+  channelId: string;
+  hostId: string;
+  players: GamePlayer[];
+  state: GameState;
+  startedAt: Date;
+  expiresAt: Date;
+  config: GameConfig;
+  data: any; // Game-specific session data
+  round?: number;
+  currentTurn?: string; // userId
+}
+
+export interface GameResult {
+  sessionId: string;
+  winners: string[];
+  losers: string[];
+  rewards: Record<string, GameReward>;
+  stats: Record<string, any>;
+  duration: number;
+}
+
+export interface GameQuestion {
+  id: string;
+  question: string;
+  options?: string[];
+  correctAnswer: string | number;
+  difficulty: 'easy' | 'medium' | 'hard';
+  category?: string;
+  hint?: string;
+  explanation?: string;
+}
+
+export interface GameStats {
+  userId: string;
+  guildId: string;
+  gameType: GameType;
+  gamesPlayed: number;
+  gamesWon: number;
+  totalScore: number;
+  bestScore: number;
+  totalXpEarned: number;
+  winStreak: number;
+  bestWinStreak: number;
+  lastPlayed: Date;
+  achievements: string[];
+}
+
+export abstract class BaseGame {
+  protected session: GameSession;
+  
+  constructor(session: GameSession) {
+    this.session = session;
+  }
+  
+  abstract start(): Promise<void>;
+  abstract handlePlayerAction(userId: string, action: any): Promise<void>;
+  abstract getGameEmbed(): any;
+  abstract finish(): Promise<GameResult>;
+  
+  protected addPlayer(userId: string, username: string): boolean {
+    if (this.session.players.length >= this.session.config.maxPlayers) {
+      return false;
+    }
+    
+    const player: GamePlayer = {
+      userId,
+      username,
+      score: 0,
+      status: PlayerStatus.WAITING,
+      joinedAt: new Date()
+    };
+    
+    this.session.players.push(player);
+    return true;
+  }
+  
+  protected removePlayer(userId: string): boolean {
+    const index = this.session.players.findIndex(p => p.userId === userId);
+    if (index === -1) return false;
+    
+    this.session.players.splice(index, 1);
+    return true;
+  }
+  
+  protected getPlayer(userId: string): GamePlayer | undefined {
+    return this.session.players.find(p => p.userId === userId);
+  }
+  
+  protected updatePlayerScore(userId: string, score: number): boolean {
+    const player = this.getPlayer(userId);
+    if (!player) return false;
+    
+    player.score = score;
+    return true;
+  }
+  
+  protected calculateRewards(player: GamePlayer, position: number): GameReward {
+    const baseXp = this.getBaseXpForGame();
+    let xp = baseXp;
+    
+    // Position bonus
+    if (position === 1) xp *= 2; // Winner gets double
+    else if (position === 2) xp *= 1.5; // Second place bonus
+    else if (position === 3) xp *= 1.2; // Third place bonus
+    
+    // Difficulty bonus
+    if (this.session.config.difficulty === 'hard') xp *= 1.5;
+    else if (this.session.config.difficulty === 'medium') xp *= 1.2;
+    
+    return {
+      xp: Math.floor(xp),
+      bonus: position <= 3 ? 100 * (4 - position) : 0
+    };
+  }
+  
+  protected abstract getBaseXpForGame(): number;
+}
+
+// Game Categories Configuration
+export const GAME_CONFIGS: Record<GameType, GameConfig> = {
+  [GameType.BLACKJACK]: { maxPlayers: 1, minPlayers: 1, timeLimit: 300 },
+  [GameType.SLOTS]: { maxPlayers: 1, minPlayers: 1, timeLimit: 60 },
+  [GameType.ROULETTE]: { maxPlayers: 6, minPlayers: 1, timeLimit: 120 },
+  [GameType.DICE]: { maxPlayers: 4, minPlayers: 1, timeLimit: 180 },
+  [GameType.LOTTERY]: { maxPlayers: 1, minPlayers: 1, timeLimit: 30 },
+  
+  [GameType.MUSIC_QUIZ]: { maxPlayers: 8, minPlayers: 1, timeLimit: 240 },
+  [GameType.POP_CULTURE]: { maxPlayers: 8, minPlayers: 1, timeLimit: 180 },
+  [GameType.GEOGRAPHY]: { maxPlayers: 8, minPlayers: 1, timeLimit: 200 },
+  [GameType.BRAZIL_HISTORY]: { maxPlayers: 8, minPlayers: 1, timeLimit: 220 },
+  
+  [GameType.SECRET_WORD]: { maxPlayers: 6, minPlayers: 1, timeLimit: 300 },
+  [GameType.ANAGRAM]: { maxPlayers: 6, minPlayers: 1, timeLimit: 120 },
+  [GameType.RHYME]: { maxPlayers: 8, minPlayers: 1, timeLimit: 90 },
+  [GameType.TRANSLATE]: { maxPlayers: 6, minPlayers: 1, timeLimit: 150 },
+  
+  [GameType.TIC_TAC_TOE]: { maxPlayers: 2, minPlayers: 2, timeLimit: 180 },
+  [GameType.SECRET_CODE]: { maxPlayers: 1, minPlayers: 1, timeLimit: 240 },
+  [GameType.ROCK_PAPER_SCISSORS]: { maxPlayers: 8, minPlayers: 2, timeLimit: 60 },
+  [GameType.MAZE]: { maxPlayers: 1, minPlayers: 1, timeLimit: 300 },
+  
+  [GameType.BATTLE_ROYALE]: { maxPlayers: 10, minPlayers: 3, timeLimit: 600 },
+  [GameType.TREASURE_HUNT]: { maxPlayers: 8, minPlayers: 2, timeLimit: 900 },
+  [GameType.SPEED_MATH]: { maxPlayers: 8, minPlayers: 2, timeLimit: 120 }
+};
+
+export const GAME_COOLDOWNS: Record<GameType, number> = {
+  [GameType.BLACKJACK]: 30,
+  [GameType.SLOTS]: 15,
+  [GameType.ROULETTE]: 120,
+  [GameType.DICE]: 20,
+  [GameType.LOTTERY]: 86400, // 24 hours
+  
+  [GameType.MUSIC_QUIZ]: 45,
+  [GameType.POP_CULTURE]: 30,
+  [GameType.GEOGRAPHY]: 40,
+  [GameType.BRAZIL_HISTORY]: 50,
+  
+  [GameType.SECRET_WORD]: 60,
+  [GameType.ANAGRAM]: 25,
+  [GameType.RHYME]: 35,
+  [GameType.TRANSLATE]: 40,
+  
+  [GameType.TIC_TAC_TOE]: 20,
+  [GameType.SECRET_CODE]: 60,
+  [GameType.ROCK_PAPER_SCISSORS]: 15,
+  [GameType.MAZE]: 120,
+  
+  [GameType.BATTLE_ROYALE]: 180,
+  [GameType.TREASURE_HUNT]: 300,
+  [GameType.SPEED_MATH]: 30
+};

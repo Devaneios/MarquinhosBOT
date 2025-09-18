@@ -3,6 +3,7 @@ import { AutocompleteInteraction, CommandInteraction, Guild } from 'discord.js';
 import { BotEvent } from '@marquinhos/types';
 import BotError from '@marquinhos/utils/botError';
 import { logger } from '@marquinhos/utils/logger';
+import { XPSystem } from '@marquinhos/utils/xpSystem';
 
 export const interactionCreate: BotEvent = {
   name: 'interactionCreate',
@@ -63,7 +64,17 @@ export const interactionCreate: BotEvent = {
         guild: interaction.guild as Guild,
       };
 
-      player.context.provide(data, () => command.execute(interaction));
+      player.context.provide(data, async () => {
+        await command.execute(interaction);
+        
+        // Add XP for command usage
+        await XPSystem.addCommandXP(interaction);
+        
+        // Check for level up notification
+        setTimeout(async () => {
+          await XPSystem.checkAndNotifyLevelUp(interaction.user.id, interaction.guildId!, interaction);
+        }, 2000);
+      });
     } else if (interaction.isAutocomplete()) {
       const command = (
         interaction as AutocompleteInteraction
