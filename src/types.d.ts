@@ -133,6 +133,160 @@ export type RolesConfig = {
   vipRoleId: Nullable<string>;
 };
 
+// Gamification Types
+export interface UserLevel {
+  userId: string;
+  guildId: string;
+  level: number;
+  xp: number;
+  totalXp: number;
+  lastXpGain: Date;
+}
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  icon: string;
+  condition: any;
+  reward?: {
+    xp?: number;
+    role?: string;
+    badge?: string;
+  };
+}
+
+export interface UserAchievement {
+  userId: string;
+  achievementId: string;
+  unlockedAt: Date;
+  guildId: string;
+}
+
+// Music System Types
+export interface Playlist {
+  id: string;
+  name: string;
+  description?: string;
+  creatorId: string;
+  guildId: string;
+  isCollaborative: boolean;
+  tracks: PlaylistTrack[];
+  followers: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PlaylistTrack {
+  title: string;
+  artist: string;
+  url: string;
+  addedBy: string;
+  addedAt: Date;
+  votes: number;
+  voters: string[];
+}
+
+export interface MusicRecommendation {
+  userId: string;
+  trackTitle: string;
+  artist: string;
+  score: number;
+  reason: string;
+  createdAt: Date;
+}
+
+export interface KaraokeSession {
+  id: string;
+  guildId: string;
+  channelId: string;
+  hostId: string;
+  currentTrack?: {
+    title: string;
+    artist: string;
+    lyrics: string[];
+    duration: number;
+  };
+  participants: string[];
+  scores: Record<string, number>;
+  isActive: boolean;
+  createdAt: Date;
+}
+
+// Social System Types
+export interface MusicGroup {
+  id: string;
+  name: string;
+  description: string;
+  guildId: string;
+  creatorId: string;
+  members: string[];
+  genre?: string;
+  isPrivate: boolean;
+  createdAt: Date;
+}
+
+export interface ListeningParty {
+  id: string;
+  name: string;
+  description: string;
+  guildId: string;
+  channelId: string;
+  hostId: string;
+  scheduledAt: Date;
+  duration: number;
+  playlist?: string;
+  participants: string[];
+  isActive: boolean;
+  createdAt: Date;
+}
+
+// Analytics Types
+export interface UserStats {
+  userId: string;
+  guildId: string;
+  totalCommands: number;
+  totalVoiceTime: number;
+  totalScrobbles: number;
+  favoriteGenres: string[];
+  listeningPatterns: Record<string, number>;
+  lastUpdated: Date;
+}
+
+export interface ServerReport {
+  guildId: string;
+  period: string;
+  totalUsers: number;
+  activeUsers: number;
+  totalCommands: number;
+  topTracks: any[];
+  topArtists: any[];
+  generatedAt: Date;
+}
+
+// Premium System Types
+export interface PremiumSubscription {
+  userId: string;
+  plan: 'basic' | 'premium' | 'lifetime';
+  startDate: Date;
+  endDate?: Date;
+  isActive: boolean;
+  features: string[];
+}
+
+// Plugin System Types
+export interface Plugin {
+  id: string;
+  name: string;
+  version: string;
+  author: string;
+  description: string;
+  enabled: boolean;
+  config: any;
+}
+
 declare global {
   namespace NodeJS {
     interface ProcessEnv {

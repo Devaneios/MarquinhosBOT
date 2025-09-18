@@ -1,0 +1,575 @@
+{
+  "info": {
+    "name": "MarquinhosBOT Games API",
+    "description": "Coleção completa de endpoints da API de games do MarquinhosBOT",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Session Management",
+      "description": "Gerenciamento de sessões de jogo",
+      "item": [
+        {
+          "name": "List Active Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bot_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sessions?guildId={{guild_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sessions"
+              ],
+              "query": [
+                {
+                  "key": "guildId",
+                  "value": "{{guild_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Game Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bot_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gameType\": \"blackjack\",\n  \"guildId\": \"{{guild_id}}\",\n  \"channelId\": \"{{channel_id}}\",\n  \"hostId\": \"{{user_id}}\",\n  \"options\": {\n    \"difficulty\": \"medium\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/sessions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sessions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Session Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bot_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sessions/{{session_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sessions",
+                "{{session_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Join Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bot_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{user_id}}\",\n  \"username\": \"Player1\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/sessions/{{session_id}}/join",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sessions",
+                "{{session_id}}",
+                "join"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send Player Action",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bot_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{user_id}}\",\n  \"type\": \"hit\",\n  \"data\": {}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/sessions/{{session_id}}/actions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sessions",
+                "{{session_id}}",
+                "actions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "End Session",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bot_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sessions/{{session_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sessions",
+                "{{session_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Casino Games",
+      "description": "Jogos de cassino e sorte",
+      "item": [
+        {
+          "name": "Slots - Spin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bot_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{session_id}}\",\n  \"bet\": 25\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/casino/slots/spin",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "casino",
+                "slots",
+                "spin"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Blackjack - Hit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bot_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{session_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/casino/blackjack/hit",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "casino",
+                "blackjack",
+                "hit"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Blackjack - Stand",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bot_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{session_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/casino/blackjack/stand",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "casino",
+                "blackjack",
+                "stand"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Knowledge Games",
+      "description": "Jogos de conhecimento e quiz",
+      "item": [
+        {
+          "name": "Quiz - Answer Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bot_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{session_id}}\",\n  \"userId\": \"{{user_id}}\",\n  \"answer\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/knowledge/quiz/answer",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "knowledge",
+                "quiz",
+                "answer"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Game Information",
+      "description": "Informações sobre jogos disponíveis",
+      "item": [
+        {
+          "name": "List Available Games",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bot_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/games",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Game Config",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bot_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/games/{{game_type}}/config",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "games",
+                "{{game_type}}",
+                "config"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Stats & Rankings",
+      "description": "Estatísticas e rankings dos jogadores",
+      "item": [
+        {
+          "name": "Get User Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bot_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/stats/user/{{user_id}}?guildId={{guild_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "stats",
+                "user",
+                "{{user_id}}"
+              ],
+              "query": [
+                {
+                  "key": "guildId",
+                  "value": "{{guild_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Rankings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bot_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/stats/rankings?guildId={{guild_id}}&gameType=blackjack&period=weekly&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "stats",
+                "rankings"
+              ],
+              "query": [
+                {
+                  "key": "guildId",
+                  "value": "{{guild_id}}"
+                },
+                {
+                  "key": "gameType",
+                  "value": "blackjack"
+                },
+                {
+                  "key": "period",
+                  "value": "weekly"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check User Cooldowns",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bot_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/cooldowns/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "cooldowns",
+                "{{user_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-generate session ID if not set",
+          "if (!pm.environment.get('session_id')) {",
+          "    const uuid = require('uuid');",
+          "    pm.environment.set('session_id', uuid.v4());",
+          "}",
+          "",
+          "// Set timestamp for requests",
+          "pm.environment.set('timestamp', new Date().toISOString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test for all requests",
+          "pm.test('Status code is successful', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+          "});",
+          "",
+          "// Save session ID from create session response",
+          "if (pm.info.requestName === 'Create Game Session' && pm.response.code === 201) {",
+          "    const responseJson = pm.response.json();",
+          "    pm.environment.set('session_id', responseJson.id);",
+          "    console.log('Session ID saved:', responseJson.id);",
+          "}",
+          "",
+          "// Log response for debugging",
+          "console.log('Response:', pm.response.json());"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://discord-bot/api/games",
+      "description": "Base URL for the Games API"
+    },
+    {
+      "key": "bot_token",
+      "value": "YOUR_BOT_TOKEN_HERE",
+      "description": "Discord Bot Token"
+    },
+    {
+      "key": "guild_id",
+      "value": "123456789012345678",
+      "description": "Discord Guild (Server) ID"
+    },
+    {
+      "key": "channel_id",
+      "value": "123456789012345678",
+      "description": "Discord Channel ID"
+    },
+    {
+      "key": "user_id",
+      "value": "123456789012345678",
+      "description": "Discord User ID"
+    },
+    {
+      "key": "session_id",
+      "value": "",
+      "description": "Game Session ID (auto-generated)"
+    },
+    {
+      "key": "game_type",
+      "value": "blackjack",
+      "description": "Type of game to interact with"
+    }
+  ]
+}
