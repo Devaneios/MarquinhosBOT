@@ -82,7 +82,7 @@ export const syncParty: SlashCommand = {
     .addSubcommand(subcommand =>
       subcommand
         .setName('list')
-        .setDescription('Lista festas ativas no servidor')),
+        .setDescription('Lista festas ativas no servidor')) as SlashCommandBuilder,
   execute: async (interaction) => {
     if (!interaction.guildId) {
       await interaction.reply({ content: 'Este comando só pode ser usado em um servidor.', ephemeral: true });

@@ -23,7 +23,7 @@ export const musicalDNA: SlashCommand = {
     .addSubcommand(subcommand =>
       subcommand
         .setName('evolution')
-        .setDescription('Mostra sua evolução musical ao longo do tempo')),
+        .setDescription('Mostra sua evolução musical ao longo do tempo')) as SlashCommandBuilder,
   execute: async (interaction) => {
     if (!interaction.guildId) {
       await interaction.reply({ content: 'Este comando só pode ser usado em um servidor.', ephemeral: true });
@@ -37,7 +37,7 @@ export const musicalDNA: SlashCommand = {
 
       switch (subcommand) {
         case 'generate':
-          const dnaResponse = await marquinhosApi.post('/musical-dna/generate', {
+          const dnaResponse = await marquinhosApi.post('/api/musical-dna/generate', {
             userId: interaction.user.id,
             guildId: interaction.guildId
           });
@@ -78,7 +78,7 @@ export const musicalDNA: SlashCommand = {
             .setDescription(`Compatibilidade entre ${interaction.user.username} e ${targetUser.username}`)
             .addFields(
               { name: '💖 Pontuação', value: `**${compatibility}%**`, inline: true },
-              { name: '🎯 Nível', value: this.getCompatibilityLevel(compatibility), inline: true }
+              { name: '🎯 Nível', value: getCompatibilityLevel(compatibility), inline: true }
             )
             .setColor(compatibility > 70 ? '#00FF00' : compatibility > 40 ? '#FFFF00' : '#FF0000');
 
@@ -112,12 +112,12 @@ export const musicalDNA: SlashCommand = {
     }
   },
   cooldown: 10,
-
-  getCompatibilityLevel: (compatibility: number): string => {
-    if (compatibility >= 90) return '🔥 Almas Gêmeas Musicais';
-    if (compatibility >= 70) return '💕 Muito Compatíveis';
-    if (compatibility >= 50) return '😊 Boa Conexão';
-    if (compatibility >= 30) return '🤔 Alguma Sintonia';
-    return '😅 Gostos Diferentes';
-  }
 };
+
+function getCompatibilityLevel(compatibility: number): string {
+  if (compatibility >= 90) return '🔥 Almas Gêmeas Musicais';
+  if (compatibility >= 70) return '💕 Muito Compatíveis';
+  if (compatibility >= 50) return '😊 Boa Conexão';
+  if (compatibility >= 30) return '🤔 Alguma Sintonia';
+  return '😅 Gostos Diferentes';
+}

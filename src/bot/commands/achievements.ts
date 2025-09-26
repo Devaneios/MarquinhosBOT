@@ -13,7 +13,7 @@ export const achievements: SlashCommand = {
         .setName('usuario')
         .setDescription('Usuário para verificar as conquistas (opcional)')
         .setRequired(false)
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     await interaction.deferReply();
     

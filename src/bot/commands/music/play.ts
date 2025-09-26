@@ -23,7 +23,7 @@ export const play: SlashCommand = {
         .setName('musica')
         .setDescription('A música a ser tocada')
         .setRequired(true),
-    ),
+    ) as SlashCommandBuilder,
   validators: [
     isUserInVoiceChannel,
     isCurrentlyInVoiceChannel,

@@ -33,7 +33,7 @@ export const avatar: SlashCommand = {
       subcommand
         .setName('feriado')
         .setDescription('Atualiza para o avatar de feriado atual'),
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction: ChatInputCommandInteraction) => {
     const subcommand = interaction.options.getSubcommand();
 

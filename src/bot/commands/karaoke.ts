@@ -36,7 +36,7 @@ export const karaoke: SlashCommand = {
       subcommand
         .setName('end')
         .setDescription('Encerra a sessão de karaokê')
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     await interaction.deferReply();
     

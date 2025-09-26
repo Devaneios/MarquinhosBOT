@@ -12,7 +12,7 @@ export const importunate: SlashCommand = {
         .setName('importunado')
         .setDescription('Quem você quer que eu irrite?')
         .setRequired(true),
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     const member = interaction.options.get('importunado')
       ?.member as GuildMember;

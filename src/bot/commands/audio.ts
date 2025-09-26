@@ -32,7 +32,7 @@ export const audio: SlashCommand = {
             return { name: audio, value: audio };
           }),
         ),
-    ),
+    ) as SlashCommandBuilder,
 
   execute: (interaction) => {
     const file = interaction.options.get('audio');

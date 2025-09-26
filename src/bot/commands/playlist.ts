@@ -63,7 +63,7 @@ export const playlist: SlashCommand = {
             .setDescription('Nome da música ou URL')
             .setRequired(true)
         )
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     await interaction.deferReply();
     

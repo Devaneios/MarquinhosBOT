@@ -27,7 +27,7 @@ export const playNext: SlashCommand = {
       option
         .setName('posicao')
         .setDescription('A posição que a música deve ser adicionada'),
-    ),
+    ) as SlashCommandBuilder,
   validators: [
     isUserInVoiceChannel,
     isCurrentlyInVoiceChannel,

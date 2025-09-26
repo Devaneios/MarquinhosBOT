@@ -31,7 +31,7 @@ export const plugins: SlashCommand = {
       subcommand
         .setName('marketplace')
         .setDescription('Abre o marketplace de plugins')
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     await interaction.deferReply();
     

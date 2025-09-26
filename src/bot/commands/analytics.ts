@@ -30,7 +30,7 @@ export const analytics: SlashCommand = {
               { name: 'Mensal', value: 'monthly' }
             )
         )
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     await interaction.deferReply();
     

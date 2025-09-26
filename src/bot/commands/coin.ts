@@ -29,7 +29,7 @@ export const coin: SlashCommand = {
     )
     .addSubcommand((subcommand) =>
       subcommand.setName('lançar').setDescription('Apenas lança a moeda'),
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     await interaction.deferReply();
     await interaction.followUp('Lançando a moeda... 🪙');
@@ -40,10 +40,11 @@ export const coin: SlashCommand = {
     ).getSubcommand();
 
     if (flipCoinResult.result === null) {
-      return interaction.reply({
+      await interaction.reply({
         content: 'A moeda caiu no ralo e não consegui ver o resultado.',
         ephemeral: true,
       });
+      return;
     }
 
     const attachment = new AttachmentBuilder(

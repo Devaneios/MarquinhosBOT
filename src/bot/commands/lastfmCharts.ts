@@ -31,7 +31,7 @@ export const lastfmCharts: SlashCommand = {
           { name: 'Último ano', value: '12month' },
           { name: 'Desde o início', value: 'overall' },
         ),
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     interaction.reply('Feature temporariamente desabilitada');
   },

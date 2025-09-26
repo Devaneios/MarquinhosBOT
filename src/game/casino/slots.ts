@@ -28,7 +28,11 @@ export class SlotsGame extends BaseGame {
     this.session.data = {
       spins: 0,
       totalWinnings: 0,
-      currentBet: 10
+      currentBet: 10,
+      reels: [[], [], []],
+      result: [],
+      multiplier: 0,
+      winType: 'none'
     } as SlotsData;
   }
 

@@ -94,7 +94,7 @@ export const games: SlashCommand = {
       subcommand
         .setName('ranking')
         .setDescription('Ver ranking dos melhores jogadores')
-    ),
+    ) as SlashCommandBuilder,
 
   execute: async (interaction: ChatInputCommandInteraction) => {
     const subcommand = interaction.options.getSubcommand();

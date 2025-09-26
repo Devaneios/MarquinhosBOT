@@ -21,7 +21,7 @@ export const chaos: SlashCommand = {
         .setName('nivel_do_chaos')
         .setDescription('O quão caótico você precisa que fique.')
         .setRequired(false),
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     // Gets the audioPlayer to execute the command only after the audio finishes
     // playing

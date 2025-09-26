@@ -12,7 +12,8 @@ export const test: SlashCommand = {
       (channel: TextChannel) => channel.type === ChannelType.GuildText,
     ) as TextChannel;
     if (!channel) {
-      return interaction.reply('Não encontrei nenhum canal de texto.');
+      await interaction.reply('Não encontrei nenhum canal de texto.');
+      return;
     }
 
     const addedOnQueueEmbed = interaction.client

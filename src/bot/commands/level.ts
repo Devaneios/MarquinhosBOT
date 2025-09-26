@@ -13,7 +13,7 @@ export const level: SlashCommand = {
         .setName('usuario')
         .setDescription('Usuário para verificar o nível (opcional)')
         .setRequired(false)
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     await interaction.deferReply();
     
@@ -38,7 +38,7 @@ export const level: SlashCommand = {
       const requiredXP = Math.floor(Math.pow(level + 1, 2) * 100);
       const progressPercentage = Math.floor((xp / requiredXP) * 100);
       
-      const progressBar = this.createProgressBar(progressPercentage);
+      const progressBar = createProgressBar(progressPercentage);
       
       const embed = interaction.client.baseEmbed()
         .setTitle(`📊 Nível de ${targetUser.username}`)

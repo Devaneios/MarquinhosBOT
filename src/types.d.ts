@@ -17,7 +17,7 @@ export type Nullable<T> = T | null | undefined;
 export interface SlashCommand {
   command: SlashCommandBuilder;
   execute: (
-    interaction: ChatInputCommandInteraction | Interaction | CommandInteraction,
+    interaction: ChatInputCommandInteraction,
   ) => Promise<void> | void;
   validators?: ((interaction: CommandInteraction) => Promise<boolean>)[];
   autocomplete?: (interaction: AutocompleteInteraction) => void;

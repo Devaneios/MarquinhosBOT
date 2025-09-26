@@ -15,7 +15,7 @@ export const voiceAnalyze: SlashCommand = {
     .addAttachmentOption(option =>
       option.setName('audio')
         .setDescription('Arquivo de áudio para análise')
-        .setRequired(false)),
+        .setRequired(false)) as SlashCommandBuilder,
   execute: async (interaction) => {
     if (!interaction.guildId) {
       await interaction.reply({ content: 'Este comando só pode ser usado em um servidor.', ephemeral: true });

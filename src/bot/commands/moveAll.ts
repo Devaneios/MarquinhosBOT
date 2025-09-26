@@ -18,12 +18,11 @@ export const moveAll: SlashCommand = {
         .setDescription('Canal escolhido para os membros serem movidos')
         .setRequired(true)
         .addChannelTypes(ChannelType.GuildVoice),
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     const member = interaction.member as GuildMember;
     const voiceChannel = member.voice.channel;
-    const newVoiceChannel = interaction.options.get('canal')
-      ?.channel as VoiceChannel;
+    const newVoiceChannel = interaction.options.getChannel('canal', true) as VoiceChannel;
 
     if (!voiceChannel) {
       await interaction.reply('Mas tu nem tá num canal de voz vei :(');

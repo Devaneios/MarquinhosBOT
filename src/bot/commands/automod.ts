@@ -32,7 +32,7 @@ export const automod: SlashCommand = {
       subcommand
         .setName('logs')
         .setDescription('Mostra logs de moderação')
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     await interaction.deferReply();
     

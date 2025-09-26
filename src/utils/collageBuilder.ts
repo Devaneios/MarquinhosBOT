@@ -146,7 +146,7 @@ export class CollageBuilder {
   ) {
     const { ctx, collageCanvas, canvasWidth, canvasHeight } =
       this.setupCanvas();
-    await this.drawBackground(ctx, canvasWidth, canvasHeight);
+    await this.drawBackground(ctx);
     const firstImageBuffer = images.shift();
     if (!firstImageBuffer) return Buffer.from('');
     const firstImage = await loadImage(firstImageBuffer);

@@ -61,7 +61,7 @@ export const recommend: SlashCommand = {
       subcommand
         .setName('collaborative')
         .setDescription('Recomendações baseadas em usuários similares')
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     await interaction.deferReply();
     

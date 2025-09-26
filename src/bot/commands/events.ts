@@ -37,7 +37,7 @@ export const events: SlashCommand = {
             .setDescription('ID do evento')
             .setRequired(true)
         )
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     await interaction.deferReply();
     

@@ -37,7 +37,7 @@ export const groups: SlashCommand = {
       subcommand
         .setName('list')
         .setDescription('Lista grupos disponíveis')
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     await interaction.deferReply();
     

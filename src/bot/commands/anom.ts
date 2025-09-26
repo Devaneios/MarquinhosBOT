@@ -24,7 +24,7 @@ export const anom: SlashCommand = {
         .setName('mensagem')
         .setDescription('O que você quer que eu envie')
         .setRequired(true),
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction: ChatInputCommandInteraction) => {
     const channel = interaction.options.get('canal')?.channel as TextChannel;
     const message = interaction.options.get('mensagem')?.value as string;

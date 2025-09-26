@@ -35,7 +35,7 @@ export const premium: SlashCommand = {
       subcommand
         .setName('donate')
         .setDescription('Fazer uma doação')
-    ),
+    ) as SlashCommandBuilder,
   execute: async (interaction) => {
     await interaction.deferReply();
     
