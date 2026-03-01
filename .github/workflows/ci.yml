@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: [self-hosted, Linux, X64, marquinhos-runner]
+    runs-on: [self-hosted, Linux, X64, devaneios-runner]
 
     steps:
       - uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: [self-hosted, Linux, X64, marquinhos-runner]
+    runs-on: [self-hosted, Linux, X64, devaneios-runner]
 
     steps:
       - uses: actions/checkout@v4
