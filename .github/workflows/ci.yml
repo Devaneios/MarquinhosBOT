@@ -55,9 +55,7 @@ jobs:
 
       - name: Scan image for CVEs
         run: |
-          docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            aquasecurity/trivy:0.69.1 image \
+          trivy image \
             --format table \
             --exit-code 0 \
             --severity HIGH,CRITICAL \
