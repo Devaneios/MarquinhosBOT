@@ -6,6 +6,9 @@ node_modules/
 .idea/
 /out
 
+# Bun
+.bun
+
 # Logs
 logs
 *.log
