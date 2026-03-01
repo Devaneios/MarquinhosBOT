@@ -130,7 +130,7 @@ export class GameManager {
   }
 
   public getActiveSessionsByGuild(guildId: string): GameSession[] {
-    return this.activeSessions.filter(session => session.guildId === guildId);
+    return [...this.activeSessions.filter(session => session.guildId === guildId).values()];
   }
 
   public getSessionStats(sessionId: string): any {

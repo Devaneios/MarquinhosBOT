@@ -29,7 +29,7 @@ export class SlotsGame extends BaseGame {
       spins: 0,
       totalWinnings: 0,
       currentBet: 10
-    } as SlotsData;
+    } as unknown as SlotsData;
   }
 
   async start(): Promise<void> {
