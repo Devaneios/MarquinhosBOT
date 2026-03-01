@@ -1,9 +1,18 @@
+import { GameManager } from '@marquinhos/game/core/GameManager';
+import { GameState } from '@marquinhos/game/core/GameTypes';
 import { BotEvent } from '@marquinhos/types';
 import BotError from '@marquinhos/utils/botError';
 import { logger } from '@marquinhos/utils/logger';
 import { XPSystem } from '@marquinhos/utils/xpSystem';
 import { useMainPlayer } from 'discord-player';
-import { AutocompleteInteraction, CommandInteraction, Guild } from 'discord.js';
+import {
+  AutocompleteInteraction,
+  ButtonInteraction,
+  CommandInteraction,
+  Guild,
+} from 'discord.js';
+
+const gameManager = GameManager.getInstance();
 
 export const interactionCreate: BotEvent = {
   name: 'interactionCreate',
@@ -67,18 +76,29 @@ export const interactionCreate: BotEvent = {
       player.context.provide(data, async () => {
         await command.execute(interaction);
 
-        // Add XP for command usage
+        // Level-up and achievement notifications come directly from the addXP
+        // API response — no separate polling call needed.
         await XPSystem.addCommandXP(interaction);
-
-        // Check for level up notification
-        setTimeout(async () => {
-          await XPSystem.checkAndNotifyLevelUp(
-            interaction.user.id,
-            interaction.guildId!,
-            interaction,
-          );
-        }, 2000);
       });
+    } else if (interaction.isButton()) {
+      const btn = interaction as ButtonInteraction;
+      const session = gameManager.getSessionByChannel(btn.channelId);
+      if (!session) return;
+
+      const gameInstance = gameManager.getGameInstance(session.id);
+      if (!gameInstance) return;
+
+      try {
+        await gameInstance.handlePlayerAction(btn.user.id, btn);
+
+        const updatedSession = gameManager.getSession(session.id);
+        if (!updatedSession || updatedSession.state === GameState.FINISHED) {
+          const result = await gameInstance.finish();
+          await gameManager.endSessionWithResult(session.id, result);
+        }
+      } catch (error) {
+        console.error('Game button handler error:', error);
+      }
     } else if (interaction.isAutocomplete()) {
       const command = (
         interaction as AutocompleteInteraction

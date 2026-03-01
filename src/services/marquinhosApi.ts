@@ -1,4 +1,5 @@
 import {
+  AddXpResult,
   ApiError,
   ApiResponse,
   LastfmTopListenedPeriod,
@@ -101,14 +102,41 @@ export class MarquinhosApiService {
   async addXP(
     userId: string,
     guildId: string,
-    amount: number,
-  ): Promise<ApiResponse<UserLevel>> {
+    eventType: string,
+  ): Promise<ApiResponse<AddXpResult>> {
     const data = await this.client.post('/api/gamification/xp', {
       userId,
       guildId,
-      amount,
+      eventType,
     });
-    return data as ApiResponse<UserLevel>;
+    return data as ApiResponse<AddXpResult>;
+  }
+
+  async postGameResult(payload: {
+    sessionId: string;
+    guildId: string;
+    gameType: string;
+    durationMs?: number;
+    results: { userId: string; position: number }[];
+  }): Promise<ApiResponse> {
+    const data = await this.client.post('/api/gamification/game-result', payload);
+    return data as ApiResponse;
+  }
+
+  async getUserGameStats(
+    userId: string,
+    guildId: string,
+  ): Promise<ApiResponse> {
+    const data = await this.client.get(`/api/gamification/game-stats/${userId}/${guildId}`);
+    return data as ApiResponse;
+  }
+
+  async getGameLeaderboard(
+    guildId: string,
+    gameType: string,
+  ): Promise<ApiResponse> {
+    const data = await this.client.get(`/api/gamification/game-leaderboard/${guildId}/${gameType}`);
+    return data as ApiResponse;
   }
 
   async getUserLevel(

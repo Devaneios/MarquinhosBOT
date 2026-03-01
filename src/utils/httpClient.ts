@@ -155,6 +155,13 @@ export class HttpClient {
         return this.fetchWithRetry(url, config, attempt + 1);
       }
 
+      if (error instanceof Error) {
+        const err = error as unknown as Record<string, unknown>;
+        if (!err.config) {
+          err.config = { url };
+        }
+      }
+
       throw error;
     }
   }

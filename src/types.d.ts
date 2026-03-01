@@ -172,7 +172,7 @@ export interface UserLevel {
   level: number;
   xp: number;
   totalXp: number;
-  lastXpGain: Date;
+  lastXpGain: Date | null;
 }
 
 export interface Achievement {
@@ -190,11 +190,26 @@ export interface Achievement {
   };
 }
 
+// UserAchievement includes joined Achievement fields (flat response from backend JOIN)
 export interface UserAchievement {
   userId: string;
+  guildId: string;
   achievementId: string;
   unlockedAt: Date;
-  guildId: string;
+  name: string;
+  description: string;
+  category: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  icon: string;
+  rewardXp: number;
+}
+
+export interface AddXpResult {
+  userLevel: UserLevel;
+  onCooldown: boolean;
+  leveledUp: boolean;
+  newLevel?: number;
+  unlockedAchievements: string[];
 }
 
 // Music System Types
