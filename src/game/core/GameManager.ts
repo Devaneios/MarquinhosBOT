@@ -1,14 +1,13 @@
 import { Collection } from 'discord.js';
+import { v4 as uuidv4 } from 'uuid';
 import {
-  GameSession,
-  GameType,
-  GameState,
-  GameResult,
   BaseGame,
   GAME_CONFIGS,
   GAME_COOLDOWNS,
+  GameSession,
+  GameState,
+  GameType,
 } from './GameTypes';
-import { v4 as uuidv4 } from 'uuid';
 
 export class GameManager {
   private static instance: GameManager;

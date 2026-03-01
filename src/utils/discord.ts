@@ -1,3 +1,4 @@
+import BotError from '@marquinhos/utils/botError';
 import {
   GuildMember,
   Message,
@@ -8,7 +9,6 @@ import {
   TextChannel,
   VoiceChannel,
 } from 'discord.js';
-import BotError from '@marquinhos/utils/botError';
 import { sleep } from './sleep';
 
 export const checkPermissions = (

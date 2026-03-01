@@ -1,5 +1,5 @@
-import { GuildMember, SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
+import { GuildMember, SlashCommandBuilder } from 'discord.js';
 
 const DATE_LOCALE_CONFIG: Intl.DateTimeFormatOptions = {
   weekday: 'long',

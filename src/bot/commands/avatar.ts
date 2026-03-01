@@ -1,11 +1,11 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
+import { SpreadsheetService } from '@marquinhos/services/spreadsheet';
+import { AvatarConfig, SlashCommand } from '@marquinhos/types';
+import { logger } from '@marquinhos/utils/logger';
 import {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
 } from 'discord.js';
-import { SpreadsheetService } from '@marquinhos/services/spreadsheet';
-import { AvatarConfig, SlashCommand } from '@marquinhos/types';
-import { logger } from '@marquinhos/utils/logger';
 
 export const avatar: SlashCommand = {
   command: new SlashCommandBuilder()

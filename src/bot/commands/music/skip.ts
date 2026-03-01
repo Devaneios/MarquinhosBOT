@@ -1,10 +1,10 @@
-import { useQueue } from 'discord-player';
-import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import {
   isCurrentlyInVoiceChannel,
   isUserInVoiceChannel,
 } from '@marquinhos/bot/validators/voice-channel';
 import { SlashCommand } from '@marquinhos/types';
+import { useQueue } from 'discord-player';
+import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 
 export const skip: SlashCommand = {
   command: new SlashCommandBuilder()

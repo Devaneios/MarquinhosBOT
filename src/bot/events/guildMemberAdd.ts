@@ -1,5 +1,5 @@
-import { GuildMember, TextChannel } from 'discord.js';
 import { BotEvent } from '@marquinhos/types';
+import { GuildMember, TextChannel } from 'discord.js';
 
 export const guildMemberAdd: BotEvent = {
   name: 'guildMemberAdd',

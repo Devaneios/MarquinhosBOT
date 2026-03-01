@@ -1,6 +1,6 @@
+import { BufferedMessage } from '@marquinhos/types';
 import crypto from 'crypto';
 import { Message, TextChannel } from 'discord.js';
-import { BufferedMessage } from '@marquinhos/types';
 
 const messageBuffer: BufferedMessage[] = [];
 const BUFFER_EXPIRY_MS = 5000;

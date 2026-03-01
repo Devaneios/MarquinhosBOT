@@ -1,5 +1,5 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
+import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
 
 export const automod: SlashCommand = {
   command: new SlashCommandBuilder()

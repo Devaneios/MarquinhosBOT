@@ -1,5 +1,5 @@
-import { GuildMember, SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
+import { GuildMember, SlashCommandBuilder } from 'discord.js';
 
 export const disconnectAll: SlashCommand = {
   command: new SlashCommandBuilder()

@@ -1,13 +1,12 @@
 import {
-  EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  EmbedBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
-  ComponentType,
 } from 'discord.js';
-import { GameSession, GameType, GamePlayer, GameState } from './GameTypes';
+import { GamePlayer, GameSession, GameState, GameType } from './GameTypes';
 
 export class GameUtils {
   static createGameEmbed(

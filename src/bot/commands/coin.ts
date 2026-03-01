@@ -1,12 +1,12 @@
-import { join } from 'path';
+import { FlipCoinResult, SlashCommand } from '@marquinhos/types';
+import { sleep } from '@marquinhos/utils/sleep';
 import {
   AttachmentBuilder,
   CommandInteractionOptionResolver,
   EmbedBuilder,
   SlashCommandBuilder,
 } from 'discord.js';
-import { FlipCoinResult, SlashCommand } from '@marquinhos/types';
-import { sleep } from '@marquinhos/utils/sleep';
+import { join } from 'path';
 
 export const coin: SlashCommand = {
   command: new SlashCommandBuilder()

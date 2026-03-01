@@ -1,8 +1,8 @@
-import { readdirSync } from 'fs';
-import { join } from 'path';
-import { SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
 import { logger } from '@marquinhos/utils/logger';
+import { SlashCommandBuilder } from 'discord.js';
+import { readdirSync } from 'fs';
+import { join } from 'path';
 
 const audiosDir = join(__dirname, '../../resources/sounds/');
 const audios: string[] = [];

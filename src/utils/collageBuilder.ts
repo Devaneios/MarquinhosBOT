@@ -1,13 +1,13 @@
-import fs from 'fs';
-import { join } from 'path';
 import {
+  CanvasRenderingContext2D,
   Image,
   createCanvas,
   loadImage,
   registerFont,
-  CanvasRenderingContext2D,
 } from 'canvas';
 import fontColorContrast from 'font-color-contrast';
+import fs from 'fs';
+import { join } from 'path';
 import sharp from 'sharp';
 
 export class CollageBuilder {

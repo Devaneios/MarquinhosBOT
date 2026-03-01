@@ -1,6 +1,6 @@
-import { SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
 import { HttpClient } from '@marquinhos/utils/httpClient';
+import { SlashCommandBuilder } from 'discord.js';
 
 const httpClient = new HttpClient({
   baseURL: process.env.MARQUINHOS_API_URL,

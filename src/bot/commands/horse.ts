@@ -1,6 +1,6 @@
-import { join } from 'path';
-import { SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
+import { SlashCommandBuilder } from 'discord.js';
+import { join } from 'path';
 
 export const horse: SlashCommand = {
   command: new SlashCommandBuilder().setName('cavalo').setDescription('CAVALO'),

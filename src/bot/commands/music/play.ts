@@ -1,17 +1,17 @@
 import {
-  ChatInputCommandInteraction,
-  CommandInteractionOptionResolver,
-  GuildMember,
-  MessageFlags,
-  SlashCommandBuilder,
-} from 'discord.js';
-import {
   canJoinVoiceChannel,
   canSpeakVoiceChannel,
   isCurrentlyInVoiceChannel,
   isUserInVoiceChannel,
 } from '@marquinhos/bot/validators/voice-channel';
 import { SlashCommand } from '@marquinhos/types';
+import {
+  ChatInputCommandInteraction,
+  CommandInteractionOptionResolver,
+  GuildMember,
+  MessageFlags,
+  SlashCommandBuilder,
+} from 'discord.js';
 import { handlePlay } from './utils';
 
 export const play: SlashCommand = {

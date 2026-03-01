@@ -1,7 +1,7 @@
-import { Client } from 'discord.js';
 import { BotEvent } from '@marquinhos/types';
 import { getBicho } from '@marquinhos/utils/bichoGame';
 import { logger } from '@marquinhos/utils/logger';
+import { Client } from 'discord.js';
 
 export const ready: BotEvent = {
   name: 'ready',

@@ -1,3 +1,5 @@
+import { SlashCommand } from '@marquinhos/types';
+import { coerceNumberProperty } from '@marquinhos/utils/coercion';
 import {
   ChannelType,
   Collection,
@@ -8,8 +10,6 @@ import {
   VoiceBasedChannel,
   VoiceChannel,
 } from 'discord.js';
-import { SlashCommand } from '@marquinhos/types';
-import { coerceNumberProperty } from '@marquinhos/utils/coercion';
 
 export const chaos: SlashCommand = {
   command: new SlashCommandBuilder()

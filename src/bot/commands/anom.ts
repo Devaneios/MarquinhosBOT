@@ -1,10 +1,10 @@
+import { SlashCommand } from '@marquinhos/types';
 import {
   ChannelType,
   ChatInputCommandInteraction,
   SlashCommandBuilder,
   TextChannel,
 } from 'discord.js';
-import { SlashCommand } from '@marquinhos/types';
 
 export const anom: SlashCommand = {
   command: new SlashCommandBuilder()

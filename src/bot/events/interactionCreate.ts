@@ -1,9 +1,9 @@
-import { useMainPlayer } from 'discord-player';
-import { AutocompleteInteraction, CommandInteraction, Guild } from 'discord.js';
 import { BotEvent } from '@marquinhos/types';
 import BotError from '@marquinhos/utils/botError';
 import { logger } from '@marquinhos/utils/logger';
 import { XPSystem } from '@marquinhos/utils/xpSystem';
+import { useMainPlayer } from 'discord-player';
+import { AutocompleteInteraction, CommandInteraction, Guild } from 'discord.js';
 
 export const interactionCreate: BotEvent = {
   name: 'interactionCreate',

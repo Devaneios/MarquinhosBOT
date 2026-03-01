@@ -22,9 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
+import { PlaybackData } from '@marquinhos/types';
 import { GuildMember, Message, VoiceChannel } from 'discord.js';
 import dotenv from 'dotenv';
-import { PlaybackData } from '@marquinhos/types';
 
 dotenv.config();
 

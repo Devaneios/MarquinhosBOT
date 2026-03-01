@@ -1,5 +1,5 @@
-import { GuildMember, SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
+import { GuildMember, SlashCommandBuilder } from 'discord.js';
 
 export const importunate: SlashCommand = {
   command: new SlashCommandBuilder()
