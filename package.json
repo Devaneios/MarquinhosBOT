@@ -2,21 +2,19 @@
   "name": "marquinhosbot",
   "version": "2.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.ts",
   "scripts": {
-    "start": "set NODE_OPTIONS=--openssl-legacy-provider && ts-node -r tsconfig-paths/register src/index.ts",
-    "start:dev": "nodemon",
-    "start:prod": "node --openssl-legacy-provider -r tsconfig-paths/register ./dist/index.js",
-    "build": "tsc --build && npm run copy-assets",
-    "prettier": "npx prettier --write \"src/**/*.ts\"",
-    "prettier:check": "npx prettier --check \"src/**/*.ts\"",
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build src/index.ts --target=bun --outdir=./dist --sourcemap=external && bun run copy-assets",
+    "typecheck": "tsc --noEmit",
     "copy-assets": "copyfiles --all --up 1 \"./src/resources/**\" \"./dist\"",
-    "register-commands": "ts-node -r tsconfig-paths/register src/register-slash-commands.ts",
+    "register-commands": "bun run src/register-slash-commands.ts",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "lint:check": "eslint src/**/*.ts --max-warnings=0",
-    "format": "npm run prettier && npm run lint:fix",
-    "check": "npm run prettier:check && npm run lint:check"
+    "format": "prettier --write \"src/**/*.ts\" && bun run lint:fix",
+    "format:check": "prettier --check \"src/**/*.ts\" && bun run lint:check"
   },
   "author": "",
   "license": "GPL-3.0",
@@ -25,7 +23,6 @@
     "axios": "^1.6.8",
     "canvas": "^3.2.1",
     "color": "^4.2.3",
-    "copyfiles": "^2.4.1",
     "discord.js": "14.25.1",
     "dotenv": "^16.4.5",
     "ffmpeg": "0.0.4",
@@ -37,32 +34,23 @@
     "winston": "^3.17.0"
   },
   "devDependencies": {
+    "@types/bun": "latest",
     "@types/color": "^4.2.0",
     "@types/fuzzy-search": "^2.1.5",
     "@types/node": "^22.13.11",
     "@typescript-eslint/eslint-plugin": "^8.33.1",
     "@typescript-eslint/parser": "^8.33.1",
     "copyfiles": "^2.4.1",
-    "cross-env": "^7.0.3",
     "eslint": "^9.23.0",
     "eslint-import-resolver-typescript": "^4.4.2",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^5.4.1",
-    "nodemon": "^3.1.9",
     "prettier": "^3.5.3",
-    "ts-node": "^10.9.2",
-    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.2"
   },
   "engines": {
-    "node": "20.x"
-  },
-  "nodemonConfig": {
-    "ignore": [
-      "*.json"
-    ],
-    "delay": "2500"
+    "bun": ">=1.0.0"
   },
   "overrides": {
     "undici": "6.23.0"
