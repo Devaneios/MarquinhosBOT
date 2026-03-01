@@ -75,6 +75,10 @@ jobs:
             sleep 5
           done
           echo "Health check timed out — rolling back"
+          echo "--- Container logs ---"
+          docker logs marquinhosbot --tail 100 2>&1 || true
+          echo "--- Container inspect ---"
+          docker inspect marquinhosbot --format='ExitCode={{.State.ExitCode}} Status={{.State.Status}} Error={{.State.Error}}' 2>&1 || true
           docker compose down || true
           if docker image inspect marquinhosbot:previous &>/dev/null; then
             docker tag marquinhosbot:previous marquinhosbot:latest
