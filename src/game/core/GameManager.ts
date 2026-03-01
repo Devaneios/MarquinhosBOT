@@ -93,13 +93,19 @@ export class GameManager {
     return true;
   }
 
-  public async endSessionWithResult(sessionId: string, result: GameResult): Promise<void> {
+  public async endSessionWithResult(
+    sessionId: string,
+    result: GameResult,
+  ): Promise<void> {
     const session = this.activeSessions.get(sessionId);
     if (!session) return;
 
     const results = [
       ...result.winners.map((userId, idx) => ({ userId, position: idx + 1 })),
-      ...result.losers.map((userId, idx) => ({ userId, position: result.winners.length + idx + 1 })),
+      ...result.losers.map((userId, idx) => ({
+        userId,
+        position: result.winners.length + idx + 1,
+      })),
     ];
 
     try {
