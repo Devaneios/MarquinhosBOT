@@ -24,7 +24,7 @@ WORKDIR /app
 
 RUN addgroup -S marquinhos && adduser -S marquinhos -G marquinhos
 
-COPY package.json bun.lock* ./
+COPY package.json bun.lock* tsconfig.json ./
 
 # Reuse pre-compiled node_modules — no build toolchain needed at runtime
 COPY --from=builder /app/node_modules ./node_modules
