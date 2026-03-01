@@ -54,12 +54,14 @@ jobs:
           docker tag marquinhosbot:latest marquinhosbot:${{ github.sha }}
 
       - name: Scan image for CVEs
-        uses: aquasecurity/trivy-action@0.33.1
-        with:
-          image-ref: marquinhosbot:${{ github.sha }}
-          format: table
-          exit-code: 0
-          severity: HIGH,CRITICAL
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasecurity/trivy:0.69.1 image \
+            --format table \
+            --exit-code 0 \
+            --severity HIGH,CRITICAL \
+            marquinhosbot:${{ github.sha }}
 
       - name: Swap container
         run: |
