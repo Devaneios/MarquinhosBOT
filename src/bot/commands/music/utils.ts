@@ -1,3 +1,4 @@
+import { logger } from '@marquinhos/utils/logger';
 import { QueryType, useMainPlayer, useQueue } from 'discord-player';
 import {
   GuildVoiceChannelResolvable,
@@ -5,7 +6,6 @@ import {
   MessagePayload,
   TextBasedChannel,
 } from 'discord.js';
-import { logger } from '@marquinhos/utils/logger';
 
 export const handlePlay = async (
   query: string,

@@ -1,3 +1,16 @@
+import * as commands from '@marquinhos/bot/commands';
+import * as events from '@marquinhos/bot/events';
+import { SpreadsheetService } from '@marquinhos/services/spreadsheet';
+import {
+  BotEvent,
+  Command,
+  SecretChannelData,
+  SlashCommand,
+} from '@marquinhos/types';
+import { sendTimedMessage } from '@marquinhos/utils/discord';
+import { safeExecute } from '@marquinhos/utils/errorHandling';
+import { logger } from '@marquinhos/utils/logger';
+import { Scrobble } from '@marquinhos/utils/scrobble';
 import { GuildQueue, Player, Track } from 'discord-player';
 import {
   DeezerExtractor,
@@ -13,19 +26,6 @@ import {
   TextChannel,
   VoiceBasedChannel,
 } from 'discord.js';
-import * as commands from '@marquinhos/bot/commands';
-import * as events from '@marquinhos/bot/events';
-import { SpreadsheetService } from '@marquinhos/services/spreadsheet';
-import {
-  BotEvent,
-  Command,
-  SecretChannelData,
-  SlashCommand,
-} from '@marquinhos/types';
-import { sendTimedMessage } from '@marquinhos/utils/discord';
-import { safeExecute } from '@marquinhos/utils/errorHandling';
-import { logger } from '@marquinhos/utils/logger';
-import { Scrobble } from '@marquinhos/utils/scrobble';
 
 const {
   Guilds,

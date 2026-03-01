@@ -1,9 +1,9 @@
 import { REST } from '@discordjs/rest';
-import { Routes } from 'discord-api-types/v10';
-import { config } from 'dotenv';
 import * as commands from '@marquinhos/bot/commands';
 import { SlashCommand } from '@marquinhos/types';
 import { logger } from '@marquinhos/utils/logger';
+import { Routes } from 'discord-api-types/v10';
+import { config } from 'dotenv';
 
 config();
 

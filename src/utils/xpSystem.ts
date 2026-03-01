@@ -1,5 +1,5 @@
-import { CommandInteraction, GuildMember } from 'discord.js';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
+import { CommandInteraction, GuildMember } from 'discord.js';
 
 const apiService = new MarquinhosApiService();
 

@@ -1,5 +1,3 @@
-import { joinVoiceChannel } from 'discord-player';
-import { GuildMember, SlashCommandBuilder } from 'discord.js';
 import {
   canJoinVoiceChannel,
   canSpeakVoiceChannel,
@@ -7,6 +5,8 @@ import {
   isUserInVoiceChannel,
 } from '@marquinhos/bot/validators/voice-channel';
 import { SlashCommand } from '@marquinhos/types';
+import { joinVoiceChannel } from 'discord-player';
+import { GuildMember, SlashCommandBuilder } from 'discord.js';
 
 export const test: SlashCommand = {
   command: new SlashCommandBuilder()

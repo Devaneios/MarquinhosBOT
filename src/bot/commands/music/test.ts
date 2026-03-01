@@ -1,5 +1,5 @@
-import { ChannelType, SlashCommandBuilder, TextChannel } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
+import { ChannelType, SlashCommandBuilder, TextChannel } from 'discord.js';
 
 export const test: SlashCommand = {
   command: new SlashCommandBuilder()

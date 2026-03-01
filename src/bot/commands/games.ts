@@ -1,48 +1,41 @@
+import { GameManager } from '@marquinhos/game/core/GameManager';
+import { GAME_CONFIGS, GameType } from '@marquinhos/game/core/GameTypes';
+import { GameUtils } from '@marquinhos/game/core/GameUtils';
+import { SlashCommand } from '@marquinhos/types';
+import { XPSystem } from '@marquinhos/utils/xpSystem';
 import {
-  SlashCommandBuilder,
-  EmbedBuilder,
   ActionRowBuilder,
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  SlashCommandBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ChatInputCommandInteraction,
-  ComponentType,
 } from 'discord.js';
-import { SlashCommand } from '@marquinhos/types';
-import { GameManager } from '@marquinhos/game/core/GameManager';
-import {
-  GameType,
-  GAME_CONFIGS,
-  GAME_COOLDOWNS,
-} from '@marquinhos/game/core/GameTypes';
-import { GameUtils } from '@marquinhos/game/core/GameUtils';
-import { XPSystem } from '@marquinhos/utils/xpSystem';
 
 // Game implementations
-import { SlotsGame } from '@marquinhos/game/casino/slots';
 import { BlackjackGame } from '@marquinhos/game/casino/blackjack';
 import { DiceGame } from '@marquinhos/game/casino/dice';
-import { RouletteGame } from '@marquinhos/game/casino/roulette';
 import { LotteryGame } from '@marquinhos/game/casino/lottery';
+import { RouletteGame } from '@marquinhos/game/casino/roulette';
+import { SlotsGame } from '@marquinhos/game/casino/slots';
 
-import { MusicQuizGame } from '@marquinhos/game/knowledge/musicQuiz';
-import { GeographyGame } from '@marquinhos/game/knowledge/geography';
-import { PopCultureGame } from '@marquinhos/game/knowledge/popCulture';
 import { BrazilHistoryGame } from '@marquinhos/game/knowledge/brazilHistory';
+import { GeographyGame } from '@marquinhos/game/knowledge/geography';
+import { MusicQuizGame } from '@marquinhos/game/knowledge/musicQuiz';
+import { PopCultureGame } from '@marquinhos/game/knowledge/popCulture';
 
-import { SecretWordGame } from '@marquinhos/game/words/secretWord';
 import { AnagramGame } from '@marquinhos/game/words/anagram';
 import { RhymeGame } from '@marquinhos/game/words/rhyme';
+import { SecretWordGame } from '@marquinhos/game/words/secretWord';
 import { TranslateGame } from '@marquinhos/game/words/translate';
 
-import { TicTacToeGame } from '@marquinhos/game/strategy/ticTacToe';
-import { SecretCodeGame } from '@marquinhos/game/strategy/secretCode';
-import { RockPaperScissorsGame } from '@marquinhos/game/strategy/rockPaperScissors';
 import { MazeGame } from '@marquinhos/game/strategy/maze';
+import { RockPaperScissorsGame } from '@marquinhos/game/strategy/rockPaperScissors';
+import { SecretCodeGame } from '@marquinhos/game/strategy/secretCode';
+import { TicTacToeGame } from '@marquinhos/game/strategy/ticTacToe';
 
-import { SpeedMathGame } from '@marquinhos/game/multiplayer/speedMath';
 import { BattleRoyaleGame } from '@marquinhos/game/multiplayer/battleRoyale';
+import { SpeedMathGame } from '@marquinhos/game/multiplayer/speedMath';
 import { TreasureHuntGame } from '@marquinhos/game/multiplayer/treasureHunt';
 
 const gameManager = GameManager.getInstance();

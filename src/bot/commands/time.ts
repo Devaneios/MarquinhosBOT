@@ -1,6 +1,6 @@
-import { join } from 'path';
-import { AttachmentBuilder, SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
+import { AttachmentBuilder, SlashCommandBuilder } from 'discord.js';
+import { join } from 'path';
 
 export const time: SlashCommand = {
   command: new SlashCommandBuilder()

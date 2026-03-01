@@ -84,31 +84,15 @@ export default [
       '@typescript-eslint/ban-ts-comment': 'warn',
 
       // Import rules
-      'import/order': [
-        'error',
-        {
-          groups: [
-            'builtin',
-            'external',
-            'internal',
-            'parent',
-            'sibling',
-            'index',
-          ],
-          'newlines-between': 'never',
-          alphabetize: {
-            order: 'asc',
-            caseInsensitive: true,
-          },
-        },
-      ],
+      // Note: import ordering is handled by prettier-plugin-organize-imports
+      'import/order': 'off', // Handled by prettier-plugin-organize-imports
       'import/no-unresolved': 'off', // TypeScript handles this
-      'import/no-duplicates': 'error',
+      'import/no-duplicates': 'off', // Handled by prettier-plugin-organize-imports
 
       // General JavaScript/TypeScript rules
       'no-console': 'off', // Allow console for bot logging
       'no-debugger': 'error',
-      'no-duplicate-imports': 'error',
+      'no-duplicate-imports': 'off', // Handled by prettier-plugin-organize-imports
       'no-unused-vars': 'off', // Use TypeScript version instead
       'prefer-const': 'error',
       'no-var': 'error',

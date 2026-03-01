@@ -1,5 +1,5 @@
-import { Message, TextChannel } from 'discord.js';
 import { BotEvent } from '@marquinhos/types';
+import { Message, TextChannel } from 'discord.js';
 import { handlePotentialSpam } from '../moderation/spam';
 
 export const messageCreate: BotEvent = {

@@ -1,6 +1,6 @@
+import { SlashCommand } from '@marquinhos/types';
 import { SlashCommandBuilder } from 'discord.js';
 import dotenv from 'dotenv';
-import { SlashCommand } from '@marquinhos/types';
 
 dotenv.config();
 

@@ -1,6 +1,6 @@
+import { PlaybackData } from '@marquinhos/types';
 import { Track } from 'discord-player';
 import { VoiceBasedChannel } from 'discord.js';
-import { PlaybackData } from '@marquinhos/types';
 
 export class Scrobble {
   playbackData: PlaybackData | null = null;

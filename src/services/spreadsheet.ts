@@ -1,5 +1,5 @@
-import { google, sheets_v4 } from 'googleapis';
 import { logger } from '@marquinhos/utils/logger';
+import { google, sheets_v4 } from 'googleapis';
 
 export class SpreadsheetService {
   private sheets: sheets_v4.Sheets;

@@ -1,5 +1,5 @@
-import { SlashCommandBuilder, PermissionsBitField } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
+import { PermissionsBitField, SlashCommandBuilder } from 'discord.js';
 
 export const disconnect: SlashCommand = {
   command: new SlashCommandBuilder()

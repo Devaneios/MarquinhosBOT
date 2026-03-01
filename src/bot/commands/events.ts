@@ -1,5 +1,5 @@
-import { SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
+import { SlashCommandBuilder } from 'discord.js';
 
 export const events: SlashCommand = {
   command: new SlashCommandBuilder()

@@ -1,11 +1,11 @@
+import { SlashCommand } from '@marquinhos/types';
 import {
-  SlashCommandBuilder,
-  PermissionsBitField,
   ChannelType,
   GuildMember,
+  PermissionsBitField,
+  SlashCommandBuilder,
   VoiceChannel,
 } from 'discord.js';
-import { SlashCommand } from '@marquinhos/types';
 
 export const moveAll: SlashCommand = {
   command: new SlashCommandBuilder()

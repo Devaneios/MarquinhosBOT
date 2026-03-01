@@ -1,7 +1,7 @@
-import { Track, useQueue } from 'discord-player';
-import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { isCurrentlyInVoiceChannel } from '@marquinhos/bot/validators/voice-channel';
 import { SlashCommand } from '@marquinhos/types';
+import { Track, useQueue } from 'discord-player';
+import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 
 export const queue: SlashCommand = {
   command: new SlashCommandBuilder()

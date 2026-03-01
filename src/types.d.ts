@@ -3,15 +3,14 @@ import {
   Collection,
   CommandInteraction,
   Client as DiscordClient,
-  Interaction,
+  EmbedBuilder,
   Message,
   PermissionResolvable,
   SlashCommandBuilder,
-  type ChatInputCommandInteraction,
-  TextChannel,
-  EmbedBuilder,
-  SlashCommandSubcommandsOnlyBuilder,
   SlashCommandOptionsOnlyBuilder,
+  SlashCommandSubcommandsOnlyBuilder,
+  TextChannel,
+  type ChatInputCommandInteraction,
 } from 'discord.js';
 
 export type Nullable<T> = T | null | undefined;
