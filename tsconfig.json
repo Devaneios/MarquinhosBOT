@@ -1,14 +1,12 @@
 {
-  "ts-node": {
-    "require": ["tsconfig-paths/register"]
-  },
   "compilerOptions": {
     "target": "ESNext",
-    "module": "commonjs",
+    "module": "esnext",
+    "lib": ["ESNext"],
     "rootDir": "src",
     "outDir": "dist",
-    // "strict": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
+    "types": ["bun-types"],
     "importHelpers": true,
     "experimentalDecorators": true,
     "esModuleInterop": true,
@@ -17,7 +15,6 @@
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "removeComments": true,
-    "typeRoots": ["node_modules/@types"],
     "sourceMap": false,
     "baseUrl": ".",
     "paths": {

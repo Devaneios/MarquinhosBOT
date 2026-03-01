@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo "Registering Discord slash commands..."
-npm run register-commands
+bun run register-commands
 
 echo "Starting MarquinhosBOT..."
-exec npm run start:prod
+exec bun run start

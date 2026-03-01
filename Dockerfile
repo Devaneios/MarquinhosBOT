@@ -1,16 +1,16 @@
-FROM node:20.19.2-alpine
+FROM oven/bun:1-alpine
 
 RUN apk add --no-cache ffmpeg python3 make g++ pkgconfig pixman cairo-dev pango-dev giflib-dev jpeg-dev
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json bun.lockb* ./
 
-RUN npm ci
+RUN bun install --frozen-lockfile
 
 COPY . .
 
-RUN npm run build
+RUN bun run build
 
 COPY entrypoint.sh /entrypoint.sh
 
