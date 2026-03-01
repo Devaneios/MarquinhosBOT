@@ -48,6 +48,13 @@ export default [
         setImmediate: 'readonly',
         clearImmediate: 'readonly',
         NodeJS: true,
+        // Fetch API globals (Node.js 18+)
+        fetch: 'readonly',
+        Response: 'readonly',
+        Request: 'readonly',
+        RequestInit: 'readonly',
+        AbortController: 'readonly',
+        AbortSignal: 'readonly',
       },
     },
     plugins: {

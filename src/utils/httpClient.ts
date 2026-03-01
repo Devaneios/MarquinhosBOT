@@ -19,7 +19,9 @@ export class HttpClient {
   private defaultTimeout: number;
   private defaultRetries: number;
 
-  private requestInterceptors: Array<(config: RequestConfig) => RequestConfig | Promise<RequestConfig>> = [];
+  private requestInterceptors: Array<
+    (config: RequestConfig) => RequestConfig | Promise<RequestConfig>
+  > = [];
   private responseInterceptors: Array<{
     onFulfilled?: (response: Response) => Response | Promise<Response>;
     onRejected?: (error: unknown) => unknown;
@@ -29,26 +31,33 @@ export class HttpClient {
     this.baseURL = options.baseURL || '';
     this.defaultHeaders = options.headers || {};
     this.defaultTimeout = options.timeout || 15000;
-    this.defaultRetries = typeof options.retries === 'number' ? options.retries : 3;
+    this.defaultRetries =
+      typeof options.retries === 'number' ? options.retries : 3;
   }
 
   public interceptors = {
     request: {
-      use: (interceptor: (config: RequestConfig) => RequestConfig | Promise<RequestConfig>) => {
+      use: (
+        interceptor: (
+          config: RequestConfig,
+        ) => RequestConfig | Promise<RequestConfig>,
+      ) => {
         this.requestInterceptors.push(interceptor);
       },
     },
     response: {
       use: (
         onFulfilled?: (response: Response) => Response | Promise<Response>,
-        onRejected?: (error: unknown) => unknown
+        onRejected?: (error: unknown) => unknown,
       ) => {
         this.responseInterceptors.push({ onFulfilled, onRejected });
       },
     },
   };
 
-  private async applyRequestInterceptors(config: RequestConfig): Promise<RequestConfig> {
+  private async applyRequestInterceptors(
+    config: RequestConfig,
+  ): Promise<RequestConfig> {
     let finalConfig = { ...config };
     for (const interceptor of this.requestInterceptors) {
       finalConfig = await interceptor(finalConfig);
@@ -56,7 +65,9 @@ export class HttpClient {
     return finalConfig;
   }
 
-  private async applyResponseInterceptors(response: Response): Promise<Response> {
+  private async applyResponseInterceptors(
+    response: Response,
+  ): Promise<Response> {
     let finalResponse = response;
     for (const interceptor of this.responseInterceptors) {
       if (interceptor.onFulfilled) {
@@ -71,9 +82,9 @@ export class HttpClient {
     for (const interceptor of this.responseInterceptors) {
       if (interceptor.onRejected) {
         try {
-           await interceptor.onRejected(finalError);
+          await interceptor.onRejected(finalError);
         } catch (e) {
-           finalError = e;
+          finalError = e;
         }
       }
     }
@@ -85,7 +96,11 @@ export class HttpClient {
     return new Promise((resolve) => setTimeout(resolve, delay));
   }
 
-  private async fetchWithRetry(url: string, config: RequestConfig, attempt: number = 0): Promise<Response> {
+  private async fetchWithRetry(
+    url: string,
+    config: RequestConfig,
+    attempt: number = 0,
+  ): Promise<Response> {
     const timeout = config.timeout ?? this.defaultTimeout;
     const retries = config.retries ?? this.defaultRetries;
     const abortController = new AbortController();
@@ -102,7 +117,9 @@ export class HttpClient {
 
       // Retry on 5xx server errors
       if (response.status >= 500 && attempt < retries) {
-        logger.warn(`Received ${response.status} from ${url}. Retrying... (${attempt + 1}/${retries})`);
+        logger.warn(
+          `Received ${response.status} from ${url}. Retrying... (${attempt + 1}/${retries})`,
+        );
         await this.exponentialBackoff(attempt);
         return this.fetchWithRetry(url, config, attempt + 1);
       }
@@ -110,9 +127,14 @@ export class HttpClient {
       // Check if response is not ok
       if (!response.ok) {
         const errorMsg = await response.text();
-        const error = new Error(`HTTP error! status: ${response.status}, message: ${errorMsg}`);
-        (error as any).response = { status: response.status, data: errorMsg };
-        (error as any).config = { url };
+        const error = new Error(
+          `HTTP error! status: ${response.status}, message: ${errorMsg}`,
+        );
+        (error as unknown as Record<string, unknown>).response = {
+          status: response.status,
+          data: errorMsg,
+        };
+        (error as unknown as Record<string, unknown>).config = { url };
         throw error;
       }
 
@@ -126,18 +148,25 @@ export class HttpClient {
         (error instanceof Error && error.name === 'AbortError');
 
       if (isRetryable && attempt < retries) {
-         logger.warn(`Network error or timeout on ${url}. Retrying... (${attempt + 1}/${retries})`);
-         await this.exponentialBackoff(attempt);
-         return this.fetchWithRetry(url, config, attempt + 1);
+        logger.warn(
+          `Network error or timeout on ${url}. Retrying... (${attempt + 1}/${retries})`,
+        );
+        await this.exponentialBackoff(attempt);
+        return this.fetchWithRetry(url, config, attempt + 1);
       }
 
       throw error;
     }
   }
 
-  public async request<T = any>(endpoint: string, options: RequestConfig = {}): Promise<T> {
-    const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
-    
+  public async request<T = unknown>(
+    endpoint: string,
+    options: RequestConfig = {},
+  ): Promise<T> {
+    const url = endpoint.startsWith('http')
+      ? endpoint
+      : `${this.baseURL}${endpoint}`;
+
     let config: RequestConfig = {
       ...options,
       headers: {
@@ -152,24 +181,30 @@ export class HttpClient {
     try {
       let response = await this.fetchWithRetry(config.url || url, config);
       response = await this.applyResponseInterceptors(response);
-      
+
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const data = await response.json();
         return data as T;
       }
       return response.text() as unknown as T;
-      
     } catch (error) {
-       return this.applyResponseErrorInterceptors(error);
+      return this.applyResponseErrorInterceptors(error);
     }
   }
 
-  public async get<T = any>(endpoint: string, options?: Omit<RequestConfig, 'method'>): Promise<T> {
+  public async get<T = unknown>(
+    endpoint: string,
+    options?: Omit<RequestConfig, 'method'>,
+  ): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'GET' });
   }
 
-  public async post<T = any>(endpoint: string, data?: any, options?: Omit<RequestConfig, 'method' | 'body'>): Promise<T> {
+  public async post<T = unknown>(
+    endpoint: string,
+    data?: unknown,
+    options?: Omit<RequestConfig, 'method' | 'body'>,
+  ): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
@@ -181,7 +216,11 @@ export class HttpClient {
     });
   }
 
-  public async put<T = any>(endpoint: string, data?: any, options?: Omit<RequestConfig, 'method' | 'body'>): Promise<T> {
+  public async put<T = unknown>(
+    endpoint: string,
+    data?: unknown,
+    options?: Omit<RequestConfig, 'method' | 'body'>,
+  ): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
@@ -193,8 +232,10 @@ export class HttpClient {
     });
   }
 
-  public async delete<T = any>(endpoint: string, options?: Omit<RequestConfig, 'method'>): Promise<T> {
+  public async delete<T = unknown>(
+    endpoint: string,
+    options?: Omit<RequestConfig, 'method'>,
+  ): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
 }
-

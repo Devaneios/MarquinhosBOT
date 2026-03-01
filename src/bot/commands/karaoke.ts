@@ -91,7 +91,11 @@ async function handleStartKaraoke(
   channelId: string,
 ) {
   try {
-    await httpClient.post('/api/karaoke/session', { guildId, channelId, hostId: userId });
+    await httpClient.post('/api/karaoke/session', {
+      guildId,
+      channelId,
+      hostId: userId,
+    });
 
     const embed = interaction.client
       .baseEmbed()
@@ -116,7 +120,9 @@ async function handleJoinKaraoke(
 ) {
   try {
     // Get active session
-    const sessionData = await httpClient.get(`/api/karaoke/active/${guildId}/${channelId}`);
+    const sessionData = await httpClient.get(
+      `/api/karaoke/active/${guildId}/${channelId}`,
+    );
 
     if (!sessionData?.data) {
       await interaction.editReply(
@@ -126,7 +132,9 @@ async function handleJoinKaraoke(
     }
 
     // Join session
-    await httpClient.post(`/api/karaoke/session/${sessionData.data.id}/join`, { userId });
+    await httpClient.post(`/api/karaoke/session/${sessionData.data.id}/join`, {
+      userId,
+    });
 
     await interaction.editReply(
       `🎤 ${interaction.user.username} entrou no karaokê!`,
@@ -157,7 +165,9 @@ async function handleShowScore(
   channelId: string,
 ) {
   try {
-    const sessionData = await httpClient.get(`/api/karaoke/active/${guildId}/${channelId}`);
+    const sessionData = await httpClient.get(
+      `/api/karaoke/active/${guildId}/${channelId}`,
+    );
 
     if (!sessionData?.data) {
       await interaction.editReply(

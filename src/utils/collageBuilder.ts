@@ -1,6 +1,5 @@
 import fs from 'fs';
 import { join } from 'path';
-
 import {
   Image,
   createCanvas,
@@ -36,25 +35,23 @@ export class CollageBuilder {
 
   async downloadImagesBuffers(imageUrls: string[]): Promise<ArrayBuffer[]> {
     const imagesPromises = imageUrls.map(async (url) => {
-       const fetchResponse = await fetch(url);
-       if (!fetchResponse.ok) throw new Error(`Failed to fetch ${url}`);
-       return fetchResponse.arrayBuffer();
+      const fetchResponse = await fetch(url);
+      if (!fetchResponse.ok) throw new Error(`Failed to fetch ${url}`);
+      return fetchResponse.arrayBuffer();
     });
 
     const imageResponses = await Promise.allSettled(imagesPromises);
-    const imagesResponsePromises = imageResponses.map(
-      async (result, index) => {
-        if (result.status === 'rejected') {
-          // Retry logic since the first failed
-          const url = imageUrls[index];
-          const retryResponse = await fetch(url);
-          if (!retryResponse.ok) throw new Error(`Retry failed for ${url}`);
-          return retryResponse.arrayBuffer();
-        }
+    const imagesResponsePromises = imageResponses.map(async (result, index) => {
+      if (result.status === 'rejected') {
+        // Retry logic since the first failed
+        const url = imageUrls[index];
+        const retryResponse = await fetch(url);
+        if (!retryResponse.ok) throw new Error(`Retry failed for ${url}`);
+        return retryResponse.arrayBuffer();
+      }
 
-        return result.value;
-      },
-    );
+      return result.value;
+    });
 
     const images = await Promise.all(imagesResponsePromises);
 
@@ -177,11 +174,11 @@ export class CollageBuilder {
 
       const imageWithBorder = await this.addBorder(image, 300, 300);
       this.drawWithEffect(ctx, imageWithBorder, x, y);
-      
+
       const countStr = counter < 10 ? `0${counter}` : `${counter}`;
       counter++;
       const cardCounter = `#${countStr}`;
-      
+
       ctx.font = '50px Bebas Neue'; // Font size and name
       let color = await this.getColorInfo(imageBuffer, 30, 35, 80, 80);
       let textColor = fontColorContrast(color);
