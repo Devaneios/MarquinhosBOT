@@ -1,223 +1,112 @@
-import axios from 'axios';
 import { LastfmTopListenedPeriod, PlaybackData } from '@marquinhos/types';
 import { logger } from '@marquinhos/utils/logger';
+import { HttpClient } from '@marquinhos/utils/httpClient';
 
 export class MarquinhosApiService {
-  async addToScrobbleQueue(scrobble: PlaybackData) {
-    const options = {
-      method: 'POST',
-      url: `${process.env.MARQUINHOS_API_URL}/api/scrobble/queue`,
+  private client: HttpClient;
+
+  constructor() {
+    this.client = new HttpClient({
+      baseURL: process.env.MARQUINHOS_API_URL,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
       },
-      data: {
-        playbackData: scrobble,
+      timeout: 15000,
+      retries: 3,
+    });
+
+    this.client.interceptors.request.use((config) => {
+      if (process.env.MARQUINHOS_API_KEY) {
+        config.headers = {
+          ...config.headers,
+          Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
+        };
+      }
+      return config;
+    });
+
+    this.client.interceptors.response.use(
+      (response) => response,
+      (error: any) => {
+        const errorMsg = error.response?.data?.message || error.message;
+        logger.error(`API Error on ${error.config?.url}: ${errorMsg}`);
+        throw error;
       },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(
-        `Failed to add playback data to scrobble queue: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    );
+  }
+
+  async addToScrobbleQueue(scrobble: PlaybackData) {
+    const data = await this.client.post('/api/scrobble/queue', {
+      playbackData: scrobble,
+    });
+    return data;
   }
 
   async dispatchScrobbleQueue(id: string) {
-    const options = {
-      method: 'POST',
-      url: `${process.env.MARQUINHOS_API_URL}/api/scrobble/${id}`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(
-        `Failed to dispatch scrobble queue for ID ${id}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    const data = await this.client.post(`/api/scrobble/${id}`);
+    return data;
   }
 
   async removeUserFromScrobbleQueue(id: string, userId: string) {
-    const options = {
-      method: 'DELETE',
-      url: `${process.env.MARQUINHOS_API_URL}/api/scrobble/${id}/${userId}`,
-      headers: {
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(
-        `Failed to remove user ${userId} from scrobble queue for ID ${id}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    const data = await this.client.delete(`/api/scrobble/${id}/${userId}`);
+    return data;
   }
 
   async addUserToScrobbleQueue(id: string, userId: string) {
-    const options = {
-      method: 'POST',
-      url: `${process.env.MARQUINHOS_API_URL}/api/scrobble/${id}/${userId}`,
-      headers: {
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(
-        `Failed to add user ${userId} to scrobble queue for ID ${id}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    const data = await this.client.post(`/api/scrobble/${id}/${userId}`);
+    return data;
   }
 
   async getTopArtists(id: string, period: LastfmTopListenedPeriod) {
-    const options = {
-      method: 'GET',
-      url: `${process.env.MARQUINHOS_API_URL}/api/user/top-artists/${period}/${id}`,
-      headers: {
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(
-        `Failed to get top artists for user ID ${id} with period ${period}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    const data = await this.client.get(
+      `/api/user/top-artists/${period}/${id}`,
+    );
+    return data;
   }
 
   async getTopAlbums(id: string, period: LastfmTopListenedPeriod) {
-    const options = {
-      method: 'GET',
-      url: `${process.env.MARQUINHOS_API_URL}/api/user/top-albums/${period}/${id}`,
-      headers: {
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(
-        `Failed to get top albums for user ID ${id} with period ${period}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    const data = await this.client.get(
+      `/api/user/top-albums/${period}/${id}`,
+    );
+    return data;
   }
 
   async getTopTracks(id: string, period: LastfmTopListenedPeriod) {
-    const options = {
-      method: 'GET',
-      url: `${process.env.MARQUINHOS_API_URL}/api/user/top-tracks/${period}/${id}`,
-      headers: {
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(
-        `Failed to get top tracks for user ID ${id} with period ${period}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    const data = await this.client.get(
+      `/api/user/top-tracks/${period}/${id}`,
+    );
+    return data;
   }
 
   // Gamification API calls
   async addXP(userId: string, guildId: string, amount: number) {
-    const options = {
-      method: 'POST',
-      url: `${process.env.MARQUINHOS_API_URL}/api/gamification/xp`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-      data: { userId, guildId, amount },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(
-        `Failed to add XP for user ${userId}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    const data = await this.client.post('/api/gamification/xp', {
+      userId,
+      guildId,
+      amount,
+    });
+    return data;
   }
 
   async getUserLevel(userId: string, guildId: string) {
-    const options = {
-      method: 'GET',
-      url: `${process.env.MARQUINHOS_API_URL}/api/gamification/level/${userId}/${guildId}`,
-      headers: {
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(
-        `Failed to get user level for ${userId}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    const data = await this.client.get(
+      `/api/gamification/level/${userId}/${guildId}`,
+    );
+    return data;
   }
 
   async getLeaderboard(guildId: string, limit: number = 10) {
-    const options = {
-      method: 'GET',
-      url: `${process.env.MARQUINHOS_API_URL}/api/gamification/leaderboard/${guildId}?limit=${limit}`,
-      headers: {
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(
-        `Failed to get leaderboard for guild ${guildId}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    const data = await this.client.get(
+      `/api/gamification/leaderboard/${guildId}?limit=${limit}`,
+    );
+    return data;
   }
 
   async getUserAchievements(userId: string, guildId: string) {
-    const options = {
-      method: 'GET',
-      url: `${process.env.MARQUINHOS_API_URL}/api/gamification/achievements/${userId}/${guildId}`,
-      headers: {
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(
-        `Failed to get achievements for user ${userId}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    const data = await this.client.get(
+      `/api/gamification/achievements/${userId}/${guildId}`,
+    );
+    return data;
   }
 
   async unlockAchievement(
@@ -225,24 +114,11 @@ export class MarquinhosApiService {
     guildId: string,
     achievementId: string,
   ) {
-    const options = {
-      method: 'POST',
-      url: `${process.env.MARQUINHOS_API_URL}/api/gamification/achievement/unlock`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-      data: { userId, guildId, achievementId },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(
-        `Failed to unlock achievement ${achievementId} for user ${userId}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    const data = await this.client.post(
+      '/api/gamification/achievement/unlock',
+      { userId, guildId, achievementId },
+    );
+    return data;
   }
 
   // Playlist API calls
@@ -253,60 +129,26 @@ export class MarquinhosApiService {
     guildId: string,
     isCollaborative: boolean = false,
   ) {
-    const options = {
-      method: 'POST',
-      url: `${process.env.MARQUINHOS_API_URL}/api/playlist`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-      data: { name, description, creatorId, guildId, isCollaborative },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(`Failed to create playlist: ${(error as Error).message}`);
-      throw error;
-    }
+    const data = await this.client.post('/api/playlist', {
+      name,
+      description,
+      creatorId,
+      guildId,
+      isCollaborative,
+    });
+    return data;
   }
 
   async getPlaylist(playlistId: string) {
-    const options = {
-      method: 'GET',
-      url: `${process.env.MARQUINHOS_API_URL}/api/playlist/${playlistId}`,
-      headers: {
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(
-        `Failed to get playlist ${playlistId}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    const data = await this.client.get(`/api/playlist/${playlistId}`);
+    return data;
   }
 
   async getUserPlaylists(userId: string, guildId: string) {
-    const options = {
-      method: 'GET',
-      url: `${process.env.MARQUINHOS_API_URL}/api/playlist/user/${userId}/${guildId}`,
-      headers: {
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(
-        `Failed to get user playlists for ${userId}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    const data = await this.client.get(
+      `/api/playlist/user/${userId}/${guildId}`,
+    );
+    return data;
   }
 
   async addTrackToPlaylist(
@@ -314,83 +156,26 @@ export class MarquinhosApiService {
     userId: string,
     track: Record<string, unknown>,
   ) {
-    const options = {
-      method: 'POST',
-      url: `${process.env.MARQUINHOS_API_URL}/api/playlist/${playlistId}/tracks`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-      data: { userId, track },
-    };
-    try {
-      const { data } = await axios.request(options);
-      return data;
-    } catch (error) {
-      logger.error(
-        `Failed to add track to playlist ${playlistId}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    const data = await this.client.post(
+      `/api/playlist/${playlistId}/tracks`,
+      { userId, track },
+    );
+    return data;
   }
 
   // Voice AI API calls
-  async post(endpoint: string, data: Record<string, unknown>) {
-    const options = {
-      method: 'POST',
-      url: `${process.env.MARQUINHOS_API_URL}${endpoint}`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-      data,
-    };
-    try {
-      const response = await axios.request(options);
-      return response.data;
-    } catch (error) {
-      logger.error(
-        `Failed to POST to ${endpoint}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+  async post(endpoint: string, payload: Record<string, unknown>) {
+    const data = await this.client.post(endpoint, payload);
+    return data;
   }
 
   async get(endpoint: string) {
-    const options = {
-      method: 'GET',
-      url: `${process.env.MARQUINHOS_API_URL}${endpoint}`,
-      headers: {
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-    };
-    try {
-      const response = await axios.request(options);
-      return response.data;
-    } catch (error) {
-      logger.error(
-        `Failed to GET from ${endpoint}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
+    const data = await this.client.get(endpoint);
+    return data;
   }
 
-  async put(endpoint: string, data: Record<string, unknown>) {
-    const options = {
-      method: 'PUT',
-      url: `${process.env.MARQUINHOS_API_URL}${endpoint}`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-      },
-      data,
-    };
-    try {
-      const response = await axios.request(options);
-      return response.data;
-    } catch (error) {
-      logger.error(`Failed to PUT to ${endpoint}: ${(error as Error).message}`);
-      throw error;
-    }
+  async put(endpoint: string, payload: Record<string, unknown>) {
+    const data = await this.client.put(endpoint, payload);
+    return data;
   }
 }
