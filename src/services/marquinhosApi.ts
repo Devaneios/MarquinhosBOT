@@ -119,7 +119,10 @@ export class MarquinhosApiService {
     durationMs?: number;
     results: { userId: string; position: number }[];
   }): Promise<ApiResponse> {
-    const data = await this.client.post('/api/gamification/game-result', payload);
+    const data = await this.client.post(
+      '/api/gamification/game-result',
+      payload,
+    );
     return data as ApiResponse;
   }
 
@@ -127,7 +130,9 @@ export class MarquinhosApiService {
     userId: string,
     guildId: string,
   ): Promise<ApiResponse> {
-    const data = await this.client.get(`/api/gamification/game-stats/${userId}/${guildId}`);
+    const data = await this.client.get(
+      `/api/gamification/game-stats/${userId}/${guildId}`,
+    );
     return data as ApiResponse;
   }
 
@@ -135,7 +140,9 @@ export class MarquinhosApiService {
     guildId: string,
     gameType: string,
   ): Promise<ApiResponse> {
-    const data = await this.client.get(`/api/gamification/game-leaderboard/${guildId}/${gameType}`);
+    const data = await this.client.get(
+      `/api/gamification/game-leaderboard/${guildId}/${gameType}`,
+    );
     return data as ApiResponse;
   }
 

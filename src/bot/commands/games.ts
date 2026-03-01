@@ -4,8 +4,6 @@ import { GameUtils } from '@marquinhos/game/core/GameUtils';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { SlashCommand } from '@marquinhos/types';
 import { XPSystem } from '@marquinhos/utils/xpSystem';
-
-const apiService = new MarquinhosApiService();
 import {
   ActionRowBuilder,
   ChatInputCommandInteraction,
@@ -14,6 +12,8 @@ import {
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
 } from 'discord.js';
+
+const apiService = new MarquinhosApiService();
 
 // Game implementations
 import { BlackjackGame } from '@marquinhos/game/casino/blackjack';
@@ -400,7 +400,10 @@ async function showStats(interaction: ChatInputCommandInteraction) {
   const guildId = interaction.guildId;
 
   if (!guildId) {
-    await interaction.reply({ content: 'Este comando só pode ser usado em servidores!', ephemeral: true });
+    await interaction.reply({
+      content: 'Este comando só pode ser usado em servidores!',
+      ephemeral: true,
+    });
     return;
   }
 
@@ -419,23 +422,35 @@ async function showStats(interaction: ChatInputCommandInteraction) {
     }
 
     const { stats, byGame } = data;
-    const winRate = stats.total_games > 0
-      ? Math.round((stats.games_won / stats.total_games) * 100)
-      : 0;
+    const winRate =
+      stats.total_games > 0
+        ? Math.round((stats.games_won / stats.total_games) * 100)
+        : 0;
 
     const embed = new EmbedBuilder()
       .setTitle(`📊 Estatísticas de ${interaction.user.username}`)
       .setColor(0x3498db)
       .addFields(
-        { name: '🎮 Jogos Jogados', value: stats.total_games.toString(), inline: true },
-        { name: '🏆 Vitórias', value: stats.games_won.toString(), inline: true },
+        {
+          name: '🎮 Jogos Jogados',
+          value: stats.total_games.toString(),
+          inline: true,
+        },
+        {
+          name: '🏆 Vitórias',
+          value: stats.games_won.toString(),
+          inline: true,
+        },
         { name: '📈 Taxa de Vitória', value: `${winRate}%`, inline: true },
       );
 
     if (byGame.length > 0) {
       const breakdown = byGame
         .slice(0, 8)
-        .map((g) => `**${g.game_type}**: ${g.games_played} jogos, ${g.wins} vitórias`)
+        .map(
+          (g) =>
+            `**${g.game_type}**: ${g.games_played} jogos, ${g.wins} vitórias`,
+        )
         .join('\n');
       embed.addFields({ name: '🎯 Por Jogo', value: breakdown, inline: false });
     }
@@ -451,7 +466,10 @@ async function showRanking(interaction: ChatInputCommandInteraction) {
   const guildId = interaction.guildId;
 
   if (!guildId) {
-    await interaction.reply({ content: 'Este comando só pode ser usado em servidores!', ephemeral: true });
+    await interaction.reply({
+      content: 'Este comando só pode ser usado em servidores!',
+      ephemeral: true,
+    });
     return;
   }
 

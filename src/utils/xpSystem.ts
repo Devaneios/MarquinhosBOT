@@ -28,10 +28,20 @@ export class XPSystem {
         const embed = interaction.client
           .baseEmbed()
           .setTitle('🎉 Level Up!')
-          .setDescription(`Parabéns <@${userId}>! Você subiu para o nível **${result.newLevel}**!`)
+          .setDescription(
+            `Parabéns <@${userId}>! Você subiu para o nível **${result.newLevel}**!`,
+          )
           .addFields(
-            { name: '⚡ XP Atual', value: result.userLevel.xp.toString(), inline: true },
-            { name: '📈 XP Total', value: result.userLevel.totalXp.toString(), inline: true },
+            {
+              name: '⚡ XP Atual',
+              value: result.userLevel.xp.toString(),
+              inline: true,
+            },
+            {
+              name: '📈 XP Total',
+              value: result.userLevel.totalXp.toString(),
+              inline: true,
+            },
           );
         await interaction.followUp({ embeds: [embed] });
       }
