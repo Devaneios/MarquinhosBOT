@@ -1,6 +1,6 @@
 import { LastfmTopListenedPeriod, PlaybackData } from '@marquinhos/types';
-import { logger } from '@marquinhos/utils/logger';
 import { HttpClient } from '@marquinhos/utils/httpClient';
+import { logger } from '@marquinhos/utils/logger';
 
 export class MarquinhosApiService {
   private client: HttpClient;
@@ -27,7 +27,7 @@ export class MarquinhosApiService {
 
     this.client.interceptors.response.use(
       (response) => response,
-      (error: any) => {
+      (error: unknown) => {
         const errorMsg = error.response?.data?.message || error.message;
         logger.error(`API Error on ${error.config?.url}: ${errorMsg}`);
         throw error;
@@ -58,23 +58,17 @@ export class MarquinhosApiService {
   }
 
   async getTopArtists(id: string, period: LastfmTopListenedPeriod) {
-    const data = await this.client.get(
-      `/api/user/top-artists/${period}/${id}`,
-    );
+    const data = await this.client.get(`/api/user/top-artists/${period}/${id}`);
     return data;
   }
 
   async getTopAlbums(id: string, period: LastfmTopListenedPeriod) {
-    const data = await this.client.get(
-      `/api/user/top-albums/${period}/${id}`,
-    );
+    const data = await this.client.get(`/api/user/top-albums/${period}/${id}`);
     return data;
   }
 
   async getTopTracks(id: string, period: LastfmTopListenedPeriod) {
-    const data = await this.client.get(
-      `/api/user/top-tracks/${period}/${id}`,
-    );
+    const data = await this.client.get(`/api/user/top-tracks/${period}/${id}`);
     return data;
   }
 
@@ -156,10 +150,10 @@ export class MarquinhosApiService {
     userId: string,
     track: Record<string, unknown>,
   ) {
-    const data = await this.client.post(
-      `/api/playlist/${playlistId}/tracks`,
-      { userId, track },
-    );
+    const data = await this.client.post(`/api/playlist/${playlistId}/tracks`, {
+      userId,
+      track,
+    });
     return data;
   }
 

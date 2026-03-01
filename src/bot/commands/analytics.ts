@@ -1,7 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
 
-
 export const analytics: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('analytics')
