@@ -1,11 +1,16 @@
 import { EmbedBuilder, ButtonStyle } from 'discord.js';
-import { BaseGame, GameSession, GameResult, PlayerStatus } from '../core/GameTypes';
+import {
+  BaseGame,
+  GameSession,
+  GameResult,
+  PlayerStatus,
+} from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
 
 interface MazeData {
   maze: string[][];
-  playerPosition: { x: number, y: number };
-  exitPosition: { x: number, y: number };
+  playerPosition: { x: number; y: number };
+  exitPosition: { x: number; y: number };
   moves: number;
   gameOver: boolean;
   won: boolean;
@@ -14,7 +19,6 @@ interface MazeData {
 }
 
 export class MazeGame extends BaseGame {
-  
   constructor(session: GameSession) {
     super(session);
     this.initializeGame();
@@ -24,7 +28,7 @@ export class MazeGame extends BaseGame {
     const maze = this.generateMaze();
     const start = { x: 1, y: 1 };
     const exit = { x: 7, y: 7 };
-    
+
     this.session.data = {
       maze,
       playerPosition: start,
@@ -33,9 +37,9 @@ export class MazeGame extends BaseGame {
       gameOver: false,
       won: false,
       timeLimit: 300, // 5 minutes
-      startTime: Date.now()
+      startTime: Date.now(),
     } as MazeData;
-    
+
     // Place player and exit
     maze[start.y][start.x] = '👤';
     maze[exit.y][exit.x] = '🏆';
@@ -52,9 +56,9 @@ export class MazeGame extends BaseGame {
       ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱'],
       ['🧱', '⬜', '🧱', '🧱', '🧱', '🧱', '🧱', '⬜', '🧱'],
       ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱'],
-      ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱']
+      ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
     ];
-    
+
     return maze;
   }
 
@@ -64,7 +68,7 @@ export class MazeGame extends BaseGame {
 
   async handlePlayerAction(userId: string, action: any): Promise<void> {
     const data = this.session.data as MazeData;
-    
+
     if (data.gameOver || this.isTimeUp()) return;
 
     if (action.type === 'move') {
@@ -74,10 +78,10 @@ export class MazeGame extends BaseGame {
 
   private async movePlayer(direction: string): Promise<void> {
     const data = this.session.data as MazeData;
-    
+
     let newX = data.playerPosition.x;
     let newY = data.playerPosition.y;
-    
+
     switch (direction) {
       case 'up':
         newY--;
@@ -94,19 +98,19 @@ export class MazeGame extends BaseGame {
       default:
         return;
     }
-    
+
     // Check bounds and walls
     if (newX < 0 || newX >= 9 || newY < 0 || newY >= 9) return;
     if (data.maze[newY][newX] === '🧱') return;
-    
+
     // Clear old position
     data.maze[data.playerPosition.y][data.playerPosition.x] = '⬜';
-    
+
     // Update position
     data.playerPosition.x = newX;
     data.playerPosition.y = newY;
     data.moves++;
-    
+
     // Check if reached exit
     if (newX === data.exitPosition.x && newY === data.exitPosition.y) {
       data.won = true;
@@ -125,13 +129,13 @@ export class MazeGame extends BaseGame {
 
   private async updateScores(): Promise<void> {
     const data = this.session.data as MazeData;
-    
+
     if (data.won) {
       const baseScore = 200;
       const moveBonus = Math.max(0, 100 - data.moves);
       const timeBonus = this.calculateTimeBonus();
       const score = baseScore + moveBonus + timeBonus;
-      
+
       this.updatePlayerScore(this.session.players[0].userId, score);
     }
   }
@@ -146,10 +150,13 @@ export class MazeGame extends BaseGame {
   getGameEmbed(): EmbedBuilder {
     const data = this.session.data as MazeData;
     const player = this.session.players[0];
-    const timeRemaining = Math.max(0, data.timeLimit - Math.floor((Date.now() - data.startTime) / 1000));
-    
+    const timeRemaining = Math.max(
+      0,
+      data.timeLimit - Math.floor((Date.now() - data.startTime) / 1000),
+    );
+
     let description = `👤 **Jogador:** ${player.username}\n\n`;
-    
+
     if (data.gameOver) {
       if (data.won) {
         description += `🎉 **PARABÉNS! Você escapou do labirinto!**\n`;
@@ -164,38 +171,38 @@ export class MazeGame extends BaseGame {
       description += `🚶 **Movimentos:** ${data.moves}\n`;
       description += `⏱️ **Tempo restante:** ${GameUtils.formatTime(timeRemaining)}\n\n`;
     }
-    
+
     // Display maze
     description += '```\n';
     for (let y = 0; y < data.maze.length; y++) {
       description += data.maze[y].join('') + '\n';
     }
     description += '```\n';
-    
+
     description += `**Legenda:**\n`;
     description += `👤 Você | 🏆 Saída | 🧱 Parede | ⬜ Caminho`;
 
     const color = data.gameOver ? (data.won ? 0x00ff00 : 0xff0000) : 0x3498db;
-    
+
     return GameUtils.createGameEmbed('🏃 Labirinto Mental', description, color);
   }
 
   getMovementButtons() {
     const data = this.session.data as MazeData;
-    
+
     if (data.gameOver || this.isTimeUp()) return [];
 
     return [
       GameUtils.createGameButtons({
         labels: ['⬆️'],
         customIds: ['maze_up'],
-        styles: [ButtonStyle.Primary]
+        styles: [ButtonStyle.Primary],
       }),
       GameUtils.createGameButtons({
         labels: ['⬅️', '⬇️', '➡️'],
         customIds: ['maze_left', 'maze_down', 'maze_right'],
-        styles: [ButtonStyle.Primary, ButtonStyle.Primary, ButtonStyle.Primary]
-      })
+        styles: [ButtonStyle.Primary, ButtonStyle.Primary, ButtonStyle.Primary],
+      }),
     ];
   }
 
@@ -203,7 +210,7 @@ export class MazeGame extends BaseGame {
     const data = this.session.data as MazeData;
     const player = this.session.players[0];
     const rewards = this.calculateRewards(player, 1);
-    
+
     if (data.won) {
       rewards.xp += 30;
       // Bonus for efficiency
@@ -223,9 +230,9 @@ export class MazeGame extends BaseGame {
         won: data.won,
         moves: data.moves,
         timeUsed: Date.now() - data.startTime,
-        efficiency: data.moves / 15 // Optimal path is about 15 moves
+        efficiency: data.moves / 15, // Optimal path is about 15 moves
       },
-      duration: Date.now() - this.session.startedAt.getTime()
+      duration: Date.now() - this.session.startedAt.getTime(),
     };
   }
 

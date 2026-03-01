@@ -66,13 +66,17 @@ export const interactionCreate: BotEvent = {
 
       player.context.provide(data, async () => {
         await command.execute(interaction);
-        
+
         // Add XP for command usage
         await XPSystem.addCommandXP(interaction);
-        
+
         // Check for level up notification
         setTimeout(async () => {
-          await XPSystem.checkAndNotifyLevelUp(interaction.user.id, interaction.guildId!, interaction);
+          await XPSystem.checkAndNotifyLevelUp(
+            interaction.user.id,
+            interaction.guildId!,
+            interaction,
+          );
         }, 2000);
       });
     } else if (interaction.isAutocomplete()) {

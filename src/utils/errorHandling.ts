@@ -3,7 +3,7 @@ import BotError from '@marquinhos/utils/botError';
 import { logger } from '@marquinhos/utils/logger';
 
 export function safeExecute(fn: Function) {
-  return function() {
+  return function () {
     try {
       const result = fn();
       if (result instanceof Promise) {

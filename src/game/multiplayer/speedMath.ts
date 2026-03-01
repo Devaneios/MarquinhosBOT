@@ -1,12 +1,17 @@
 import { EmbedBuilder, ButtonStyle } from 'discord.js';
-import { BaseGame, GameSession, GameResult, PlayerStatus } from '../core/GameTypes';
+import {
+  BaseGame,
+  GameSession,
+  GameResult,
+  PlayerStatus,
+} from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
 
 interface SpeedMathData {
   questions: MathQuestion[];
   currentQuestionIndex: number;
   scores: Record<string, number>;
-  answered: Record<string, { answer: number, time: number }>;
+  answered: Record<string, { answer: number; time: number }>;
   questionStartTime: number;
   finished: boolean;
 }
@@ -18,7 +23,6 @@ interface MathQuestion {
 }
 
 export class SpeedMathGame extends BaseGame {
-  
   constructor(session: GameSession) {
     super(session);
     this.initializeGame();
@@ -31,21 +35,21 @@ export class SpeedMathGame extends BaseGame {
       scores: {},
       answered: {},
       questionStartTime: Date.now(),
-      finished: false
+      finished: false,
     } as SpeedMathData;
 
-    this.session.players.forEach(player => {
+    this.session.players.forEach((player) => {
       this.session.data.scores[player.userId] = 0;
     });
   }
 
   private generateQuestions(count: number): MathQuestion[] {
     const questions: MathQuestion[] = [];
-    
+
     for (let i = 0; i < count; i++) {
       const type = Math.floor(Math.random() * 4);
       let question: MathQuestion;
-      
+
       switch (type) {
         case 0: // Addition
           question = this.generateAddition();
@@ -62,10 +66,10 @@ export class SpeedMathGame extends BaseGame {
         default:
           question = this.generateAddition();
       }
-      
+
       questions.push(question);
     }
-    
+
     return questions;
   }
 
@@ -75,7 +79,7 @@ export class SpeedMathGame extends BaseGame {
     return {
       question: `${a} + ${b}`,
       answer: a + b,
-      difficulty: 1
+      difficulty: 1,
     };
   }
 
@@ -85,7 +89,7 @@ export class SpeedMathGame extends BaseGame {
     return {
       question: `${a} - ${b}`,
       answer: a - b,
-      difficulty: 1
+      difficulty: 1,
     };
   }
 
@@ -95,7 +99,7 @@ export class SpeedMathGame extends BaseGame {
     return {
       question: `${a} × ${b}`,
       answer: a * b,
-      difficulty: 2
+      difficulty: 2,
     };
   }
 
@@ -106,17 +110,17 @@ export class SpeedMathGame extends BaseGame {
     return {
       question: `${a} ÷ ${b}`,
       answer: answer,
-      difficulty: 2
+      difficulty: 2,
     };
   }
 
   async start(): Promise<void> {
-    this.session.players.forEach(p => p.status = PlayerStatus.ACTIVE);
+    this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
   }
 
   async handlePlayerAction(userId: string, action: any): Promise<void> {
     const data = this.session.data as SpeedMathData;
-    
+
     if (data.finished || data.answered[userId]) return;
 
     if (action.type === 'answer') {
@@ -128,17 +132,22 @@ export class SpeedMathGame extends BaseGame {
     const data = this.session.data as SpeedMathData;
     const currentQuestion = data.questions[data.currentQuestionIndex];
     const responseTime = Date.now() - data.questionStartTime;
-    
+
     data.answered[userId] = { answer, time: responseTime };
-    
+
     if (answer === currentQuestion.answer) {
-      const points = this.calculatePoints(responseTime, currentQuestion.difficulty);
+      const points = this.calculatePoints(
+        responseTime,
+        currentQuestion.difficulty,
+      );
       data.scores[userId] += points;
       this.updatePlayerScore(userId, data.scores[userId]);
     }
 
-    const allAnswered = this.session.players.every(p => data.answered[p.userId]);
-    
+    const allAnswered = this.session.players.every(
+      (p) => data.answered[p.userId],
+    );
+
     if (allAnswered) {
       await this.nextQuestion();
     }
@@ -152,9 +161,9 @@ export class SpeedMathGame extends BaseGame {
 
   private async nextQuestion(): Promise<void> {
     const data = this.session.data as SpeedMathData;
-    
+
     await GameUtils.delay(2000); // Show results for 2 seconds
-    
+
     data.currentQuestionIndex++;
     data.answered = {};
     data.questionStartTime = Date.now();
@@ -166,13 +175,13 @@ export class SpeedMathGame extends BaseGame {
 
   getGameEmbed(): EmbedBuilder {
     const data = this.session.data as SpeedMathData;
-    
+
     if (data.finished) {
       return this.getResultsEmbed();
     }
 
     const currentQuestion = data.questions[data.currentQuestionIndex];
-    
+
     let description = `**Questão ${data.currentQuestionIndex + 1}/${data.questions.length}**\n\n`;
     description += `🧮 **${currentQuestion.question} = ?**\n\n`;
 
@@ -180,8 +189,8 @@ export class SpeedMathGame extends BaseGame {
     const answeredPlayers = Object.keys(data.answered);
     if (answeredPlayers.length > 0) {
       description += `✅ **Responderam:**\n`;
-      answeredPlayers.forEach(userId => {
-        const player = this.session.players.find(p => p.userId === userId);
+      answeredPlayers.forEach((userId) => {
+        const player = this.session.players.find((p) => p.userId === userId);
         const answerData = data.answered[userId];
         const isCorrect = answerData.answer === currentQuestion.answer;
         const emoji = isCorrect ? '✅' : '❌';
@@ -190,10 +199,10 @@ export class SpeedMathGame extends BaseGame {
     }
 
     // Current scores
-    const sortedPlayers = this.session.players.sort((a, b) => 
-      (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0)
+    const sortedPlayers = this.session.players.sort(
+      (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
-    
+
     description += `\n📊 **Pontuação:**\n`;
     sortedPlayers.forEach((player, index) => {
       const score = data.scores[player.userId] || 0;
@@ -206,12 +215,12 @@ export class SpeedMathGame extends BaseGame {
 
   private getResultsEmbed(): EmbedBuilder {
     const data = this.session.data as SpeedMathData;
-    const sortedPlayers = this.session.players.sort((a, b) => 
-      (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0)
+    const sortedPlayers = this.session.players.sort(
+      (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
     let description = '🏁 **Resultados Finais!**\n\n';
-    
+
     sortedPlayers.forEach((player, index) => {
       const position = index + 1;
       const score = data.scores[player.userId] || 0;
@@ -219,13 +228,17 @@ export class SpeedMathGame extends BaseGame {
       description += `${medal} **${player.username}** - ${score} pontos\n`;
     });
 
-    return GameUtils.createGameEmbed('🏆 Speed Math - Resultados', description, 0x00ff00);
+    return GameUtils.createGameEmbed(
+      '🏆 Speed Math - Resultados',
+      description,
+      0x00ff00,
+    );
   }
 
   async finish(): Promise<GameResult> {
     const data = this.session.data as SpeedMathData;
-    const sortedPlayers = this.session.players.sort((a, b) => 
-      (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0)
+    const sortedPlayers = this.session.players.sort(
+      (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
     const winners = sortedPlayers.slice(0, Math.min(3, sortedPlayers.length));
@@ -240,15 +253,17 @@ export class SpeedMathGame extends BaseGame {
 
     return {
       sessionId: this.session.id,
-      winners: winners.map(p => p.userId),
+      winners: winners.map((p) => p.userId),
       losers: [],
       rewards,
       stats: {
         questionsAnswered: data.questions.length,
-        averageScore: Object.values(data.scores).reduce((a, b) => a + b, 0) / this.session.players.length,
-        highestScore: Math.max(...Object.values(data.scores))
+        averageScore:
+          Object.values(data.scores).reduce((a, b) => a + b, 0) /
+          this.session.players.length,
+        highestScore: Math.max(...Object.values(data.scores)),
       },
-      duration: Date.now() - this.session.startedAt.getTime()
+      duration: Date.now() - this.session.startedAt.getTime(),
     };
   }
 

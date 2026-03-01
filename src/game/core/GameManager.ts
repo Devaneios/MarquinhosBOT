@@ -1,19 +1,20 @@
 import { Collection } from 'discord.js';
-import { 
-  GameSession, 
-  GameType, 
-  GameState, 
-  GameResult, 
+import {
+  GameSession,
+  GameType,
+  GameState,
+  GameResult,
   BaseGame,
   GAME_CONFIGS,
-  GAME_COOLDOWNS 
+  GAME_COOLDOWNS,
 } from './GameTypes';
 import { v4 as uuidv4 } from 'uuid';
 
 export class GameManager {
   private static instance: GameManager;
   private activeSessions: Collection<string, GameSession> = new Collection();
-  private playerCooldowns: Collection<string, Map<GameType, number>> = new Collection();
+  private playerCooldowns: Collection<string, Map<GameType, number>> =
+    new Collection();
   private gameInstances: Collection<string, BaseGame> = new Collection();
 
   private constructor() {
@@ -33,11 +34,11 @@ export class GameManager {
     guildId: string,
     channelId: string,
     hostId: string,
-    options?: any
+    options?: any,
   ): GameSession {
     const config = { ...GAME_CONFIGS[gameType], options };
     const sessionId = uuidv4();
-    
+
     const session: GameSession = {
       id: sessionId,
       type: gameType,
@@ -50,7 +51,7 @@ export class GameManager {
       expiresAt: new Date(Date.now() + (config.timeLimit || 300) * 1000),
       config,
       data: {},
-      round: 1
+      round: 1,
     };
 
     this.activeSessions.set(sessionId, session);
@@ -62,13 +63,19 @@ export class GameManager {
   }
 
   public getSessionByChannel(channelId: string): GameSession | undefined {
-    return this.activeSessions.find(session => session.channelId === channelId);
+    return this.activeSessions.find(
+      (session) => session.channelId === channelId,
+    );
   }
 
-  public getPlayerSession(userId: string, guildId: string): GameSession | undefined {
-    return this.activeSessions.find(session => 
-      session.guildId === guildId && 
-      session.players.some(player => player.userId === userId)
+  public getPlayerSession(
+    userId: string,
+    guildId: string,
+  ): GameSession | undefined {
+    return this.activeSessions.find(
+      (session) =>
+        session.guildId === guildId &&
+        session.players.some((player) => player.userId === userId),
     );
   }
 
@@ -79,7 +86,7 @@ export class GameManager {
     session.state = GameState.FINISHED;
     this.activeSessions.delete(sessionId);
     this.gameInstances.delete(sessionId);
-    
+
     return true;
   }
 
@@ -108,7 +115,7 @@ export class GameManager {
       userCooldowns = new Map();
       this.playerCooldowns.set(userId, userCooldowns);
     }
-    
+
     userCooldowns.set(gameType, Date.now());
   }
 
@@ -121,7 +128,7 @@ export class GameManager {
 
     const cooldownTime = GAME_COOLDOWNS[gameType] * 1000;
     const remaining = cooldownTime - (Date.now() - lastPlayed);
-    
+
     return Math.max(0, Math.ceil(remaining / 1000));
   }
 
@@ -130,7 +137,11 @@ export class GameManager {
   }
 
   public getActiveSessionsByGuild(guildId: string): GameSession[] {
-    return [...this.activeSessions.filter(session => session.guildId === guildId).values()];
+    return [
+      ...this.activeSessions
+        .filter((session) => session.guildId === guildId)
+        .values(),
+    ];
   }
 
   public getSessionStats(sessionId: string): any {
@@ -143,17 +154,18 @@ export class GameManager {
       state: session.state,
       players: session.players.length,
       duration: Date.now() - session.startedAt.getTime(),
-      round: session.round
+      round: session.round,
     };
   }
 
   private cleanupExpiredSessions(): void {
     const now = new Date();
-    const expiredSessions = this.activeSessions.filter(session => 
-      session.expiresAt < now || session.state === GameState.FINISHED
+    const expiredSessions = this.activeSessions.filter(
+      (session) =>
+        session.expiresAt < now || session.state === GameState.FINISHED,
     );
 
-    expiredSessions.forEach(session => {
+    expiredSessions.forEach((session) => {
       this.endSession(session.id);
     });
 
@@ -165,7 +177,7 @@ export class GameManager {
           userCooldowns.delete(gameType);
         }
       });
-      
+
       if (userCooldowns.size === 0) {
         this.playerCooldowns.delete(userId);
       }
@@ -182,14 +194,14 @@ export class GameManager {
       activeSessions: this.activeSessions.size,
       gameInstances: this.gameInstances.size,
       playersWithCooldowns: this.playerCooldowns.size,
-      sessions: this.activeSessions.map(s => ({
+      sessions: this.activeSessions.map((s) => ({
         id: s.id,
         type: s.type,
         state: s.state,
         players: s.players.length,
         guild: s.guildId,
-        channel: s.channelId
-      }))
+        channel: s.channelId,
+      })),
     };
   }
 }

@@ -6,24 +6,24 @@ export const recommend: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('recommend')
     .setDescription('Recebe recomendações de música personalizadas')
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('personalized')
         .setDescription('Recomendações baseadas no seu gosto musical')
-        .addIntegerOption(option =>
+        .addIntegerOption((option) =>
           option
             .setName('quantidade')
             .setDescription('Número de recomendações (1-10)')
             .setMinValue(1)
             .setMaxValue(10)
-            .setRequired(false)
-        )
+            .setRequired(false),
+        ),
     )
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('genre')
         .setDescription('Recomendações de um gênero específico')
-        .addStringOption(option =>
+        .addStringOption((option) =>
           option
             .setName('genero')
             .setDescription('Gênero musical')
@@ -36,15 +36,15 @@ export const recommend: SlashCommand = {
               { name: 'Hip-Hop', value: 'hip-hop' },
               { name: 'Clássica', value: 'classical' },
               { name: 'Country', value: 'country' },
-              { name: 'Indie', value: 'indie' }
-            )
-        )
+              { name: 'Indie', value: 'indie' },
+            ),
+        ),
     )
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('time')
         .setDescription('Recomendações baseadas no horário')
-        .addStringOption(option =>
+        .addStringOption((option) =>
           option
             .setName('periodo')
             .setDescription('Período do dia')
@@ -53,24 +53,26 @@ export const recommend: SlashCommand = {
               { name: 'Manhã', value: 'morning' },
               { name: 'Tarde', value: 'afternoon' },
               { name: 'Noite', value: 'evening' },
-              { name: 'Madrugada', value: 'night' }
-            )
-        )
+              { name: 'Madrugada', value: 'night' },
+            ),
+        ),
     )
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('collaborative')
-        .setDescription('Recomendações baseadas em usuários similares')
+        .setDescription('Recomendações baseadas em usuários similares'),
     ),
   execute: async (interaction) => {
     await interaction.deferReply();
-    
+
     const subcommand = interaction.options.getSubcommand();
     const userId = interaction.user.id;
     const guildId = interaction.guildId;
-    
+
     if (!guildId) {
-      await interaction.editReply('Este comando só pode ser usado em servidores!');
+      await interaction.editReply(
+        'Este comando só pode ser usado em servidores!',
+      );
       return;
     }
 
@@ -82,62 +84,91 @@ export const recommend: SlashCommand = {
       switch (subcommand) {
         case 'personalized':
           const limit = interaction.options.getInteger('quantidade') || 5;
-          recommendations = await getPersonalizedRecommendations(userId, guildId, limit);
+          recommendations = await getPersonalizedRecommendations(
+            userId,
+            guildId,
+            limit,
+          );
           title = '🎵 Recomendações Personalizadas';
           description = 'Baseadas no seu histórico musical';
           break;
-          
+
         case 'genre':
           const genre = interaction.options.getString('genero')!;
           recommendations = await getGenreRecommendations(genre, guildId);
           title = `🎵 Recomendações de ${getGenreLabel(genre)}`;
           description = `Músicas populares do gênero ${getGenreLabel(genre)}`;
           break;
-          
+
         case 'time':
           const timeOfDay = interaction.options.getString('periodo')!;
-          recommendations = await getTimeRecommendations(userId, guildId, timeOfDay);
+          recommendations = await getTimeRecommendations(
+            userId,
+            guildId,
+            timeOfDay,
+          );
           title = `🎵 Recomendações para ${getTimeLabel(timeOfDay)}`;
           description = `Músicas perfeitas para ${getTimeLabel(timeOfDay)}`;
           break;
-          
+
         case 'collaborative':
-          recommendations = await getCollaborativeRecommendations(userId, guildId);
+          recommendations = await getCollaborativeRecommendations(
+            userId,
+            guildId,
+          );
           title = '🎵 Descobertas Colaborativas';
           description = 'Baseadas em usuários com gosto similar';
           break;
       }
 
       if (recommendations.length === 0) {
-        await interaction.editReply('Nenhuma recomendação encontrada. Use mais comandos de música para melhorar as sugestões!');
+        await interaction.editReply(
+          'Nenhuma recomendação encontrada. Use mais comandos de música para melhorar as sugestões!',
+        );
         return;
       }
 
-      const embed = interaction.client.baseEmbed()
+      const embed = interaction.client
+        .baseEmbed()
         .setTitle(title)
         .setDescription(description);
 
-      const recommendationText = recommendations.map((rec, index) => 
-        `**${index + 1}.** ${rec.artist || 'Artista Desconhecido'} - ${rec.title}\n` +
-        `*${rec.reason || 'Recomendado para você'}*`
-      ).join('\n\n');
+      const recommendationText = recommendations
+        .map(
+          (rec, index) =>
+            `**${index + 1}.** ${rec.artist || 'Artista Desconhecido'} - ${rec.title}\n` +
+            `*${rec.reason || 'Recomendado para você'}*`,
+        )
+        .join('\n\n');
 
-      embed.addFields({ name: 'Sugestões', value: recommendationText, inline: false });
-      
+      embed.addFields({
+        name: 'Sugestões',
+        value: recommendationText,
+        inline: false,
+      });
+
       if (recommendations.length > 0) {
-        embed.setFooter({ text: `${recommendations.length} recomendações encontradas` });
+        embed.setFooter({
+          text: `${recommendations.length} recomendações encontradas`,
+        });
       }
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {
       console.error('Error in recommend command:', error);
-      await interaction.editReply('Ocorreu um erro ao buscar recomendações. Tente novamente mais tarde.');
+      await interaction.editReply(
+        'Ocorreu um erro ao buscar recomendações. Tente novamente mais tarde.',
+      );
     }
   },
   cooldown: 30,
 };
 
-async function getPersonalizedRecommendations(userId: string, guildId: string, limit: number): Promise<any[]> {
+async function getPersonalizedRecommendations(
+  userId: string,
+  guildId: string,
+  limit: number,
+): Promise<any[]> {
   try {
     const response = await axios.get(
       `${process.env.MARQUINHOS_API_URL}/api/recommendations/personalized/${userId}/${guildId}?limit=${limit}`,
@@ -145,7 +176,7 @@ async function getPersonalizedRecommendations(userId: string, guildId: string, l
         headers: {
           Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
         },
-      }
+      },
     );
     return response.data.data || [];
   } catch (error) {
@@ -154,7 +185,10 @@ async function getPersonalizedRecommendations(userId: string, guildId: string, l
   }
 }
 
-async function getGenreRecommendations(genre: string, guildId: string): Promise<any[]> {
+async function getGenreRecommendations(
+  genre: string,
+  guildId: string,
+): Promise<any[]> {
   try {
     const response = await axios.get(
       `${process.env.MARQUINHOS_API_URL}/api/recommendations/genre/${genre}/${guildId}`,
@@ -162,7 +196,7 @@ async function getGenreRecommendations(genre: string, guildId: string): Promise<
         headers: {
           Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
         },
-      }
+      },
     );
     return response.data.data || [];
   } catch (error) {
@@ -171,7 +205,11 @@ async function getGenreRecommendations(genre: string, guildId: string): Promise<
   }
 }
 
-async function getTimeRecommendations(userId: string, guildId: string, timeOfDay: string): Promise<any[]> {
+async function getTimeRecommendations(
+  userId: string,
+  guildId: string,
+  timeOfDay: string,
+): Promise<any[]> {
   try {
     const response = await axios.get(
       `${process.env.MARQUINHOS_API_URL}/api/recommendations/time/${userId}/${guildId}/${timeOfDay}`,
@@ -179,7 +217,7 @@ async function getTimeRecommendations(userId: string, guildId: string, timeOfDay
         headers: {
           Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
         },
-      }
+      },
     );
     return response.data.data || [];
   } catch (error) {
@@ -188,7 +226,10 @@ async function getTimeRecommendations(userId: string, guildId: string, timeOfDay
   }
 }
 
-async function getCollaborativeRecommendations(userId: string, guildId: string): Promise<any[]> {
+async function getCollaborativeRecommendations(
+  userId: string,
+  guildId: string,
+): Promise<any[]> {
   try {
     const response = await axios.get(
       `${process.env.MARQUINHOS_API_URL}/api/recommendations/collaborative/${userId}/${guildId}`,
@@ -196,7 +237,7 @@ async function getCollaborativeRecommendations(userId: string, guildId: string):
         headers: {
           Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
         },
-      }
+      },
     );
     return response.data.data || [];
   } catch (error) {
@@ -207,24 +248,24 @@ async function getCollaborativeRecommendations(userId: string, guildId: string):
 
 function getGenreLabel(genre: string): string {
   const labels: Record<string, string> = {
-    'rock': 'Rock',
-    'pop': 'Pop',
-    'jazz': 'Jazz',
-    'electronic': 'Eletrônica',
+    rock: 'Rock',
+    pop: 'Pop',
+    jazz: 'Jazz',
+    electronic: 'Eletrônica',
     'hip-hop': 'Hip-Hop',
-    'classical': 'Clássica',
-    'country': 'Country',
-    'indie': 'Indie'
+    classical: 'Clássica',
+    country: 'Country',
+    indie: 'Indie',
   };
   return labels[genre] || genre;
 }
 
 function getTimeLabel(timeOfDay: string): string {
   const labels: Record<string, string> = {
-    'morning': 'manhã',
-    'afternoon': 'tarde',
-    'evening': 'noite',
-    'night': 'madrugada'
+    morning: 'manhã',
+    afternoon: 'tarde',
+    evening: 'noite',
+    night: 'madrugada',
   };
   return labels[timeOfDay] || timeOfDay;
 }

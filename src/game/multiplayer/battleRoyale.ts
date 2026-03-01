@@ -1,5 +1,10 @@
 import { EmbedBuilder, ButtonStyle } from 'discord.js';
-import { BaseGame, GameSession, GameResult, PlayerStatus } from '../core/GameTypes';
+import {
+  BaseGame,
+  GameSession,
+  GameResult,
+  PlayerStatus,
+} from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
 
 interface BattleRoyaleData {
@@ -25,21 +30,21 @@ export class BattleRoyaleGame extends BaseGame {
       type: 'emoji_combo',
       question: 'Qual filme este emoji representa? 🦁👑',
       correctAnswer: 'REI LEAO',
-      timeLimit: 15
+      timeLimit: 15,
     },
     {
       type: 'quick_choice',
       question: 'Qual é mais rápido?',
       options: ['Guepardo', 'Falcão', 'Tubarão'],
       correctAnswer: 'Falcão',
-      timeLimit: 10
+      timeLimit: 10,
     },
     {
       type: 'riddle',
       question: 'O que é que quanto mais se tira, maior fica?',
       correctAnswer: 'BURACO',
-      timeLimit: 20
-    }
+      timeLimit: 20,
+    },
   ] as Challenge[];
 
   constructor(session: GameSession) {
@@ -50,11 +55,11 @@ export class BattleRoyaleGame extends BaseGame {
   private initializeGame(): void {
     this.session.data = {
       round: 1,
-      alivePlayers: this.session.players.map(p => p.userId),
+      alivePlayers: this.session.players.map((p) => p.userId),
       eliminatedPlayers: [],
       currentChallenge: this.getRandomChallenge(),
       responses: {},
-      finished: false
+      finished: false,
     } as BattleRoyaleData;
   }
 
@@ -63,12 +68,12 @@ export class BattleRoyaleGame extends BaseGame {
   }
 
   async start(): Promise<void> {
-    this.session.players.forEach(p => p.status = PlayerStatus.ACTIVE);
+    this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
   }
 
   async handlePlayerAction(userId: string, action: any): Promise<void> {
     const data = this.session.data as BattleRoyaleData;
-    
+
     if (data.finished || !data.alivePlayers.includes(userId)) return;
 
     if (action.type === 'respond') {
@@ -76,12 +81,15 @@ export class BattleRoyaleGame extends BaseGame {
     }
   }
 
-  private async submitResponse(userId: string, response: string): Promise<void> {
+  private async submitResponse(
+    userId: string,
+    response: string,
+  ): Promise<void> {
     const data = this.session.data as BattleRoyaleData;
     data.responses[userId] = response.toUpperCase();
 
-    const allResponded = data.alivePlayers.every(id => data.responses[id]);
-    
+    const allResponded = data.alivePlayers.every((id) => data.responses[id]);
+
     if (allResponded) {
       await this.processRound();
     }
@@ -92,7 +100,7 @@ export class BattleRoyaleGame extends BaseGame {
     const correctPlayers = [];
     const wrongPlayers = [];
 
-    data.alivePlayers.forEach(userId => {
+    data.alivePlayers.forEach((userId) => {
       const response = data.responses[userId];
       if (response === data.currentChallenge.correctAnswer) {
         correctPlayers.push(userId);
@@ -110,7 +118,7 @@ export class BattleRoyaleGame extends BaseGame {
       // Everyone was wrong, eliminate randomly
       const toEliminate = GameUtils.getRandomElement(data.alivePlayers);
       data.eliminatedPlayers.push(toEliminate);
-      data.alivePlayers = data.alivePlayers.filter(id => id !== toEliminate);
+      data.alivePlayers = data.alivePlayers.filter((id) => id !== toEliminate);
     }
 
     // Check if game should end
@@ -127,37 +135,39 @@ export class BattleRoyaleGame extends BaseGame {
 
   private async updateScores(): Promise<void> {
     const data = this.session.data as BattleRoyaleData;
-    
+
     // Winner gets highest score
     if (data.alivePlayers.length === 1) {
       this.updatePlayerScore(data.alivePlayers[0], 100);
     }
-    
+
     // Participants get points based on survival
     data.eliminatedPlayers.forEach((userId, index) => {
-      const survivalBonus = Math.max(10, 60 - (index * 5));
+      const survivalBonus = Math.max(10, 60 - index * 5);
       this.updatePlayerScore(userId, survivalBonus);
     });
   }
 
   getGameEmbed(): EmbedBuilder {
     const data = this.session.data as BattleRoyaleData;
-    
+
     let description = `⚔️ **Battle Royale - Rodada ${data.round}**\n\n`;
-    
+
     if (data.finished) {
       if (data.alivePlayers.length === 1) {
-        const winner = this.session.players.find(p => p.userId === data.alivePlayers[0]);
+        const winner = this.session.players.find(
+          (p) => p.userId === data.alivePlayers[0],
+        );
         description += `👑 **VENCEDOR: ${winner?.username}!**\n\n`;
       }
       description += `**Ordem de eliminação:**\n`;
       data.eliminatedPlayers.reverse().forEach((userId, index) => {
-        const player = this.session.players.find(p => p.userId === userId);
+        const player = this.session.players.find((p) => p.userId === userId);
         description += `${index + 2}. ${player?.username}\n`;
       });
     } else {
       description += `**Desafio:**\n${data.currentChallenge.question}\n\n`;
-      
+
       if (data.currentChallenge.options) {
         description += `**Opções:**\n`;
         data.currentChallenge.options.forEach((option, index) => {
@@ -174,8 +184,12 @@ export class BattleRoyaleGame extends BaseGame {
     }
 
     const color = data.finished ? 0x00ff00 : 0xff4757;
-    
-    return GameUtils.createGameEmbed('⚔️ Battle Royale dos Emojis', description, color);
+
+    return GameUtils.createGameEmbed(
+      '⚔️ Battle Royale dos Emojis',
+      description,
+      color,
+    );
   }
 
   async finish(): Promise<GameResult> {
@@ -186,7 +200,8 @@ export class BattleRoyaleGame extends BaseGame {
     if (data.alivePlayers.length === 1) {
       const winner = data.alivePlayers[0];
       const winnerRewards = this.calculateRewards(
-        this.session.players.find(p => p.userId === winner)!, 1
+        this.session.players.find((p) => p.userId === winner)!,
+        1,
       );
       winnerRewards.xp += 40;
       rewards[winner] = winnerRewards;
@@ -194,7 +209,7 @@ export class BattleRoyaleGame extends BaseGame {
 
     // Other players
     data.eliminatedPlayers.forEach((userId, index) => {
-      const player = this.session.players.find(p => p.userId === userId)!;
+      const player = this.session.players.find((p) => p.userId === userId)!;
       const position = data.eliminatedPlayers.length - index + 1;
       const baseRewards = this.calculateRewards(player, position);
       baseRewards.xp += Math.max(5, 25 - index * 2);
@@ -209,9 +224,9 @@ export class BattleRoyaleGame extends BaseGame {
       stats: {
         rounds: data.round,
         finalParticipants: data.alivePlayers.length,
-        eliminated: data.eliminatedPlayers.length
+        eliminated: data.eliminatedPlayers.length,
       },
-      duration: Date.now() - this.session.startedAt.getTime()
+      duration: Date.now() - this.session.startedAt.getTime(),
     };
   }
 

@@ -1,5 +1,10 @@
 import { EmbedBuilder, ButtonStyle } from 'discord.js';
-import { BaseGame, GameSession, GameResult, PlayerStatus } from '../core/GameTypes';
+import {
+  BaseGame,
+  GameSession,
+  GameResult,
+  PlayerStatus,
+} from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
 
 interface DiceData {
@@ -23,7 +28,7 @@ interface DiceRoll {
 
 export class DiceGame extends BaseGame {
   private readonly diceEmojis = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-  
+
   constructor(session: GameSession) {
     super(session);
     this.session.data = {
@@ -34,7 +39,7 @@ export class DiceGame extends BaseGame {
       betType: null,
       betValue: null,
       winnings: 0,
-      history: []
+      history: [],
     } as DiceData;
   }
 
@@ -44,7 +49,7 @@ export class DiceGame extends BaseGame {
 
   async handlePlayerAction(userId: string, action: any): Promise<void> {
     const data = this.session.data as DiceData;
-    
+
     switch (action.type) {
       case 'roll':
         await this.rollDice();
@@ -63,7 +68,7 @@ export class DiceGame extends BaseGame {
 
   private async rollDice(): Promise<void> {
     const data = this.session.data as DiceData;
-    
+
     if (!data.betType) return;
 
     const roll: number[] = [];
@@ -73,20 +78,20 @@ export class DiceGame extends BaseGame {
 
     const sum = roll.reduce((a, b) => a + b, 0);
     const { isWin, payout } = this.checkBet(roll, sum);
-    
+
     const rollResult: DiceRoll = {
       dice: [...roll],
       sum,
       bet: this.formatBetDescription(),
       result: isWin ? 'win' : 'lose',
-      payout: isWin ? data.bet * payout : 0
+      payout: isWin ? data.bet * payout : 0,
     };
 
     data.lastRoll = roll;
     data.totalRolls++;
     data.winnings += rollResult.payout;
     data.history.push(rollResult);
-    
+
     // Keep only last 5 rolls in history
     if (data.history.length > 5) {
       data.history.shift();
@@ -99,43 +104,46 @@ export class DiceGame extends BaseGame {
     this.updatePlayerScore(this.session.players[0].userId, data.winnings);
   }
 
-  private checkBet(roll: number[], sum: number): { isWin: boolean, payout: number } {
+  private checkBet(
+    roll: number[],
+    sum: number,
+  ): { isWin: boolean; payout: number } {
     const data = this.session.data as DiceData;
-    
+
     switch (data.betType) {
       case 'sum':
-        return { 
-          isWin: sum === data.betValue, 
-          payout: this.getSumPayout(data.diceCount, data.betValue as number) 
+        return {
+          isWin: sum === data.betValue,
+          payout: this.getSumPayout(data.diceCount, data.betValue as number),
         };
-      
+
       case 'exact':
         const exactValue = data.betValue as number;
         const hasExact = roll.includes(exactValue);
-        const count = roll.filter(d => d === exactValue).length;
-        return { 
-          isWin: hasExact, 
-          payout: count * 2 
+        const count = roll.filter((d) => d === exactValue).length;
+        return {
+          isWin: hasExact,
+          payout: count * 2,
         };
-      
+
       case 'even_odd':
         const isEven = sum % 2 === 0;
         const betEven = data.betValue === 'even';
-        return { 
-          isWin: isEven === betEven, 
-          payout: 2 
+        return {
+          isWin: isEven === betEven,
+          payout: 2,
         };
-      
+
       case 'high_low':
         const maxSum = data.diceCount * 6;
         const midPoint = maxSum / 2;
         const isHigh = sum > midPoint;
         const betHigh = data.betValue === 'high';
-        return { 
-          isWin: isHigh === betHigh, 
-          payout: 2 
+        return {
+          isWin: isHigh === betHigh,
+          payout: 2,
         };
-      
+
       default:
         return { isWin: false, payout: 0 };
     }
@@ -146,11 +154,11 @@ export class DiceGame extends BaseGame {
     const minSum = diceCount;
     const maxSum = diceCount * 6;
     const midPoint = (minSum + maxSum) / 2;
-    
+
     const distance = Math.abs(targetSum - midPoint);
     const maxDistance = midPoint - minSum;
     const difficulty = distance / maxDistance;
-    
+
     return Math.floor(2 + difficulty * 8); // 2x to 10x payout
   }
 
@@ -174,7 +182,7 @@ export class DiceGame extends BaseGame {
 
   private formatBetDescription(): string {
     const data = this.session.data as DiceData;
-    
+
     switch (data.betType) {
       case 'sum':
         return `Soma = ${data.betValue}`;
@@ -192,7 +200,7 @@ export class DiceGame extends BaseGame {
   getGameEmbed(): EmbedBuilder {
     const data = this.session.data as DiceData;
     const player = this.session.players[0];
-    
+
     let description = `👤 **Jogador:** ${player.username}\n`;
     description += `🎲 **Dados:** ${data.diceCount}\n`;
     description += `💰 **Aposta:** ${data.bet} coins\n`;
@@ -200,7 +208,9 @@ export class DiceGame extends BaseGame {
 
     // Last roll
     if (data.lastRoll.length > 0) {
-      const diceDisplay = data.lastRoll.map(d => this.diceEmojis[d - 1]).join(' ');
+      const diceDisplay = data.lastRoll
+        .map((d) => this.diceEmojis[d - 1])
+        .join(' ');
       const sum = data.lastRoll.reduce((a, b) => a + b, 0);
       description += `**Último resultado:** ${diceDisplay}\n`;
       description += `**Soma:** ${sum}\n\n`;
@@ -219,13 +229,18 @@ export class DiceGame extends BaseGame {
       description += `**Histórico recente:**\n`;
       data.history.slice(-3).forEach((roll, index) => {
         const emoji = roll.result === 'win' ? '✅' : '❌';
-        const diceDisplay = roll.dice.map(d => this.diceEmojis[d - 1]).join('');
+        const diceDisplay = roll.dice
+          .map((d) => this.diceEmojis[d - 1])
+          .join('');
         description += `${emoji} ${diceDisplay} (${roll.sum}) - ${roll.bet} - ${roll.payout > 0 ? `+${roll.payout}` : '0'}\n`;
       });
     }
 
-    const color = data.history.length > 0 && data.history[data.history.length - 1]?.result === 'win' 
-      ? 0x00ff00 : 0xffaa00;
+    const color =
+      data.history.length > 0 &&
+      data.history[data.history.length - 1]?.result === 'win'
+        ? 0x00ff00
+        : 0xffaa00;
 
     return GameUtils.createGameEmbed('🎲 Dados Mágicos', description, color);
   }
@@ -239,29 +254,49 @@ export class DiceGame extends BaseGame {
     return [
       // Bet type selection
       GameUtils.createGameButtons({
-        labels: ['📊 Soma Específica', '🔢 Número Exato', '⚪ Par/Ímpar', '📈 Alto/Baixo'],
-        customIds: ['dice_bet_sum', 'dice_bet_exact', 'dice_bet_even_odd', 'dice_bet_high_low']
+        labels: [
+          '📊 Soma Específica',
+          '🔢 Número Exato',
+          '⚪ Par/Ímpar',
+          '📈 Alto/Baixo',
+        ],
+        customIds: [
+          'dice_bet_sum',
+          'dice_bet_exact',
+          'dice_bet_even_odd',
+          'dice_bet_high_low',
+        ],
       }),
-      
+
       // Dice count
       GameUtils.createGameButtons({
         labels: ['2🎲', '3🎲', '4🎲', '5🎲'],
-        customIds: ['dice_count_2', 'dice_count_3', 'dice_count_4', 'dice_count_5'],
-        styles: [ButtonStyle.Secondary, ButtonStyle.Secondary, ButtonStyle.Secondary, ButtonStyle.Secondary]
-      })
+        customIds: [
+          'dice_count_2',
+          'dice_count_3',
+          'dice_count_4',
+          'dice_count_5',
+        ],
+        styles: [
+          ButtonStyle.Secondary,
+          ButtonStyle.Secondary,
+          ButtonStyle.Secondary,
+          ButtonStyle.Secondary,
+        ],
+      }),
     ];
   }
 
   getActionButtons() {
     const data = this.session.data as DiceData;
-    
+
     if (data.betType) {
       return [
         GameUtils.createGameButtons({
           labels: ['🎲 Rolar Dados', '❌ Cancelar Aposta'],
           customIds: ['dice_roll', 'dice_cancel_bet'],
-          styles: [ButtonStyle.Primary, ButtonStyle.Danger]
-        })
+          styles: [ButtonStyle.Primary, ButtonStyle.Danger],
+        }),
       ];
     }
 
@@ -272,9 +307,11 @@ export class DiceGame extends BaseGame {
     const player = this.session.players[0];
     const data = this.session.data as DiceData;
     const rewards = this.calculateRewards(player, 1);
-    
+
     // Bonus XP for good performance
-    const winRate = data.history.filter(h => h.result === 'win').length / Math.max(data.history.length, 1);
+    const winRate =
+      data.history.filter((h) => h.result === 'win').length /
+      Math.max(data.history.length, 1);
     if (winRate > 0.5) {
       rewards.xp += Math.floor(winRate * 20);
     }
@@ -287,10 +324,12 @@ export class DiceGame extends BaseGame {
       stats: {
         totalRolls: data.totalRolls,
         winnings: data.winnings,
-        winRate: data.history.filter(h => h.result === 'win').length / Math.max(data.history.length, 1),
-        biggestWin: Math.max(...data.history.map(h => h.payout))
+        winRate:
+          data.history.filter((h) => h.result === 'win').length /
+          Math.max(data.history.length, 1),
+        biggestWin: Math.max(...data.history.map((h) => h.payout)),
       },
-      duration: Date.now() - this.session.startedAt.getTime()
+      duration: Date.now() - this.session.startedAt.getTime(),
     };
   }
 

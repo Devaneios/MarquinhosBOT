@@ -1,5 +1,10 @@
 import { EmbedBuilder, ButtonStyle } from 'discord.js';
-import { BaseGame, GameSession, GameResult, PlayerStatus } from '../core/GameTypes';
+import {
+  BaseGame,
+  GameSession,
+  GameResult,
+  PlayerStatus,
+} from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
 
 interface SlotsData {
@@ -20,7 +25,7 @@ export class SlotsGame extends BaseGame {
     '🍊🍊🍊': 8,
     '🍋🍋🍋': 6,
     '🍒🍒🍒': 4,
-    'ANY_TWO': 2
+    ANY_TWO: 2,
   };
 
   constructor(session: GameSession) {
@@ -28,7 +33,7 @@ export class SlotsGame extends BaseGame {
     this.session.data = {
       spins: 0,
       totalWinnings: 0,
-      currentBet: 10
+      currentBet: 10,
     } as unknown as SlotsData;
   }
 
@@ -47,7 +52,7 @@ export class SlotsGame extends BaseGame {
 
   private async spin(): Promise<void> {
     const reels: string[][] = [[], [], []];
-    
+
     // Generate spinning animation
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 5; j++) {
@@ -59,7 +64,7 @@ export class SlotsGame extends BaseGame {
     const result = [
       GameUtils.getRandomElement(this.symbols),
       GameUtils.getRandomElement(this.symbols),
-      GameUtils.getRandomElement(this.symbols)
+      GameUtils.getRandomElement(this.symbols),
     ];
 
     const { multiplier, winType } = this.calculatePayout(result);
@@ -72,15 +77,21 @@ export class SlotsGame extends BaseGame {
       winType,
       spins: this.session.data.spins + 1,
       totalWinnings: this.session.data.totalWinnings + winnings,
-      currentBet: this.session.data.currentBet
+      currentBet: this.session.data.currentBet,
     };
 
-    this.updatePlayerScore(this.session.players[0].userId, this.session.data.totalWinnings);
+    this.updatePlayerScore(
+      this.session.players[0].userId,
+      this.session.data.totalWinnings,
+    );
   }
 
-  private calculatePayout(result: string[]): { multiplier: number, winType: string } {
+  private calculatePayout(result: string[]): {
+    multiplier: number;
+    winType: string;
+  } {
     const resultString = result.join('');
-    
+
     // Check for exact matches
     for (const [combination, payout] of Object.entries(this.payouts)) {
       if (combination === resultString) {
@@ -89,7 +100,11 @@ export class SlotsGame extends BaseGame {
     }
 
     // Check for two matching symbols
-    if (result[0] === result[1] || result[1] === result[2] || result[0] === result[2]) {
+    if (
+      result[0] === result[1] ||
+      result[1] === result[2] ||
+      result[0] === result[2]
+    ) {
       return { multiplier: this.payouts.ANY_TWO, winType: 'Dois iguais' };
     }
 
@@ -105,11 +120,11 @@ export class SlotsGame extends BaseGame {
   getGameEmbed(): EmbedBuilder {
     const data = this.session.data;
     const player = this.session.players[0];
-    
+
     let resultDisplay = '';
     if (data.result) {
       resultDisplay = `**${data.result.join(' | ')}**\n\n`;
-      
+
       if (data.multiplier > 0) {
         resultDisplay += `🎉 **${data.winType}!**\n`;
         resultDisplay += `💰 Ganhou: **${data.currentBet * data.multiplier}** coins\n\n`;
@@ -121,14 +136,14 @@ export class SlotsGame extends BaseGame {
     const embed = GameUtils.createGameEmbed(
       '🎰 Caça-níqueis do Marquinhos',
       `${resultDisplay}` +
-      `👤 **Jogador:** ${player.username}\n` +
-      `🎲 **Jogadas:** ${data.spins}\n` +
-      `💰 **Total ganho:** ${data.totalWinnings} coins\n` +
-      `🎯 **Aposta atual:** ${data.currentBet} coins\n\n` +
-      `**Pagamentos:**\n` +
-      `💎💎💎 - 100x | 7️⃣7️⃣7️⃣ - 50x | ⭐⭐⭐ - 25x\n` +
-      `🔔🔔🔔 - 15x | 🍇🍇🍇 - 10x | Dois iguais - 2x`,
-      data.multiplier > 0 ? 0x00ff00 : 0xffaa00
+        `👤 **Jogador:** ${player.username}\n` +
+        `🎲 **Jogadas:** ${data.spins}\n` +
+        `💰 **Total ganho:** ${data.totalWinnings} coins\n` +
+        `🎯 **Aposta atual:** ${data.currentBet} coins\n\n` +
+        `**Pagamentos:**\n` +
+        `💎💎💎 - 100x | 7️⃣7️⃣7️⃣ - 50x | ⭐⭐⭐ - 25x\n` +
+        `🔔🔔🔔 - 15x | 🍇🍇🍇 - 10x | Dois iguais - 2x`,
+      data.multiplier > 0 ? 0x00ff00 : 0xffaa00,
     );
 
     return embed;
@@ -139,15 +154,19 @@ export class SlotsGame extends BaseGame {
       GameUtils.createGameButtons({
         labels: ['🎰 Girar', '⬇️ Diminuir Aposta', '⬆️ Aumentar Aposta'],
         customIds: ['slots_spin', 'slots_bet_down', 'slots_bet_up'],
-        styles: [ButtonStyle.Primary, ButtonStyle.Secondary, ButtonStyle.Secondary]
-      })
+        styles: [
+          ButtonStyle.Primary,
+          ButtonStyle.Secondary,
+          ButtonStyle.Secondary,
+        ],
+      }),
     ];
   }
 
   async finish(): Promise<GameResult> {
     const player = this.session.players[0];
     const rewards = this.calculateRewards(player, 1);
-    
+
     // Bonus XP for big wins
     if (this.session.data.totalWinnings > 100) {
       rewards.xp += Math.floor(this.session.data.totalWinnings / 10);
@@ -161,9 +180,9 @@ export class SlotsGame extends BaseGame {
       stats: {
         spins: this.session.data.spins,
         totalWinnings: this.session.data.totalWinnings,
-        biggestWin: this.session.data.multiplier
+        biggestWin: this.session.data.multiplier,
       },
-      duration: Date.now() - this.session.startedAt.getTime()
+      duration: Date.now() - this.session.startedAt.getTime(),
     };
   }
 
