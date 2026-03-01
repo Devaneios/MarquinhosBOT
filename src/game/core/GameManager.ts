@@ -1,13 +1,17 @@
+import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { Collection } from 'discord.js';
 import { v4 as uuidv4 } from 'uuid';
 import {
   BaseGame,
   GAME_CONFIGS,
   GAME_COOLDOWNS,
+  GameResult,
   GameSession,
   GameState,
   GameType,
 } from './GameTypes';
+
+const apiService = new MarquinhosApiService();
 
 export class GameManager {
   private static instance: GameManager;
@@ -87,6 +91,30 @@ export class GameManager {
     this.gameInstances.delete(sessionId);
 
     return true;
+  }
+
+  public async endSessionWithResult(sessionId: string, result: GameResult): Promise<void> {
+    const session = this.activeSessions.get(sessionId);
+    if (!session) return;
+
+    const results = [
+      ...result.winners.map((userId, idx) => ({ userId, position: idx + 1 })),
+      ...result.losers.map((userId, idx) => ({ userId, position: result.winners.length + idx + 1 })),
+    ];
+
+    try {
+      await apiService.postGameResult({
+        sessionId,
+        guildId: session.guildId,
+        gameType: session.type,
+        durationMs: result.duration,
+        results,
+      });
+    } catch (error) {
+      console.error('Failed to post game result:', error);
+    }
+
+    this.endSession(sessionId);
   }
 
   public registerGameInstance(sessionId: string, gameInstance: BaseGame): void {

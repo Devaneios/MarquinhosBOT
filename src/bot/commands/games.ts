@@ -1,8 +1,11 @@
 import { GameManager } from '@marquinhos/game/core/GameManager';
 import { GAME_CONFIGS, GameType } from '@marquinhos/game/core/GameTypes';
 import { GameUtils } from '@marquinhos/game/core/GameUtils';
+import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { SlashCommand } from '@marquinhos/types';
 import { XPSystem } from '@marquinhos/utils/xpSystem';
+
+const apiService = new MarquinhosApiService();
 import {
   ActionRowBuilder,
   ChatInputCommandInteraction,
@@ -393,53 +396,99 @@ function getGameComponents(gameInstance: any, gameType: GameType): any[] {
 }
 
 async function showStats(interaction: ChatInputCommandInteraction) {
-  const embed = new EmbedBuilder()
-    .setTitle('📊 Suas Estatísticas de Jogos')
-    .setDescription('Estatísticas detalhadas em breve!')
-    .setColor(0x3498db)
-    .addFields(
-      {
-        name: '🎮 Jogos Jogados',
-        value: 'Sistema em desenvolvimento',
-        inline: true,
-      },
-      {
-        name: '🏆 Vitórias',
-        value: 'Sistema em desenvolvimento',
-        inline: true,
-      },
-      {
-        name: '⭐ XP Total de Games',
-        value: 'Sistema em desenvolvimento',
-        inline: true,
-      },
-    );
+  const userId = interaction.user.id;
+  const guildId = interaction.guildId;
 
-  await interaction.reply({ embeds: [embed], ephemeral: true });
+  if (!guildId) {
+    await interaction.reply({ content: 'Este comando só pode ser usado em servidores!', ephemeral: true });
+    return;
+  }
+
+  await interaction.deferReply({ ephemeral: true });
+
+  try {
+    const response = await apiService.getUserGameStats(userId, guildId);
+    const data = response?.data as {
+      stats: { total_games: number; games_won: number };
+      byGame: { game_type: string; games_played: number; wins: number }[];
+    } | null;
+
+    if (!data) {
+      await interaction.editReply('Não foi possível buscar suas estatísticas.');
+      return;
+    }
+
+    const { stats, byGame } = data;
+    const winRate = stats.total_games > 0
+      ? Math.round((stats.games_won / stats.total_games) * 100)
+      : 0;
+
+    const embed = new EmbedBuilder()
+      .setTitle(`📊 Estatísticas de ${interaction.user.username}`)
+      .setColor(0x3498db)
+      .addFields(
+        { name: '🎮 Jogos Jogados', value: stats.total_games.toString(), inline: true },
+        { name: '🏆 Vitórias', value: stats.games_won.toString(), inline: true },
+        { name: '📈 Taxa de Vitória', value: `${winRate}%`, inline: true },
+      );
+
+    if (byGame.length > 0) {
+      const breakdown = byGame
+        .slice(0, 8)
+        .map((g) => `**${g.game_type}**: ${g.games_played} jogos, ${g.wins} vitórias`)
+        .join('\n');
+      embed.addFields({ name: '🎯 Por Jogo', value: breakdown, inline: false });
+    }
+
+    await interaction.editReply({ embeds: [embed] });
+  } catch (error) {
+    console.error('Error fetching game stats:', error);
+    await interaction.editReply('Ocorreu um erro ao buscar suas estatísticas.');
+  }
 }
 
 async function showRanking(interaction: ChatInputCommandInteraction) {
-  const embed = new EmbedBuilder()
-    .setTitle('🏆 Ranking dos Melhores Jogadores')
-    .setDescription('Ranking geral em desenvolvimento!')
-    .setColor(0xf39c12)
-    .addFields(
-      {
-        name: '🥇 1º Lugar',
-        value: 'Sistema em desenvolvimento',
-        inline: false,
-      },
-      {
-        name: '🥈 2º Lugar',
-        value: 'Sistema em desenvolvimento',
-        inline: false,
-      },
-      {
-        name: '🥉 3º Lugar',
-        value: 'Sistema em desenvolvimento',
-        inline: false,
-      },
-    );
+  const guildId = interaction.guildId;
 
-  await interaction.reply({ embeds: [embed], ephemeral: true });
+  if (!guildId) {
+    await interaction.reply({ content: 'Este comando só pode ser usado em servidores!', ephemeral: true });
+    return;
+  }
+
+  await interaction.deferReply();
+
+  try {
+    // Show overall level leaderboard as the default ranking
+    const response = await apiService.getLeaderboard(guildId, 10);
+
+    if (!response?.data || response.data.length === 0) {
+      await interaction.editReply('Nenhum jogador encontrado no ranking.');
+      return;
+    }
+
+    const medals = ['🥇', '🥈', '🥉'];
+    let description = '';
+
+    for (let i = 0; i < response.data.length; i++) {
+      const entry = response.data[i]!;
+      const medal = medals[i] ?? '🏅';
+      try {
+        const discordUser = await interaction.client.users.fetch(entry.userId);
+        description += `${medal} **${i + 1}.** ${discordUser.username} — Nível ${entry.level} (${entry.totalXp} XP)\n`;
+      } catch {
+        description += `${medal} **${i + 1}.** Usuário desconhecido — Nível ${entry.level} (${entry.totalXp} XP)\n`;
+      }
+    }
+
+    const embed = new EmbedBuilder()
+      .setTitle(`🏆 Ranking de ${interaction.guild?.name}`)
+      .setDescription(description)
+      .setColor(0xf39c12)
+      .setFooter({ text: `Top ${response.data.length} jogadores` });
+
+    await interaction.editReply({ embeds: [embed] });
+  } catch (error) {
+    console.error('Error fetching ranking:', error);
+    await interaction.editReply('Ocorreu um erro ao buscar o ranking.');
+  }
 }

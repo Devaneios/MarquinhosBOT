@@ -174,6 +174,12 @@ export class MarquinhosBot {
 
     player.events.on('playerError', (queue: GuildQueue, error: Error) => {
       logger.error(`Error in player: ${error.message}`);
+      const { interactionChannel } = queue.metadata as {
+        interactionChannel: TextChannel;
+      };
+      interactionChannel?.send(
+        '❌ Não foi possível reproduzir esta faixa. Tente novamente.',
+      );
     });
 
     player.events.on('audioTrackAdd', (queue, track) => {

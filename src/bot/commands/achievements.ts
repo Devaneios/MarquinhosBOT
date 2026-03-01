@@ -1,8 +1,16 @@
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
-import { SlashCommand } from '@marquinhos/types';
+import { SlashCommand, UserAchievement } from '@marquinhos/types';
 import { SlashCommandBuilder } from 'discord.js';
 
 const apiService = new MarquinhosApiService();
+
+const RARITY_ORDER = ['legendary', 'epic', 'rare', 'common'] as const;
+const RARITY_LABELS: Record<string, string> = {
+  legendary: '🌟 Lendárias',
+  epic: '💜 Épicas',
+  rare: '💙 Raras',
+  common: '⚪ Comuns',
+};
 
 export const achievements: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -30,33 +38,26 @@ export const achievements: SlashCommand = {
     }
 
     try {
-      const userAchievements = await apiService.getUserAchievements(
-        userId,
-        guildId,
-      );
+      const response = await apiService.getUserAchievements(userId, guildId);
 
-      if (!userAchievements?.data || userAchievements.data.length === 0) {
+      if (!response?.data || response.data.length === 0) {
         await interaction.editReply(
           `${targetUser.username} ainda não possui conquistas desbloqueadas.`,
         );
         return;
       }
 
-      const achievementsByRarity = {
+      // Group by rarity — each item is now a flat joined object with all fields populated
+      const byRarity: Record<string, UserAchievement[]> = {
         legendary: [],
         epic: [],
         rare: [],
         common: [],
       };
 
-      // Group achievements by rarity
-      for (const userAchievement of userAchievements.data) {
-        // Note: achievementId is a string ID, not the full achievement object
-        // This would need to fetch full achievement details from another endpoint
-        // For now, we'll just count them by assuming they have the data needed
-        const achievementId = userAchievement.achievementId as any;
-        if (achievementId && achievementId.rarity) {
-          achievementsByRarity[achievementId.rarity].push(achievementId);
+      for (const achievement of response.data) {
+        if (byRarity[achievement.rarity]) {
+          byRarity[achievement.rarity].push(achievement);
         }
       }
 
@@ -64,43 +65,14 @@ export const achievements: SlashCommand = {
         .baseEmbed()
         .setTitle(`🏆 Conquistas de ${targetUser.username}`)
         .setThumbnail(targetUser.displayAvatarURL())
-        .setFooter({
-          text: `Total: ${userAchievements.data.length} conquistas`,
-        });
+        .setFooter({ text: `Total: ${response.data.length} conquistas` });
 
-      // Add fields for each rarity (if any achievements exist)
-      if (achievementsByRarity.legendary.length > 0) {
-        const legendaryText = achievementsByRarity.legendary
-          .map((a) => `${a.icon} **${a.name}**`)
-          .join('\n');
+      for (const rarity of RARITY_ORDER) {
+        const list = byRarity[rarity];
+        if (list.length === 0) continue;
         embed.addFields({
-          name: '🌟 Lendárias',
-          value: legendaryText,
-          inline: false,
-        });
-      }
-
-      if (achievementsByRarity.epic.length > 0) {
-        const epicText = achievementsByRarity.epic
-          .map((a) => `${a.icon} **${a.name}**`)
-          .join('\n');
-        embed.addFields({ name: '💜 Épicas', value: epicText, inline: false });
-      }
-
-      if (achievementsByRarity.rare.length > 0) {
-        const rareText = achievementsByRarity.rare
-          .map((a) => `${a.icon} **${a.name}**`)
-          .join('\n');
-        embed.addFields({ name: '💙 Raras', value: rareText, inline: false });
-      }
-
-      if (achievementsByRarity.common.length > 0) {
-        const commonText = achievementsByRarity.common
-          .map((a) => `${a.icon} **${a.name}**`)
-          .join('\n');
-        embed.addFields({
-          name: '⚪ Comuns',
-          value: commonText,
+          name: RARITY_LABELS[rarity],
+          value: list.map((a) => `${a.icon} **${a.name}**`).join('\n'),
           inline: false,
         });
       }
