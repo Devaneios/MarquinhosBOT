@@ -19,8 +19,14 @@ services:
         limits:
           cpus: '1.0'
           memory: 512M
+    networks:
+      - marquinhos-net
     logging:
       driver: json-file
       options:
         max-size: '100m'
         max-file: '10'
+
+networks:
+  marquinhos-net:
+    external: true
