@@ -1,4 +1,4 @@
-import axios from 'axios';
+
 import BotError from '@marquinhos/utils/botError';
 import { logger } from '@marquinhos/utils/logger';
 
@@ -37,9 +37,12 @@ async function sendErrorMessage(error: BotError) {
   const description = error?.stack || 'No stack trace';
 
   try {
-    await axios.post(
-      encodeURI(process.env.MARQUINHOS_ERROR_WEBHOOK || ''),
-      {
+    await fetch(encodeURI(process.env.MARQUINHOS_ERROR_WEBHOOK || ''), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         username: 'Marquinhos Error Notifier',
         avatar_url: 'https://i.imgur.com/M4k2OVe.png',
         embeds: [
@@ -67,13 +70,8 @@ async function sendErrorMessage(error: BotError) {
             ],
           },
         ],
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
-    );
+      }),
+    });
   } catch (error) {
     console.error(error);
   }

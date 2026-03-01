@@ -1,6 +1,14 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
-import axios from 'axios';
+import { HttpClient } from '@marquinhos/utils/httpClient';
+
+const httpClient = new HttpClient({
+  baseURL: process.env.MARQUINHOS_API_URL,
+  headers: {
+    Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
+  },
+  retries: 2,
+});
 
 export const recommend: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -170,15 +178,10 @@ async function getPersonalizedRecommendations(
   limit: number,
 ): Promise<any[]> {
   try {
-    const response = await axios.get(
-      `${process.env.MARQUINHOS_API_URL}/api/recommendations/personalized/${userId}/${guildId}?limit=${limit}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-        },
-      },
+    const data = await httpClient.get(
+      `/api/recommendations/personalized/${userId}/${guildId}?limit=${limit}`
     );
-    return response.data.data || [];
+    return data.data || [];
   } catch (error) {
     console.error('Failed to get personalized recommendations:', error);
     return [];
@@ -190,15 +193,10 @@ async function getGenreRecommendations(
   guildId: string,
 ): Promise<any[]> {
   try {
-    const response = await axios.get(
-      `${process.env.MARQUINHOS_API_URL}/api/recommendations/genre/${genre}/${guildId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-        },
-      },
+    const data = await httpClient.get(
+      `/api/recommendations/genre/${genre}/${guildId}`
     );
-    return response.data.data || [];
+    return data.data || [];
   } catch (error) {
     console.error('Failed to get genre recommendations:', error);
     return [];
@@ -211,15 +209,10 @@ async function getTimeRecommendations(
   timeOfDay: string,
 ): Promise<any[]> {
   try {
-    const response = await axios.get(
-      `${process.env.MARQUINHOS_API_URL}/api/recommendations/time/${userId}/${guildId}/${timeOfDay}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-        },
-      },
+    const data = await httpClient.get(
+      `/api/recommendations/time/${userId}/${guildId}/${timeOfDay}`
     );
-    return response.data.data || [];
+    return data.data || [];
   } catch (error) {
     console.error('Failed to get time recommendations:', error);
     return [];
@@ -231,15 +224,10 @@ async function getCollaborativeRecommendations(
   guildId: string,
 ): Promise<any[]> {
   try {
-    const response = await axios.get(
-      `${process.env.MARQUINHOS_API_URL}/api/recommendations/collaborative/${userId}/${guildId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-        },
-      },
+    const data = await httpClient.get(
+      `/api/recommendations/collaborative/${userId}/${guildId}`
     );
-    return response.data.data || [];
+    return data.data || [];
   } catch (error) {
     console.error('Failed to get collaborative recommendations:', error);
     return [];

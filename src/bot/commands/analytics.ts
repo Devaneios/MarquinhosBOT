@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
-import axios from 'axios';
+
 
 export const analytics: SlashCommand = {
   command: new SlashCommandBuilder()

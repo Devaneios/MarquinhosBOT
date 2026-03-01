@@ -1,6 +1,14 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
-import axios from 'axios';
+import { HttpClient } from '@marquinhos/utils/httpClient';
+
+const httpClient = new HttpClient({
+  baseURL: process.env.MARQUINHOS_API_URL,
+  headers: {
+    Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
+  },
+  retries: 2,
+});
 
 export const karaoke: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -83,23 +91,14 @@ async function handleStartKaraoke(
   channelId: string,
 ) {
   try {
-    const response = await axios.post(
-      `${process.env.MARQUINHOS_API_URL}/api/karaoke/session`,
-      { guildId, channelId, hostId: userId },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-        },
-      },
-    );
+    await httpClient.post('/api/karaoke/session', { guildId, channelId, hostId: userId });
 
     const embed = interaction.client
       .baseEmbed()
       .setTitle('🎤 Sessão de Karaokê Iniciada!')
       .setDescription('Use `/karaoke join` para participar!')
       .addFields(
-        { name: 'Host', value: `<@${userId}>`, inline: true },
+        { name: 'Host', value: `<\@${userId}>`, inline: true },
         { name: 'Participantes', value: '1', inline: true },
       );
 
@@ -117,14 +116,9 @@ async function handleJoinKaraoke(
 ) {
   try {
     // Get active session
-    const sessionResponse = await axios.get(
-      `${process.env.MARQUINHOS_API_URL}/api/karaoke/active/${guildId}/${channelId}`,
-      {
-        headers: { Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}` },
-      },
-    );
+    const sessionData = await httpClient.get(`/api/karaoke/active/${guildId}/${channelId}`);
 
-    if (!sessionResponse.data.data) {
+    if (!sessionData?.data) {
       await interaction.editReply(
         'Nenhuma sessão de karaokê ativa neste canal.',
       );
@@ -132,16 +126,7 @@ async function handleJoinKaraoke(
     }
 
     // Join session
-    await axios.post(
-      `${process.env.MARQUINHOS_API_URL}/api/karaoke/session/${sessionResponse.data.data.id}/join`,
-      { userId },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-        },
-      },
-    );
+    await httpClient.post(`/api/karaoke/session/${sessionData.data.id}/join`, { userId });
 
     await interaction.editReply(
       `🎤 ${interaction.user.username} entrou no karaokê!`,
@@ -172,14 +157,9 @@ async function handleShowScore(
   channelId: string,
 ) {
   try {
-    const sessionResponse = await axios.get(
-      `${process.env.MARQUINHOS_API_URL}/api/karaoke/active/${guildId}/${channelId}`,
-      {
-        headers: { Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}` },
-      },
-    );
+    const sessionData = await httpClient.get(`/api/karaoke/active/${guildId}/${channelId}`);
 
-    if (!sessionResponse.data.data) {
+    if (!sessionData?.data) {
       await interaction.editReply(
         'Nenhuma sessão ativa para mostrar pontuação.',
       );
@@ -192,7 +172,7 @@ async function handleShowScore(
       .setDescription('Pontuações da sessão atual')
       .addFields({
         name: 'Participantes',
-        value: sessionResponse.data.data.participants.length.toString(),
+        value: sessionData.data.participants.length.toString(),
         inline: true,
       });
 

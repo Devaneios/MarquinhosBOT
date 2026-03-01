@@ -22,7 +22,6 @@
   "dependencies": {
     "@discord-player/extractor": "^7.1.0",
     "@discordjs/voice": "^0.16.1",
-    "axios": "^1.6.8",
     "canvas": "^3.2.1",
     "color": "^4.2.3",
     "discord-player": "^7.1.0",
