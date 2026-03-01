@@ -150,7 +150,7 @@ export const syncParty: SlashCommand = {
             },
           );
 
-          const party = createResponse.data;
+          const party = createResponse.data as any;
 
           const createEmbed = interaction.client
             .baseEmbed()
@@ -196,7 +196,7 @@ export const syncParty: SlashCommand = {
             return;
           }
 
-          const joinedParty = joinResponse.data;
+          const joinedParty = joinResponse.data as any;
 
           const joinEmbed = interaction.client
             .baseEmbed()
@@ -255,7 +255,7 @@ export const syncParty: SlashCommand = {
             )
             .addFields({
               name: '📋 Posição na Playlist',
-              value: `#${addResponse.data.playlist.length}`,
+              value: `#${(addResponse.data as any).playlist.length}`,
               inline: true,
             });
 
@@ -310,7 +310,7 @@ export const syncParty: SlashCommand = {
           const listResponse = await marquinhosApi.get(
             `/sync-party/active/${interaction.guildId}`,
           );
-          const activeParties = listResponse.data;
+          const activeParties = listResponse.data as any;
 
           if (!activeParties || activeParties.length === 0) {
             await interaction.editReply({

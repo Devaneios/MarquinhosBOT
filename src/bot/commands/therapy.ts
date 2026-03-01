@@ -147,7 +147,7 @@ export const therapy: SlashCommand = {
             },
           );
 
-          const session = sessionResponse.data;
+          const session = sessionResponse.data as any;
 
           const sessionEmbed = interaction.client
             .baseEmbed()
@@ -216,7 +216,7 @@ export const therapy: SlashCommand = {
             return;
           }
 
-          const endedSession = endResponse.data;
+          const endedSession = endResponse.data as any;
           const improvement = calculateImprovement(mood, finalMood);
 
           const endEmbed = interaction.client
@@ -267,7 +267,7 @@ export const therapy: SlashCommand = {
             return;
           }
 
-          const insights = insightsResponse.data;
+          const insights = insightsResponse.data as any;
 
           const insightsEmbed = interaction.client
             .baseEmbed()

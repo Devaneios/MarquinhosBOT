@@ -53,7 +53,7 @@ export const musicalDNA: SlashCommand = {
             },
           );
 
-          const dna = dnaResponse.data;
+          const dna = dnaResponse.data as any;
           const topInstruments = Array.from(dna.instrumentPreferences.entries())
             .sort(([, a], [, b]) => b - a)
             .slice(0, 5)
@@ -101,7 +101,8 @@ export const musicalDNA: SlashCommand = {
             },
           );
 
-          const compatibility = compatibilityResponse.data.compatibility;
+          const compatibility = (compatibilityResponse.data as any)
+            .compatibility;
 
           const compatEmbed = interaction.client
             .baseEmbed()
@@ -145,7 +146,7 @@ export const musicalDNA: SlashCommand = {
             return;
           }
 
-          const evolution = evolutionResponse.data;
+          const evolution = evolutionResponse.data as any;
 
           const evolutionEmbed = interaction.client
             .baseEmbed()

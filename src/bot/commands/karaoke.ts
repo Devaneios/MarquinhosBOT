@@ -120,9 +120,9 @@ async function handleJoinKaraoke(
 ) {
   try {
     // Get active session
-    const sessionData = await httpClient.get(
+    const sessionData = (await httpClient.get(
       `/api/karaoke/active/${guildId}/${channelId}`,
-    );
+    )) as any;
 
     if (!sessionData?.data) {
       await interaction.editReply(
@@ -165,9 +165,9 @@ async function handleShowScore(
   channelId: string,
 ) {
   try {
-    const sessionData = await httpClient.get(
+    const sessionData = (await httpClient.get(
       `/api/karaoke/active/${guildId}/${channelId}`,
-    );
+    )) as any;
 
     if (!sessionData?.data) {
       await interaction.editReply(
