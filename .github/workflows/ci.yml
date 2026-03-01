@@ -54,7 +54,7 @@ jobs:
           docker tag marquinhosbot:latest marquinhosbot:${{ github.sha }}
 
       - name: Scan image for CVEs
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           image-ref: marquinhosbot:${{ github.sha }}
           format: table
