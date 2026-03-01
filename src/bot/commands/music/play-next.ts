@@ -1,5 +1,5 @@
 import {
-  CommandInteraction,
+  ChatInputCommandInteraction,
   CommandInteractionOptionResolver,
   GuildMember,
   SlashCommandBuilder,
@@ -34,7 +34,7 @@ export const playNext: SlashCommand = {
     canSpeakVoiceChannel,
     canJoinVoiceChannel,
   ],
-  execute: async (interaction: CommandInteraction) => {
+  execute: async (interaction: ChatInputCommandInteraction) => {
     const voiceChannel = (interaction.member as GuildMember).voice.channel!;
     const memberId = (interaction.member as GuildMember).id;
 

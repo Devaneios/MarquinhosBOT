@@ -37,9 +37,9 @@ export const leaderboard: SlashCommand = {
 
       let description = '';
       for (let i = 0; i < leaderboard.data.length; i++) {
-        const user = leaderboard.data[i];
+        const user = leaderboard.data[i]!;
         const position = i + 1;
-        const medal = this.getMedal(position);
+        const medal = getMedal(position);
         
         try {
           const discordUser = await interaction.client.users.fetch(user.userId);

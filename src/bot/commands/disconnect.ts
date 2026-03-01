@@ -1,9 +1,6 @@
 import {
   SlashCommandBuilder,
   PermissionsBitField,
-  CommandInteraction,
-  CacheType,
-  Interaction,
 } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
 
@@ -18,9 +15,7 @@ export const disconnect: SlashCommand = {
         .setDescription('O usuário que será desconectado')
         .setRequired(true),
     ) as SlashCommandBuilder,
-  execute: async (interaction: CommandInteraction<CacheType> | Interaction) => {
-    if (!interaction.isCommand()) return;
-
+  execute: async (interaction) => {
     const targetUser = interaction.options.get('usuario')?.user;
     const disconnectEmbed = interaction.client.baseEmbed();
 

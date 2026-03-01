@@ -28,7 +28,8 @@ export const test: SlashCommand = {
     joinVoiceChannel({
       channelId: voiceChannel.id,
       guildId: voiceChannel.guild.id,
-      adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      adapterCreator: voiceChannel.guild.voiceAdapterCreator as any,
     });
     const addedOnQueueEmbed = interaction.client
       .baseEmbed()

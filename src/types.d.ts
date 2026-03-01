@@ -10,15 +10,31 @@ import {
   type ChatInputCommandInteraction,
   TextChannel,
   EmbedBuilder,
+  SlashCommandSubcommandsOnlyBuilder,
+  SlashCommandOptionsOnlyBuilder,
 } from 'discord.js';
 
 export type Nullable<T> = T | null | undefined;
 
 export interface SlashCommand {
-  command: SlashCommandBuilder;
-  execute: (
-    interaction: ChatInputCommandInteraction | Interaction | CommandInteraction,
-  ) => Promise<void> | void;
+  command:
+    | SlashCommandBuilder
+    | SlashCommandSubcommandsOnlyBuilder
+    | SlashCommandOptionsOnlyBuilder
+    | Omit<SlashCommandBuilder, 'addSubcommandGroup' | 'addSubcommand'>
+    | Omit<
+        SlashCommandBuilder,
+        | 'addBooleanOption'
+        | 'addUserOption'
+        | 'addChannelOption'
+        | 'addRoleOption'
+        | 'addStringOption'
+        | 'addNumberOption'
+        | 'addIntegerOption'
+        | 'addAttachmentOption'
+        | 'addMentionableOption'
+      >;
+  execute: (interaction: ChatInputCommandInteraction) => Promise<any> | void;
   validators?: ((interaction: CommandInteraction) => Promise<boolean>)[];
   autocomplete?: (interaction: AutocompleteInteraction) => void;
   cooldown?: number; // in seconds

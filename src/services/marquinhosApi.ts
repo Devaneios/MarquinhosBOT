@@ -220,7 +220,11 @@ export class MarquinhosApiService {
     }
   }
 
-  async unlockAchievement(userId: string, guildId: string, achievementId: string) {
+  async unlockAchievement(
+    userId: string,
+    guildId: string,
+    achievementId: string,
+  ) {
     const options = {
       method: 'POST',
       url: `${process.env.MARQUINHOS_API_URL}/api/gamification/achievement/unlock`,
@@ -242,7 +246,13 @@ export class MarquinhosApiService {
   }
 
   // Playlist API calls
-  async createPlaylist(name: string, description: string, creatorId: string, guildId: string, isCollaborative: boolean = false) {
+  async createPlaylist(
+    name: string,
+    description: string,
+    creatorId: string,
+    guildId: string,
+    isCollaborative: boolean = false,
+  ) {
     const options = {
       method: 'POST',
       url: `${process.env.MARQUINHOS_API_URL}/api/playlist`,
@@ -256,9 +266,7 @@ export class MarquinhosApiService {
       const { data } = await axios.request(options);
       return data;
     } catch (error) {
-      logger.error(
-        `Failed to create playlist: ${(error as Error).message}`,
-      );
+      logger.error(`Failed to create playlist: ${(error as Error).message}`);
       throw error;
     }
   }
@@ -301,7 +309,11 @@ export class MarquinhosApiService {
     }
   }
 
-  async addTrackToPlaylist(playlistId: string, userId: string, track: any) {
+  async addTrackToPlaylist(
+    playlistId: string,
+    userId: string,
+    track: Record<string, unknown>,
+  ) {
     const options = {
       method: 'POST',
       url: `${process.env.MARQUINHOS_API_URL}/api/playlist/${playlistId}/tracks`,
@@ -323,7 +335,7 @@ export class MarquinhosApiService {
   }
 
   // Voice AI API calls
-  async post(endpoint: string, data: any) {
+  async post(endpoint: string, data: Record<string, unknown>) {
     const options = {
       method: 'POST',
       url: `${process.env.MARQUINHOS_API_URL}${endpoint}`,
@@ -337,7 +349,9 @@ export class MarquinhosApiService {
       const response = await axios.request(options);
       return response.data;
     } catch (error) {
-      logger.error(`Failed to POST to ${endpoint}: ${(error as Error).message}`);
+      logger.error(
+        `Failed to POST to ${endpoint}: ${(error as Error).message}`,
+      );
       throw error;
     }
   }
@@ -354,12 +368,14 @@ export class MarquinhosApiService {
       const response = await axios.request(options);
       return response.data;
     } catch (error) {
-      logger.error(`Failed to GET from ${endpoint}: ${(error as Error).message}`);
+      logger.error(
+        `Failed to GET from ${endpoint}: ${(error as Error).message}`,
+      );
       throw error;
     }
   }
 
-  async put(endpoint: string, data: any) {
+  async put(endpoint: string, data: Record<string, unknown>) {
     const options = {
       method: 'PUT',
       url: `${process.env.MARQUINHOS_API_URL}${endpoint}`,

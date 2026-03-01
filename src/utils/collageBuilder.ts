@@ -144,9 +144,9 @@ export class CollageBuilder {
     type: string,
     period: string = 'overall',
   ) {
-    const { ctx, collageCanvas, canvasWidth, canvasHeight } =
+    const { ctx, collageCanvas, canvasWidth, canvasHeight: _canvasHeight } =
       this.setupCanvas();
-    await this.drawBackground(ctx, canvasWidth, canvasHeight);
+    await this.drawBackground(ctx);
     const firstImageBuffer = images.shift();
     if (!firstImageBuffer) return Buffer.from('');
     const firstImage = await loadImage(firstImageBuffer);
