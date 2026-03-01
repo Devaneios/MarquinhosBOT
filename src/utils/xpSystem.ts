@@ -24,14 +24,14 @@ export class XPSystem {
   static async addCommandXP(interaction: CommandInteraction): Promise<void> {
     const userId = interaction.user.id;
     const guildId = interaction.guildId;
-    
+
     if (!guildId) return;
 
     // Check cooldown
     const cooldownKey = `${userId}-${guildId}`;
     const now = Date.now();
     const lastXpGain = this.cooldowns.get(cooldownKey) || 0;
-    
+
     if (now - lastXpGain < this.COOLDOWN_TIME) return;
 
     try {
@@ -61,23 +61,39 @@ export class XPSystem {
     }
   }
 
-  static async checkAndNotifyLevelUp(userId: string, guildId: string, interaction?: CommandInteraction): Promise<void> {
+  static async checkAndNotifyLevelUp(
+    userId: string,
+    guildId: string,
+    interaction?: CommandInteraction,
+  ): Promise<void> {
     try {
       const userLevel = await apiService.getUserLevel(userId, guildId);
-      
+
       if (userLevel?.data && interaction) {
         // Check if this is a level up by comparing timestamps
-        const levelUpRecent = new Date(userLevel.data.lastXpGain).getTime() > (Date.now() - 10000);
-        
+        const levelUpRecent =
+          new Date(userLevel.data.lastXpGain).getTime() > Date.now() - 10000;
+
         if (levelUpRecent) {
-          const embed = interaction.client.baseEmbed()
+          const embed = interaction.client
+            .baseEmbed()
             .setTitle('🎉 Level Up!')
-            .setDescription(`Parabéns! Você subiu para o nível **${userLevel.data.level}**!`)
+            .setDescription(
+              `Parabéns! Você subiu para o nível **${userLevel.data.level}**!`,
+            )
             .addFields(
-              { name: 'XP Atual', value: userLevel.data.xp.toString(), inline: true },
-              { name: 'XP Total', value: userLevel.data.totalXp.toString(), inline: true }
+              {
+                name: 'XP Atual',
+                value: userLevel.data.xp.toString(),
+                inline: true,
+              },
+              {
+                name: 'XP Total',
+                value: userLevel.data.totalXp.toString(),
+                inline: true,
+              },
             );
-          
+
           if (interaction.channel) {
             await interaction.followUp({ embeds: [embed] });
           }

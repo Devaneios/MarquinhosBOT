@@ -1,5 +1,10 @@
 import { EmbedBuilder, ButtonStyle } from 'discord.js';
-import { BaseGame, GameSession, GameResult, PlayerStatus } from '../core/GameTypes';
+import {
+  BaseGame,
+  GameSession,
+  GameResult,
+  PlayerStatus,
+} from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
 
 interface Card {
@@ -34,7 +39,7 @@ export class BlackjackGame extends BaseGame {
     { value: '10', numeric: 10 },
     { value: 'J', numeric: 10 },
     { value: 'Q', numeric: 10 },
-    { value: 'K', numeric: 10 }
+    { value: 'K', numeric: 10 },
   ];
 
   constructor(session: GameSession) {
@@ -55,7 +60,7 @@ export class BlackjackGame extends BaseGame {
       dealerTotal: this.calculateTotal([dealerCards[0]]), // Only show first card
       gamePhase: 'initial',
       result: null,
-      bet: 20
+      bet: 20,
     } as BlackjackData;
 
     // Check for blackjack
@@ -69,13 +74,13 @@ export class BlackjackGame extends BaseGame {
 
   private createDeck(): Card[] {
     const deck: Card[] = [];
-    
+
     for (const suit of this.suits) {
       for (const val of this.values) {
         deck.push({
           suit,
           value: val.value,
-          numericValue: val.numeric
+          numericValue: val.numeric,
         });
       }
     }
@@ -110,12 +115,14 @@ export class BlackjackGame extends BaseGame {
   }
 
   private formatCards(cards: Card[], hideSecond = false): string {
-    return cards.map((card, index) => {
-      if (hideSecond && index === 1) {
-        return '🃏';
-      }
-      return `${card.value}${card.suit}`;
-    }).join(' ');
+    return cards
+      .map((card, index) => {
+        if (hideSecond && index === 1) {
+          return '🃏';
+        }
+        return `${card.value}${card.suit}`;
+      })
+      .join(' ');
   }
 
   async start(): Promise<void> {
@@ -124,7 +131,7 @@ export class BlackjackGame extends BaseGame {
 
   async handlePlayerAction(userId: string, action: any): Promise<void> {
     const data = this.session.data as BlackjackData;
-    
+
     if (data.gamePhase !== 'player_turn') return;
 
     switch (action.type) {
@@ -157,7 +164,7 @@ export class BlackjackGame extends BaseGame {
   private async stand(): Promise<void> {
     const data = this.session.data as BlackjackData;
     data.gamePhase = 'dealer_turn';
-    
+
     // Reveal dealer's second card and calculate total
     data.dealerTotal = this.calculateTotal(data.dealerCards);
 
@@ -176,7 +183,7 @@ export class BlackjackGame extends BaseGame {
     const data = this.session.data as BlackjackData;
     data.bet *= 2;
     await this.hit();
-    
+
     if (data.gamePhase === 'player_turn') {
       await this.stand();
     }
@@ -184,11 +191,11 @@ export class BlackjackGame extends BaseGame {
 
   private determineWinner(): 'win' | 'lose' | 'push' {
     const data = this.session.data as BlackjackData;
-    
+
     if (data.dealerTotal > 21) {
       return 'win'; // Dealer bust
     }
-    
+
     if (data.playerTotal > data.dealerTotal) {
       return 'win';
     } else if (data.playerTotal < data.dealerTotal) {
@@ -201,18 +208,19 @@ export class BlackjackGame extends BaseGame {
   getGameEmbed(): EmbedBuilder {
     const data = this.session.data as BlackjackData;
     const player = this.session.players[0];
-    
+
     let description = `👤 **Jogador:** ${player.username}\n`;
     description += `💰 **Aposta:** ${data.bet} coins\n\n`;
-    
+
     // Player cards
     description += `**Suas cartas:** ${this.formatCards(data.playerCards)}\n`;
     description += `**Total:** ${data.playerTotal}\n\n`;
-    
+
     // Dealer cards
-    const showDealerCards = data.gamePhase === 'dealer_turn' || data.gamePhase === 'finished';
+    const showDealerCards =
+      data.gamePhase === 'dealer_turn' || data.gamePhase === 'finished';
     description += `**Dealer:** ${this.formatCards(data.dealerCards, !showDealerCards)}\n`;
-    
+
     if (showDealerCards) {
       description += `**Total do Dealer:** ${data.dealerTotal}\n\n`;
     } else {
@@ -223,7 +231,7 @@ export class BlackjackGame extends BaseGame {
     if (data.result) {
       let resultText = '';
       let winnings = 0;
-      
+
       switch (data.result) {
         case 'blackjack':
           resultText = '🎉 **BLACKJACK!** Você ganhou!';
@@ -242,33 +250,45 @@ export class BlackjackGame extends BaseGame {
           winnings = data.bet;
           break;
       }
-      
+
       description += `${resultText}\n`;
       if (winnings > 0) {
         description += `💰 **Ganhos:** ${winnings} coins`;
       }
-      
+
       this.updatePlayerScore(player.userId, winnings);
     }
 
-    const color = data.result === 'win' || data.result === 'blackjack' ? 0x00ff00 : 
-                  data.result === 'lose' ? 0xff0000 : 0xffaa00;
+    const color =
+      data.result === 'win' || data.result === 'blackjack'
+        ? 0x00ff00
+        : data.result === 'lose'
+          ? 0xff0000
+          : 0xffaa00;
 
     return GameUtils.createGameEmbed('🃏 Blackjack', description, color);
   }
 
   getActionButtons() {
     const data = this.session.data as BlackjackData;
-    
+
     if (data.gamePhase === 'player_turn') {
       const canDouble = data.playerCards.length === 2;
-      
+
       return [
         GameUtils.createGameButtons({
           labels: ['🎯 Pedir', '✋ Parar', ...(canDouble ? ['🔥 Dobrar'] : [])],
-          customIds: ['bj_hit', 'bj_stand', ...(canDouble ? ['bj_double'] : [])],
-          styles: [ButtonStyle.Primary, ButtonStyle.Secondary, ...(canDouble ? [ButtonStyle.Danger] : [])]
-        })
+          customIds: [
+            'bj_hit',
+            'bj_stand',
+            ...(canDouble ? ['bj_double'] : []),
+          ],
+          styles: [
+            ButtonStyle.Primary,
+            ButtonStyle.Secondary,
+            ...(canDouble ? [ButtonStyle.Danger] : []),
+          ],
+        }),
       ];
     }
 
@@ -279,7 +299,7 @@ export class BlackjackGame extends BaseGame {
     const player = this.session.players[0];
     const data = this.session.data as BlackjackData;
     const rewards = this.calculateRewards(player, 1);
-    
+
     // Bonus XP for blackjack or big wins
     if (data.result === 'blackjack') {
       rewards.xp += 15;
@@ -289,7 +309,10 @@ export class BlackjackGame extends BaseGame {
 
     return {
       sessionId: this.session.id,
-      winners: data.result === 'win' || data.result === 'blackjack' ? [player.userId] : [],
+      winners:
+        data.result === 'win' || data.result === 'blackjack'
+          ? [player.userId]
+          : [],
       losers: data.result === 'lose' ? [player.userId] : [],
       rewards: { [player.userId]: rewards },
       stats: {
@@ -297,9 +320,9 @@ export class BlackjackGame extends BaseGame {
         playerTotal: data.playerTotal,
         dealerTotal: data.dealerTotal,
         bet: data.bet,
-        cardsUsed: data.playerCards.length + data.dealerCards.length
+        cardsUsed: data.playerCards.length + data.dealerCards.length,
       },
-      duration: Date.now() - this.session.startedAt.getTime()
+      duration: Date.now() - this.session.startedAt.getTime(),
     };
   }
 

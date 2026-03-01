@@ -1,5 +1,10 @@
 import { EmbedBuilder, ButtonStyle } from 'discord.js';
-import { BaseGame, GameSession, GameResult, PlayerStatus } from '../core/GameTypes';
+import {
+  BaseGame,
+  GameSession,
+  GameResult,
+  PlayerStatus,
+} from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
 
 interface TicTacToeData {
@@ -12,7 +17,6 @@ interface TicTacToeData {
 }
 
 export class TicTacToeGame extends BaseGame {
-  
   constructor(session: GameSession) {
     super(session);
     this.initializeGame();
@@ -23,25 +27,25 @@ export class TicTacToeGame extends BaseGame {
       board: [
         ['⬜', '⬜', '⬜'],
         ['⬜', '⬜', '⬜'],
-        ['⬜', '⬜', '⬜']
+        ['⬜', '⬜', '⬜'],
       ],
       currentPlayer: 0,
       gameOver: false,
       winner: null,
       isDraw: false,
-      moves: 0
+      moves: 0,
     } as TicTacToeData;
   }
 
   async start(): Promise<void> {
-    this.session.players.forEach(p => p.status = PlayerStatus.ACTIVE);
+    this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
   }
 
   async handlePlayerAction(userId: string, action: any): Promise<void> {
     const data = this.session.data as TicTacToeData;
-    
+
     if (data.gameOver) return;
-    
+
     // Check if it's the player's turn
     if (this.session.players[data.currentPlayer].userId !== userId) return;
 
@@ -52,9 +56,15 @@ export class TicTacToeGame extends BaseGame {
 
   private async makeMove(row: number, col: number): Promise<void> {
     const data = this.session.data as TicTacToeData;
-    
+
     // Check if move is valid
-    if (row < 0 || row > 2 || col < 0 || col > 2 || data.board[row][col] !== '⬜') {
+    if (
+      row < 0 ||
+      row > 2 ||
+      col < 0 ||
+      col > 2 ||
+      data.board[row][col] !== '⬜'
+    ) {
       return;
     }
 
@@ -86,23 +96,39 @@ export class TicTacToeGame extends BaseGame {
 
     // Check rows
     for (let i = 0; i < 3; i++) {
-      if (board[i][0] === symbol && board[i][1] === symbol && board[i][2] === symbol) {
+      if (
+        board[i][0] === symbol &&
+        board[i][1] === symbol &&
+        board[i][2] === symbol
+      ) {
         return true;
       }
     }
 
     // Check columns
     for (let i = 0; i < 3; i++) {
-      if (board[0][i] === symbol && board[1][i] === symbol && board[2][i] === symbol) {
+      if (
+        board[0][i] === symbol &&
+        board[1][i] === symbol &&
+        board[2][i] === symbol
+      ) {
         return true;
       }
     }
 
     // Check diagonals
-    if (board[0][0] === symbol && board[1][1] === symbol && board[2][2] === symbol) {
+    if (
+      board[0][0] === symbol &&
+      board[1][1] === symbol &&
+      board[2][2] === symbol
+    ) {
       return true;
     }
-    if (board[0][2] === symbol && board[1][1] === symbol && board[2][0] === symbol) {
+    if (
+      board[0][2] === symbol &&
+      board[1][1] === symbol &&
+      board[2][0] === symbol
+    ) {
       return true;
     }
 
@@ -111,18 +137,18 @@ export class TicTacToeGame extends BaseGame {
 
   private async updateScores(): Promise<void> {
     const data = this.session.data as TicTacToeData;
-    
+
     if (data.winner) {
       const winnerScore = 100;
       const loserScore = 20;
-      
-      this.session.players.forEach(player => {
+
+      this.session.players.forEach((player) => {
         const score = player.userId === data.winner ? winnerScore : loserScore;
         this.updatePlayerScore(player.userId, score);
       });
     } else if (data.isDraw) {
       // Draw - both players get 50 points
-      this.session.players.forEach(player => {
+      this.session.players.forEach((player) => {
         this.updatePlayerScore(player.userId, 50);
       });
     }
@@ -130,13 +156,15 @@ export class TicTacToeGame extends BaseGame {
 
   getGameEmbed(): EmbedBuilder {
     const data = this.session.data as TicTacToeData;
-    
+
     let description = '';
-    
+
     // Game status
     if (data.gameOver) {
       if (data.winner) {
-        const winner = this.session.players.find(p => p.userId === data.winner);
+        const winner = this.session.players.find(
+          (p) => p.userId === data.winner,
+        );
         description += `🎉 **${winner?.username} venceu!**\n\n`;
       } else if (data.isDraw) {
         description += '🤝 **Empate!**\n\n';
@@ -159,18 +187,22 @@ export class TicTacToeGame extends BaseGame {
     description += `❌ ${this.session.players[0].username}\n`;
     description += `⭕ ${this.session.players[1].username}`;
 
-    const color = data.gameOver ? (data.winner ? 0x00ff00 : 0xffaa00) : 0x3498db;
-    
+    const color = data.gameOver
+      ? data.winner
+        ? 0x00ff00
+        : 0xffaa00
+      : 0x3498db;
+
     return GameUtils.createGameEmbed('⭕ Jogo da Velha', description, color);
   }
 
   getBoardButtons() {
     const data = this.session.data as TicTacToeData;
-    
+
     if (data.gameOver) return [];
 
     const buttons = [];
-    
+
     for (let row = 0; row < 3; row++) {
       const rowButtons = [];
       for (let col = 0; col < 3; col++) {
@@ -179,17 +211,17 @@ export class TicTacToeGame extends BaseGame {
           label: isOccupied ? data.board[row][col] : '⬜',
           customId: `ttt_move_${row}_${col}`,
           style: isOccupied ? ButtonStyle.Secondary : ButtonStyle.Primary,
-          disabled: isOccupied
+          disabled: isOccupied,
         });
       }
-      
+
       buttons.push(
         GameUtils.createGameButtons({
-          labels: rowButtons.map(b => b.label),
-          customIds: rowButtons.map(b => b.customId),
-          styles: rowButtons.map(b => b.style),
-          disabled: rowButtons.map(b => b.disabled)
-        })
+          labels: rowButtons.map((b) => b.label),
+          customIds: rowButtons.map((b) => b.customId),
+          styles: rowButtons.map((b) => b.style),
+          disabled: rowButtons.map((b) => b.disabled),
+        }),
       );
     }
 
@@ -203,28 +235,32 @@ export class TicTacToeGame extends BaseGame {
     this.session.players.forEach((player, index) => {
       const isWinner = player.userId === data.winner;
       const baseRewards = this.calculateRewards(player, isWinner ? 1 : 2);
-      
+
       if (isWinner) {
         baseRewards.xp += 20;
       } else if (data.isDraw) {
         baseRewards.xp += 10;
       }
-      
+
       rewards[player.userId] = baseRewards;
     });
 
     return {
       sessionId: this.session.id,
       winners: data.winner ? [data.winner] : [],
-      losers: data.winner ? this.session.players.filter(p => p.userId !== data.winner).map(p => p.userId) : [],
+      losers: data.winner
+        ? this.session.players
+            .filter((p) => p.userId !== data.winner)
+            .map((p) => p.userId)
+        : [],
       rewards,
       stats: {
         moves: data.moves,
         winner: data.winner,
         isDraw: data.isDraw,
-        gameLength: Date.now() - this.session.startedAt.getTime()
+        gameLength: Date.now() - this.session.startedAt.getTime(),
       },
-      duration: Date.now() - this.session.startedAt.getTime()
+      duration: Date.now() - this.session.startedAt.getTime(),
     };
   }
 

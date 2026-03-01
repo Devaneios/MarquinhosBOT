@@ -9,7 +9,9 @@ config();
 
 export async function registerCommands() {
   const requiredEnvVars = ['MARQUINHOS_TOKEN', 'MARQUINHOS_CLIENT_ID'];
-  const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+  const missingEnvVars = requiredEnvVars.filter(
+    (envVar) => !process.env[envVar],
+  );
 
   if (missingEnvVars.length > 0) {
     logger.error(

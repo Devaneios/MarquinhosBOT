@@ -1,5 +1,11 @@
 import { EmbedBuilder, ButtonStyle } from 'discord.js';
-import { BaseGame, GameSession, GameResult, PlayerStatus, GameQuestion } from '../core/GameTypes';
+import {
+  BaseGame,
+  GameSession,
+  GameResult,
+  PlayerStatus,
+  GameQuestion,
+} from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
 
 interface GeographyData {
@@ -23,7 +29,7 @@ export class GeographyGame extends BaseGame {
       difficulty: 'medium',
       category: 'Brasil',
       hint: 'Nome de um famoso líder seringueiro',
-      explanation: 'Rio Branco, em homenagem ao Barão do Rio Branco'
+      explanation: 'Rio Branco, em homenagem ao Barão do Rio Branco',
     },
     {
       id: '2',
@@ -33,7 +39,7 @@ export class GeographyGame extends BaseGame {
       difficulty: 'easy',
       category: 'Mundo',
       hint: 'Localizada entre Nepal e Tibet',
-      explanation: 'Monte Everest com 8.848 metros de altitude'
+      explanation: 'Monte Everest com 8.848 metros de altitude',
     },
     {
       id: '3',
@@ -43,17 +49,22 @@ export class GeographyGame extends BaseGame {
       difficulty: 'hard',
       category: 'Mundo',
       hint: 'País nórdico conhecido pelos lagos',
-      explanation: 'Finlândia tem mais de 188.000 ilhas'
+      explanation: 'Finlândia tem mais de 188.000 ilhas',
     },
     {
       id: '4',
       question: '🌊 Qual é o rio mais longo do Brasil?',
-      options: ['Rio São Francisco', 'Rio Paraná', 'Rio Amazonas', 'Rio Tocantins'],
+      options: [
+        'Rio São Francisco',
+        'Rio Paraná',
+        'Rio Amazonas',
+        'Rio Tocantins',
+      ],
       correctAnswer: 2,
       difficulty: 'easy',
       category: 'Brasil',
       hint: 'Passa por vários países da América do Sul',
-      explanation: 'Rio Amazonas com cerca de 6.400 km'
+      explanation: 'Rio Amazonas com cerca de 6.400 km',
     },
     {
       id: '5',
@@ -63,7 +74,7 @@ export class GeographyGame extends BaseGame {
       difficulty: 'hard',
       category: 'Mundo',
       hint: 'É um deserto polar',
-      explanation: 'Antártica é tecnicamente o maior deserto (polar)'
+      explanation: 'Antártica é tecnicamente o maior deserto (polar)',
     },
     {
       id: '6',
@@ -73,7 +84,7 @@ export class GeographyGame extends BaseGame {
       difficulty: 'medium',
       category: 'Brasil',
       hint: 'Tem o maior litoral do Brasil',
-      explanation: 'Bahia possui mais de 1.000 km de litoral'
+      explanation: 'Bahia possui mais de 1.000 km de litoral',
     },
     {
       id: '7',
@@ -83,7 +94,7 @@ export class GeographyGame extends BaseGame {
       difficulty: 'medium',
       category: 'Mundo',
       hint: 'Berço da humanidade',
-      explanation: 'África tem 54 países reconhecidos'
+      explanation: 'África tem 54 países reconhecidos',
     },
     {
       id: '8',
@@ -93,7 +104,7 @@ export class GeographyGame extends BaseGame {
       difficulty: 'easy',
       category: 'Brasil',
       hint: 'Centro financeiro do país',
-      explanation: 'São Paulo com mais de 12 milhões de habitantes'
+      explanation: 'São Paulo com mais de 12 milhões de habitantes',
     },
     {
       id: '9',
@@ -103,7 +114,7 @@ export class GeographyGame extends BaseGame {
       difficulty: 'medium',
       category: 'Mundo',
       hint: 'Não é tecnicamente um país',
-      explanation: 'Antártica registrou -89,2°C na estação Vostok'
+      explanation: 'Antártica registrou -89,2°C na estação Vostok',
     },
     {
       id: '10',
@@ -113,7 +124,7 @@ export class GeographyGame extends BaseGame {
       difficulty: 'medium',
       category: 'Mundo',
       hint: 'Percorre toda a costa oeste da América do Sul',
-      explanation: 'Cordilheira dos Andes com mais de 7.000 km'
+      explanation: 'Cordilheira dos Andes com mais de 7.000 km',
     },
     {
       id: '11',
@@ -123,7 +134,7 @@ export class GeographyGame extends BaseGame {
       difficulty: 'easy',
       category: 'Mundo',
       hint: 'Nome significa "pacífico" ou "calmo"',
-      explanation: 'Oceano Pacífico cobre 1/3 da superfície terrestre'
+      explanation: 'Oceano Pacífico cobre 1/3 da superfície terrestre',
     },
     {
       id: '12',
@@ -133,8 +144,8 @@ export class GeographyGame extends BaseGame {
       difficulty: 'medium',
       category: 'Brasil',
       hint: 'Região da caatinga e do forró',
-      explanation: 'Nordeste tem 9 estados'
-    }
+      explanation: 'Nordeste tem 9 estados',
+    },
   ];
 
   constructor(session: GameSession) {
@@ -143,8 +154,11 @@ export class GeographyGame extends BaseGame {
   }
 
   private initializeGame(): void {
-    const selectedQuestions = GameUtils.getRandomElements(this.geographyQuestions, 6);
-    
+    const selectedQuestions = GameUtils.getRandomElements(
+      this.geographyQuestions,
+      6,
+    );
+
     this.session.data = {
       questions: selectedQuestions,
       currentQuestionIndex: 0,
@@ -153,24 +167,24 @@ export class GeographyGame extends BaseGame {
       timeLimit: 40, // 40 seconds per question
       questionStartTime: Date.now(),
       finished: false,
-      hintsUsed: {}
+      hintsUsed: {},
     } as GeographyData;
 
     // Initialize scores and hints
-    this.session.players.forEach(player => {
+    this.session.players.forEach((player) => {
       this.session.data.scores[player.userId] = 0;
       this.session.data.hintsUsed[player.userId] = 0;
     });
   }
 
   async start(): Promise<void> {
-    this.session.players.forEach(p => p.status = PlayerStatus.ACTIVE);
+    this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
     this.session.data.questionStartTime = Date.now();
   }
 
   async handlePlayerAction(userId: string, action: any): Promise<void> {
     const data = this.session.data as GeographyData;
-    
+
     if (data.finished) return;
 
     switch (action.type) {
@@ -188,24 +202,31 @@ export class GeographyGame extends BaseGame {
   private async submitAnswer(userId: string, answer: number): Promise<void> {
     const data = this.session.data as GeographyData;
     const currentQuestion = data.questions[data.currentQuestionIndex];
-    
+
     data.answered[userId] = true;
-    
+
     const isCorrect = answer === currentQuestion.correctAnswer;
     if (isCorrect) {
       const timeBonus = this.calculateTimeBonus();
-      const difficultyBonus = this.getDifficultyBonus(currentQuestion.difficulty);
+      const difficultyBonus = this.getDifficultyBonus(
+        currentQuestion.difficulty,
+      );
       const hintPenalty = data.hintsUsed[userId] * 10; // 10 points penalty per hint used
-      const points = Math.max(50, 100 + timeBonus + difficultyBonus - hintPenalty);
-      
+      const points = Math.max(
+        50,
+        100 + timeBonus + difficultyBonus - hintPenalty,
+      );
+
       data.scores[userId] += points;
       this.updatePlayerScore(userId, data.scores[userId]);
     }
 
     // Check if all players answered or time's up
-    const allAnswered = this.session.players.every(p => data.answered[p.userId]);
+    const allAnswered = this.session.players.every(
+      (p) => data.answered[p.userId],
+    );
     const timeUp = Date.now() - data.questionStartTime > data.timeLimit * 1000;
-    
+
     if (allAnswered || timeUp) {
       await this.nextQuestion();
     }
@@ -225,16 +246,20 @@ export class GeographyGame extends BaseGame {
 
   private getDifficultyBonus(difficulty: string): number {
     switch (difficulty) {
-      case 'easy': return 0;
-      case 'medium': return 30;
-      case 'hard': return 60;
-      default: return 0;
+      case 'easy':
+        return 0;
+      case 'medium':
+        return 30;
+      case 'hard':
+        return 60;
+      default:
+        return 0;
     }
   }
 
   private async nextQuestion(): Promise<void> {
     const data = this.session.data as GeographyData;
-    
+
     data.currentQuestionIndex++;
     data.answered = {};
     data.questionStartTime = Date.now();
@@ -246,56 +271,69 @@ export class GeographyGame extends BaseGame {
 
   getGameEmbed(): EmbedBuilder {
     const data = this.session.data as GeographyData;
-    
+
     if (data.finished) {
       return this.getResultsEmbed();
     }
 
     const currentQuestion = data.questions[data.currentQuestionIndex];
-    const timeRemaining = Math.max(0, data.timeLimit - Math.floor((Date.now() - data.questionStartTime) / 1000));
-    
+    const timeRemaining = Math.max(
+      0,
+      data.timeLimit - Math.floor((Date.now() - data.questionStartTime) / 1000),
+    );
+
     let description = `**Pergunta ${data.currentQuestionIndex + 1}/${data.questions.length}**\n\n`;
     description += `${currentQuestion.question}\n\n`;
-    
+
     currentQuestion.options?.forEach((option, index) => {
       const letter = String.fromCharCode(65 + index); // A, B, C, D
       description += `**${letter})** ${option}\n`;
     });
-    
+
     description += `\n⏱️ **Tempo restante:** ${timeRemaining}s\n`;
     description += `🌍 **Categoria:** ${currentQuestion.category}\n`;
     description += `⭐ **Dificuldade:** ${currentQuestion.difficulty}`;
 
     // Show hint if available and requested
-    const hintRequested = this.session.players.some(p => 
-      this.session.data.hintsUsed[p.userId] > 0 && 
-      data.currentQuestionIndex < data.questions.length
+    const hintRequested = this.session.players.some(
+      (p) =>
+        this.session.data.hintsUsed[p.userId] > 0 &&
+        data.currentQuestionIndex < data.questions.length,
     );
-    
+
     if (hintRequested && currentQuestion.hint) {
       description += `\n\n💡 **Dica:** ${currentQuestion.hint}`;
     }
 
     // Show who answered
-    const answeredPlayers = this.session.players.filter(p => data.answered[p.userId]);
+    const answeredPlayers = this.session.players.filter(
+      (p) => data.answered[p.userId],
+    );
     if (answeredPlayers.length > 0) {
-      description += `\n\n✅ **Responderam:** ${answeredPlayers.map(p => p.username).join(', ')}`;
+      description += `\n\n✅ **Responderam:** ${answeredPlayers.map((p) => p.username).join(', ')}`;
     }
 
-    const difficultyColors = { easy: 0x00ff00, medium: 0xffaa00, hard: 0xff0000 };
-    const color = difficultyColors[currentQuestion.difficulty as keyof typeof difficultyColors] || 0x3498db;
+    const difficultyColors = {
+      easy: 0x00ff00,
+      medium: 0xffaa00,
+      hard: 0xff0000,
+    };
+    const color =
+      difficultyColors[
+        currentQuestion.difficulty as keyof typeof difficultyColors
+      ] || 0x3498db;
 
     return GameUtils.createGameEmbed('🌍 Geografia Maluca', description, color);
   }
 
   private getResultsEmbed(): EmbedBuilder {
     const data = this.session.data as GeographyData;
-    const sortedPlayers = this.session.players.sort((a, b) => 
-      (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0)
+    const sortedPlayers = this.session.players.sort(
+      (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
     let description = '🎉 **Resultados Finais!**\n\n';
-    
+
     sortedPlayers.forEach((player, index) => {
       const position = index + 1;
       const score = data.scores[player.userId] || 0;
@@ -311,33 +349,41 @@ export class GeographyGame extends BaseGame {
     description += '\n🗺️ **Estatísticas:**\n';
     description += `• Total de perguntas: ${data.questions.length}\n`;
     description += `• Tempo por pergunta: ${data.timeLimit}s\n`;
-    
-    const avgScore = Object.values(data.scores).reduce((a, b) => a + b, 0) / this.session.players.length;
+
+    const avgScore =
+      Object.values(data.scores).reduce((a, b) => a + b, 0) /
+      this.session.players.length;
     const totalHints = Object.values(data.hintsUsed).reduce((a, b) => a + b, 0);
     description += `• Pontuação média: ${Math.round(avgScore)}\n`;
     description += `• Total de dicas usadas: ${totalHints}`;
 
-    return GameUtils.createGameEmbed('🏆 Geografia Maluca - Resultados', description, 0x00ff00);
+    return GameUtils.createGameEmbed(
+      '🏆 Geografia Maluca - Resultados',
+      description,
+      0x00ff00,
+    );
   }
 
   getActionButtons() {
     const data = this.session.data as GeographyData;
-    
+
     if (data.finished) return [];
 
     const currentQuestion = data.questions[data.currentQuestionIndex];
     if (!currentQuestion.options) return [];
 
     const answerButtons = [];
-    const labels = currentQuestion.options.map((_, index) => String.fromCharCode(65 + index));
+    const labels = currentQuestion.options.map((_, index) =>
+      String.fromCharCode(65 + index),
+    );
     const customIds = labels.map((_, index) => `geo_answer_${index}`);
 
     answerButtons.push(
       GameUtils.createGameButtons({
         labels,
         customIds,
-        styles: labels.map(() => ButtonStyle.Primary)
-      })
+        styles: labels.map(() => ButtonStyle.Primary),
+      }),
     );
 
     // Hint button
@@ -346,8 +392,8 @@ export class GeographyGame extends BaseGame {
         GameUtils.createGameButtons({
           labels: ['💡 Dica (-10 pontos)'],
           customIds: ['geo_hint'],
-          styles: [ButtonStyle.Secondary]
-        })
+          styles: [ButtonStyle.Secondary],
+        }),
       );
     }
 
@@ -356,8 +402,8 @@ export class GeographyGame extends BaseGame {
 
   async finish(): Promise<GameResult> {
     const data = this.session.data as GeographyData;
-    const sortedPlayers = this.session.players.sort((a, b) => 
-      (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0)
+    const sortedPlayers = this.session.players.sort(
+      (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
     const winners = sortedPlayers.slice(0, Math.min(3, sortedPlayers.length));
@@ -367,31 +413,36 @@ export class GeographyGame extends BaseGame {
       const baseRewards = this.calculateRewards(player, index + 1);
       const score = data.scores[player.userId] || 0;
       const hintsUsed = data.hintsUsed[player.userId] || 0;
-      
+
       // Bonus XP based on performance
       baseRewards.xp += Math.floor(score / 8);
-      
+
       // Penalty for using too many hints
       if (hintsUsed > 2) {
         baseRewards.xp = Math.max(5, baseRewards.xp - (hintsUsed - 2) * 5);
       }
-      
+
       rewards[player.userId] = baseRewards;
     });
 
     return {
       sessionId: this.session.id,
-      winners: winners.map(p => p.userId),
+      winners: winners.map((p) => p.userId),
       losers: [],
       rewards,
       stats: {
         questionsAnswered: data.questions.length,
-        averageScore: Object.values(data.scores).reduce((a, b) => a + b, 0) / this.session.players.length,
+        averageScore:
+          Object.values(data.scores).reduce((a, b) => a + b, 0) /
+          this.session.players.length,
         highestScore: Math.max(...Object.values(data.scores)),
-        totalHintsUsed: Object.values(data.hintsUsed).reduce((a, b) => a + b, 0),
-        categories: [...new Set(data.questions.map(q => q.category))]
+        totalHintsUsed: Object.values(data.hintsUsed).reduce(
+          (a, b) => a + b,
+          0,
+        ),
+        categories: [...new Set(data.questions.map((q) => q.category))],
       },
-      duration: Date.now() - this.session.startedAt.getTime()
+      duration: Date.now() - this.session.startedAt.getTime(),
     };
   }
 

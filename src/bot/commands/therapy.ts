@@ -8,12 +8,13 @@ export const therapy: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('therapy')
     .setDescription('Terapia musical personalizada baseada em IA')
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('start')
         .setDescription('Inicia uma sessão de terapia musical')
-        .addStringOption(option =>
-          option.setName('mood')
+        .addStringOption((option) =>
+          option
+            .setName('mood')
             .setDescription('Como você está se sentindo?')
             .setRequired(true)
             .addChoices(
@@ -22,28 +23,36 @@ export const therapy: SlashCommand = {
               { name: '😤 Estressado', value: 'stressed' },
               { name: '😴 Cansado', value: 'tired' },
               { name: '😊 Neutro', value: 'neutral' },
-              { name: '😄 Feliz', value: 'happy' }
-            ))
-        .addIntegerOption(option =>
-          option.setName('energy')
+              { name: '😄 Feliz', value: 'happy' },
+            ),
+        )
+        .addIntegerOption((option) =>
+          option
+            .setName('energy')
             .setDescription('Nível de energia (1-10)')
             .setRequired(true)
             .setMinValue(1)
-            .setMaxValue(10))
-        .addIntegerOption(option =>
-          option.setName('stress')
+            .setMaxValue(10),
+        )
+        .addIntegerOption((option) =>
+          option
+            .setName('stress')
             .setDescription('Nível de estresse (1-10)')
             .setRequired(true)
             .setMinValue(1)
-            .setMaxValue(10))
-        .addIntegerOption(option =>
-          option.setName('focus')
+            .setMaxValue(10),
+        )
+        .addIntegerOption((option) =>
+          option
+            .setName('focus')
             .setDescription('Nível de foco (1-10)')
             .setRequired(true)
             .setMinValue(1)
-            .setMaxValue(10))
-        .addStringOption(option =>
-          option.setName('context')
+            .setMaxValue(10),
+        )
+        .addStringOption((option) =>
+          option
+            .setName('context')
             .setDescription('O que você está fazendo?')
             .setRequired(true)
             .addChoices(
@@ -52,22 +61,29 @@ export const therapy: SlashCommand = {
               { name: '🏃 Exercitando', value: 'exercise' },
               { name: '😌 Relaxando', value: 'relax' },
               { name: '😴 Tentando dormir', value: 'sleep' },
-              { name: '🎮 Jogando', value: 'gaming' }
-            ))
-        .addStringOption(option =>
-          option.setName('description')
+              { name: '🎮 Jogando', value: 'gaming' },
+            ),
+        )
+        .addStringOption((option) =>
+          option
+            .setName('description')
             .setDescription('Descreva como você está se sentindo (opcional)')
-            .setRequired(false)))
-    .addSubcommand(subcommand =>
+            .setRequired(false),
+        ),
+    )
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('end')
         .setDescription('Finaliza a sessão de terapia atual')
-        .addStringOption(option =>
-          option.setName('session-id')
+        .addStringOption((option) =>
+          option
+            .setName('session-id')
             .setDescription('ID da sessão de terapia')
-            .setRequired(true))
-        .addStringOption(option =>
-          option.setName('final-mood')
+            .setRequired(true),
+        )
+        .addStringOption((option) =>
+          option
+            .setName('final-mood')
             .setDescription('Como você está se sentindo agora?')
             .setRequired(true)
             .addChoices(
@@ -76,21 +92,29 @@ export const therapy: SlashCommand = {
               { name: '😤 Estressado', value: 'stressed' },
               { name: '😴 Cansado', value: 'tired' },
               { name: '😊 Neutro', value: 'neutral' },
-              { name: '😄 Feliz', value: 'happy' }
-            ))
-        .addIntegerOption(option =>
-          option.setName('satisfaction')
+              { name: '😄 Feliz', value: 'happy' },
+            ),
+        )
+        .addIntegerOption((option) =>
+          option
+            .setName('satisfaction')
             .setDescription('Quão satisfeito você ficou com a sessão? (1-10)')
             .setRequired(true)
             .setMinValue(1)
-            .setMaxValue(10)))
-    .addSubcommand(subcommand =>
+            .setMaxValue(10),
+        ),
+    )
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('insights')
-        .setDescription('Vê insights da sua jornada de terapia musical')),
+        .setDescription('Vê insights da sua jornada de terapia musical'),
+    ),
   execute: async (interaction) => {
     if (!interaction.guildId) {
-      await interaction.reply({ content: 'Este comando só pode ser usado em um servidor.', ephemeral: true });
+      await interaction.reply({
+        content: 'Este comando só pode ser usado em um servidor.',
+        ephemeral: true,
+      });
       return;
     }
 
@@ -108,30 +132,57 @@ export const therapy: SlashCommand = {
           const context = interaction.options.getString('context', true);
           const description = interaction.options.getString('description');
 
-          const sessionResponse = await marquinhosApi.post('/music-therapist/session/start', {
-            userId: interaction.user.id,
-            guildId: interaction.guildId,
-            mood,
-            energy,
-            stress,
-            focus,
-            context,
-            description,
-            goals: ['stress_reduction', 'mood_improvement']
-          });
+          const sessionResponse = await marquinhosApi.post(
+            '/music-therapist/session/start',
+            {
+              userId: interaction.user.id,
+              guildId: interaction.guildId,
+              mood,
+              energy,
+              stress,
+              focus,
+              context,
+              description,
+              goals: ['stress_reduction', 'mood_improvement'],
+            },
+          );
 
           const session = sessionResponse.data;
 
-          const sessionEmbed = interaction.client.baseEmbed()
+          const sessionEmbed = interaction.client
+            .baseEmbed()
             .setTitle('🧘 Sessão de Terapia Musical Iniciada')
-            .setDescription('Sua sessão personalizada foi criada com base no seu estado atual')
+            .setDescription(
+              'Sua sessão personalizada foi criada com base no seu estado atual',
+            )
             .addFields(
-              { name: '🆔 ID da Sessão', value: `\`${session.sessionId}\``, inline: true },
-              { name: '🎯 Foco Terapêutico', value: getTherapyFocus(mood, stress, energy), inline: true },
-              { name: '🎵 Recomendações', value: session.recommendations.slice(0, 3).map((rec: any) => 
-                `• **${rec.title}** - ${rec.artist}\n  _${rec.therapeuticPurpose}_`
-              ).join('\n'), inline: false },
-              { name: '💡 Dica', value: 'Use `/therapy end` quando terminar para registrar os resultados!', inline: false }
+              {
+                name: '🆔 ID da Sessão',
+                value: `\`${session.sessionId}\``,
+                inline: true,
+              },
+              {
+                name: '🎯 Foco Terapêutico',
+                value: getTherapyFocus(mood, stress, energy),
+                inline: true,
+              },
+              {
+                name: '🎵 Recomendações',
+                value: session.recommendations
+                  .slice(0, 3)
+                  .map(
+                    (rec: any) =>
+                      `• **${rec.title}** - ${rec.artist}\n  _${rec.therapeuticPurpose}_`,
+                  )
+                  .join('\n'),
+                inline: false,
+              },
+              {
+                name: '💡 Dica',
+                value:
+                  'Use `/therapy end` quando terminar para registrar os resultados!',
+                inline: false,
+              },
             )
             .setColor('#9B59B6');
 
@@ -141,58 +192,118 @@ export const therapy: SlashCommand = {
         case 'end':
           const sessionId = interaction.options.getString('session-id', true);
           const finalMood = interaction.options.getString('final-mood', true);
-          const satisfaction = interaction.options.getInteger('satisfaction', true);
+          const satisfaction = interaction.options.getInteger(
+            'satisfaction',
+            true,
+          );
 
-          const endResponse = await marquinhosApi.put(`/music-therapist/session/${sessionId}/end`, {
-            mood: finalMood,
-            energy: Math.max(1, Math.min(10, energy + 2)), // Simulated improvement
-            stress: Math.max(1, stress - 1), // Simulated stress reduction
-            focus: Math.max(1, Math.min(10, focus + 1)), // Simulated focus improvement
-            satisfaction,
-            notes: 'Sessão concluída via Discord'
-          });
+          const endResponse = await marquinhosApi.put(
+            `/music-therapist/session/${sessionId}/end`,
+            {
+              mood: finalMood,
+              energy: Math.max(1, Math.min(10, energy + 2)), // Simulated improvement
+              stress: Math.max(1, stress - 1), // Simulated stress reduction
+              focus: Math.max(1, Math.min(10, focus + 1)), // Simulated focus improvement
+              satisfaction,
+              notes: 'Sessão concluída via Discord',
+            },
+          );
 
           if (!endResponse.data) {
-            await interaction.editReply({ content: 'Sessão não encontrada. Verifique o ID da sessão.' });
+            await interaction.editReply({
+              content: 'Sessão não encontrada. Verifique o ID da sessão.',
+            });
             return;
           }
 
           const endedSession = endResponse.data;
           const improvement = calculateImprovement(mood, finalMood);
 
-          const endEmbed = interaction.client.baseEmbed()
+          const endEmbed = interaction.client
+            .baseEmbed()
             .setTitle('✅ Sessão de Terapia Finalizada')
             .setDescription('Obrigado por usar a terapia musical!')
             .addFields(
               { name: '📊 Progresso', value: improvement, inline: true },
-              { name: '⭐ Sua Avaliação', value: `${satisfaction}/10`, inline: true },
-              { name: '🎵 Músicas Efetivas', value: endedSession.recommendations.filter((r: any) => (r.effectiveness || 0) > 7).length.toString(), inline: true },
-              { name: '💡 Recomendação', value: getPostSessionAdvice(satisfaction, finalMood), inline: false }
+              {
+                name: '⭐ Sua Avaliação',
+                value: `${satisfaction}/10`,
+                inline: true,
+              },
+              {
+                name: '🎵 Músicas Efetivas',
+                value: endedSession.recommendations
+                  .filter((r: any) => (r.effectiveness || 0) > 7)
+                  .length.toString(),
+                inline: true,
+              },
+              {
+                name: '💡 Recomendação',
+                value: getPostSessionAdvice(satisfaction, finalMood),
+                inline: false,
+              },
             )
-            .setColor(satisfaction >= 7 ? '#27AE60' : satisfaction >= 4 ? '#F39C12' : '#E74C3C');
+            .setColor(
+              satisfaction >= 7
+                ? '#27AE60'
+                : satisfaction >= 4
+                  ? '#F39C12'
+                  : '#E74C3C',
+            );
 
           await interaction.editReply({ embeds: [endEmbed] });
           break;
 
         case 'insights':
-          const insightsResponse = await marquinhosApi.get(`/music-therapist/insights/${interaction.user.id}/${interaction.guildId}`);
-          
+          const insightsResponse = await marquinhosApi.get(
+            `/music-therapist/insights/${interaction.user.id}/${interaction.guildId}`,
+          );
+
           if (!insightsResponse.data) {
-            await interaction.editReply({ content: 'Você ainda não tem insights suficientes. Complete algumas sessões de terapia primeiro!' });
+            await interaction.editReply({
+              content:
+                'Você ainda não tem insights suficientes. Complete algumas sessões de terapia primeiro!',
+            });
             return;
           }
 
           const insights = insightsResponse.data;
 
-          const insightsEmbed = interaction.client.baseEmbed()
+          const insightsEmbed = interaction.client
+            .baseEmbed()
             .setTitle(`📈 Insights de Terapia Musical`)
             .setDescription(`Sua jornada de bem-estar através da música`)
             .addFields(
-              { name: '📊 Estatísticas', value: `Sessões: ${insights.totalSessions}\nCompletas: ${insights.completedSessions}\nMelhora Média: ${insights.averageImprovement.toFixed(1)}`, inline: true },
-              { name: '🏆 Abordagens Efetivas', value: insights.mostEffectiveApproaches.join('\n') || 'Ainda coletando dados', inline: true },
-              { name: '📋 Preocupações Comuns', value: insights.commonConcerns.join('\n') || 'Nenhuma identificada', inline: true },
-              { name: '📈 Tendência', value: getTrendDescription(insights.progressTrend), inline: false },
-              { name: '💡 Recomendações Personalizadas', value: insights.personalizedRecommendations.join('\n') || 'Continue suas sessões!', inline: false }
+              {
+                name: '📊 Estatísticas',
+                value: `Sessões: ${insights.totalSessions}\nCompletas: ${insights.completedSessions}\nMelhora Média: ${insights.averageImprovement.toFixed(1)}`,
+                inline: true,
+              },
+              {
+                name: '🏆 Abordagens Efetivas',
+                value:
+                  insights.mostEffectiveApproaches.join('\n') ||
+                  'Ainda coletando dados',
+                inline: true,
+              },
+              {
+                name: '📋 Preocupações Comuns',
+                value:
+                  insights.commonConcerns.join('\n') || 'Nenhuma identificada',
+                inline: true,
+              },
+              {
+                name: '📈 Tendência',
+                value: getTrendDescription(insights.progressTrend),
+                inline: false,
+              },
+              {
+                name: '💡 Recomendações Personalizadas',
+                value:
+                  insights.personalizedRecommendations.join('\n') ||
+                  'Continue suas sessões!',
+                inline: false,
+              },
             )
             .setColor('#8E44AD');
 
@@ -201,7 +312,10 @@ export const therapy: SlashCommand = {
       }
     } catch (error) {
       console.error('Error with therapy:', error);
-      await interaction.editReply({ content: 'Erro ao processar terapia musical. Tente novamente mais tarde.' });
+      await interaction.editReply({
+        content:
+          'Erro ao processar terapia musical. Tente novamente mais tarde.',
+      });
     }
   },
   cooldown: 10,
@@ -216,7 +330,14 @@ function getTherapyFocus(mood: string, stress: number, energy: number): string {
 }
 
 function calculateImprovement(initialMood: string, finalMood: string): string {
-  const moodValues = { sad: 1, anxious: 2, stressed: 3, tired: 4, neutral: 5, happy: 6 };
+  const moodValues = {
+    sad: 1,
+    anxious: 2,
+    stressed: 3,
+    tired: 4,
+    neutral: 5,
+    happy: 6,
+  };
   const initial = moodValues[initialMood as keyof typeof moodValues] || 5;
   const final = moodValues[finalMood as keyof typeof moodValues] || 5;
   const improvement = final - initial;
@@ -227,17 +348,24 @@ function calculateImprovement(initialMood: string, finalMood: string): string {
 }
 
 function getPostSessionAdvice(satisfaction: number, finalMood: string): string {
-  if (satisfaction >= 8) return 'Ótimo! Continue usando a terapia musical regularmente.';
-  if (satisfaction >= 6) return 'Bom progresso! Tente sessões mais longas na próxima vez.';
-  if (satisfaction >= 4) return 'Progresso moderado. Experimente gêneros diferentes.';
+  if (satisfaction >= 8)
+    return 'Ótimo! Continue usando a terapia musical regularmente.';
+  if (satisfaction >= 6)
+    return 'Bom progresso! Tente sessões mais longas na próxima vez.';
+  if (satisfaction >= 4)
+    return 'Progresso moderado. Experimente gêneros diferentes.';
   return 'Vamos ajustar a abordagem. Tente descrever melhor seus sentimentos na próxima vez.';
 }
 
 function getTrendDescription(trend: string): string {
   switch (trend) {
-    case 'improving': return '📈 Melhorando consistentemente';
-    case 'declining': return '📉 Precisa de mais atenção';
-    case 'stable': return '➡️ Progresso estável';
-    default: return '📊 Dados insuficientes';
+    case 'improving':
+      return '📈 Melhorando consistentemente';
+    case 'declining':
+      return '📉 Precisa de mais atenção';
+    case 'stable':
+      return '➡️ Progresso estável';
+    default:
+      return '📊 Dados insuficientes';
   }
 }

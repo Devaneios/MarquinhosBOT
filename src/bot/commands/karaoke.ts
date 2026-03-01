@@ -6,47 +6,47 @@ export const karaoke: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('karaoke')
     .setDescription('Sistema de karaokê')
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('start')
-        .setDescription('Inicia uma sessão de karaokê')
+        .setDescription('Inicia uma sessão de karaokê'),
     )
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('join')
-        .setDescription('Entra na sessão de karaokê ativa')
+        .setDescription('Entra na sessão de karaokê ativa'),
     )
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('song')
         .setDescription('Define a música atual do karaokê')
-        .addStringOption(option =>
+        .addStringOption((option) =>
           option
             .setName('musica')
             .setDescription('Nome da música')
-            .setRequired(true)
-        )
+            .setRequired(true),
+        ),
     )
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('score')
-        .setDescription('Mostra o ranking da sessão atual')
+        .setDescription('Mostra o ranking da sessão atual'),
     )
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('end')
-        .setDescription('Encerra a sessão de karaokê')
+    .addSubcommand((subcommand) =>
+      subcommand.setName('end').setDescription('Encerra a sessão de karaokê'),
     ),
   execute: async (interaction) => {
     await interaction.deferReply();
-    
+
     const subcommand = interaction.options.getSubcommand();
     const userId = interaction.user.id;
     const guildId = interaction.guildId;
     const channelId = interaction.channelId;
-    
+
     if (!guildId) {
-      await interaction.editReply('Este comando só pode ser usado em servidores!');
+      await interaction.editReply(
+        'Este comando só pode ser usado em servidores!',
+      );
       return;
     }
 
@@ -76,7 +76,12 @@ export const karaoke: SlashCommand = {
   cooldown: 5,
 };
 
-async function handleStartKaraoke(interaction: any, userId: string, guildId: string, channelId: string) {
+async function handleStartKaraoke(
+  interaction: any,
+  userId: string,
+  guildId: string,
+  channelId: string,
+) {
   try {
     const response = await axios.post(
       `${process.env.MARQUINHOS_API_URL}/api/karaoke/session`,
@@ -86,15 +91,16 @@ async function handleStartKaraoke(interaction: any, userId: string, guildId: str
           'Content-Type': 'application/json',
           Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
         },
-      }
+      },
     );
 
-    const embed = interaction.client.baseEmbed()
+    const embed = interaction.client
+      .baseEmbed()
       .setTitle('🎤 Sessão de Karaokê Iniciada!')
       .setDescription('Use `/karaoke join` para participar!')
       .addFields(
         { name: 'Host', value: `<@${userId}>`, inline: true },
-        { name: 'Participantes', value: '1', inline: true }
+        { name: 'Participantes', value: '1', inline: true },
       );
 
     await interaction.editReply({ embeds: [embed] });
@@ -103,18 +109,25 @@ async function handleStartKaraoke(interaction: any, userId: string, guildId: str
   }
 }
 
-async function handleJoinKaraoke(interaction: any, userId: string, guildId: string, channelId: string) {
+async function handleJoinKaraoke(
+  interaction: any,
+  userId: string,
+  guildId: string,
+  channelId: string,
+) {
   try {
     // Get active session
     const sessionResponse = await axios.get(
       `${process.env.MARQUINHOS_API_URL}/api/karaoke/active/${guildId}/${channelId}`,
       {
         headers: { Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}` },
-      }
+      },
     );
 
     if (!sessionResponse.data.data) {
-      await interaction.editReply('Nenhuma sessão de karaokê ativa neste canal.');
+      await interaction.editReply(
+        'Nenhuma sessão de karaokê ativa neste canal.',
+      );
       return;
     }
 
@@ -127,10 +140,12 @@ async function handleJoinKaraoke(interaction: any, userId: string, guildId: stri
           'Content-Type': 'application/json',
           Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
         },
-      }
+      },
     );
 
-    await interaction.editReply(`🎤 ${interaction.user.username} entrou no karaokê!`);
+    await interaction.editReply(
+      `🎤 ${interaction.user.username} entrou no karaokê!`,
+    );
   } catch (error) {
     await interaction.editReply('Erro ao entrar na sessão.');
   }
@@ -138,37 +153,48 @@ async function handleJoinKaraoke(interaction: any, userId: string, guildId: stri
 
 async function handleSetSong(interaction: any, userId: string) {
   const musicQuery = interaction.options.getString('musica');
-  
+
   // Parse artist and title
   const parts = musicQuery.split(' - ');
   const track = {
     title: parts.length > 1 ? parts[1] : musicQuery,
-    artist: parts.length > 1 ? parts[0] : 'Artista Desconhecido'
+    artist: parts.length > 1 ? parts[0] : 'Artista Desconhecido',
   };
 
-  await interaction.editReply(`🎵 Música definida: **${track.artist} - ${track.title}**\nComece a cantar!`);
+  await interaction.editReply(
+    `🎵 Música definida: **${track.artist} - ${track.title}**\nComece a cantar!`,
+  );
 }
 
-async function handleShowScore(interaction: any, guildId: string, channelId: string) {
+async function handleShowScore(
+  interaction: any,
+  guildId: string,
+  channelId: string,
+) {
   try {
     const sessionResponse = await axios.get(
       `${process.env.MARQUINHOS_API_URL}/api/karaoke/active/${guildId}/${channelId}`,
       {
         headers: { Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}` },
-      }
+      },
     );
 
     if (!sessionResponse.data.data) {
-      await interaction.editReply('Nenhuma sessão ativa para mostrar pontuação.');
+      await interaction.editReply(
+        'Nenhuma sessão ativa para mostrar pontuação.',
+      );
       return;
     }
 
-    const embed = interaction.client.baseEmbed()
+    const embed = interaction.client
+      .baseEmbed()
       .setTitle('🏆 Ranking do Karaokê')
       .setDescription('Pontuações da sessão atual')
-      .addFields(
-        { name: 'Participantes', value: sessionResponse.data.data.participants.length.toString(), inline: true }
-      );
+      .addFields({
+        name: 'Participantes',
+        value: sessionResponse.data.data.participants.length.toString(),
+        inline: true,
+      });
 
     await interaction.editReply({ embeds: [embed] });
   } catch (error) {
@@ -176,6 +202,13 @@ async function handleShowScore(interaction: any, guildId: string, channelId: str
   }
 }
 
-async function handleEndKaraoke(interaction: any, userId: string, guildId: string, channelId: string) {
-  await interaction.editReply('🎤 Sessão de karaokê encerrada! Obrigado por participar!');
+async function handleEndKaraoke(
+  interaction: any,
+  userId: string,
+  guildId: string,
+  channelId: string,
+) {
+  await interaction.editReply(
+    '🎤 Sessão de karaokê encerrada! Obrigado por participar!',
+  );
 }

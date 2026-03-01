@@ -7,11 +7,15 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ChatInputCommandInteraction,
-  ComponentType
+  ComponentType,
 } from 'discord.js';
 import { SlashCommand } from '@marquinhos/types';
 import { GameManager } from '@marquinhos/game/core/GameManager';
-import { GameType, GAME_CONFIGS, GAME_COOLDOWNS } from '@marquinhos/game/core/GameTypes';
+import {
+  GameType,
+  GAME_CONFIGS,
+  GAME_COOLDOWNS,
+} from '@marquinhos/game/core/GameTypes';
 import { GameUtils } from '@marquinhos/game/core/GameUtils';
 import { XPSystem } from '@marquinhos/utils/xpSystem';
 
@@ -46,17 +50,19 @@ const gameManager = GameManager.getInstance();
 export const games: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('games')
-    .setDescription('Central de jogos do Marquinhos - 20 mini games disponíveis!')
-    .addSubcommand(subcommand =>
+    .setDescription(
+      'Central de jogos do Marquinhos - 20 mini games disponíveis!',
+    )
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('list')
-        .setDescription('Ver todos os jogos disponíveis')
+        .setDescription('Ver todos os jogos disponíveis'),
     )
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('play')
         .setDescription('Iniciar um jogo específico')
-        .addStringOption(option =>
+        .addStringOption((option) =>
           option
             .setName('game')
             .setDescription('Escolha o jogo')
@@ -77,23 +83,26 @@ export const games: SlashCommand = {
               { name: '🌐 Traduzindo', value: 'translate' },
               { name: '⭕ Jogo da Velha', value: 'tic_tac_toe' },
               { name: '🔐 Código Secreto', value: 'secret_code' },
-              { name: '✂️ Pedra, Papel, Tesoura', value: 'rock_paper_scissors' },
+              {
+                name: '✂️ Pedra, Papel, Tesoura',
+                value: 'rock_paper_scissors',
+              },
               { name: '🏃 Labirinto Mental', value: 'maze' },
               { name: '➕ Speed Math', value: 'speed_math' },
               { name: '⚔️ Battle Royale', value: 'battle_royale' },
-              { name: '🗺️ Caça ao Tesouro', value: 'treasure_hunt' }
-            )
-        )
+              { name: '🗺️ Caça ao Tesouro', value: 'treasure_hunt' },
+            ),
+        ),
     )
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('stats')
-        .setDescription('Ver suas estatísticas de jogos')
+        .setDescription('Ver suas estatísticas de jogos'),
     )
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('ranking')
-        .setDescription('Ver ranking dos melhores jogadores')
+        .setDescription('Ver ranking dos melhores jogadores'),
     ),
 
   execute: async (interaction: ChatInputCommandInteraction) => {
@@ -115,45 +124,45 @@ export const games: SlashCommand = {
         break;
     }
   },
-  cooldown: 5
+  cooldown: 5,
 };
 
 async function showGameList(interaction: ChatInputCommandInteraction) {
   const embed = new EmbedBuilder()
     .setTitle('🎮 Central de Jogos do Marquinhos')
     .setDescription('Escolha uma categoria e divirta-se!')
-    .setColor(0x00AE86)
+    .setColor(0x00ae86)
     .addFields(
       {
         name: '🎰 Cassino e Sorte',
         value: `🎰 Caça-níqueis\n🃏 Blackjack\n🎲 Dados Mágicos\n🔫 Roleta Russa\n🎫 Loteria`,
-        inline: true
+        inline: true,
       },
       {
         name: '🧠 Conhecimento',
         value: `🎵 Quiz Musical\n🌍 Geografia Maluca\n📺 Cultura Pop\n🇧🇷 História do Brasil`,
-        inline: true
+        inline: true,
       },
       {
         name: '📝 Palavras',
         value: `🔤 Palavra Secreta\n🔀 Anagrama Insano\n🎤 Rima Rápida\n🌐 Traduzindo`,
-        inline: true
+        inline: true,
       },
       {
         name: '🧩 Estratégia',
         value: `⭕ Jogo da Velha\n🔐 Código Secreto\n✂️ Pedra, Papel, Tesoura\n🏃 Labirinto Mental`,
-        inline: true
+        inline: true,
       },
       {
         name: '🏆 Multiplayer',
         value: `➕ Speed Math\n⚔️ Battle Royale\n🗺️ Caça ao Tesouro`,
-        inline: true
+        inline: true,
       },
       {
         name: '🎯 Como Jogar',
         value: `Use \`/games play\` para escolher um jogo!\nCada jogo dá XP baseado na performance.`,
-        inline: false
-      }
+        inline: false,
+      },
     )
     .setTimestamp();
 
@@ -185,58 +194,69 @@ async function showGameList(interaction: ChatInputCommandInteraction) {
         .setLabel('🏆 Multiplayer')
         .setValue('multiplayer')
         .setDescription('Jogos competitivos')
-        .setEmoji('🏆')
+        .setEmoji('🏆'),
     );
 
-  const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu);
+  const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+    selectMenu,
+  );
 
   await interaction.reply({
     embeds: [embed],
-    components: [row]
+    components: [row],
   });
 }
 
-async function startGame(interaction: ChatInputCommandInteraction, gameKey: string) {
+async function startGame(
+  interaction: ChatInputCommandInteraction,
+  gameKey: string,
+) {
   const userId = interaction.user.id;
   const guildId = interaction.guildId!;
   const channelId = interaction.channelId;
 
   // Convert key to GameType
   const gameTypeMap: Record<string, GameType> = {
-    'slots': GameType.SLOTS,
-    'blackjack': GameType.BLACKJACK,
-    'dice': GameType.DICE,
-    'roulette': GameType.ROULETTE,
-    'lottery': GameType.LOTTERY,
-    'music_quiz': GameType.MUSIC_QUIZ,
-    'geography': GameType.GEOGRAPHY,
-    'pop_culture': GameType.POP_CULTURE,
-    'brazil_history': GameType.BRAZIL_HISTORY,
-    'secret_word': GameType.SECRET_WORD,
-    'anagram': GameType.ANAGRAM,
-    'rhyme': GameType.RHYME,
-    'translate': GameType.TRANSLATE,
-    'tic_tac_toe': GameType.TIC_TAC_TOE,
-    'secret_code': GameType.SECRET_CODE,
-    'rock_paper_scissors': GameType.ROCK_PAPER_SCISSORS,
-    'maze': GameType.MAZE,
-    'speed_math': GameType.SPEED_MATH,
-    'battle_royale': GameType.BATTLE_ROYALE,
-    'treasure_hunt': GameType.TREASURE_HUNT
+    slots: GameType.SLOTS,
+    blackjack: GameType.BLACKJACK,
+    dice: GameType.DICE,
+    roulette: GameType.ROULETTE,
+    lottery: GameType.LOTTERY,
+    music_quiz: GameType.MUSIC_QUIZ,
+    geography: GameType.GEOGRAPHY,
+    pop_culture: GameType.POP_CULTURE,
+    brazil_history: GameType.BRAZIL_HISTORY,
+    secret_word: GameType.SECRET_WORD,
+    anagram: GameType.ANAGRAM,
+    rhyme: GameType.RHYME,
+    translate: GameType.TRANSLATE,
+    tic_tac_toe: GameType.TIC_TAC_TOE,
+    secret_code: GameType.SECRET_CODE,
+    rock_paper_scissors: GameType.ROCK_PAPER_SCISSORS,
+    maze: GameType.MAZE,
+    speed_math: GameType.SPEED_MATH,
+    battle_royale: GameType.BATTLE_ROYALE,
+    treasure_hunt: GameType.TREASURE_HUNT,
   };
 
   const gameType = gameTypeMap[gameKey];
   if (!gameType) {
-    await interaction.reply({ content: 'Jogo não encontrado!', ephemeral: true });
+    await interaction.reply({
+      content: 'Jogo não encontrado!',
+      ephemeral: true,
+    });
     return;
   }
 
   // Check cooldown
   if (!gameManager.canUserPlay(userId, gameType)) {
-    const cooldownRemaining = gameManager.getUserCooldownRemaining(userId, gameType);
+    const cooldownRemaining = gameManager.getUserCooldownRemaining(
+      userId,
+      gameType,
+    );
     await interaction.reply({
       content: `⏰ Você precisa aguardar ${GameUtils.formatCooldownTime(cooldownRemaining)} antes de jogar novamente.`,
-      ephemeral: true
+      ephemeral: true,
     });
     return;
   }
@@ -246,7 +266,7 @@ async function startGame(interaction: ChatInputCommandInteraction, gameKey: stri
   if (existingSession) {
     await interaction.reply({
       content: '🎮 Você já está em um jogo! Termine o atual primeiro.',
-      ephemeral: true
+      ephemeral: true,
     });
     return;
   }
@@ -256,14 +276,19 @@ async function startGame(interaction: ChatInputCommandInteraction, gameKey: stri
   if (channelSession) {
     await interaction.reply({
       content: '🎮 Já há um jogo acontecendo neste canal!',
-      ephemeral: true
+      ephemeral: true,
     });
     return;
   }
 
   // Create game session
-  const session = gameManager.createSession(gameType, guildId, channelId, userId);
-  
+  const session = gameManager.createSession(
+    gameType,
+    guildId,
+    channelId,
+    userId,
+  );
+
   // Add players (check for multiplayer requirements)
   const config = GAME_CONFIGS[gameType];
   session.players.push({
@@ -271,7 +296,7 @@ async function startGame(interaction: ChatInputCommandInteraction, gameKey: stri
     username: interaction.user.username,
     score: 0,
     status: 'waiting' as any,
-    joinedAt: new Date()
+    joinedAt: new Date(),
   });
 
   // Create game instance
@@ -282,7 +307,7 @@ async function startGame(interaction: ChatInputCommandInteraction, gameKey: stri
   } catch (error) {
     await interaction.reply({
       content: '❌ Erro ao criar o jogo. Tente novamente.',
-      ephemeral: true
+      ephemeral: true,
     });
     return;
   }
@@ -292,13 +317,13 @@ async function startGame(interaction: ChatInputCommandInteraction, gameKey: stri
 
   // Start the game
   await gameInstance.start();
-  
+
   const embed = gameInstance.getGameEmbed();
   const components = getGameComponents(gameInstance, gameType);
 
   await interaction.reply({
     embeds: [embed],
-    components
+    components,
   });
 
   // Add XP for starting a game
@@ -307,33 +332,54 @@ async function startGame(interaction: ChatInputCommandInteraction, gameKey: stri
 
 function createGameInstance(gameType: GameType, session: any) {
   switch (gameType) {
-    case GameType.SLOTS: return new SlotsGame(session);
-    case GameType.BLACKJACK: return new BlackjackGame(session);
-    case GameType.DICE: return new DiceGame(session);
-    case GameType.ROULETTE: return new RouletteGame(session);
-    case GameType.LOTTERY: return new LotteryGame(session);
-    case GameType.MUSIC_QUIZ: return new MusicQuizGame(session);
-    case GameType.GEOGRAPHY: return new GeographyGame(session);
-    case GameType.POP_CULTURE: return new PopCultureGame(session);
-    case GameType.BRAZIL_HISTORY: return new BrazilHistoryGame(session);
-    case GameType.SECRET_WORD: return new SecretWordGame(session);
-    case GameType.ANAGRAM: return new AnagramGame(session);
-    case GameType.RHYME: return new RhymeGame(session);
-    case GameType.TRANSLATE: return new TranslateGame(session);
-    case GameType.TIC_TAC_TOE: return new TicTacToeGame(session);
-    case GameType.SECRET_CODE: return new SecretCodeGame(session);
-    case GameType.ROCK_PAPER_SCISSORS: return new RockPaperScissorsGame(session);
-    case GameType.MAZE: return new MazeGame(session);
-    case GameType.SPEED_MATH: return new SpeedMathGame(session);
-    case GameType.BATTLE_ROYALE: return new BattleRoyaleGame(session);
-    case GameType.TREASURE_HUNT: return new TreasureHuntGame(session);
-    default: throw new Error('Game type not implemented');
+    case GameType.SLOTS:
+      return new SlotsGame(session);
+    case GameType.BLACKJACK:
+      return new BlackjackGame(session);
+    case GameType.DICE:
+      return new DiceGame(session);
+    case GameType.ROULETTE:
+      return new RouletteGame(session);
+    case GameType.LOTTERY:
+      return new LotteryGame(session);
+    case GameType.MUSIC_QUIZ:
+      return new MusicQuizGame(session);
+    case GameType.GEOGRAPHY:
+      return new GeographyGame(session);
+    case GameType.POP_CULTURE:
+      return new PopCultureGame(session);
+    case GameType.BRAZIL_HISTORY:
+      return new BrazilHistoryGame(session);
+    case GameType.SECRET_WORD:
+      return new SecretWordGame(session);
+    case GameType.ANAGRAM:
+      return new AnagramGame(session);
+    case GameType.RHYME:
+      return new RhymeGame(session);
+    case GameType.TRANSLATE:
+      return new TranslateGame(session);
+    case GameType.TIC_TAC_TOE:
+      return new TicTacToeGame(session);
+    case GameType.SECRET_CODE:
+      return new SecretCodeGame(session);
+    case GameType.ROCK_PAPER_SCISSORS:
+      return new RockPaperScissorsGame(session);
+    case GameType.MAZE:
+      return new MazeGame(session);
+    case GameType.SPEED_MATH:
+      return new SpeedMathGame(session);
+    case GameType.BATTLE_ROYALE:
+      return new BattleRoyaleGame(session);
+    case GameType.TREASURE_HUNT:
+      return new TreasureHuntGame(session);
+    default:
+      throw new Error('Game type not implemented');
   }
 }
 
 function getGameComponents(gameInstance: any, gameType: GameType): any[] {
   const components = [];
-  
+
   // Add game-specific action buttons
   if (typeof gameInstance.getActionButtons === 'function') {
     const actionButtons = gameInstance.getActionButtons();
@@ -362,18 +408,18 @@ async function showStats(interaction: ChatInputCommandInteraction) {
       {
         name: '🎮 Jogos Jogados',
         value: 'Sistema em desenvolvimento',
-        inline: true
+        inline: true,
       },
       {
         name: '🏆 Vitórias',
         value: 'Sistema em desenvolvimento',
-        inline: true
+        inline: true,
       },
       {
         name: '⭐ XP Total de Games',
         value: 'Sistema em desenvolvimento',
-        inline: true
-      }
+        inline: true,
+      },
     );
 
   await interaction.reply({ embeds: [embed], ephemeral: true });
@@ -388,18 +434,18 @@ async function showRanking(interaction: ChatInputCommandInteraction) {
       {
         name: '🥇 1º Lugar',
         value: 'Sistema em desenvolvimento',
-        inline: false
+        inline: false,
       },
       {
         name: '🥈 2º Lugar',
         value: 'Sistema em desenvolvimento',
-        inline: false
+        inline: false,
       },
       {
         name: '🥉 3º Lugar',
         value: 'Sistema em desenvolvimento',
-        inline: false
-      }
+        inline: false,
+      },
     );
 
   await interaction.reply({ embeds: [embed], ephemeral: true });

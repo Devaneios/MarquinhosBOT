@@ -1,5 +1,10 @@
 import { EmbedBuilder, ButtonStyle } from 'discord.js';
-import { BaseGame, GameSession, GameResult, PlayerStatus } from '../core/GameTypes';
+import {
+  BaseGame,
+  GameSession,
+  GameResult,
+  PlayerStatus,
+} from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
 
 interface SecretCodeData {
@@ -17,7 +22,6 @@ interface CodeGuess {
 }
 
 export class SecretCodeGame extends BaseGame {
-  
   constructor(session: GameSession) {
     super(session);
     this.initializeGame();
@@ -29,19 +33,19 @@ export class SecretCodeGame extends BaseGame {
       guesses: [],
       maxAttempts: 10,
       won: false,
-      gameOver: false
+      gameOver: false,
     } as SecretCodeData;
   }
 
   private generateSecretCode(): number[] {
     const code = [];
     const availableDigits = [1, 2, 3, 4, 5, 6];
-    
+
     for (let i = 0; i < 4; i++) {
       const randomIndex = Math.floor(Math.random() * availableDigits.length);
       code.push(availableDigits.splice(randomIndex, 1)[0]);
     }
-    
+
     return code;
   }
 
@@ -51,7 +55,7 @@ export class SecretCodeGame extends BaseGame {
 
   async handlePlayerAction(userId: string, action: any): Promise<void> {
     const data = this.session.data as SecretCodeData;
-    
+
     if (data.gameOver) return;
 
     if (action.type === 'guess') {
@@ -61,12 +65,12 @@ export class SecretCodeGame extends BaseGame {
 
   private async submitGuess(guessCode: number[]): Promise<void> {
     const data = this.session.data as SecretCodeData;
-    
+
     if (guessCode.length !== 4) return;
-    
+
     const result = this.evaluateGuess(guessCode);
     data.guesses.push(result);
-    
+
     if (result.exact === 4) {
       data.won = true;
       data.gameOver = true;
@@ -81,10 +85,10 @@ export class SecretCodeGame extends BaseGame {
     const data = this.session.data as SecretCodeData;
     let exact = 0;
     let partial = 0;
-    
+
     const secretCopy = [...data.secretCode];
     const guessCopy = [...guess];
-    
+
     // Check for exact matches
     for (let i = 3; i >= 0; i--) {
       if (guessCopy[i] === secretCopy[i]) {
@@ -93,7 +97,7 @@ export class SecretCodeGame extends BaseGame {
         guessCopy.splice(i, 1);
       }
     }
-    
+
     // Check for partial matches
     for (const digit of guessCopy) {
       const index = secretCopy.indexOf(digit);
@@ -102,22 +106,22 @@ export class SecretCodeGame extends BaseGame {
         secretCopy.splice(index, 1);
       }
     }
-    
+
     return {
       code: guess,
       exact,
-      partial
+      partial,
     };
   }
 
   private async updateScores(): Promise<void> {
     const data = this.session.data as SecretCodeData;
-    
+
     if (data.won) {
       const baseScore = 200;
       const attemptBonus = (data.maxAttempts - data.guesses.length) * 10;
       const score = baseScore + attemptBonus;
-      
+
       this.updatePlayerScore(this.session.players[0].userId, score);
     }
   }
@@ -125,9 +129,9 @@ export class SecretCodeGame extends BaseGame {
   getGameEmbed(): EmbedBuilder {
     const data = this.session.data as SecretCodeData;
     const player = this.session.players[0];
-    
+
     let description = `👤 **Jogador:** ${player.username}\n\n`;
-    
+
     if (data.gameOver) {
       if (data.won) {
         description += `🎉 **PARABÉNS! Você quebrou o código!**\n`;
@@ -142,7 +146,7 @@ export class SecretCodeGame extends BaseGame {
       description += `🎯 **Tentativas restantes:** ${data.maxAttempts - data.guesses.length}\n`;
       description += `🔢 **Use dígitos de 1 a 6 (sem repetir)**\n\n`;
     }
-    
+
     // Show guesses history
     if (data.guesses.length > 0) {
       description += `**Histórico de tentativas:**\n`;
@@ -151,11 +155,11 @@ export class SecretCodeGame extends BaseGame {
         description += `🎯 ${guess.exact} exatos, 🔄 ${guess.partial} parciais\n`;
       });
     }
-    
+
     description += `\n💡 **Dica:** 🎯 = posição correta, 🔄 = dígito correto mas posição errada`;
 
     const color = data.gameOver ? (data.won ? 0x00ff00 : 0xff0000) : 0x3498db;
-    
+
     return GameUtils.createGameEmbed('🔐 Código Secreto', description, color);
   }
 
@@ -163,7 +167,7 @@ export class SecretCodeGame extends BaseGame {
     const data = this.session.data as SecretCodeData;
     const player = this.session.players[0];
     const rewards = this.calculateRewards(player, 1);
-    
+
     if (data.won) {
       rewards.xp += 25;
       rewards.xp += (data.maxAttempts - data.guesses.length) * 2;
@@ -178,9 +182,9 @@ export class SecretCodeGame extends BaseGame {
         won: data.won,
         attempts: data.guesses.length,
         maxAttempts: data.maxAttempts,
-        secretCode: data.secretCode
+        secretCode: data.secretCode,
       },
-      duration: Date.now() - this.session.startedAt.getTime()
+      duration: Date.now() - this.session.startedAt.getTime(),
     };
   }
 

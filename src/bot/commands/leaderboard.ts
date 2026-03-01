@@ -14,22 +14,24 @@ export const leaderboard: SlashCommand = {
         .setDescription('Número de usuários para mostrar (padrão: 10)')
         .setMinValue(5)
         .setMaxValue(25)
-        .setRequired(false)
+        .setRequired(false),
     ),
   execute: async (interaction) => {
     await interaction.deferReply();
-    
+
     const limit = interaction.options.getInteger('limite') || 10;
     const guildId = interaction.guildId;
-    
+
     if (!guildId) {
-      await interaction.editReply('Este comando só pode ser usado em servidores!');
+      await interaction.editReply(
+        'Este comando só pode ser usado em servidores!',
+      );
       return;
     }
 
     try {
       const leaderboard = await apiService.getLeaderboard(guildId, limit);
-      
+
       if (!leaderboard?.data || leaderboard.data.length === 0) {
         await interaction.editReply('Nenhum usuário encontrado no ranking.');
         return;
@@ -40,7 +42,7 @@ export const leaderboard: SlashCommand = {
         const user = leaderboard.data[i]!;
         const position = i + 1;
         const medal = getMedal(position);
-        
+
         try {
           const discordUser = await interaction.client.users.fetch(user.userId);
           description += `${medal} **${position}.** ${discordUser.username} - Nível ${user.level} (${user.totalXp} XP total)\n`;
@@ -49,10 +51,13 @@ export const leaderboard: SlashCommand = {
         }
       }
 
-      const embed = interaction.client.baseEmbed()
+      const embed = interaction.client
+        .baseEmbed()
         .setTitle(`🏆 Ranking do ${interaction.guild?.name}`)
         .setDescription(description)
-        .setFooter({ text: `Mostrando top ${leaderboard.data.length} usuários` });
+        .setFooter({
+          text: `Mostrando top ${leaderboard.data.length} usuários`,
+        });
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {
@@ -65,9 +70,13 @@ export const leaderboard: SlashCommand = {
 
 function getMedal(position: number): string {
   switch (position) {
-    case 1: return '🥇';
-    case 2: return '🥈';
-    case 3: return '🥉';
-    default: return '🏅';
+    case 1:
+      return '🥇';
+    case 2:
+      return '🥈';
+    case 3:
+      return '🥉';
+    default:
+      return '🏅';
   }
 }
