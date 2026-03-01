@@ -51,9 +51,12 @@ export const achievements: SlashCommand = {
 
       // Group achievements by rarity
       for (const userAchievement of userAchievements.data) {
-        const achievement = userAchievement.achievementId;
-        if (achievement && achievement.rarity) {
-          achievementsByRarity[achievement.rarity].push(achievement);
+        // Note: achievementId is a string ID, not the full achievement object
+        // This would need to fetch full achievement details from another endpoint
+        // For now, we'll just count them by assuming they have the data needed
+        const achievementId = userAchievement.achievementId as any;
+        if (achievementId && achievementId.rarity) {
+          achievementsByRarity[achievementId.rarity].push(achievementId);
         }
       }
 

@@ -178,9 +178,9 @@ async function getPersonalizedRecommendations(
   limit: number,
 ): Promise<any[]> {
   try {
-    const data = await httpClient.get(
+    const data = (await httpClient.get(
       `/api/recommendations/personalized/${userId}/${guildId}?limit=${limit}`,
-    );
+    )) as any;
     return data.data || [];
   } catch (error) {
     console.error('Failed to get personalized recommendations:', error);
@@ -193,9 +193,9 @@ async function getGenreRecommendations(
   guildId: string,
 ): Promise<any[]> {
   try {
-    const data = await httpClient.get(
+    const data = (await httpClient.get(
       `/api/recommendations/genre/${genre}/${guildId}`,
-    );
+    )) as any;
     return data.data || [];
   } catch (error) {
     console.error('Failed to get genre recommendations:', error);
@@ -209,9 +209,9 @@ async function getTimeRecommendations(
   timeOfDay: string,
 ): Promise<any[]> {
   try {
-    const data = await httpClient.get(
+    const data = (await httpClient.get(
       `/api/recommendations/time/${userId}/${guildId}/${timeOfDay}`,
-    );
+    )) as any;
     return data.data || [];
   } catch (error) {
     console.error('Failed to get time recommendations:', error);
@@ -224,9 +224,9 @@ async function getCollaborativeRecommendations(
   guildId: string,
 ): Promise<any[]> {
   try {
-    const data = await httpClient.get(
+    const data = (await httpClient.get(
       `/api/recommendations/collaborative/${userId}/${guildId}`,
-    );
+    )) as any;
     return data.data || [];
   } catch (error) {
     console.error('Failed to get collaborative recommendations:', error);

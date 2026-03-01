@@ -16,6 +16,23 @@ import {
 
 export type Nullable<T> = T | null | undefined;
 
+// API Response Types
+export interface ApiResponse<T = unknown> {
+  data: T;
+  message?: string;
+  error?: string;
+}
+
+export interface ApiError extends Error {
+  response?: {
+    status?: number;
+    data?: unknown;
+  };
+  config?: {
+    url?: string;
+  };
+}
+
 export interface SlashCommand {
   command:
     | SlashCommandBuilder

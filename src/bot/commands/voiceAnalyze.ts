@@ -57,7 +57,7 @@ export const voiceAnalyze: SlashCommand = {
         '/voice-ai/analyze',
         analysisData,
       );
-      const analysis = response.data;
+      const analysis = response.data as any;
 
       const embed = interaction.client
         .baseEmbed()
