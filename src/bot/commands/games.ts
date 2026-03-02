@@ -88,6 +88,12 @@ export const games: SlashCommand = {
               { name: '⚔️ Battle Royale', value: 'battle_royale' },
               { name: '🗺️ Caça ao Tesouro', value: 'treasure_hunt' },
             ),
+        )
+        .addUserOption((option) =>
+          option
+            .setName('oponente')
+            .setDescription('Marque um oponente para jogos multiplayer')
+            .setRequired(false),
         ),
     )
     .addSubcommand((subcommand) =>
@@ -287,6 +293,48 @@ async function startGame(
 
   // Add players (check for multiplayer requirements)
   const config = GAME_CONFIGS[gameType];
+  const opponent = interaction.options.getUser('oponente');
+
+  const multiplayerGames = [
+    GameType.TIC_TAC_TOE,
+    GameType.ROCK_PAPER_SCISSORS,
+    GameType.SPEED_MATH,
+    GameType.BATTLE_ROYALE,
+    GameType.TREASURE_HUNT,
+  ];
+
+  if (multiplayerGames.includes(gameType) && !opponent) {
+    await interaction.reply({
+      content: '👥 Este é um jogo multiplayer! Por favor, mencione um oponente usando a opção `oponente`.',
+      ephemeral: true,
+    });
+    return;
+  }
+
+  if (!multiplayerGames.includes(gameType) && opponent) {
+    await interaction.reply({
+      content: '❌ Este jogo é singleplayer, você não pode convidar um oponente.',
+      ephemeral: true,
+    });
+    return;
+  }
+
+  if (opponent && opponent.bot) {
+    await interaction.reply({
+      content: '❌ Você não pode jogar contra um bot!',
+      ephemeral: true,
+    });
+    return;
+  }
+
+  if (opponent && opponent.id === userId) {
+    await interaction.reply({
+      content: '❌ Você não pode jogar contra si mesmo!',
+      ephemeral: true,
+    });
+    return;
+  }
+
   session.players.push({
     userId,
     username: interaction.user.username,
@@ -294,6 +342,16 @@ async function startGame(
     status: 'waiting' as any,
     joinedAt: new Date(),
   });
+
+  if (opponent) {
+    session.players.push({
+      userId: opponent.id,
+      username: opponent.username,
+      score: 0,
+      status: 'waiting' as any,
+      joinedAt: new Date(),
+    });
+  }
 
   // Create game instance
   let gameInstance;
@@ -381,6 +439,14 @@ function getGameComponents(gameInstance: any, gameType: GameType): any[] {
     const actionButtons = gameInstance.getActionButtons();
     if (actionButtons && actionButtons.length > 0) {
       components.push(...actionButtons);
+    }
+  }
+
+  // Add board buttons for games like TicTacToe
+  if (typeof gameInstance.getBoardButtons === 'function') {
+    const boardButtons = gameInstance.getBoardButtons();
+    if (boardButtons && boardButtons.length > 0) {
+      components.push(...boardButtons);
     }
   }
 

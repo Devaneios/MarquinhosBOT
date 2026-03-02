@@ -19,34 +19,45 @@ const WEEKDAY_LOCALE_CONFIG: Intl.DateTimeFormatOptions = {
 export const checkIn: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('check-in')
-    .setDescription('Mostra quando você entrou no servidor'),
+    .setDescription('Receba um carimbo no seu passaporte do servidor!'),
   execute: async (interaction) => {
     const member = interaction.member as GuildMember;
     const guildName = interaction.guild?.name as string;
-    interaction.reply({
-      embeds: [
-        interaction.client
-          .baseEmbed()
-          .setDescription(checkInReply(member, guildName)),
-      ],
-    });
+
+    if (!member) {
+      await interaction.reply({ content: 'Você não está em um servidor!', ephemeral: true });
+      return;
+    }
+
+    const memberJoinedDate = new Date(member.joinedTimestamp as number);
+    const formatedMemberJoinedTimestamp = memberJoinedDate.toLocaleString(
+      'pt-BR',
+      DATE_LOCALE_CONFIG,
+    );
+    const dayOfTheWeekMemberJoined = memberJoinedDate.toLocaleString(
+      'pt-BR',
+      WEEKDAY_LOCALE_CONFIG,
+    );
+
+    const description = `Você entrou no **${guildName}** ${
+      ['sábado', 'domingo'].includes(dayOfTheWeekMemberJoined) ? 'no' : 'na'
+    } **${formatedMemberJoinedTimestamp}**`;
+
+    const embed = interaction.client.baseEmbed()
+      .setTitle('🛂 Passaporte do Servidor')
+      .setColor(0x3498db)
+      .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
+      .addFields(
+        { name: '👤 Cidadão', value: member.user.username, inline: true },
+        { name: '🏷️ Apelido', value: member.nickname || 'Nenhum', inline: true },
+        { name: '📅 Data de Emissão (Entrada)', value: formatedMemberJoinedTimestamp, inline: false },
+        { name: '🗓️ Conta Criada em', value: member.user.createdAt.toLocaleDateString('pt-BR'), inline: false },
+      )
+      .setDescription(description)
+      .setFooter({ text: `Passaporte oficial de ${guildName} | Carimbado com sucesso! ✅` })
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
   },
   cooldown: 10,
-};
-
-export const checkInReply = (member: GuildMember, guildName: string) => {
-  if (!member) return 'Você não está em um servidor';
-  const memberJoinedDate = new Date(member?.joinedTimestamp as number);
-  const formatedMemberJoinedTimestamp = memberJoinedDate.toLocaleString(
-    'pt-BR',
-    DATE_LOCALE_CONFIG,
-  );
-  const dayOfTheWeekMemberJoined = memberJoinedDate.toLocaleString(
-    'pt-BR',
-    WEEKDAY_LOCALE_CONFIG,
-  );
-
-  return `Você entrou no ${guildName} ${
-    ['sábado', 'domingo'].includes(dayOfTheWeekMemberJoined) ? 'no' : 'na'
-  } ${formatedMemberJoinedTimestamp}`;
 };
