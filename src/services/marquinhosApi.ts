@@ -246,12 +246,4 @@ export class MarquinhosApiService {
     const data = await this.client.get(endpoint);
     return data as ApiResponse;
   }
-
-  async put(
-    endpoint: string,
-    payload: Record<string, unknown>,
-  ): Promise<ApiResponse> {
-    const data = await this.client.put(endpoint, payload);
-    return data as ApiResponse;
-  }
 }

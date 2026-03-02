@@ -1,8 +1,11 @@
 import { FlipCoinResult, SlashCommand } from '@marquinhos/types';
 import { sleep } from '@marquinhos/utils/sleep';
 import {
+  ActionRowBuilder,
   AttachmentBuilder,
-  CommandInteractionOptionResolver,
+  ButtonBuilder,
+  ButtonStyle,
+  ComponentType,
   EmbedBuilder,
   SlashCommandBuilder,
 } from 'discord.js';
@@ -11,79 +14,106 @@ import { join } from 'path';
 export const coin: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('moeda')
-    .setDescription('Tiro cara ou coroa numa moeda semi-viciada.')
-    .addSubcommand((subcommand) =>
-      subcommand
-        .setName('apostar')
-        .setDescription('Aposta no cara ou coroa')
-        .addStringOption((option) =>
-          option
-            .setName('escolha')
-            .setDescription('Escolha entre cara ou coroa')
-            .setRequired(true)
-            .addChoices(
-              { name: 'Cara', value: 'Cara' },
-              { name: 'Coroa', value: 'Coroa' },
-            ),
-        ),
-    )
-    .addSubcommand((subcommand) =>
-      subcommand.setName('lançar').setDescription('Apenas lança a moeda'),
-    ),
+    .setDescription('Tiro cara ou coroa numa moeda semi-viciada.'),
   execute: async (interaction) => {
-    await interaction.deferReply();
-    await interaction.followUp('Lançando a moeda... 🪙');
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId('coin_heads')
+        .setLabel('Cara')
+        .setEmoji('🪙')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('coin_tails')
+        .setLabel('Coroa')
+        .setEmoji('👑')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('coin_only_flip')
+        .setLabel('Apenas lançar')
+        .setStyle(ButtonStyle.Secondary),
+    );
 
-    const flipCoinResult = await flipCoin();
-    const subcommand = (
-      interaction.options as CommandInteractionOptionResolver
-    ).getSubcommand();
+    const initialEmbed = interaction.client
+      .baseEmbed()
+      .setTitle('🪙 Cara ou Coroa?')
+      .setDescription('Faça sua aposta ou apenas lance a moeda!');
 
-    if (flipCoinResult.result === null) {
-      return interaction.reply({
-        content: 'A moeda caiu no ralo e não consegui ver o resultado.',
-        ephemeral: true,
+    const response = await interaction.reply({
+      embeds: [initialEmbed],
+      components: [row],
+      fetchReply: true,
+    });
+
+    try {
+      const confirmation = await response.awaitMessageComponent({
+        filter: (i) => i.user.id === interaction.user.id,
+        time: 30000,
+        componentType: ComponentType.Button,
+      });
+
+      await confirmation.deferUpdate();
+      await interaction.editReply({
+        embeds: [initialEmbed.setDescription('Lançando a moeda... 🪙')],
+        components: [],
+      });
+
+      const flipCoinResult = await flipCoin();
+
+      if (flipCoinResult.result === null) {
+        return interaction.editReply({
+          content: 'A moeda caiu no ralo e não consegui ver o resultado.',
+          embeds: [],
+        });
+      }
+
+      const attachment = new AttachmentBuilder(
+        join(
+          process.env?.ROOT_DIR ?? '.',
+          `/resources/images/coin_${flipCoinResult.result.toLowerCase()}.png`,
+        ),
+      );
+
+      const coinEmbed = buildEmbed(
+        interaction.client.baseEmbed(),
+        flipCoinResult,
+      );
+
+      let choice: string | null = null;
+      if (confirmation.customId === 'coin_heads') choice = 'Cara';
+      if (confirmation.customId === 'coin_tails') choice = 'Coroa';
+
+      if (choice) {
+        if (choice === flipCoinResult.result) {
+          coinEmbed.setDescription(
+            `Boa! Você apostou em **${choice}** e acertou!\n\nForam feitas ${
+              flipCoinResult.count
+            } tentativas durante ${(flipCoinResult.elapsedTime / 1000).toFixed(
+              2,
+            )}s.`,
+          );
+        } else {
+          coinEmbed.setDescription(
+            `Ih! Você apostou em **${choice}** e errou!\n\nForam feitas ${
+              flipCoinResult.count
+            } tentativas durante ${(flipCoinResult.elapsedTime / 1000).toFixed(
+              2,
+            )}s.`,
+          );
+        }
+      }
+
+      await interaction.editReply({
+        content: '',
+        embeds: [coinEmbed],
+        files: [attachment],
+      });
+    } catch (e) {
+      await interaction.editReply({
+        content: 'Tempo esgotado para escolher!',
+        embeds: [],
+        components: [],
       });
     }
-
-    const attachment = new AttachmentBuilder(
-      join(
-        process.env?.ROOT_DIR ?? '.',
-        `/resources/images/coin_${flipCoinResult.result.toLowerCase()}.png`,
-      ),
-    );
-
-    const coinEmbed = buildEmbed(
-      interaction.client.baseEmbed(),
-      flipCoinResult,
-    );
-
-    if (subcommand === 'apostar') {
-      const choice = interaction.options.get('escolha')?.value as string;
-      if (choice === flipCoinResult.result) {
-        coinEmbed.setDescription(
-          `Boa! Você acertou!\n\nForam feitas ${
-            flipCoinResult.count
-          } tentativas durante ${(flipCoinResult.elapsedTime / 1000).toFixed(
-            2,
-          )}s.`,
-        );
-      } else {
-        coinEmbed.setDescription(
-          `Ih! Você errou!\n\nForam feitas ${
-            flipCoinResult.count
-          } tentativas durante ${(flipCoinResult.elapsedTime / 1000).toFixed(
-            2,
-          )}s.`,
-        );
-      }
-    }
-
-    await interaction.editReply({
-      content: '',
-      embeds: [coinEmbed],
-      files: [attachment],
-    });
   },
   cooldown: 10,
 };

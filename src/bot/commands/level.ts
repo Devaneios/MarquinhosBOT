@@ -44,20 +44,25 @@ export const level: SlashCommand = {
       const progressPercentage = Math.floor((xp / requiredXP) * 100);
 
       const progressBar = createProgressBar(progressPercentage);
+      const badge = getBadgeForLevel(level);
+      const color = getColorForLevel(level);
 
       const embed = interaction.client
         .baseEmbed()
-        .setTitle(`📊 Nível de ${targetUser.username}`)
-        .setThumbnail(targetUser.displayAvatarURL())
-        .addFields(
-          { name: '🏆 Nível', value: level.toString(), inline: true },
-          { name: '⚡ XP Atual', value: `${xp}/${requiredXP}`, inline: true },
-          { name: '📈 XP Total', value: totalXp.toString(), inline: true },
-          {
-            name: '📊 Progresso',
-            value: `${progressBar} ${progressPercentage}%`,
-            inline: false,
-          },
+        .setColor(color)
+        .setAuthor({
+          name: targetUser.username,
+          iconURL: targetUser.displayAvatarURL(),
+        })
+        .setTitle(`🌟 Cartão de Nível`)
+        .setThumbnail(targetUser.displayAvatarURL({ size: 256 }))
+        .setDescription(
+          `**Cargo Atual:** ${badge}\n\n` +
+            `**Nível:** \`${level}\`\n` +
+            `**Experiência:** \`${xp} / ${requiredXP} XP\`\n\n` +
+            `**Progresso:**\n` +
+            `${progressBar} \`${progressPercentage}%\`\n\n` +
+            `*XP Total Acumulado: ${totalXp}*`,
         );
 
       await interaction.editReply({ embeds: [embed] });
@@ -74,5 +79,23 @@ export const level: SlashCommand = {
 function createProgressBar(percentage: number): string {
   const filled = Math.floor(percentage / 10);
   const empty = 10 - filled;
-  return '█'.repeat(filled) + '░'.repeat(empty);
+  return '🟩'.repeat(filled) + '⬛'.repeat(empty);
+}
+
+function getBadgeForLevel(level: number): string {
+  if (level < 10) return '🌱 Iniciante';
+  if (level < 20) return '🥉 Aventureiro de Bronze';
+  if (level < 30) return '🥈 Cavaleiro de Prata';
+  if (level < 40) return '🥇 Herói de Ouro';
+  if (level < 50) return '💎 Lenda de Diamante';
+  return '👑 Mestre Supremo';
+}
+
+function getColorForLevel(level: number): number {
+  if (level < 10) return 0x2ecc71; // Green
+  if (level < 20) return 0xcd7f32; // Bronze
+  if (level < 30) return 0xc0c0c0; // Silver
+  if (level < 40) return 0xffd700; // Gold
+  if (level < 50) return 0xb9f2ff; // Diamond
+  return 0x9b59b6; // Purple
 }
