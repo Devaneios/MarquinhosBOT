@@ -269,11 +269,15 @@ export class LotteryGame extends BaseGame {
         labels.push(number.toString());
         customIds.push(`lottery_select_${number}`);
         styles.push(isSelected ? ButtonStyle.Success : ButtonStyle.Secondary);
-        disabled.push(!isSelected && data.playerNumbers.length >= this.numbersToSelect);
+        disabled.push(
+          !isSelected && data.playerNumbers.length >= this.numbersToSelect,
+        );
       }
 
       if (labels.length > 0) {
-        buttons.push(GameUtils.createGameButtons({ labels, customIds, styles, disabled }));
+        buttons.push(
+          GameUtils.createGameButtons({ labels, customIds, styles, disabled }),
+        );
       }
     }
 
@@ -293,7 +297,13 @@ export class LotteryGame extends BaseGame {
     return [
       GameUtils.createGameButtons({
         labels: ['◀️', '🎲 Surpresinha', '🗑️ Limpar', '🎪 Sortear', '▶️'],
-        customIds: ['lottery_page_prev', 'lottery_quick_pick', 'lottery_clear', 'lottery_draw', 'lottery_page_next'],
+        customIds: [
+          'lottery_page_prev',
+          'lottery_quick_pick',
+          'lottery_clear',
+          'lottery_draw',
+          'lottery_page_next',
+        ],
         styles: [
           ButtonStyle.Primary,
           ButtonStyle.Secondary,

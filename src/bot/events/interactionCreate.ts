@@ -60,13 +60,18 @@ function parseButtonAction(customId: string): Record<string, any> | null {
   // TicTacToe
   if (customId.startsWith('ttt_move_')) {
     const parts = customId.split('_');
-    return { type: 'move', row: parseInt(parts[2], 10), col: parseInt(parts[3], 10) };
+    return {
+      type: 'move',
+      row: parseInt(parts[2], 10),
+      col: parseInt(parts[3], 10),
+    };
   }
 
   // Rock Paper Scissors
   if (customId === 'rps_rock') return { type: 'choose', choice: 'rock' };
   if (customId === 'rps_paper') return { type: 'choose', choice: 'paper' };
-  if (customId === 'rps_scissors') return { type: 'choose', choice: 'scissors' };
+  if (customId === 'rps_scissors')
+    return { type: 'choose', choice: 'scissors' };
 
   // Maze
   if (customId === 'maze_up') return { type: 'move', direction: 'up' };
@@ -76,28 +81,43 @@ function parseButtonAction(customId: string): Record<string, any> | null {
 
   // MusicQuiz
   if (customId.startsWith('quiz_answer_')) {
-    return { type: 'answer', answer: parseInt(customId.replace('quiz_answer_', ''), 10) };
+    return {
+      type: 'answer',
+      answer: parseInt(customId.replace('quiz_answer_', ''), 10),
+    };
   }
 
   // Geography
   if (customId.startsWith('geo_answer_')) {
-    return { type: 'answer', answer: parseInt(customId.replace('geo_answer_', ''), 10) };
+    return {
+      type: 'answer',
+      answer: parseInt(customId.replace('geo_answer_', ''), 10),
+    };
   }
   if (customId === 'geo_hint') return { type: 'hint' };
 
   // Pop Culture
   if (customId.startsWith('pop_answer_')) {
-    return { type: 'answer', answer: parseInt(customId.replace('pop_answer_', ''), 10) };
+    return {
+      type: 'answer',
+      answer: parseInt(customId.replace('pop_answer_', ''), 10),
+    };
   }
 
   // Brazil History
   if (customId.startsWith('history_answer_')) {
-    return { type: 'answer', answer: parseInt(customId.replace('history_answer_', ''), 10) };
+    return {
+      type: 'answer',
+      answer: parseInt(customId.replace('history_answer_', ''), 10),
+    };
   }
 
   // SecretWord
   if (customId.startsWith('word_letter_')) {
-    return { type: 'guess_letter', letter: customId.replace('word_letter_', '') };
+    return {
+      type: 'guess_letter',
+      letter: customId.replace('word_letter_', ''),
+    };
   }
   if (customId === 'word_guess_complete') return null;
 
@@ -128,21 +148,89 @@ function parseButtonAction(customId: string): Record<string, any> | null {
 }
 
 /** Shows the appropriate Discord modal for a text-input game action. */
-async function showGameModal(btn: ButtonInteraction, customId: string): Promise<void> {
-  type ModalCfg = { title: string; label: string; placeholder: string; modalId: string };
+async function showGameModal(
+  btn: ButtonInteraction,
+  customId: string,
+): Promise<void> {
+  type ModalCfg = {
+    title: string;
+    label: string;
+    placeholder: string;
+    modalId: string;
+  };
   const configs: Record<string, ModalCfg> = {
-    word_guess_complete: { title: 'Adivinhar a Palavra', label: 'Digite a palavra completa', placeholder: 'Ex: COMPUTADOR', modalId: 'modal_secret_word' },
-    anagram_guess: { title: 'Resolver Anagrama', label: 'Palavra desembaralhada', placeholder: 'Ex: AMOR', modalId: 'modal_anagram' },
-    rhyme_input: { title: 'Rima Rápida', label: 'Uma palavra que rima', placeholder: 'Ex: DOR', modalId: 'modal_rhyme' },
-    translate_answer: { title: 'Tradução', label: 'Digite a tradução', placeholder: 'Ex: OLÁ MUNDO', modalId: 'modal_translate' },
-    hunt_answer: { title: 'Resposta do Enigma', label: 'Sua resposta', placeholder: 'Ex: SOL', modalId: 'modal_treasure_hunt' },
-    secret_code_guess: { title: 'Código Secreto', label: '4 dígitos de 1 a 6 sem repetir', placeholder: 'Ex: 1 2 3 4', modalId: 'modal_secret_code' },
-    speed_math_answer: { title: 'Speed Math', label: 'Resultado', placeholder: 'Digite o número', modalId: 'modal_speed_math' },
-    battle_royale_respond: { title: 'Sua Resposta', label: 'Responda o desafio', placeholder: 'Digite sua resposta', modalId: 'modal_battle_royale' },
-    dice_bet_sum: { title: 'Apostar na Soma', label: 'Soma alvo', placeholder: 'Ex: 7', modalId: 'modal_dice_sum' },
-    dice_bet_exact: { title: 'Número Exato', label: 'Número (1-6)', placeholder: 'Ex: 4', modalId: 'modal_dice_exact' },
-    dice_bet_even_odd: { title: 'Par ou Ímpar', label: 'par ou impar', placeholder: 'par / impar', modalId: 'modal_dice_even_odd' },
-    dice_bet_high_low: { title: 'Alto ou Baixo', label: 'alto ou baixo', placeholder: 'alto / baixo', modalId: 'modal_dice_high_low' },
+    word_guess_complete: {
+      title: 'Adivinhar a Palavra',
+      label: 'Digite a palavra completa',
+      placeholder: 'Ex: COMPUTADOR',
+      modalId: 'modal_secret_word',
+    },
+    anagram_guess: {
+      title: 'Resolver Anagrama',
+      label: 'Palavra desembaralhada',
+      placeholder: 'Ex: AMOR',
+      modalId: 'modal_anagram',
+    },
+    rhyme_input: {
+      title: 'Rima Rápida',
+      label: 'Uma palavra que rima',
+      placeholder: 'Ex: DOR',
+      modalId: 'modal_rhyme',
+    },
+    translate_answer: {
+      title: 'Tradução',
+      label: 'Digite a tradução',
+      placeholder: 'Ex: OLÁ MUNDO',
+      modalId: 'modal_translate',
+    },
+    hunt_answer: {
+      title: 'Resposta do Enigma',
+      label: 'Sua resposta',
+      placeholder: 'Ex: SOL',
+      modalId: 'modal_treasure_hunt',
+    },
+    secret_code_guess: {
+      title: 'Código Secreto',
+      label: '4 dígitos de 1 a 6 sem repetir',
+      placeholder: 'Ex: 1 2 3 4',
+      modalId: 'modal_secret_code',
+    },
+    speed_math_answer: {
+      title: 'Speed Math',
+      label: 'Resultado',
+      placeholder: 'Digite o número',
+      modalId: 'modal_speed_math',
+    },
+    battle_royale_respond: {
+      title: 'Sua Resposta',
+      label: 'Responda o desafio',
+      placeholder: 'Digite sua resposta',
+      modalId: 'modal_battle_royale',
+    },
+    dice_bet_sum: {
+      title: 'Apostar na Soma',
+      label: 'Soma alvo',
+      placeholder: 'Ex: 7',
+      modalId: 'modal_dice_sum',
+    },
+    dice_bet_exact: {
+      title: 'Número Exato',
+      label: 'Número (1-6)',
+      placeholder: 'Ex: 4',
+      modalId: 'modal_dice_exact',
+    },
+    dice_bet_even_odd: {
+      title: 'Par ou Ímpar',
+      label: 'par ou impar',
+      placeholder: 'par / impar',
+      modalId: 'modal_dice_even_odd',
+    },
+    dice_bet_high_low: {
+      title: 'Alto ou Baixo',
+      label: 'alto ou baixo',
+      placeholder: 'alto / baixo',
+      modalId: 'modal_dice_high_low',
+    },
   };
 
   const cfg = configs[customId];
@@ -157,12 +245,17 @@ async function showGameModal(btn: ButtonInteraction, customId: string): Promise<
     .setRequired(true)
     .setMaxLength(100);
 
-  modal.addComponents(new ActionRowBuilder<TextInputBuilder>().addComponents(input));
+  modal.addComponents(
+    new ActionRowBuilder<TextInputBuilder>().addComponents(input),
+  );
   await btn.showModal(modal);
 }
 
 /** Parses a modal submission into a game action object. */
-function parseModalAction(modalId: string, value: string): Record<string, any> | null {
+function parseModalAction(
+  modalId: string,
+  value: string,
+): Record<string, any> | null {
   value = value.trim();
 
   switch (modalId) {
@@ -177,7 +270,11 @@ function parseModalAction(modalId: string, value: string): Record<string, any> |
     case 'modal_treasure_hunt':
       return { type: 'solve', answer: value };
     case 'modal_secret_code': {
-      const digits = value.replace(/\s+/g, '').split('').map(Number).filter((n) => !isNaN(n));
+      const digits = value
+        .replace(/\s+/g, '')
+        .split('')
+        .map(Number)
+        .filter((n) => !isNaN(n));
       return { type: 'guess', code: digits };
     }
     case 'modal_speed_math': {
@@ -188,22 +285,30 @@ function parseModalAction(modalId: string, value: string): Record<string, any> |
       return { type: 'respond', response: value };
     case 'modal_dice_sum': {
       const sum = parseInt(value, 10);
-      return isNaN(sum) ? null : { type: 'set_bet', betType: 'sum', betValue: sum };
+      return isNaN(sum)
+        ? null
+        : { type: 'set_bet', betType: 'sum', betValue: sum };
     }
     case 'modal_dice_exact': {
       const num = parseInt(value, 10);
-      return isNaN(num) ? null : { type: 'set_bet', betType: 'exact', betValue: num };
+      return isNaN(num)
+        ? null
+        : { type: 'set_bet', betType: 'exact', betValue: num };
     }
     case 'modal_dice_even_odd': {
       const v = value.toLowerCase();
-      if (v === 'par' || v === 'even') return { type: 'set_bet', betType: 'even_odd', betValue: 'even' };
-      if (v === 'impar' || v === 'ímpar' || v === 'odd') return { type: 'set_bet', betType: 'even_odd', betValue: 'odd' };
+      if (v === 'par' || v === 'even')
+        return { type: 'set_bet', betType: 'even_odd', betValue: 'even' };
+      if (v === 'impar' || v === 'ímpar' || v === 'odd')
+        return { type: 'set_bet', betType: 'even_odd', betValue: 'odd' };
       return null;
     }
     case 'modal_dice_high_low': {
       const v = value.toLowerCase();
-      if (v === 'alto' || v === 'high') return { type: 'set_bet', betType: 'high_low', betValue: 'high' };
-      if (v === 'baixo' || v === 'low') return { type: 'set_bet', betType: 'high_low', betValue: 'low' };
+      if (v === 'alto' || v === 'high')
+        return { type: 'set_bet', betType: 'high_low', betValue: 'high' };
+      if (v === 'baixo' || v === 'low')
+        return { type: 'set_bet', betType: 'high_low', betValue: 'low' };
       return null;
     }
     default:
@@ -243,7 +348,7 @@ async function handleGameInteraction(
   userId: string,
   channelId: string,
   action: Record<string, any>,
-  updateFn: (payload: { embeds: any[]; components: any[] }) => Promise<void>,
+  updateFn: (payload: { embeds: any[]; components: any[] }) => Promise<unknown>,
   errorFn: (msg: string) => Promise<void>,
 ): Promise<void> {
   const session = gameManager.getSessionByChannel(channelId);
@@ -368,7 +473,7 @@ export const interactionCreate: BotEvent = {
         (msg) => btn.followUp({ content: msg, ephemeral: true }).then(() => {}),
       );
     } else if ((interaction as any).isModalSubmit?.()) {
-      const modal = interaction as ModalSubmitInteraction;
+      const modal = interaction as unknown as ModalSubmitInteraction;
 
       const session = gameManager.getSessionByChannel(modal.channelId);
       if (!session) return;
@@ -379,7 +484,10 @@ export const interactionCreate: BotEvent = {
       const action = parseModalAction(modal.customId, value);
 
       if (!action) {
-        await modal.reply({ content: '❌ Entrada inválida. Tente novamente.', ephemeral: true });
+        await modal.reply({
+          content: '❌ Entrada inválida. Tente novamente.',
+          ephemeral: true,
+        });
         return;
       }
 
@@ -390,7 +498,8 @@ export const interactionCreate: BotEvent = {
         modal.channelId,
         action,
         (payload) => modal.editReply(payload),
-        (msg) => modal.followUp({ content: msg, ephemeral: true }).then(() => {}),
+        (msg) =>
+          modal.followUp({ content: msg, ephemeral: true }).then(() => {}),
       );
     } else if (interaction.isAutocomplete()) {
       const command = (

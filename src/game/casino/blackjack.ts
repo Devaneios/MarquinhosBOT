@@ -312,9 +312,7 @@ export class BlackjackGame extends BaseGame {
           ? [player.userId]
           : [],
       losers:
-        data.result === 'lose' || data.result === 'push'
-          ? [player.userId]
-          : [],
+        data.result === 'lose' || data.result === 'push' ? [player.userId] : [],
       rewards: { [player.userId]: rewards },
       stats: {
         result: data.result,

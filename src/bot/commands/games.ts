@@ -296,7 +296,8 @@ async function startGame(
 
   if (multiplayerGames.includes(gameType) && !opponent) {
     await interaction.reply({
-      content: '👥 Este é um jogo multiplayer! Por favor, mencione um oponente usando a opção `oponente`.',
+      content:
+        '👥 Este é um jogo multiplayer! Por favor, mencione um oponente usando a opção `oponente`.',
       ephemeral: true,
     });
     return;
@@ -304,7 +305,8 @@ async function startGame(
 
   if (!multiplayerGames.includes(gameType) && opponent) {
     await interaction.reply({
-      content: '❌ Este jogo é singleplayer, você não pode convidar um oponente.',
+      content:
+        '❌ Este jogo é singleplayer, você não pode convidar um oponente.',
       ephemeral: true,
     });
     return;
