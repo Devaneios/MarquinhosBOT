@@ -46,20 +46,45 @@ export class MazeGame extends BaseGame {
   }
 
   private generateMaze(): string[][] {
-    // Create a simple 9x9 maze
-    const maze = [
-      ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
-      ['🧱', '⬜', '⬜', '🧱', '⬜', '⬜', '⬜', '🧱', '🧱'],
-      ['🧱', '⬜', '🧱', '🧱', '⬜', '🧱', '⬜', '🧱', '🧱'],
-      ['🧱', '⬜', '⬜', '⬜', '⬜', '🧱', '⬜', '⬜', '🧱'],
-      ['🧱', '🧱', '🧱', '⬜', '🧱', '🧱', '🧱', '⬜', '🧱'],
-      ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱'],
-      ['🧱', '⬜', '🧱', '🧱', '🧱', '🧱', '🧱', '⬜', '🧱'],
-      ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱'],
-      ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
+    // Several preset 9x9 maze layouts to prevent memorisation
+    const layouts: string[][][] = [
+      [
+        ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
+        ['🧱', '⬜', '⬜', '🧱', '⬜', '⬜', '⬜', '🧱', '🧱'],
+        ['🧱', '⬜', '🧱', '🧱', '⬜', '🧱', '⬜', '🧱', '🧱'],
+        ['🧱', '⬜', '⬜', '⬜', '⬜', '🧱', '⬜', '⬜', '🧱'],
+        ['🧱', '🧱', '🧱', '⬜', '🧱', '🧱', '🧱', '⬜', '🧱'],
+        ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱'],
+        ['🧱', '⬜', '🧱', '🧱', '🧱', '🧱', '🧱', '⬜', '🧱'],
+        ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱'],
+        ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
+      ],
+      [
+        ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
+        ['🧱', '⬜', '🧱', '⬜', '⬜', '⬜', '🧱', '⬜', '🧱'],
+        ['🧱', '⬜', '🧱', '⬜', '🧱', '⬜', '🧱', '⬜', '🧱'],
+        ['🧱', '⬜', '⬜', '⬜', '🧱', '⬜', '⬜', '⬜', '🧱'],
+        ['🧱', '🧱', '⬜', '🧱', '🧱', '🧱', '⬜', '🧱', '🧱'],
+        ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱'],
+        ['🧱', '⬜', '🧱', '⬜', '🧱', '⬜', '🧱', '⬜', '🧱'],
+        ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱'],
+        ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
+      ],
+      [
+        ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
+        ['🧱', '⬜', '⬜', '⬜', '🧱', '⬜', '⬜', '⬜', '🧱'],
+        ['🧱', '🧱', '🧱', '⬜', '🧱', '⬜', '🧱', '⬜', '🧱'],
+        ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱', '⬜', '🧱'],
+        ['🧱', '⬜', '🧱', '🧱', '🧱', '⬜', '🧱', '🧱', '🧱'],
+        ['🧱', '⬜', '⬜', '⬜', '🧱', '⬜', '⬜', '⬜', '🧱'],
+        ['🧱', '🧱', '🧱', '⬜', '🧱', '🧱', '🧱', '⬜', '🧱'],
+        ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱'],
+        ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
+      ],
     ];
 
-    return maze;
+    const chosen = layouts[Math.floor(Math.random() * layouts.length)];
+    return chosen.map((row) => [...row]);
   }
 
   async start(): Promise<void> {
@@ -162,10 +187,9 @@ export class MazeGame extends BaseGame {
         description += `🎉 **PARABÉNS! Você escapou do labirinto!**\n`;
         description += `🚶 **Movimentos:** ${data.moves}\n`;
         description += `⏱️ **Tempo:** ${Math.floor((Date.now() - data.startTime) / 1000)}s\n\n`;
+      } else {
+        description += `⏰ **Tempo esgotado!**\n\n`;
       }
-    } else if (this.isTimeUp()) {
-      description += `⏰ **Tempo esgotado!**\n\n`;
-      data.gameOver = true;
     } else {
       description += `🏃 **Escape do labirinto!**\n`;
       description += `🚶 **Movimentos:** ${data.moves}\n`;
@@ -204,6 +228,10 @@ export class MazeGame extends BaseGame {
         styles: [ButtonStyle.Primary, ButtonStyle.Primary, ButtonStyle.Primary],
       }),
     ];
+  }
+
+  public isFinished(): boolean {
+    return super.isFinished() || this.isTimeUp();
   }
 
   async finish(): Promise<GameResult> {

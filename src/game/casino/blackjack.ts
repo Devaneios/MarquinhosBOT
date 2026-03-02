@@ -255,8 +255,6 @@ export class BlackjackGame extends BaseGame {
       if (winnings > 0) {
         description += `💰 **Ganhos:** ${winnings} coins`;
       }
-
-      this.updatePlayerScore(player.userId, winnings);
     }
 
     const color =
@@ -313,7 +311,10 @@ export class BlackjackGame extends BaseGame {
         data.result === 'win' || data.result === 'blackjack'
           ? [player.userId]
           : [],
-      losers: data.result === 'lose' ? [player.userId] : [],
+      losers:
+        data.result === 'lose' || data.result === 'push'
+          ? [player.userId]
+          : [],
       rewards: { [player.userId]: rewards },
       stats: {
         result: data.result,

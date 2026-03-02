@@ -255,7 +255,6 @@ export class RhymeGame extends BaseGame {
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
-    const winners = sortedPlayers.slice(0, Math.min(3, sortedPlayers.length));
     const rewards: Record<string, any> = {};
 
     sortedPlayers.forEach((player, index) => {
@@ -270,8 +269,8 @@ export class RhymeGame extends BaseGame {
 
     return {
       sessionId: this.session.id,
-      winners: winners.map((p) => p.userId),
-      losers: [],
+      winners: sortedPlayers.length > 0 ? [sortedPlayers[0].userId] : [],
+      losers: sortedPlayers.slice(1).map((p) => p.userId),
       rewards,
       stats: {
         targetWord: data.targetWord,
