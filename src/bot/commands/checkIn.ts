@@ -25,7 +25,10 @@ export const checkIn: SlashCommand = {
     const guildName = interaction.guild?.name as string;
 
     if (!member) {
-      await interaction.reply({ content: 'Você não está em um servidor!', ephemeral: true });
+      await interaction.reply({
+        content: 'Você não está em um servidor!',
+        ephemeral: true,
+      });
       return;
     }
 
@@ -43,18 +46,33 @@ export const checkIn: SlashCommand = {
       ['sábado', 'domingo'].includes(dayOfTheWeekMemberJoined) ? 'no' : 'na'
     } **${formatedMemberJoinedTimestamp}**`;
 
-    const embed = interaction.client.baseEmbed()
+    const embed = interaction.client
+      .baseEmbed()
       .setTitle('🛂 Passaporte do Servidor')
       .setColor(0x3498db)
       .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
       .addFields(
         { name: '👤 Cidadão', value: member.user.username, inline: true },
-        { name: '🏷️ Apelido', value: member.nickname || 'Nenhum', inline: true },
-        { name: '📅 Data de Emissão (Entrada)', value: formatedMemberJoinedTimestamp, inline: false },
-        { name: '🗓️ Conta Criada em', value: member.user.createdAt.toLocaleDateString('pt-BR'), inline: false },
+        {
+          name: '🏷️ Apelido',
+          value: member.nickname || 'Nenhum',
+          inline: true,
+        },
+        {
+          name: '📅 Data de Emissão (Entrada)',
+          value: formatedMemberJoinedTimestamp,
+          inline: false,
+        },
+        {
+          name: '🗓️ Conta Criada em',
+          value: member.user.createdAt.toLocaleDateString('pt-BR'),
+          inline: false,
+        },
       )
       .setDescription(description)
-      .setFooter({ text: `Passaporte oficial de ${guildName} | Carimbado com sucesso! ✅` })
+      .setFooter({
+        text: `Passaporte oficial de ${guildName} | Carimbado com sucesso! ✅`,
+      })
       .setTimestamp();
 
     await interaction.reply({ embeds: [embed] });
