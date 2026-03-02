@@ -84,8 +84,12 @@ export class AnagramGame extends BaseGame {
   }
 
   private scrambleWord(word: string): string {
-    const letters = word.split('');
-    return GameUtils.shuffleArray(letters).join('');
+    if (word.length <= 1) return word;
+    let scrambled: string;
+    do {
+      scrambled = GameUtils.shuffleArray([...word.split('')]).join('');
+    } while (scrambled === word);
+    return scrambled;
   }
 
   async start(): Promise<void> {
@@ -216,6 +220,15 @@ export class AnagramGame extends BaseGame {
     if (data.solved || this.isTimeUp()) return [];
 
     const buttons = [];
+
+    // Guess button (opens modal)
+    buttons.push(
+      GameUtils.createGameButtons({
+        labels: ['✏️ Adivinhar'],
+        customIds: ['anagram_guess'],
+        styles: [ButtonStyle.Primary],
+      }),
+    );
 
     // Hint button
     if (data.hintsUsed < data.hints.length) {

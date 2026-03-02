@@ -16,7 +16,8 @@ interface GeographyData {
   timeLimit: number;
   questionStartTime: number;
   finished: boolean;
-  hintsUsed: Record<string, number>;
+  hintsUsed: Record<string, number>; // total hints per player (for stats/display)
+  currentHints: Record<string, number>; // hints used on the current question only
 }
 
 export class GeographyGame extends BaseGame {
@@ -168,12 +169,14 @@ export class GeographyGame extends BaseGame {
       questionStartTime: Date.now(),
       finished: false,
       hintsUsed: {},
+      currentHints: {},
     } as GeographyData;
 
     // Initialize scores and hints
     this.session.players.forEach((player) => {
       this.session.data.scores[player.userId] = 0;
       this.session.data.hintsUsed[player.userId] = 0;
+      this.session.data.currentHints[player.userId] = 0;
     });
   }
 
@@ -211,7 +214,7 @@ export class GeographyGame extends BaseGame {
       const difficultyBonus = this.getDifficultyBonus(
         currentQuestion.difficulty,
       );
-      const hintPenalty = data.hintsUsed[userId] * 10; // 10 points penalty per hint used
+      const hintPenalty = (data.currentHints[userId] || 0) * 10; // 10 points penalty per hint used on this question
       const points = Math.max(
         50,
         100 + timeBonus + difficultyBonus - hintPenalty,
@@ -235,6 +238,7 @@ export class GeographyGame extends BaseGame {
   private async showHint(userId: string): Promise<void> {
     const data = this.session.data as GeographyData;
     data.hintsUsed[userId] = (data.hintsUsed[userId] || 0) + 1;
+    data.currentHints[userId] = (data.currentHints[userId] || 0) + 1;
   }
 
   private calculateTimeBonus(): number {
@@ -262,6 +266,7 @@ export class GeographyGame extends BaseGame {
 
     data.currentQuestionIndex++;
     data.answered = {};
+    data.currentHints = {}; // reset per-question hints so the penalty doesn't carry over
     data.questionStartTime = Date.now();
 
     if (data.currentQuestionIndex >= data.questions.length) {
@@ -406,7 +411,6 @@ export class GeographyGame extends BaseGame {
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
-    const winners = sortedPlayers.slice(0, Math.min(3, sortedPlayers.length));
     const rewards: Record<string, any> = {};
 
     sortedPlayers.forEach((player, index) => {
@@ -427,8 +431,8 @@ export class GeographyGame extends BaseGame {
 
     return {
       sessionId: this.session.id,
-      winners: winners.map((p) => p.userId),
-      losers: [],
+      winners: sortedPlayers.length > 0 ? [sortedPlayers[0].userId] : [],
+      losers: sortedPlayers.slice(1).map((p) => p.userId),
       rewards,
       stats: {
         questionsAnswered: data.questions.length,

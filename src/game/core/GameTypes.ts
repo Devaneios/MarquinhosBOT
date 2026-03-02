@@ -191,6 +191,17 @@ export abstract class BaseGame {
   }
 
   protected abstract getBaseXpForGame(): number;
+
+  public isFinished(): boolean {
+    const data = this.session.data;
+    return !!(
+      data.gameOver ||
+      data.finished ||
+      data.solved ||
+      data.drawn ||
+      data.gamePhase === 'finished'
+    );
+  }
 }
 
 // Game Categories Configuration

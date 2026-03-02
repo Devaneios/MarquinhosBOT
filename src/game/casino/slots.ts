@@ -45,6 +45,10 @@ export class SlotsGame extends BaseGame {
   async handlePlayerAction(userId: string, action: any): Promise<void> {
     if (action.type === 'spin') {
       await this.spin();
+    } else if (action.type === 'bet_down') {
+      this.changeBet(Math.max(5, this.session.data.currentBet - 5));
+    } else if (action.type === 'bet_up') {
+      this.changeBet(Math.min(100, this.session.data.currentBet + 5));
     } else if (action.type === 'change_bet') {
       this.changeBet(action.amount);
     }

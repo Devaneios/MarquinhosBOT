@@ -1,5 +1,5 @@
 import { GameManager } from '@marquinhos/game/core/GameManager';
-import { GAME_CONFIGS, GameType } from '@marquinhos/game/core/GameTypes';
+import { GameType } from '@marquinhos/game/core/GameTypes';
 import { GameUtils } from '@marquinhos/game/core/GameUtils';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { SlashCommand } from '@marquinhos/types';
@@ -283,16 +283,7 @@ async function startGame(
     return;
   }
 
-  // Create game session
-  const session = gameManager.createSession(
-    gameType,
-    guildId,
-    channelId,
-    userId,
-  );
-
-  // Add players (check for multiplayer requirements)
-  const config = GAME_CONFIGS[gameType];
+  // Validate opponent/multiplayer before creating session to avoid orphaned sessions
   const opponent = interaction.options.getUser('oponente');
 
   const multiplayerGames = [
@@ -335,6 +326,14 @@ async function startGame(
     return;
   }
 
+  // Create game session
+  const session = gameManager.createSession(
+    gameType,
+    guildId,
+    channelId,
+    userId,
+  );
+
   session.players.push({
     userId,
     username: interaction.user.username,
@@ -373,7 +372,7 @@ async function startGame(
   await gameInstance.start();
 
   const embed = gameInstance.getGameEmbed();
-  const components = getGameComponents(gameInstance, gameType);
+  const components = getGameComponents(gameInstance);
 
   await interaction.reply({
     embeds: [embed],
@@ -431,34 +430,31 @@ function createGameInstance(gameType: GameType, session: any) {
   }
 }
 
-function getGameComponents(gameInstance: any, gameType: GameType): any[] {
-  const components = [];
+function getGameComponents(gameInstance: any): any[] {
+  const components: any[] = [];
 
-  // Add game-specific action buttons
-  if (typeof gameInstance.getActionButtons === 'function') {
-    const actionButtons = gameInstance.getActionButtons();
-    if (actionButtons && actionButtons.length > 0) {
-      components.push(...actionButtons);
+  const buttonMethods = [
+    'getActionButtons',
+    'getAnswerButtons',
+    'getChoiceButtons',
+    'getBoardButtons',
+    'getMovementButtons',
+    'getBetButtons',
+    'getLetterButtons',
+    'getNumberButtons',
+  ];
+
+  for (const method of buttonMethods) {
+    if (typeof gameInstance[method] === 'function') {
+      const rows = gameInstance[method]();
+      if (rows && rows.length > 0) {
+        components.push(...rows);
+      }
     }
   }
 
-  // Add board buttons for games like TicTacToe
-  if (typeof gameInstance.getBoardButtons === 'function') {
-    const boardButtons = gameInstance.getBoardButtons();
-    if (boardButtons && boardButtons.length > 0) {
-      components.push(...boardButtons);
-    }
-  }
-
-  // Add game-specific components (like number buttons for lottery)
-  if (typeof gameInstance.getNumberButtons === 'function') {
-    const numberButtons = gameInstance.getNumberButtons();
-    if (numberButtons && numberButtons.length > 0) {
-      components.push(...numberButtons.slice(0, 5)); // Limit components
-    }
-  }
-
-  return components;
+  // Discord allows a maximum of 5 action rows per message
+  return components.slice(0, 5);
 }
 
 async function showStats(interaction: ChatInputCommandInteraction) {

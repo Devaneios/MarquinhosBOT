@@ -14,6 +14,7 @@ interface LotteryData {
   prize: number;
   drawn: boolean;
   ticketCost: number;
+  currentNumberPage: number;
 }
 
 export class LotteryGame extends BaseGame {
@@ -31,6 +32,7 @@ export class LotteryGame extends BaseGame {
       prize: 0,
       drawn: false,
       ticketCost: this.ticketCost,
+      currentNumberPage: 0,
     } as LotteryData;
   }
 
@@ -58,6 +60,12 @@ export class LotteryGame extends BaseGame {
         break;
       case 'clear_numbers':
         this.clearNumbers();
+        break;
+      case 'page_prev':
+        if (data.currentNumberPage > 0) data.currentNumberPage--;
+        break;
+      case 'page_next':
+        if (data.currentNumberPage < 2) data.currentNumberPage++;
         break;
     }
   }
@@ -212,6 +220,9 @@ export class LotteryGame extends BaseGame {
         description += `💸 **Prejuízo:** -${data.ticketCost} coins`;
       }
     } else {
+      const pageStart = data.currentNumberPage * 20 + 1;
+      const pageEnd = Math.min(pageStart + 19, this.maxNumber);
+      description += `📄 **Página ${data.currentNumberPage + 1}/3** (números ${pageStart}–${pageEnd})\n\n`;
       description += `**Prêmios disponíveis:**\n`;
       description += `🎊 6 números: ${this.calculatePrize(6)} coins\n`;
       description += `🎉 5 números: ${this.calculatePrize(5)} coins\n`;
@@ -242,40 +253,28 @@ export class LotteryGame extends BaseGame {
 
     const buttons = [];
     const buttonsPerRow = 5;
+    const numbersPerPage = 20; // 4 rows × 5 buttons
+    const pageStart = data.currentNumberPage * numbersPerPage + 1;
+    const pageEnd = Math.min(pageStart + numbersPerPage - 1, this.maxNumber);
 
-    // Create number selection buttons in rows of 5
-    for (let start = 1; start <= this.maxNumber; start += buttonsPerRow * 2) {
-      const labels = [];
-      const customIds = [];
-      const styles = [];
+    for (let start = pageStart; start <= pageEnd; start += buttonsPerRow) {
+      const labels: string[] = [];
+      const customIds: string[] = [];
+      const styles: ButtonStyle[] = [];
+      const disabled: boolean[] = [];
 
-      for (let i = 0; i < buttonsPerRow && start + i <= this.maxNumber; i++) {
+      for (let i = 0; i < buttonsPerRow && start + i <= pageEnd; i++) {
         const number = start + i;
         const isSelected = data.playerNumbers.includes(number);
-
         labels.push(number.toString());
         customIds.push(`lottery_select_${number}`);
         styles.push(isSelected ? ButtonStyle.Success : ButtonStyle.Secondary);
+        disabled.push(!isSelected && data.playerNumbers.length >= this.numbersToSelect);
       }
 
       if (labels.length > 0) {
-        buttons.push(
-          GameUtils.createGameButtons({
-            labels,
-            customIds,
-            styles,
-            disabled: labels.map((label) => {
-              const num = parseInt(label);
-              return data.playerNumbers.includes(num)
-                ? false
-                : data.playerNumbers.length >= this.numbersToSelect;
-            }),
-          }),
-        );
+        buttons.push(GameUtils.createGameButtons({ labels, customIds, styles, disabled }));
       }
-
-      // Limit to show reasonable amount of buttons at once
-      if (buttons.length >= 6) break;
     }
 
     return buttons;
@@ -289,17 +288,26 @@ export class LotteryGame extends BaseGame {
     }
 
     const canDraw = data.playerNumbers.length === this.numbersToSelect;
+    const totalPages = 3; // pages 0-2 cover numbers 1-60
 
     return [
       GameUtils.createGameButtons({
-        labels: ['🎲 Surpresinha', '🗑️ Limpar', '🎪 Sortear'],
-        customIds: ['lottery_quick_pick', 'lottery_clear', 'lottery_draw'],
+        labels: ['◀️', '🎲 Surpresinha', '🗑️ Limpar', '🎪 Sortear', '▶️'],
+        customIds: ['lottery_page_prev', 'lottery_quick_pick', 'lottery_clear', 'lottery_draw', 'lottery_page_next'],
         styles: [
+          ButtonStyle.Primary,
           ButtonStyle.Secondary,
           ButtonStyle.Danger,
           ButtonStyle.Primary,
+          ButtonStyle.Primary,
         ],
-        disabled: [false, data.playerNumbers.length === 0, !canDraw],
+        disabled: [
+          data.currentNumberPage === 0,
+          false,
+          data.playerNumbers.length === 0,
+          !canDraw,
+          data.currentNumberPage >= totalPages - 1,
+        ],
       }),
     ];
   }

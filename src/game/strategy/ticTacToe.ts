@@ -252,7 +252,7 @@ export class TicTacToeGame extends BaseGame {
         ? this.session.players
             .filter((p) => p.userId !== data.winner)
             .map((p) => p.userId)
-        : [],
+        : this.session.players.map((p) => p.userId), // draw: record participation for both
       rewards,
       stats: {
         moves: data.moves,

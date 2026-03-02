@@ -161,7 +161,7 @@ export class BattleRoyaleGame extends BaseGame {
         description += `👑 **VENCEDOR: ${winner?.username}!**\n\n`;
       }
       description += `**Ordem de eliminação:**\n`;
-      data.eliminatedPlayers.reverse().forEach((userId, index) => {
+      [...data.eliminatedPlayers].reverse().forEach((userId, index) => {
         const player = this.session.players.find((p) => p.userId === userId);
         description += `${index + 2}. ${player?.username}\n`;
       });
