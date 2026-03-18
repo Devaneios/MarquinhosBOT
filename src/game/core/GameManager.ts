@@ -138,7 +138,7 @@ export class GameManager {
     const lastPlayed = userCooldowns.get(gameType);
     if (!lastPlayed) return true;
 
-    const cooldownTime = GAME_COOLDOWNS[gameType] * 1000;
+    const cooldownTime = 0;
     return Date.now() - lastPlayed >= cooldownTime;
   }
 

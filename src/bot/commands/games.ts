@@ -83,7 +83,7 @@ export const games: SlashCommand = {
                 name: '✂️ Pedra, Papel, Tesoura',
                 value: 'rock_paper_scissors',
               },
-              { name: '🏃 Labirinto Mental', value: 'maze' },
+              { name: '🏃 Labirinto', value: 'maze' },
               { name: '➕ Speed Math', value: 'speed_math' },
               { name: '⚔️ Battle Royale', value: 'battle_royale' },
               { name: '🗺️ Caça ao Tesouro', value: 'treasure_hunt' },
@@ -126,7 +126,7 @@ export const games: SlashCommand = {
         break;
     }
   },
-  cooldown: 5,
+  cooldown: 0,
 };
 
 async function showGameList(interaction: ChatInputCommandInteraction) {
@@ -152,7 +152,7 @@ async function showGameList(interaction: ChatInputCommandInteraction) {
       },
       {
         name: '🧩 Estratégia',
-        value: `⭕ Jogo da Velha\n🔐 Código Secreto\n✂️ Pedra, Papel, Tesoura\n🏃 Labirinto Mental`,
+        value: `⭕ Jogo da Velha\n🔐 Código Secreto\n✂️ Pedra, Papel, Tesoura\n🏃 Labirinto`,
         inline: true,
       },
       {

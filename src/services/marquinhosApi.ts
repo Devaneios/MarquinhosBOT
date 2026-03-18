@@ -3,6 +3,7 @@ import {
   ApiError,
   ApiResponse,
   LastfmTopListenedPeriod,
+  MazeViewportState,
   PlaybackData,
   Playlist,
   UserAchievement,
@@ -188,6 +189,49 @@ export class MarquinhosApiService {
     return data as ApiResponse<UserAchievement>;
   }
 
+  // Maze Game API calls
+  async startMaze(
+    userId: string,
+    guildId: string,
+    mode: 'open' | 'foggy',
+    size: number,
+  ): Promise<MazeViewportState> {
+    const data = await this.client.post('/api/games/maze/start', {
+      userId,
+      guildId,
+      mode,
+      size,
+    });
+    return (data as ApiResponse<MazeViewportState>).data;
+  }
+
+  async moveMaze(
+    sessionId: string,
+    userId: string,
+    direction: string,
+  ): Promise<MazeViewportState> {
+    const data = await this.client.post(`/api/games/maze/${sessionId}/move`, {
+      userId,
+      direction,
+    });
+    return (data as ApiResponse<MazeViewportState>).data;
+  }
+
+  async getMazeState(sessionId: string): Promise<MazeViewportState | null> {
+    try {
+      const data = await this.client.get(`/api/games/maze/${sessionId}`);
+      return (data as ApiResponse<MazeViewportState>).data;
+    } catch {
+      return null;
+    }
+  }
+
+  async abandonMaze(sessionId: string, userId: string): Promise<void> {
+    await this.client.delete(`/api/games/maze/${sessionId}`, {
+      body: JSON.stringify({ userId }),
+    });
+  }
+
   // Playlist API calls
   async createPlaylist(
     name: string,
@@ -231,6 +275,15 @@ export class MarquinhosApiService {
       track,
     });
     return data as ApiResponse<Playlist>;
+  }
+
+  async healthCheck(): Promise<boolean> {
+    try {
+      await this.client.get('/api/health');
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Voice AI API calls
