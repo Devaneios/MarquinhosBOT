@@ -10,6 +10,7 @@ import {
   ButtonInteraction,
   CommandInteraction,
   Guild,
+  MessageFlags,
   ModalBuilder,
   ModalSubmitInteraction,
   TextInputBuilder,
@@ -476,7 +477,7 @@ export const interactionCreate: BotEvent = {
         btn.channelId,
         action,
         (payload) => btn.editReply(payload),
-        (msg) => btn.followUp({ content: msg, ephemeral: true }).then(() => {}),
+        (msg) => btn.followUp({ content: msg, flags: MessageFlags.Ephemeral }).then(() => {}),
       );
     } else if ((interaction as any).isModalSubmit?.()) {
       const modal = interaction as unknown as ModalSubmitInteraction;
@@ -492,7 +493,7 @@ export const interactionCreate: BotEvent = {
       if (!action) {
         await modal.reply({
           content: '❌ Entrada inválida. Tente novamente.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
         return;
       }
@@ -505,7 +506,7 @@ export const interactionCreate: BotEvent = {
         action,
         (payload) => modal.editReply(payload),
         (msg) =>
-          modal.followUp({ content: msg, ephemeral: true }).then(() => {}),
+          modal.followUp({ content: msg, flags: MessageFlags.Ephemeral }).then(() => {}),
       );
     } else if (interaction.isAutocomplete()) {
       const command = (

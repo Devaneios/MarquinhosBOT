@@ -1,4 +1,5 @@
 export { achievements } from './achievements';
+export { admin } from './admin';
 export { apistatus } from './apistatus';
 export { anom } from './anom';
 export { audio } from './audio';
@@ -27,4 +28,5 @@ export { playlist } from './playlist';
 export { plugins } from './plugins';
 export { recommend } from './recommend';
 export { syncParty } from './syncParty';
+export { termo } from './termo';
 export { time } from './time';

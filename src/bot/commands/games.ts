@@ -8,6 +8,7 @@ import {
   ActionRowBuilder,
   ChatInputCommandInteraction,
   EmbedBuilder,
+  MessageFlags,
   SlashCommandBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
@@ -245,7 +246,7 @@ async function startGame(
   if (!gameType) {
     await interaction.reply({
       content: 'Jogo não encontrado!',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -258,7 +259,7 @@ async function startGame(
     );
     await interaction.reply({
       content: `⏰ Você precisa aguardar ${GameUtils.formatCooldownTime(cooldownRemaining)} antes de jogar novamente.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -268,7 +269,7 @@ async function startGame(
   if (existingSession) {
     await interaction.reply({
       content: '🎮 Você já está em um jogo! Termine o atual primeiro.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -278,7 +279,7 @@ async function startGame(
   if (channelSession) {
     await interaction.reply({
       content: '🎮 Já há um jogo acontecendo neste canal!',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -298,7 +299,7 @@ async function startGame(
     await interaction.reply({
       content:
         '👥 Este é um jogo multiplayer! Por favor, mencione um oponente usando a opção `oponente`.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -307,7 +308,7 @@ async function startGame(
     await interaction.reply({
       content:
         '❌ Este jogo é singleplayer, você não pode convidar um oponente.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -315,7 +316,7 @@ async function startGame(
   if (opponent && opponent.bot) {
     await interaction.reply({
       content: '❌ Você não pode jogar contra um bot!',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -323,7 +324,7 @@ async function startGame(
   if (opponent && opponent.id === userId) {
     await interaction.reply({
       content: '❌ Você não pode jogar contra si mesmo!',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -362,7 +363,7 @@ async function startGame(
   } catch (error) {
     await interaction.reply({
       content: '❌ Erro ao criar o jogo. Tente novamente.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -466,12 +467,12 @@ async function showStats(interaction: ChatInputCommandInteraction) {
   if (!guildId) {
     await interaction.reply({
       content: 'Este comando só pode ser usado em servidores!',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
 
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   try {
     const response = await apiService.getUserGameStats(userId, guildId);
@@ -532,7 +533,7 @@ async function showRanking(interaction: ChatInputCommandInteraction) {
   if (!guildId) {
     await interaction.reply({
       content: 'Este comando só pode ser usado em servidores!',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }

@@ -23,34 +23,6 @@ export class XPSystem {
       if (!result || result.onCooldown) return;
 
       cooldowns.set(key, now);
-
-      if (result.leveledUp && result.newLevel && interaction.channel) {
-        const embed = interaction.client
-          .baseEmbed()
-          .setTitle('🎉 Level Up!')
-          .setDescription(
-            `Parabéns <@${userId}>! Você subiu para o nível **${result.newLevel}**!`,
-          )
-          .addFields(
-            {
-              name: '⚡ XP Atual',
-              value: result.userLevel.xp.toString(),
-              inline: true,
-            },
-            {
-              name: '📈 XP Total',
-              value: result.userLevel.totalXp.toString(),
-              inline: true,
-            },
-          );
-        await interaction.followUp({ embeds: [embed] });
-      }
-
-      if (result.unlockedAchievements.length > 0 && interaction.channel) {
-        await interaction.followUp({
-          content: `🏆 Nova conquista desbloqueada! Use \`/achievements\` para ver.`,
-        });
-      }
     } catch (error) {
       console.error('Failed to add command XP:', error);
     }

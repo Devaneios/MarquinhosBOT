@@ -1,6 +1,6 @@
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { SlashCommand } from '@marquinhos/types';
-import { SlashCommandBuilder } from 'discord.js';
+import { MessageFlags, SlashCommandBuilder } from 'discord.js';
 
 const marquinhosApi = new MarquinhosApiService();
 
@@ -114,7 +114,7 @@ export const syncParty: SlashCommand = {
     if (!interaction.guildId) {
       await interaction.reply({
         content: 'Este comando só pode ser usado em um servidor.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
