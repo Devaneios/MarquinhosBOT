@@ -1,5 +1,5 @@
 import { SlashCommand } from '@marquinhos/types';
-import { GuildMember, SlashCommandBuilder } from 'discord.js';
+import { GuildMember, MessageFlags, SlashCommandBuilder } from 'discord.js';
 
 const DATE_LOCALE_CONFIG: Intl.DateTimeFormatOptions = {
   weekday: 'long',
@@ -27,7 +27,7 @@ export const checkIn: SlashCommand = {
     if (!member) {
       await interaction.reply({
         content: 'Você não está em um servidor!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

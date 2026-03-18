@@ -286,6 +286,58 @@ export class MarquinhosApiService {
     }
   }
 
+  // Wordle/Termo API calls
+  async submitWordleGuess(
+    userId: string,
+    guildId: string,
+    guess: string,
+  ): Promise<ApiResponse> {
+    const data = await this.client.post('/api/wordle/guess', {
+      userId,
+      guildId,
+      guess,
+    });
+    return data as ApiResponse;
+  }
+
+  async getWordleStats(guildId: string): Promise<ApiResponse> {
+    const data = await this.client.get(`/api/wordle/stats/${guildId}`);
+    return data as ApiResponse;
+  }
+
+  async getUserWordleSession(
+    userId: string,
+    guildId: string,
+  ): Promise<ApiResponse> {
+    const data = await this.client.get(
+      `/api/wordle/session/${userId}/${guildId}`,
+    );
+    return data as ApiResponse;
+  }
+
+  async forceNewWordleWord(guildId: string): Promise<ApiResponse> {
+    const data = await this.client.post('/api/wordle/admin/force-new-word', {
+      guildId,
+    });
+    return data as ApiResponse;
+  }
+
+  async setWordleConfig(
+    guildId: string,
+    channelId: string,
+  ): Promise<ApiResponse> {
+    const data = await this.client.post('/api/wordle/config', {
+      guildId,
+      channelId,
+    });
+    return data as ApiResponse;
+  }
+
+  async getWordleConfig(guildId: string): Promise<ApiResponse> {
+    const data = await this.client.get(`/api/wordle/config/${guildId}`);
+    return data as ApiResponse;
+  }
+
   // Voice AI API calls
   async post(
     endpoint: string,

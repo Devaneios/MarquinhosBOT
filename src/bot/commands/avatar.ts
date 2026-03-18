@@ -5,6 +5,7 @@ import { logger } from '@marquinhos/utils/logger';
 import {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
+  MessageFlags,
 } from 'discord.js';
 
 export const avatar: SlashCommand = {
@@ -59,7 +60,7 @@ export const avatar: SlashCommand = {
       logger.error('Error in avatar command:', error);
       await interaction.reply({
         content: 'Houve um erro ao processar o comando de avatar.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },
@@ -90,7 +91,7 @@ async function handleListAvatars(
   interaction: ChatInputCommandInteraction,
   avatars: AvatarConfig[],
 ) {
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   if (!avatars || avatars.length === 0) {
     return interaction.editReply('Nenhum avatar encontrado.');
