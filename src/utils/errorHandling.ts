@@ -32,11 +32,14 @@ const commandErrorHandler = async (error: BotError) => {
 };
 
 async function sendErrorMessage(error: BotError) {
+  const webhookUrl = process.env.MARQUINHOS_ERROR_WEBHOOK;
+  if (!webhookUrl) return;
+
   const title = error.message;
   const description = error?.stack || 'No stack trace';
 
   try {
-    await fetch(encodeURI(process.env.MARQUINHOS_ERROR_WEBHOOK || ''), {
+    await fetch(encodeURI(webhookUrl), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

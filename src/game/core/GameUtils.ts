@@ -164,7 +164,7 @@ export class GameUtils {
       [GameType.TIC_TAC_TOE]: 'Jogo da Velha',
       [GameType.SECRET_CODE]: 'Código Secreto',
       [GameType.ROCK_PAPER_SCISSORS]: 'Pedra, Papel, Tesoura',
-      [GameType.MAZE]: 'Labirinto Mental',
+      [GameType.MAZE]: 'Labirinto',
       [GameType.BATTLE_ROYALE]: 'Battle Royale dos Emojis',
       [GameType.TREASURE_HUNT]: 'Caça ao Tesouro',
       [GameType.SPEED_MATH]: 'Speed Math',

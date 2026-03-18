@@ -1,4 +1,9 @@
-import { ButtonStyle, EmbedBuilder } from 'discord.js';
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
+} from 'discord.js';
 import {
   BaseGame,
   GameResult,
@@ -7,258 +12,256 @@ import {
 } from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
 
+// Cell type constants — must match renderViewport expectations
+const WALL = 0;
+const PATH = 1;
+const PLAYER = 2;
+const GOAL = 3;
+const FOG = 5;
+
+const CELL_EMOJI = ['🧱', '⬜', '👤', '🏆', '🟩', '⬛'] as const;
+const BORDER_ROW = '🟩'.repeat(10);
+
+// Viewport half-size: 4 cells in each direction → 9×9 window
+const VIEWPORT_HALF = 4;
+
 interface MazeData {
-  maze: string[][];
-  playerPosition: { x: number; y: number };
-  exitPosition: { x: number; y: number };
-  moves: number;
-  gameOver: boolean;
-  won: boolean;
-  timeLimit: number;
-  startTime: number;
+  phase: 'setup_size' | 'setup_mode' | 'playing';
+  selectedSize?: number;
+  grid?: boolean[][];
+  playerRow?: number;
+  playerCol?: number;
+  goalRow?: number;
+  goalCol?: number;
+  mode?: 'open' | 'foggy';
+  visited?: boolean[][];
+  moves?: number;
+  isCompleted?: boolean;
+}
+
+interface MazeAction {
+  type: 'setup_size' | 'setup_mode' | 'move';
+  size?: number;
+  mode?: 'open' | 'foggy';
+  direction?: string;
 }
 
 export class MazeGame extends BaseGame {
   constructor(session: GameSession) {
     super(session);
-    this.initializeGame();
-  }
-
-  private initializeGame(): void {
-    const maze = this.generateMaze();
-    const start = { x: 1, y: 1 };
-    const exit = { x: 7, y: 7 };
-
-    this.session.data = {
-      maze,
-      playerPosition: start,
-      exitPosition: exit,
-      moves: 0,
-      gameOver: false,
-      won: false,
-      timeLimit: 300, // 5 minutes
-      startTime: Date.now(),
-    } as MazeData;
-
-    // Place player and exit
-    maze[start.y][start.x] = '👤';
-    maze[exit.y][exit.x] = '🏆';
-  }
-
-  private generateMaze(): string[][] {
-    // Several preset 9x9 maze layouts to prevent memorisation
-    const layouts: string[][][] = [
-      [
-        ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
-        ['🧱', '⬜', '⬜', '🧱', '⬜', '⬜', '⬜', '🧱', '🧱'],
-        ['🧱', '⬜', '🧱', '🧱', '⬜', '🧱', '⬜', '🧱', '🧱'],
-        ['🧱', '⬜', '⬜', '⬜', '⬜', '🧱', '⬜', '⬜', '🧱'],
-        ['🧱', '🧱', '🧱', '⬜', '🧱', '🧱', '🧱', '⬜', '🧱'],
-        ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱'],
-        ['🧱', '⬜', '🧱', '🧱', '🧱', '🧱', '🧱', '⬜', '🧱'],
-        ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱'],
-        ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
-      ],
-      [
-        ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
-        ['🧱', '⬜', '🧱', '⬜', '⬜', '⬜', '🧱', '⬜', '🧱'],
-        ['🧱', '⬜', '🧱', '⬜', '🧱', '⬜', '🧱', '⬜', '🧱'],
-        ['🧱', '⬜', '⬜', '⬜', '🧱', '⬜', '⬜', '⬜', '🧱'],
-        ['🧱', '🧱', '⬜', '🧱', '🧱', '🧱', '⬜', '🧱', '🧱'],
-        ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱'],
-        ['🧱', '⬜', '🧱', '⬜', '🧱', '⬜', '🧱', '⬜', '🧱'],
-        ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱'],
-        ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
-      ],
-      [
-        ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
-        ['🧱', '⬜', '⬜', '⬜', '🧱', '⬜', '⬜', '⬜', '🧱'],
-        ['🧱', '🧱', '🧱', '⬜', '🧱', '⬜', '🧱', '⬜', '🧱'],
-        ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱', '⬜', '🧱'],
-        ['🧱', '⬜', '🧱', '🧱', '🧱', '⬜', '🧱', '🧱', '🧱'],
-        ['🧱', '⬜', '⬜', '⬜', '🧱', '⬜', '⬜', '⬜', '🧱'],
-        ['🧱', '🧱', '🧱', '⬜', '🧱', '🧱', '🧱', '⬜', '🧱'],
-        ['🧱', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '🧱'],
-        ['🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱', '🧱'],
-      ],
-    ];
-
-    const chosen = layouts[Math.floor(Math.random() * layouts.length)];
-    return chosen.map((row) => [...row]);
+    this.session.data = { phase: 'setup_size' } as MazeData;
   }
 
   async start(): Promise<void> {
     this.session.players[0].status = PlayerStatus.ACTIVE;
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(_userId: string, action: MazeAction): Promise<void> {
     const data = this.session.data as MazeData;
 
-    if (data.gameOver || this.isTimeUp()) return;
-
-    if (action.type === 'move') {
-      await this.movePlayer(action.direction);
-    }
-  }
-
-  private async movePlayer(direction: string): Promise<void> {
-    const data = this.session.data as MazeData;
-
-    let newX = data.playerPosition.x;
-    let newY = data.playerPosition.y;
-
-    switch (direction) {
-      case 'up':
-        newY--;
-        break;
-      case 'down':
-        newY++;
-        break;
-      case 'left':
-        newX--;
-        break;
-      case 'right':
-        newX++;
-        break;
-      default:
-        return;
+    if (action.type === 'setup_size') {
+      data.selectedSize = action.size;
+      data.phase = 'setup_mode';
+      return;
     }
 
-    // Check bounds and walls
-    if (newX < 0 || newX >= 9 || newY < 0 || newY >= 9) return;
-    if (data.maze[newY][newX] === '🧱') return;
-
-    // Clear old position
-    data.maze[data.playerPosition.y][data.playerPosition.x] = '⬜';
-
-    // Update position
-    data.playerPosition.x = newX;
-    data.playerPosition.y = newY;
-    data.moves++;
-
-    // Check if reached exit
-    if (newX === data.exitPosition.x && newY === data.exitPosition.y) {
-      data.won = true;
-      data.gameOver = true;
-      data.maze[newY][newX] = '🎉';
-      await this.updateScores();
-    } else {
-      data.maze[newY][newX] = '👤';
+    if (action.type === 'setup_mode') {
+      const size = data.selectedSize!;
+      const grid = generateMaze(size);
+      data.grid = grid;
+      data.playerRow = 1;
+      data.playerCol = 1;
+      data.goalRow = size - 2;
+      data.goalCol = size - 2;
+      data.mode = action.mode;
+      data.moves = 0;
+      data.isCompleted = false;
+      // Track visited cells for foggy mode
+      data.visited = Array.from({ length: size }, () =>
+        new Array(size).fill(false),
+      );
+      data.visited[1][1] = true;
+      data.phase = 'playing';
+      return;
     }
-  }
 
-  private isTimeUp(): boolean {
-    const data = this.session.data as MazeData;
-    return Date.now() - data.startTime > data.timeLimit * 1000;
-  }
+    if (
+      action.type === 'move' &&
+      data.phase === 'playing' &&
+      !data.isCompleted
+    ) {
+      const dirMap: Record<string, [number, number]> = {
+        up: [-1, 0],
+        down: [1, 0],
+        left: [0, -1],
+        right: [0, 1],
+      };
+      const delta = dirMap[action.direction ?? ''];
+      if (!delta) return;
 
-  private async updateScores(): Promise<void> {
-    const data = this.session.data as MazeData;
+      const newRow = data.playerRow! + delta[0];
+      const newCol = data.playerCol! + delta[1];
+      const grid = data.grid!;
 
-    if (data.won) {
-      const baseScore = 200;
-      const moveBonus = Math.max(0, 100 - data.moves);
-      const timeBonus = this.calculateTimeBonus();
-      const score = baseScore + moveBonus + timeBonus;
+      if (
+        newRow >= 0 &&
+        newRow < grid.length &&
+        newCol >= 0 &&
+        newCol < grid[0].length &&
+        grid[newRow][newCol]
+      ) {
+        data.playerRow = newRow;
+        data.playerCol = newCol;
+        data.moves = (data.moves ?? 0) + 1;
+        if (data.visited) data.visited[newRow][newCol] = true;
 
-      this.updatePlayerScore(this.session.players[0].userId, score);
+        if (newRow === data.goalRow && newCol === data.goalCol) {
+          data.isCompleted = true;
+        }
+      }
     }
-  }
-
-  private calculateTimeBonus(): number {
-    const data = this.session.data as MazeData;
-    const elapsed = Date.now() - data.startTime;
-    const remaining = Math.max(0, data.timeLimit * 1000 - elapsed);
-    return Math.floor((remaining / (data.timeLimit * 1000)) * 50);
   }
 
   getGameEmbed(): EmbedBuilder {
     const data = this.session.data as MazeData;
     const player = this.session.players[0];
-    const timeRemaining = Math.max(
-      0,
-      data.timeLimit - Math.floor((Date.now() - data.startTime) / 1000),
-    );
 
-    let description = `👤 **Jogador:** ${player.username}\n\n`;
-
-    if (data.gameOver) {
-      if (data.won) {
-        description += `🎉 **PARABÉNS! Você escapou do labirinto!**\n`;
-        description += `🚶 **Movimentos:** ${data.moves}\n`;
-        description += `⏱️ **Tempo:** ${Math.floor((Date.now() - data.startTime) / 1000)}s\n\n`;
-      } else {
-        description += `⏰ **Tempo esgotado!**\n\n`;
-      }
-    } else {
-      description += `🏃 **Escape do labirinto!**\n`;
-      description += `🚶 **Movimentos:** ${data.moves}\n`;
-      description += `⏱️ **Tempo restante:** ${GameUtils.formatTime(timeRemaining)}\n\n`;
+    if (data.phase === 'setup_size') {
+      return GameUtils.createGameEmbed(
+        '🏃 Labirinto',
+        `👤 **${player.username}**\n\nEscolha o tamanho do labirinto:\n\n🟫 **Pequeno** — 15×15\n🟧 **Médio** — 31×31\n🟥 **Grande** — 51×51\n⬛ **Enorme** — 99×99`,
+        0x3498db,
+      );
     }
 
-    // Display maze
-    description += '```\n';
-    for (let y = 0; y < data.maze.length; y++) {
-      description += data.maze[y].join('') + '\n';
+    if (data.phase === 'setup_mode') {
+      const sizeLabel: Record<number, string> = {
+        15: 'Pequeno (15×15)',
+        31: 'Médio (31×31)',
+        51: 'Grande (51×51)',
+        99: 'Enorme (99×99)',
+      };
+      return GameUtils.createGameEmbed(
+        '🏃 Labirinto',
+        `👤 **${player.username}**\n\n📐 **Tamanho:** ${sizeLabel[data.selectedSize!]}\n\nEscolha o modo de jogo:\n\n🌅 **Aberto** — todos os caminhos visíveis\n🌫️ **Nebuloso** — só vê o corredor atual`,
+        0x3498db,
+      );
     }
-    description += '```\n';
 
-    description += `**Legenda:**\n`;
-    description += `👤 Você | 🏆 Saída | 🧱 Parede | ⬜ Caminho`;
+    // Playing phase
+    const moves = data.moves ?? 0;
+    const header = data.isCompleted
+      ? `👤 **${player.username}**\n\n🎉 **PARABÉNS! Você escapou do labirinto!**\n🚶 **Movimentos:** ${moves}\n\n`
+      : `👤 **${player.username}** | 🚶 **Movimentos:** ${moves}\n\n`;
+    const fogLegend =
+      data.isCompleted || data.mode === 'open' ? '' : ' | ⬛ Névoa';
+    const legend = `\n\n**Legenda:** 👤 Você | 🏆 Saída | 🧱 Parede | ⬜ Caminho | 🟩 Borda${fogLegend}`;
+    const description = `${header}${renderViewport(data)}${legend}`;
 
-    const color = data.gameOver ? (data.won ? 0x00ff00 : 0xff0000) : 0x3498db;
-
-    return GameUtils.createGameEmbed('🏃 Labirinto Mental', description, color);
+    const color = data.isCompleted ? 0x00ff00 : 0x3498db;
+    return GameUtils.createGameEmbed('🏃 Labirinto', description, color);
   }
 
-  getMovementButtons() {
+  getMovementButtons(): ActionRowBuilder<ButtonBuilder>[] {
     const data = this.session.data as MazeData;
 
-    if (data.gameOver || this.isTimeUp()) return [];
+    if (data.phase === 'setup_size') {
+      return [
+        GameUtils.createGameButtons({
+          labels: ['🟫 Pequeno', '🟧 Médio', '🟥 Grande', '⬛ Enorme'],
+          customIds: [
+            'maze_setup_size_15',
+            'maze_setup_size_31',
+            'maze_setup_size_51',
+            'maze_setup_size_99',
+          ],
+          styles: [
+            ButtonStyle.Secondary,
+            ButtonStyle.Secondary,
+            ButtonStyle.Secondary,
+            ButtonStyle.Secondary,
+          ],
+        }),
+      ];
+    }
 
-    return [
-      GameUtils.createGameButtons({
-        labels: ['⬆️'],
-        customIds: ['maze_up'],
-        styles: [ButtonStyle.Primary],
-      }),
-      GameUtils.createGameButtons({
-        labels: ['⬅️', '⬇️', '➡️'],
-        customIds: ['maze_left', 'maze_down', 'maze_right'],
-        styles: [ButtonStyle.Primary, ButtonStyle.Primary, ButtonStyle.Primary],
-      }),
-    ];
+    if (data.phase === 'setup_mode') {
+      return [
+        GameUtils.createGameButtons({
+          labels: ['🌅 Aberto', '🌫️ Nebuloso'],
+          customIds: ['maze_setup_mode_open', 'maze_setup_mode_foggy'],
+          styles: [ButtonStyle.Primary, ButtonStyle.Primary],
+        }),
+      ];
+    }
+
+    if (data.phase === 'playing' && !data.isCompleted) {
+      return [
+        GameUtils.createGameButtons({
+          labels: ['⬜', '⬆️', '⬜'],
+          customIds: ['maze_noop_1', 'maze_up', 'maze_noop_2'],
+          styles: [
+            ButtonStyle.Secondary,
+            ButtonStyle.Primary,
+            ButtonStyle.Secondary,
+          ],
+          disabled: [true, false, true],
+        }),
+        GameUtils.createGameButtons({
+          labels: ['⬅️', '⬜', '➡️'],
+          customIds: ['maze_left', 'maze_noop_3', 'maze_right'],
+          styles: [
+            ButtonStyle.Primary,
+            ButtonStyle.Secondary,
+            ButtonStyle.Primary,
+          ],
+          disabled: [false, true, false],
+        }),
+        GameUtils.createGameButtons({
+          labels: ['⬜', '⬇️', '⬜'],
+          customIds: ['maze_noop_4', 'maze_down', 'maze_noop_5'],
+          styles: [
+            ButtonStyle.Secondary,
+            ButtonStyle.Primary,
+            ButtonStyle.Secondary,
+          ],
+          disabled: [true, false, true],
+        }),
+      ];
+    }
+
+    return [];
   }
 
   public isFinished(): boolean {
-    return super.isFinished() || this.isTimeUp();
+    const data = this.session.data as MazeData;
+    return data.isCompleted ?? false;
   }
 
   async finish(): Promise<GameResult> {
     const data = this.session.data as MazeData;
     const player = this.session.players[0];
+    const won = data.isCompleted ?? false;
     const rewards = this.calculateRewards(player, 1);
 
-    if (data.won) {
+    if (won) {
       rewards.xp += 30;
-      // Bonus for efficiency
-      if (data.moves < 20) {
+      const moves = data.moves ?? 0;
+      if (moves < 20) {
         rewards.xp += 20;
-      } else if (data.moves < 30) {
+      } else if (moves < 30) {
         rewards.xp += 10;
       }
     }
 
     return {
       sessionId: this.session.id,
-      winners: data.won ? [player.userId] : [],
-      losers: !data.won ? [player.userId] : [],
+      winners: won ? [player.userId] : [],
+      losers: !won ? [player.userId] : [],
       rewards: { [player.userId]: rewards },
       stats: {
-        won: data.won,
-        moves: data.moves,
-        timeUsed: Date.now() - data.startTime,
-        efficiency: data.moves / 15, // Optimal path is about 15 moves
+        won,
+        moves: data.moves ?? 0,
       },
       duration: Date.now() - this.session.startedAt.getTime(),
     };
@@ -267,4 +270,106 @@ export class MazeGame extends BaseGame {
   protected getBaseXpForGame(): number {
     return 30;
   }
+}
+
+/**
+ * Generates a perfect maze using iterative depth-first search (recursive backtracker).
+ * Grid size must be odd. Cells at odd (row, col) are path nodes; even cells are walls.
+ * Returns a 2D boolean array: true = walkable, false = wall.
+ */
+function generateMaze(size: number): boolean[][] {
+  const grid: boolean[][] = Array.from({ length: size }, () =>
+    new Array(size).fill(false),
+  );
+
+  // Carve starting cell
+  grid[1][1] = true;
+
+  const stack: [number, number][] = [[1, 1]];
+  const directions: [number, number][] = [
+    [-2, 0],
+    [2, 0],
+    [0, -2],
+    [0, 2],
+  ];
+
+  while (stack.length > 0) {
+    const [r, c] = stack[stack.length - 1];
+
+    // Shuffle neighbors
+    const shuffled = [...directions].sort(() => Math.random() - 0.5);
+    let moved = false;
+
+    for (const [dr, dc] of shuffled) {
+      const nr = r + dr;
+      const nc = c + dc;
+      if (nr > 0 && nr < size - 1 && nc > 0 && nc < size - 1 && !grid[nr][nc]) {
+        // Carve wall between current and neighbor
+        grid[r + dr / 2][c + dc / 2] = true;
+        grid[nr][nc] = true;
+        stack.push([nr, nc]);
+        moved = true;
+        break;
+      }
+    }
+
+    if (!moved) {
+      stack.pop();
+    }
+  }
+
+  // Ensure goal cell is always reachable
+  grid[size - 2][size - 2] = true;
+
+  return grid;
+}
+
+/**
+ * Renders a 9×9 viewport centered on the player.
+ * In foggy mode, unvisited cells appear as FOG.
+ */
+function renderViewport(data: MazeData): string {
+  const grid = data.grid!;
+  const pr = data.playerRow!;
+  const pc = data.playerCol!;
+  const gr = data.goalRow!;
+  const gc = data.goalCol!;
+  const size = grid.length;
+  const foggy = data.mode === 'foggy' && !data.isCompleted;
+  const visited = data.visited;
+
+  const viewSize = VIEWPORT_HALF * 2 + 1;
+  const viewport: number[][] = [];
+
+  for (let i = 0; i < viewSize; i++) {
+    const row: number[] = [];
+    for (let j = 0; j < viewSize; j++) {
+      const r = pr - VIEWPORT_HALF + i;
+      const c = pc - VIEWPORT_HALF + j;
+
+      if (r < 0 || r >= size || c < 0 || c >= size) {
+        row.push(WALL);
+        continue;
+      }
+      if (r === pr && c === pc) {
+        row.push(PLAYER);
+        continue;
+      }
+      if (r === gr && c === gc) {
+        row.push(foggy && visited && !visited[gr][gc] ? FOG : GOAL);
+        continue;
+      }
+      if (foggy && visited && !visited[r][c]) {
+        row.push(FOG);
+        continue;
+      }
+      row.push(grid[r][c] ? PATH : WALL);
+    }
+    viewport.push(row);
+  }
+
+  const rows = viewport.map(
+    (row) => `🟩${row.map((c) => CELL_EMOJI[c]).join('')}🟩`,
+  );
+  return `${BORDER_ROW}\n${rows.join('\n')}\n${BORDER_ROW}`;
 }

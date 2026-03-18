@@ -1,4 +1,5 @@
 export { achievements } from './achievements';
+export { apistatus } from './apistatus';
 export { anom } from './anom';
 export { audio } from './audio';
 export { automod } from './automod';

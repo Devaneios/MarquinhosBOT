@@ -78,6 +78,12 @@ function parseButtonAction(customId: string): Record<string, any> | null {
   if (customId === 'maze_down') return { type: 'move', direction: 'down' };
   if (customId === 'maze_left') return { type: 'move', direction: 'left' };
   if (customId === 'maze_right') return { type: 'move', direction: 'right' };
+  if (customId === 'maze_setup_size_15') return { type: 'setup_size', size: 15 };
+  if (customId === 'maze_setup_size_31') return { type: 'setup_size', size: 31 };
+  if (customId === 'maze_setup_size_51') return { type: 'setup_size', size: 51 };
+  if (customId === 'maze_setup_size_99') return { type: 'setup_size', size: 99 };
+  if (customId === 'maze_setup_mode_open') return { type: 'setup_mode', mode: 'open' };
+  if (customId === 'maze_setup_mode_foggy') return { type: 'setup_mode', mode: 'foggy' };
 
   // MusicQuiz
   if (customId.startsWith('quiz_answer_')) {
