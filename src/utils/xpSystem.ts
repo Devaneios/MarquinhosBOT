@@ -1,9 +1,10 @@
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
-import { CommandInteraction, GuildMember } from 'discord.js';
+import { logger } from '@marquinhos/utils/logger';
+import { CommandInteraction } from 'discord.js';
 
 const apiService = new MarquinhosApiService();
 
-// In-memory cooldown is a pre-filter optimization — the backend is authoritative.
+// In-memory cooldown is a pre-filter optimisation — the backend is authoritative.
 const cooldowns = new Map<string, number>();
 const COMMAND_COOLDOWN_MS = 60_000;
 
@@ -24,23 +25,7 @@ export class XPSystem {
 
       cooldowns.set(key, now);
     } catch (error) {
-      console.error('Failed to add command XP:', error);
-    }
-  }
-
-  static async addVoiceXP(member: GuildMember): Promise<void> {
-    try {
-      // await apiService.addXP(member.id, member.guild.id, 'voice_join');
-    } catch (error) {
-      console.error('Failed to add voice XP:', error);
-    }
-  }
-
-  static async addScrobbleXP(userId: string, guildId: string): Promise<void> {
-    try {
-      // await apiService.addXP(userId, guildId, 'scrobble');
-    } catch (error) {
-      console.error('Failed to add scrobble XP:', error);
+      logger.error(`Failed to add command XP: ${error}`);
     }
   }
 }

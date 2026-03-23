@@ -1,4 +1,5 @@
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
+import { logger } from '@marquinhos/utils/logger';
 import { Collection } from 'discord.js';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -19,10 +20,11 @@ export class GameManager {
   private playerCooldowns: Collection<string, Map<GameType, number>> =
     new Collection();
   private gameInstances: Collection<string, BaseGame> = new Collection();
+  private cleanupInterval: ReturnType<typeof setInterval>;
 
   private constructor() {
-    // Cleanup expired sessions every minute
-    setInterval(() => this.cleanupExpiredSessions(), 60000);
+    // Store handle so the interval can be cancelled (e.g., in tests)
+    this.cleanupInterval = setInterval(() => this.cleanupExpiredSessions(), 60000);
   }
 
   public static getInstance(): GameManager {
@@ -117,7 +119,7 @@ export class GameManager {
         results,
       });
     } catch (error) {
-      console.error('Failed to post game result:', error);
+      logger.error(`Failed to post game result: ${error}`);
     }
 
     this.endSession(sessionId);
@@ -138,7 +140,7 @@ export class GameManager {
     const lastPlayed = userCooldowns.get(gameType);
     if (!lastPlayed) return true;
 
-    const cooldownTime = 0;
+    const cooldownTime = GAME_COOLDOWNS[gameType] * 1000;
     return Date.now() - lastPlayed >= cooldownTime;
   }
 
