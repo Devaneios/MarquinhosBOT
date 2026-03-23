@@ -375,7 +375,7 @@ async function startGame(
   await gameInstance.start();
 
   const embed = gameInstance.getGameEmbed();
-  const components = getGameComponents(gameInstance);
+  const components = gameInstance.getComponents();
 
   await interaction.reply({
     embeds: [embed],
@@ -433,32 +433,6 @@ function createGameInstance(gameType: GameType, session: any) {
   }
 }
 
-function getGameComponents(gameInstance: any): any[] {
-  const components: any[] = [];
-
-  const buttonMethods = [
-    'getActionButtons',
-    'getAnswerButtons',
-    'getChoiceButtons',
-    'getBoardButtons',
-    'getMovementButtons',
-    'getBetButtons',
-    'getLetterButtons',
-    'getNumberButtons',
-  ];
-
-  for (const method of buttonMethods) {
-    if (typeof gameInstance[method] === 'function') {
-      const rows = gameInstance[method]();
-      if (rows && rows.length > 0) {
-        components.push(...rows);
-      }
-    }
-  }
-
-  // Discord allows a maximum of 5 action rows per message
-  return components.slice(0, 5);
-}
 
 async function showStats(interaction: ChatInputCommandInteraction) {
   const userId = interaction.user.id;

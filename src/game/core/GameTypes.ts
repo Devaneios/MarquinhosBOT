@@ -120,6 +120,23 @@ export interface GameStats {
   achievements: string[];
 }
 
+export interface ModalConfig {
+  modalId: string;
+  title: string;
+  label: string;
+  placeholder: string;
+  maxLength?: number;
+}
+
+export type ButtonResult =
+  | { kind: 'action'; action: Record<string, unknown> }
+  | { kind: 'modal'; config: ModalConfig }
+  | { kind: 'ignore' };
+
+export type ButtonDescriptor =
+  | { kind: 'static'; customId: string; result: ButtonResult }
+  | { kind: 'prefix'; prefix: string; parse: (suffix: string) => ButtonResult };
+
 export abstract class BaseGame {
   protected session: GameSession;
 
@@ -201,6 +218,53 @@ export abstract class BaseGame {
       data.drawn ||
       data.gamePhase === 'finished'
     );
+  }
+
+  /**
+   * Returns all Discord component rows for the current game state.
+   * Default: duck-types the 8 legacy method names — existing games work unchanged.
+   * New games override this and return rows directly.
+   */
+  public getComponents(): any[] {
+    const LEGACY_METHODS = [
+      'getActionButtons',
+      'getAnswerButtons',
+      'getChoiceButtons',
+      'getBoardButtons',
+      'getMovementButtons',
+      'getBetButtons',
+      'getLetterButtons',
+      'getNumberButtons',
+    ] as const;
+    const rows: any[] = [];
+    for (const method of LEGACY_METHODS) {
+      if (typeof (this as any)[method] === 'function') {
+        const result = (this as any)[method]();
+        if (result?.length) rows.push(...result);
+      }
+    }
+    return rows.slice(0, 5);
+  }
+
+  /**
+   * Declares this game's button dispatch rules.
+   * Default: [] — falls through to the legacy STATIC_BUTTONS/PREFIX_RULES.
+   * New games override this; no edits to any handler file needed.
+   */
+  public getButtonDescriptors(): ButtonDescriptor[] {
+    return [];
+  }
+
+  /**
+   * Parses a modal submission into a game action.
+   * Default: null — falls through to the legacy parseModalAction switch.
+   * New games override this; no edits to any handler file needed.
+   */
+  public parseModal(
+    _modalId: string,
+    _value: string,
+  ): Record<string, unknown> | null {
+    return null;
   }
 }
 

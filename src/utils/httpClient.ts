@@ -126,13 +126,19 @@ export class HttpClient {
 
       // Check if response is not ok
       if (!response.ok) {
-        const errorMsg = await response.text();
+        const errorText = await response.text();
+        let errorData: unknown = errorText;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          // keep as string
+        }
         const error = new Error(
-          `HTTP error! status: ${response.status}, message: ${errorMsg}`,
+          `HTTP error! status: ${response.status}, message: ${errorText}`,
         );
         (error as unknown as Record<string, unknown>).response = {
           status: response.status,
-          data: errorMsg,
+          data: errorData,
         };
         (error as unknown as Record<string, unknown>).config = { url };
         throw error;

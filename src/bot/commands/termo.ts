@@ -1,10 +1,37 @@
-import { SlashCommand } from '@marquinhos/types';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
-import { MessageFlags, SlashCommandBuilder, TextChannel } from 'discord.js';
+import { SlashCommand } from '@marquinhos/types';
+import { createCanvas, registerFont } from 'canvas';
+import {
+  AttachmentBuilder,
+  MessageFlags,
+  SlashCommandBuilder,
+  TextChannel,
+} from 'discord.js';
+import { fileURLToPath } from 'url';
 
 type LetterFeedback = 'correct' | 'present' | 'absent';
 
 const api = new MarquinhosApiService();
+
+registerFont(
+  fileURLToPath(
+    new URL('../../resources/fonts/BebasNeueRegular.ttf', import.meta.url),
+  ),
+  { family: 'Bebas Neue' },
+);
+
+const KEY_SIZE = 52;
+const KEY_GAP = 6;
+const PADDING = 16;
+const CORNER_RADIUS = 6;
+const BG_COLOR = '#121213';
+const KEY_COLORS: Record<LetterFeedback | 'unused', string> = {
+  correct: '#538d4e',
+  present: '#b59f3b',
+  absent: '#3a3a3c',
+  unused: '#818384',
+};
+const ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
 
 const SQUARE: Record<LetterFeedback, string> = {
   correct: '🟩',
@@ -24,14 +51,20 @@ function buildGuessGrid(
     (g) => `\`${g.guess.toUpperCase()}\` ${feedbackToSquares(g.feedback)}`,
   );
   if (rows.length === 0) {
-    rows.push('⬜'.repeat(wordLength) + ' *(sem tentativas ainda)*');
+    rows.push(`${'⬜'.repeat(wordLength)} *(sem tentativas ainda)*`);
   }
   return rows.join('\n');
 }
 
-function buildKeyboard(guesses: { guess: string; feedback: LetterFeedback[] }[]): string {
+function buildKeyboardImage(
+  guesses: { guess: string; feedback: LetterFeedback[] }[],
+): Buffer {
   const letterState: Record<string, LetterFeedback> = {};
-  const priority: Record<LetterFeedback, number> = { correct: 3, present: 2, absent: 1 };
+  const priority: Record<LetterFeedback, number> = {
+    correct: 3,
+    present: 2,
+    absent: 1,
+  };
 
   for (const { guess, feedback } of guesses) {
     for (let i = 0; i < guess.length; i++) {
@@ -43,21 +76,43 @@ function buildKeyboard(guesses: { guess: string; feedback: LetterFeedback[] }[])
     }
   }
 
-  const rows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
-  return rows
-    .map((row) =>
-      row
-        .split('')
-        .map((l) => {
-          const state = letterState[l];
-          if (state === 'correct') return `🟩`;
-          if (state === 'present') return `🟨`;
-          if (state === 'absent') return `⬛`;
-          return `🔲`;
-        })
-        .join(''),
-    )
-    .join('\n');
+  const maxKeys = ROWS.reduce((m, r) => Math.max(m, r.length), 0);
+  const canvasWidth =
+    PADDING * 2 + maxKeys * KEY_SIZE + (maxKeys - 1) * KEY_GAP;
+  const canvasHeight =
+    PADDING * 2 + ROWS.length * KEY_SIZE + (ROWS.length - 1) * KEY_GAP;
+
+  const canvas = createCanvas(canvasWidth, canvasHeight);
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = BG_COLOR;
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `${Math.round(KEY_SIZE * 0.55)}px "Bebas Neue"`;
+
+  ROWS.forEach((row, rowIndex) => {
+    const rowWidth = row.length * KEY_SIZE + (row.length - 1) * KEY_GAP;
+    const rowX = (canvasWidth - rowWidth) / 2;
+    const rowY = PADDING + rowIndex * (KEY_SIZE + KEY_GAP);
+
+    row.split('').forEach((letter, colIndex) => {
+      const x = rowX + colIndex * (KEY_SIZE + KEY_GAP);
+      const y = rowY;
+
+      const state = letterState[letter] ?? 'unused';
+      ctx.fillStyle = KEY_COLORS[state];
+      ctx.beginPath();
+      ctx.roundRect(x, y, KEY_SIZE, KEY_SIZE, CORNER_RADIUS);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(letter.toUpperCase(), x + KEY_SIZE / 2, y + KEY_SIZE / 2);
+    });
+  });
+
+  return canvas.toBuffer('image/png');
 }
 
 export const termo: SlashCommand = {
@@ -65,10 +120,7 @@ export const termo: SlashCommand = {
     .setName('termo')
     .setDescription('Jogue o Termo — adivinhe a palavra do dia!')
     .addStringOption((opt) =>
-      opt
-        .setName('palpite')
-        .setDescription('Sua tentativa')
-        .setRequired(true),
+      opt.setName('palpite').setDescription('Sua tentativa').setRequired(true),
     ),
 
   execute: async (interaction) => {
@@ -91,16 +143,18 @@ export const termo: SlashCommand = {
       return;
     }
 
+    const keyboardBuffer = buildKeyboardImage(result.guesses);
+    const attachment = new AttachmentBuilder(keyboardBuffer, {
+      name: 'keyboard.png',
+    });
+
     const embed = interaction.client.baseEmbed();
     embed.setTitle('🟩 Termo — Palavra do Dia');
-
-    const grid = buildGuessGrid(result.guesses, result.wordLength);
-    const keyboard = buildKeyboard(result.guesses);
-
-    embed.addFields(
-      { name: `Tentativas (${result.attempts})`, value: grid },
-      { name: 'Teclado', value: keyboard },
-    );
+    embed.addFields({
+      name: `Tentativas (${result.attempts})`,
+      value: buildGuessGrid(result.guesses, result.wordLength),
+    });
+    embed.setImage('attachment://keyboard.png');
 
     if (result.solved) {
       embed.setDescription(
@@ -109,30 +163,30 @@ export const termo: SlashCommand = {
       embed.setColor(0x57f287);
     }
 
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed], files: [attachment] });
 
-    // Post public message in the configured Termo channel
-    try {
-      const configResponse = await api.getWordleConfig(interaction.guildId!);
-      const channelId = (configResponse.data as any)?.channelId;
-      if (!channelId) return;
+    // Post public message in the configured Termo channel only when solved
+    if (result.solved) {
+      try {
+        const configResponse = await api.getWordleConfig(interaction.guildId!);
+        const channelId = (configResponse.data as any)?.channelId;
+        if (!channelId) return;
 
-      const channel = interaction.client.channels.cache.get(channelId) as
-        | TextChannel
-        | undefined;
-      if (!channel) return;
+        const channel = interaction.client.channels.cache.get(channelId) as
+          | TextChannel
+          | undefined;
+        if (!channel) return;
 
-      const latestGuess = result.guesses[result.guesses.length - 1];
-      const squares = feedbackToSquares(latestGuess.feedback);
+        const allSquares = (result.guesses as { feedback: LetterFeedback[] }[])
+          .map((g) => feedbackToSquares(g.feedback))
+          .join('\n');
 
-      let publicMsg = `${interaction.user} está jogando Termo — Tentativa ${result.attempts}:\n${squares}`;
-      if (result.solved) {
-        publicMsg = `${interaction.user} acertou o Termo em ${result.attempts} tentativa${result.attempts > 1 ? 's' : ''}! 🎉\n${squares}`;
+        const publicMsg = `${interaction.user} acertou o Termo em ${result.attempts} tentativa${result.attempts > 1 ? 's' : ''}! 🎉\n${allSquares}`;
+
+        await channel.send(publicMsg);
+      } catch {
+        // Silently ignore if channel config is missing or send fails
       }
-
-      await channel.send(publicMsg);
-    } catch {
-      // Silently ignore if channel config is missing or send fails
     }
   },
   cooldown: 3,

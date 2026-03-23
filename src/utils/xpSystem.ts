@@ -30,7 +30,7 @@ export class XPSystem {
 
   static async addVoiceXP(member: GuildMember): Promise<void> {
     try {
-      await apiService.addXP(member.id, member.guild.id, 'voice_join');
+      // await apiService.addXP(member.id, member.guild.id, 'voice_join');
     } catch (error) {
       console.error('Failed to add voice XP:', error);
     }
@@ -38,7 +38,7 @@ export class XPSystem {
 
   static async addScrobbleXP(userId: string, guildId: string): Promise<void> {
     try {
-      await apiService.addXP(userId, guildId, 'scrobble');
+      // await apiService.addXP(userId, guildId, 'scrobble');
     } catch (error) {
       console.error('Failed to add scrobble XP:', error);
     }
