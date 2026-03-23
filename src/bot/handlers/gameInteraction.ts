@@ -1,4 +1,5 @@
 import { GameManager } from '@marquinhos/game/core/GameManager';
+import { logger } from '@marquinhos/utils/logger';
 import { MessageFlags } from 'discord.js';
 
 const gameManager = GameManager.getInstance();
@@ -16,6 +17,10 @@ export async function handleGameInteraction(
   const gameInstance = gameManager.getGameInstance(session.id);
   if (!gameInstance) return;
 
+  // Reject button presses from users who are not participants in this session.
+  // Discord component customIds are public — anyone in the channel can click.
+  if (!session.players.some((p) => p.userId === userId)) return;
+
   try {
     await gameInstance.handlePlayerAction(userId, action);
 
@@ -30,7 +35,7 @@ export async function handleGameInteraction(
       await updateFn({ embeds: [embed], components });
     }
   } catch (error) {
-    console.error('Game interaction error:', error);
+    logger.error(`Game interaction error: ${error}`);
     await errorFn('Ocorreu um erro ao processar sua ação. Tente novamente.');
   }
 }

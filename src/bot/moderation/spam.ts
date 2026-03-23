@@ -19,7 +19,7 @@ setInterval(() => {
 }, CLEAN_INTERVAL_MS);
 
 function hashMessage(content: string, userId: string): string {
-  return crypto.createHash('md5').update(`${content}${userId}`).digest('hex');
+  return crypto.createHash('sha256').update(`${content}${userId}`).digest('hex');
 }
 
 async function notifyModeratorAboutSpam(
