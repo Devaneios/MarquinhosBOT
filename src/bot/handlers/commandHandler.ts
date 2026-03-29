@@ -1,5 +1,4 @@
 import { logger } from '@marquinhos/utils/logger';
-import { XPSystem } from '@marquinhos/utils/xpSystem';
 import { useMainPlayer } from 'discord-player';
 import { ChatInputCommandInteraction, Guild } from 'discord.js';
 
@@ -26,13 +25,19 @@ export async function handleCommandInteraction(
       return;
     }
     // Expired cooldown entry — reset it with a deletion timer
-    interaction.client.cooldowns.set(cooldownKey, Date.now() + command.cooldown * 1000);
+    interaction.client.cooldowns.set(
+      cooldownKey,
+      Date.now() + command.cooldown * 1000,
+    );
     setTimeout(
       () => interaction.client.cooldowns.delete(cooldownKey),
       command.cooldown * 1000,
     );
   } else if (command.cooldown && !cooldown) {
-    interaction.client.cooldowns.set(cooldownKey, Date.now() + command.cooldown * 1000);
+    interaction.client.cooldowns.set(
+      cooldownKey,
+      Date.now() + command.cooldown * 1000,
+    );
     setTimeout(
       () => interaction.client.cooldowns.delete(cooldownKey),
       command.cooldown * 1000,
@@ -60,9 +65,5 @@ export async function handleCommandInteraction(
   // of becoming silently dropped unhandled promise rejections.
   await player.context.provide(data, async () => {
     await command.execute(interaction);
-
-    // Level-up and achievement notifications come directly from the addXP
-    // API response — no separate polling call needed.
-    await XPSystem.addCommandXP(interaction);
   });
 }
