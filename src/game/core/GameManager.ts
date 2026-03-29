@@ -24,7 +24,10 @@ export class GameManager {
 
   private constructor() {
     // Store handle so the interval can be cancelled (e.g., in tests)
-    this.cleanupInterval = setInterval(() => this.cleanupExpiredSessions(), 60000);
+    this.cleanupInterval = setInterval(
+      () => this.cleanupExpiredSessions(),
+      60000,
+    );
   }
 
   public static getInstance(): GameManager {
