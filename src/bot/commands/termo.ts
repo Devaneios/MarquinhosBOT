@@ -128,7 +128,12 @@ export const termo: SlashCommand = {
     .setName('termo')
     .setDescription('Jogue o Termo — adivinhe a palavra do dia!')
     .addStringOption((opt) =>
-      opt.setName('palpite').setDescription('Sua tentativa').setRequired(true),
+      opt
+        .setName('palpite')
+        .setDescription('Sua tentativa')
+        .setRequired(true)
+        .setMinLength(5)
+        .setMaxLength(12),
     ),
 
   execute: async (interaction) => {
@@ -140,11 +145,11 @@ export const termo: SlashCommand = {
       return;
     }
 
-    const guess = interaction.options.getString('palpite', true);
+    const guess = interaction.options.getString('palpite', true).trim();
 
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-    let result: WordleGuessResult | undefined;
+    let result: WordleGuessResult;
     try {
       const response = await api.submitWordleGuess(
         interaction.user.id,
@@ -159,7 +164,7 @@ export const termo: SlashCommand = {
       return;
     }
 
-    const keyboardBuffer = buildKeyboardImage(result!.guesses);
+    const keyboardBuffer = buildKeyboardImage(result.guesses);
     const attachment = new AttachmentBuilder(keyboardBuffer, {
       name: 'keyboard.png',
     });
@@ -167,14 +172,14 @@ export const termo: SlashCommand = {
     const embed = interaction.client.baseEmbed();
     embed.setTitle('🟩 Termo — Palavra do Dia');
     embed.addFields({
-      name: `Tentativas (${result!.attempts})`,
-      value: buildGuessGrid(result!.guesses, result!.wordLength),
+      name: `Tentativas (${result.attempts})`,
+      value: buildGuessGrid(result.guesses, result.wordLength),
     });
     embed.setImage('attachment://keyboard.png');
 
-    if (result!.solved) {
+    if (result.solved) {
       embed.setDescription(
-        `🎉 Você acertou em **${result!.attempts}** tentativa${result!.attempts > 1 ? 's' : ''}!`,
+        `🎉 Você acertou em **${result.attempts}** tentativa${result.attempts > 1 ? 's' : ''}!`,
       );
       embed.setColor(0x57f287);
     }
@@ -182,20 +187,22 @@ export const termo: SlashCommand = {
     await interaction.editReply({ embeds: [embed], files: [attachment] });
 
     // Post public message in the configured Termo channel only when solved
-    if (result!.solved) {
+    if (result.solved) {
       try {
         const configResponse = await api.getWordleConfig(interaction.guildId);
         const channelId = (configResponse.data as any)?.channelId;
         if (!channelId) return;
 
-        const channel = await interaction.client.channels.fetch(channelId).catch(() => null);
+        const channel = await interaction
+          .guild!.channels.fetch(channelId)
+          .catch(() => null);
         if (!channel || !channel.isTextBased()) return;
 
-        const allSquares = (result!.guesses as { feedback: LetterFeedback[] }[])
+        const allSquares = result.guesses
           .map((g) => feedbackToSquares(g.feedback))
           .join('\n');
 
-        const publicMsg = `${interaction.user} acertou o Termo em ${result!.attempts} tentativa${result!.attempts > 1 ? 's' : ''}! 🎉\n${allSquares}`;
+        const publicMsg = `${interaction.user} acertou o Termo em ${result.attempts} tentativa${result.attempts > 1 ? 's' : ''}! 🎉\n${allSquares}`;
 
         await channel.send(publicMsg);
       } catch {

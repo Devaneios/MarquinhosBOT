@@ -78,6 +78,8 @@ function startTermoScheduler(client: Client): void {
   }, msToMidnight);
 }
 
+const lastBroadcastWinners = new Map<string, number>();
+
 async function broadcastTermoStats(client: Client): Promise<void> {
   const guilds = client.guilds.cache;
 
@@ -90,7 +92,7 @@ async function broadcastTermoStats(client: Client): Promise<void> {
       const statsRes = await api.getWordleStats(guildId);
       const stats = statsRes.data as any;
 
-      if (!stats || stats.playersCount === 0) continue;
+      if (!stats || stats.winnersCount <= (lastBroadcastWinners.get(guildId) ?? 0)) continue;
 
       const channel = client.channels.cache.get(channelId) as TextChannel | undefined;
       if (!channel) continue;
@@ -100,6 +102,7 @@ async function broadcastTermoStats(client: Client): Promise<void> {
         `${stats.winnersCount} acertaram, ` +
         `média de ${stats.avgAttempts} tentativa${stats.avgAttempts !== 1 ? 's' : ''}.`,
       );
+      lastBroadcastWinners.set(guildId, stats.winnersCount);
     } catch {
       // Skip guilds with errors
     }
