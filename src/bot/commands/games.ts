@@ -3,7 +3,6 @@ import { GameType } from '@marquinhos/game/core/GameTypes';
 import { GameUtils } from '@marquinhos/game/core/GameUtils';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { SlashCommand } from '@marquinhos/types';
-import { XPSystem } from '@marquinhos/utils/xpSystem';
 import {
   ActionRowBuilder,
   ChatInputCommandInteraction,
@@ -381,9 +380,6 @@ async function startGame(
     embeds: [embed],
     components,
   });
-
-  // Add XP for starting a game
-  await XPSystem.addCommandXP(interaction);
 }
 
 function createGameInstance(gameType: GameType, session: any) {
@@ -432,7 +428,6 @@ function createGameInstance(gameType: GameType, session: any) {
       throw new Error('Game type not implemented');
   }
 }
-
 
 async function showStats(interaction: ChatInputCommandInteraction) {
   const userId = interaction.user.id;
@@ -495,8 +490,8 @@ async function showStats(interaction: ChatInputCommandInteraction) {
     }
 
     await interaction.editReply({ embeds: [embed] });
-  } catch (error) {
-    console.error('Error fetching game stats:', error);
+  } catch (_error) {
+    console.error('Error fetching game stats:', _error);
     await interaction.editReply('Ocorreu um erro ao buscar suas estatísticas.');
   }
 }
