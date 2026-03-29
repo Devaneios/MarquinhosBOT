@@ -57,8 +57,37 @@ async function rotateTermoWord(client: Client): Promise<void> {
           | undefined;
         if (!channel) continue;
 
+        const shortTrashTalks = [
+          'boa sorte (vão precisar).',
+          'duvido acertarem.',
+          'quero só ver o desespero.',
+          'valendo a dignidade.',
+          'vão chutar até amanhã.',
+          'essa vai dar trabalho.',
+          'desistir é uma opção.',
+          'ninguém vai acertar essa.',
+          'hoje não é o dia de vocês.',
+          'já podem ir desistindo.',
+          'nem tentem.',
+          'essa tá fácil... pra mim.',
+          'quem vai se humilhar primeiro?',
+          'essa palavra não é pra qualquer um.',
+          'alguém aqui sabe português?',
+          'podem errar à vontade.',
+          'vão sofrer muito hoje.',
+          'esperando o primeiro erro.',
+          'hoje tem humilhação gratuita.',
+          'vão reclamar que a palavra é injusta.',
+          'podem começar a chorar agora.',
+          'vocês não estão prontos.',
+          'hoje a palavra vence.',
+          'muito vocabulário pra pouca gente.',
+          'spoiler: não vão acertar.',
+        ];
+        const trashTalk =
+          shortTrashTalks[Math.floor(Math.random() * shortTrashTalks.length)];
         await channel.send(
-          `🟩 **Nova palavra do Termo!** (${data.wordLength} letras) — boa sorte a todos!\n` +
+          `<@&1487639231361978399> **Nova palavra!** (${data.wordLength} letras) — ${trashTalk}\n` +
             `${'⬜'.repeat(data.wordLength)}`,
         );
       } catch {
@@ -108,7 +137,7 @@ async function broadcastTermoStats(client: Client): Promise<void> {
       if (!channel) continue;
 
       await channel.send(
-        `📊 **Termo — Hoje:** ${stats.playersCount} pessoa${stats.playersCount !== 1 ? 's' : ''} jogaram, ` +
+        `**Termo — Hoje:** ${stats.playersCount} pessoa${stats.playersCount !== 1 ? 's' : ''} jogaram, ` +
           `${stats.winnersCount} acertaram, ` +
           `média de ${stats.avgAttempts} tentativa${stats.avgAttempts !== 1 ? 's' : ''}.`,
       );

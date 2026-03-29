@@ -83,7 +83,7 @@ export const admin: SlashCommand = {
 
         const embed = interaction.client.baseEmbed();
         embed
-          .setTitle('🔄 Nova palavra do Termo gerada!')
+          .setTitle('Nova palavra do Termo gerada!')
           .setDescription(
             `**Palavra:** \`${result.word.toUpperCase()}\` (${result.wordLength} letras)\n` +
               `**Data:** ${result.wordDate}`,
@@ -112,7 +112,7 @@ export const admin: SlashCommand = {
           if (!wordleChannel) return;
 
           await wordleChannel.send(
-            `🔄 **Nova palavra do Termo!** (${result.wordLength} letras) — boa sorte a todos!\n` +
+            `**Nova palavra!** (${result.wordLength} letras) — tomara que errem!\n` +
               `${'⬜'.repeat(result.wordLength)}`,
           );
         } catch {
