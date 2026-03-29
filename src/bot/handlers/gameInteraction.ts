@@ -1,6 +1,5 @@
 import { GameManager } from '@marquinhos/game/core/GameManager';
 import { logger } from '@marquinhos/utils/logger';
-import { MessageFlags } from 'discord.js';
 
 const gameManager = GameManager.getInstance();
 

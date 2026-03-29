@@ -1,7 +1,7 @@
+import { handleAutocompleteInteraction } from '@marquinhos/bot/handlers/autocompleteHandler';
 import { handleCommandInteraction } from '@marquinhos/bot/handlers/commandHandler';
 import { handleButtonInteraction } from '@marquinhos/bot/handlers/gameButtonHandler';
 import { handleModalSubmitInteraction } from '@marquinhos/bot/handlers/gameModalHandler';
-import { handleAutocompleteInteraction } from '@marquinhos/bot/handlers/autocompleteHandler';
 import { BotEvent } from '@marquinhos/types';
 import { Interaction } from 'discord.js';
 

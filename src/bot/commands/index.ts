@@ -1,7 +1,7 @@
 export { achievements } from './achievements';
 export { admin } from './admin';
-export { apistatus } from './apistatus';
 export { anom } from './anom';
+export { apistatus } from './apistatus';
 export { audio } from './audio';
 export { automod } from './automod';
 export { avatar } from './avatar';

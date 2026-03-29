@@ -1,5 +1,5 @@
-import { GameManager } from '@marquinhos/game/core/GameManager';
 import { handleGameInteraction } from '@marquinhos/bot/handlers/gameInteraction';
+import { GameManager } from '@marquinhos/game/core/GameManager';
 import { MessageFlags, ModalSubmitInteraction } from 'discord.js';
 
 const gameManager = GameManager.getInstance();
@@ -88,8 +88,10 @@ export async function handleModalSubmitInteraction(
   const value = modal.fields.getTextInputValue('input').trim();
 
   // Try new API first (game owns its modal parsing)
-  let action: Record<string, unknown> | null =
-    gameInstance.parseModal(modal.customId, value);
+  let action: Record<string, unknown> | null = gameInstance.parseModal(
+    modal.customId,
+    value,
+  );
 
   // Fall through to legacy switch for the 20 existing games
   if (!action) action = legacyParseModal(modal.customId, value);
@@ -109,6 +111,8 @@ export async function handleModalSubmitInteraction(
     action,
     (payload) => modal.editReply(payload),
     (msg) =>
-      modal.followUp({ content: msg, flags: MessageFlags.Ephemeral }).then(() => {}),
+      modal
+        .followUp({ content: msg, flags: MessageFlags.Ephemeral })
+        .then(() => {}),
   );
 }

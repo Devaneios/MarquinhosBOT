@@ -1,10 +1,10 @@
-import { SlashCommand } from '@marquinhos/types';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
+import { SlashCommand } from '@marquinhos/types';
 import {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
-  TextChannel,
   MessageFlags,
+  PermissionFlagsBits,
+  SlashCommandBuilder,
+  TextChannel,
 } from 'discord.js';
 
 const api = new MarquinhosApiService();
@@ -21,12 +21,16 @@ export const admin: SlashCommand = {
         .addSubcommand((sub) =>
           sub
             .setName('novo')
-            .setDescription('Força uma nova palavra para o Termo (uso em testes)'),
+            .setDescription(
+              'Força uma nova palavra para o Termo (uso em testes)',
+            ),
         )
         .addSubcommand((sub) =>
           sub
             .setName('canal')
-            .setDescription('Define o canal onde o Termo envia mensagens públicas')
+            .setDescription(
+              'Define o canal onde o Termo envia mensagens públicas',
+            )
             .addChannelOption((opt) =>
               opt
                 .setName('canal')
@@ -71,7 +75,9 @@ export const admin: SlashCommand = {
           const response = await api.forceNewWordleWord(interaction.guildId!);
           result = response.data;
         } catch {
-          await interaction.editReply({ content: '❌ Erro ao gerar nova palavra.' });
+          await interaction.editReply({
+            content: '❌ Erro ao gerar nova palavra.',
+          });
           return;
         }
 
@@ -80,34 +86,34 @@ export const admin: SlashCommand = {
           .setTitle('🔄 Nova palavra do Termo gerada!')
           .setDescription(
             `**Palavra:** \`${result.word.toUpperCase()}\` (${result.wordLength} letras)\n` +
-            `**Data:** ${result.wordDate}`,
+              `**Data:** ${result.wordDate}`,
           )
-          .addFields(
-            {
-              name: 'Estatísticas anteriores',
-              value:
-                `👥 Jogadores: ${result.stats?.playersCount ?? 0}\n` +
-                `✅ Acertos: ${result.stats?.winnersCount ?? 0}\n` +
-                `📊 Média de tentativas: ${result.stats?.avgAttempts ?? 0}`,
-            },
-          );
+          .addFields({
+            name: 'Estatísticas anteriores',
+            value:
+              `👥 Jogadores: ${result.stats?.playersCount ?? 0}\n` +
+              `✅ Acertos: ${result.stats?.winnersCount ?? 0}\n` +
+              `📊 Média de tentativas: ${result.stats?.avgAttempts ?? 0}`,
+          });
 
         await interaction.editReply({ embeds: [embed] });
 
         // Also post in the configured wordle channel
         try {
-          const configResponse = await api.getWordleConfig(interaction.guildId!);
+          const configResponse = await api.getWordleConfig(
+            interaction.guildId!,
+          );
           const channelId = (configResponse.data as any)?.channelId;
           if (!channelId) return;
 
-          const wordleChannel = interaction.client.channels.cache.get(channelId) as
-            | TextChannel
-            | undefined;
+          const wordleChannel = interaction.client.channels.cache.get(
+            channelId,
+          ) as TextChannel | undefined;
           if (!wordleChannel) return;
 
           await wordleChannel.send(
             `🔄 **Nova palavra do Termo!** (${result.wordLength} letras) — boa sorte a todos!\n` +
-            `${'⬜'.repeat(result.wordLength)}`,
+              `${'⬜'.repeat(result.wordLength)}`,
           );
         } catch {
           // Silently ignore
@@ -123,23 +129,35 @@ export const admin: SlashCommand = {
           const stats = response.data as any;
 
           const embed = interaction.client.baseEmbed();
-          embed
-            .setTitle('📊 Termo — Estatísticas de Hoje')
-            .addFields(
-              { name: 'Data', value: stats.wordDate, inline: true },
-              { name: 'Tamanho', value: `${stats.wordLength} letras`, inline: true },
-              { name: 'Jogadores', value: String(stats.playersCount), inline: true },
-              { name: 'Acertos', value: String(stats.winnersCount), inline: true },
-              {
-                name: 'Média de tentativas',
-                value: String(stats.avgAttempts),
-                inline: true,
-              },
-            );
+          embed.setTitle('📊 Termo — Estatísticas de Hoje').addFields(
+            { name: 'Data', value: stats.wordDate, inline: true },
+            {
+              name: 'Tamanho',
+              value: `${stats.wordLength} letras`,
+              inline: true,
+            },
+            {
+              name: 'Jogadores',
+              value: String(stats.playersCount),
+              inline: true,
+            },
+            {
+              name: 'Acertos',
+              value: String(stats.winnersCount),
+              inline: true,
+            },
+            {
+              name: 'Média de tentativas',
+              value: String(stats.avgAttempts),
+              inline: true,
+            },
+          );
 
           await interaction.editReply({ embeds: [embed] });
         } catch {
-          await interaction.editReply({ content: '❌ Erro ao buscar estatísticas.' });
+          await interaction.editReply({
+            content: '❌ Erro ao buscar estatísticas.',
+          });
         }
         return;
       }

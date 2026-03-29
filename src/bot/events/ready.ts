@@ -1,7 +1,7 @@
+import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { BotEvent } from '@marquinhos/types';
 import { getBicho } from '@marquinhos/utils/bichoGame';
 import { logger } from '@marquinhos/utils/logger';
-import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { Client, TextChannel } from 'discord.js';
 
 const api = new MarquinhosApiService();
@@ -52,12 +52,14 @@ async function rotateTermoWord(client: Client): Promise<void> {
         const result = await api.forceNewWordleWord(guildId);
         const data = result.data as any;
 
-        const channel = client.channels.cache.get(channelId) as TextChannel | undefined;
+        const channel = client.channels.cache.get(channelId) as
+          | TextChannel
+          | undefined;
         if (!channel) continue;
 
         await channel.send(
           `🟩 **Nova palavra do Termo!** (${data.wordLength} letras) — boa sorte a todos!\n` +
-          `${'⬜'.repeat(data.wordLength)}`,
+            `${'⬜'.repeat(data.wordLength)}`,
         );
       } catch {
         // Skip guilds with errors
@@ -70,7 +72,9 @@ async function rotateTermoWord(client: Client): Promise<void> {
 
 function startTermoScheduler(client: Client): void {
   const msToMidnight = msUntilMidnightRecife();
-  logger.info(`Termo: próxima palavra em ${Math.round(msToMidnight / 60000)} minutos`);
+  logger.info(
+    `Termo: próxima palavra em ${Math.round(msToMidnight / 60000)} minutos`,
+  );
 
   setTimeout(() => {
     rotateTermoWord(client);
@@ -92,15 +96,21 @@ async function broadcastTermoStats(client: Client): Promise<void> {
       const statsRes = await api.getWordleStats(guildId);
       const stats = statsRes.data as any;
 
-      if (!stats || stats.winnersCount <= (lastBroadcastWinners.get(guildId) ?? 0)) continue;
+      if (
+        !stats ||
+        stats.winnersCount <= (lastBroadcastWinners.get(guildId) ?? 0)
+      )
+        continue;
 
-      const channel = client.channels.cache.get(channelId) as TextChannel | undefined;
+      const channel = client.channels.cache.get(channelId) as
+        | TextChannel
+        | undefined;
       if (!channel) continue;
 
       await channel.send(
         `📊 **Termo — Hoje:** ${stats.playersCount} pessoa${stats.playersCount !== 1 ? 's' : ''} jogaram, ` +
-        `${stats.winnersCount} acertaram, ` +
-        `média de ${stats.avgAttempts} tentativa${stats.avgAttempts !== 1 ? 's' : ''}.`,
+          `${stats.winnersCount} acertaram, ` +
+          `média de ${stats.avgAttempts} tentativa${stats.avgAttempts !== 1 ? 's' : ''}.`,
       );
       lastBroadcastWinners.set(guildId, stats.winnersCount);
     } catch {
