@@ -133,7 +133,7 @@ export const termo: SlashCommand = {
         .setDescription('Sua tentativa')
         .setRequired(true)
         .setMinLength(5)
-        .setMaxLength(12),
+        .setMaxLength(6),
     ),
 
   execute: async (interaction) => {
