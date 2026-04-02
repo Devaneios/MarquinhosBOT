@@ -66,7 +66,7 @@ async function notifyModeratorAboutSpam(
   }
 }
 
-export function handlePotentialSpam(message: Message) {
+export async function handlePotentialSpam(message: Message) {
   const messageContent = message.content.trim();
   const userId = message.author.id;
   const messageHash = hashMessage(messageContent, userId);
