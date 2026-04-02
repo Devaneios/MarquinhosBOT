@@ -2,7 +2,7 @@ import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { SlashCommand } from '@marquinhos/types';
 import { SlashCommandBuilder } from 'discord.js';
 
-const apiService = new MarquinhosApiService();
+const apiService = MarquinhosApiService.getInstance();
 
 export const level: SlashCommand = {
   command: new SlashCommandBuilder()

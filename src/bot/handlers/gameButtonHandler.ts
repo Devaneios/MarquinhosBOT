@@ -5,9 +5,11 @@ import {
   ButtonResult,
   ModalConfig,
 } from '@marquinhos/game/core/GameTypes';
+import { logger } from '@marquinhos/utils/logger';
 import {
   ActionRowBuilder,
   ButtonInteraction,
+  InteractionEditReplyOptions,
   MessageFlags,
   ModalBuilder,
   TextInputBuilder,
@@ -416,7 +418,7 @@ export async function handleButtonInteraction(
     try {
       await buildAndShowModal(btn, result.config);
     } catch (error) {
-      console.error('Error showing game modal:', error);
+      logger.warn('Error showing game modal:', error);
     }
     return;
   }
@@ -426,10 +428,10 @@ export async function handleButtonInteraction(
     btn.user.id,
     btn.channelId,
     result.action,
-    (payload) => btn.editReply(payload),
+    (payload) => btn.editReply(payload as InteractionEditReplyOptions),
     (msg) =>
       btn
         .followUp({ content: msg, flags: MessageFlags.Ephemeral })
-        .then(() => {}),
+        .then(() => undefined),
   );
 }

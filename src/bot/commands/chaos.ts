@@ -11,6 +11,8 @@ import {
   VoiceChannel,
 } from 'discord.js';
 
+export const activeChaosTimers = new Set<NodeJS.Timeout>();
+
 export const chaos: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('chaos')
@@ -50,22 +52,24 @@ export const chaos: SlashCommand = {
     // playAudio(interaction, currentVoiceChannel, '_caos');
 
     // When the audio finishes playing, call the function
-    setTimeout(() => chaos2(interaction, levelOfChaos), 500);
+    const initialTimer = setTimeout(() => {
+      activeChaosTimers.delete(initialTimer);
+      chaos2(interaction, levelOfChaos);
+    }, 500);
+    activeChaosTimers.add(initialTimer);
 
-    interaction.reply('É TILAMBUCOOOOOOO');
-    interaction.deleteReply();
+    await interaction.reply('É TILAMBUCOOOOOOO');
+    await interaction.deleteReply();
   },
   cooldown: 10,
 };
 
 async function chaos2(interaction: CommandInteraction, limit: number) {
-  // Voice channel enum to filter all available channels
-  const voiceChannelEnumNumber = 2;
   // Gets the voice channel that will (primaly) suffer the chaos
   const voiceChannel = (interaction.member as GuildMember).voice.channel;
   // Gets the list of all voice channels in the guild
   const voiceChannels = interaction.guild?.channels.cache.filter(
-    (channel) => channel.type === voiceChannelEnumNumber,
+    (channel) => channel.type === ChannelType.GuildVoice,
   );
   // Gets the list of all users in the voiceChannel
   const activeUsers = voiceChannel?.members.filter((user) => !user.user.bot);
@@ -91,7 +95,9 @@ async function chaos3(
 ) {
   // That's how I made it work. Recursively calling the function chaos with a counter that goes from 1 to "limit".
   if (counter <= limit) {
-    setTimeout(() => {
+    const timerId = setTimeout(() => {
+      activeChaosTimers.delete(timerId);
+
       // First, increment the counter to the next call
       counter++;
       // Create variable usuario
@@ -114,6 +120,7 @@ async function chaos3(
       // The recursion itself. We just send the same data with the counter increased
       chaos3(counter, voiceChannel, voiceChannels, activeUsers, limit);
     }, 1000);
+    activeChaosTimers.add(timerId);
   } else {
     // After the final recursion, this iteration moves everyone to the
     // original channel

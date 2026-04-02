@@ -2,6 +2,7 @@ import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import {
   BaseGame,
   GameResult,
+  GameReward,
   GameSession,
   PlayerStatus,
 } from '../core/GameTypes';
@@ -74,7 +75,10 @@ export class RouletteGame extends BaseGame {
     this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as RouletteData;
 
     if (data.gameOver) return;
@@ -271,9 +275,9 @@ export class RouletteGame extends BaseGame {
 
   async finish(): Promise<GameResult> {
     const data = this.session.data as RouletteData;
-    let winners: string[] = [];
-    let losers: string[] = [];
-    const rewards: Record<string, any> = {};
+    const winners: string[] = [];
+    const losers: string[] = [];
+    const rewards: Record<string, GameReward> = {};
 
     if (data.mode === 'solo') {
       const player = this.session.players[0];

@@ -53,13 +53,16 @@ export class SecretCodeGame extends BaseGame {
     this.session.players[0].status = PlayerStatus.ACTIVE;
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as SecretCodeData;
 
     if (data.gameOver) return;
 
     if (action.type === 'guess') {
-      await this.submitGuess(action.code);
+      await this.submitGuess(action.code as number[]);
     }
   }
 

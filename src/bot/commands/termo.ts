@@ -19,7 +19,7 @@ interface WordleGuessResult {
   wordLength: number;
 }
 
-const api = new MarquinhosApiService();
+const api = MarquinhosApiService.getInstance();
 
 registerFont(
   fileURLToPath(
@@ -157,9 +157,10 @@ export const termo: SlashCommand = {
         guess,
       );
       result = response.data as WordleGuessResult;
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message =
-        err?.response?.data?.message ?? 'Erro ao processar tentativa.';
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ?? 'Erro ao processar tentativa.';
       await interaction.editReply({ content: `❌ ${message}` });
       return;
     }
@@ -190,7 +191,8 @@ export const termo: SlashCommand = {
     if (result.solved) {
       try {
         const configResponse = await api.getWordleConfig(interaction.guildId);
-        const channelId = (configResponse.data as any)?.channelId;
+        const channelId = (configResponse.data as { channelId?: string })
+          ?.channelId;
         if (!channelId) return;
 
         const channel = await interaction

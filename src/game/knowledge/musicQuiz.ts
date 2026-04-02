@@ -3,6 +3,7 @@ import {
   BaseGame,
   GameQuestion,
   GameResult,
+  GameReward,
   GameSession,
   PlayerStatus,
 } from '../core/GameTypes';
@@ -153,7 +154,7 @@ export class MusicQuizGame extends BaseGame {
       5,
     );
 
-    this.session.data = {
+    const data: MusicQuizData = {
       questions: selectedQuestions,
       currentQuestionIndex: 0,
       scores: {},
@@ -161,26 +162,30 @@ export class MusicQuizGame extends BaseGame {
       timeLimit: 30, // 30 seconds per question
       questionStartTime: Date.now(),
       finished: false,
-    } as MusicQuizData;
+    };
+    this.session.data = data;
 
     // Initialize scores
     this.session.players.forEach((player) => {
-      this.session.data.scores[player.userId] = 0;
+      data.scores[player.userId] = 0;
     });
   }
 
   async start(): Promise<void> {
     this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
-    this.session.data.questionStartTime = Date.now();
+    (this.session.data as MusicQuizData).questionStartTime = Date.now();
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as MusicQuizData;
 
     if (data.finished || data.answered[userId]) return;
 
     if (action.type === 'answer') {
-      await this.submitAnswer(userId, action.answer);
+      await this.submitAnswer(userId, action.answer as number);
     }
   }
 
@@ -293,7 +298,7 @@ export class MusicQuizGame extends BaseGame {
 
   private getResultsEmbed(): EmbedBuilder {
     const data = this.session.data as MusicQuizData;
-    const sortedPlayers = this.session.players.sort(
+    const sortedPlayers = [...this.session.players].sort(
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
@@ -346,11 +351,11 @@ export class MusicQuizGame extends BaseGame {
 
   async finish(): Promise<GameResult> {
     const data = this.session.data as MusicQuizData;
-    const sortedPlayers = this.session.players.sort(
+    const sortedPlayers = [...this.session.players].sort(
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
-    const rewards: Record<string, any> = {};
+    const rewards: Record<string, GameReward> = {};
 
     sortedPlayers.forEach((player, index) => {
       const baseRewards = this.calculateRewards(player, index + 1);

@@ -1,4 +1,5 @@
 import { BotEvent } from '@marquinhos/types';
+import { logger } from '@marquinhos/utils/logger';
 import { Message, TextChannel } from 'discord.js';
 import { handlePotentialSpam } from '../moderation/spam';
 
@@ -14,6 +15,8 @@ export const messageCreate: BotEvent = {
     const messageContent = message.content.trim();
     if (!messageContent) return;
 
-    handlePotentialSpam(message);
+    handlePotentialSpam(message).catch((err) =>
+      logger.error('Error in spam handler:', err),
+    );
   },
 };

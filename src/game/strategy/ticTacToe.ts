@@ -1,7 +1,9 @@
+import { logger } from '@marquinhos/utils/logger';
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import {
   BaseGame,
   GameResult,
+  GameReward,
   GameSession,
   PlayerStatus,
 } from '../core/GameTypes';
@@ -14,9 +16,13 @@ interface TicTacToeData {
   winner: string | null;
   isDraw: boolean;
   moves: number;
+  timedOut?: boolean;
 }
 
 export class TicTacToeGame extends BaseGame {
+  private turnTimer: ReturnType<typeof setTimeout> | null = null;
+  private static readonly TURN_TIMEOUT_MS = 60_000; // 60 seconds
+
   constructor(session: GameSession) {
     super(session);
     this.initializeGame();
@@ -39,9 +45,39 @@ export class TicTacToeGame extends BaseGame {
 
   async start(): Promise<void> {
     this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
+    this.resetTurnTimer();
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  /** Resets the turn timer. Called after each move. */
+  private resetTurnTimer(): void {
+    this.clearTurnTimer();
+    this.turnTimer = setTimeout(() => {
+      const data = this.session.data as TicTacToeData;
+      if (data.gameOver) return;
+
+      // The current player timed out — other player wins
+      const loserIndex = data.currentPlayer;
+      const winnerIndex = loserIndex === 0 ? 1 : 0;
+      data.gameOver = true;
+      data.timedOut = true;
+      data.winner = this.session.players[winnerIndex].userId;
+      this.updateScores().catch((err) =>
+        logger.error('TicTacToe turn timeout score update failed:', err),
+      );
+    }, TicTacToeGame.TURN_TIMEOUT_MS);
+  }
+
+  private clearTurnTimer(): void {
+    if (this.turnTimer) {
+      clearTimeout(this.turnTimer);
+      this.turnTimer = null;
+    }
+  }
+
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as TicTacToeData;
 
     if (data.gameOver) return;
@@ -50,7 +86,7 @@ export class TicTacToeGame extends BaseGame {
     if (this.session.players[data.currentPlayer].userId !== userId) return;
 
     if (action.type === 'move') {
-      await this.makeMove(action.row, action.col);
+      await this.makeMove(action.row as number, action.col as number);
     }
   }
 
@@ -86,6 +122,7 @@ export class TicTacToeGame extends BaseGame {
     } else {
       // Switch players
       data.currentPlayer = data.currentPlayer === 0 ? 1 : 0;
+      this.resetTurnTimer();
     }
   }
 
@@ -165,7 +202,14 @@ export class TicTacToeGame extends BaseGame {
         const winner = this.session.players.find(
           (p) => p.userId === data.winner,
         );
-        description += `🎉 **${winner?.username} venceu!**\n\n`;
+        if (data.timedOut) {
+          const loser = this.session.players.find(
+            (p) => p.userId !== data.winner,
+          );
+          description += `⏰ **${loser?.username} demorou demais!** ${winner?.username} venceu!\n\n`;
+        } else {
+          description += `🎉 **${winner?.username} venceu!**\n\n`;
+        }
       } else if (data.isDraw) {
         description += '🤝 **Empate!**\n\n';
       }
@@ -178,7 +222,7 @@ export class TicTacToeGame extends BaseGame {
     // Board display
     description += '```\n';
     for (let i = 0; i < 3; i++) {
-      description += data.board[i].join(' ') + '\n';
+      description += `${data.board[i].join(' ')}\n`;
     }
     description += '```\n';
 
@@ -229,10 +273,11 @@ export class TicTacToeGame extends BaseGame {
   }
 
   async finish(): Promise<GameResult> {
+    this.clearTurnTimer();
     const data = this.session.data as TicTacToeData;
-    const rewards: Record<string, any> = {};
+    const rewards: Record<string, GameReward> = {};
 
-    this.session.players.forEach((player, index) => {
+    this.session.players.forEach((player, _index) => {
       const isWinner = player.userId === data.winner;
       const baseRewards = this.calculateRewards(player, isWinner ? 1 : 2);
 

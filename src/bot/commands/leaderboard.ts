@@ -1,8 +1,9 @@
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { SlashCommand } from '@marquinhos/types';
+import { logger } from '@marquinhos/utils/logger';
 import { SlashCommandBuilder } from 'discord.js';
 
-const apiService = new MarquinhosApiService();
+const apiService = MarquinhosApiService.getInstance();
 
 export const leaderboard: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -37,18 +38,25 @@ export const leaderboard: SlashCommand = {
         return;
       }
 
+      // Fetch all Discord users in parallel instead of sequentially (P2 perf)
+      const userResults = await Promise.allSettled(
+        leaderboard.data.map((entry) =>
+          interaction.client.users.fetch(entry.userId),
+        ),
+      );
+
       let description = '';
       for (let i = 0; i < leaderboard.data.length; i++) {
         const user = leaderboard.data[i]!;
         const position = i + 1;
         const medal = getMedal(position);
+        const fetchResult = userResults[i];
+        const username =
+          fetchResult.status === 'fulfilled'
+            ? fetchResult.value.username
+            : 'Usuario desconhecido';
 
-        try {
-          const discordUser = await interaction.client.users.fetch(user.userId);
-          description += `${medal} **${position}.** ${discordUser.username} - Nível ${user.level} (${user.totalXp} XP total)\n`;
-        } catch {
-          description += `${medal} **${position}.** Usuario desconhecido - Nível ${user.level} (${user.totalXp} XP total)\n`;
-        }
+        description += `${medal} **${position}.** ${username} - Nível ${user.level} (${user.totalXp} XP total)\n`;
       }
 
       const embed = interaction.client
@@ -61,7 +69,7 @@ export const leaderboard: SlashCommand = {
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {
-      console.error('Error fetching leaderboard:', error);
+      logger.error('Error fetching leaderboard:', error);
       await interaction.editReply('Ocorreu um erro ao buscar o ranking.');
     }
   },

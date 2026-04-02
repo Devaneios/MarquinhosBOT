@@ -46,7 +46,7 @@ jobs:
 
       - name: Build Docker image (with layer cache)
         run: |
-          docker compose build \
+          docker compose -f docker-compose.yml build \
             --build-arg BUILDKIT_INLINE_CACHE=1
 
       - name: Tag image with commit SHA
@@ -63,8 +63,8 @@ jobs:
 
       - name: Swap container
         run: |
-          docker compose down || true
-          docker compose up -d --no-build
+          docker compose -f docker-compose.yml down || true
+          docker compose -f docker-compose.yml up -d --no-build
 
       - name: Wait for healthy status
         run: |
@@ -79,10 +79,10 @@ jobs:
           docker logs marquinhosbot --tail 100 2>&1 || true
           echo "--- Container inspect ---"
           docker inspect marquinhosbot --format='ExitCode={{.State.ExitCode}} Status={{.State.Status}} Error={{.State.Error}}' 2>&1 || true
-          docker compose down || true
+          docker compose -f docker-compose.yml down || true
           if docker image inspect marquinhosbot:previous &>/dev/null; then
             docker tag marquinhosbot:previous marquinhosbot:latest
-            docker compose up -d --no-build || true
+            docker compose -f docker-compose.yml up -d --no-build || true
           fi
           exit 1
 

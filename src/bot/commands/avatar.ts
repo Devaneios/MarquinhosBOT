@@ -103,19 +103,11 @@ async function handleListAvatars(
         return `- **${avatar.name}** (Sem período definido)`;
       }
 
-      const currentDate = new Date();
-      const startDate = new Date(avatar.startDate);
-      startDate.setFullYear(
-        currentDate.getFullYear() + startDate.getFullYear() - 2017,
-      );
-      const endDate = new Date(avatar.endDate);
-      endDate.setFullYear(
-        currentDate.getFullYear() + endDate.getFullYear() - 2017,
-      );
+      const { start, end } = getSeasonDatesForCurrentYear(avatar);
 
       return `- **${avatar.name}**  (<t:${Math.floor(
-        startDate.getTime() / 1000,
-      )}:D> até <t:${Math.floor(endDate.getTime() / 1000)}:D>)`;
+        start.getTime() / 1000,
+      )}:D> até <t:${Math.floor(end.getTime() / 1000)}:D>)`;
     })
     .join('\n');
 
@@ -173,6 +165,36 @@ async function handleHolidayAvatar(
   }
 }
 
+/**
+ * Extracts month/day from a stored date and projects them onto the current year.
+ * Avoids fragile year-offset math.
+ */
+function getSeasonDatesForCurrentYear(avatar: AvatarConfig): {
+  start: Date;
+  end: Date;
+} {
+  const now = new Date();
+  const year = now.getFullYear();
+  const startDate = new Date(avatar.startDate!);
+  const endDate = new Date(avatar.endDate!);
+
+  const start = new Date(year, startDate.getMonth(), startDate.getDate());
+  const end = new Date(year, endDate.getMonth(), endDate.getDate(), 23, 59, 59);
+
+  // Handle year-crossing ranges (e.g., Dec 15 – Jan 15)
+  if (end < start) {
+    // If we're past the end month, the range is start(this year) – end(next year)
+    // If we're before the start month, the range is start(last year) – end(this year)
+    if (now >= start) {
+      end.setFullYear(year + 1);
+    } else {
+      start.setFullYear(year - 1);
+    }
+  }
+
+  return { start, end };
+}
+
 async function findSeasonalAvatar(
   avatars: AvatarConfig[],
 ): Promise<AvatarConfig> {
@@ -181,21 +203,11 @@ async function findSeasonalAvatar(
   const currentSeasonAvatar = avatars.find((avatar) => {
     if (!avatar.startDate || !avatar.endDate) return false;
 
-    const startDate = new Date(avatar.startDate);
-    startDate.setFullYear(
-      currentDate.getFullYear() + startDate.getFullYear() - 2017,
-    );
-    const endDate = new Date(avatar.endDate);
-    endDate.setFullYear(
-      currentDate.getFullYear() + endDate.getFullYear() - 2017,
-    );
-
-    console.log(startDate, endDate, currentDate);
-
-    return currentDate >= startDate && currentDate <= endDate;
+    const { start, end } = getSeasonDatesForCurrentYear(avatar);
+    return currentDate >= start && currentDate <= end;
   });
 
-  console.log('Current season avatar:', currentSeasonAvatar);
+  logger.debug('Current season avatar:', currentSeasonAvatar?.name ?? 'none');
 
   if (currentSeasonAvatar) return currentSeasonAvatar;
 

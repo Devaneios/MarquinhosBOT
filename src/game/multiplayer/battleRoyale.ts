@@ -2,6 +2,7 @@ import { EmbedBuilder } from 'discord.js';
 import {
   BaseGame,
   GameResult,
+  GameReward,
   GameSession,
   PlayerStatus,
 } from '../core/GameTypes';
@@ -71,13 +72,16 @@ export class BattleRoyaleGame extends BaseGame {
     this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as BattleRoyaleData;
 
     if (data.finished || !data.alivePlayers.includes(userId)) return;
 
     if (action.type === 'respond') {
-      await this.submitResponse(userId, action.response);
+      await this.submitResponse(userId, action.response as string);
     }
   }
 
@@ -194,7 +198,7 @@ export class BattleRoyaleGame extends BaseGame {
 
   async finish(): Promise<GameResult> {
     const data = this.session.data as BattleRoyaleData;
-    const rewards: Record<string, any> = {};
+    const rewards: Record<string, GameReward> = {};
 
     // Winner
     if (data.alivePlayers.length === 1) {

@@ -52,7 +52,7 @@ export class BlackjackGame extends BaseGame {
     const playerCards = [this.drawCard(deck), this.drawCard(deck)];
     const dealerCards = [this.drawCard(deck), this.drawCard(deck)];
 
-    this.session.data = {
+    const initData: BlackjackData = {
       playerCards,
       dealerCards,
       deck,
@@ -61,14 +61,15 @@ export class BlackjackGame extends BaseGame {
       gamePhase: 'initial',
       result: null,
       bet: 20,
-    } as BlackjackData;
+    };
+    this.session.data = initData;
 
     // Check for blackjack
-    if (this.session.data.playerTotal === 21) {
-      this.session.data.gamePhase = 'finished';
-      this.session.data.result = 'blackjack';
+    if (initData.playerTotal === 21) {
+      initData.gamePhase = 'finished';
+      initData.result = 'blackjack';
     } else {
-      this.session.data.gamePhase = 'player_turn';
+      initData.gamePhase = 'player_turn';
     }
   }
 
@@ -89,6 +90,11 @@ export class BlackjackGame extends BaseGame {
   }
 
   private drawCard(deck: Card[]): Card {
+    if (deck.length === 0) {
+      // Reshuffle a fresh deck when exhausted (very rare but prevents crash)
+      const freshDeck = this.createDeck();
+      deck.push(...freshDeck);
+    }
     return deck.pop()!;
   }
 
@@ -129,7 +135,10 @@ export class BlackjackGame extends BaseGame {
     this.session.players[0].status = PlayerStatus.ACTIVE;
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as BlackjackData;
 
     if (data.gamePhase !== 'player_turn') return;

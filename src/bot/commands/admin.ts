@@ -1,5 +1,6 @@
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { SlashCommand } from '@marquinhos/types';
+import { logger } from '@marquinhos/utils/logger';
 import {
   MessageFlags,
   PermissionFlagsBits,
@@ -7,7 +8,7 @@ import {
   TextChannel,
 } from 'discord.js';
 
-const api = new MarquinhosApiService();
+const api = MarquinhosApiService.getInstance();
 
 export const admin: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -59,7 +60,8 @@ export const admin: SlashCommand = {
           await interaction.editReply({
             content: `✅ Canal do Termo configurado para <#${channel.id}>`,
           });
-        } catch {
+        } catch (err) {
+          logger.warn('admin termo canal: Error saving config:', err);
           await interaction.editReply({
             content: '❌ Erro ao salvar configuração.',
           });
@@ -70,53 +72,65 @@ export const admin: SlashCommand = {
       if (sub === 'novo') {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-        let result: any;
         try {
           const response = await api.forceNewWordleWord(interaction.guildId!);
-          result = response.data;
-        } catch {
+          const result = response.data as {
+            word: string;
+            wordLength: number;
+            wordDate: string;
+            stats?: {
+              playersCount?: number;
+              winnersCount?: number;
+              avgAttempts?: number;
+            };
+          };
+
+          const embed = interaction.client.baseEmbed();
+          embed
+            .setTitle('Nova palavra do Termo gerada!')
+            .setDescription(
+              `**Palavra:** \`${result.word.toUpperCase()}\` (${result.wordLength} letras)\n` +
+                `**Data:** ${result.wordDate}`,
+            )
+            .addFields({
+              name: 'Estatísticas anteriores',
+              value:
+                `👥 Jogadores: ${result.stats?.playersCount ?? 0}\n` +
+                `✅ Acertos: ${result.stats?.winnersCount ?? 0}\n` +
+                `📊 Média de tentativas: ${result.stats?.avgAttempts ?? 0}`,
+            });
+
+          await interaction.editReply({ embeds: [embed] });
+
+          // Also post in the configured wordle channel
+          try {
+            const configResponse = await api.getWordleConfig(
+              interaction.guildId!,
+            );
+            const channelId = (configResponse.data as { channelId?: string })
+              ?.channelId;
+            if (!channelId) return;
+
+            const wordleChannel = interaction.client.channels.cache.get(
+              channelId,
+            ) as TextChannel | undefined;
+            if (!wordleChannel) return;
+
+            await wordleChannel.send(
+              `**Nova palavra!** (${result.wordLength} letras) — tomara que errem!\n` +
+                `${'⬜'.repeat(result.wordLength)}`,
+            );
+          } catch (err) {
+            logger.warn(
+              'admin termo novo: Error posting to wordle channel:',
+              err,
+            );
+          }
+        } catch (err) {
+          logger.warn('admin termo novo: Error generating word:', err);
           await interaction.editReply({
             content: '❌ Erro ao gerar nova palavra.',
           });
-          return;
-        }
-
-        const embed = interaction.client.baseEmbed();
-        embed
-          .setTitle('Nova palavra do Termo gerada!')
-          .setDescription(
-            `**Palavra:** \`${result.word.toUpperCase()}\` (${result.wordLength} letras)\n` +
-              `**Data:** ${result.wordDate}`,
-          )
-          .addFields({
-            name: 'Estatísticas anteriores',
-            value:
-              `👥 Jogadores: ${result.stats?.playersCount ?? 0}\n` +
-              `✅ Acertos: ${result.stats?.winnersCount ?? 0}\n` +
-              `📊 Média de tentativas: ${result.stats?.avgAttempts ?? 0}`,
-          });
-
-        await interaction.editReply({ embeds: [embed] });
-
-        // Also post in the configured wordle channel
-        try {
-          const configResponse = await api.getWordleConfig(
-            interaction.guildId!,
-          );
-          const channelId = (configResponse.data as any)?.channelId;
-          if (!channelId) return;
-
-          const wordleChannel = interaction.client.channels.cache.get(
-            channelId,
-          ) as TextChannel | undefined;
-          if (!wordleChannel) return;
-
-          await wordleChannel.send(
-            `**Nova palavra!** (${result.wordLength} letras) — tomara que errem!\n` +
-              `${'⬜'.repeat(result.wordLength)}`,
-          );
-        } catch {
-          // Silently ignore
         }
         return;
       }
@@ -126,7 +140,13 @@ export const admin: SlashCommand = {
 
         try {
           const response = await api.getWordleStats(interaction.guildId!);
-          const stats = response.data as any;
+          const stats = response.data as {
+            wordDate: string;
+            wordLength: number;
+            playersCount: number;
+            winnersCount: number;
+            avgAttempts: number;
+          };
 
           const embed = interaction.client.baseEmbed();
           embed.setTitle('📊 Termo — Estatísticas de Hoje').addFields(
@@ -154,7 +174,8 @@ export const admin: SlashCommand = {
           );
 
           await interaction.editReply({ embeds: [embed] });
-        } catch {
+        } catch (err) {
+          logger.warn('admin termo status: Error fetching stats:', err);
           await interaction.editReply({
             content: '❌ Erro ao buscar estatísticas.',
           });

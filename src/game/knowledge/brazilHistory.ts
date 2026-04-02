@@ -3,6 +3,7 @@ import {
   BaseGame,
   GameQuestion,
   GameResult,
+  GameReward,
   GameSession,
   PlayerStatus,
 } from '../core/GameTypes';
@@ -149,7 +150,7 @@ export class BrazilHistoryGame extends BaseGame {
       6,
     );
 
-    this.session.data = {
+    const data: BrazilHistoryData = {
       questions: selectedQuestions,
       currentQuestionIndex: 0,
       scores: {},
@@ -157,25 +158,29 @@ export class BrazilHistoryGame extends BaseGame {
       timeLimit: 45,
       questionStartTime: Date.now(),
       finished: false,
-    } as BrazilHistoryData;
+    };
+    this.session.data = data;
 
     this.session.players.forEach((player) => {
-      this.session.data.scores[player.userId] = 0;
+      data.scores[player.userId] = 0;
     });
   }
 
   async start(): Promise<void> {
     this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
-    this.session.data.questionStartTime = Date.now();
+    (this.session.data as BrazilHistoryData).questionStartTime = Date.now();
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as BrazilHistoryData;
 
     if (data.finished || data.answered[userId]) return;
 
     if (action.type === 'answer') {
-      await this.submitAnswer(userId, action.answer);
+      await this.submitAnswer(userId, action.answer as number);
     }
   }
 
@@ -340,7 +345,7 @@ export class BrazilHistoryGame extends BaseGame {
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
-    const rewards: Record<string, any> = {};
+    const rewards: Record<string, GameReward> = {};
 
     sortedPlayers.forEach((player, index) => {
       const baseRewards = this.calculateRewards(player, index + 1);

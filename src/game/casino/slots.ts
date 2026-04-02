@@ -8,10 +8,13 @@ import {
 import { GameUtils } from '../core/GameUtils';
 
 interface SlotsData {
-  reels: string[][];
-  result: string[];
-  multiplier: number;
-  winType: string;
+  spins: number;
+  totalWinnings: number;
+  currentBet: number;
+  reels?: string[][];
+  result?: string[];
+  multiplier?: number;
+  winType?: string;
 }
 
 export class SlotsGame extends BaseGame {
@@ -34,7 +37,7 @@ export class SlotsGame extends BaseGame {
       spins: 0,
       totalWinnings: 0,
       currentBet: 10,
-    } as unknown as SlotsData;
+    } as SlotsData;
   }
 
   async start(): Promise<void> {
@@ -42,15 +45,22 @@ export class SlotsGame extends BaseGame {
     await this.spin();
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     if (action.type === 'spin') {
       await this.spin();
     } else if (action.type === 'bet_down') {
-      this.changeBet(Math.max(5, this.session.data.currentBet - 5));
+      this.changeBet(
+        Math.max(5, (this.session.data as SlotsData).currentBet - 5),
+      );
     } else if (action.type === 'bet_up') {
-      this.changeBet(Math.min(100, this.session.data.currentBet + 5));
+      this.changeBet(
+        Math.min(100, (this.session.data as SlotsData).currentBet + 5),
+      );
     } else if (action.type === 'change_bet') {
-      this.changeBet(action.amount);
+      this.changeBet(action.amount as number);
     }
   }
 
@@ -72,22 +82,22 @@ export class SlotsGame extends BaseGame {
     ];
 
     const { multiplier, winType } = this.calculatePayout(result);
-    const winnings = this.session.data.currentBet * multiplier;
+    const prev = this.session.data as SlotsData;
+    const winnings = prev.currentBet * multiplier;
+    const newTotalWinnings = prev.totalWinnings + winnings;
+
+    // Update score BEFORE replacing state to maintain consistency (P1 fix)
+    this.updatePlayerScore(this.session.players[0].userId, newTotalWinnings);
 
     this.session.data = {
       reels,
       result,
       multiplier,
       winType,
-      spins: this.session.data.spins + 1,
-      totalWinnings: this.session.data.totalWinnings + winnings,
-      currentBet: this.session.data.currentBet,
-    };
-
-    this.updatePlayerScore(
-      this.session.players[0].userId,
-      this.session.data.totalWinnings,
-    );
+      spins: prev.spins + 1,
+      totalWinnings: newTotalWinnings,
+      currentBet: prev.currentBet,
+    } as SlotsData;
   }
 
   private calculatePayout(result: string[]): {
@@ -117,12 +127,12 @@ export class SlotsGame extends BaseGame {
 
   private changeBet(amount: number): void {
     if (amount >= 5 && amount <= 100) {
-      this.session.data.currentBet = amount;
+      (this.session.data as SlotsData).currentBet = amount;
     }
   }
 
   getGameEmbed(): EmbedBuilder {
-    const data = this.session.data;
+    const data = this.session.data as SlotsData;
     const player = this.session.players[0];
 
     let resultDisplay = '';
@@ -170,10 +180,11 @@ export class SlotsGame extends BaseGame {
   async finish(): Promise<GameResult> {
     const player = this.session.players[0];
     const rewards = this.calculateRewards(player, 1);
+    const data = this.session.data as SlotsData;
 
     // Bonus XP for big wins
-    if (this.session.data.totalWinnings > 100) {
-      rewards.xp += Math.floor(this.session.data.totalWinnings / 10);
+    if (data.totalWinnings > 100) {
+      rewards.xp += Math.floor(data.totalWinnings / 10);
     }
 
     return {
@@ -182,9 +193,9 @@ export class SlotsGame extends BaseGame {
       losers: [],
       rewards: { [player.userId]: rewards },
       stats: {
-        spins: this.session.data.spins,
-        totalWinnings: this.session.data.totalWinnings,
-        biggestWin: this.session.data.multiplier,
+        spins: data.spins,
+        totalWinnings: data.totalWinnings,
+        biggestWin: data.multiplier,
       },
       duration: Date.now() - this.session.startedAt.getTime(),
     };

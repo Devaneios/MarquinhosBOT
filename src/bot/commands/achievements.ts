@@ -2,7 +2,7 @@ import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { SlashCommand, UserAchievement } from '@marquinhos/types';
 import { SlashCommandBuilder } from 'discord.js';
 
-const apiService = new MarquinhosApiService();
+const apiService = MarquinhosApiService.getInstance();
 
 const RARITY_ORDER = ['legendary', 'epic', 'rare', 'common'] as const;
 const RARITY_LABELS: Record<string, string> = {

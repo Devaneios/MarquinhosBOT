@@ -12,7 +12,7 @@ import {
   GameType,
 } from './GameTypes';
 
-const apiService = new MarquinhosApiService();
+const apiService = MarquinhosApiService.getInstance();
 
 export class GameManager {
   private static instance: GameManager;
@@ -21,6 +21,8 @@ export class GameManager {
     new Collection();
   private gameInstances: Collection<string, BaseGame> = new Collection();
   private cleanupInterval: ReturnType<typeof setInterval>;
+  /** Sessions currently being processed — prevents concurrent actions (P0 fix) */
+  private processingSessionIds: Set<string> = new Set();
 
   private constructor() {
     // Store handle so the interval can be cancelled (e.g., in tests)
@@ -37,12 +39,17 @@ export class GameManager {
     return GameManager.instance;
   }
 
+  /** Clears cleanup interval. Call from shutdown hook. */
+  public destroy(): void {
+    clearInterval(this.cleanupInterval);
+  }
+
   public createSession(
     gameType: GameType,
     guildId: string,
     channelId: string,
     hostId: string,
-    options?: any,
+    options?: Record<string, unknown>,
   ): GameSession {
     const config = { ...GAME_CONFIGS[gameType], options };
     const sessionId = uuidv4();
@@ -87,6 +94,21 @@ export class GameManager {
     );
   }
 
+  /**
+   * Acquires a processing lock for the session.
+   * Returns true if the lock was acquired, false if already processing.
+   */
+  public acquireSessionLock(sessionId: string): boolean {
+    if (this.processingSessionIds.has(sessionId)) return false;
+    this.processingSessionIds.add(sessionId);
+    return true;
+  }
+
+  /** Releases the processing lock for the session. */
+  public releaseSessionLock(sessionId: string): void {
+    this.processingSessionIds.delete(sessionId);
+  }
+
   public endSession(sessionId: string): boolean {
     const session = this.activeSessions.get(sessionId);
     if (!session) return false;
@@ -94,6 +116,7 @@ export class GameManager {
     session.state = GameState.FINISHED;
     this.activeSessions.delete(sessionId);
     this.gameInstances.delete(sessionId);
+    this.processingSessionIds.delete(sessionId);
 
     return true;
   }
@@ -113,6 +136,10 @@ export class GameManager {
       })),
     ];
 
+    // Delete session BEFORE the API call to prevent double-finish (P0 fix).
+    // A second button press while the API call is in-flight will find no session.
+    this.endSession(sessionId);
+
     try {
       await apiService.postGameResult({
         sessionId,
@@ -124,8 +151,6 @@ export class GameManager {
     } catch (error) {
       logger.error(`Failed to post game result: ${error}`);
     }
-
-    this.endSession(sessionId);
   }
 
   public registerGameInstance(sessionId: string, gameInstance: BaseGame): void {
@@ -182,7 +207,7 @@ export class GameManager {
     ];
   }
 
-  public getSessionStats(sessionId: string): any {
+  public getSessionStats(sessionId: string): Record<string, unknown> | null {
     const session = this.getSession(sessionId);
     if (!session) return null;
 
@@ -227,7 +252,7 @@ export class GameManager {
   }
 
   // Debug methods
-  public debugInfo(): any {
+  public debugInfo(): Record<string, unknown> {
     return {
       activeSessions: this.activeSessions.size,
       gameInstances: this.gameInstances.size,

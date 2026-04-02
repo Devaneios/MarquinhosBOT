@@ -107,7 +107,7 @@ export const coin: SlashCommand = {
         embeds: [coinEmbed],
         files: [attachment],
       });
-    } catch (e) {
+    } catch (_e) {
       await interaction.editReply({
         content: 'Tempo esgotado para escolher!',
         embeds: [],

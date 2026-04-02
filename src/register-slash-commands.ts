@@ -26,7 +26,11 @@ export async function registerCommands() {
   const slashCommands = Object.values(commands)
     .filter((slashCommand) => !slashCommand.disabled)
     .map((slashCommand: SlashCommand) => {
-      slashCommand.command.setName(`${slashCommand.command.name}`);
+      slashCommand.command.setName(
+        `${slashCommand.command.name}${
+          process.env.NODE_ENV === 'development' ? '-dev' : ''
+        }`,
+      );
       return slashCommand.command;
     });
 

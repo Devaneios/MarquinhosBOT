@@ -2,6 +2,7 @@ import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import {
   BaseGame,
   GameResult,
+  GameReward,
   GameSession,
   PlayerStatus,
 } from '../core/GameTypes';
@@ -111,7 +112,7 @@ export class RhymeGame extends BaseGame {
   private initializeGame(): void {
     const selectedRhyme = GameUtils.getRandomElement(this.rhymeWords);
 
-    this.session.data = {
+    const data: RhymeData = {
       targetWord: selectedRhyme.word,
       validRhymes: selectedRhyme.rhymes,
       playerRhymes: {},
@@ -119,11 +120,12 @@ export class RhymeGame extends BaseGame {
       timeLimit: 90, // 90 seconds
       startTime: Date.now(),
       finished: false,
-    } as RhymeData;
+    };
+    this.session.data = data;
 
     this.session.players.forEach((player) => {
-      this.session.data.playerRhymes[player.userId] = [];
-      this.session.data.scores[player.userId] = 0;
+      data.playerRhymes[player.userId] = [];
+      data.scores[player.userId] = 0;
     });
   }
 
@@ -131,13 +133,16 @@ export class RhymeGame extends BaseGame {
     this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as RhymeData;
 
     if (data.finished || this.isTimeUp()) return;
 
     if (action.type === 'rhyme') {
-      await this.submitRhyme(userId, action.word);
+      await this.submitRhyme(userId, action.word as string);
     }
   }
 
@@ -255,7 +260,7 @@ export class RhymeGame extends BaseGame {
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
-    const rewards: Record<string, any> = {};
+    const rewards: Record<string, GameReward> = {};
 
     sortedPlayers.forEach((player, index) => {
       const baseRewards = this.calculateRewards(player, index + 1);

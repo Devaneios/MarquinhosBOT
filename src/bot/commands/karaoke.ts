@@ -1,6 +1,7 @@
 import { SlashCommand } from '@marquinhos/types';
 import { HttpClient } from '@marquinhos/utils/httpClient';
-import { SlashCommandBuilder } from 'discord.js';
+import { parseArtistTitle } from '@marquinhos/utils/parser';
+import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 
 const httpClient = new HttpClient({
   baseURL: process.env.MARQUINHOS_API_URL,
@@ -85,7 +86,7 @@ export const karaoke: SlashCommand = {
 };
 
 async function handleStartKaraoke(
-  interaction: any,
+  interaction: ChatInputCommandInteraction,
   userId: string,
   guildId: string,
   channelId: string,
@@ -102,18 +103,18 @@ async function handleStartKaraoke(
       .setTitle('🎤 Sessão de Karaokê Iniciada!')
       .setDescription('Use `/karaoke join` para participar!')
       .addFields(
-        { name: 'Host', value: `<\@${userId}>`, inline: true },
+        { name: 'Host', value: `<@${userId}>`, inline: true },
         { name: 'Participantes', value: '1', inline: true },
       );
 
     await interaction.editReply({ embeds: [embed] });
-  } catch (error) {
+  } catch (_error) {
     await interaction.editReply('Erro ao iniciar sessão de karaokê.');
   }
 }
 
 async function handleJoinKaraoke(
-  interaction: any,
+  interaction: ChatInputCommandInteraction,
   userId: string,
   guildId: string,
   channelId: string,
@@ -122,7 +123,7 @@ async function handleJoinKaraoke(
     // Get active session
     const sessionData = (await httpClient.get(
       `/api/karaoke/active/${guildId}/${channelId}`,
-    )) as any;
+    )) as { data: { id: string } };
 
     if (!sessionData?.data) {
       await interaction.editReply(
@@ -139,20 +140,19 @@ async function handleJoinKaraoke(
     await interaction.editReply(
       `🎤 ${interaction.user.username} entrou no karaokê!`,
     );
-  } catch (error) {
+  } catch (_error) {
     await interaction.editReply('Erro ao entrar na sessão.');
   }
 }
 
-async function handleSetSong(interaction: any, userId: string) {
+async function handleSetSong(
+  interaction: ChatInputCommandInteraction,
+  _userId: string,
+) {
   const musicQuery = interaction.options.getString('musica');
 
   // Parse artist and title
-  const parts = musicQuery.split(' - ');
-  const track = {
-    title: parts.length > 1 ? parts[1] : musicQuery,
-    artist: parts.length > 1 ? parts[0] : 'Artista Desconhecido',
-  };
+  const track = parseArtistTitle(musicQuery);
 
   await interaction.editReply(
     `🎵 Música definida: **${track.artist} - ${track.title}**\nComece a cantar!`,
@@ -160,14 +160,14 @@ async function handleSetSong(interaction: any, userId: string) {
 }
 
 async function handleShowScore(
-  interaction: any,
+  interaction: ChatInputCommandInteraction,
   guildId: string,
   channelId: string,
 ) {
   try {
     const sessionData = (await httpClient.get(
       `/api/karaoke/active/${guildId}/${channelId}`,
-    )) as any;
+    )) as { data: { participants: unknown[] } };
 
     if (!sessionData?.data) {
       await interaction.editReply(
@@ -187,16 +187,16 @@ async function handleShowScore(
       });
 
     await interaction.editReply({ embeds: [embed] });
-  } catch (error) {
+  } catch (_error) {
     await interaction.editReply('Erro ao buscar pontuações.');
   }
 }
 
 async function handleEndKaraoke(
-  interaction: any,
-  userId: string,
-  guildId: string,
-  channelId: string,
+  interaction: ChatInputCommandInteraction,
+  _userId: string,
+  _guildId: string,
+  _channelId: string,
 ) {
   await interaction.editReply(
     '🎤 Sessão de karaokê encerrada! Obrigado por participar!',

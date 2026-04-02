@@ -14,33 +14,25 @@ export async function handleCommandInteraction(
   const cooldownKey = `${interaction.commandName}-${interaction.user.id}`;
   const cooldown = interaction.client.cooldowns.get(cooldownKey);
 
-  if (command.cooldown && cooldown) {
-    if (Date.now() < cooldown) {
-      await interaction.reply(
-        `Vai com calma! Você pode usar esse comando novamente daqui ${Math.floor(
-          Math.abs(Date.now() - cooldown) / 1000,
-        )} segundos.`,
-      );
-      setTimeout(() => interaction.deleteReply(), TIMED_MESSAGE_DURATION_MS);
-      return;
-    }
-    // Expired cooldown entry — reset it with a deletion timer
+  // Passive expiration: clean up past cooldowns rather than using setTimeout
+  if (cooldown && Date.now() < cooldown) {
+    await interaction.reply(
+      `Vai com calma! Você pode usar esse comando novamente daqui ${Math.ceil(
+        (cooldown - Date.now()) / 1000,
+      )} segundos.`,
+    );
+    setTimeout(
+      () => interaction.deleteReply().catch(() => undefined),
+      TIMED_MESSAGE_DURATION_MS,
+    );
+    return;
+  }
+
+  // Set new cooldown
+  if (command.cooldown) {
     interaction.client.cooldowns.set(
       cooldownKey,
       Date.now() + command.cooldown * 1000,
-    );
-    setTimeout(
-      () => interaction.client.cooldowns.delete(cooldownKey),
-      command.cooldown * 1000,
-    );
-  } else if (command.cooldown && !cooldown) {
-    interaction.client.cooldowns.set(
-      cooldownKey,
-      Date.now() + command.cooldown * 1000,
-    );
-    setTimeout(
-      () => interaction.client.cooldowns.delete(cooldownKey),
-      command.cooldown * 1000,
     );
   }
 

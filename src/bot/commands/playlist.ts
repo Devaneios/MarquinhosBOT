@@ -1,8 +1,9 @@
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
-import { SlashCommand } from '@marquinhos/types';
-import { SlashCommandBuilder } from 'discord.js';
+import { Playlist, PlaylistTrack, SlashCommand } from '@marquinhos/types';
+import { parseArtistTitle } from '@marquinhos/utils/parser';
+import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 
-const apiService = new MarquinhosApiService();
+const apiService = MarquinhosApiService.getInstance();
 
 export const playlist: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -102,7 +103,7 @@ export const playlist: SlashCommand = {
 };
 
 async function handleCreatePlaylist(
-  interaction: any,
+  interaction: ChatInputCommandInteraction,
   userId: string,
   guildId: string,
 ) {
@@ -135,13 +136,13 @@ async function handleCreatePlaylist(
       );
 
     await interaction.editReply({ embeds: [embed] });
-  } catch (error) {
+  } catch (_error) {
     await interaction.editReply('Erro ao criar playlist. Tente novamente.');
   }
 }
 
 async function handleListPlaylists(
-  interaction: any,
+  interaction: ChatInputCommandInteraction,
   userId: string,
   guildId: string,
 ) {
@@ -159,7 +160,7 @@ async function handleListPlaylists(
       .setDescription(
         result.data
           .map(
-            (playlist: any, index: number) =>
+            (playlist: Playlist, index: number) =>
               `**${index + 1}.** ${playlist.name} (${playlist.tracks.length} músicas)\n` +
               `ID: \`${playlist.id}\`\n` +
               `${playlist.isCollaborative ? '👥 Colaborativa' : '👤 Privada'}`,
@@ -168,12 +169,12 @@ async function handleListPlaylists(
       );
 
     await interaction.editReply({ embeds: [embed] });
-  } catch (error) {
+  } catch (_error) {
     await interaction.editReply('Erro ao buscar playlists.');
   }
 }
 
-async function handleShowPlaylist(interaction: any) {
+async function handleShowPlaylist(interaction: ChatInputCommandInteraction) {
   const playlistId = interaction.options.getString('id');
 
   try {
@@ -190,7 +191,7 @@ async function handleShowPlaylist(interaction: any) {
         ? playlist.tracks
             .slice(0, 10)
             .map(
-              (track: any, index: number) =>
+              (track: PlaylistTrack, index: number) =>
                 `**${index + 1}.** ${track.artist} - ${track.title} (${track.votes} votos)`,
             )
             .join('\n')
@@ -226,17 +227,20 @@ async function handleShowPlaylist(interaction: any) {
     }
 
     await interaction.editReply({ embeds: [embed] });
-  } catch (error) {
+  } catch (_error) {
     await interaction.editReply('Erro ao buscar playlist.');
   }
 }
 
-async function handleAddToPlaylist(interaction: any, userId: string) {
+async function handleAddToPlaylist(
+  interaction: ChatInputCommandInteraction,
+  userId: string,
+) {
   const playlistId = interaction.options.getString('playlist');
   const musicQuery = interaction.options.getString('musica');
 
   // Parse music info (simplified)
-  let track: any;
+  let track: { title: string; artist: string; url: string };
   if (musicQuery.includes('http')) {
     // URL provided
     track = {
@@ -246,10 +250,10 @@ async function handleAddToPlaylist(interaction: any, userId: string) {
     };
   } else {
     // Search query provided
-    const parts = musicQuery.split(' - ');
+    const parsed = parseArtistTitle(musicQuery);
     track = {
-      title: parts.length > 1 ? parts[1] : musicQuery,
-      artist: parts.length > 1 ? parts[0] : 'Artista Desconhecido',
+      title: parsed.title,
+      artist: parsed.artist,
       url: `https://example.com/search?q=${encodeURIComponent(musicQuery)}`,
     };
   }
@@ -279,8 +283,10 @@ async function handleAddToPlaylist(interaction: any, userId: string) {
       });
 
     await interaction.editReply({ embeds: [embed] });
-  } catch (error: any) {
-    if (error.response?.status === 403) {
+  } catch (error: unknown) {
+    if (
+      (error as { response?: { status?: number } })?.response?.status === 403
+    ) {
       await interaction.editReply(
         'Você não tem permissão para adicionar músicas a esta playlist.',
       );

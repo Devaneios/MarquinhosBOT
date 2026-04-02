@@ -1,5 +1,6 @@
 import * as commands from '@marquinhos/bot/commands';
 import * as events from '@marquinhos/bot/events';
+import { GameManager } from '@marquinhos/game/core/GameManager';
 import { SpreadsheetService } from '@marquinhos/services/spreadsheet';
 import {
   BotEvent,
@@ -10,7 +11,6 @@ import {
 import { sendTimedMessage } from '@marquinhos/utils/discord';
 import { safeExecute } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
-import { Scrobble } from '@marquinhos/utils/scrobble';
 import { GuildQueue, Player, Track } from 'discord-player';
 import {
   DeezerExtractor,
@@ -34,6 +34,13 @@ const {
   GuildMembers,
   GuildVoiceStates,
 } = GatewayIntentBits;
+
+const REQUIRED_ENV_VARS = [
+  'MARQUINHOS_TOKEN',
+  'MARQUINHOS_API_URL',
+  'MARQUINHOS_API_KEY',
+  'MARQUINHOS_CLIENT_ID',
+] as const;
 
 export class MarquinhosBot {
   private _client: Client;
@@ -60,11 +67,35 @@ export class MarquinhosBot {
   }
 
   async start() {
+    this._validateEnv();
     this._loadSlashCommands();
     this._loadEvents();
     await this._initializePlayer();
+    this._registerShutdownHooks();
     SpreadsheetService.getInstance();
     await this._client.login(process.env.MARQUINHOS_TOKEN);
+  }
+
+  /** Fail fast if any required env var is missing. */
+  private _validateEnv() {
+    const missing = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
+    if (missing.length > 0) {
+      throw new Error(
+        `Missing required environment variables: ${missing.join(', ')}`,
+      );
+    }
+  }
+
+  /** Registers SIGTERM/SIGINT handlers that tear down intervals and timers. */
+  private _registerShutdownHooks() {
+    const cleanup = () => {
+      logger.info('Shutting down gracefully...');
+      GameManager.getInstance().destroy();
+      this._client.destroy();
+      process.exit(0);
+    };
+    process.on('SIGTERM', cleanup);
+    process.on('SIGINT', cleanup);
   }
 
   private _loadSlashCommands() {
@@ -75,7 +106,7 @@ export class MarquinhosBot {
       .forEach((slashCommand: SlashCommand) => {
         slashCommand.command.setName(
           `${slashCommand.command.name}${
-            process.env.NODE_ENV === 'production' ? '' : '-dev'
+            process.env.NODE_ENV === 'development' ? '-dev' : ''
           }`,
         );
         const commandName = slashCommand.command.name;
@@ -113,31 +144,21 @@ export class MarquinhosBot {
     const player = new Player(this._client, {
       skipFFmpeg: true,
     });
-    const timers: NodeJS.Timeout[] = [];
+    let timers: NodeJS.Timeout[] = [];
+
+    const clearTimers = () => {
+      timers.forEach((timer) => clearTimeout(timer));
+      timers = [];
+    };
 
     const handlePlayStart = async (queue: GuildQueue, track: Track) => {
-      const { interactionChannel, voiceChannel, addedBy } = queue.metadata as {
+      const { interactionChannel, addedBy } = queue.metadata as {
         interactionChannel: TextChannel;
         voiceChannel: VoiceBasedChannel;
         addedBy: string;
       };
 
-      timers.forEach((timer) => clearTimeout(timer));
-
-      const scrobble = new Scrobble();
-      scrobble.create(voiceChannel, track).then(() => scrobble.queue());
-
-      const fourMinutesInMillis = 240000;
-
-      const timeUntilScrobbling = Math.min(
-        Math.floor(track.durationMS / 2),
-        fourMinutesInMillis,
-      );
-      const dispatchTimer = setTimeout(() => {
-        scrobble.dispatch();
-      }, timeUntilScrobbling);
-
-      timers.push(dispatchTimer);
+      clearTimers();
 
       const playerEmbed = player.client
         .baseEmbed()
@@ -171,6 +192,10 @@ export class MarquinhosBot {
     player.events.on('playerStart', (queue: GuildQueue, track: Track) =>
       safeExecute(handlePlayStart.bind(this, queue, track)),
     );
+
+    // Clear timers when track finishes or queue empties (P1 fix — timer accumulation)
+    player.events.on('playerFinish', () => clearTimers());
+    player.events.on('emptyQueue', () => clearTimers());
 
     player.events.on('playerError', (queue: GuildQueue, error: Error) => {
       logger.error(`Error in player: ${error.message}`);

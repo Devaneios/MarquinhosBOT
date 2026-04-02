@@ -2,6 +2,7 @@ import { SlashCommand } from '@marquinhos/types';
 import {
   ChannelType,
   ChatInputCommandInteraction,
+  PermissionsBitField,
   SlashCommandBuilder,
   TextChannel,
 } from 'discord.js';
@@ -26,13 +27,33 @@ export const anom: SlashCommand = {
         .setRequired(true),
     ),
   execute: async (interaction: ChatInputCommandInteraction) => {
-    const channel = interaction.options.get('canal')?.channel as TextChannel;
-    const message = interaction.options.get('mensagem')?.value as string;
+    const channel = interaction.options.getChannel('canal') as TextChannel;
+    const message = interaction.options.getString('mensagem', true);
+
+    // Verify bot has SendMessages permission in the target channel
+    const botMember = interaction.guild?.members.me;
+    if (
+      botMember &&
+      !channel
+        .permissionsFor(botMember)
+        ?.has(PermissionsBitField.Flags.SendMessages)
+    ) {
+      await interaction.reply({
+        content: 'Não tenho permissão para enviar mensagens nesse canal.',
+        ephemeral: true,
+      });
+      return;
+    }
+
     const anomEmbed = interaction.client.baseEmbed();
-    channel.send({
+    await channel.send({
       embeds: [
         anomEmbed.setTitle('👀 Alguém disse isso:').setDescription(message),
       ],
+    });
+    await interaction.reply({
+      content: 'Mensagem enviada.',
+      ephemeral: true,
     });
   },
   cooldown: 10,

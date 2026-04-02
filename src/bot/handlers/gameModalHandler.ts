@@ -1,6 +1,10 @@
 import { handleGameInteraction } from '@marquinhos/bot/handlers/gameInteraction';
 import { GameManager } from '@marquinhos/game/core/GameManager';
-import { MessageFlags, ModalSubmitInteraction } from 'discord.js';
+import {
+  InteractionEditReplyOptions,
+  MessageFlags,
+  ModalSubmitInteraction,
+} from 'discord.js';
 
 const gameManager = GameManager.getInstance();
 
@@ -109,10 +113,10 @@ export async function handleModalSubmitInteraction(
     modal.user.id,
     modal.channelId,
     action,
-    (payload) => modal.editReply(payload),
+    (payload) => modal.editReply(payload as InteractionEditReplyOptions),
     (msg) =>
       modal
         .followUp({ content: msg, flags: MessageFlags.Ephemeral })
-        .then(() => {}),
+        .then(() => undefined),
   );
 }

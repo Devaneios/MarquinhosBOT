@@ -13,9 +13,10 @@ import { HttpClient } from '@marquinhos/utils/httpClient';
 import { logger } from '@marquinhos/utils/logger';
 
 export class MarquinhosApiService {
+  private static instance: MarquinhosApiService;
   private client: HttpClient;
 
-  constructor() {
+  private constructor() {
     this.client = new HttpClient({
       baseURL: process.env.MARQUINHOS_API_URL,
       headers: {
@@ -39,12 +40,20 @@ export class MarquinhosApiService {
       (response) => response,
       (error: unknown) => {
         const apiError = error as ApiError;
+        const data = apiError.response?.data as ApiResponse | undefined;
         const errorMsg =
-          apiError.response?.data || apiError.message || 'Unknown error';
+          data?.message ?? data ?? apiError.message ?? 'Unknown error';
         logger.error(`API Error on ${apiError.config?.url}: ${errorMsg}`);
         throw error;
       },
     );
+  }
+
+  public static getInstance(): MarquinhosApiService {
+    if (!MarquinhosApiService.instance) {
+      MarquinhosApiService.instance = new MarquinhosApiService();
+    }
+    return MarquinhosApiService.instance;
   }
 
   async addToScrobbleQueue(scrobble: PlaybackData): Promise<ApiResponse> {
