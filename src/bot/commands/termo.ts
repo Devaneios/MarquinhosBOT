@@ -1,10 +1,12 @@
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { SlashCommand } from '@marquinhos/types';
+import { logger } from '@marquinhos/utils/logger';
 import { createCanvas, registerFont } from 'canvas';
 import {
   AttachmentBuilder,
   MessageFlags,
   SlashCommandBuilder,
+  type ChatInputCommandInteraction,
 } from 'discord.js';
 import { fileURLToPath, URL } from 'url';
 
@@ -20,6 +22,11 @@ interface WordleGuessResult {
 }
 
 const api = MarquinhosApiService.getInstance();
+
+const previousErrorInteractions = new Map<
+  string,
+  ChatInputCommandInteraction
+>();
 
 registerFont(
   fileURLToPath(
@@ -145,6 +152,17 @@ export const termo: SlashCommand = {
       return;
     }
 
+    const userId = interaction.user.id;
+    const prevError = previousErrorInteractions.get(userId);
+    if (prevError) {
+      prevError.deleteReply().catch(() => {
+        logger.warn(
+          `Termo: failed to delete previous error message for user ${userId}`,
+        );
+      });
+      previousErrorInteractions.delete(userId);
+    }
+
     const guess = interaction.options.getString('palpite', true).trim();
 
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
@@ -162,8 +180,11 @@ export const termo: SlashCommand = {
         (err as { response?: { data?: { message?: string } } })?.response?.data
           ?.message ?? 'Erro ao processar tentativa.';
       await interaction.editReply({ content: `❌ ${message}` });
+      previousErrorInteractions.set(userId, interaction);
       return;
     }
+
+    previousErrorInteractions.delete(userId);
 
     const keyboardBuffer = buildKeyboardImage(result.guesses);
     const attachment = new AttachmentBuilder(keyboardBuffer, {

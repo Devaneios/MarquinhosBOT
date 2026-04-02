@@ -105,10 +105,20 @@ async function rotateTermoWord(client: Client): Promise<void> {
         ];
         const trashTalk =
           shortTrashTalks[Math.floor(Math.random() * shortTrashTalks.length)];
-        await channel.send(
-          `<@&1487639231361978399> **Nova palavra!** (${data.wordLength} letras) — ${trashTalk}\n` +
-            `${'⬜'.repeat(data.wordLength)}`,
+        const newWordEmbed = client.baseEmbed();
+        newWordEmbed.setTitle('🟩 Nova Palavra do Termo!');
+        newWordEmbed.setDescription(
+          `${trashTalk}\n${'⬜'.repeat(data.wordLength)}`,
         );
+        newWordEmbed.addFields({
+          name: 'Letras',
+          value: String(data.wordLength),
+          inline: true,
+        });
+        await channel.send({
+          content: '<@&1487639231361978399>',
+          embeds: [newWordEmbed],
+        });
       } catch (err) {
         logger.warn(`Termo: failed to rotate word for guild ${guildId}:`, err);
       }
@@ -148,6 +158,7 @@ async function broadcastTermoStats(client: Client): Promise<void> {
         playersCount: number;
         winnersCount: number;
         avgAttempts: number;
+        wordLength: number;
       };
 
       if (
@@ -161,11 +172,23 @@ async function broadcastTermoStats(client: Client): Promise<void> {
         | undefined;
       if (!channel) continue;
 
-      await channel.send(
-        `**Termo — Hoje:** ${stats.playersCount} pessoa${stats.playersCount !== 1 ? 's' : ''} jogaram, ` +
-          `${stats.winnersCount} acertaram, ` +
-          `média de ${stats.avgAttempts} tentativa${stats.avgAttempts !== 1 ? 's' : ''}.`,
+      const statsEmbed = client.baseEmbed();
+      statsEmbed.setTitle('📊 Termo — Status de Hoje');
+      statsEmbed.addFields(
+        { name: 'Jogadores', value: String(stats.playersCount), inline: true },
+        { name: 'Acertaram', value: String(stats.winnersCount), inline: true },
+        {
+          name: 'Média de tentativas',
+          value: String(stats.avgAttempts),
+          inline: true,
+        },
+        {
+          name: 'Letras na palavra',
+          value: String(stats.wordLength),
+          inline: true,
+        },
       );
+      await channel.send({ embeds: [statsEmbed] });
       lastBroadcastWinners.set(guildId, stats.winnersCount);
     } catch (err) {
       logger.warn(`Termo stats: failed for guild ${guildId}:`, err);
