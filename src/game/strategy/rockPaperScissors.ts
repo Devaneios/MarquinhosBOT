@@ -2,6 +2,7 @@ import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import {
   BaseGame,
   GameResult,
+  GameReward,
   GameSession,
   PlayerStatus,
 } from '../core/GameTypes';
@@ -46,9 +47,10 @@ export class RockPaperScissorsGame extends BaseGame {
       finished: false,
       waitingForChoices: true,
     } as RPSData;
+    const data = this.session.data as RPSData;
 
     this.session.players.forEach((player) => {
-      this.session.data.scores[player.userId] = 0;
+      data.scores[player.userId] = 0;
     });
   }
 
@@ -56,13 +58,16 @@ export class RockPaperScissorsGame extends BaseGame {
     this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as RPSData;
 
     if (data.finished || !data.waitingForChoices) return;
 
     if (action.type === 'choose') {
-      await this.submitChoice(userId, action.choice);
+      await this.submitChoice(userId, action.choice as string);
     }
   }
 
@@ -251,7 +256,7 @@ export class RockPaperScissorsGame extends BaseGame {
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
-    const rewards: Record<string, any> = {};
+    const rewards: Record<string, GameReward> = {};
 
     sortedPlayers.forEach((player, index) => {
       const baseRewards = this.calculateRewards(player, index + 1);

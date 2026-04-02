@@ -2,6 +2,7 @@ import { EmbedBuilder } from 'discord.js';
 import {
   BaseGame,
   GameResult,
+  GameReward,
   GameSession,
   PlayerStatus,
 } from '../core/GameTypes';
@@ -29,17 +30,18 @@ export class SpeedMathGame extends BaseGame {
   }
 
   private initializeGame(): void {
-    this.session.data = {
+    const data: SpeedMathData = {
       questions: this.generateQuestions(10),
       currentQuestionIndex: 0,
       scores: {},
       answered: {},
       questionStartTime: Date.now(),
       finished: false,
-    } as SpeedMathData;
+    };
+    this.session.data = data;
 
     this.session.players.forEach((player) => {
-      this.session.data.scores[player.userId] = 0;
+      data.scores[player.userId] = 0;
     });
   }
 
@@ -109,7 +111,7 @@ export class SpeedMathGame extends BaseGame {
     const a = b * answer;
     return {
       question: `${a} ÷ ${b}`,
-      answer: answer,
+      answer,
       difficulty: 2,
     };
   }
@@ -118,13 +120,16 @@ export class SpeedMathGame extends BaseGame {
     this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as SpeedMathData;
 
     if (data.finished || data.answered[userId]) return;
 
     if (action.type === 'answer') {
-      await this.submitAnswer(userId, action.answer);
+      await this.submitAnswer(userId, action.answer as number);
     }
   }
 
@@ -199,7 +204,7 @@ export class SpeedMathGame extends BaseGame {
     }
 
     // Current scores
-    const sortedPlayers = this.session.players.sort(
+    const sortedPlayers = [...this.session.players].sort(
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
@@ -215,7 +220,7 @@ export class SpeedMathGame extends BaseGame {
 
   private getResultsEmbed(): EmbedBuilder {
     const data = this.session.data as SpeedMathData;
-    const sortedPlayers = this.session.players.sort(
+    const sortedPlayers = [...this.session.players].sort(
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
@@ -237,11 +242,11 @@ export class SpeedMathGame extends BaseGame {
 
   async finish(): Promise<GameResult> {
     const data = this.session.data as SpeedMathData;
-    const sortedPlayers = this.session.players.sort(
+    const sortedPlayers = [...this.session.players].sort(
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
-    const rewards: Record<string, any> = {};
+    const rewards: Record<string, GameReward> = {};
 
     sortedPlayers.forEach((player, index) => {
       const baseRewards = this.calculateRewards(player, index + 1);

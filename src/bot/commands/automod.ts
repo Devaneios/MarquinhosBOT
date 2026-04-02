@@ -37,7 +37,7 @@ export const automod: SlashCommand = {
     const subcommand = interaction.options.getSubcommand();
 
     switch (subcommand) {
-      case 'configure':
+      case 'configure': {
         const spamDetection = interaction.options.getBoolean('spam_detection');
         const autoRoles = interaction.options.getBoolean('auto_roles');
 
@@ -59,8 +59,9 @@ export const automod: SlashCommand = {
 
         await interaction.editReply({ embeds: [embed] });
         break;
+      }
 
-      case 'status':
+      case 'status': {
         const statusEmbed = interaction.client
           .baseEmbed()
           .setTitle('🛡️ Status da Moderação')
@@ -75,8 +76,9 @@ export const automod: SlashCommand = {
 
         await interaction.editReply({ embeds: [statusEmbed] });
         break;
+      }
 
-      case 'logs':
+      case 'logs': {
         const logsEmbed = interaction.client
           .baseEmbed()
           .setTitle('📋 Logs de Moderação')
@@ -88,6 +90,7 @@ export const automod: SlashCommand = {
 
         await interaction.editReply({ embeds: [logsEmbed] });
         break;
+      }
     }
   },
   cooldown: 15,

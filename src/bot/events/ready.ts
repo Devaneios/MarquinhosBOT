@@ -4,7 +4,10 @@ import { getBicho } from '@marquinhos/utils/bichoGame';
 import { logger } from '@marquinhos/utils/logger';
 import { Client, TextChannel } from 'discord.js';
 
-const api = new MarquinhosApiService();
+const api = MarquinhosApiService.getInstance();
+
+/** Tracked intervals — cleared on shutdown via GameManager.destroy() chain */
+const intervalHandles: ReturnType<typeof setInterval>[] = [];
 
 export const ready: BotEvent = {
   name: 'ready',
@@ -20,23 +23,39 @@ export const ready: BotEvent = {
 
 function startBichoGame(client: Client) {
   client.user?.setActivity(getBicho());
-  setInterval(() => {
-    client.user?.setActivity(getBicho());
-  }, 100 * 1000);
+  intervalHandles.push(
+    setInterval(() => {
+      client.user?.setActivity(getBicho());
+    }, 100 * 1000),
+  );
 }
 
-/** Returns milliseconds until next midnight in Recife time (UTC-3). */
+/** Returns milliseconds until next midnight in Recife time (America/Recife). */
 function msUntilMidnightRecife(): number {
   const now = new Date();
-  // Current time in Recife (UTC-3)
-  const recifeOffset = -3 * 60; // minutes
-  const localOffset = now.getTimezoneOffset(); // minutes (positive = behind UTC)
-  const diffMin = recifeOffset - -localOffset;
-  const recifeNow = new Date(now.getTime() + diffMin * 60 * 1000);
+  // Build a formatter that gives us the Recife hour/minute/second
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Recife',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: false,
+  })
+    .formatToParts(now)
+    .reduce(
+      (acc, p) => {
+        if (p.type === 'hour') acc.hour = Number(p.value);
+        if (p.type === 'minute') acc.minute = Number(p.value);
+        if (p.type === 'second') acc.second = Number(p.value);
+        return acc;
+      },
+      { hour: 0, minute: 0, second: 0 },
+    );
 
-  const nextMidnight = new Date(recifeNow);
-  nextMidnight.setHours(24, 0, 0, 0);
-  return nextMidnight.getTime() - recifeNow.getTime();
+  const msElapsedToday =
+    parts.hour * 3_600_000 + parts.minute * 60_000 + parts.second * 1_000;
+  const msInDay = 24 * 3_600_000;
+  return msInDay - msElapsedToday;
 }
 
 async function rotateTermoWord(client: Client): Promise<void> {
@@ -46,11 +65,11 @@ async function rotateTermoWord(client: Client): Promise<void> {
     for (const [guildId] of guilds) {
       try {
         const cfgRes = await api.getWordleConfig(guildId);
-        const channelId = (cfgRes.data as any)?.channelId;
+        const channelId = (cfgRes.data as { channelId?: string })?.channelId;
         if (!channelId) continue;
 
         const result = await api.forceNewWordleWord(guildId);
-        const data = result.data as any;
+        const data = result.data as { wordLength: number };
 
         const channel = client.channels.cache.get(channelId) as
           | TextChannel
@@ -90,8 +109,8 @@ async function rotateTermoWord(client: Client): Promise<void> {
           `<@&1487639231361978399> **Nova palavra!** (${data.wordLength} letras) — ${trashTalk}\n` +
             `${'⬜'.repeat(data.wordLength)}`,
         );
-      } catch {
-        // Skip guilds with errors
+      } catch (err) {
+        logger.warn(`Termo: failed to rotate word for guild ${guildId}:`, err);
       }
     }
   } catch (err) {
@@ -107,7 +126,9 @@ function startTermoScheduler(client: Client): void {
 
   setTimeout(() => {
     rotateTermoWord(client);
-    setInterval(() => rotateTermoWord(client), 24 * 60 * 60 * 1000);
+    intervalHandles.push(
+      setInterval(() => rotateTermoWord(client), 24 * 60 * 60 * 1000),
+    );
   }, msToMidnight);
 }
 
@@ -119,11 +140,15 @@ async function broadcastTermoStats(client: Client): Promise<void> {
   for (const [guildId] of guilds) {
     try {
       const cfgRes = await api.getWordleConfig(guildId);
-      const channelId = (cfgRes.data as any)?.channelId;
+      const channelId = (cfgRes.data as { channelId?: string })?.channelId;
       if (!channelId) continue;
 
       const statsRes = await api.getWordleStats(guildId);
-      const stats = statsRes.data as any;
+      const stats = statsRes.data as {
+        playersCount: number;
+        winnersCount: number;
+        avgAttempts: number;
+      };
 
       if (
         !stats ||
@@ -142,13 +167,15 @@ async function broadcastTermoStats(client: Client): Promise<void> {
           `média de ${stats.avgAttempts} tentativa${stats.avgAttempts !== 1 ? 's' : ''}.`,
       );
       lastBroadcastWinners.set(guildId, stats.winnersCount);
-    } catch {
-      // Skip guilds with errors
+    } catch (err) {
+      logger.warn(`Termo stats: failed for guild ${guildId}:`, err);
     }
   }
 }
 
 function startTermoStatsBroadcast(client: Client): void {
   const TWO_HOURS = 2 * 60 * 60 * 1000;
-  setInterval(() => broadcastTermoStats(client), TWO_HOURS);
+  intervalHandles.push(
+    setInterval(() => broadcastTermoStats(client), TWO_HOURS),
+  );
 }

@@ -91,6 +91,19 @@ export class HttpClient {
     throw finalError;
   }
 
+  /** Races a promise against a timeout. Rejects with an Error if the timeout fires first. */
+  private withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+    return Promise.race([
+      promise,
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`Body read timed out after ${ms}ms`)),
+          ms,
+        ),
+      ),
+    ]);
+  }
+
   private exponentialBackoff(attempt: number): Promise<void> {
     const delay = Math.min(Math.pow(2, attempt) * 1000, 10000); // Max delay of 10s
     return new Promise((resolve) => setTimeout(resolve, delay));
@@ -195,12 +208,16 @@ export class HttpClient {
       let response = await this.fetchWithRetry(config.url || url, config);
       response = await this.applyResponseInterceptors(response);
 
+      const bodyTimeout = config.timeout ?? this.defaultTimeout;
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
+        const data = await this.withTimeout(response.json(), bodyTimeout);
         return data as T;
       }
-      return response.text() as unknown as T;
+      return (await this.withTimeout(
+        response.text(),
+        bodyTimeout,
+      )) as unknown as T;
     } catch (error) {
       return this.applyResponseErrorInterceptors(error);
     }

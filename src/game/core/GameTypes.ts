@@ -1,3 +1,5 @@
+import { ActionRowBuilder, EmbedBuilder } from 'discord.js';
+
 export enum GameType {
   // Casino Games
   BLACKJACK = 'blackjack',
@@ -51,7 +53,7 @@ export interface GamePlayer {
   score: number;
   status: PlayerStatus;
   joinedAt: Date;
-  data?: any; // Game-specific player data
+  data?: Record<string, unknown>; // Game-specific player data
 }
 
 export interface GameConfig {
@@ -59,7 +61,7 @@ export interface GameConfig {
   minPlayers: number;
   timeLimit?: number; // in seconds
   difficulty?: 'easy' | 'medium' | 'hard';
-  options?: Record<string, any>;
+  options?: Record<string, unknown>;
 }
 
 export interface GameReward {
@@ -80,7 +82,7 @@ export interface GameSession {
   startedAt: Date;
   expiresAt: Date;
   config: GameConfig;
-  data: any; // Game-specific session data
+  data: unknown; // Game-specific session data
   round?: number;
   currentTurn?: string; // userId
 }
@@ -90,7 +92,7 @@ export interface GameResult {
   winners: string[];
   losers: string[];
   rewards: Record<string, GameReward>;
-  stats: Record<string, any>;
+  stats: Record<string, unknown>;
   duration: number;
 }
 
@@ -145,8 +147,11 @@ export abstract class BaseGame {
   }
 
   abstract start(): Promise<void>;
-  abstract handlePlayerAction(userId: string, action: any): Promise<void>;
-  abstract getGameEmbed(): any;
+  abstract handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void>;
+  abstract getGameEmbed(): EmbedBuilder;
   abstract finish(): Promise<GameResult>;
 
   protected addPlayer(userId: string, username: string): boolean {
@@ -210,7 +215,28 @@ export abstract class BaseGame {
   protected abstract getBaseXpForGame(): number;
 
   public isFinished(): boolean {
-    const data = this.session.data;
+    // Prefer authoritative subclass implementation
+    if (this._isFinished !== BaseGame.prototype._isFinished) {
+      return this._isFinished();
+    }
+    // Fallback: duck-type session.data flags for legacy games
+    const data = this.session.data as Record<string, unknown>;
+    return !!(
+      data.gameOver ||
+      data.finished ||
+      data.solved ||
+      data.drawn ||
+      data.gamePhase === 'finished'
+    );
+  }
+
+  /**
+   * Override in subclasses to provide an authoritative finished check.
+   * Default implementation is never called directly — isFinished() uses
+   * duck-typing as fallback for legacy games that don't override this.
+   */
+  protected _isFinished(): boolean {
+    const data = this.session.data as Record<string, unknown>;
     return !!(
       data.gameOver ||
       data.finished ||
@@ -225,7 +251,7 @@ export abstract class BaseGame {
    * Default: duck-types the 8 legacy method names — existing games work unchanged.
    * New games override this and return rows directly.
    */
-  public getComponents(): any[] {
+  public getComponents(): ActionRowBuilder[] {
     const LEGACY_METHODS = [
       'getActionButtons',
       'getAnswerButtons',
@@ -236,10 +262,11 @@ export abstract class BaseGame {
       'getLetterButtons',
       'getNumberButtons',
     ] as const;
-    const rows: any[] = [];
+    const rows: ActionRowBuilder[] = [];
+    const self = this as unknown as Record<string, unknown>;
     for (const method of LEGACY_METHODS) {
-      if (typeof (this as any)[method] === 'function') {
-        const result = (this as any)[method]();
+      if (typeof self[method] === 'function') {
+        const result = (self[method] as () => ActionRowBuilder[])();
         if (result?.length) rows.push(...result);
       }
     }

@@ -1,8 +1,18 @@
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { SlashCommand } from '@marquinhos/types';
+import { logger } from '@marquinhos/utils/logger';
 import { MessageFlags, SlashCommandBuilder } from 'discord.js';
 
-const marquinhosApi = new MarquinhosApiService();
+const marquinhosApi = MarquinhosApiService.getInstance();
+
+interface SyncPartySession {
+  id: string;
+  name?: string;
+  hostId: string;
+  participants: string[];
+  playlist: unknown[];
+  currentTrack?: { title: string };
+}
 
 export const syncParty: SlashCommand = {
   command: new SlashCommandBuilder()
@@ -125,7 +135,7 @@ export const syncParty: SlashCommand = {
       const subcommand = interaction.options.getSubcommand();
 
       switch (subcommand) {
-        case 'create':
+        case 'create': {
           const name = interaction.options.getString('name', true);
           const description =
             interaction.options.getString('description') || '';
@@ -150,7 +160,7 @@ export const syncParty: SlashCommand = {
             },
           );
 
-          const party = createResponse.data as any;
+          const party = createResponse.data as SyncPartySession;
 
           const createEmbed = interaction.client
             .baseEmbed()
@@ -176,8 +186,9 @@ export const syncParty: SlashCommand = {
 
           await interaction.editReply({ embeds: [createEmbed] });
           break;
+        }
 
-        case 'join':
+        case 'join': {
           const partyId = interaction.options.getString('party-id', true);
           const platform = interaction.options.getString('platform', true);
 
@@ -196,7 +207,7 @@ export const syncParty: SlashCommand = {
             return;
           }
 
-          const joinedParty = joinResponse.data as any;
+          const joinedParty = joinResponse.data as SyncPartySession;
 
           const joinEmbed = interaction.client
             .baseEmbed()
@@ -218,8 +229,9 @@ export const syncParty: SlashCommand = {
 
           await interaction.editReply({ embeds: [joinEmbed] });
           break;
+        }
 
-        case 'add-track':
+        case 'add-track': {
           const addPartyId = interaction.options.getString('party-id', true);
           const songName = interaction.options.getString('song', true);
 
@@ -255,14 +267,15 @@ export const syncParty: SlashCommand = {
             )
             .addFields({
               name: '📋 Posição na Playlist',
-              value: `#${(addResponse.data as any).playlist.length}`,
+              value: `#${(addResponse.data as SyncPartySession).playlist.length}`,
               inline: true,
             });
 
           await interaction.editReply({ embeds: [addEmbed] });
           break;
+        }
 
-        case 'vote':
+        case 'vote': {
           const votePartyId = interaction.options.getString('party-id', true);
           const trackNumber = interaction.options.getInteger(
             'track-number',
@@ -305,12 +318,13 @@ export const syncParty: SlashCommand = {
 
           await interaction.editReply({ embeds: [voteEmbed] });
           break;
+        }
 
-        case 'list':
+        case 'list': {
           const listResponse = await marquinhosApi.get(
             `/sync-party/active/${interaction.guildId}`,
           );
-          const activeParties = listResponse.data as any;
+          const activeParties = listResponse.data as SyncPartySession[];
 
           if (!activeParties || activeParties.length === 0) {
             await interaction.editReply({
@@ -322,9 +336,9 @@ export const syncParty: SlashCommand = {
 
           const partiesText = activeParties
             .map(
-              (p: any, index: number) =>
-                `**${index + 1}.** ${p.name}\n` +
-                `└ ID: \`${p.id}\` | Participantes: ${p.participants.length} | Host: <@${p.hostId}>`,
+              (p: SyncPartySession, index: number) =>
+                `**${index + 1}.** ${p.name || 'Festa sem nome'}\n` +
+                `└ ID: \`${p.id}\` | Participantes: ${p.participants?.length || 0} | Host: <@${p.hostId}>`,
             )
             .join('\n\n');
 
@@ -336,9 +350,10 @@ export const syncParty: SlashCommand = {
 
           await interaction.editReply({ embeds: [listEmbed] });
           break;
+        }
       }
     } catch (error) {
-      console.error('Error with sync party:', error);
+      logger.error('Error with sync party:', error);
       await interaction.editReply({
         content:
           'Erro ao gerenciar festa sincronizada. Tente novamente mais tarde.',

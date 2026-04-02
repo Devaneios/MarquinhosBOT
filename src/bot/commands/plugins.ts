@@ -36,7 +36,7 @@ export const plugins: SlashCommand = {
     const subcommand = interaction.options.getSubcommand();
 
     switch (subcommand) {
-      case 'list':
+      case 'list': {
         const listEmbed = interaction.client
           .baseEmbed()
           .setTitle('🔌 Plugins Disponíveis')
@@ -50,8 +50,9 @@ export const plugins: SlashCommand = {
 
         await interaction.editReply({ embeds: [listEmbed] });
         break;
+      }
 
-      case 'install':
+      case 'install': {
         const pluginId = interaction.options.getString('plugin');
 
         const installEmbed = interaction.client
@@ -65,8 +66,9 @@ export const plugins: SlashCommand = {
 
         await interaction.editReply({ embeds: [installEmbed] });
         break;
+      }
 
-      case 'manage':
+      case 'manage': {
         const manageEmbed = interaction.client
           .baseEmbed()
           .setTitle('⚙️ Plugins Instalados')
@@ -78,8 +80,9 @@ export const plugins: SlashCommand = {
 
         await interaction.editReply({ embeds: [manageEmbed] });
         break;
+      }
 
-      case 'marketplace':
+      case 'marketplace': {
         const marketplaceEmbed = interaction.client
           .baseEmbed()
           .setTitle('🛒 Marketplace de Plugins')
@@ -99,6 +102,7 @@ export const plugins: SlashCommand = {
 
         await interaction.editReply({ embeds: [marketplaceEmbed] });
         break;
+      }
     }
   },
   cooldown: 15,

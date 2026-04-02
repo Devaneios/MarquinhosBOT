@@ -2,6 +2,7 @@ import { EmbedBuilder } from 'discord.js';
 import {
   BaseGame,
   GameResult,
+  GameReward,
   GameSession,
   PlayerStatus,
 } from '../core/GameTypes';
@@ -99,7 +100,7 @@ export class TranslateGame extends BaseGame {
   private initializeGame(): void {
     const selectedPhrases = GameUtils.getRandomElements(this.phrases, 4);
 
-    this.session.data = {
+    const data: TranslateData = {
       phrases: selectedPhrases,
       currentIndex: 0,
       scores: {},
@@ -107,25 +108,29 @@ export class TranslateGame extends BaseGame {
       timeLimit: 45,
       questionStartTime: Date.now(),
       finished: false,
-    } as TranslateData;
+    };
+    this.session.data = data;
 
     this.session.players.forEach((player) => {
-      this.session.data.scores[player.userId] = 0;
+      data.scores[player.userId] = 0;
     });
   }
 
   async start(): Promise<void> {
     this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
-    this.session.data.questionStartTime = Date.now();
+    (this.session.data as TranslateData).questionStartTime = Date.now();
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as TranslateData;
 
     if (data.finished || data.answered[userId]) return;
 
     if (action.type === 'translate') {
-      await this.submitTranslation(userId, action.translation);
+      await this.submitTranslation(userId, action.translation as string);
     }
   }
 
@@ -252,7 +257,7 @@ export class TranslateGame extends BaseGame {
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
-    const rewards: Record<string, any> = {};
+    const rewards: Record<string, GameReward> = {};
 
     sortedPlayers.forEach((player, index) => {
       const baseRewards = this.calculateRewards(player, index + 1);

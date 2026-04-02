@@ -1,17 +1,21 @@
 import { SlashCommand } from '@marquinhos/types';
-import { GuildMember, SlashCommandBuilder } from 'discord.js';
+import {
+  GuildMember,
+  PermissionsBitField,
+  SlashCommandBuilder,
+} from 'discord.js';
 
 export const disconnectAll: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('encerrar-chamada')
     .setDescription('Remove todo mundo da chamada atual')
-    .setDefaultMemberPermissions(0),
+    .setDefaultMemberPermissions(PermissionsBitField.Flags.MoveMembers),
   execute: async (interaction) => {
     const member = interaction.member as GuildMember;
     const voiceChannel = member?.voice.channel;
     const disconnectAllEmbed = interaction.client.baseEmbed();
     if (!voiceChannel) {
-      interaction.reply({
+      await interaction.reply({
         embeds: [
           disconnectAllEmbed.setDescription(
             'Você precisa estar em um canal de voz para usar esse comando',
@@ -26,7 +30,7 @@ export const disconnectAll: SlashCommand = {
       await user.voice.setChannel(null);
     }
 
-    interaction.reply({
+    await interaction.reply({
       embeds: [
         disconnectAllEmbed.setDescription(
           'Todos os usuários foram desconectados',

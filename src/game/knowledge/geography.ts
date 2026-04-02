@@ -3,6 +3,7 @@ import {
   BaseGame,
   GameQuestion,
   GameResult,
+  GameReward,
   GameSession,
   PlayerStatus,
 } from '../core/GameTypes';
@@ -160,7 +161,7 @@ export class GeographyGame extends BaseGame {
       6,
     );
 
-    this.session.data = {
+    const data: GeographyData = {
       questions: selectedQuestions,
       currentQuestionIndex: 0,
       scores: {},
@@ -170,22 +171,26 @@ export class GeographyGame extends BaseGame {
       finished: false,
       hintsUsed: {},
       currentHints: {},
-    } as GeographyData;
+    };
+    this.session.data = data;
 
     // Initialize scores and hints
     this.session.players.forEach((player) => {
-      this.session.data.scores[player.userId] = 0;
-      this.session.data.hintsUsed[player.userId] = 0;
-      this.session.data.currentHints[player.userId] = 0;
+      data.scores[player.userId] = 0;
+      data.hintsUsed[player.userId] = 0;
+      data.currentHints[player.userId] = 0;
     });
   }
 
   async start(): Promise<void> {
     this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
-    this.session.data.questionStartTime = Date.now();
+    (this.session.data as GeographyData).questionStartTime = Date.now();
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as GeographyData;
 
     if (data.finished) return;
@@ -193,7 +198,7 @@ export class GeographyGame extends BaseGame {
     switch (action.type) {
       case 'answer':
         if (!data.answered[userId]) {
-          await this.submitAnswer(userId, action.answer);
+          await this.submitAnswer(userId, action.answer as number);
         }
         break;
       case 'hint':
@@ -302,7 +307,7 @@ export class GeographyGame extends BaseGame {
     // Show hint if available and requested
     const hintRequested = this.session.players.some(
       (p) =>
-        this.session.data.hintsUsed[p.userId] > 0 &&
+        data.hintsUsed[p.userId] > 0 &&
         data.currentQuestionIndex < data.questions.length,
     );
 
@@ -411,7 +416,7 @@ export class GeographyGame extends BaseGame {
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
-    const rewards: Record<string, any> = {};
+    const rewards: Record<string, GameReward> = {};
 
     sortedPlayers.forEach((player, index) => {
       const baseRewards = this.calculateRewards(player, index + 1);

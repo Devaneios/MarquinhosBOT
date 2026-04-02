@@ -36,7 +36,9 @@ interface MazeData {
   mode?: 'open' | 'foggy';
   visited?: boolean[][];
   moves?: number;
+  moveLimit?: number;
   isCompleted?: boolean;
+  isExhausted?: boolean;
 }
 
 interface MazeAction {
@@ -56,16 +58,20 @@ export class MazeGame extends BaseGame {
     this.session.players[0].status = PlayerStatus.ACTIVE;
   }
 
-  async handlePlayerAction(_userId: string, action: MazeAction): Promise<void> {
+  async handlePlayerAction(
+    _userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
+    const mazeAction = action as unknown as MazeAction;
     const data = this.session.data as MazeData;
 
-    if (action.type === 'setup_size') {
-      data.selectedSize = action.size;
+    if (mazeAction.type === 'setup_size') {
+      data.selectedSize = mazeAction.size;
       data.phase = 'setup_mode';
       return;
     }
 
-    if (action.type === 'setup_mode') {
+    if (mazeAction.type === 'setup_mode') {
       const size = data.selectedSize!;
       const grid = generateMaze(size);
       data.grid = grid;
@@ -73,9 +79,11 @@ export class MazeGame extends BaseGame {
       data.playerCol = 1;
       data.goalRow = size - 2;
       data.goalCol = size - 2;
-      data.mode = action.mode;
+      data.mode = mazeAction.mode;
       data.moves = 0;
+      data.moveLimit = Math.floor((size * size) / 2);
       data.isCompleted = false;
+      data.isExhausted = false;
       // Track visited cells for foggy mode
       data.visited = Array.from({ length: size }, () =>
         new Array(size).fill(false),
@@ -86,7 +94,7 @@ export class MazeGame extends BaseGame {
     }
 
     if (
-      action.type === 'move' &&
+      mazeAction.type === 'move' &&
       data.phase === 'playing' &&
       !data.isCompleted
     ) {
@@ -96,7 +104,7 @@ export class MazeGame extends BaseGame {
         left: [0, -1],
         right: [0, 1],
       };
-      const delta = dirMap[action.direction ?? ''];
+      const delta = dirMap[mazeAction.direction ?? ''];
       if (!delta) return;
 
       const newRow = data.playerRow! + delta[0];
@@ -117,6 +125,8 @@ export class MazeGame extends BaseGame {
 
         if (newRow === data.goalRow && newCol === data.goalCol) {
           data.isCompleted = true;
+        } else if (data.moveLimit && data.moves! >= data.moveLimit) {
+          data.isExhausted = true;
         }
       }
     }
@@ -150,15 +160,22 @@ export class MazeGame extends BaseGame {
 
     // Playing phase
     const moves = data.moves ?? 0;
+    const limit = data.moveLimit ?? 0;
     const header = data.isCompleted
-      ? `👤 **${player.username}**\n\n🎉 **PARABÉNS! Você escapou do labirinto!**\n🚶 **Movimentos:** ${moves}\n\n`
-      : `👤 **${player.username}** | 🚶 **Movimentos:** ${moves}\n\n`;
+      ? `👤 **${player.username}**\n\n🎉 **PARABÉNS! Você escapou do labirinto!**\n🚶 **Movimentos:** ${moves}/${limit}\n\n`
+      : data.isExhausted
+        ? `👤 **${player.username}**\n\n❌ **Limite de movimentos atingido!** (${moves}/${limit})\n\n`
+        : `👤 **${player.username}** | 🚶 **Movimentos:** ${moves}/${limit}\n\n`;
     const fogLegend =
       data.isCompleted || data.mode === 'open' ? '' : ' | ⬛ Névoa';
     const legend = `\n\n**Legenda:** 👤 Você | 🏆 Saída | 🧱 Parede | ⬜ Caminho | 🟩 Borda${fogLegend}`;
     const description = `${header}${renderViewport(data)}${legend}`;
 
-    const color = data.isCompleted ? 0x00ff00 : 0x3498db;
+    const color = data.isCompleted
+      ? 0x00ff00
+      : data.isExhausted
+        ? 0xff0000
+        : 0x3498db;
     return GameUtils.createGameEmbed('🏃 Labirinto', description, color);
   }
 
@@ -195,7 +212,7 @@ export class MazeGame extends BaseGame {
       ];
     }
 
-    if (data.phase === 'playing' && !data.isCompleted) {
+    if (data.phase === 'playing' && !data.isCompleted && !data.isExhausted) {
       return [
         GameUtils.createGameButtons({
           labels: ['⬜', '⬆️', '⬜'],
@@ -235,7 +252,7 @@ export class MazeGame extends BaseGame {
 
   public isFinished(): boolean {
     const data = this.session.data as MazeData;
-    return data.isCompleted ?? false;
+    return (data.isCompleted ?? false) || (data.isExhausted ?? false);
   }
 
   async finish(): Promise<GameResult> {

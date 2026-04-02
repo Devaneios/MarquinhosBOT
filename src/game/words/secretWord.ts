@@ -2,6 +2,7 @@ import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import {
   BaseGame,
   GameResult,
+  GameReward,
   GameSession,
   PlayerStatus,
 } from '../core/GameTypes';
@@ -158,17 +159,20 @@ export class SecretWordGame extends BaseGame {
     this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as SecretWordData;
 
     if (data.gameOver) return;
 
     switch (action.type) {
       case 'guess_letter':
-        await this.guessLetter(action.letter);
+        await this.guessLetter(action.letter as string);
         break;
       case 'guess_word':
-        await this.guessWord(action.word);
+        await this.guessWord(action.word as string);
         break;
       case 'show_hint':
         // Hint is shown in embed when available
@@ -416,9 +420,9 @@ export class SecretWordGame extends BaseGame {
 
   async finish(): Promise<GameResult> {
     const data = this.session.data as SecretWordData;
-    const rewards: Record<string, any> = {};
+    const rewards: Record<string, GameReward> = {};
 
-    this.session.players.forEach((player, index) => {
+    this.session.players.forEach((player, _index) => {
       const baseRewards = this.calculateRewards(
         player,
         data.won ? 1 : this.session.players.length,

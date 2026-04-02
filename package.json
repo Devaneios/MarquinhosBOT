@@ -8,11 +8,12 @@
     "dev": "bun --watch src/index.ts",
     "build": "bun build src/index.ts --target=bun --outdir=./dist --sourcemap=external && bun run copy-assets",
     "typecheck": "tsc --noEmit",
+    "test": "bun test",
     "copy-assets": "copyfiles --all --up 1 \"./src/resources/**\" \"./dist\"",
     "register-commands": "bun run src/register-slash-commands.ts",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
-    "lint:check": "eslint src/**/*.ts --max-warnings=0",
+    "lint": "eslint 'src/**/*.ts'",
+    "lint:fix": "eslint 'src/**/*.ts' --fix",
+    "lint:check": "eslint 'src/**/*.ts' --max-warnings=0",
     "format": "prettier --write \"src/**/*.ts\" && bun run lint:fix",
     "format:check": "prettier --check \"src/**/*.ts\" && bun run lint:check",
     "prepare": "husky"
@@ -66,6 +67,6 @@
     "undici": "6.23.0"
   },
   "lint-staged": {
-    "*.ts": ["prettier --write", "eslint --fix"]
+    "src/**/*.ts": ["prettier --write", "eslint --fix"]
   }
 }

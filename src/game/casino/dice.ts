@@ -47,21 +47,22 @@ export class DiceGame extends BaseGame {
     this.session.players[0].status = PlayerStatus.ACTIVE;
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
-    const data = this.session.data as DiceData;
-
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     switch (action.type) {
       case 'roll':
         await this.rollDice();
         break;
       case 'set_bet':
-        this.setBet(action.betType, action.betValue);
+        this.setBet(action.betType as string, action.betValue);
         break;
       case 'change_dice_count':
-        this.changeDiceCount(action.count);
+        this.changeDiceCount(action.count as number);
         break;
       case 'change_bet_amount':
-        this.changeBetAmount(action.amount);
+        this.changeBetAmount(action.amount as number);
         break;
     }
   }
@@ -117,7 +118,7 @@ export class DiceGame extends BaseGame {
           payout: this.getSumPayout(data.diceCount, data.betValue as number),
         };
 
-      case 'exact':
+      case 'exact': {
         const exactValue = data.betValue as number;
         const hasExact = roll.includes(exactValue);
         const count = roll.filter((d) => d === exactValue).length;
@@ -125,16 +126,18 @@ export class DiceGame extends BaseGame {
           isWin: hasExact,
           payout: count * 2,
         };
+      }
 
-      case 'even_odd':
+      case 'even_odd': {
         const isEven = sum % 2 === 0;
         const betEven = data.betValue === 'even';
         return {
           isWin: isEven === betEven,
           payout: 2,
         };
+      }
 
-      case 'high_low':
+      case 'high_low': {
         const maxSum = data.diceCount * 6;
         const midPoint = maxSum / 2;
         const isHigh = sum > midPoint;
@@ -143,6 +146,7 @@ export class DiceGame extends BaseGame {
           isWin: isHigh === betHigh,
           payout: 2,
         };
+      }
 
       default:
         return { isWin: false, payout: 0 };
@@ -162,21 +166,21 @@ export class DiceGame extends BaseGame {
     return Math.floor(2 + difficulty * 8); // 2x to 10x payout
   }
 
-  private setBet(betType: string, betValue: any): void {
+  private setBet(betType: string, betValue: unknown): void {
     const data = this.session.data as DiceData;
-    data.betType = betType as any;
-    data.betValue = betValue;
+    data.betType = betType as DiceData['betType'];
+    data.betValue = betValue as string | number;
   }
 
   private changeDiceCount(count: number): void {
     if (count >= 2 && count <= 5) {
-      this.session.data.diceCount = count;
+      (this.session.data as DiceData).diceCount = count;
     }
   }
 
   private changeBetAmount(amount: number): void {
     if (amount >= 5 && amount <= 100) {
-      this.session.data.bet = amount;
+      (this.session.data as DiceData).bet = amount;
     }
   }
 
@@ -227,7 +231,7 @@ export class DiceGame extends BaseGame {
     // Recent history
     if (data.history.length > 0) {
       description += `**Histórico recente:**\n`;
-      data.history.slice(-3).forEach((roll, index) => {
+      data.history.slice(-3).forEach((roll, _index) => {
         const emoji = roll.result === 'win' ? '✅' : '❌';
         const diceDisplay = roll.dice
           .map((d) => this.diceEmojis[d - 1])
@@ -248,8 +252,8 @@ export class DiceGame extends BaseGame {
   getBetButtons() {
     const data = this.session.data as DiceData;
     const maxSum = data.diceCount * 6;
-    const minSum = data.diceCount;
-    const midPoint = maxSum / 2;
+    const _minSum = data.diceCount;
+    const _midPoint = maxSum / 2;
 
     return [
       // Bet type selection

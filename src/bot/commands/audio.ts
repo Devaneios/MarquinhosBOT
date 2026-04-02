@@ -34,10 +34,10 @@ export const audio: SlashCommand = {
         ),
     ),
 
-  execute: (interaction) => {
+  execute: async (interaction) => {
     const file = interaction.options.get('audio');
     const audioEmbed = interaction.client.baseEmbed();
-    interaction.reply({
+    await interaction.reply({
       embeds: [
         audioEmbed.setDescription(`Reproduzindo ${file?.value as string}`),
       ],

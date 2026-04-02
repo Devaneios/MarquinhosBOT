@@ -2,6 +2,7 @@ import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import {
   BaseGame,
   GameResult,
+  GameReward,
   GameSession,
   PlayerStatus,
 } from '../core/GameTypes';
@@ -71,7 +72,7 @@ export class TreasureHuntGame extends BaseGame {
   private initializeGame(): void {
     const selectedClues = GameUtils.getRandomElements(this.clues, 4);
 
-    this.session.data = {
+    const data: TreasureHuntData = {
       clues: selectedClues,
       currentClueIndex: 0,
       solvedClues: {},
@@ -79,11 +80,12 @@ export class TreasureHuntGame extends BaseGame {
       finished: false,
       treasureFound: false,
       winner: null,
-    } as TreasureHuntData;
+    };
+    this.session.data = data;
 
     this.session.players.forEach((player) => {
-      this.session.data.scores[player.userId] = 0;
-      this.session.data.solvedClues[player.userId] = [];
+      data.scores[player.userId] = 0;
+      data.solvedClues[player.userId] = [];
     });
   }
 
@@ -91,14 +93,17 @@ export class TreasureHuntGame extends BaseGame {
     this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as TreasureHuntData;
 
     if (data.finished) return;
 
     switch (action.type) {
       case 'solve':
-        await this.submitSolution(userId, action.answer);
+        await this.submitSolution(userId, action.answer as string);
         break;
       case 'hint':
         // Hint costs points but is shown in embed
@@ -246,7 +251,7 @@ export class TreasureHuntGame extends BaseGame {
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
-    const rewards: Record<string, any> = {};
+    const rewards: Record<string, GameReward> = {};
 
     sortedPlayers.forEach((player, index) => {
       const baseRewards = this.calculateRewards(player, index + 1);

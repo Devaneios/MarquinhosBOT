@@ -3,6 +3,7 @@ import {
   isUserInVoiceChannel,
 } from '@marquinhos/bot/validators/voice-channel';
 import { SlashCommand } from '@marquinhos/types';
+import { logger } from '@marquinhos/utils/logger';
 import { useQueue } from 'discord-player';
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 
@@ -16,26 +17,21 @@ export const skip: SlashCommand = {
       const queue = useQueue();
 
       if (!queue) {
-        interaction.reply(
-          'This server does not have an active player session.',
-        );
+        await interaction.reply('Não há uma sessão de reprodução ativa.');
         return;
       }
 
       if (!queue.isPlaying()) {
-        interaction.reply('There is no track playing.');
+        await interaction.reply('Não há nenhuma música tocando.');
         return;
       }
 
-      // Skip the current track
       queue.node.skip();
 
-      // Send a confirmation message
-      interaction.reply('The current song has been skipped.');
+      await interaction.reply('A música atual foi pulada.');
     } catch (error) {
-      // Handle any errors that occur
-      console.error(error);
-      interaction.reply('An error occurred while skipping the song!');
+      logger.error('Error skipping track:', error);
+      await interaction.reply('Ocorreu um erro ao pular a música!');
     }
   },
 };

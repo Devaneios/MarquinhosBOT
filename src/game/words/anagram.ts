@@ -2,6 +2,7 @@ import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import {
   BaseGame,
   GameResult,
+  GameReward,
   GameSession,
   PlayerStatus,
 } from '../core/GameTypes';
@@ -77,9 +78,10 @@ export class AnagramGame extends BaseGame {
       hints: selectedWord.hints,
       hintsUsed: 0,
     } as AnagramData;
+    const data = this.session.data as AnagramData;
 
     this.session.players.forEach((player) => {
-      this.session.data.guesses[player.userId] = [];
+      data.guesses[player.userId] = [];
     });
   }
 
@@ -96,14 +98,17 @@ export class AnagramGame extends BaseGame {
     this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as AnagramData;
 
     if (data.solved || this.isTimeUp()) return;
 
     switch (action.type) {
       case 'guess':
-        await this.submitGuess(userId, action.word);
+        await this.submitGuess(userId, action.word as string);
         break;
       case 'hint':
         this.useHint();
@@ -246,9 +251,9 @@ export class AnagramGame extends BaseGame {
 
   async finish(): Promise<GameResult> {
     const data = this.session.data as AnagramData;
-    const rewards: Record<string, any> = {};
+    const rewards: Record<string, GameReward> = {};
 
-    this.session.players.forEach((player, index) => {
+    this.session.players.forEach((player, _index) => {
       const isWinner = player.userId === data.winner;
       const baseRewards = this.calculateRewards(
         player,

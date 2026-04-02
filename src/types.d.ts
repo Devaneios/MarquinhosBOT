@@ -50,7 +50,9 @@ export interface SlashCommand {
         | 'addAttachmentOption'
         | 'addMentionableOption'
       >;
-  execute: (interaction: ChatInputCommandInteraction) => Promise<any> | void;
+  execute: (
+    interaction: ChatInputCommandInteraction,
+  ) => Promise<unknown> | void;
   validators?: ((interaction: CommandInteraction) => Promise<boolean>)[];
   autocomplete?: (interaction: AutocompleteInteraction) => void;
   cooldown?: number; // in seconds
@@ -182,7 +184,7 @@ export interface Achievement {
   category: string;
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
   icon: string;
-  condition: any;
+  condition: unknown;
   reward?: {
     xp?: number;
     role?: string;
@@ -220,6 +222,7 @@ export interface MazeViewportState {
   viewport: number[][];
   moves: number;
   isCompleted: boolean;
+  isAbandoned?: boolean;
 }
 
 // Music System Types
@@ -318,8 +321,8 @@ export interface ServerReport {
   totalUsers: number;
   activeUsers: number;
   totalCommands: number;
-  topTracks: any[];
-  topArtists: any[];
+  topTracks: unknown[];
+  topArtists: unknown[];
   generatedAt: Date;
 }
 
@@ -341,7 +344,7 @@ export interface Plugin {
   author: string;
   description: string;
   enabled: boolean;
-  config: any;
+  config: Record<string, unknown>;
 }
 
 declare global {

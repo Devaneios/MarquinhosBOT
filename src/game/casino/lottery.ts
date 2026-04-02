@@ -40,17 +40,20 @@ export class LotteryGame extends BaseGame {
     this.session.players[0].status = PlayerStatus.ACTIVE;
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as LotteryData;
 
     if (data.drawn) return;
 
     switch (action.type) {
       case 'select_number':
-        this.selectNumber(action.number);
+        this.selectNumber(action.number as number);
         break;
       case 'remove_number':
-        this.removeNumber(action.number);
+        this.removeNumber(action.number as number);
         break;
       case 'quick_pick':
         this.quickPick();
@@ -105,7 +108,7 @@ export class LotteryGame extends BaseGame {
   }
 
   private clearNumbers(): void {
-    this.session.data.playerNumbers = [];
+    (this.session.data as LotteryData).playerNumbers = [];
   }
 
   private async drawNumbers(): Promise<void> {

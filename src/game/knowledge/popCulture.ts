@@ -3,6 +3,7 @@ import {
   BaseGame,
   GameQuestion,
   GameResult,
+  GameReward,
   GameSession,
   PlayerStatus,
 } from '../core/GameTypes';
@@ -135,7 +136,7 @@ export class PopCultureGame extends BaseGame {
   private initializeGame(): void {
     const selectedQuestions = GameUtils.getRandomElements(this.popQuestions, 5);
 
-    this.session.data = {
+    const data: PopCultureData = {
       questions: selectedQuestions,
       currentQuestionIndex: 0,
       scores: {},
@@ -143,25 +144,29 @@ export class PopCultureGame extends BaseGame {
       timeLimit: 30,
       questionStartTime: Date.now(),
       finished: false,
-    } as PopCultureData;
+    };
+    this.session.data = data;
 
     this.session.players.forEach((player) => {
-      this.session.data.scores[player.userId] = 0;
+      data.scores[player.userId] = 0;
     });
   }
 
   async start(): Promise<void> {
     this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
-    this.session.data.questionStartTime = Date.now();
+    (this.session.data as PopCultureData).questionStartTime = Date.now();
   }
 
-  async handlePlayerAction(userId: string, action: any): Promise<void> {
+  async handlePlayerAction(
+    userId: string,
+    action: Record<string, unknown>,
+  ): Promise<void> {
     const data = this.session.data as PopCultureData;
 
     if (data.finished || data.answered[userId]) return;
 
     if (action.type === 'answer') {
-      await this.submitAnswer(userId, action.answer);
+      await this.submitAnswer(userId, action.answer as number);
     }
   }
 
@@ -291,7 +296,7 @@ export class PopCultureGame extends BaseGame {
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
-    const rewards: Record<string, any> = {};
+    const rewards: Record<string, GameReward> = {};
 
     sortedPlayers.forEach((player, index) => {
       const baseRewards = this.calculateRewards(player, index + 1);

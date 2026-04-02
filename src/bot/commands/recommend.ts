@@ -1,6 +1,17 @@
 import { SlashCommand } from '@marquinhos/types';
 import { HttpClient } from '@marquinhos/utils/httpClient';
+import { logger } from '@marquinhos/utils/logger';
 import { SlashCommandBuilder } from 'discord.js';
+
+interface RecommendationItem {
+  artist: string;
+  title: string;
+  reason?: string;
+}
+
+interface RecommendationResponse {
+  data: RecommendationItem[];
+}
 
 const httpClient = new HttpClient({
   baseURL: process.env.MARQUINHOS_API_URL,
@@ -85,12 +96,12 @@ export const recommend: SlashCommand = {
     }
 
     try {
-      let recommendations: any[] = [];
+      let recommendations: RecommendationItem[] = [];
       let title = '';
       let description = '';
 
       switch (subcommand) {
-        case 'personalized':
+        case 'personalized': {
           const limit = interaction.options.getInteger('quantidade') || 5;
           recommendations = await getPersonalizedRecommendations(
             userId,
@@ -100,15 +111,17 @@ export const recommend: SlashCommand = {
           title = '🎵 Recomendações Personalizadas';
           description = 'Baseadas no seu histórico musical';
           break;
+        }
 
-        case 'genre':
+        case 'genre': {
           const genre = interaction.options.getString('genero')!;
           recommendations = await getGenreRecommendations(genre, guildId);
           title = `🎵 Recomendações de ${getGenreLabel(genre)}`;
           description = `Músicas populares do gênero ${getGenreLabel(genre)}`;
           break;
+        }
 
-        case 'time':
+        case 'time': {
           const timeOfDay = interaction.options.getString('periodo')!;
           recommendations = await getTimeRecommendations(
             userId,
@@ -118,6 +131,7 @@ export const recommend: SlashCommand = {
           title = `🎵 Recomendações para ${getTimeLabel(timeOfDay)}`;
           description = `Músicas perfeitas para ${getTimeLabel(timeOfDay)}`;
           break;
+        }
 
         case 'collaborative':
           recommendations = await getCollaborativeRecommendations(
@@ -163,7 +177,7 @@ export const recommend: SlashCommand = {
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {
-      console.error('Error in recommend command:', error);
+      logger.error('Error in recommend command:', error);
       await interaction.editReply(
         'Ocorreu um erro ao buscar recomendações. Tente novamente mais tarde.',
       );
@@ -176,14 +190,14 @@ async function getPersonalizedRecommendations(
   userId: string,
   guildId: string,
   limit: number,
-): Promise<any[]> {
+): Promise<RecommendationItem[]> {
   try {
     const data = (await httpClient.get(
       `/api/recommendations/personalized/${userId}/${guildId}?limit=${limit}`,
-    )) as any;
+    )) as RecommendationResponse;
     return data.data || [];
   } catch (error) {
-    console.error('Failed to get personalized recommendations:', error);
+    logger.warn('Failed to get personalized recommendations:', error);
     return [];
   }
 }
@@ -191,14 +205,14 @@ async function getPersonalizedRecommendations(
 async function getGenreRecommendations(
   genre: string,
   guildId: string,
-): Promise<any[]> {
+): Promise<RecommendationItem[]> {
   try {
     const data = (await httpClient.get(
       `/api/recommendations/genre/${genre}/${guildId}`,
-    )) as any;
+    )) as RecommendationResponse;
     return data.data || [];
   } catch (error) {
-    console.error('Failed to get genre recommendations:', error);
+    logger.warn('Failed to get genre recommendations:', error);
     return [];
   }
 }
@@ -207,14 +221,14 @@ async function getTimeRecommendations(
   userId: string,
   guildId: string,
   timeOfDay: string,
-): Promise<any[]> {
+): Promise<RecommendationItem[]> {
   try {
     const data = (await httpClient.get(
       `/api/recommendations/time/${userId}/${guildId}/${timeOfDay}`,
-    )) as any;
+    )) as RecommendationResponse;
     return data.data || [];
   } catch (error) {
-    console.error('Failed to get time recommendations:', error);
+    logger.warn('Failed to get time recommendations:', error);
     return [];
   }
 }
@@ -222,14 +236,14 @@ async function getTimeRecommendations(
 async function getCollaborativeRecommendations(
   userId: string,
   guildId: string,
-): Promise<any[]> {
+): Promise<RecommendationItem[]> {
   try {
     const data = (await httpClient.get(
       `/api/recommendations/collaborative/${userId}/${guildId}`,
-    )) as any;
+    )) as RecommendationResponse;
     return data.data || [];
   } catch (error) {
-    console.error('Failed to get collaborative recommendations:', error);
+    logger.warn('Failed to get collaborative recommendations:', error);
     return [];
   }
 }
