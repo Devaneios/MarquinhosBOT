@@ -123,7 +123,7 @@ export const termo: SlashCommand = {
       const keyboardBuffer = await buildKeyboardImage(
         result.guesses,
         result.wordLength,
-        { maxAttempts: result.attempts, streak: 0 },
+        { maxAttempts: result.attempts },
       );
       const attachment = new AttachmentBuilder(keyboardBuffer, {
         name: 'keyboard.png',
@@ -159,7 +159,7 @@ export const termo: SlashCommand = {
     const keyboardBuffer = await buildKeyboardImage(
       result.guesses,
       result.wordLength,
-      { maxAttempts: result.attempts, streak: 0 },
+      { maxAttempts: result.attempts },
     );
     const attachment = new AttachmentBuilder(keyboardBuffer, {
       name: 'keyboard.png',

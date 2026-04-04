@@ -58,7 +58,6 @@ const guesses: { guess: string; feedback: LetterFeedback[] }[] = [
 mkdirSync(OUT_DIR, { recursive: true });
 const buf = await buildKeyboardImage(guesses, 6, {
   maxAttempts: 12,
-  streak: 5,
 });
 const outPath = join(OUT_DIR, 'termo-test.png');
 writeFileSync(outPath, buf);
