@@ -6,7 +6,7 @@
   "scripts": {
     "start": "bun run src/index.ts",
     "dev": "bun --watch src/index.ts",
-    "build": "bun build src/index.ts --target=bun --outdir=./dist --sourcemap=external && bun run copy-assets",
+    "build": "bun build src/index.ts --target=bun --outdir=./dist --sourcemap=external",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "register-commands": "bun run src/register-slash-commands.ts",
