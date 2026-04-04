@@ -107,7 +107,7 @@ async function handleCreatePlaylist(
   userId: string,
   guildId: string,
 ) {
-  const name = interaction.options.getString('nome');
+  const name = interaction.options.getString('nome', true);
   const description = interaction.options.getString('descricao') || '';
   const isCollaborative =
     interaction.options.getBoolean('colaborativa') || false;
@@ -175,7 +175,7 @@ async function handleListPlaylists(
 }
 
 async function handleShowPlaylist(interaction: ChatInputCommandInteraction) {
-  const playlistId = interaction.options.getString('id');
+  const playlistId = interaction.options.getString('id', true);
 
   try {
     const result = await apiService.getPlaylist(playlistId);
@@ -236,8 +236,8 @@ async function handleAddToPlaylist(
   interaction: ChatInputCommandInteraction,
   userId: string,
 ) {
-  const playlistId = interaction.options.getString('playlist');
-  const musicQuery = interaction.options.getString('musica');
+  const playlistId = interaction.options.getString('playlist', true);
+  const musicQuery = interaction.options.getString('musica', true);
 
   // Parse music info (simplified)
   let track: { title: string; artist: string; url: string };

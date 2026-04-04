@@ -1,7 +1,7 @@
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { logger } from '@marquinhos/utils/logger';
+import { randomUUID } from 'crypto';
 import { Collection } from 'discord.js';
-import { v4 as uuidv4 } from 'uuid';
 import {
   BaseGame,
   GAME_CONFIGS,
@@ -52,7 +52,7 @@ export class GameManager {
     options?: Record<string, unknown>,
   ): GameSession {
     const config = { ...GAME_CONFIGS[gameType], options };
-    const sessionId = uuidv4();
+    const sessionId = randomUUID();
 
     const session: GameSession = {
       id: sessionId,

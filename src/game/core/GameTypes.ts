@@ -1,4 +1,8 @@
-import { ActionRowBuilder, EmbedBuilder } from 'discord.js';
+import {
+  ActionRowBuilder,
+  EmbedBuilder,
+  MessageActionRowComponentBuilder,
+} from 'discord.js';
 
 export enum GameType {
   // Casino Games
@@ -251,7 +255,7 @@ export abstract class BaseGame {
    * Default: duck-types the 8 legacy method names — existing games work unchanged.
    * New games override this and return rows directly.
    */
-  public getComponents(): ActionRowBuilder[] {
+  public getComponents(): ActionRowBuilder<MessageActionRowComponentBuilder>[] {
     const LEGACY_METHODS = [
       'getActionButtons',
       'getAnswerButtons',
@@ -262,11 +266,15 @@ export abstract class BaseGame {
       'getLetterButtons',
       'getNumberButtons',
     ] as const;
-    const rows: ActionRowBuilder[] = [];
+    const rows: ActionRowBuilder<MessageActionRowComponentBuilder>[] = [];
     const self = this as unknown as Record<string, unknown>;
     for (const method of LEGACY_METHODS) {
       if (typeof self[method] === 'function') {
-        const result = (self[method] as () => ActionRowBuilder[])();
+        const result = (
+          self[
+            method
+          ] as () => ActionRowBuilder<MessageActionRowComponentBuilder>[]
+        )();
         if (result?.length) rows.push(...result);
       }
     }

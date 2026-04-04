@@ -1,8 +1,6 @@
-import js from '@eslint/js';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
 import importPlugin from 'eslint-plugin-import';
-import prettier from 'eslint-plugin-prettier';
 
 export default [
   // Ignore patterns first
@@ -63,9 +61,6 @@ export default [
       // prettier: prettier,
     },
     rules: {
-      // Base JavaScript rules
-      ...js.configs.recommended.rules,
-
       // TypeScript specific rules
       '@typescript-eslint/no-unused-vars': [
         'error',

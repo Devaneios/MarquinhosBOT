@@ -16,10 +16,8 @@
     "forceConsistentCasingInFileNames": true,
     "removeComments": true,
     "sourceMap": false,
-    "baseUrl": ".",
     "paths": {
-      "@marquinhos/": ["src/", "dist/"],
-      "@marquinhos/*": ["src/*", "dist/*"]
+      "@marquinhos/*": ["./src/*"]
     }
   },
   "include": ["src/**/*.ts"],
