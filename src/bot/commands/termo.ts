@@ -1,16 +1,16 @@
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { SlashCommand } from '@marquinhos/types';
 import { logger } from '@marquinhos/utils/logger';
-import { createCanvas, registerFont } from 'canvas';
+import {
+  buildKeyboardImage,
+  type LetterFeedback,
+} from '@marquinhos/utils/termoKeyboard';
 import {
   AttachmentBuilder,
   MessageFlags,
   SlashCommandBuilder,
   type ChatInputCommandInteraction,
 } from 'discord.js';
-import { fileURLToPath, URL } from 'url';
-
-type LetterFeedback = 'correct' | 'present' | 'absent';
 
 interface WordleGuessResult {
   guess: string;
@@ -28,26 +28,6 @@ const previousErrorInteractions = new Map<
   ChatInputCommandInteraction
 >();
 
-registerFont(
-  fileURLToPath(
-    new URL('../../resources/fonts/BebasNeueRegular.ttf', import.meta.url),
-  ),
-  { family: 'Bebas Neue' },
-);
-
-const KEY_SIZE = 52;
-const KEY_GAP = 6;
-const PADDING = 16;
-const CORNER_RADIUS = 6;
-const BG_COLOR = '#121213';
-const KEY_COLORS: Record<LetterFeedback | 'unused', string> = {
-  correct: '#538d4e',
-  present: '#b59f3b',
-  absent: '#3a3a3c',
-  unused: '#818384',
-};
-const ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
-
 const SQUARE: Record<LetterFeedback, string> = {
   correct: '🟩',
   present: '🟨',
@@ -58,95 +38,49 @@ function feedbackToSquares(feedback: LetterFeedback[]): string {
   return feedback.map((f) => SQUARE[f]).join('');
 }
 
-function buildGuessGrid(
-  guesses: { guess: string; feedback: LetterFeedback[] }[],
-  wordLength: number,
-): string {
-  const rows = guesses.map(
-    (g) => `\`${g.guess.toUpperCase()}\` ${feedbackToSquares(g.feedback)}`,
-  );
-  if (rows.length === 0) {
-    rows.push(`${'⬜'.repeat(wordLength)} *(sem tentativas ainda)*`);
-  }
-  return rows.join('\n');
-}
-
-function buildKeyboardImage(
-  guesses: { guess: string; feedback: LetterFeedback[] }[],
-): Buffer {
-  const letterState: Record<string, LetterFeedback> = {};
-  const priority: Record<LetterFeedback, number> = {
-    correct: 3,
-    present: 2,
-    absent: 1,
-  };
-
-  for (const { guess, feedback } of guesses) {
-    for (let i = 0; i < guess.length; i++) {
-      const letter = guess[i];
-      const current = letterState[letter];
-      if (!current || priority[feedback[i]] > priority[current]) {
-        letterState[letter] = feedback[i];
-      }
-    }
-  }
-
-  const maxKeys = ROWS.reduce((m, r) => Math.max(m, r.length), 0);
-  const canvasWidth =
-    PADDING * 2 + maxKeys * KEY_SIZE + (maxKeys - 1) * KEY_GAP;
-  const canvasHeight =
-    PADDING * 2 + ROWS.length * KEY_SIZE + (ROWS.length - 1) * KEY_GAP;
-
-  const canvas = createCanvas(canvasWidth, canvasHeight);
-  const ctx = canvas.getContext('2d');
-
-  ctx.fillStyle = BG_COLOR;
-  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = `${Math.round(KEY_SIZE * 0.55)}px "Bebas Neue"`;
-
-  ROWS.forEach((row, rowIndex) => {
-    const rowWidth = row.length * KEY_SIZE + (row.length - 1) * KEY_GAP;
-    const rowX = (canvasWidth - rowWidth) / 2;
-    const rowY = PADDING + rowIndex * (KEY_SIZE + KEY_GAP);
-
-    row.split('').forEach((letter, colIndex) => {
-      const x = rowX + colIndex * (KEY_SIZE + KEY_GAP);
-      const y = rowY;
-
-      const state = letterState[letter] ?? 'unused';
-      ctx.fillStyle = KEY_COLORS[state];
-      ctx.beginPath();
-      ctx.roundRect(x, y, KEY_SIZE, KEY_SIZE, CORNER_RADIUS);
-      ctx.fill();
-
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(letter.toUpperCase(), x + KEY_SIZE / 2, y + KEY_SIZE / 2);
-    });
-  });
-
-  return canvas.toBuffer('image/png');
-}
-
 export const termo: SlashCommand = {
   command: new SlashCommandBuilder()
     .setName('termo')
-    .setDescription('Jogue o Termo — adivinhe a palavra do dia!')
+    .setDescription('Jogue o Terminhos, o Termo do Marquinhos!')
     .addStringOption((opt) =>
-      opt
-        .setName('palpite')
-        .setDescription('Sua tentativa')
-        .setRequired(true)
-        .setMinLength(5)
-        .setMaxLength(6),
+      opt.setName('palpite').setDescription('Sua tentativa'),
     ),
 
   execute: async (interaction) => {
     if (!interaction.guildId) {
       await interaction.reply({
-        content: '❌ O Termo só pode ser jogado em servidores.',
+        content: '❌ O Terminhos só pode ser jogado no Devaneios.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    const configResponse = await api.getWordleConfig(interaction.guildId);
+    const channelId = (configResponse.data as { channelId?: string })
+      ?.channelId;
+    if (!channelId) {
+      await interaction.reply({
+        content: '❌ O Terminhos não está configurado.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    const channel = await interaction
+      .guild!.channels.fetch(channelId)
+      .catch(() => null);
+    if (!channel || !channel.isTextBased()) {
+      await interaction.reply({
+        content:
+          '❌ O canal configurado para o Terminhos é inválido. Peça para um administrador corrigir a configuração.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    if (channelId !== interaction.channelId) {
+      await interaction.reply({
+        content: `❌ Por favor, jogue o Terminhos no canal <#${channelId}>.`,
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -163,9 +97,45 @@ export const termo: SlashCommand = {
       previousErrorInteractions.delete(userId);
     }
 
-    const guess = interaction.options.getString('palpite', true).trim();
+    const guess = interaction.options.getString('palpite', false)?.trim();
 
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+    if (!guess) {
+      const userAttemptsResponse = await api.getUserWordleSession(
+        userId,
+        interaction.guildId,
+      );
+      const result = userAttemptsResponse.data as {
+        guesses: { guess: string; feedback: LetterFeedback[] }[];
+        wordLength: number;
+        attempts: number;
+      } | null;
+
+      if (!result) {
+        await interaction.editReply({
+          content:
+            '❌ Você ainda não tentou nenhuma vez. Envie um palpite para começar!',
+        });
+        return;
+      }
+
+      const keyboardBuffer = await buildKeyboardImage(
+        result.guesses,
+        result.wordLength,
+        { maxAttempts: result.attempts, streak: 0 },
+      );
+      const attachment = new AttachmentBuilder(keyboardBuffer, {
+        name: 'keyboard.png',
+      });
+
+      const embed = interaction.client.baseEmbed();
+      embed.setTitle('⬛🟨🟩 Terminhos');
+      embed.setImage('attachment://keyboard.png');
+
+      await interaction.editReply({ embeds: [embed], files: [attachment] });
+      return;
+    }
 
     let result: WordleGuessResult;
     try {
@@ -186,17 +156,17 @@ export const termo: SlashCommand = {
 
     previousErrorInteractions.delete(userId);
 
-    const keyboardBuffer = buildKeyboardImage(result.guesses);
+    const keyboardBuffer = await buildKeyboardImage(
+      result.guesses,
+      result.wordLength,
+      { maxAttempts: result.attempts, streak: 0 },
+    );
     const attachment = new AttachmentBuilder(keyboardBuffer, {
       name: 'keyboard.png',
     });
 
     const embed = interaction.client.baseEmbed();
-    embed.setTitle('🟩 Termo — Palavra do Dia');
-    embed.addFields({
-      name: `Tentativas (${result.attempts})`,
-      value: buildGuessGrid(result.guesses, result.wordLength),
-    });
+    embed.setTitle('⬛🟨🟩 Terminhos');
     embed.setImage('attachment://keyboard.png');
 
     if (result.solved) {
@@ -225,7 +195,7 @@ export const termo: SlashCommand = {
           .map((g) => feedbackToSquares(g.feedback))
           .join('\n');
 
-        const publicMsg = `${interaction.user} acertou o Termo em ${result.attempts} tentativa${result.attempts > 1 ? 's' : ''}! 🎉\n${allSquares}`;
+        const publicMsg = `${interaction.user} acertou o Terminho em ${result.attempts} tentativa${result.attempts > 1 ? 's' : ''}! 🎉\n${allSquares}`;
 
         await channel.send(publicMsg);
       } catch {

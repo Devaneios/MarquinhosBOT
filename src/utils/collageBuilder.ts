@@ -1,10 +1,10 @@
 import {
-  CanvasRenderingContext2D,
+  type SKRSContext2D as CanvasRenderingContext2D,
+  GlobalFonts,
   Image,
   createCanvas,
   loadImage,
-  registerFont,
-} from 'canvas';
+} from '@napi-rs/canvas';
 import fontColorContrast from 'font-color-contrast';
 import fs from 'fs';
 import { join } from 'path';
@@ -71,7 +71,7 @@ export class CollageBuilder {
     ctx.strokeRect(0, 0, canvas.width, canvas.height);
 
     // Save the final image
-    return loadImage(canvas.toBuffer());
+    return loadImage(canvas.toBuffer('image/png'));
   }
 
   setupCanvas() {
@@ -79,9 +79,10 @@ export class CollageBuilder {
     const canvasHeight = 1600;
     const collageCanvas = createCanvas(canvasWidth, canvasHeight);
     const ctx = collageCanvas.getContext('2d');
-    registerFont(join(__dirname, '../resources/fonts/BebasNeueRegular.ttf'), {
-      family: "'Bebas Neue', sans-serif",
-    });
+    GlobalFonts.registerFromPath(
+      join(__dirname, '../resources/fonts/BebasNeueRegular.ttf'),
+      'Bebas Neue',
+    );
     return { ctx, collageCanvas, canvasWidth, canvasHeight };
   }
 
@@ -227,7 +228,7 @@ export class CollageBuilder {
       periodMessageTextX += charWidth;
     }
 
-    return collageCanvas.toBuffer();
+    return collageCanvas.toBuffer('image/png');
   }
 
   parsePeriodMessage(period: string) {

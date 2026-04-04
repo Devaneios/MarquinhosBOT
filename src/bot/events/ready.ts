@@ -106,7 +106,7 @@ async function rotateTermoWord(client: Client): Promise<void> {
         const trashTalk =
           shortTrashTalks[Math.floor(Math.random() * shortTrashTalks.length)];
         const newWordEmbed = client.baseEmbed();
-        newWordEmbed.setTitle('🟩 Nova Palavra do Termo!');
+        newWordEmbed.setTitle('🟩 Nova Palavra do Terminhos!');
         newWordEmbed.setDescription(
           `${trashTalk}\n${'⬜'.repeat(data.wordLength)}`,
         );
@@ -120,18 +120,21 @@ async function rotateTermoWord(client: Client): Promise<void> {
           embeds: [newWordEmbed],
         });
       } catch (err) {
-        logger.warn(`Termo: failed to rotate word for guild ${guildId}:`, err);
+        logger.warn(
+          `Terminhos: failed to rotate word for guild ${guildId}:`,
+          err,
+        );
       }
     }
   } catch (err) {
-    logger.error('Erro ao rotacionar palavra do Termo:', err);
+    logger.error('Erro ao rotacionar palavra do Terminhos:', err);
   }
 }
 
 function startTermoScheduler(client: Client): void {
   const msToMidnight = msUntilMidnightRecife();
   logger.info(
-    `Termo: próxima palavra em ${Math.round(msToMidnight / 60000)} minutos`,
+    `Terminhos: próxima palavra em ${Math.round(msToMidnight / 60000)} minutos`,
   );
 
   setTimeout(() => {
@@ -173,7 +176,7 @@ async function broadcastTermoStats(client: Client): Promise<void> {
       if (!channel) continue;
 
       const statsEmbed = client.baseEmbed();
-      statsEmbed.setTitle('📊 Termo — Status de Hoje');
+      statsEmbed.setTitle('📊 Terminhos — Status de Hoje');
       statsEmbed.addFields(
         { name: 'Jogadores', value: String(stats.playersCount), inline: true },
         { name: 'Acertaram', value: String(stats.winnersCount), inline: true },
@@ -191,7 +194,7 @@ async function broadcastTermoStats(client: Client): Promise<void> {
       await channel.send({ embeds: [statsEmbed] });
       lastBroadcastWinners.set(guildId, stats.winnersCount);
     } catch (err) {
-      logger.warn(`Termo stats: failed for guild ${guildId}:`, err);
+      logger.warn(`Terminhos stats: failed for guild ${guildId}:`, err);
     }
   }
 }

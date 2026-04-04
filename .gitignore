@@ -132,6 +132,9 @@ Thumbs.db:encryptable
 ehthumbs.db
 ehthumbs_vista.db
 
+# Test output
+test-output/
+
 # General macOS files
 .DS_Store
 .AppleDouble

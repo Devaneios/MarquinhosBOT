@@ -101,8 +101,8 @@ export class BattleRoyaleGame extends BaseGame {
 
   private async processRound(): Promise<void> {
     const data = this.session.data as BattleRoyaleData;
-    const correctPlayers = [];
-    const wrongPlayers = [];
+    const correctPlayers: string[] = [];
+    const wrongPlayers: string[] = [];
 
     data.alivePlayers.forEach((userId) => {
       const response = data.responses[userId];

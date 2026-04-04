@@ -139,9 +139,9 @@ export class SlotsGame extends BaseGame {
     if (data.result) {
       resultDisplay = `**${data.result.join(' | ')}**\n\n`;
 
-      if (data.multiplier > 0) {
+      if ((data.multiplier ?? 0) > 0) {
         resultDisplay += `🎉 **${data.winType}!**\n`;
-        resultDisplay += `💰 Ganhou: **${data.currentBet * data.multiplier}** coins\n\n`;
+        resultDisplay += `💰 Ganhou: **${data.currentBet * (data.multiplier ?? 0)}** coins\n\n`;
       } else {
         resultDisplay += `😢 **${data.winType}**\n\n`;
       }
@@ -157,7 +157,7 @@ export class SlotsGame extends BaseGame {
         `**Pagamentos:**\n` +
         `💎💎💎 - 100x | 7️⃣7️⃣7️⃣ - 50x | ⭐⭐⭐ - 25x\n` +
         `🔔🔔🔔 - 15x | 🍇🍇🍇 - 10x | Dois iguais - 2x`,
-      data.multiplier > 0 ? 0x00ff00 : 0xffaa00,
+      (data.multiplier ?? 0) > 0 ? 0x00ff00 : 0xffaa00,
     );
 
     return embed;

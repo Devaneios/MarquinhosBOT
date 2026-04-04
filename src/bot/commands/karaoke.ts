@@ -149,9 +149,8 @@ async function handleSetSong(
   interaction: ChatInputCommandInteraction,
   _userId: string,
 ) {
-  const musicQuery = interaction.options.getString('musica');
+  const musicQuery = interaction.options.getString('musica', true);
 
-  // Parse artist and title
   const track = parseArtistTitle(musicQuery);
 
   await interaction.editReply(
