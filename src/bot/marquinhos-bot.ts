@@ -105,11 +105,12 @@ export class MarquinhosBot {
       .filter((slashCommand) => !slashCommand.disabled)
       .forEach((slashCommand: SlashCommand) => {
         slashCommand.command.setName(
-          `${slashCommand.command.name}${
-            process.env.NODE_ENV === 'development' ? '-dev' : ''
-          }`,
+          `${
+            process.env.NODE_ENV === 'development' ? 'dev-' : ''
+          }${slashCommand.command.name}`,
         );
         const commandName = slashCommand.command.name;
+        logger.info(`Loading slash command ${commandName}`);
         try {
           this._client.slashCommands.set(commandName, slashCommand);
           logger.info(`Successfully loaded slash command ${commandName}`);

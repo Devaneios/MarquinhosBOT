@@ -27,9 +27,12 @@ export async function registerCommands() {
     .filter((slashCommand) => !slashCommand.disabled)
     .map((slashCommand: SlashCommand) => {
       slashCommand.command.setName(
-        `${slashCommand.command.name}${
-          process.env.NODE_ENV === 'development' ? '-dev' : ''
-        }`,
+        `${
+          process.env.NODE_ENV === 'development' ? 'dev-' : ''
+        }${slashCommand.command.name}`,
+      );
+      logger.info(
+        `Prepared slash command ${slashCommand.command.name} for registration`,
       );
       return slashCommand.command;
     });
@@ -60,5 +63,12 @@ export async function registerCommands() {
 
 // Only auto-run when executed directly: bun src/register-slash-commands.ts
 if (import.meta.main) {
-  registerCommands().catch(console.error);
+  try {
+    await registerCommands();
+    process.exit(0);
+  } catch (error) {
+    logger.error('Error registering slash commands:');
+    logger.error(error);
+    process.exit(1);
+  }
 }
