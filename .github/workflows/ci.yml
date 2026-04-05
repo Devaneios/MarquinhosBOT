@@ -72,7 +72,7 @@ jobs:
             STATUS=$(docker inspect --format='{{.State.Health.Status}}' marquinhosbot 2>/dev/null || echo "missing")
             echo "Attempt $i/12: $STATUS"
             [ "$STATUS" = "healthy" ] && { echo "Marquinhos is healthy"; exit 0; }
-            sleep 5
+            sleep 15
           done
           echo "Health check timed out — rolling back"
           echo "--- Container logs ---"
