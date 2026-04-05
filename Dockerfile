@@ -18,7 +18,7 @@ RUN bun install --frozen-lockfile
 FROM oven/bun:1-debian AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg \
+    ffmpeg procps \
     libpixman-1-0 libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
     libgif7 libjpeg62-turbo \
     && rm -rf /var/lib/apt/lists/*
