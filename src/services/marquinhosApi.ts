@@ -347,6 +347,17 @@ export class MarquinhosApiService {
     return data as ApiResponse;
   }
 
+  async validateWordleGuess(
+    guildId: string,
+    guess: string,
+  ): Promise<ApiResponse> {
+    const params = new URLSearchParams({ guess });
+    const data = await this.client.get(
+      `/api/wordle/validate/${guildId}?${params}`,
+    );
+    return data as ApiResponse;
+  }
+
   // Voice AI API calls
   async post(
     endpoint: string,
