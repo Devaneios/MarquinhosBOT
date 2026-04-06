@@ -9,6 +9,7 @@ import {
   AttachmentBuilder,
   MessageFlags,
   SlashCommandBuilder,
+  type AutocompleteInteraction,
   type ChatInputCommandInteraction,
 } from 'discord.js';
 
@@ -43,7 +44,10 @@ export const termo: SlashCommand = {
     .setName('termo')
     .setDescription('Jogue o Terminhos, o Termo do Marquinhos!')
     .addStringOption((opt) =>
-      opt.setName('palpite').setDescription('Sua tentativa'),
+      opt
+        .setName('palpite')
+        .setDescription('Sua tentativa')
+        .setAutocomplete(true),
     ),
 
   execute: async (interaction) => {
@@ -201,6 +205,34 @@ export const termo: SlashCommand = {
       } catch {
         // Silently ignore if channel config is missing or send fails
       }
+    }
+  },
+  autocomplete: async (interaction: AutocompleteInteraction) => {
+    const guess = interaction.options.getFocused().trim();
+
+    if (!guess || !interaction.guildId) {
+      await interaction.respond([]);
+      return;
+    }
+
+    try {
+      const response = await api.validateWordleGuess(
+        interaction.guildId,
+        guess,
+      );
+      const result = response.data as {
+        valid: boolean;
+        wordLength: number;
+        message: string;
+      };
+
+      if (!result.valid) {
+        await interaction.respond([]);
+        return;
+      }
+      await interaction.respond([{ name: guess, value: guess }]);
+    } catch {
+      await interaction.respond([]);
     }
   },
   cooldown: 3,
