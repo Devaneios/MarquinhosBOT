@@ -53,12 +53,20 @@ export async function buildKeyboardImage(
     absent: 1,
   };
 
+  const KB_LETTERS = new Set(KB_ROWS.join(''));
+
+  function letterToKey(ch: string): string {
+    if (KB_LETTERS.has(ch)) return ch;
+    const stripped = ch.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+    return KB_LETTERS.has(stripped) ? stripped : ch;
+  }
+
   for (const { guess, feedback } of guesses) {
     for (let i = 0; i < guess.length; i++) {
-      const letter = guess[i];
-      const current = letterState[letter];
+      const key = letterToKey(guess[i]);
+      const current = letterState[key];
       if (!current || priority[feedback[i]] > priority[current]) {
-        letterState[letter] = feedback[i];
+        letterState[key] = feedback[i];
       }
     }
   }
