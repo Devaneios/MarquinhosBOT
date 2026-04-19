@@ -1,9 +1,9 @@
 import { Box, Column, Root, Row, Style, Text } from '@meonode/canvas';
-import { fileURLToPath, URL } from 'url';
+import { resourcePath } from './resources';
 
 export type LetterFeedback = 'correct' | 'present' | 'absent';
 
-const FONT_DIR = fileURLToPath(new URL('../resources/fonts', import.meta.url));
+const FONT_DIR = resourcePath('fonts');
 
 const KB_ROWS = ['qwertyuiop', 'asdfghjklç', 'zxcvbnm'];
 

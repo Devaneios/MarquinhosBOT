@@ -1,0 +1,4 @@
+export const GuildConfig = {
+  MOD_ROLE_ID: '598322611877052462',
+  TERMINHOS_ANNOUNCE_ROLE_ID: '1487639231361978399',
+} as const;

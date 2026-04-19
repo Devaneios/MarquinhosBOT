@@ -9,6 +9,7 @@
     "types": ["bun-types"],
     "importHelpers": true,
     "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,

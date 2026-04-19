@@ -1,3 +1,4 @@
+import { env } from '@marquinhos/config/environment';
 import {
   AddXpResult,
   ApiError,
@@ -18,7 +19,7 @@ export class MarquinhosApiService {
 
   private constructor() {
     this.client = new HttpClient({
-      baseURL: process.env.MARQUINHOS_API_URL,
+      baseURL: env.MARQUINHOS_API_URL,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -27,12 +28,10 @@ export class MarquinhosApiService {
     });
 
     this.client.interceptors.request.use((config) => {
-      if (process.env.MARQUINHOS_API_KEY) {
-        config.headers = {
-          ...config.headers,
-          Authorization: `Bearer ${process.env.MARQUINHOS_API_KEY}`,
-        };
-      }
+      config.headers = {
+        ...config.headers,
+        Authorization: `Bearer ${env.MARQUINHOS_API_KEY}`,
+      };
       return config;
     });
 
