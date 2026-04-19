@@ -1,67 +1,63 @@
-import { REST } from '@discordjs/rest';
-import * as commands from '@marquinhos/bot/commands';
-import { SlashCommand } from '@marquinhos/types';
+import { env } from '@marquinhos/config/environment';
+import { registerSapphireCommands } from '@marquinhos/lib/registerSapphirePieces';
 import { logger } from '@marquinhos/utils/logger';
-import { Routes } from 'discord-api-types/v10';
-import { config } from 'dotenv';
-
-config();
+import {
+  ApplicationCommandRegistries,
+  RegisterBehavior,
+  SapphireClient,
+  Events as SapphireEvents,
+} from '@sapphire/framework';
+import '@sapphire/plugin-logger/register';
+import { GatewayIntentBits } from 'discord.js';
 
 export async function registerCommands() {
-  const requiredEnvVars = ['MARQUINHOS_TOKEN', 'MARQUINHOS_CLIENT_ID'];
-  const missingEnvVars = requiredEnvVars.filter(
-    (envVar) => !process.env[envVar],
+  ApplicationCommandRegistries.setDefaultBehaviorWhenNotIdentical(
+    RegisterBehavior.Overwrite,
   );
 
-  if (missingEnvVars.length > 0) {
-    logger.error(
-      `Missing required environment variables: ${missingEnvVars.join(', ')}`,
-    );
-    logger.error(
-      'Command registration failed. Please check your environment configuration.',
-    );
-    process.exit(1);
-  }
+  const client = new SapphireClient({
+    intents: [GatewayIntentBits.Guilds],
+    baseUserDirectory: null,
+    loadMessageCommandListeners: false,
+    loadDefaultErrorListeners: false,
+  });
 
-  const slashCommands = Object.values(commands)
-    .filter((slashCommand) => !slashCommand.disabled)
-    .map((slashCommand: SlashCommand) => {
-      slashCommand.command.setName(
-        `${
-          process.env.NODE_ENV === 'development' ? 'dev-' : ''
-        }${slashCommand.command.name}`,
-      );
-      logger.info(
-        `Prepared slash command ${slashCommand.command.name} for registration`,
-      );
-      return slashCommand.command;
-    });
-
-  console.log(slashCommands.length);
-
-  const rest = new REST({ version: '10' }).setToken(
-    process.env.MARQUINHOS_TOKEN as string,
-  );
+  registerSapphireCommands();
 
   try {
     logger.info('Started refreshing application commands.');
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Timed out while registering application commands.'));
+      }, 30_000);
 
-    const data = await rest.put(
-      Routes.applicationCommands(process.env.MARQUINHOS_CLIENT_ID as string),
-      { body: slashCommands.map((command) => command.toJSON()) },
-    );
+      client.once(SapphireEvents.ApplicationCommandRegistriesRegistered, () => {
+        clearTimeout(timeout);
+        resolve();
+      });
 
-    logger.info(
-      `Successfully reloaded ${
-        Array.isArray(data) ? data.length : 0
-      } application commands.`,
-    );
+      client.once(
+        SapphireEvents.ApplicationCommandRegistriesBulkOverwriteError,
+        (error) => {
+          clearTimeout(timeout);
+          reject(error);
+        },
+      );
+
+      client.login(env.MARQUINHOS_TOKEN).catch((error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+    });
+    logger.info('Successfully reloaded application commands.');
   } catch (error) {
     logger.error(error);
+    throw error;
+  } finally {
+    client.destroy();
   }
 }
 
-// Only auto-run when executed directly: bun src/register-slash-commands.ts
 if (import.meta.main) {
   try {
     await registerCommands();

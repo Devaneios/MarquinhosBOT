@@ -139,7 +139,6 @@ export class GameUtils {
       [GameType.ROCK_PAPER_SCISSORS]: '✂️',
       [GameType.MAZE]: '🏃',
       [GameType.BATTLE_ROYALE]: '⚔️',
-      [GameType.TREASURE_HUNT]: '🗺️',
       [GameType.SPEED_MATH]: '➕',
     };
 
@@ -166,7 +165,6 @@ export class GameUtils {
       [GameType.ROCK_PAPER_SCISSORS]: 'Pedra, Papel, Tesoura',
       [GameType.MAZE]: 'Labirinto',
       [GameType.BATTLE_ROYALE]: 'Battle Royale dos Emojis',
-      [GameType.TREASURE_HUNT]: 'Caça ao Tesouro',
       [GameType.SPEED_MATH]: 'Speed Math',
     };
 

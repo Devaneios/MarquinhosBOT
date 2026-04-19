@@ -1,3 +1,4 @@
+import { env } from '@marquinhos/config/environment';
 import BotError from '@marquinhos/utils/botError';
 import { logger } from '@marquinhos/utils/logger';
 
@@ -57,7 +58,7 @@ function queueErrorForWebhook(error: BotError): void {
 }
 
 async function sendErrorBatch(errors: BotError[]): Promise<void> {
-  const webhookUrl = process.env.MARQUINHOS_ERROR_WEBHOOK;
+  const webhookUrl = env.MARQUINHOS_ERROR_WEBHOOK;
   if (!webhookUrl) return;
 
   // Cap embeds to 10 per message (Discord limit)

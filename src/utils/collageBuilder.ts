@@ -7,8 +7,8 @@ import {
 } from '@napi-rs/canvas';
 import fontColorContrast from 'font-color-contrast';
 import fs from 'fs';
-import { join } from 'path';
 import sharp from 'sharp';
+import { resourcePath } from './resources';
 
 export class CollageBuilder {
   async resizeImages(imagesBuffers: ArrayBuffer[]): Promise<Buffer[]> {
@@ -80,7 +80,7 @@ export class CollageBuilder {
     const collageCanvas = createCanvas(canvasWidth, canvasHeight);
     const ctx = collageCanvas.getContext('2d');
     GlobalFonts.registerFromPath(
-      join(__dirname, '../resources/fonts/BebasNeueRegular.ttf'),
+      resourcePath('fonts', 'BebasNeueRegular.ttf'),
       'Bebas Neue',
     );
     return { ctx, collageCanvas, canvasWidth, canvasHeight };
@@ -88,7 +88,7 @@ export class CollageBuilder {
 
   async drawBackground(ctx: CanvasRenderingContext2D) {
     const background = fs.readFileSync(
-      join(__dirname, '../resources/images/card-background.png'),
+      resourcePath('images', 'card-background.png'),
     );
     const backgroundImg = await loadImage(background);
     ctx.drawImage(backgroundImg, 0, 0);

@@ -6,7 +6,7 @@
   "scripts": {
     "start": "bun run src/index.ts",
     "dev": "bun --watch src/index.ts",
-    "build": "bun build src/index.ts --target=bun --outdir=./dist --sourcemap=external",
+    "build": "bun build src/index.ts --target=bun --external @meonode/canvas --external skia-canvas --external @snazzah/davey --external @snazzah/davey-linux-x64-gnu --external @snazzah/davey-linux-x64-musl --outdir=./dist --sourcemap=external && cp -R src/resources dist/",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "register-commands": "bun run src/register-slash-commands.ts",
@@ -25,6 +25,8 @@
     "@discordjs/voice": "^0.19.2",
     "@meonode/canvas": "^2.0.2",
     "@napi-rs/canvas": "^0.1.97",
+    "@sapphire/framework": "^5.5.0",
+    "@sapphire/plugin-logger": "^4.1.0",
     "color": "^5.0.3",
     "discord-player": "^7.2.0",
     "discord-player-deezer": "^2.6.0",
@@ -37,7 +39,8 @@
     "googleapis": "^171.4.0",
     "mediaplex": "^1.0.0",
     "sharp": "^0.34.5",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",

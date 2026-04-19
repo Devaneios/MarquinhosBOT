@@ -31,4 +31,3 @@ export * from './strategy/ticTacToe';
 // Multiplayer Games
 export * from './multiplayer/battleRoyale';
 export * from './multiplayer/speedMath';
-export * from './multiplayer/treasureHunt';

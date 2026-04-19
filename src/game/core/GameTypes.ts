@@ -32,7 +32,6 @@ export enum GameType {
 
   // Multiplayer Games
   BATTLE_ROYALE = 'battle_royale',
-  TREASURE_HUNT = 'treasure_hunt',
   SPEED_MATH = 'speed_math',
 }
 
@@ -331,7 +330,6 @@ export const GAME_CONFIGS: Record<GameType, GameConfig> = {
   [GameType.MAZE]: { maxPlayers: 1, minPlayers: 1, timeLimit: 300 },
 
   [GameType.BATTLE_ROYALE]: { maxPlayers: 10, minPlayers: 3, timeLimit: 600 },
-  [GameType.TREASURE_HUNT]: { maxPlayers: 8, minPlayers: 2, timeLimit: 900 },
   [GameType.SPEED_MATH]: { maxPlayers: 8, minPlayers: 2, timeLimit: 120 },
 };
 
@@ -358,6 +356,5 @@ export const GAME_COOLDOWNS: Record<GameType, number> = {
   [GameType.MAZE]: 120,
 
   [GameType.BATTLE_ROYALE]: 180,
-  [GameType.TREASURE_HUNT]: 300,
   [GameType.SPEED_MATH]: 30,
 };

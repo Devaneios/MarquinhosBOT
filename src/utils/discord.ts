@@ -1,5 +1,6 @@
 import BotError from '@marquinhos/utils/botError';
 import {
+  EmbedBuilder,
   GuildMember,
   Message,
   MessageCreateOptions,
@@ -10,6 +11,17 @@ import {
   VoiceChannel,
 } from 'discord.js';
 import { sleep } from './sleep';
+
+export interface BaseEmbedClient {
+  user: { displayAvatarURL(): string } | null;
+}
+
+export function baseEmbed(client: BaseEmbedClient): EmbedBuilder {
+  return new EmbedBuilder().setColor('#0099ff').setFooter({
+    text: 'Marquinhos Bot ™️',
+    iconURL: client.user?.displayAvatarURL(),
+  });
+}
 
 export const checkPermissions = (
   member: GuildMember,

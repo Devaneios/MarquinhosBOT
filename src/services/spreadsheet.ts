@@ -1,3 +1,4 @@
+import { env } from '@marquinhos/config/environment';
 import { logger } from '@marquinhos/utils/logger';
 import { google, sheets_v4 } from 'googleapis';
 
@@ -7,10 +8,10 @@ export class SpreadsheetService {
   private static instance: SpreadsheetService;
 
   constructor() {
-    this.spreadsheetId = process.env.MARQUINHOS_SPREADSHEET_ID || '';
+    this.spreadsheetId = env.MARQUINHOS_SPREADSHEET_ID || '';
     this.sheets = google.sheets({
       version: 'v4',
-      auth: process.env.MARQUINHOS_SPREADSHEET_API_KEY,
+      auth: env.MARQUINHOS_SPREADSHEET_API_KEY,
     });
     logger.info('Google Sheets API initialized with API key');
   }
