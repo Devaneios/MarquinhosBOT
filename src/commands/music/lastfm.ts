@@ -20,7 +20,7 @@ export class LastfmCommand extends MarquinhosCommand {
     interaction: Command.ChatInputCommandInteraction,
   ) {
     const lastfmEmbed = baseEmbed(this.container.client);
-    interaction.reply({
+    await interaction.reply({
       embeds: [
         lastfmEmbed
           .setThumbnail(

@@ -2,6 +2,7 @@ import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { Playlist, PlaylistTrack } from '@marquinhos/types';
 import { baseEmbed } from '@marquinhos/utils/discord';
+import { logger } from '@marquinhos/utils/logger';
 import { parseArtistTitle } from '@marquinhos/utils/parser';
 import { Command } from '@sapphire/framework';
 import { ChatInputCommandInteraction } from 'discord.js';
@@ -104,7 +105,7 @@ export class PlaylistCommand extends MarquinhosCommand {
           break;
       }
     } catch (error) {
-      console.error('Error in playlist command:', error);
+      logger.error('Error in playlist command:', error);
       await interaction.editReply('Ocorreu um erro ao executar o comando.');
     }
   }

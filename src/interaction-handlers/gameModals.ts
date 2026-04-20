@@ -30,8 +30,6 @@ function legacyParseModal(
       return { type: 'rhyme', word: value };
     case 'modal_translate':
       return { type: 'translate', translation: value };
-    case 'modal_treasure_hunt':
-      return { type: 'solve', answer: value };
     case 'modal_secret_code': {
       const digits = value
         .replace(/\s+/g, '')

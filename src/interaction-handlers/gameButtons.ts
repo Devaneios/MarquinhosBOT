@@ -199,20 +199,6 @@ const STATIC_BUTTONS = new Map<string, ButtonResult>([
       },
     },
   ],
-  // TreasureHunt
-  ['hunt_hint', { kind: 'action', action: { type: 'hint' } }],
-  [
-    'hunt_answer',
-    {
-      kind: 'modal',
-      config: {
-        modalId: 'modal_treasure_hunt',
-        title: 'Resposta do Enigma',
-        label: 'Sua resposta',
-        placeholder: 'Ex: SOL',
-      },
-    },
-  ],
   // SecretCode
   [
     'secret_code_guess',
