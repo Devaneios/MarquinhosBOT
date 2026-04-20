@@ -208,7 +208,7 @@ async function showGameList(interaction: ChatInputCommandInteraction) {
       },
       {
         name: '🏆 Multiplayer',
-        value: '➕ Speed Math\n⚔️ Battle Royale\n🗺️ Caça ao Tesouro',
+        value: '➕ Speed Math\n⚔️ Battle Royale',
         inline: true,
       },
       {
@@ -337,6 +337,17 @@ async function startGame(
       flags: MessageFlags.Ephemeral,
     });
     return;
+  }
+  if (opponent) {
+    const opponentSession = gameManager.getPlayerSession(opponent.id, guildId);
+    if (opponentSession) {
+      await interaction.reply({
+        content:
+          '🎮 Esse jogador já está em um jogo! Tente novamente mais tarde.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
   }
 
   const session = gameManager.createSession(

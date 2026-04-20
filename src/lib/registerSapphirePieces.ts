@@ -33,6 +33,7 @@ import { GameModalsHandler } from '@marquinhos/interaction-handlers/gameModals';
 import { GuildMemberAddListener } from '@marquinhos/listeners/guildMemberAdd';
 import { MessageCreateListener } from '@marquinhos/listeners/messageCreate';
 import { ReadyListener } from '@marquinhos/listeners/ready';
+import { VoiceStateUpdateListener } from '@marquinhos/listeners/voiceStateUpdate';
 import { BotNotInOtherChannelPrecondition } from '@marquinhos/preconditions/BotNotInOtherChannel';
 import { CanJoinPrecondition } from '@marquinhos/preconditions/CanJoin';
 import { CanSpeakPrecondition } from '@marquinhos/preconditions/CanSpeak';
@@ -81,6 +82,7 @@ const listeners = [
   ['guildMemberAdd', GuildMemberAddListener],
   ['messageCreate', MessageCreateListener],
   ['ready', ReadyListener],
+  ['voiceStateUpdate', VoiceStateUpdateListener],
 ] as const;
 
 const preconditions = [

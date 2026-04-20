@@ -41,7 +41,7 @@ export class ChaosCommand extends MarquinhosCommand {
       10,
     );
     if (levelOfChaos > 25) {
-      interaction.reply(
+      await interaction.reply(
         'Não posso fazer isso, vocês não aguentariam tamanho caos!',
       );
       return;
@@ -49,7 +49,7 @@ export class ChaosCommand extends MarquinhosCommand {
     const currentVoiceChannel = (interaction.member as GuildMember).voice
       .channel;
     if (!currentVoiceChannel) {
-      interaction.reply('Você precisa estar em um canal de voz!');
+      await interaction.reply('Você precisa estar em um canal de voz!');
       return;
     }
 

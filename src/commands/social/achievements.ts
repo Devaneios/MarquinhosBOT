@@ -1,6 +1,7 @@
 import { buildAchievementsEmbed } from '@marquinhos/formatters/achievements';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
+import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 
 const apiService = MarquinhosApiService.getInstance();
@@ -58,7 +59,7 @@ export class AchievementsCommand extends MarquinhosCommand {
       );
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {
-      console.error('Error fetching user achievements:', error);
+      logger.error('Error fetching user achievements:', error);
       await interaction.editReply('Ocorreu um erro ao buscar as conquistas.');
     }
   }

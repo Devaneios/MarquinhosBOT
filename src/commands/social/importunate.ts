@@ -30,14 +30,16 @@ export class ImportunateCommand extends MarquinhosCommand {
       ?.member as GuildMember;
 
     if (member.user.bot) {
-      interaction.reply({ content: 'Nunca vou conseguir irritar um bot' });
+      await interaction.reply({
+        content: 'Nunca vou conseguir irritar um bot',
+      });
       return;
     }
 
     if (member.voice.channel) {
-      interaction.reply({ content: `${member} AEHOOOOOOOOOOOOOO` });
+      await interaction.reply({ content: `${member} AEHOOOOOOOOOOOOOO` });
     } else {
-      interaction.reply({
+      await interaction.reply({
         content: 'Acho que essa pessoa aí não tá num canal de voz..',
       });
     }
