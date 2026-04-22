@@ -5,7 +5,6 @@ import {
   buildResultImage,
   type LetterFeedback,
 } from '@marquinhos/ui/screens/termo';
-import { baseEmbed } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import {
@@ -125,10 +124,7 @@ export class TermoCommand extends MarquinhosCommand {
       const attachment = new AttachmentBuilder(keyboardBuffer, {
         name: 'keyboard.png',
       });
-      const embed = baseEmbed(this.container.client);
-      embed.setTitle('⬛🟨🟩 Terminhos');
-      embed.setImage('attachment://keyboard.png');
-      await interaction.editReply({ embeds: [embed], files: [attachment] });
+      await interaction.editReply({ files: [attachment] });
       return;
     }
 
@@ -153,23 +149,16 @@ export class TermoCommand extends MarquinhosCommand {
     const keyboardBuffer = await buildKeyboardImage(
       result.guesses,
       result.wordLength,
-      { maxAttempts: result.attempts },
+      {
+        maxAttempts: result.attempts,
+        status: result.solved ? { attempts: result.attempts } : undefined,
+      },
     );
     const attachment = new AttachmentBuilder(keyboardBuffer, {
       name: 'keyboard.png',
     });
-    const embed = baseEmbed(this.container.client);
-    embed.setTitle('⬛🟨🟩 Terminhos');
-    embed.setImage('attachment://keyboard.png');
 
-    if (result.solved) {
-      embed.setDescription(
-        `🎉 Você acertou em **${result.attempts}** tentativa${result.attempts > 1 ? 's' : ''}!`,
-      );
-      embed.setColor(0x57f287);
-    }
-
-    await interaction.editReply({ embeds: [embed], files: [attachment] });
+    await interaction.editReply({ files: [attachment] });
 
     if (result.solved) {
       try {

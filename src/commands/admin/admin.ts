@@ -1,9 +1,19 @@
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
-import { baseEmbed } from '@marquinhos/utils/discord';
+import {
+  buildNewWordImage,
+  buildNoticeImage,
+  buildStatsImage,
+  type TermoStats,
+} from '@marquinhos/ui/screens/termo';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
-import { MessageFlags, PermissionFlagsBits, TextChannel } from 'discord.js';
+import {
+  AttachmentBuilder,
+  MessageFlags,
+  PermissionFlagsBits,
+  TextChannel,
+} from 'discord.js';
 
 const api = MarquinhosApiService.getInstance();
 
@@ -66,8 +76,17 @@ export class AdminCommand extends MarquinhosCommand {
 
         try {
           await api.setWordleConfig(interaction.guildId!, channel.id);
+          const channelName = `#${channel.name}`;
+          const buffer = await buildNoticeImage(
+            'TERMO CONFIGURADO',
+            `Canal configurado para ${channelName}.`,
+            { badge: 'ADMIN' },
+          );
+          const attachment = new AttachmentBuilder(buffer, {
+            name: 'termo-configurado.png',
+          });
           await interaction.editReply({
-            content: `✅ Canal do Termo configurado para <#${channel.id}>`,
+            files: [attachment],
           });
         } catch (err) {
           logger.warn('admin termo canal: Error saving config:', err);
@@ -94,22 +113,20 @@ export class AdminCommand extends MarquinhosCommand {
             };
           };
 
-          const embed = baseEmbed(this.container.client);
-          embed
-            .setTitle('Nova palavra do Termo gerada!')
-            .setDescription(
-              `**Palavra:** \`${result.word.toUpperCase()}\` (${result.wordLength} letras)\n` +
-                `**Data:** ${result.wordDate}`,
-            )
-            .addFields({
-              name: 'Estatísticas anteriores',
-              value:
-                `👥 Jogadores: ${result.stats?.playersCount ?? 0}\n` +
-                `✅ Acertos: ${result.stats?.winnersCount ?? 0}\n` +
-                `📊 Média de tentativas: ${result.stats?.avgAttempts ?? 0}`,
-            });
+          const adminBuffer = await buildNewWordImage(
+            {
+              word: result.word,
+              wordLength: result.wordLength,
+              wordDate: result.wordDate,
+              stats: result.stats,
+            },
+            { revealWord: true, admin: true },
+          );
+          const adminAttachment = new AttachmentBuilder(adminBuffer, {
+            name: 'nova-palavra-admin.png',
+          });
 
-          await interaction.editReply({ embeds: [embed] });
+          await interaction.editReply({ files: [adminAttachment] });
 
           try {
             const configResponse = await api.getWordleConfig(
@@ -122,9 +139,15 @@ export class AdminCommand extends MarquinhosCommand {
               channelId,
             ) as TextChannel | undefined;
             if (!wordleChannel) return;
-            await wordleChannel.send(
-              `**Nova palavra!** (${result.wordLength} letras) — tomara que errem!\n${'⬜'.repeat(result.wordLength)}`,
-            );
+            const publicBuffer = await buildNewWordImage({
+              wordLength: result.wordLength,
+              wordDate: result.wordDate,
+              message: 'tomara que errem.',
+            });
+            const publicAttachment = new AttachmentBuilder(publicBuffer, {
+              name: 'nova-palavra.png',
+            });
+            await wordleChannel.send({ files: [publicAttachment] });
           } catch (err) {
             logger.warn(
               'admin termo novo: Error posting to wordle channel:',
@@ -151,34 +174,18 @@ export class AdminCommand extends MarquinhosCommand {
             playersCount: number;
             winnersCount: number;
             avgAttempts: number;
+            word?: string;
           };
 
-          const embed = baseEmbed(this.container.client);
-          embed.setTitle('📊 Termo — Estatísticas de Hoje').addFields(
-            { name: 'Data', value: stats.wordDate, inline: true },
-            {
-              name: 'Tamanho',
-              value: `${stats.wordLength} letras`,
-              inline: true,
-            },
-            {
-              name: 'Jogadores',
-              value: String(stats.playersCount),
-              inline: true,
-            },
-            {
-              name: 'Acertos',
-              value: String(stats.winnersCount),
-              inline: true,
-            },
-            {
-              name: 'Média de tentativas',
-              value: String(stats.avgAttempts),
-              inline: true,
-            },
-          );
+          const buffer = await buildStatsImage(stats as TermoStats, {
+            title: 'STATUS DO TERMO',
+            revealWord: true,
+          });
+          const attachment = new AttachmentBuilder(buffer, {
+            name: 'termo-status.png',
+          });
 
-          await interaction.editReply({ embeds: [embed] });
+          await interaction.editReply({ files: [attachment] });
         } catch (err) {
           logger.warn('admin termo status: Error fetching stats:', err);
           await interaction.editReply({
