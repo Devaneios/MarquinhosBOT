@@ -1,8 +1,12 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { buildKeyboardImage, type LetterFeedback } from './termoKeyboard';
+import {
+  buildKeyboardImage,
+  buildResultImage,
+  type LetterFeedback,
+} from './termo';
 
-const OUT_DIR = join(import.meta.dir, '../../test-output');
+const OUT_DIR = join(import.meta.dir, '../../../test-output');
 
 const guesses: { guess: string; feedback: LetterFeedback[] }[] = [
   {
@@ -56,10 +60,17 @@ const guesses: { guess: string; feedback: LetterFeedback[] }[] = [
 ];
 
 mkdirSync(OUT_DIR, { recursive: true });
-const buf = await buildKeyboardImage(guesses, 6, {
+
+const keyboardBuffer = await buildKeyboardImage(guesses, 6, {
   maxAttempts: 12,
+  streak: 7,
 });
-const outPath = join(OUT_DIR, 'termo-test.png');
-writeFileSync(outPath, buf);
-console.log(`wrote ${outPath}`);
-process.exit(0);
+writeFileSync(join(OUT_DIR, 'termo-keyboard.png'), keyboardBuffer);
+
+const resultBuffer = await buildResultImage(guesses, 'TesterUser', {
+  streak: 7,
+});
+writeFileSync(join(OUT_DIR, 'termo-result.png'), resultBuffer);
+
+console.log(`wrote ${OUT_DIR}/termo-keyboard.png`);
+console.log(`wrote ${OUT_DIR}/termo-result.png`);

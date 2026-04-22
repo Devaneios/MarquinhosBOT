@@ -1,11 +1,12 @@
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
-import { baseEmbed } from '@marquinhos/utils/discord';
-import { logger } from '@marquinhos/utils/logger';
 import {
   buildKeyboardImage,
+  buildResultImage,
   type LetterFeedback,
-} from '@marquinhos/utils/termoKeyboard';
+} from '@marquinhos/ui/screens/termo';
+import { baseEmbed } from '@marquinhos/utils/discord';
+import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import {
   AttachmentBuilder,
@@ -15,12 +16,11 @@ import {
 } from 'discord.js';
 
 interface WordleGuessResult {
-  guess: string;
-  feedback: LetterFeedback[];
   guesses: { guess: string; feedback: LetterFeedback[] }[];
   solved: boolean;
   attempts: number;
   wordLength: number;
+  streak?: number;
 }
 
 const api = MarquinhosApiService.getInstance();
@@ -28,16 +28,6 @@ const previousErrorInteractions = new Map<
   string,
   ChatInputCommandInteraction
 >();
-
-const SQUARE: Record<LetterFeedback, string> = {
-  correct: '🟩',
-  present: '🟨',
-  absent: '⬛',
-};
-
-function feedbackToSquares(feedback: LetterFeedback[]): string {
-  return feedback.map((f) => SQUARE[f]).join('');
-}
 
 export class TermoCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
@@ -183,18 +173,18 @@ export class TermoCommand extends MarquinhosCommand {
 
     if (result.solved) {
       try {
-        const cfgRes = await api.getWordleConfig(interaction.guildId);
-        const chId = (cfgRes.data as { channelId?: string })?.channelId;
-        if (!chId) return;
-        const ch = await interaction
-          .guild!.channels.fetch(chId)
-          .catch(() => null);
-        if (!ch || !ch.isTextBased()) return;
-        const allSquares = result.guesses
-          .map((g) => feedbackToSquares(g.feedback))
-          .join('\n');
-        const publicMsg = `${interaction.user} acertou o Terminho em ${result.attempts} tentativa${result.attempts > 1 ? 's' : ''}! 🎉\n${allSquares}`;
-        await ch.send(publicMsg);
+        const resultBuffer = await buildResultImage(
+          result.guesses,
+          interaction.user.displayName,
+          { streak: result.streak },
+        );
+        const resultAttachment = new AttachmentBuilder(resultBuffer, {
+          name: 'resultado.png',
+        });
+        await channel.send({
+          content: `${interaction.user}`,
+          files: [resultAttachment],
+        });
       } catch {
         /* silently ignore */
       }
