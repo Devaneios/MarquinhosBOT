@@ -10,29 +10,11 @@ export enum GameType {
   SLOTS = 'slots',
   ROULETTE = 'roulette',
   DICE = 'dice',
-  LOTTERY = 'lottery',
-
-  // Knowledge Games
-  MUSIC_QUIZ = 'music_quiz',
-  POP_CULTURE = 'pop_culture',
-  GEOGRAPHY = 'geography',
-  BRAZIL_HISTORY = 'brazil_history',
-
-  // Word Games
-  SECRET_WORD = 'secret_word',
-  ANAGRAM = 'anagram',
-  RHYME = 'rhyme',
-  TRANSLATE = 'translate',
 
   // Strategy Games
   TIC_TAC_TOE = 'tic_tac_toe',
-  SECRET_CODE = 'secret_code',
   ROCK_PAPER_SCISSORS = 'rock_paper_scissors',
   MAZE = 'maze',
-
-  // Multiplayer Games
-  BATTLE_ROYALE = 'battle_royale',
-  SPEED_MATH = 'speed_math',
 }
 
 export enum GameState {
@@ -308,29 +290,14 @@ export const GAME_CONFIGS: Record<GameType, GameConfig> = {
   [GameType.SLOTS]: { maxPlayers: 1, minPlayers: 1, timeLimit: 60 },
   [GameType.ROULETTE]: { maxPlayers: 6, minPlayers: 1, timeLimit: 120 },
   [GameType.DICE]: { maxPlayers: 4, minPlayers: 1, timeLimit: 180 },
-  [GameType.LOTTERY]: { maxPlayers: 1, minPlayers: 1, timeLimit: 30 },
-
-  [GameType.MUSIC_QUIZ]: { maxPlayers: 8, minPlayers: 1, timeLimit: 240 },
-  [GameType.POP_CULTURE]: { maxPlayers: 8, minPlayers: 1, timeLimit: 180 },
-  [GameType.GEOGRAPHY]: { maxPlayers: 8, minPlayers: 1, timeLimit: 200 },
-  [GameType.BRAZIL_HISTORY]: { maxPlayers: 8, minPlayers: 1, timeLimit: 220 },
-
-  [GameType.SECRET_WORD]: { maxPlayers: 6, minPlayers: 1, timeLimit: 300 },
-  [GameType.ANAGRAM]: { maxPlayers: 6, minPlayers: 1, timeLimit: 120 },
-  [GameType.RHYME]: { maxPlayers: 8, minPlayers: 1, timeLimit: 90 },
-  [GameType.TRANSLATE]: { maxPlayers: 6, minPlayers: 1, timeLimit: 150 },
 
   [GameType.TIC_TAC_TOE]: { maxPlayers: 2, minPlayers: 2, timeLimit: 180 },
-  [GameType.SECRET_CODE]: { maxPlayers: 1, minPlayers: 1, timeLimit: 240 },
   [GameType.ROCK_PAPER_SCISSORS]: {
     maxPlayers: 8,
     minPlayers: 2,
     timeLimit: 60,
   },
   [GameType.MAZE]: { maxPlayers: 1, minPlayers: 1, timeLimit: 300 },
-
-  [GameType.BATTLE_ROYALE]: { maxPlayers: 10, minPlayers: 3, timeLimit: 600 },
-  [GameType.SPEED_MATH]: { maxPlayers: 8, minPlayers: 2, timeLimit: 120 },
 };
 
 export const GAME_COOLDOWNS: Record<GameType, number> = {
@@ -338,23 +305,8 @@ export const GAME_COOLDOWNS: Record<GameType, number> = {
   [GameType.SLOTS]: 15,
   [GameType.ROULETTE]: 120,
   [GameType.DICE]: 20,
-  [GameType.LOTTERY]: 86400, // 24 hours
-
-  [GameType.MUSIC_QUIZ]: 45,
-  [GameType.POP_CULTURE]: 30,
-  [GameType.GEOGRAPHY]: 40,
-  [GameType.BRAZIL_HISTORY]: 50,
-
-  [GameType.SECRET_WORD]: 60,
-  [GameType.ANAGRAM]: 25,
-  [GameType.RHYME]: 35,
-  [GameType.TRANSLATE]: 40,
 
   [GameType.TIC_TAC_TOE]: 20,
-  [GameType.SECRET_CODE]: 60,
   [GameType.ROCK_PAPER_SCISSORS]: 15,
   [GameType.MAZE]: 120,
-
-  [GameType.BATTLE_ROYALE]: 180,
-  [GameType.SPEED_MATH]: 30,
 };

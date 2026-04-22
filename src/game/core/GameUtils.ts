@@ -125,21 +125,9 @@ export class GameUtils {
       [GameType.SLOTS]: '🎰',
       [GameType.ROULETTE]: '🎲',
       [GameType.DICE]: '🎲',
-      [GameType.LOTTERY]: '🎫',
-      [GameType.MUSIC_QUIZ]: '🎵',
-      [GameType.POP_CULTURE]: '📺',
-      [GameType.GEOGRAPHY]: '🌍',
-      [GameType.BRAZIL_HISTORY]: '🇧🇷',
-      [GameType.SECRET_WORD]: '🔤',
-      [GameType.ANAGRAM]: '🔀',
-      [GameType.RHYME]: '🎤',
-      [GameType.TRANSLATE]: '🌐',
       [GameType.TIC_TAC_TOE]: '⭕',
-      [GameType.SECRET_CODE]: '🔐',
       [GameType.ROCK_PAPER_SCISSORS]: '✂️',
       [GameType.MAZE]: '🏃',
-      [GameType.BATTLE_ROYALE]: '⚔️',
-      [GameType.SPEED_MATH]: '➕',
     };
 
     return emojis[gameType] || '🎮';
@@ -151,21 +139,9 @@ export class GameUtils {
       [GameType.SLOTS]: 'Caça-níqueis',
       [GameType.ROULETTE]: 'Roleta Russa',
       [GameType.DICE]: 'Dados Mágicos',
-      [GameType.LOTTERY]: 'Loteria do Marquinhos',
-      [GameType.MUSIC_QUIZ]: 'Quiz Musical',
-      [GameType.POP_CULTURE]: 'Cultura Pop',
-      [GameType.GEOGRAPHY]: 'Geografia Maluca',
-      [GameType.BRAZIL_HISTORY]: 'História do Brasil',
-      [GameType.SECRET_WORD]: 'Palavra Secreta',
-      [GameType.ANAGRAM]: 'Anagrama Insano',
-      [GameType.RHYME]: 'Rima Rápida',
-      [GameType.TRANSLATE]: 'Traduzindo',
       [GameType.TIC_TAC_TOE]: 'Jogo da Velha',
-      [GameType.SECRET_CODE]: 'Código Secreto',
       [GameType.ROCK_PAPER_SCISSORS]: 'Pedra, Papel, Tesoura',
       [GameType.MAZE]: 'Labirinto',
-      [GameType.BATTLE_ROYALE]: 'Battle Royale dos Emojis',
-      [GameType.SPEED_MATH]: 'Speed Math',
     };
 
     return names[gameType] || 'Jogo Desconhecido';
