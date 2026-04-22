@@ -1,3 +1,6 @@
 [alias]
 "@marquinhos/*" = "src/*"
 "@marquinhos" = "src"
+
+[test]
+preload = ["./tests/setup.ts"]
