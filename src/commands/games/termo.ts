@@ -186,6 +186,10 @@ export class TermoCommand extends MarquinhosCommand {
       await interaction.respond([]);
       return;
     }
+    if (guess.length < 5 || guess.length > 6) {
+      await interaction.respond([]);
+      return;
+    }
     try {
       const response = await api.validateWordleGuess(
         interaction.guildId,
