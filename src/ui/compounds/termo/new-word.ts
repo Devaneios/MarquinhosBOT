@@ -1,12 +1,5 @@
 import { Column, Row, Style, Text } from '@meonode/canvas';
-import {
-  badge,
-  card,
-  labelText,
-  panel,
-  sectionHeader,
-  statCard,
-} from '../../primitives';
+import { badge, card, panel, sectionHeader, statCard } from '../../primitives';
 import { defaultTheme, type Theme } from '../../theme';
 import type { CanvasNode } from '../../types';
 import { type TermoStats, wordPreview } from './stats';
@@ -32,19 +25,18 @@ export function newWordPanel(
         width: '100%',
         gap: theme.spacing.sm,
         children: [
-          labelText('PALAVRA', { letterSpacing: 2 }, theme),
-          wordPreview(
-            data.word,
-            data.wordLength,
-            options?.revealWord === true,
-            theme,
-          ),
           Text(`${data.wordLength} letras`, {
             fontFamily: theme.fontFamilies.body,
             fontWeight: '600',
             fontSize: theme.fontSizes.md,
             color: theme.colors.textPrimary,
           }),
+          wordPreview(
+            data.word,
+            data.wordLength,
+            options?.revealWord === true,
+            theme,
+          ),
         ],
       }),
       ...(data.message !== undefined
@@ -95,7 +87,11 @@ export function newWordCard(
     [
       sectionHeader(
         'NOVO TERMINHO',
-        data.wordDate ?? (options?.admin === true ? 'ADMIN' : undefined),
+        data.wordDate !== undefined
+          ? data.wordDate.split('-').reverse().join('/')
+          : options?.admin === true
+            ? 'ADMIN'
+            : undefined,
         theme,
       ),
       newWordPanel(data, options, theme),
