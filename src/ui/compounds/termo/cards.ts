@@ -3,7 +3,7 @@ import { defaultTheme, type Theme } from '../../theme';
 import type { CanvasNode } from '../../types';
 import { attemptGrid } from './attempt-grid';
 import { termoKeyboardPanel } from './keyboard-panel';
-import { resultIntro, resultStats, resultSummaryPanel } from './result-summary';
+import { resultIntro, resultSummaryPanel } from './result-summary';
 import { statsLead, termoStatsPanel, type TermoStats } from './stats';
 import { solvedStatusBanner } from './status-banner';
 import type { TermoGuess, TermoSolvedStatus } from './types';
@@ -48,8 +48,7 @@ export function termoResultCard(
 ): CanvasNode {
   return card(
     [
-      resultIntro(username, theme),
-      resultStats(guesses.length, options?.streak, theme),
+      resultIntro(username, guesses.length, theme),
       resultSummaryPanel(guesses, theme),
     ],
     theme,

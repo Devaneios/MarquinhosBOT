@@ -7,6 +7,7 @@ import type { TermoGuess } from './types';
 
 export function resultIntro(
   username: string,
+  total: number,
   theme: Theme = defaultTheme,
 ): CanvasNode {
   return Column({
@@ -14,7 +15,7 @@ export function resultIntro(
     alignItems: Style.Align.FlexStart,
     gap: theme.spacing.sm,
     children: [
-      Text(`${username} acertou o Terminho de hoje.`, {
+      Text(`${username} acertou o Terminho em ${total} tentativas`, {
         fontFamily: theme.fontFamilies.body,
         fontWeight: '400',
         fontSize: theme.fontSizes.md,
