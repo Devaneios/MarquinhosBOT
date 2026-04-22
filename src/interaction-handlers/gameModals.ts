@@ -22,28 +22,6 @@ function legacyParseModal(
   value: string,
 ): Record<string, unknown> | null {
   switch (modalId) {
-    case 'modal_secret_word':
-      return { type: 'guess_word', word: value };
-    case 'modal_anagram':
-      return { type: 'guess', word: value };
-    case 'modal_rhyme':
-      return { type: 'rhyme', word: value };
-    case 'modal_translate':
-      return { type: 'translate', translation: value };
-    case 'modal_secret_code': {
-      const digits = value
-        .replace(/\s+/g, '')
-        .split('')
-        .map(Number)
-        .filter((n) => !isNaN(n));
-      return { type: 'guess', code: digits };
-    }
-    case 'modal_speed_math': {
-      const answer = parseFloat(value);
-      return isNaN(answer) ? null : { type: 'answer', answer };
-    }
-    case 'modal_battle_royale':
-      return { type: 'respond', response: value };
     case 'modal_dice_sum': {
       const sum = parseInt(value, 10);
       return isNaN(sum)

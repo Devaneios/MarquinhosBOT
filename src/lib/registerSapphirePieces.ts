@@ -1,6 +1,5 @@
 import { AdminCommand } from '@marquinhos/commands/admin/admin';
 import { ChaosCommand } from '@marquinhos/commands/admin/chaos';
-import { PluginsCommand } from '@marquinhos/commands/admin/plugins';
 import { ApiStatusCommand } from '@marquinhos/commands/dev/apistatus';
 import { GamesCommand } from '@marquinhos/commands/games/games';
 import { TermoCommand } from '@marquinhos/commands/games/termo';
@@ -43,7 +42,6 @@ import { container } from '@sapphire/framework';
 const commands = [
   ['admin', AdminCommand],
   ['chaos', ChaosCommand],
-  ['plugins', PluginsCommand],
   ['apistatus', ApiStatusCommand],
   ['games', GamesCommand],
   ['termo', TermoCommand],
