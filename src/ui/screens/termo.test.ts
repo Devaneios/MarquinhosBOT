@@ -2,7 +2,10 @@ import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import {
   buildKeyboardImage,
+  buildNewWordImage,
+  buildNoticeImage,
   buildResultImage,
+  buildStatsImage,
   type LetterFeedback,
 } from './termo';
 
@@ -64,6 +67,7 @@ mkdirSync(OUT_DIR, { recursive: true });
 const keyboardBuffer = await buildKeyboardImage(guesses, 6, {
   maxAttempts: 12,
   streak: 7,
+  status: { attempts: 12 },
 });
 writeFileSync(join(OUT_DIR, 'termo-keyboard.png'), keyboardBuffer);
 
@@ -72,5 +76,40 @@ const resultBuffer = await buildResultImage(guesses, 'TesterUser', {
 });
 writeFileSync(join(OUT_DIR, 'termo-result.png'), resultBuffer);
 
+const newWordBuffer = await buildNewWordImage(
+  {
+    word: 'termos',
+    wordLength: 6,
+    wordDate: '2026-04-22',
+    message: 'boa sorte (vao precisar).',
+    stats: { playersCount: 14, winnersCount: 5, avgAttempts: 4.2 },
+  },
+  { revealWord: true, admin: true },
+);
+writeFileSync(join(OUT_DIR, 'termo-new-word.png'), newWordBuffer);
+
+const statsBuffer = await buildStatsImage(
+  {
+    word: 'termos',
+    wordDate: '2026-04-22',
+    wordLength: 6,
+    playersCount: 14,
+    winnersCount: 5,
+    avgAttempts: 4.2,
+  },
+  { revealWord: true },
+);
+writeFileSync(join(OUT_DIR, 'termo-stats.png'), statsBuffer);
+
+const noticeBuffer = await buildNoticeImage(
+  'TERMO CONFIGURADO',
+  'Canal configurado para #termo.',
+  { badge: 'ADMIN' },
+);
+writeFileSync(join(OUT_DIR, 'termo-notice.png'), noticeBuffer);
+
 console.log(`wrote ${OUT_DIR}/termo-keyboard.png`);
 console.log(`wrote ${OUT_DIR}/termo-result.png`);
+console.log(`wrote ${OUT_DIR}/termo-new-word.png`);
+console.log(`wrote ${OUT_DIR}/termo-stats.png`);
+console.log(`wrote ${OUT_DIR}/termo-notice.png`);

@@ -1,10 +1,14 @@
 import { GuildConfig } from '@marquinhos/config/guild';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
+import {
+  buildNewWordImage,
+  buildStatsImage,
+  type TermoStats,
+} from '@marquinhos/ui/screens/termo';
 import { getBicho } from '@marquinhos/utils/bichoGame';
-import { baseEmbed } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
 import { Listener } from '@sapphire/framework';
-import { Client, Events, TextChannel } from 'discord.js';
+import { AttachmentBuilder, Client, Events, TextChannel } from 'discord.js';
 
 const api = MarquinhosApiService.getInstance();
 
@@ -66,7 +70,7 @@ async function rotateTermoWord(client: Client<true>): Promise<void> {
         if (!channelId) continue;
 
         const result = await api.forceNewWordleWord(guildId);
-        const data = result.data as { wordLength: number };
+        const data = result.data as { wordLength: number; wordDate?: string };
 
         const channel = client.channels.cache.get(channelId) as
           | TextChannel
@@ -102,19 +106,17 @@ async function rotateTermoWord(client: Client<true>): Promise<void> {
         ];
         const trashTalk =
           shortTrashTalks[Math.floor(Math.random() * shortTrashTalks.length)];
-        const newWordEmbed = baseEmbed(client);
-        newWordEmbed.setTitle('🟩 Nova Palavra do Terminhos!');
-        newWordEmbed.setDescription(
-          `${trashTalk}\n${'⬜'.repeat(data.wordLength)}`,
-        );
-        newWordEmbed.addFields({
-          name: 'Letras',
-          value: String(data.wordLength),
-          inline: true,
+        const buffer = await buildNewWordImage({
+          wordLength: data.wordLength,
+          wordDate: data.wordDate,
+          message: trashTalk,
+        });
+        const attachment = new AttachmentBuilder(buffer, {
+          name: 'nova-palavra.png',
         });
         await channel.send({
           content: `<@&${GuildConfig.TERMINHOS_ANNOUNCE_ROLE_ID}>`,
-          embeds: [newWordEmbed],
+          files: [attachment],
         });
       } catch (err) {
         logger.warn(
@@ -153,6 +155,7 @@ async function broadcastTermoStats(client: Client<true>): Promise<void> {
 
       const statsRes = await api.getWordleStats(guildId);
       const stats = statsRes.data as {
+        wordDate?: string;
         playersCount: number;
         winnersCount: number;
         avgAttempts: number;
@@ -170,23 +173,13 @@ async function broadcastTermoStats(client: Client<true>): Promise<void> {
         | undefined;
       if (!channel) continue;
 
-      const statsEmbed = baseEmbed(client);
-      statsEmbed.setTitle('📊 Terminhos — Status de Hoje');
-      statsEmbed.addFields(
-        { name: 'Jogadores', value: String(stats.playersCount), inline: true },
-        { name: 'Acertaram', value: String(stats.winnersCount), inline: true },
-        {
-          name: 'Média de tentativas',
-          value: String(stats.avgAttempts),
-          inline: true,
-        },
-        {
-          name: 'Letras na palavra',
-          value: String(stats.wordLength),
-          inline: true,
-        },
-      );
-      await channel.send({ embeds: [statsEmbed] });
+      const buffer = await buildStatsImage(stats as TermoStats, {
+        title: 'STATUS DO TERMO',
+      });
+      const attachment = new AttachmentBuilder(buffer, {
+        name: 'termo-status.png',
+      });
+      await channel.send({ files: [attachment] });
       lastBroadcastWinners.set(guildId, stats.winnersCount);
     } catch (err) {
       logger.warn(`Terminhos stats: failed for guild ${guildId}:`, err);
