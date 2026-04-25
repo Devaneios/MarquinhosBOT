@@ -313,6 +313,11 @@ export class MarquinhosApiService {
     return data as ApiResponse;
   }
 
+  async getWordleDayGuesses(guildId: string): Promise<ApiResponse> {
+    const data = await this.client.get(`/api/wordle/day-guesses/${guildId}`);
+    return data as ApiResponse;
+  }
+
   async getUserWordleSession(
     userId: string,
     guildId: string,

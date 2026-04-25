@@ -1,6 +1,10 @@
 import { GuildConfig } from '@marquinhos/config/guild';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
-import { buildWordHiddenPreviewImage } from '@marquinhos/ui/screens/termo';
+import {
+  buildCrosswordImage,
+  buildWordHiddenPreviewImage,
+  type LetterFeedback,
+} from '@marquinhos/ui/screens/termo';
 import { getBicho } from '@marquinhos/utils/bichoGame';
 import { baseEmbed } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
@@ -14,6 +18,13 @@ import {
 } from 'discord.js';
 
 const api = MarquinhosApiService.getInstance();
+
+type WordleDayGuesses = {
+  word: string;
+  wordDate: string;
+  wordLength: number;
+  guesses: { guess: string; feedback: LetterFeedback[] }[];
+} | null;
 
 export class ReadyListener extends Listener<typeof Events.ClientReady> {
   public constructor(context: Listener.LoaderContext) {
@@ -72,40 +83,42 @@ async function rotateTermoWord(client: Client<true>): Promise<void> {
         const channelId = (cfgRes.data as { channelId?: string })?.channelId;
         if (!channelId) continue;
 
-        const result = await api.forceNewWordleWord(guildId);
-        const data = result.data as { wordLength: number; wordDate?: string };
-
         const channel = client.channels.cache.get(channelId) as
           | TextChannel
           | undefined;
         if (!channel) continue;
 
+        await sendTermoCrossword(client, guildId, channel);
+
+        const result = await api.forceNewWordleWord(guildId);
+        const data = result.data as { wordLength: number; wordDate?: string };
+
         const shortTrashTalks = [
-          'boa sorte (vão precisar).',
-          'duvido acertarem.',
-          'quero só ver o desespero.',
-          'valendo a dignidade.',
-          'vão chutar até amanhã.',
-          'essa vai dar trabalho.',
-          'desistir é uma opção.',
-          'ninguém vai acertar essa.',
-          'hoje não é o dia de vocês.',
-          'já podem ir desistindo.',
-          'nem tentem.',
-          'essa tá fácil... pra mim.',
+          'boa sorte (vão precisar)',
+          'duvido acertarem',
+          'quero só ver o desespero',
+          'valendo a dignidade',
+          'vão chutar até amanhã',
+          'essa vai dar trabalho',
+          'desistir é uma opção',
+          'ninguém vai acertar essa',
+          'hoje não é o dia de vocês',
+          'já podem ir desistindo',
+          'nem tentem',
+          'essa tá fácil... pra mim',
           'quem vai se humilhar primeiro?',
-          'essa palavra não é pra qualquer um.',
+          'essa palavra não é pra qualquer um',
           'alguém aqui sabe português?',
-          'podem errar à vontade.',
-          'vão sofrer muito hoje.',
-          'esperando o primeiro erro.',
-          'hoje tem humilhação gratuita.',
-          'vão reclamar que a palavra é injusta.',
-          'podem começar a chorar agora.',
-          'vocês não estão prontos.',
-          'hoje a palavra vence.',
-          'muito vocabulário pra pouca gente.',
-          'spoiler: não vão acertar.',
+          'podem errar à vontade',
+          'vão sofrer muito hoje',
+          'esperando o primeiro erro',
+          'hoje tem humilhação gratuita',
+          'vão reclamar que a palavra é injusta',
+          'podem começar a chorar agora',
+          'vocês não estão prontos',
+          'hoje a palavra vence',
+          'muito vocabulário pra pouca gente',
+          'spoiler: não vão acertar',
         ];
         const trashTalk =
           shortTrashTalks[Math.floor(Math.random() * shortTrashTalks.length)];
@@ -137,6 +150,38 @@ async function rotateTermoWord(client: Client<true>): Promise<void> {
     }
   } catch (err) {
     logger.error('Erro ao rotacionar palavra do Terminhos:', err);
+  }
+}
+
+async function sendTermoCrossword(
+  client: Client<true>,
+  guildId: string,
+  channel: TextChannel,
+): Promise<void> {
+  try {
+    const response = await api.getWordleDayGuesses(guildId);
+    const data = response.data as WordleDayGuesses;
+    if (!data) return;
+
+    const crosswordBuffer = await buildCrosswordImage(data.guesses, data.word);
+    const crosswordAttachment = new AttachmentBuilder(crosswordBuffer, {
+      name: 'terminhos-cruzados.png',
+    });
+
+    const embed = baseEmbed(client)
+      .setTitle(`Terminhos cruzados - ${data.word}`)
+      .setColor(0x588157)
+      .setImage('attachment://terminhos-cruzados.png');
+
+    await channel.send({
+      embeds: [embed],
+      files: [crosswordAttachment],
+    });
+  } catch (err) {
+    logger.warn(
+      `Terminhos: failed to send crossword for guild ${guildId}:`,
+      err,
+    );
   }
 }
 
