@@ -2,7 +2,7 @@ export { attemptGrid } from './attempt-grid';
 export {
   termoKeyboardCard,
   termoResultCard,
-  termoStatsCard,
+  wordPreviewCard,
   type TermoKeyboardCardOptions,
 } from './cards';
 export { keyboardKey } from './keyboard-key';
@@ -12,18 +12,8 @@ export {
   buildLetterStates,
   type LetterFeedback,
 } from './letter-states';
-export { newWordCard, newWordPanel, previousStatsPanel } from './new-word';
-export type { TermoNewWord } from './new-word';
-export { termoNoticeCard } from './notice';
-export { resultIntro, resultStats, resultSummaryPanel } from './result-summary';
+export { resultSummaryPanel } from './result-summary';
 export { attemptRow, keyboardRow } from './rows';
-export {
-  statsLead,
-  termoStatsGrid,
-  termoStatsPanel,
-  wordPreview,
-} from './stats';
-export type { TermoStats } from './stats';
 export { solvedStatusBanner } from './status-banner';
 export { attemptTile, emptyTile, resultTile } from './tiles';
 export type { TermoGuess, TermoSolvedStatus } from './types';

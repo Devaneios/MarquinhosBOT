@@ -1,10 +1,10 @@
-import { card, sectionHeader } from '../../primitives';
+import { card, panel } from '../../primitives';
 import { defaultTheme, type Theme } from '../../theme';
 import type { CanvasNode } from '../../types';
 import { attemptGrid } from './attempt-grid';
 import { termoKeyboardPanel } from './keyboard-panel';
-import { resultIntro, resultSummaryPanel } from './result-summary';
-import { statsLead, termoStatsPanel, type TermoStats } from './stats';
+import { resultSummaryPanel } from './result-summary';
+import { wordPreview } from './stats';
 import { solvedStatusBanner } from './status-banner';
 import type { TermoGuess, TermoSolvedStatus } from './types';
 
@@ -21,19 +21,17 @@ export function termoKeyboardCard(
   theme: Theme = defaultTheme,
 ): CanvasNode {
   const maxAttempts = options?.maxAttempts ?? 6;
-  const streak = options?.streak;
 
   return card(
     [
-      sectionHeader(
-        'TENTATIVAS',
-        streak !== undefined ? `STREAK: ${streak}` : undefined,
-        theme,
-      ),
       ...(options?.status !== undefined
         ? [solvedStatusBanner(options.status, theme)]
         : []),
-      attemptGrid(guesses, wordLength, maxAttempts, theme),
+      panel(
+        attemptGrid(guesses, wordLength, maxAttempts, theme),
+        { padding: 12, gap: 6 },
+        theme,
+      ),
       termoKeyboardPanel(guesses, theme),
     ],
     theme,
@@ -42,33 +40,24 @@ export function termoKeyboardCard(
 
 export function termoResultCard(
   guesses: TermoGuess[],
-  username: string,
-  options?: { streak?: number },
   theme: Theme = defaultTheme,
 ): CanvasNode {
-  return card(
-    [
-      resultIntro(username, guesses.length, theme),
-      resultSummaryPanel(guesses, theme),
-    ],
-    theme,
-  );
+  return card([resultSummaryPanel(guesses, theme)], theme);
 }
 
-export function termoStatsCard(
-  stats: TermoStats,
-  options?: { title?: string; subtitle?: string; revealWord?: boolean },
+export function wordPreviewCard(
+  word: string,
+  theme: Theme = defaultTheme,
+): CanvasNode {
+  return card([wordPreview(word, word.length, true, theme)], theme);
+}
+
+export function wordHiddenPreviewCard(
+  wordLength: number,
   theme: Theme = defaultTheme,
 ): CanvasNode {
   return card(
-    [
-      statsLead(options?.title ?? 'STATUS DO TERMO', options?.subtitle, theme),
-      termoStatsPanel(
-        stats,
-        { title: 'ESTATISTICAS', revealWord: options?.revealWord },
-        theme,
-      ),
-    ],
+    [wordPreview(' '.repeat(wordLength), wordLength, false, theme)],
     theme,
   );
 }

@@ -1,24 +1,15 @@
 import {
-  newWordCard,
   termoKeyboardCard,
-  termoNoticeCard,
   termoResultCard,
-  termoStatsCard,
+  wordPreviewCard,
   type LetterFeedback,
   type TermoGuess,
-  type TermoNewWord,
   type TermoSolvedStatus,
-  type TermoStats,
 } from '../compounds/termo';
 import { render } from '../render';
 import { defaultTheme, type Theme } from '../theme';
 
-export {
-  type LetterFeedback,
-  type TermoNewWord,
-  type TermoSolvedStatus,
-  type TermoStats,
-};
+export { type LetterFeedback, type TermoSolvedStatus };
 
 export async function buildKeyboardImage(
   guesses: TermoGuess[],
@@ -31,49 +22,35 @@ export async function buildKeyboardImage(
   },
 ): Promise<Buffer> {
   const theme = options?.theme ?? defaultTheme;
-
   return render([termoKeyboardCard(guesses, wordLength, options, theme)]);
 }
 
 export async function buildResultImage(
   guesses: TermoGuess[],
-  username: string,
-  options?: { streak?: number; theme?: Theme },
+  options?: { theme?: Theme },
 ): Promise<Buffer> {
   const theme = options?.theme ?? defaultTheme;
-
-  return render([termoResultCard(guesses, username, options, theme)]);
+  return render([termoResultCard(guesses, theme)], {
+    width: (32 + 4) * guesses[0].feedback.length + 24,
+  });
 }
 
-export async function buildNewWordImage(
-  data: TermoNewWord,
-  options?: { revealWord?: boolean; admin?: boolean; theme?: Theme },
+export async function buildWordPreviewImage(
+  word: string,
+  options?: { theme?: Theme },
 ): Promise<Buffer> {
   const theme = options?.theme ?? defaultTheme;
-
-  return render([newWordCard(data, options, theme)]);
+  return render([wordPreviewCard(word, theme)], {
+    width: (32 + 4) * word.length + 24,
+  });
 }
 
-export async function buildStatsImage(
-  stats: TermoStats,
-  options?: {
-    title?: string;
-    subtitle?: string;
-    revealWord?: boolean;
-    theme?: Theme;
-  },
+export async function buildWordHiddenPreviewImage(
+  wordLength: number,
+  options?: { theme?: Theme },
 ): Promise<Buffer> {
   const theme = options?.theme ?? defaultTheme;
-
-  return render([termoStatsCard(stats, options, theme)]);
-}
-
-export async function buildNoticeImage(
-  title: string,
-  body: string,
-  options?: { badge?: string; theme?: Theme },
-): Promise<Buffer> {
-  const theme = options?.theme ?? defaultTheme;
-
-  return render([termoNoticeCard(title, body, options, theme)]);
+  return render([wordPreviewCard(' '.repeat(wordLength), theme)], {
+    width: (32 + 4) * wordLength + 24,
+  });
 }

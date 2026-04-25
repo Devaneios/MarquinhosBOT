@@ -10,8 +10,8 @@ export function attemptTile(
 ): CanvasNode {
   const colors = theme.colors[feedback];
   return Box({
-    width: 24,
-    height: 24,
+    width: 32,
+    height: 32,
     backgroundColor: colors.bg,
     borderRadius: theme.radii.sm,
     justifyContent: Style.Justify.Center,
@@ -33,8 +33,8 @@ export function attemptTile(
 
 export function emptyTile(theme: Theme = defaultTheme): CanvasNode {
   return Box({
-    width: 24,
-    height: 24,
+    width: 32,
+    height: 32,
     borderRadius: theme.radii.sm / 2,
     border: 1,
     borderColor: 'rgba(65,73,62,0.2)',
