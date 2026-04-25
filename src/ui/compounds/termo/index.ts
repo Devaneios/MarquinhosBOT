@@ -1,10 +1,17 @@
 export { attemptGrid } from './attempt-grid';
 export {
+  termoCrosswordCard,
   termoKeyboardCard,
   termoResultCard,
   wordPreviewCard,
   type TermoKeyboardCardOptions,
 } from './cards';
+export {
+  buildCrosswordLayout,
+  type CrosswordLayout,
+  type GridCell,
+  type PlacedWord,
+} from './crossword-layout';
 export { keyboardKey } from './keyboard-key';
 export { termoKeyboardPanel } from './keyboard-panel';
 export {

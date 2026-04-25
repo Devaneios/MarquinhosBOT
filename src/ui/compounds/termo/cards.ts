@@ -2,6 +2,8 @@ import { card, panel } from '../../primitives';
 import { defaultTheme, type Theme } from '../../theme';
 import type { CanvasNode } from '../../types';
 import { attemptGrid } from './attempt-grid';
+import { crosswordGrid } from './crossword-grid';
+import type { CrosswordLayout } from './crossword-layout';
 import { termoKeyboardPanel } from './keyboard-panel';
 import { resultSummaryPanel } from './result-summary';
 import { wordPreview } from './stats';
@@ -50,6 +52,16 @@ export function wordPreviewCard(
   theme: Theme = defaultTheme,
 ): CanvasNode {
   return card([wordPreview(word, word.length, true, theme)], theme);
+}
+
+export function termoCrosswordCard(
+  layout: CrosswordLayout,
+  theme: Theme = defaultTheme,
+): CanvasNode {
+  return card(
+    [panel(crosswordGrid(layout, theme), { padding: 12 }, theme)],
+    theme,
+  );
 }
 
 export function wordHiddenPreviewCard(

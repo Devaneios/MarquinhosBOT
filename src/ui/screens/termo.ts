@@ -1,4 +1,6 @@
 import {
+  buildCrosswordLayout,
+  termoCrosswordCard,
   termoKeyboardCard,
   termoResultCard,
   wordPreviewCard,
@@ -43,6 +45,18 @@ export async function buildWordPreviewImage(
   return render([wordPreviewCard(word, theme)], {
     width: (32 + 4) * word.length + 24,
   });
+}
+
+export async function buildCrosswordImage(
+  guesses: TermoGuess[],
+  answerWord: string,
+  options?: { theme?: Theme },
+): Promise<Buffer> {
+  const theme = options?.theme ?? defaultTheme;
+  const layout = buildCrosswordLayout(answerWord, guesses);
+  const cols = layout.maxCol - layout.minCol + 1;
+  const width = cols * 32 + (cols - 1) * 4 + 24;
+  return render([termoCrosswordCard(layout, theme)], { width });
 }
 
 export async function buildWordHiddenPreviewImage(
