@@ -20,12 +20,13 @@ export async function render(
 ): Promise<Buffer> {
   const canvas = await Root({
     width: options?.width ?? 360,
-    scale: options?.scale ?? 2,
-    workerMode: false,
+    scale: options?.scale ?? 1,
+    workerMode: true,
     fonts: FONTS,
     children,
   });
-  const buffer = Buffer.from(canvas.toBufferSync());
+  const canvasBuffer = await canvas.toBuffer('png');
+  const buffer = Buffer.from(canvasBuffer);
   if (typeof canvas.release === 'function') {
     canvas.release();
   }

@@ -5,10 +5,12 @@ import {
   buildResultImage,
   type LetterFeedback,
 } from '@marquinhos/ui/screens/termo';
+import { baseEmbed } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import {
   AttachmentBuilder,
+  GuildMember,
   MessageFlags,
   type AutocompleteInteraction,
   type ChatInputCommandInteraction,
@@ -162,18 +164,42 @@ export class TermoCommand extends MarquinhosCommand {
 
     if (result.solved) {
       try {
-        const resultBuffer = await buildResultImage(
-          result.guesses,
-          interaction.user.displayName,
-          { streak: result.streak },
-        );
+        const resultBuffer = await buildResultImage(result.guesses);
         const resultAttachment = new AttachmentBuilder(resultBuffer, {
           name: 'resultado.png',
         });
+        const name =
+          (interaction.member as GuildMember).nickname ||
+          interaction.user.displayName ||
+          interaction.user.username ||
+          interaction.user.globalName;
+
+        const message =
+          result.attempts === 1
+            ? 'acertou de primeira!'
+            : `acertou em ${result.attempts} tentativa${result.attempts > 1 ? 's' : ''}!`;
+
+        const embed = baseEmbed(this.container.client)
+          .setTitle(`${name} ${message}`)
+          .setColor(0x588157)
+          .setImage('attachment://resultado.png');
+
         await channel.send({
-          content: `${interaction.user}`,
+          embeds: [embed],
           files: [resultAttachment],
         });
+
+        if (result.guesses.length === 1) {
+          const message = await channel.send(
+            `TAPORRA ${name} EU NUNCA ACREDITEI! ESPERO QUE NUNCA MAIS CONSIGA!`,
+          );
+          message.react(':marquinhosverao:1192666622356361367');
+        } else if (result.guesses.length === 2) {
+          const message = await channel.send(
+            `OLOCO ${name} QUASE HEIN! DA PRÓXIMA VAI SER NO MÍNIMO 5!`,
+          );
+          message.react(':marquinhosverao:1192666622356361367');
+        }
       } catch {
         /* silently ignore */
       }

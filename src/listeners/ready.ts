@@ -1,14 +1,17 @@
 import { GuildConfig } from '@marquinhos/config/guild';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
-import {
-  buildNewWordImage,
-  buildStatsImage,
-  type TermoStats,
-} from '@marquinhos/ui/screens/termo';
+import { buildWordHiddenPreviewImage } from '@marquinhos/ui/screens/termo';
 import { getBicho } from '@marquinhos/utils/bichoGame';
+import { baseEmbed } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
 import { Listener } from '@sapphire/framework';
-import { AttachmentBuilder, Client, Events, TextChannel } from 'discord.js';
+import {
+  AttachmentBuilder,
+  Client,
+  EmbedBuilder,
+  Events,
+  TextChannel,
+} from 'discord.js';
 
 const api = MarquinhosApiService.getInstance();
 
@@ -106,17 +109,24 @@ async function rotateTermoWord(client: Client<true>): Promise<void> {
         ];
         const trashTalk =
           shortTrashTalks[Math.floor(Math.random() * shortTrashTalks.length)];
-        const buffer = await buildNewWordImage({
-          wordLength: data.wordLength,
-          wordDate: data.wordDate,
-          message: trashTalk,
-        });
-        const attachment = new AttachmentBuilder(buffer, {
+
+        const previewBuffer = await buildWordHiddenPreviewImage(
+          data.wordLength,
+        );
+        const previewAttachment = new AttachmentBuilder(previewBuffer, {
           name: 'nova-palavra.png',
         });
+
+        const embed = baseEmbed(client)
+          .setTitle(`Novo Terminho - ${data.wordLength} letras`)
+          .setDescription(trashTalk)
+          .setColor(0x588157)
+          .setImage('attachment://nova-palavra.png');
+
         await channel.send({
           content: `<@&${GuildConfig.TERMINHOS_ANNOUNCE_ROLE_ID}>`,
-          files: [attachment],
+          embeds: [embed],
+          files: [previewAttachment],
         });
       } catch (err) {
         logger.warn(
@@ -173,13 +183,25 @@ async function broadcastTermoStats(client: Client<true>): Promise<void> {
         | undefined;
       if (!channel) continue;
 
-      const buffer = await buildStatsImage(stats as TermoStats, {
-        title: 'STATUS DO TERMO',
-      });
-      const attachment = new AttachmentBuilder(buffer, {
-        name: 'termo-status.png',
-      });
-      await channel.send({ files: [attachment] });
+      const embed = new EmbedBuilder()
+        .setTitle('Status do Termo')
+        .addFields(
+          {
+            name: 'Jogadores',
+            value: String(stats.playersCount),
+            inline: true,
+          },
+          { name: 'Acertos', value: String(stats.winnersCount), inline: true },
+          { name: 'Média', value: stats.avgAttempts.toFixed(1), inline: true },
+          { name: 'Letras', value: String(stats.wordLength), inline: true },
+        )
+        .setColor(0x588157);
+      if (stats.wordDate) {
+        embed.setFooter({
+          text: stats.wordDate.split('-').reverse().join('/'),
+        });
+      }
+      await channel.send({ embeds: [embed] });
       lastBroadcastWinners.set(guildId, stats.winnersCount);
     } catch (err) {
       logger.warn(`Terminhos stats: failed for guild ${guildId}:`, err);

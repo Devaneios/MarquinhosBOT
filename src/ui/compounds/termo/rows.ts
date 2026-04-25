@@ -13,7 +13,7 @@ export function attemptRow(
   if (attempt) {
     return Row({
       justifyContent: Style.Justify.FlexStart,
-      gap: 2,
+      gap: 4,
       width: '100%',
       children: attempt.guess
         .split('')
