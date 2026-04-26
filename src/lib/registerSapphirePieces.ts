@@ -5,6 +5,7 @@ import { GamesCommand } from '@marquinhos/commands/games/games';
 import { TermoCommand } from '@marquinhos/commands/games/termo';
 import { AnomCommand } from '@marquinhos/commands/general/anom';
 import { AvatarCommand } from '@marquinhos/commands/general/avatar';
+import { CatCommand } from '@marquinhos/commands/general/cat';
 import { CoinCommand } from '@marquinhos/commands/general/coin';
 import { EsrohCommand } from '@marquinhos/commands/general/esroh';
 import { HorseCommand } from '@marquinhos/commands/general/horse';
@@ -47,6 +48,7 @@ const commands = [
   ['termo', TermoCommand],
   ['anom', AnomCommand],
   ['avatar', AvatarCommand],
+  ['gato', CatCommand],
   ['moeda', CoinCommand],
   ['olavac', EsrohCommand],
   ['cavalo', HorseCommand],
