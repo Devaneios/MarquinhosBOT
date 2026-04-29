@@ -224,6 +224,7 @@ export class GameButtonsHandler extends InteractionHandler {
   }
 
   override parse(interaction: ButtonInteraction) {
+    if (interaction.customId.startsWith('termo_')) return this.none();
     const session = gameManager.getSessionByChannel(interaction.channelId);
     if (!session) return this.none();
     return this.some();

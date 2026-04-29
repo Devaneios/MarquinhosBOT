@@ -1,7 +1,6 @@
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
-  buildKeyboardImage,
   buildResultImage,
   type LetterFeedback,
 } from '@marquinhos/ui/screens/termo';
@@ -15,6 +14,7 @@ import {
   type AutocompleteInteraction,
   type ChatInputCommandInteraction,
 } from 'discord.js';
+import { buildKeyboardAttachment, buildTermoActionRow } from './termoResponse';
 
 interface WordleGuessResult {
   guesses: { guess: string; feedback: LetterFeedback[] }[];
@@ -118,15 +118,15 @@ export class TermoCommand extends MarquinhosCommand {
         });
         return;
       }
-      const keyboardBuffer = await buildKeyboardImage(
+      const attachment = await buildKeyboardAttachment(
         result.guesses,
         result.wordLength,
         { maxAttempts: result.attempts },
       );
-      const attachment = new AttachmentBuilder(keyboardBuffer, {
-        name: 'keyboard.png',
+      await interaction.editReply({
+        files: [attachment],
+        components: [buildTermoActionRow()],
       });
-      await interaction.editReply({ files: [attachment] });
       return;
     }
 
@@ -148,7 +148,7 @@ export class TermoCommand extends MarquinhosCommand {
     }
 
     previousErrorInteractions.delete(userId);
-    const keyboardBuffer = await buildKeyboardImage(
+    const attachment = await buildKeyboardAttachment(
       result.guesses,
       result.wordLength,
       {
@@ -156,11 +156,11 @@ export class TermoCommand extends MarquinhosCommand {
         status: result.solved ? { attempts: result.attempts } : undefined,
       },
     );
-    const attachment = new AttachmentBuilder(keyboardBuffer, {
-      name: 'keyboard.png',
-    });
 
-    await interaction.editReply({ files: [attachment] });
+    await interaction.editReply({
+      files: [attachment],
+      components: [buildTermoActionRow()],
+    });
 
     if (result.solved) {
       try {

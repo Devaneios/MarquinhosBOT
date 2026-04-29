@@ -30,6 +30,7 @@ import { LeaderboardCommand } from '@marquinhos/commands/social/leaderboard';
 import { LevelCommand } from '@marquinhos/commands/social/level';
 import { GameButtonsHandler } from '@marquinhos/interaction-handlers/gameButtons';
 import { GameModalsHandler } from '@marquinhos/interaction-handlers/gameModals';
+import { TermoButtonsHandler } from '@marquinhos/interaction-handlers/termoButtons';
 import { GuildMemberAddListener } from '@marquinhos/listeners/guildMemberAdd';
 import { MessageCreateListener } from '@marquinhos/listeners/messageCreate';
 import { ReadyListener } from '@marquinhos/listeners/ready';
@@ -76,6 +77,7 @@ const commands = [
 const interactionHandlers = [
   ['gameButtons', GameButtonsHandler],
   ['gameModals', GameModalsHandler],
+  ['termoButtons', TermoButtonsHandler],
 ] as const;
 
 const listeners = [
