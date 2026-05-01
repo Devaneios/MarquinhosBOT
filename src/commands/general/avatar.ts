@@ -6,6 +6,9 @@ import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import { MessageFlags } from 'discord.js';
 
+let avatarCache: AvatarConfig[] | null = null;
+let avatarCacheExpiry = 0;
+
 export class AvatarCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
     super(context, { name: 'avatar', cooldownDelay: 10_000 });
@@ -47,6 +50,10 @@ export class AvatarCommand extends MarquinhosCommand {
   ) {
     const subcommand = interaction.options.getSubcommand();
 
+    await interaction.deferReply({
+      flags: subcommand === 'listar' ? MessageFlags.Ephemeral : undefined,
+    });
+
     try {
       const spreadsheet = SpreadsheetService.getInstance();
       const avatars = await spreadsheet.getRowsAsObjects<AvatarConfig>(
@@ -67,22 +74,31 @@ export class AvatarCommand extends MarquinhosCommand {
       }
     } catch (error) {
       logger.error('Error in avatar command:', error);
-      await interaction.reply({
+      await interaction.editReply({
         content: 'Houve um erro ao processar o comando de avatar.',
-        flags: MessageFlags.Ephemeral,
       });
     }
   }
 
   override async autocompleteRun(interaction: Command.AutocompleteInteraction) {
     const focusedValue = interaction.options.getFocused();
-    const spreadsheet = SpreadsheetService.getInstance();
-    const avatars = await spreadsheet.getRowsAsObjects<AvatarConfig>(
-      'avatars',
-      'A1:D',
-    );
 
-    const filtered = avatars
+    const now = Date.now();
+    if (!avatarCache || now > avatarCacheExpiry) {
+      try {
+        const spreadsheet = SpreadsheetService.getInstance();
+        avatarCache = await spreadsheet.getRowsAsObjects<AvatarConfig>(
+          'avatars',
+          'A1:D',
+        );
+        avatarCacheExpiry = now + 5 * 60 * 1000;
+      } catch {
+        await interaction.respond([]);
+        return;
+      }
+    }
+
+    const filtered = avatarCache
       .filter((avatar) =>
         avatar.name.toLowerCase().includes(focusedValue.toLowerCase()),
       )
@@ -101,8 +117,6 @@ async function handleListAvatars(
   interaction: Command.ChatInputCommandInteraction,
   avatars: AvatarConfig[],
 ) {
-  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-
   if (!avatars || avatars.length === 0) {
     return interaction.editReply('Nenhum avatar encontrado.');
   }
@@ -128,8 +142,6 @@ async function handleSelectAvatar(
   interaction: Command.ChatInputCommandInteraction,
   avatars: AvatarConfig[],
 ) {
-  await interaction.deferReply();
-
   const avatarName = interaction.options.getString('nome');
 
   const selectedAvatar = avatars.find((avatar) => avatar.name === avatarName);
@@ -158,8 +170,6 @@ async function handleHolidayAvatar(
   interaction: Command.ChatInputCommandInteraction,
   avatars: AvatarConfig[],
 ) {
-  await interaction.deferReply();
-
   try {
     const avatar = await findSeasonalAvatar(avatars);
     logger.info(`Updating avatar to ${avatar.name}`);

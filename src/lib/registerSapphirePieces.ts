@@ -31,6 +31,10 @@ import { LevelCommand } from '@marquinhos/commands/social/level';
 import { GameButtonsHandler } from '@marquinhos/interaction-handlers/gameButtons';
 import { GameModalsHandler } from '@marquinhos/interaction-handlers/gameModals';
 import { TermoButtonsHandler } from '@marquinhos/interaction-handlers/termoButtons';
+import {
+  AutocompleteInteractionErrorListener,
+  ChatInputCommandErrorListener,
+} from '@marquinhos/listeners/commandError';
 import { GuildMemberAddListener } from '@marquinhos/listeners/guildMemberAdd';
 import { MessageCreateListener } from '@marquinhos/listeners/messageCreate';
 import { ReadyListener } from '@marquinhos/listeners/ready';
@@ -81,6 +85,8 @@ const interactionHandlers = [
 ] as const;
 
 const listeners = [
+  ['chatInputCommandError', ChatInputCommandErrorListener],
+  ['autocompleteInteractionError', AutocompleteInteractionErrorListener],
   ['guildMemberAdd', GuildMemberAddListener],
   ['messageCreate', MessageCreateListener],
   ['ready', ReadyListener],
