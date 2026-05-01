@@ -36,9 +36,11 @@ export class DisconnectCommand extends MarquinhosCommand {
       return;
     }
 
+    await interaction.deferReply();
+
     const member = await interaction.guild?.members.fetch(targetUser.id);
     if (!member) {
-      await interaction.reply({
+      await interaction.editReply({
         embeds: [
           disconnectEmbed.setDescription(
             'Não foi possível encontrar o membro no servidor.',
@@ -49,7 +51,7 @@ export class DisconnectCommand extends MarquinhosCommand {
     }
 
     if (!member.voice.channel) {
-      await interaction.reply({
+      await interaction.editReply({
         embeds: [
           disconnectEmbed.setDescription(
             'Este usuário não está em um canal de voz.',
@@ -61,7 +63,7 @@ export class DisconnectCommand extends MarquinhosCommand {
 
     try {
       await member.voice.setChannel(null);
-      await interaction.reply({
+      await interaction.editReply({
         embeds: [
           disconnectEmbed.setDescription(
             `${member.user.username} foi desconectado do canal de voz.`,
@@ -69,7 +71,7 @@ export class DisconnectCommand extends MarquinhosCommand {
         ],
       });
     } catch (_error) {
-      await interaction.reply({
+      await interaction.editReply({
         embeds: [
           disconnectEmbed.setDescription(
             'Não foi possível desconectar o usuário. Verifique se tenho as permissões necessárias.',

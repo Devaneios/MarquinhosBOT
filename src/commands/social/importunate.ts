@@ -26,8 +26,16 @@ export class ImportunateCommand extends MarquinhosCommand {
   override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction,
   ) {
-    const member = interaction.options.get('importunado')
-      ?.member as GuildMember;
+    const member = interaction.options.getMember(
+      'importunado',
+    ) as GuildMember | null;
+
+    if (!member) {
+      await interaction.reply({
+        content: '❌ Usuário não encontrado.',
+      });
+      return;
+    }
 
     if (member.user.bot) {
       await interaction.reply({

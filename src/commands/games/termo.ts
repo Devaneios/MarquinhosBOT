@@ -58,13 +58,14 @@ export class TermoCommand extends MarquinhosCommand {
       return;
     }
 
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
     const configResponse = await api.getWordleConfig(interaction.guildId);
     const channelId = (configResponse.data as { channelId?: string })
       ?.channelId;
     if (!channelId) {
-      await interaction.reply({
+      await interaction.editReply({
         content: '❌ O Terminhos não está configurado.',
-        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -73,17 +74,15 @@ export class TermoCommand extends MarquinhosCommand {
       .guild!.channels.fetch(channelId)
       .catch(() => null);
     if (!channel || !channel.isTextBased()) {
-      await interaction.reply({
+      await interaction.editReply({
         content: '❌ O canal configurado para o Terminhos é inválido.',
-        flags: MessageFlags.Ephemeral,
       });
       return;
     }
 
     if (channelId !== interaction.channelId) {
-      await interaction.reply({
+      await interaction.editReply({
         content: `❌ Por favor, jogue o Terminhos no canal <#${channelId}>.`,
-        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -100,7 +99,6 @@ export class TermoCommand extends MarquinhosCommand {
     }
 
     const guess = interaction.options.getString('palpite', false)?.trim();
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     if (!guess) {
       const userAttemptsResponse = await api.getUserWordleSession(
