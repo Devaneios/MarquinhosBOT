@@ -1,5 +1,6 @@
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { Command } from '@sapphire/framework';
+import { joinVoiceChannel } from 'discord-player';
 import { GuildMember } from 'discord.js';
 
 export class ImportunateCommand extends MarquinhosCommand {
@@ -30,24 +31,37 @@ export class ImportunateCommand extends MarquinhosCommand {
       'importunado',
     ) as GuildMember | null;
 
+    await interaction.deferReply({ ephemeral: true });
+
     if (!member) {
-      await interaction.reply({
+      await interaction.editReply({
         content: '❌ Usuário não encontrado.',
       });
       return;
     }
 
     if (member.user.bot) {
-      await interaction.reply({
+      await interaction.editReply({
         content: 'Nunca vou conseguir irritar um bot',
       });
       return;
     }
 
     if (member.voice.channel) {
-      await interaction.reply({ content: `${member} AEHOOOOOOOOOOOOOO` });
+      const connection = joinVoiceChannel({
+        channelId: member.voice.channel.id,
+        guildId: member.guild.id,
+        adapterCreator: member.guild.voiceAdapterCreator,
+      });
+      await interaction.editReply({
+        content: `Pronto, já tô lá no canal de voz irritando a vida do ${member.user.tag}!`,
+      });
+      setTimeout(() => {
+        connection.disconnect();
+        connection.destroy();
+      }, 3000);
     } else {
-      await interaction.reply({
+      await interaction.editReply({
         content: 'Acho que essa pessoa aí não tá num canal de voz..',
       });
     }
