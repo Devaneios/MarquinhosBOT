@@ -8,6 +8,7 @@ import {
 import { getBicho } from '@marquinhos/utils/bichoGame';
 import { baseEmbed } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
+import { resourcePath } from '@marquinhos/utils/resources';
 import { Listener } from '@sapphire/framework';
 import {
   AttachmentBuilder,
@@ -37,6 +38,7 @@ export class ReadyListener extends Listener<typeof Events.ClientReady> {
     startBichoGame(client);
     startTermoScheduler(client);
     startTermoStatsBroadcast(client);
+    startWednesdayImageScheduler(client);
   }
 }
 
@@ -268,4 +270,79 @@ async function broadcastTermoStats(client: Client<true>): Promise<void> {
 function startTermoStatsBroadcast(client: Client<true>): void {
   const TWO_HOURS = 2 * 60 * 60 * 1000;
   setInterval(() => broadcastTermoStats(client), TWO_HOURS);
+}
+
+function msUntilNextWednesdayAt5PM(): number {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Recife',
+    weekday: 'short',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: false,
+  })
+    .formatToParts(now)
+    .reduce(
+      (acc, p) => {
+        if (p.type === 'weekday') acc.weekday = p.value; // 'Wed', 'Mon', etc.
+        if (p.type === 'hour') acc.hour = Number(p.value);
+        if (p.type === 'minute') acc.minute = Number(p.value);
+        if (p.type === 'second') acc.second = Number(p.value);
+        return acc;
+      },
+      { weekday: '', hour: 0, minute: 0, second: 0 },
+    );
+
+  const TARGET_HOUR = 17;
+  const msElapsedToday =
+    parts.hour * 3_600_000 + parts.minute * 60_000 + parts.second * 1_000;
+  const msUntil5PM = TARGET_HOUR * 3_600_000 - msElapsedToday;
+
+  const isWednesday = parts.weekday === 'Wed';
+  if (isWednesday && msUntil5PM > 0) return msUntil5PM;
+
+  // Days until next Wednesday (wraps around the week)
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const currentDay = weekdays.indexOf(parts.weekday);
+  const wednesdayDay = weekdays.indexOf('Wed');
+  const daysUntilWed = (wednesdayDay - currentDay + 7) % 7 || 7; // at least 1 full week ahead
+
+  const msInDay = 24 * 3_600_000;
+  const msRemainingToday = msInDay - msElapsedToday;
+  return (
+    msRemainingToday + (daysUntilWed - 1) * msInDay + TARGET_HOUR * 3_600_000
+  );
+}
+
+async function postWednesdayImage(client: Client<true>): Promise<void> {
+  try {
+    const channel = client.channels.cache.get(
+      GuildConfig.WEDNESDAY_IMAGE_CHANNEL_ID,
+    ) as TextChannel | undefined;
+    if (!channel) return;
+
+    const attachment = new AttachmentBuilder(
+      resourcePath('images', 'wednesday.jpg'),
+    );
+    await channel.send({ files: [attachment] });
+  } catch (err) {
+    logger.error('Wednesday image: falha ao postar imagem:', err);
+  }
+}
+
+function scheduleNextWednesday(client: Client<true>): void {
+  const ms = msUntilNextWednesdayAt5PM();
+  logger.info(
+    `Wednesday image: próximo post em ${Math.round(ms / 60000)} minutos`,
+  );
+  setTimeout(async () => {
+    await postWednesdayImage(client);
+    scheduleNextWednesday(client);
+  }, ms);
+}
+
+function startWednesdayImageScheduler(client: Client<true>): void {
+  if (!GuildConfig.WEDNESDAY_IMAGE_CHANNEL_ID) return;
+  scheduleNextWednesday(client);
 }
