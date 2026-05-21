@@ -7,6 +7,7 @@ import { env } from './config/environment';
 import { GameManager } from './game/core/GameManager';
 import { initializePlayer } from './lib/player';
 import { registerSapphirePieces } from './lib/registerSapphirePieces';
+import { MarquinhosApiService } from './services/marquinhosApi';
 import { SpreadsheetService } from './services/spreadsheet';
 import { logger } from './utils/logger';
 
@@ -54,6 +55,15 @@ async function main() {
     registerShutdownHooks();
     SpreadsheetService.getInstance();
     await client.login(env.MARQUINHOS_TOKEN);
+    try {
+      const api = MarquinhosApiService.getInstance();
+      const { data } = await api.getWordlistPoolStats();
+      logger.info(
+        `Termo wordlist: ${data.remaining} palavras restantes de ${data.total} (${data.used} já usadas)`,
+      );
+    } catch {
+      logger.warn('Não foi possível obter stats do wordlist do termo.');
+    }
   } catch (error) {
     logger.error('Failed to start Marquinhos:', error);
     process.exit(1);
