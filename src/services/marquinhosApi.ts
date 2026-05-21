@@ -362,6 +362,17 @@ export class MarquinhosApiService {
     return data as ApiResponse;
   }
 
+  async getWordlistPoolStats(): Promise<
+    ApiResponse<{ total: number; used: number; remaining: number }>
+  > {
+    const data = await this.client.get('/api/wordle/wordlist-pool-stats');
+    return data as ApiResponse<{
+      total: number;
+      used: number;
+      remaining: number;
+    }>;
+  }
+
   // Voice AI API calls
   async post(
     endpoint: string,
