@@ -3,9 +3,13 @@ import {
   buildCrosswordLayout,
   termoCrosswordCard,
   termoKeyboardCard,
+  termoLeaderboardCard,
   termoResultCard,
   wordPreviewCard,
+  type DailyEntry,
+  type LeaderboardPeriod,
   type LetterFeedback,
+  type RankedEntry,
   type TermoGuess,
   type TermoSolvedStatus,
 } from '../compounds/termo';
@@ -67,6 +71,20 @@ export async function buildWordHiddenPreviewImage(
   const theme = options?.theme ?? defaultTheme;
   return render([wordPreviewCard(' '.repeat(wordLength), theme)], {
     width: (32 + 4) * wordLength + 24,
+  });
+}
+
+export type { DailyEntry, LeaderboardPeriod, RankedEntry };
+
+export async function buildTermoLeaderboardImage(
+  entries: (DailyEntry | RankedEntry)[],
+  period: LeaderboardPeriod,
+  groupStreak: number,
+  options?: { theme?: Theme },
+): Promise<Buffer> {
+  const theme = options?.theme ?? defaultTheme;
+  return render([termoLeaderboardCard(entries, period, groupStreak, theme)], {
+    width: 420,
   });
 }
 
