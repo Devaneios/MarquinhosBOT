@@ -4,8 +4,11 @@ import {
   buildCrosswordImage,
   buildKeyboardImage,
   buildResultImage,
+  buildTermoLeaderboardImage,
   buildWordPreviewImage,
+  type DailyEntry,
   type LetterFeedback,
+  type RankedEntry,
 } from './termo';
 
 const OUT_DIR = join(import.meta.dir, '../../../test-output');
@@ -729,6 +732,32 @@ writeFileSync(
 writeFileSync(
   join(OUT_DIR, 'crossword-gaveta.png'),
   await buildCrosswordImage(gavetaDay, 'gaveta'),
+);
+
+const dailyEntries: DailyEntry[] = [
+  { rank: 1, displayName: 'Alice', attempts: 2, solved: true },
+  { rank: 2, displayName: 'Bob', attempts: 4, solved: true },
+  { rank: 3, displayName: 'Charlie', attempts: 6, solved: false },
+];
+
+const rankedEntries: RankedEntry[] = [
+  { rank: 1, displayName: 'Alice', avgScore: 2.3, totalDays: 7 },
+  { rank: 2, displayName: 'Bob', avgScore: 3.1, totalDays: 5 },
+  { rank: 3, displayName: 'Charlie', avgScore: 3.5, totalDays: 3 },
+  { rank: 4, displayName: 'Diana', avgScore: 4.0, totalDays: 2 },
+];
+
+writeFileSync(
+  join(OUT_DIR, 'leaderboard-daily.png'),
+  await buildTermoLeaderboardImage(dailyEntries, 'daily', 12),
+);
+writeFileSync(
+  join(OUT_DIR, 'leaderboard-weekly.png'),
+  await buildTermoLeaderboardImage(rankedEntries, 'weekly', 12),
+);
+writeFileSync(
+  join(OUT_DIR, 'leaderboard-all-time.png'),
+  await buildTermoLeaderboardImage([], 'all-time', 0),
 );
 
 console.log('done');

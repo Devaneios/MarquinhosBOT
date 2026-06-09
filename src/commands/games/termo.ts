@@ -2,7 +2,9 @@ import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
   buildResultImage,
+  buildTermoLeaderboardImage,
   type LetterFeedback,
+  type RankedEntry,
 } from '@marquinhos/ui/screens/termo';
 import { baseEmbed } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
@@ -40,16 +42,50 @@ export class TermoCommand extends MarquinhosCommand {
       builder
         .setName(this.commandName)
         .setDescription('Jogue o Terminhos, o Termo do Marquinhos!')
-        .addStringOption((opt) =>
-          opt
-            .setName('palpite')
-            .setDescription('Sua tentativa')
-            .setAutocomplete(true),
+        .addSubcommand((sub) =>
+          sub
+            .setName('jogar')
+            .setDescription('Envie um palpite ou veja seu estado atual')
+            .addStringOption((opt) =>
+              opt
+                .setName('palpite')
+                .setDescription('Sua tentativa')
+                .setAutocomplete(true),
+            ),
+        )
+        .addSubcommand((sub) =>
+          sub
+            .setName('leaderboard')
+            .setDescription('Veja o ranking do Terminhos')
+            .addStringOption((opt) =>
+              opt
+                .setName('periodo')
+                .setDescription('Período do ranking')
+                .setRequired(true)
+                .addChoices(
+                  { name: 'Esta semana', value: 'weekly' },
+                  { name: 'Este mês', value: 'monthly' },
+                  { name: 'Histórico', value: 'all-time' },
+                ),
+            ),
         ),
     );
   }
 
   override async chatInputRun(interaction: ChatInputCommandInteraction) {
+    const subcommand = interaction.options.getSubcommand();
+
+    if (subcommand === 'leaderboard') {
+      await this.handleLeaderboard(interaction);
+      return;
+    }
+
+    await this.handleJogar(interaction);
+  }
+
+  private async handleJogar(
+    interaction: ChatInputCommandInteraction,
+  ): Promise<void> {
     if (!interaction.guildId) {
       await interaction.reply({
         content: '❌ O Terminhos só pode ser jogado no Devaneios.',
@@ -172,13 +208,13 @@ export class TermoCommand extends MarquinhosCommand {
           interaction.user.username ||
           interaction.user.globalName;
 
-        const message =
+        const solvedMessage =
           result.attempts === 1
             ? 'acertou de primeira!'
             : `acertou em ${result.attempts} tentativa${result.attempts > 1 ? 's' : ''}!`;
 
         const embed = baseEmbed(this.container.client)
-          .setTitle(`${name} ${message}`)
+          .setTitle(`${name} ${solvedMessage}`)
           .setColor(0x588157)
           .setImage('attachment://resultado.png');
 
@@ -188,19 +224,82 @@ export class TermoCommand extends MarquinhosCommand {
         });
 
         if (result.guesses.length === 1) {
-          const message = await channel.send(
+          const msg = await channel.send(
             `TAPORRA ${name} EU NUNCA ACREDITEI! ESPERO QUE NUNCA MAIS CONSIGA!`,
           );
-          message.react(':marquinhosverao:1192666622356361367');
+          msg.react(':marquinhosverao:1192666622356361367');
         } else if (result.guesses.length === 2) {
-          const message = await channel.send(
+          const msg = await channel.send(
             `OLOCO ${name} QUASE HEIN! DA PRÓXIMA VAI SER NO MÍNIMO 5!`,
           );
-          message.react(':marquinhosverao:1192666622356361367');
+          msg.react(':marquinhosverao:1192666622356361367');
         }
       } catch {
         /* silently ignore */
       }
+    }
+  }
+
+  private async handleLeaderboard(
+    interaction: ChatInputCommandInteraction,
+  ): Promise<void> {
+    if (!interaction.guildId) {
+      await interaction.reply({
+        content: '❌ Este comando só funciona em servidores.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    const rawPeriod = interaction.options.getString('periodo', true);
+    const period = rawPeriod as 'weekly' | 'monthly' | 'all-time';
+
+    await interaction.deferReply();
+
+    try {
+      const response = await api.getWordleLeaderboard(
+        interaction.guildId,
+        period,
+      );
+      const { data: rawEntries, groupStreak } = response.data as {
+        data: { userId: string; totalDays: number; avgScore: number }[];
+        groupStreak: number;
+      };
+
+      const guild = interaction.guild!;
+      const userIds = rawEntries.map((e) => e.userId);
+      const membersCollection =
+        userIds.length > 0
+          ? await guild.members.fetch({ user: userIds }).catch(() => null)
+          : null;
+
+      const entries: RankedEntry[] = rawEntries.map((e, i) => ({
+        rank: i + 1,
+        displayName:
+          membersCollection?.get(e.userId)?.displayName ?? `<@${e.userId}>`,
+        avgScore: e.avgScore,
+        totalDays: e.totalDays,
+      }));
+
+      const buffer = await buildTermoLeaderboardImage(
+        entries,
+        period,
+        groupStreak,
+      );
+      const attachment = new AttachmentBuilder(buffer, {
+        name: 'terminhos-ranking.png',
+      });
+
+      const embed = baseEmbed(this.container.client)
+        .setColor(0x588157)
+        .setImage('attachment://terminhos-ranking.png');
+
+      await interaction.editReply({ embeds: [embed], files: [attachment] });
+    } catch (err) {
+      logger.error('Termo leaderboard error:', err);
+      await interaction.editReply({
+        content: '❌ Erro ao buscar o ranking.',
+      });
     }
   }
 

@@ -373,6 +373,29 @@ export class MarquinhosApiService {
     }>;
   }
 
+  async getWordleLeaderboard(
+    guildId: string,
+    period: 'daily' | 'weekly' | 'monthly' | 'all-time',
+  ): Promise<
+    ApiResponse<{
+      data:
+        | { userId: string; totalDays: number; avgScore: number }[]
+        | { userId: string; attempts: number; solved: boolean }[];
+      groupStreak: number;
+    }>
+  > {
+    const params = new URLSearchParams({ period });
+    const result = await this.client.get(
+      `/api/wordle/leaderboard/${guildId}?${params}`,
+    );
+    return result as ApiResponse<{
+      data:
+        | { userId: string; totalDays: number; avgScore: number }[]
+        | { userId: string; attempts: number; solved: boolean }[];
+      groupStreak: number;
+    }>;
+  }
+
   // Voice AI API calls
   async post(
     endpoint: string,

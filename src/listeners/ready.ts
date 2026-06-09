@@ -2,7 +2,9 @@ import { GuildConfig } from '@marquinhos/config/guild';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
   buildCrosswordImage,
+  buildTermoLeaderboardImage,
   buildWordHiddenPreviewImage,
+  type DailyEntry,
   type LetterFeedback,
 } from '@marquinhos/ui/screens/termo';
 import { getBicho } from '@marquinhos/utils/bichoGame';
@@ -91,6 +93,7 @@ async function rotateTermoWord(client: Client<true>): Promise<void> {
         if (!channel) continue;
 
         await sendTermoCrossword(client, guildId, channel);
+        await sendTermoLeaderboard(client, guildId, channel);
 
         const result = await api.forceNewWordleWord(guildId);
         const data = result.data as { wordLength: number; wordDate?: string };
@@ -193,6 +196,59 @@ async function sendTermoCrossword(
   } catch (err) {
     logger.warn(
       `Terminhos: failed to send crossword for guild ${guildId}:`,
+      err,
+    );
+  }
+}
+
+async function sendTermoLeaderboard(
+  client: Client<true>,
+  guildId: string,
+  channel: TextChannel,
+): Promise<void> {
+  try {
+    const response = await api.getWordleLeaderboard(guildId, 'daily');
+    const { data: rawEntries, groupStreak } = response.data as {
+      data: { userId: string; attempts: number; solved: boolean }[];
+      groupStreak: number;
+    };
+
+    if (rawEntries.length === 0) return;
+
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) return;
+
+    const userIds = rawEntries.map((e) => e.userId);
+    const membersCollection = await guild.members
+      .fetch({ user: userIds })
+      .catch(() => null);
+
+    const entries: DailyEntry[] = rawEntries.map((e, i) => ({
+      rank: i + 1,
+      displayName:
+        membersCollection?.get(e.userId)?.displayName ?? `<@${e.userId}>`,
+      attempts: e.attempts,
+      solved: e.solved,
+    }));
+
+    const buffer = await buildTermoLeaderboardImage(
+      entries,
+      'daily',
+      groupStreak,
+    );
+    const attachment = new AttachmentBuilder(buffer, {
+      name: 'terminhos-ranking.png',
+    });
+
+    const embed = baseEmbed(client)
+      .setTitle('Terminhos — Ranking do Dia')
+      .setColor(0x588157)
+      .setImage('attachment://terminhos-ranking.png');
+
+    await channel.send({ embeds: [embed], files: [attachment] });
+  } catch (err) {
+    logger.warn(
+      `Terminhos: failed to send leaderboard for guild ${guildId}:`,
       err,
     );
   }

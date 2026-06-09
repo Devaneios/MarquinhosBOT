@@ -15,6 +15,12 @@ export {
 export { keyboardKey } from './keyboard-key';
 export { termoKeyboardPanel } from './keyboard-panel';
 export {
+  termoLeaderboardCard,
+  type DailyEntry,
+  type LeaderboardPeriod,
+  type RankedEntry,
+} from './leaderboard';
+export {
   TERMO_KB_ROWS,
   buildLetterStates,
   type LetterFeedback,
