@@ -274,10 +274,12 @@ export class AdminCommand extends MarquinhosCommand {
             interaction.guildId!,
             period,
           );
-          const { data: rawEntries, groupStreak } = response.data as {
-            data: { userId: string; totalDays: number; avgScore: number }[];
-            groupStreak: number;
-          };
+          const rawEntries = response.data as {
+            userId: string;
+            totalDays: number;
+            avgScore: number;
+          }[];
+          const { groupStreak } = response;
 
           const guild = interaction.guild!;
           const userIds = rawEntries.map((e) => e.userId);
