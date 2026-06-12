@@ -6,6 +6,7 @@ import {
   buildWordHiddenPreviewImage,
   buildWordPreviewImage,
   denseRanks,
+  type DailyEntry,
   type RankedEntry,
 } from '@marquinhos/ui/screens/termo';
 import { baseEmbed, fetchAvatarBuffer } from '@marquinhos/utils/discord';
@@ -274,11 +275,7 @@ export class AdminCommand extends MarquinhosCommand {
             interaction.guildId!,
             period,
           );
-          const rawEntries = response.data as {
-            userId: string;
-            totalDays: number;
-            avgScore: number;
-          }[];
+          const rawEntries = response.data as { userId: string }[];
           const { groupStreak } = response;
 
           const guild = interaction.guild!;
@@ -288,24 +285,56 @@ export class AdminCommand extends MarquinhosCommand {
               ? await guild.members.fetch({ user: userIds }).catch(() => null)
               : null;
 
-          const ranks = denseRanks(
-            rawEntries.map((e) => `${e.avgScore}:${e.totalDays}`),
-          );
-          const entries: RankedEntry[] = await Promise.all(
-            rawEntries.map(async (e, i) => {
-              const member = membersCollection?.get(e.userId);
-              const avatar = member
-                ? await fetchAvatarBuffer(member)
-                : undefined;
-              return {
-                rank: ranks[i],
-                displayName: member?.displayName ?? `<@${e.userId}>`,
-                avgScore: e.avgScore,
-                totalDays: e.totalDays,
-                avatar,
-              };
-            }),
-          );
+          let entries: (DailyEntry | RankedEntry)[];
+          if (period === 'daily') {
+            const dailyEntries = rawEntries as unknown as {
+              userId: string;
+              attempts: number;
+              solved: boolean;
+            }[];
+            const ranks = denseRanks(
+              dailyEntries.map((e) => (e.solved ? `s:${e.attempts}` : 'u')),
+            );
+            entries = await Promise.all(
+              dailyEntries.map(async (e, i) => {
+                const member = membersCollection?.get(e.userId);
+                const avatar = member
+                  ? await fetchAvatarBuffer(member)
+                  : undefined;
+                return {
+                  rank: ranks[i],
+                  displayName: member?.displayName ?? `<@${e.userId}>`,
+                  attempts: e.attempts,
+                  solved: e.solved,
+                  avatar,
+                };
+              }),
+            );
+          } else {
+            const rankedEntries = rawEntries as unknown as {
+              userId: string;
+              totalDays: number;
+              avgScore: number;
+            }[];
+            const ranks = denseRanks(
+              rankedEntries.map((e) => `${e.avgScore}:${e.totalDays}`),
+            );
+            entries = await Promise.all(
+              rankedEntries.map(async (e, i) => {
+                const member = membersCollection?.get(e.userId);
+                const avatar = member
+                  ? await fetchAvatarBuffer(member)
+                  : undefined;
+                return {
+                  rank: ranks[i],
+                  displayName: member?.displayName ?? `<@${e.userId}>`,
+                  avgScore: e.avgScore,
+                  totalDays: e.totalDays,
+                  avatar,
+                };
+              }),
+            );
+          }
 
           const buffer = await buildTermoLeaderboardImage(
             entries,
