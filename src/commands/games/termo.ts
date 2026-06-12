@@ -2,12 +2,9 @@ import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
   buildResultImage,
-  buildTermoLeaderboardImage,
-  denseRanks,
   type LetterFeedback,
-  type RankedEntry,
 } from '@marquinhos/ui/screens/termo';
-import { baseEmbed, fetchAvatarBuffer } from '@marquinhos/utils/discord';
+import { baseEmbed } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import {
@@ -43,45 +40,16 @@ export class TermoCommand extends MarquinhosCommand {
       builder
         .setName(this.commandName)
         .setDescription('Jogue o Terminhos, o Termo do Marquinhos!')
-        .addSubcommand((sub) =>
-          sub
-            .setName('jogar')
-            .setDescription('Envie um palpite ou veja seu estado atual')
-            .addStringOption((opt) =>
-              opt
-                .setName('palpite')
-                .setDescription('Sua tentativa')
-                .setAutocomplete(true),
-            ),
-        )
-        .addSubcommand((sub) =>
-          sub
-            .setName('leaderboard')
-            .setDescription('Veja o ranking do Terminhos')
-            .addStringOption((opt) =>
-              opt
-                .setName('periodo')
-                .setDescription('Período do ranking')
-                .setRequired(true)
-                .addChoices(
-                  { name: 'Hoje', value: 'daily' },
-                  { name: 'Esta semana', value: 'weekly' },
-                  { name: 'Este mês', value: 'monthly' },
-                  { name: 'Histórico', value: 'all-time' },
-                ),
-            ),
+        .addStringOption((opt) =>
+          opt
+            .setName('palpite')
+            .setDescription('Sua tentativa')
+            .setAutocomplete(true),
         ),
     );
   }
 
   override async chatInputRun(interaction: ChatInputCommandInteraction) {
-    const subcommand = interaction.options.getSubcommand();
-
-    if (subcommand === 'leaderboard') {
-      await this.handleLeaderboard(interaction);
-      return;
-    }
-
     await this.handleJogar(interaction);
   }
 
@@ -239,78 +207,6 @@ export class TermoCommand extends MarquinhosCommand {
       } catch {
         /* silently ignore */
       }
-    }
-  }
-
-  private async handleLeaderboard(
-    interaction: ChatInputCommandInteraction,
-  ): Promise<void> {
-    if (!interaction.guildId) {
-      await interaction.reply({
-        content: '❌ Este comando só funciona em servidores.',
-        flags: MessageFlags.Ephemeral,
-      });
-      return;
-    }
-
-    const rawPeriod = interaction.options.getString('periodo', true);
-    const period = rawPeriod as 'daily' | 'weekly' | 'monthly' | 'all-time';
-
-    await interaction.deferReply();
-
-    try {
-      const response = await api.getWordleLeaderboard(
-        interaction.guildId,
-        period,
-      );
-      const { data: rawEntries, groupStreak } = response.data as {
-        data: { userId: string; totalDays: number; avgScore: number }[];
-        groupStreak: number;
-      };
-
-      const guild = interaction.guild!;
-      const userIds = rawEntries.map((e) => e.userId);
-      const membersCollection =
-        userIds.length > 0
-          ? await guild.members.fetch({ user: userIds }).catch(() => null)
-          : null;
-
-      const ranks = denseRanks(
-        rawEntries.map((e) => `${e.avgScore}:${e.totalDays}`),
-      );
-      const entries: RankedEntry[] = await Promise.all(
-        rawEntries.map(async (e, i) => {
-          const member = membersCollection?.get(e.userId);
-          const avatar = member ? await fetchAvatarBuffer(member) : undefined;
-          return {
-            rank: ranks[i],
-            displayName: member?.displayName ?? `<@${e.userId}>`,
-            avgScore: e.avgScore,
-            totalDays: e.totalDays,
-            avatar,
-          };
-        }),
-      );
-
-      const buffer = await buildTermoLeaderboardImage(
-        entries,
-        period,
-        groupStreak,
-      );
-      const attachment = new AttachmentBuilder(buffer, {
-        name: 'terminhos-ranking.png',
-      });
-
-      const embed = baseEmbed(this.container.client)
-        .setColor(0x588157)
-        .setImage('attachment://terminhos-ranking.png');
-
-      await interaction.editReply({ embeds: [embed], files: [attachment] });
-    } catch (err) {
-      logger.error('Termo leaderboard error:', err);
-      await interaction.editReply({
-        content: '❌ Erro ao buscar o ranking.',
-      });
     }
   }
 

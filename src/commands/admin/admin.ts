@@ -2,10 +2,13 @@ import { GuildConfig } from '@marquinhos/config/guild';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
+  buildTermoLeaderboardImage,
   buildWordHiddenPreviewImage,
   buildWordPreviewImage,
+  denseRanks,
+  type RankedEntry,
 } from '@marquinhos/ui/screens/termo';
-import { baseEmbed } from '@marquinhos/utils/discord';
+import { baseEmbed, fetchAvatarBuffer } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import {
@@ -58,6 +61,23 @@ export class AdminCommand extends MarquinhosCommand {
                 .setName('status')
                 .setDescription(
                   'Exibe as estatísticas de hoje (revela a palavra)',
+                ),
+            )
+            .addSubcommand((sub) =>
+              sub
+                .setName('leaderboard')
+                .setDescription('Veja o ranking do Terminhos')
+                .addStringOption((opt) =>
+                  opt
+                    .setName('periodo')
+                    .setDescription('Período do ranking')
+                    .setRequired(true)
+                    .addChoices(
+                      { name: 'Hoje', value: 'daily' },
+                      { name: 'Esta semana', value: 'weekly' },
+                      { name: 'Este mês', value: 'monthly' },
+                      { name: 'Histórico', value: 'all-time' },
+                    ),
                 ),
             ),
         ),
@@ -238,6 +258,74 @@ export class AdminCommand extends MarquinhosCommand {
           logger.warn('admin termo status: Error fetching stats:', err);
           await interaction.editReply({
             content: '❌ Erro ao buscar status.',
+          });
+        }
+        return;
+      }
+
+      if (sub === 'leaderboard') {
+        const rawPeriod = interaction.options.getString('periodo', true);
+        const period = rawPeriod as 'daily' | 'weekly' | 'monthly' | 'all-time';
+
+        await interaction.deferReply();
+
+        try {
+          const response = await api.getWordleLeaderboard(
+            interaction.guildId!,
+            period,
+          );
+          const { data: rawEntries, groupStreak } = response.data as {
+            data: { userId: string; totalDays: number; avgScore: number }[];
+            groupStreak: number;
+          };
+
+          const guild = interaction.guild!;
+          const userIds = rawEntries.map((e) => e.userId);
+          const membersCollection =
+            userIds.length > 0
+              ? await guild.members.fetch({ user: userIds }).catch(() => null)
+              : null;
+
+          const ranks = denseRanks(
+            rawEntries.map((e) => `${e.avgScore}:${e.totalDays}`),
+          );
+          const entries: RankedEntry[] = await Promise.all(
+            rawEntries.map(async (e, i) => {
+              const member = membersCollection?.get(e.userId);
+              const avatar = member
+                ? await fetchAvatarBuffer(member)
+                : undefined;
+              return {
+                rank: ranks[i],
+                displayName: member?.displayName ?? `<@${e.userId}>`,
+                avgScore: e.avgScore,
+                totalDays: e.totalDays,
+                avatar,
+              };
+            }),
+          );
+
+          const buffer = await buildTermoLeaderboardImage(
+            entries,
+            period,
+            groupStreak,
+          );
+          const attachment = new AttachmentBuilder(buffer, {
+            name: 'terminhos-ranking.png',
+          });
+
+          const embed = baseEmbed(this.container.client)
+            .setColor(0x588157)
+            .setImage('attachment://terminhos-ranking.png');
+
+          await interaction.editReply({
+            embeds: [embed],
+            files: [attachment],
+          });
+        } catch (err) {
+          logger.error('admin termo leaderboard: Error fetching ranking:', err);
+          await interaction.editReply({
+            content: '❌ Erro ao buscar o ranking.',
           });
         }
         return;
