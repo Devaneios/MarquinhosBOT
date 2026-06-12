@@ -377,23 +377,19 @@ export class MarquinhosApiService {
     guildId: string,
     period: 'daily' | 'weekly' | 'monthly' | 'all-time',
   ): Promise<
-    ApiResponse<{
-      data:
-        | { userId: string; totalDays: number; avgScore: number }[]
-        | { userId: string; attempts: number; solved: boolean }[];
-      groupStreak: number;
-    }>
+    ApiResponse<
+      | { userId: string; totalDays: number; avgScore: number }[]
+      | { userId: string; attempts: number; solved: boolean }[]
+    > & { groupStreak: number }
   > {
     const params = new URLSearchParams({ period });
     const result = await this.client.get(
       `/api/wordle/leaderboard/${guildId}?${params}`,
     );
-    return result as ApiResponse<{
-      data:
-        | { userId: string; totalDays: number; avgScore: number }[]
-        | { userId: string; attempts: number; solved: boolean }[];
-      groupStreak: number;
-    }>;
+    return result as ApiResponse<
+      | { userId: string; totalDays: number; avgScore: number }[]
+      | { userId: string; attempts: number; solved: boolean }[]
+    > & { groupStreak: number };
   }
 
   // Voice AI API calls

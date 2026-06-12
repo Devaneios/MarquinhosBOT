@@ -209,10 +209,12 @@ async function sendTermoLeaderboard(
 ): Promise<void> {
   try {
     const response = await api.getWordleLeaderboard(guildId, 'daily');
-    const { data: rawEntries, groupStreak } = response.data as {
-      data: { userId: string; attempts: number; solved: boolean }[];
-      groupStreak: number;
-    };
+    const rawEntries = response.data as {
+      userId: string;
+      attempts: number;
+      solved: boolean;
+    }[];
+    const { groupStreak } = response;
 
     if (rawEntries.length === 0) return;
 
