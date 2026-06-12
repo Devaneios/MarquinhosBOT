@@ -383,6 +383,14 @@ function streakBanner(streak: number, theme: Theme): CanvasNode {
     justifyContent: Style.Justify.SpaceBetween,
     alignItems: Style.Align.Center,
     children: [
+      Column({
+        alignItems: Style.Align.FlexStart,
+        gap: 4,
+        children: [
+          pixelText('STREAK', 12, hexToRgba(STREAK_COLOR, 1)),
+          pixelText('DO SERVIDOR', 12, hexToRgba(STREAK_COLOR, 0.7)),
+        ],
+      }),
       Row({
         alignItems: Style.Align.FlexStart,
         gap: theme.spacing.sm,
@@ -393,15 +401,7 @@ function streakBanner(streak: number, theme: Theme): CanvasNode {
             height: 26,
           }),
           pixelText(`${streak}`, 26, STREAK_COLOR),
-          pixelText(`${daysText}`, 10, theme.colors.textMuted),
-        ],
-      }),
-      Column({
-        alignItems: Style.Align.FlexEnd,
-        gap: 4,
-        children: [
-          pixelText('SEQUÊNCIA', 8, theme.colors.textMuted),
-          pixelText('DO SERVIDOR', 8, hexToRgba(STREAK_COLOR, 0.8)),
+          pixelText(`${daysText}`, 12, theme.colors.textMuted),
         ],
       }),
     ],
