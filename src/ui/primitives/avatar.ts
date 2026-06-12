@@ -9,7 +9,7 @@ export function avatar(
 ): CanvasNode {
   void theme;
   return Image({
-    src: imageBuffer,
+    src: `data:image/png;base64,${imageBuffer.toString('base64')}`,
     width: size,
     height: size,
     borderRadius: size / 2,

@@ -3,10 +3,11 @@ import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
   buildResultImage,
   buildTermoLeaderboardImage,
+  denseRanks,
   type LetterFeedback,
   type RankedEntry,
 } from '@marquinhos/ui/screens/termo';
-import { baseEmbed } from '@marquinhos/utils/discord';
+import { baseEmbed, fetchAvatarBuffer } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import {
@@ -63,6 +64,7 @@ export class TermoCommand extends MarquinhosCommand {
                 .setDescription('Período do ranking')
                 .setRequired(true)
                 .addChoices(
+                  { name: 'Hoje', value: 'daily' },
                   { name: 'Esta semana', value: 'weekly' },
                   { name: 'Este mês', value: 'monthly' },
                   { name: 'Histórico', value: 'all-time' },
@@ -252,7 +254,7 @@ export class TermoCommand extends MarquinhosCommand {
     }
 
     const rawPeriod = interaction.options.getString('periodo', true);
-    const period = rawPeriod as 'weekly' | 'monthly' | 'all-time';
+    const period = rawPeriod as 'daily' | 'weekly' | 'monthly' | 'all-time';
 
     await interaction.deferReply();
 
@@ -273,13 +275,22 @@ export class TermoCommand extends MarquinhosCommand {
           ? await guild.members.fetch({ user: userIds }).catch(() => null)
           : null;
 
-      const entries: RankedEntry[] = rawEntries.map((e, i) => ({
-        rank: i + 1,
-        displayName:
-          membersCollection?.get(e.userId)?.displayName ?? `<@${e.userId}>`,
-        avgScore: e.avgScore,
-        totalDays: e.totalDays,
-      }));
+      const ranks = denseRanks(
+        rawEntries.map((e) => `${e.avgScore}:${e.totalDays}`),
+      );
+      const entries: RankedEntry[] = await Promise.all(
+        rawEntries.map(async (e, i) => {
+          const member = membersCollection?.get(e.userId);
+          const avatar = member ? await fetchAvatarBuffer(member) : undefined;
+          return {
+            rank: ranks[i],
+            displayName: member?.displayName ?? `<@${e.userId}>`,
+            avgScore: e.avgScore,
+            totalDays: e.totalDays,
+            avatar,
+          };
+        }),
+      );
 
       const buffer = await buildTermoLeaderboardImage(
         entries,

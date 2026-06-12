@@ -4,11 +4,12 @@ import {
   buildCrosswordImage,
   buildTermoLeaderboardImage,
   buildWordHiddenPreviewImage,
+  denseRanks,
   type DailyEntry,
   type LetterFeedback,
 } from '@marquinhos/ui/screens/termo';
 import { getBicho } from '@marquinhos/utils/bichoGame';
-import { baseEmbed } from '@marquinhos/utils/discord';
+import { baseEmbed, fetchAvatarBuffer } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
 import { resourcePath } from '@marquinhos/utils/resources';
 import { Listener } from '@sapphire/framework';
@@ -223,13 +224,22 @@ async function sendTermoLeaderboard(
       .fetch({ user: userIds })
       .catch(() => null);
 
-    const entries: DailyEntry[] = rawEntries.map((e, i) => ({
-      rank: i + 1,
-      displayName:
-        membersCollection?.get(e.userId)?.displayName ?? `<@${e.userId}>`,
-      attempts: e.attempts,
-      solved: e.solved,
-    }));
+    const ranks = denseRanks(
+      rawEntries.map((e) => (e.solved ? `s:${e.attempts}` : 'u')),
+    );
+    const entries: DailyEntry[] = await Promise.all(
+      rawEntries.map(async (e, i) => {
+        const member = membersCollection?.get(e.userId);
+        const avatar = member ? await fetchAvatarBuffer(member) : undefined;
+        return {
+          rank: ranks[i],
+          displayName: member?.displayName ?? `<@${e.userId}>`,
+          attempts: e.attempts,
+          solved: e.solved,
+          avatar,
+        };
+      }),
+    );
 
     const buffer = await buildTermoLeaderboardImage(
       entries,

@@ -1,6 +1,7 @@
 import sharp from 'sharp';
 import {
   buildCrosswordLayout,
+  denseRanks,
   termoCrosswordCard,
   termoKeyboardCard,
   termoLeaderboardCard,
@@ -74,6 +75,7 @@ export async function buildWordHiddenPreviewImage(
   });
 }
 
+export { denseRanks };
 export type { DailyEntry, LeaderboardPeriod, RankedEntry };
 
 export async function buildTermoLeaderboardImage(
@@ -84,7 +86,7 @@ export async function buildTermoLeaderboardImage(
 ): Promise<Buffer> {
   const theme = options?.theme ?? defaultTheme;
   return render([termoLeaderboardCard(entries, period, groupStreak, theme)], {
-    width: 420,
+    width: 480,
   });
 }
 
