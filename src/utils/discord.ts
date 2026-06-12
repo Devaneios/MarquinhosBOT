@@ -70,3 +70,16 @@ export const voiceChannelPresence = (message: Message): VoiceChannel | null => {
 export enum AudioPlayerDisconnectEvent {
   Disconnect = 'disconnect',
 }
+
+export async function fetchAvatarBuffer(
+  member: GuildMember,
+): Promise<Buffer | undefined> {
+  try {
+    const url = member.displayAvatarURL({ extension: 'png', size: 128 });
+    const res = await fetch(url);
+    if (!res.ok) return undefined;
+    return Buffer.from(await res.arrayBuffer());
+  } catch {
+    return undefined;
+  }
+}

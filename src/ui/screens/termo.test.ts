@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import sharp from 'sharp';
 import {
   buildCrosswordImage,
   buildKeyboardImage,
@@ -734,17 +735,124 @@ writeFileSync(
   await buildCrosswordImage(gavetaDay, 'gaveta'),
 );
 
+async function makeFakeAvatar(color: string): Promise<Buffer> {
+  return sharp({
+    create: {
+      width: 128,
+      height: 128,
+      channels: 4,
+      background: color,
+    },
+  })
+    .png()
+    .toBuffer();
+}
+
+const avatarAlice = await makeFakeAvatar('#E85D04');
+const avatarBob = await makeFakeAvatar('#3F37C9');
+const avatarCharlie = await makeFakeAvatar('#4CC9F0');
+const avatarDiana = await makeFakeAvatar('#7209B7');
+const avatarEve = await makeFakeAvatar('#F72585');
+const avatarGabi = await makeFakeAvatar('#06D6A0');
+const avatarHugo = await makeFakeAvatar('#FFD166');
+
 const dailyEntries: DailyEntry[] = [
-  { rank: 1, displayName: 'Alice', attempts: 2, solved: true },
-  { rank: 2, displayName: 'Bob', attempts: 4, solved: true },
-  { rank: 3, displayName: 'Charlie', attempts: 6, solved: false },
+  {
+    rank: 1,
+    displayName: 'Alice',
+    attempts: 2,
+    solved: true,
+    avatar: avatarAlice,
+  },
+  { rank: 1, displayName: 'Bob', attempts: 2, solved: true, avatar: avatarBob },
+  {
+    rank: 2,
+    displayName: 'Charlie',
+    attempts: 4,
+    solved: true,
+    avatar: avatarCharlie,
+  },
+  {
+    rank: 3,
+    displayName: 'Diana',
+    attempts: 5,
+    solved: true,
+    avatar: avatarDiana,
+  },
+  { rank: 4, displayName: 'Eve', attempts: 6, solved: false },
+  { rank: 4, displayName: 'Frank', attempts: 6, solved: false },
 ];
 
 const rankedEntries: RankedEntry[] = [
-  { rank: 1, displayName: 'Alice', avgScore: 2.3, totalDays: 7 },
-  { rank: 2, displayName: 'Bob', avgScore: 3.1, totalDays: 5 },
-  { rank: 3, displayName: 'Charlie', avgScore: 3.5, totalDays: 3 },
-  { rank: 4, displayName: 'Diana', avgScore: 4.0, totalDays: 2 },
+  {
+    rank: 1,
+    displayName: 'Alice',
+    avgScore: 2.3,
+    totalDays: 7,
+    avatar: avatarAlice,
+  },
+  {
+    rank: 2,
+    displayName: 'Bob',
+    avgScore: 3.1,
+    totalDays: 5,
+    avatar: avatarBob,
+  },
+  {
+    rank: 2,
+    displayName: 'Charlie',
+    avgScore: 3.1,
+    totalDays: 5,
+    avatar: avatarCharlie,
+  },
+  {
+    rank: 3,
+    displayName: 'Diana',
+    avgScore: 4.0,
+    totalDays: 2,
+    avatar: avatarDiana,
+  },
+  {
+    rank: 4,
+    displayName: 'Eve',
+    avgScore: 4.2,
+    totalDays: 1,
+    avatar: avatarEve,
+  },
+  { rank: 5, displayName: 'Frank', avgScore: 4.8, totalDays: 1 },
+];
+
+const bigTieEntries: DailyEntry[] = [
+  {
+    rank: 1,
+    displayName: 'Alice',
+    attempts: 3,
+    solved: true,
+    avatar: avatarAlice,
+  },
+  { rank: 1, displayName: 'Bob', attempts: 3, solved: true, avatar: avatarBob },
+  {
+    rank: 1,
+    displayName: 'Gabi',
+    attempts: 3,
+    solved: true,
+    avatar: avatarGabi,
+  },
+  {
+    rank: 1,
+    displayName: 'Hugo',
+    attempts: 3,
+    solved: true,
+    avatar: avatarHugo,
+  },
+  {
+    rank: 2,
+    displayName: 'Charlie',
+    attempts: 5,
+    solved: true,
+    avatar: avatarCharlie,
+  },
+  { rank: 3, displayName: 'Eve', attempts: 6, solved: false },
 ];
 
 writeFileSync(
@@ -758,6 +866,10 @@ writeFileSync(
 writeFileSync(
   join(OUT_DIR, 'leaderboard-all-time.png'),
   await buildTermoLeaderboardImage([], 'all-time', 0),
+);
+writeFileSync(
+  join(OUT_DIR, 'leaderboard-daily-tie.png'),
+  await buildTermoLeaderboardImage(bigTieEntries, 'daily', 30),
 );
 
 console.log('done');

@@ -7,6 +7,7 @@ const FONT_DIR = resourcePath('fonts');
 const FONTS = [
   { family: 'Space Grotesk', paths: [`${FONT_DIR}/SpaceGrotesk.ttf`] },
   { family: 'Inter', paths: [`${FONT_DIR}/Inter.ttf`] },
+  { family: 'Press Start 2P', paths: [`${FONT_DIR}/PressStart2P.ttf`] },
 ];
 
 export type RenderOptions = {

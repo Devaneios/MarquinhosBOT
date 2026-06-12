@@ -15,6 +15,7 @@ export {
 export { keyboardKey } from './keyboard-key';
 export { termoKeyboardPanel } from './keyboard-panel';
 export {
+  denseRanks,
   termoLeaderboardCard,
   type DailyEntry,
   type LeaderboardPeriod,
