@@ -9,6 +9,11 @@ import { initializePlayer } from './lib/player';
 import { registerSapphirePieces } from './lib/registerSapphirePieces';
 import { MarquinhosApiService } from './services/marquinhosApi';
 import { SpreadsheetService } from './services/spreadsheet';
+import {
+  flushPendingErrors,
+  reportError,
+  setDiscordClient,
+} from './utils/errorHandling';
 import { logger } from './utils/logger';
 
 process.env.ROOT_DIR = dirname(fileURLToPath(import.meta.url));
@@ -19,7 +24,14 @@ process.on('unhandledRejection', (reason, promise) => {
 
 process.on('uncaughtException', (error: Error) => {
   logger.error(`Uncaught exception: ${error.message}\n${error.stack}`);
-  process.exit(1);
+  reportError(error, {
+    origin: 'process.uncaughtException',
+    logLevel: 'error',
+  });
+  Promise.race([
+    flushPendingErrors(),
+    new Promise((resolve) => setTimeout(resolve, 2000)),
+  ]).finally(() => process.exit(1));
 });
 
 const client = new SapphireClient({
@@ -55,6 +67,7 @@ async function main() {
     registerShutdownHooks();
     SpreadsheetService.getInstance();
     await client.login(env.MARQUINHOS_TOKEN);
+    setDiscordClient(client);
     try {
       const api = MarquinhosApiService.getInstance();
       const { data } = await api.getWordlistPoolStats();

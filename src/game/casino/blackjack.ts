@@ -273,7 +273,12 @@ export class BlackjackGame extends BaseGame {
           ? 0xff0000
           : 0xffaa00;
 
-    return GameUtils.createGameEmbed('🃏 Blackjack', description, color);
+    return GameUtils.createGameEmbed(
+      '🃏 Blackjack',
+      description,
+      color,
+      data.gamePhase === 'finished' ? undefined : this.session.expiresAt,
+    );
   }
 
   getActionButtons() {
@@ -305,7 +310,8 @@ export class BlackjackGame extends BaseGame {
   async finish(): Promise<GameResult> {
     const player = this.session.players[0];
     const data = this.session.data as BlackjackData;
-    const rewards = this.calculateRewards(player, 1);
+    const isWin = data.result === 'win' || data.result === 'blackjack';
+    const rewards = this.calculateRewards(player, isWin ? 1 : 4);
 
     // Bonus XP for blackjack or big wins
     if (data.result === 'blackjack') {
@@ -335,6 +341,6 @@ export class BlackjackGame extends BaseGame {
   }
 
   protected getBaseXpForGame(): number {
-    return 10;
+    return 8;
   }
 }

@@ -305,7 +305,12 @@ async function startGame(
 
   const embed = gameInstance.getGameEmbed();
   const components = gameInstance.getComponents();
-  await interaction.reply({ embeds: [embed], components });
+  const message = await interaction.reply({
+    embeds: [embed],
+    components,
+    fetchReply: true,
+  });
+  gameManager.attachMessage(session.id, message);
 }
 
 async function showStats(interaction: ChatInputCommandInteraction) {

@@ -1,9 +1,5 @@
 import { GameManager } from '@marquinhos/game/core/GameManager';
-import {
-  ButtonDescriptor,
-  ButtonResult,
-  ModalConfig,
-} from '@marquinhos/game/core/GameTypes';
+import { ButtonResult, ModalConfig } from '@marquinhos/game/core/GameTypes';
 import { handleGameInteraction } from '@marquinhos/lib/gameInteraction';
 import { logger } from '@marquinhos/utils/logger';
 import {
@@ -23,8 +19,8 @@ import {
 const gameManager = GameManager.getInstance();
 
 // ---------------------------------------------------------------------------
-// Legacy dispatch tables — backwards-compat layer for the 20 existing games.
-// New games declare getButtonDescriptors() on their class instead.
+// Dispatch tables for the 7 games' buttons (casino: blackjack, slots,
+// roulette, dice; strategy: maze, rock-paper-scissors, tic-tac-toe).
 // ---------------------------------------------------------------------------
 
 const STATIC_BUTTONS = new Map<string, ButtonResult>([
@@ -185,17 +181,18 @@ function legacyParseButton(customId: string): ButtonResult {
   return { kind: 'ignore' };
 }
 
-function resolveDescriptors(
-  descriptors: ButtonDescriptor[],
-  customId: string,
-): ButtonResult {
-  for (const d of descriptors) {
-    if (d.kind === 'static' && d.customId === customId) return d.result;
-    if (d.kind === 'prefix' && customId.startsWith(d.prefix)) {
-      return d.parse(customId.slice(d.prefix.length));
-    }
-  }
-  return { kind: 'ignore' };
+const GAME_BUTTON_PREFIXES = [
+  'bj_',
+  'slots_',
+  'dice_',
+  'roulette_',
+  'rps_',
+  'maze_',
+  'ttt_',
+] as const;
+
+function isGameButtonCustomId(customId: string): boolean {
+  return GAME_BUTTON_PREFIXES.some((prefix) => customId.startsWith(prefix));
 }
 
 async function buildAndShowModal(
@@ -224,24 +221,30 @@ export class GameButtonsHandler extends InteractionHandler {
   }
 
   override parse(interaction: ButtonInteraction) {
-    if (interaction.customId.startsWith('termo_')) return this.none();
-    const session = gameManager.getSessionByChannel(interaction.channelId);
-    if (!session) return this.none();
+    if (!isGameButtonCustomId(interaction.customId)) return this.none();
     return this.some();
   }
 
   override async run(btn: ButtonInteraction) {
-    const session = gameManager.getSessionByChannel(btn.channelId)!;
+    const session = gameManager.getSessionByChannel(btn.channelId);
+    if (!session) {
+      await btn.reply({
+        content: 'Esta partida já expirou.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
     const gameInstance = gameManager.getGameInstance(session.id);
-    if (!gameInstance) return;
+    if (!gameInstance) {
+      await btn.reply({
+        content: 'Esta partida já expirou.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
 
-    const descriptors = gameInstance.getButtonDescriptors();
-    let result: ButtonResult =
-      descriptors.length > 0
-        ? resolveDescriptors(descriptors, btn.customId)
-        : { kind: 'ignore' };
-
-    if (result.kind === 'ignore') result = legacyParseButton(btn.customId);
+    const result = legacyParseButton(btn.customId);
     if (result.kind === 'ignore') return;
 
     if (result.kind === 'modal') {

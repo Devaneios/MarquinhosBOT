@@ -1,6 +1,7 @@
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import {
   BaseGame,
+  BET_RANGE,
   GameResult,
   GameSession,
   PlayerStatus,
@@ -16,6 +17,7 @@ interface DiceData {
   betValue: number | string | null;
   winnings: number;
   history: DiceRoll[];
+  finished?: boolean;
 }
 
 interface DiceRoll {
@@ -51,6 +53,8 @@ export class DiceGame extends BaseGame {
     userId: string,
     action: Record<string, unknown>,
   ): Promise<void> {
+    if ((this.session.data as DiceData).finished) return;
+
     switch (action.type) {
       case 'roll':
         await this.rollDice();
@@ -63,6 +67,9 @@ export class DiceGame extends BaseGame {
         break;
       case 'change_bet_amount':
         this.changeBetAmount(action.amount as number);
+        break;
+      case 'finish_session':
+        (this.session.data as DiceData).finished = true;
         break;
     }
   }
@@ -179,7 +186,7 @@ export class DiceGame extends BaseGame {
   }
 
   private changeBetAmount(amount: number): void {
-    if (amount >= 5 && amount <= 100) {
+    if (amount >= BET_RANGE.min && amount <= BET_RANGE.max) {
       (this.session.data as DiceData).bet = amount;
     }
   }
@@ -205,6 +212,19 @@ export class DiceGame extends BaseGame {
     const data = this.session.data as DiceData;
     const player = this.session.players[0];
 
+    if (data.finished) {
+      const description =
+        `🏁 **Jogo encerrado!**\n\n` +
+        `👤 **Jogador:** ${player.username}\n` +
+        `🎲 **Total de jogadas:** ${data.totalRolls}\n` +
+        `💎 **Total ganho:** ${data.winnings} coins`;
+      return GameUtils.createGameEmbed(
+        '🎲 Dados Mágicos',
+        description,
+        0x808080,
+      );
+    }
+
     let description = `👤 **Jogador:** ${player.username}\n`;
     description += `🎲 **Dados:** ${data.diceCount}\n`;
     description += `💰 **Aposta:** ${data.bet} coins\n`;
@@ -222,10 +242,12 @@ export class DiceGame extends BaseGame {
 
     // Current bet
     if (data.betType) {
-      description += `🎯 **Aposta atual:** ${this.formatBetDescription()}\n`;
+      description += `🎯 **FASE: PRONTO PARA ROLAR**\n`;
+      description += `Aposta: ${this.formatBetDescription()}\n`;
       description += `💰 **Valor apostado:** ${data.bet} coins\n\n`;
     } else {
-      description += `❓ **Faça sua aposta para rolar os dados!**\n\n`;
+      description += `📝 **FASE: FAÇA SUA APOSTA**\n`;
+      description += `❓ Escolha um tipo de aposta abaixo para liberar o botão de rolar!\n\n`;
     }
 
     // Recent history
@@ -246,7 +268,12 @@ export class DiceGame extends BaseGame {
         ? 0x00ff00
         : 0xffaa00;
 
-    return GameUtils.createGameEmbed('🎲 Dados Mágicos', description, color);
+    return GameUtils.createGameEmbed(
+      '🎲 Dados Mágicos',
+      description,
+      color,
+      this.session.expiresAt,
+    );
   }
 
   getBetButtons() {
@@ -293,6 +320,13 @@ export class DiceGame extends BaseGame {
 
   getActionButtons() {
     const data = this.session.data as DiceData;
+    if (data.finished) return [];
+
+    const endGameButton = GameUtils.createGameButtons({
+      labels: ['🏁 Encerrar Jogo'],
+      customIds: ['dice_finish'],
+      styles: [ButtonStyle.Secondary],
+    });
 
     if (data.betType) {
       return [
@@ -301,10 +335,11 @@ export class DiceGame extends BaseGame {
           customIds: ['dice_roll', 'dice_cancel_bet'],
           styles: [ButtonStyle.Primary, ButtonStyle.Danger],
         }),
+        endGameButton,
       ];
     }
 
-    return this.getBetButtons();
+    return [...this.getBetButtons(), endGameButton];
   }
 
   async finish(): Promise<GameResult> {
@@ -338,6 +373,6 @@ export class DiceGame extends BaseGame {
   }
 
   protected getBaseXpForGame(): number {
-    return 8;
+    return 5;
   }
 }

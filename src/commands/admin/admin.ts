@@ -1,4 +1,5 @@
 import { GuildConfig } from '@marquinhos/config/guild';
+import { GameManager } from '@marquinhos/game/core/GameManager';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
@@ -10,6 +11,7 @@ import {
   type RankedEntry,
 } from '@marquinhos/ui/screens/termo';
 import { baseEmbed, fetchAvatarBuffer } from '@marquinhos/utils/discord';
+import { getRecentErrors } from '@marquinhos/utils/errorHistory';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import {
@@ -33,6 +35,13 @@ export class AdminCommand extends MarquinhosCommand {
         .setName(this.commandName)
         .setDescription('Comandos administrativos')
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+        .addSubcommand((sub) =>
+          sub
+            .setName('status')
+            .setDescription(
+              'Mostra o status atual do bot (API, sessões, erros, uptime)',
+            ),
+        )
         .addSubcommandGroup((group) =>
           group
             .setName('termo')
@@ -88,8 +97,13 @@ export class AdminCommand extends MarquinhosCommand {
   override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction,
   ) {
-    const subgroup = interaction.options.getSubcommandGroup(true);
+    const subgroup = interaction.options.getSubcommandGroup(false);
     const sub = interaction.options.getSubcommand(true);
+
+    if (subgroup === null && sub === 'status') {
+      await this.handleStatus(interaction);
+      return;
+    }
 
     if (subgroup === 'termo') {
       if (sub === 'canal') {
@@ -362,5 +376,78 @@ export class AdminCommand extends MarquinhosCommand {
         return;
       }
     }
+  }
+
+  private async handleStatus(interaction: Command.ChatInputCommandInteraction) {
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+    const start = performance.now();
+    const apiOnline = await api.healthCheck();
+    const latencyMs = Math.round(performance.now() - start);
+
+    const debugInfo = GameManager.getInstance().debugInfo() as {
+      activeSessions: number;
+      sessions: { type: string }[];
+    };
+    const sessionsByType = debugInfo.sessions.reduce<Record<string, number>>(
+      (acc, s) => {
+        acc[s.type] = (acc[s.type] ?? 0) + 1;
+        return acc;
+      },
+      {},
+    );
+    const sessionsSummary =
+      Object.keys(sessionsByType).length > 0
+        ? Object.entries(sessionsByType)
+            .map(([type, count]) => `${type}: ${count}`)
+            .join(', ')
+        : 'Nenhuma sessão ativa';
+
+    const recentErrors = getRecentErrors();
+    const errorsSummary =
+      recentErrors.length > 0
+        ? recentErrors
+            .slice(-5)
+            .map(
+              (e) =>
+                `[${e.logLevel}] ${e.origin} (${e.timestamp.toLocaleTimeString('pt-BR')})`,
+            )
+            .join('\n')
+        : 'Nenhum erro nos últimos 15 minutos';
+
+    const uptimeSeconds = Math.round(process.uptime());
+    const memoryMb = Math.round(process.memoryUsage().rss / 1024 / 1024);
+
+    const embed = baseEmbed(this.container.client)
+      .setTitle('Status do Marquinhos')
+      .addFields(
+        {
+          name: 'API',
+          value: apiOnline ? `✅ Online (${latencyMs}ms)` : '❌ Offline',
+          inline: true,
+        },
+        {
+          name: 'Ping Discord',
+          value: `${interaction.client.ws.ping}ms`,
+          inline: true,
+        },
+        {
+          name: 'Uptime',
+          value: `${Math.floor(uptimeSeconds / 3600)}h ${Math.floor((uptimeSeconds % 3600) / 60)}m`,
+          inline: true,
+        },
+        { name: 'Memória', value: `${memoryMb}MB`, inline: true },
+        {
+          name: `Sessões ativas (${debugInfo.activeSessions})`,
+          value: sessionsSummary,
+        },
+        {
+          name: `Erros recentes (${recentErrors.length})`,
+          value: errorsSummary,
+        },
+      )
+      .setColor(0x588157);
+
+    await interaction.editReply({ embeds: [embed] });
   }
 }

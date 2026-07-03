@@ -1,6 +1,7 @@
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import {
   BaseGame,
+  BET_RANGE,
   GameResult,
   GameSession,
   PlayerStatus,
@@ -15,6 +16,7 @@ interface SlotsData {
   result?: string[];
   multiplier?: number;
   winType?: string;
+  finished?: boolean;
 }
 
 export class SlotsGame extends BaseGame {
@@ -49,15 +51,25 @@ export class SlotsGame extends BaseGame {
     userId: string,
     action: Record<string, unknown>,
   ): Promise<void> {
+    if ((this.session.data as SlotsData).finished) return;
+
     if (action.type === 'spin') {
       await this.spin();
+    } else if (action.type === 'stop') {
+      (this.session.data as SlotsData).finished = true;
     } else if (action.type === 'bet_down') {
       this.changeBet(
-        Math.max(5, (this.session.data as SlotsData).currentBet - 5),
+        Math.max(
+          BET_RANGE.min,
+          (this.session.data as SlotsData).currentBet - 5,
+        ),
       );
     } else if (action.type === 'bet_up') {
       this.changeBet(
-        Math.min(100, (this.session.data as SlotsData).currentBet + 5),
+        Math.min(
+          BET_RANGE.max,
+          (this.session.data as SlotsData).currentBet + 5,
+        ),
       );
     } else if (action.type === 'change_bet') {
       this.changeBet(action.amount as number);
@@ -126,7 +138,7 @@ export class SlotsGame extends BaseGame {
   }
 
   private changeBet(amount: number): void {
-    if (amount >= 5 && amount <= 100) {
+    if (amount >= BET_RANGE.min && amount <= BET_RANGE.max) {
       (this.session.data as SlotsData).currentBet = amount;
     }
   }
@@ -147,29 +159,53 @@ export class SlotsGame extends BaseGame {
       }
     }
 
-    const embed = GameUtils.createGameEmbed(
-      '🎰 Caça-níqueis do Marquinhos',
-      `${resultDisplay}` +
+    const description = data.finished
+      ? `🏁 **Jogo encerrado!**\n\n` +
+        `👤 **Jogador:** ${player.username}\n` +
+        `🎲 **Jogadas:** ${data.spins}\n` +
+        `💰 **Total ganho:** ${data.totalWinnings} coins`
+      : `${resultDisplay}` +
         `👤 **Jogador:** ${player.username}\n` +
         `🎲 **Jogadas:** ${data.spins}\n` +
         `💰 **Total ganho:** ${data.totalWinnings} coins\n` +
         `🎯 **Aposta atual:** ${data.currentBet} coins\n\n` +
         `**Pagamentos:**\n` +
         `💎💎💎 - 100x | 7️⃣7️⃣7️⃣ - 50x | ⭐⭐⭐ - 25x\n` +
-        `🔔🔔🔔 - 15x | 🍇🍇🍇 - 10x | Dois iguais - 2x`,
-      (data.multiplier ?? 0) > 0 ? 0x00ff00 : 0xffaa00,
-    );
+        `🔔🔔🔔 - 15x | 🍇🍇🍇 - 10x | Dois iguais - 2x`;
 
-    return embed;
+    return GameUtils.createGameEmbed(
+      '🎰 Caça-níqueis do Marquinhos',
+      description,
+      data.finished
+        ? 0x808080
+        : (data.multiplier ?? 0) > 0
+          ? 0x00ff00
+          : 0xffaa00,
+      data.finished ? undefined : this.session.expiresAt,
+    );
   }
 
   getActionButtons() {
+    const data = this.session.data as SlotsData;
+    if (data.finished) return [];
+
     return [
       GameUtils.createGameButtons({
-        labels: ['🎰 Girar', '⬇️ Diminuir Aposta', '⬆️ Aumentar Aposta'],
-        customIds: ['slots_spin', 'slots_bet_down', 'slots_bet_up'],
+        labels: [
+          '🎰 Girar',
+          '🛑 Parar',
+          '⬇️ Diminuir Aposta',
+          '⬆️ Aumentar Aposta',
+        ],
+        customIds: [
+          'slots_spin',
+          'slots_stop',
+          'slots_bet_down',
+          'slots_bet_up',
+        ],
         styles: [
           ButtonStyle.Primary,
+          ButtonStyle.Secondary,
           ButtonStyle.Secondary,
           ButtonStyle.Secondary,
         ],
@@ -202,6 +238,6 @@ export class SlotsGame extends BaseGame {
   }
 
   protected getBaseXpForGame(): number {
-    return 5;
+    return 4;
   }
 }

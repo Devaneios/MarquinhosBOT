@@ -10,6 +10,7 @@ import {
 } from '@marquinhos/ui/screens/termo';
 import { getBicho } from '@marquinhos/utils/bichoGame';
 import { baseEmbed, fetchAvatarBuffer } from '@marquinhos/utils/discord';
+import { reportError } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { resourcePath } from '@marquinhos/utils/resources';
 import { Listener } from '@sapphire/framework';
@@ -163,10 +164,15 @@ async function rotateTermoWord(client: Client<true>): Promise<void> {
           `Terminhos: failed to rotate word for guild ${guildId}:`,
           err,
         );
+        reportError(err, {
+          origin: `ready.rotateTermoWord:${guildId}`,
+          logLevel: 'error',
+        });
       }
     }
   } catch (err) {
     logger.error('Erro ao rotacionar palavra do Terminhos:', err);
+    reportError(err, { origin: 'ready.rotateTermoWord', logLevel: 'error' });
   }
 }
 
@@ -331,6 +337,10 @@ async function broadcastTermoStats(client: Client<true>): Promise<void> {
       lastBroadcastWinners.set(guildId, stats.winnersCount);
     } catch (err) {
       logger.warn(`Terminhos stats: failed for guild ${guildId}:`, err);
+      reportError(err, {
+        origin: `ready.broadcastTermoStats:${guildId}`,
+        logLevel: 'error',
+      });
     }
   }
 }
@@ -396,6 +406,7 @@ async function postWednesdayImage(client: Client<true>): Promise<void> {
     await channel.send({ files: [attachment] });
   } catch (err) {
     logger.error('Wednesday image: falha ao postar imagem:', err);
+    reportError(err, { origin: 'ready.postWednesdayImage', logLevel: 'error' });
   }
 }
 

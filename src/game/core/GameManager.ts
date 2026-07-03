@@ -1,7 +1,9 @@
+import { expireSessionMessage } from '@marquinhos/lib/gameLifecycle';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
+import { reportError } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { randomUUID } from 'crypto';
-import { Collection } from 'discord.js';
+import { Collection, Message } from 'discord.js';
 import {
   BaseGame,
   GAME_CONFIGS,
@@ -150,11 +152,20 @@ export class GameManager {
       });
     } catch (error) {
       logger.error(`Failed to post game result: ${error}`);
+      reportError(error, {
+        origin: 'GameManager.postGameResult',
+        logLevel: 'warn',
+      });
     }
   }
 
   public registerGameInstance(sessionId: string, gameInstance: BaseGame): void {
     this.gameInstances.set(sessionId, gameInstance);
+  }
+
+  public attachMessage(sessionId: string, message: Message): void {
+    const session = this.activeSessions.get(sessionId);
+    if (session) session.message = message;
   }
 
   public getGameInstance(sessionId: string): BaseGame | undefined {
@@ -229,7 +240,20 @@ export class GameManager {
     );
 
     expiredSessions.forEach((session) => {
+      // Sessions that already finished normally were removed from
+      // activeSessions synchronously by endSessionWithResult() before this
+      // sweep ever runs, so this branch only catches genuinely abandoned
+      // sessions — those get their message marked as expired.
+      const wasNaturalTimeout =
+        session.expiresAt < now && session.state !== GameState.FINISHED;
       this.endSession(session.id);
+      if (wasNaturalTimeout) {
+        expireSessionMessage(session).catch((error) =>
+          logger.error(
+            `Failed to mark expired session message ${session.id}: ${error}`,
+          ),
+        );
+      }
     });
 
     // Also cleanup old cooldowns (older than 24 hours)

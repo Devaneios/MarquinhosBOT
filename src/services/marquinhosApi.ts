@@ -10,8 +10,21 @@ import {
   UserAchievement,
   UserLevel,
 } from '@marquinhos/types';
+import { reportError } from '@marquinhos/utils/errorHandling';
 import { HttpClient } from '@marquinhos/utils/httpClient';
 import { logger } from '@marquinhos/utils/logger';
+
+export function handleApiResponseError(error: unknown): never {
+  const apiError = error as ApiError;
+  const data = apiError.response?.data as ApiResponse | undefined;
+  const errorMsg = data?.message ?? data ?? apiError.message ?? 'Unknown error';
+  logger.error(`API Error on ${apiError.config?.url}: ${errorMsg}`);
+  reportError(error, {
+    origin: `API:${apiError.config?.url ?? 'unknown'}`,
+    logLevel: 'warn',
+  });
+  throw error;
+}
 
 export class MarquinhosApiService {
   private static instance: MarquinhosApiService;
@@ -37,14 +50,7 @@ export class MarquinhosApiService {
 
     this.client.interceptors.response.use(
       (response) => response,
-      (error: unknown) => {
-        const apiError = error as ApiError;
-        const data = apiError.response?.data as ApiResponse | undefined;
-        const errorMsg =
-          data?.message ?? data ?? apiError.message ?? 'Unknown error';
-        logger.error(`API Error on ${apiError.config?.url}: ${errorMsg}`);
-        throw error;
-      },
+      handleApiResponseError,
     );
   }
 

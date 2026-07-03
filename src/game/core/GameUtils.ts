@@ -13,10 +13,17 @@ export class GameUtils {
     title: string,
     description: string,
     color?: number,
+    expiresAt?: Date,
   ): EmbedBuilder {
+    let fullDescription = description;
+    if (expiresAt) {
+      const unixSeconds = Math.floor(expiresAt.getTime() / 1000);
+      fullDescription += `\n\n⏰ Expira <t:${unixSeconds}:R>`;
+    }
+
     return new EmbedBuilder()
       .setTitle(title)
-      .setDescription(description)
+      .setDescription(fullDescription)
       .setColor(color || 0x00ae86)
       .setTimestamp();
   }

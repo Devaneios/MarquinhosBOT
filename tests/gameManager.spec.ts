@@ -1,12 +1,18 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test';
 import { GameManager } from '../src/game/core/GameManager';
 import { GameState, GameType } from '../src/game/core/GameTypes';
+import { MarquinhosApiService } from '../src/services/marquinhosApi';
+import * as errorHandling from '../src/utils/errorHandling';
 
 let manager: GameManager;
+const reportErrorSpy = spyOn(errorHandling, 'reportError').mockImplementation(
+  () => {},
+);
 
 beforeEach(() => {
   (GameManager as any).instance = undefined;
   manager = GameManager.getInstance();
+  reportErrorSpy.mockClear();
 });
 
 afterEach(() => {
@@ -110,5 +116,28 @@ describe('GameManager session count', () => {
 
     manager.endSession(s1.id);
     expect(manager.getActiveSessionsCount()).toBe(1);
+  });
+});
+
+describe('GameManager.endSessionWithResult', () => {
+  it('reports an error when postGameResult fails, without throwing', async () => {
+    spyOn(MarquinhosApiService.prototype, 'postGameResult').mockImplementation(
+      async () => {
+        throw new Error('api down');
+      },
+    );
+
+    const session = manager.createSession(GameType.SLOTS, 'g', 'c', 'host');
+
+    await manager.endSessionWithResult(session.id, {
+      winners: ['host'],
+      losers: [],
+      duration: 1000,
+    } as any);
+
+    expect(reportErrorSpy).toHaveBeenCalledWith(expect.any(Error), {
+      origin: 'GameManager.postGameResult',
+      logLevel: 'warn',
+    });
   });
 });
