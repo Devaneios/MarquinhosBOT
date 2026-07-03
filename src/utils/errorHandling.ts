@@ -1,6 +1,9 @@
 import { env } from '@marquinhos/config/environment';
+import type { BotErrorLogLevel } from '@marquinhos/types';
 import BotError from '@marquinhos/utils/botError';
+import { recordError } from '@marquinhos/utils/errorHistory';
 import { logger } from '@marquinhos/utils/logger';
+import type { Client } from 'discord.js';
 
 /**
  * Wraps a function so that both synchronous throws and async rejections
@@ -24,96 +27,144 @@ export function safeExecute(fn: Function) {
   };
 }
 
-const commandErrorHandler = async (error: BotError) => {
-  queueErrorForWebhook(error);
-  switch (error.logLevel) {
-    case 'warn':
-      logger.warn(`${error?.stack ?? error.message}`);
-      break;
-    case 'info':
-      logger.info(`${error?.stack ?? error.message}`);
-      break;
-    default:
-      logger.error(`${error?.stack ?? error.message}`);
-      break;
-  }
+const commandErrorHandler = (error: BotError) => {
+  reportError(error, {
+    origin: error.origin ?? 'Unknown',
+    logLevel: error.logLevel,
+  });
 };
 
-// --- Webhook error batching (flush at most once per 5s) ---
-const ERROR_FLUSH_INTERVAL_MS = 5000;
-const pendingErrors: BotError[] = [];
-let flushTimer: NodeJS.Timeout | null = null;
-
-function queueErrorForWebhook(error: BotError): void {
-  pendingErrors.push(error);
-  if (!flushTimer) {
-    flushTimer = setTimeout(() => {
-      flushTimer = null;
-      const batch = pendingErrors.splice(0);
-      if (batch.length > 0) {
-        sendErrorBatch(batch);
-      }
-    }, ERROR_FLUSH_INTERVAL_MS);
-  }
+export interface ReportErrorOptions {
+  origin: string;
+  logLevel?: BotErrorLogLevel;
 }
 
-async function sendErrorBatch(errors: BotError[]): Promise<void> {
-  const webhookUrl = env.MARQUINHOS_ERROR_WEBHOOK;
-  if (!webhookUrl) return;
+/**
+ * Routes an error from anywhere in the app — not just command handlers —
+ * to the console logger, the in-memory error history ring buffer, and the
+ * batched admin DM queue.
+ */
+export function reportError(error: unknown, options: ReportErrorOptions): void {
+  const err = error as { stack?: string; message?: string };
+  const logLevel = options.logLevel ?? 'error';
+  const message = err?.message ?? String(error);
+  const text = err?.stack ?? message;
 
-  // Cap embeds to 10 per message (Discord limit)
-  const embeds = errors.slice(0, 10).map((error) => {
-    const title = error.message;
-    const description = error?.stack || 'No stack trace';
-    return {
-      title: 'Search error on StackOverflow',
-      url: `https://www.google.com/search?q=${encodeURIComponent(
-        title,
-      )}%20site:stackoverflow.com`,
-      description: `\`\`\`${description.slice(0, 1024)}\`\`\``,
-      color: 0xff0000,
-      footer: {
-        text: 'The operation has failed successfully!',
-      },
-      fields: [
-        {
-          name: 'Level',
-          value: error.logLevel || 'error',
-          inline: true,
-        },
-        {
-          name: 'Origin',
-          value: error.origin || 'Unknown',
-          inline: true,
-        },
-      ],
-    };
+  switch (logLevel) {
+    case 'warn':
+      logger.warn(text);
+      break;
+    case 'info':
+      logger.info(text);
+      break;
+    default:
+      logger.error(text);
+      break;
+  }
+
+  recordError({
+    timestamp: new Date(),
+    origin: options.origin,
+    logLevel,
+    message,
   });
 
-  if (errors.length > 10) {
+  queueErrorForDM({
+    message,
+    stack: err?.stack,
+    logLevel,
+    origin: options.origin,
+  });
+}
+
+// --- Discord DM error batching (flush at most once per 5s) ---
+
+interface QueuedError {
+  message: string;
+  stack?: string;
+  logLevel: BotErrorLogLevel;
+  origin: string;
+}
+
+const ERROR_FLUSH_INTERVAL_MS = 5000;
+let pendingErrors: QueuedError[] = [];
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+let discordClient: Client | null = null;
+
+export function setDiscordClient(client: Client | null): void {
+  discordClient = client;
+}
+
+function queueErrorForDM(error: QueuedError): void {
+  pendingErrors.push(error);
+  scheduleFlush();
+}
+
+function scheduleFlush(): void {
+  if (flushTimer) return;
+  flushTimer = setTimeout(() => {
+    flushTimer = null;
+    flushPendingErrors();
+  }, ERROR_FLUSH_INTERVAL_MS);
+}
+
+/**
+ * Sends the queued batch as a DM. On success the queue is cleared; on any
+ * failure (client not ready, DM closed, etc.) the batch is left queued so
+ * the next flush retries it, and the failure is logged to console instead.
+ */
+export async function flushPendingErrors(): Promise<void> {
+  if (pendingErrors.length === 0) return;
+
+  const userId = env.MARQUINHOS_ERROR_DM_USER_ID;
+  if (!userId) {
+    pendingErrors = [];
+    return;
+  }
+
+  if (!discordClient) {
+    logger.error(
+      `Cannot deliver ${pendingErrors.length} queued error(s): Discord client not ready yet. Will retry.`,
+    );
+    scheduleFlush();
+    return;
+  }
+
+  const batch = pendingErrors.slice(0, 10);
+  const embeds = batch.map((error) => ({
+    title: error.message.slice(0, 256),
+    description: `\`\`\`${(error.stack ?? 'No stack trace').slice(0, 1024)}\`\`\``,
+    color: 0xff0000,
+    fields: [
+      { name: 'Level', value: error.logLevel, inline: true },
+      { name: 'Origin', value: error.origin, inline: true },
+    ],
+  }));
+
+  if (pendingErrors.length > 10) {
     embeds.push({
-      title: `... and ${errors.length - 10} more errors`,
-      url: '',
+      title: `... and ${pendingErrors.length - 10} more errors`,
       description: '',
       color: 0xff0000,
-      footer: { text: '' },
       fields: [],
     });
   }
 
   try {
-    await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: 'Marquinhos Error Notifier',
-        avatar_url: 'https://i.imgur.com/M4k2OVe.png',
-        embeds,
-      }),
-    });
+    const user = await discordClient.users.fetch(userId);
+    await user.send({ embeds });
+    pendingErrors = [];
   } catch (error) {
-    logger.error('Failed to send error webhook:', error);
+    logger.error(`Failed to DM error batch: ${error}`);
+    scheduleFlush();
   }
+}
+
+export function _resetErrorHandlingForTests(): void {
+  pendingErrors = [];
+  if (flushTimer) {
+    clearTimeout(flushTimer);
+    flushTimer = null;
+  }
+  discordClient = null;
 }

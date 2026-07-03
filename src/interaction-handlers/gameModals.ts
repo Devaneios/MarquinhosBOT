@@ -13,8 +13,7 @@ import {
 const gameManager = GameManager.getInstance();
 
 // ---------------------------------------------------------------------------
-// Legacy modal action parser — backwards-compat for the 20 existing games.
-// New games implement parseModal() on their class instead.
+// Modal action parser for the dice game's bet-entry modals.
 // ---------------------------------------------------------------------------
 
 function legacyParseModal(
@@ -55,6 +54,13 @@ function legacyParseModal(
   }
 }
 
+const GAME_MODAL_IDS = new Set([
+  'modal_dice_sum',
+  'modal_dice_exact',
+  'modal_dice_even_odd',
+  'modal_dice_high_low',
+]);
+
 export class GameModalsHandler extends InteractionHandler {
   public constructor(ctx: InteractionHandler.LoaderContext) {
     super(ctx, { interactionHandlerType: InteractionHandlerTypes.ModalSubmit });
@@ -62,23 +68,32 @@ export class GameModalsHandler extends InteractionHandler {
 
   override parse(interaction: ModalSubmitInteraction) {
     if (!interaction.channelId) return this.none();
-    const session = gameManager.getSessionByChannel(interaction.channelId);
-    if (!session) return this.none();
+    if (!GAME_MODAL_IDS.has(interaction.customId)) return this.none();
     return this.some();
   }
 
   override async run(modal: ModalSubmitInteraction) {
     if (!modal.channelId) return;
-    const session = gameManager.getSessionByChannel(modal.channelId)!;
+    const session = gameManager.getSessionByChannel(modal.channelId);
+    if (!session) {
+      await modal.reply({
+        content: 'Esta partida já expirou.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
     const gameInstance = gameManager.getGameInstance(session.id);
-    if (!gameInstance) return;
+    if (!gameInstance) {
+      await modal.reply({
+        content: 'Esta partida já expirou.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
 
     const value = modal.fields.getTextInputValue('input').trim();
-    let action: Record<string, unknown> | null = gameInstance.parseModal(
-      modal.customId,
-      value,
-    );
-    if (!action) action = legacyParseModal(modal.customId, value);
+    const action = legacyParseModal(modal.customId, value);
 
     if (!action) {
       await modal.reply({

@@ -7,6 +7,7 @@ import {
   PlayerStatus,
 } from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
+import { UserFacingError } from '../core/UserFacingError';
 
 interface RouletteData {
   chambers: boolean[]; // true = bullet, false = empty
@@ -86,7 +87,9 @@ export class RouletteGame extends BaseGame {
     // Check if it's the player's turn (in multiplayer)
     if (data.mode === 'multiplayer') {
       const currentPlayer = data.players[data.currentPlayerIndex];
-      if (currentPlayer.userId !== userId) return;
+      if (currentPlayer.userId !== userId) {
+        throw new UserFacingError('Não é sua vez!');
+      }
     }
 
     if (action.type === 'pull_trigger') {
@@ -241,7 +244,12 @@ export class RouletteGame extends BaseGame {
         : 0xff0000
       : 0xffaa00;
 
-    return GameUtils.createGameEmbed('🔫 Roleta Russa', description, color);
+    return GameUtils.createGameEmbed(
+      '🔫 Roleta Russa',
+      description,
+      color,
+      data.gameOver ? undefined : this.session.expiresAt,
+    );
   }
 
   getActionButtons() {
@@ -344,6 +352,6 @@ export class RouletteGame extends BaseGame {
   }
 
   protected getBaseXpForGame(): number {
-    return 20;
+    return 30;
   }
 }

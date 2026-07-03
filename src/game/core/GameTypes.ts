@@ -1,6 +1,7 @@
 import {
   ActionRowBuilder,
   EmbedBuilder,
+  Message,
   MessageActionRowComponentBuilder,
 } from 'discord.js';
 
@@ -70,6 +71,7 @@ export interface GameSession {
   data: unknown; // Game-specific session data
   round?: number;
   currentTurn?: string; // userId
+  message?: Message; // Discord message displaying this session, attached after the initial reply
 }
 
 export interface GameResult {
@@ -119,10 +121,6 @@ export type ButtonResult =
   | { kind: 'action'; action: Record<string, unknown> }
   | { kind: 'modal'; config: ModalConfig }
   | { kind: 'ignore' };
-
-export type ButtonDescriptor =
-  | { kind: 'static'; customId: string; result: ButtonResult }
-  | { kind: 'prefix'; prefix: string; parse: (suffix: string) => ButtonResult };
 
 export abstract class BaseGame {
   protected session: GameSession;
@@ -186,10 +184,6 @@ export abstract class BaseGame {
     else if (position === 2)
       xp *= 1.5; // Second place bonus
     else if (position === 3) xp *= 1.2; // Third place bonus
-
-    // Difficulty bonus
-    if (this.session.config.difficulty === 'hard') xp *= 1.5;
-    else if (this.session.config.difficulty === 'medium') xp *= 1.2;
 
     return {
       xp: Math.floor(xp),
@@ -261,27 +255,6 @@ export abstract class BaseGame {
     }
     return rows.slice(0, 5);
   }
-
-  /**
-   * Declares this game's button dispatch rules.
-   * Default: [] — falls through to the legacy STATIC_BUTTONS/PREFIX_RULES.
-   * New games override this; no edits to any handler file needed.
-   */
-  public getButtonDescriptors(): ButtonDescriptor[] {
-    return [];
-  }
-
-  /**
-   * Parses a modal submission into a game action.
-   * Default: null — falls through to the legacy parseModalAction switch.
-   * New games override this; no edits to any handler file needed.
-   */
-  public parseModal(
-    _modalId: string,
-    _value: string,
-  ): Record<string, unknown> | null {
-    return null;
-  }
 }
 
 // Game Categories Configuration
@@ -310,3 +283,5 @@ export const GAME_COOLDOWNS: Record<GameType, number> = {
   [GameType.ROCK_PAPER_SCISSORS]: 15,
   [GameType.MAZE]: 120,
 };
+
+export const BET_RANGE = { min: 5, max: 100 } as const;

@@ -229,6 +229,7 @@ export class RockPaperScissorsGame extends BaseGame {
       '✂️ Pedra, Papel, Tesoura',
       description,
       color,
+      data.finished ? undefined : this.session.expiresAt,
     );
   }
 
@@ -280,6 +281,6 @@ export class RockPaperScissorsGame extends BaseGame {
   }
 
   protected getBaseXpForGame(): number {
-    return 8;
+    return 4;
   }
 }

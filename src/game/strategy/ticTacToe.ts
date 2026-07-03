@@ -1,5 +1,7 @@
+import { updateSessionMessage } from '@marquinhos/lib/gameLifecycle';
 import { logger } from '@marquinhos/utils/logger';
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
+import { GameManager } from '../core/GameManager';
 import {
   BaseGame,
   GameResult,
@@ -8,6 +10,9 @@ import {
   PlayerStatus,
 } from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
+import { UserFacingError } from '../core/UserFacingError';
+
+const gameManager = GameManager.getInstance();
 
 interface TicTacToeData {
   board: string[][];
@@ -61,9 +66,16 @@ export class TicTacToeGame extends BaseGame {
       data.gameOver = true;
       data.timedOut = true;
       data.winner = this.session.players[winnerIndex].userId;
-      this.updateScores().catch((err) =>
-        logger.error('TicTacToe turn timeout score update failed:', err),
-      );
+
+      this.updateScores()
+        .then(() => this.finish())
+        .then((result) =>
+          gameManager.endSessionWithResult(this.session.id, result),
+        )
+        .then(() => updateSessionMessage(this.session, this.getGameEmbed(), []))
+        .catch((err) =>
+          logger.error('TicTacToe turn timeout finish flow failed:', err),
+        );
     }, TicTacToeGame.TURN_TIMEOUT_MS);
   }
 
@@ -83,7 +95,9 @@ export class TicTacToeGame extends BaseGame {
     if (data.gameOver) return;
 
     // Check if it's the player's turn
-    if (this.session.players[data.currentPlayer].userId !== userId) return;
+    if (this.session.players[data.currentPlayer].userId !== userId) {
+      throw new UserFacingError('Não é sua vez!');
+    }
 
     if (action.type === 'move') {
       await this.makeMove(action.row as number, action.col as number);
@@ -237,7 +251,12 @@ export class TicTacToeGame extends BaseGame {
         : 0xffaa00
       : 0x3498db;
 
-    return GameUtils.createGameEmbed('⭕ Jogo da Velha', description, color);
+    return GameUtils.createGameEmbed(
+      '⭕ Jogo da Velha',
+      description,
+      color,
+      data.gameOver ? undefined : this.session.expiresAt,
+    );
   }
 
   getBoardButtons() {
@@ -310,6 +329,6 @@ export class TicTacToeGame extends BaseGame {
   }
 
   protected getBaseXpForGame(): number {
-    return 15;
+    return 5;
   }
 }

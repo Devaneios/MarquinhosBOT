@@ -141,6 +141,7 @@ export class MazeGame extends BaseGame {
         '🏃 Labirinto',
         `👤 **${player.username}**\n\nEscolha o tamanho do labirinto:\n\n🟫 **Pequeno** — 15×15\n🟧 **Médio** — 31×31\n🟥 **Grande** — 51×51\n⬛ **Enorme** — 99×99`,
         0x3498db,
+        this.session.expiresAt,
       );
     }
 
@@ -155,6 +156,7 @@ export class MazeGame extends BaseGame {
         '🏃 Labirinto',
         `👤 **${player.username}**\n\n📐 **Tamanho:** ${sizeLabel[data.selectedSize!]}\n\nEscolha o modo de jogo:\n\n🌅 **Aberto** — todos os caminhos visíveis\n🌫️ **Nebuloso** — só vê o corredor atual`,
         0x3498db,
+        this.session.expiresAt,
       );
     }
 
@@ -176,7 +178,12 @@ export class MazeGame extends BaseGame {
       : data.isExhausted
         ? 0xff0000
         : 0x3498db;
-    return GameUtils.createGameEmbed('🏃 Labirinto', description, color);
+    return GameUtils.createGameEmbed(
+      '🏃 Labirinto',
+      description,
+      color,
+      data.isCompleted || data.isExhausted ? undefined : this.session.expiresAt,
+    );
   }
 
   getMovementButtons(): ActionRowBuilder<ButtonBuilder>[] {
