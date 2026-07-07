@@ -21,6 +21,10 @@ import {
   PermissionFlagsBits,
   TextChannel,
 } from 'discord.js';
+import {
+  buildWordlistReviewActionRow,
+  buildWordlistReviewContent,
+} from './wordlistReviewResponse';
 
 const api = MarquinhosApiService.getInstance();
 
@@ -88,6 +92,18 @@ export class AdminCommand extends MarquinhosCommand {
                       { name: 'Este mês', value: 'monthly' },
                       { name: 'Histórico', value: 'all-time' },
                     ),
+                ),
+            ),
+        )
+        .addSubcommandGroup((group) =>
+          group
+            .setName('wordlist')
+            .setDescription('Gerenciar a wordlist do Termo')
+            .addSubcommand((sub) =>
+              sub
+                .setName('review')
+                .setDescription(
+                  'Revisa a próxima palavra pendente da wordlist.txt',
                 ),
             ),
         ),
@@ -371,6 +387,28 @@ export class AdminCommand extends MarquinhosCommand {
           logger.error('admin termo leaderboard: Error fetching ranking:', err);
           await interaction.editReply({
             content: '❌ Erro ao buscar o ranking.',
+          });
+        }
+        return;
+      }
+    }
+
+    if (subgroup === 'wordlist') {
+      if (sub === 'review') {
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+        try {
+          const response = await api.getNextWordlistReviewWord();
+          await interaction.editReply({
+            content: buildWordlistReviewContent(response.data),
+            components: response.data.done
+              ? []
+              : [buildWordlistReviewActionRow()],
+          });
+        } catch (err) {
+          logger.warn('admin wordlist review: Error fetching next word:', err);
+          await interaction.editReply({
+            content: '❌ Erro ao buscar a próxima palavra.',
           });
         }
         return;
