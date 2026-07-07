@@ -31,6 +31,7 @@ import { LevelCommand } from '@marquinhos/commands/social/level';
 import { GameButtonsHandler } from '@marquinhos/interaction-handlers/gameButtons';
 import { GameModalsHandler } from '@marquinhos/interaction-handlers/gameModals';
 import { TermoButtonsHandler } from '@marquinhos/interaction-handlers/termoButtons';
+import { WordlistReviewButtonsHandler } from '@marquinhos/interaction-handlers/wordlistReviewButtons';
 import {
   AutocompleteInteractionErrorListener,
   ChatInputCommandErrorListener,
@@ -82,6 +83,7 @@ const interactionHandlers = [
   ['gameButtons', GameButtonsHandler],
   ['gameModals', GameModalsHandler],
   ['termoButtons', TermoButtonsHandler],
+  ['wordlistReviewButtons', WordlistReviewButtonsHandler],
 ] as const;
 
 const listeners = [

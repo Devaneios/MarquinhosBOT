@@ -398,6 +398,46 @@ export class MarquinhosApiService {
     > & { groupStreak: number };
   }
 
+  async getNextWordlistReviewWord(): Promise<
+    ApiResponse<{
+      word: string | null;
+      index: number;
+      total: number;
+      done: boolean;
+    }>
+  > {
+    const data = await this.client.get('/api/wordle/review/next');
+    return data as ApiResponse<{
+      word: string | null;
+      index: number;
+      total: number;
+      done: boolean;
+    }>;
+  }
+
+  async submitWordlistReviewDecision(
+    word: string,
+    decision: 'keep' | 'remove',
+  ): Promise<
+    ApiResponse<{
+      word: string | null;
+      index: number;
+      total: number;
+      done: boolean;
+    }>
+  > {
+    const data = await this.client.post('/api/wordle/review/decision', {
+      word,
+      decision,
+    });
+    return data as ApiResponse<{
+      word: string | null;
+      index: number;
+      total: number;
+      done: boolean;
+    }>;
+  }
+
   // Voice AI API calls
   async post(
     endpoint: string,
