@@ -29,6 +29,7 @@ export function handleApiResponseError(error: unknown): never {
 export class MarquinhosApiService {
   private static instance: MarquinhosApiService;
   private client: HttpClient;
+  private wordleConfigCache = new Map<string, string | null>();
 
   private constructor() {
     this.client = new HttpClient({
@@ -345,16 +346,41 @@ export class MarquinhosApiService {
     guildId: string,
     channelId: string,
   ): Promise<ApiResponse> {
-    const data = await this.client.post('/api/wordle/config', {
+    const data = (await this.client.post('/api/wordle/config', {
       guildId,
       channelId,
-    });
-    return data as ApiResponse;
+    })) as ApiResponse;
+    this.wordleConfigCache.set(guildId, channelId);
+    return data;
   }
 
   async getWordleConfig(guildId: string): Promise<ApiResponse> {
-    const data = await this.client.get(`/api/wordle/config/${guildId}`);
-    return data as ApiResponse;
+    if (this.wordleConfigCache.has(guildId)) {
+      return { data: { channelId: this.wordleConfigCache.get(guildId) } };
+    }
+    const data = (await this.client.get(
+      `/api/wordle/config/${guildId}`,
+    )) as ApiResponse;
+    this.wordleConfigCache.set(
+      guildId,
+      (data.data as { channelId?: string })?.channelId ?? null,
+    );
+    return data;
+  }
+
+  async preloadWordleConfigs(guildIds: string[]): Promise<void> {
+    await Promise.all(
+      guildIds.map(async (guildId) => {
+        try {
+          await this.getWordleConfig(guildId);
+        } catch (err) {
+          logger.warn(
+            `Failed to preload wordle config for guild ${guildId}:`,
+            err,
+          );
+        }
+      }),
+    );
   }
 
   async validateWordleGuess(
