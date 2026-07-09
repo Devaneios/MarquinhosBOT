@@ -13,6 +13,7 @@ const FONTS = [
 export type RenderOptions = {
   width?: number;
   scale?: number;
+  workerMode?: boolean;
 };
 
 export async function render(
@@ -22,7 +23,7 @@ export async function render(
   const canvas = await Root({
     width: options?.width ?? 360,
     scale: options?.scale ?? 1,
-    workerMode: true,
+    workerMode: options?.workerMode ?? true,
     fonts: FONTS,
     children,
   });
