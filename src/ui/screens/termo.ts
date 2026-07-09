@@ -40,6 +40,7 @@ export async function buildResultImage(
   const theme = options?.theme ?? defaultTheme;
   return render([termoResultCard(guesses, theme)], {
     width: (32 + 4) * guesses[0].feedback.length + 24,
+    workerMode: false,
   });
 }
 
