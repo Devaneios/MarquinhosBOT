@@ -39,6 +39,7 @@ export class ReadyListener extends Listener<typeof Events.ClientReady> {
   override async run(client: Client<true>) {
     logger.info(`Logged in as ${client.user.tag}`);
     logger.info('Marquinhos™ is online!');
+    await api.preloadWordleConfigs([...client.guilds.cache.keys()]);
     startBichoGame(client);
     startTermoScheduler(client);
     startTermoStatsBroadcast(client);
