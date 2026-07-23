@@ -149,6 +149,7 @@ export class MarquinhosApiService {
     channelId: string;
     content: string;
     recentMessages: { author: string; content: string }[];
+    repliedMessage?: { author: string; content: string };
   }): Promise<ApiResponse<AiChatResponse>> {
     const data = await this.client.post('/api/ai-chat/respond', payload);
     return data as ApiResponse<AiChatResponse>;
