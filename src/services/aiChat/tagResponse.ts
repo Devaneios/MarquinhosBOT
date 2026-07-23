@@ -18,6 +18,11 @@ export interface TagResponseMessage {
   channelId: string;
   client: { user: { id: string } | null };
   mentions: { has(userId: string): boolean };
+  reference: { messageId?: string } | null;
+  fetchReference(): Promise<{
+    author: { id: string; username: string; bot?: boolean };
+    content: string;
+  }>;
   channel: {
     sendTyping(): Promise<unknown>;
     send(content: string): Promise<unknown>;
@@ -92,6 +97,22 @@ export async function handleTagResponse(
         content: m.content,
       }));
 
+    let repliedMessage: { author: string; content: string } | undefined;
+    if (message.reference) {
+      try {
+        const referencedMessage = await message.fetchReference();
+        repliedMessage = {
+          author:
+            referencedMessage.author.id === botUserId
+              ? 'você (bot)'
+              : referencedMessage.author.username,
+          content: referencedMessage.content,
+        };
+      } catch {
+        repliedMessage = undefined;
+      }
+    }
+
     const response = await apiService.respondToTag({
       userId: message.author.id,
       guildId: message.guildId,
@@ -100,6 +121,7 @@ export async function handleTagResponse(
         .replace(new RegExp(`<@!?${botUserId}>`, 'g'), '')
         .trim(),
       recentMessages,
+      repliedMessage,
     });
 
     const result = response.data;
