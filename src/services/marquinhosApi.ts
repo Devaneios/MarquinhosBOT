@@ -1,6 +1,7 @@
 import { env } from '@marquinhos/config/environment';
 import {
   AddXpResult,
+  AiChatResponse,
   ApiError,
   ApiResponse,
   LastfmTopListenedPeriod,
@@ -140,6 +141,17 @@ export class MarquinhosApiService {
       payload,
     );
     return data as ApiResponse;
+  }
+
+  async respondToTag(payload: {
+    userId: string;
+    guildId: string;
+    channelId: string;
+    content: string;
+    recentMessages: { author: string; content: string }[];
+  }): Promise<ApiResponse<AiChatResponse>> {
+    const data = await this.client.post('/api/ai-chat/respond', payload);
+    return data as ApiResponse<AiChatResponse>;
   }
 
   async getUserGameStats(

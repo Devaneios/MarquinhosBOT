@@ -214,6 +214,20 @@ export interface AddXpResult {
   unlockedAchievements: string[];
 }
 
+// AI Chat Types
+export type AiChatCategory =
+  | 'general_question'
+  | 'opinion_reference'
+  | 'casual_chat'
+  | 'off_topic_unclear'
+  | 'guardrail_roast';
+
+export interface AiChatResponse {
+  status: 'ok' | 'rate_limited' | 'error';
+  category?: AiChatCategory;
+  reply?: string;
+}
+
 // Maze Game Types
 export interface MazeViewportState {
   sessionId: string;
