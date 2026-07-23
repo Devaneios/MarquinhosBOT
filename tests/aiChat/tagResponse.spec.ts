@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import { GuildConfig } from '@marquinhos/config/guild';
 import { handleTagResponse } from '@marquinhos/services/aiChat/tagResponse';
 import type { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
+import type { EmbedBuilder } from 'discord.js';
 
 function makeMessage(
   overrides: Partial<{
@@ -18,6 +19,7 @@ function makeMessage(
 ) {
   const replies: string[] = [];
   const sends: string[] = [];
+  const embedReplies: EmbedBuilder[] = [];
   const typingCalls: number[] = [];
   return {
     id: 'trigger-message',
@@ -25,25 +27,36 @@ function makeMessage(
     author: { id: 'user1' },
     guildId: overrides.guildId ?? GuildConfig.DEVANEIOS_GUILD_ID,
     channelId: overrides.channelId ?? GuildConfig.DEVANEIOS_CHANNEL_ID,
-    client: { user: { id: 'bot1' } },
+    client: {
+      user: { id: 'bot1', displayAvatarURL: () => 'https://example.com/avatar.png' },
+    },
     mentions: { has: () => overrides.mentionsBot ?? true },
     channel: {
       sendTyping: async () => {
         typingCalls.push(1);
       },
-      send: async (text: string) => {
-        sends.push(text);
+      send: async (payload: string | { embeds: EmbedBuilder[] }) => {
+        if (typeof payload === 'string') {
+          sends.push(payload);
+        } else {
+          embedReplies.push(...payload.embeds);
+        }
       },
       messages: {
         fetch: async () =>
           new Map((overrides.recentMessages ?? []).map((m) => [m.id, m])),
       },
     },
-    reply: async (text: string) => {
-      replies.push(text);
+    reply: async (payload: string | { embeds: EmbedBuilder[] }) => {
+      if (typeof payload === 'string') {
+        replies.push(payload);
+      } else {
+        embedReplies.push(...payload.embeds);
+      }
     },
     replies,
     sends,
+    embedReplies,
     typingCalls,
   };
 }
@@ -198,5 +211,43 @@ describe('handleTagResponse', () => {
     expect(
       [...message.replies, ...message.sends].join('\n'),
     ).toBe(longReply);
+  });
+
+  it('replies with an embed when the backend reports format "embed"', async () => {
+    const message = makeMessage({ content: '<@bot1> como resolvo esse erro?' });
+    const api = fakeApiService(async () => ({
+      data: {
+        status: 'ok',
+        category: 'code_technical_question',
+        reply: 'Tenta capturar a exceção com try/catch.',
+        format: 'embed',
+        embedTitle: '💻 Resposta técnica',
+      },
+    }));
+    await handleTagResponse(message, api);
+    expect(message.replies.length).toBe(0);
+    expect(message.embedReplies.length).toBe(1);
+    expect(message.embedReplies[0]?.data.title).toBe('💻 Resposta técnica');
+    expect(message.embedReplies[0]?.data.description).toBe(
+      'Tenta capturar a exceção com try/catch.',
+    );
+  });
+
+  it('falls back to plain text when an "embed" reply exceeds the embed description limit', async () => {
+    const longReply = 'x'.repeat(4100);
+    const message = makeMessage({ content: '<@bot1> me explica tudo' });
+    const api = fakeApiService(async () => ({
+      data: {
+        status: 'ok',
+        category: 'general_question',
+        reply: longReply,
+        format: 'embed',
+        embedTitle: '💭 Resposta',
+      },
+    }));
+    await handleTagResponse(message, api);
+    expect(message.embedReplies.length).toBe(0);
+    expect(message.replies.length).toBe(1);
+    expect(message.sends.length).toBeGreaterThan(0);
   });
 });
