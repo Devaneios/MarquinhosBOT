@@ -1,5 +1,7 @@
 import { GuildConfig } from '@marquinhos/config/guild';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
+import { baseEmbed } from '@marquinhos/utils/discord';
+import type { EmbedBuilder } from 'discord.js';
 import {
   ERROR_FALLBACK_POOL,
   LENGTH_GATE_POOL,
@@ -9,6 +11,10 @@ import { isGreeting, pickGreeting } from './greeting';
 
 const MAX_TAG_LENGTH = 2000;
 const MAX_DISCORD_MESSAGE_LENGTH = 2000;
+const MAX_EMBED_DESCRIPTION_LENGTH = 4096;
+const DEFAULT_EMBED_TITLE = '💭 Resposta';
+
+type TagResponsePayload = string | { embeds: EmbedBuilder[] };
 
 export interface TagResponseMessage {
   id: string;
@@ -16,7 +22,9 @@ export interface TagResponseMessage {
   author: { id: string };
   guildId: string | null;
   channelId: string;
-  client: { user: { id: string } | null };
+  client: {
+    user: { id: string; displayAvatarURL(): string } | null;
+  };
   mentions: { has(userId: string): boolean };
   reference: { messageId?: string } | null;
   fetchReference(): Promise<{
@@ -25,7 +33,7 @@ export interface TagResponseMessage {
   }>;
   channel: {
     sendTyping(): Promise<unknown>;
-    send(content: string): Promise<unknown>;
+    send(content: TagResponsePayload): Promise<unknown>;
     messages: {
       fetch(options: { limit: number }): Promise<
         Map<
@@ -39,7 +47,7 @@ export interface TagResponseMessage {
       >;
     };
   };
-  reply(content: string): Promise<unknown>;
+  reply(content: TagResponsePayload): Promise<unknown>;
 }
 
 function pick(pool: string[]): string {
@@ -133,6 +141,17 @@ export async function handleTagResponse(
 
     if (result.status === 'error' || !result.reply) {
       await message.reply(pick(ERROR_FALLBACK_POOL));
+      return;
+    }
+
+    if (
+      result.format === 'embed' &&
+      result.reply.length <= MAX_EMBED_DESCRIPTION_LENGTH
+    ) {
+      const embed = baseEmbed(message.client)
+        .setTitle(result.embedTitle ?? DEFAULT_EMBED_TITLE)
+        .setDescription(result.reply);
+      await message.reply({ embeds: [embed] });
       return;
     }
 

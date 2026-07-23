@@ -229,6 +229,8 @@ export interface AiChatResponse {
   status: 'ok' | 'rate_limited' | 'error';
   category?: AiChatCategory;
   reply?: string;
+  format?: 'embed' | 'text';
+  embedTitle?: string;
 }
 
 // Maze Game Types
