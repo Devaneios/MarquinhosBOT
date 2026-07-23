@@ -9,13 +9,19 @@ function makeMessage(
     guildId: string | null;
     channelId: string;
     mentionsBot: boolean;
-    recentMessages: { author: { username: string; bot?: boolean }; content: string }[];
+    recentMessages: {
+      id: string;
+      author: { id: string; username: string; bot?: boolean };
+      content: string;
+    }[];
   }> = {},
 ) {
   const replies: string[] = [];
+  const sends: string[] = [];
   const typingCalls: number[] = [];
   return {
-    content: overrides.content ?? '<@123456789012345678> oi',
+    id: 'trigger-message',
+    content: overrides.content ?? '<@bot1> oi',
     author: { id: 'user1' },
     guildId: overrides.guildId ?? GuildConfig.DEVANEIOS_GUILD_ID,
     channelId: overrides.channelId ?? GuildConfig.DEVANEIOS_CHANNEL_ID,
@@ -25,15 +31,19 @@ function makeMessage(
       sendTyping: async () => {
         typingCalls.push(1);
       },
+      send: async (text: string) => {
+        sends.push(text);
+      },
       messages: {
         fetch: async () =>
-          new Map((overrides.recentMessages ?? []).map((m, i) => [String(i), m])),
+          new Map((overrides.recentMessages ?? []).map((m) => [m.id, m])),
       },
     },
     reply: async (text: string) => {
       replies.push(text);
     },
     replies,
+    sends,
     typingCalls,
   };
 }
@@ -78,7 +88,7 @@ describe('handleTagResponse', () => {
 
   it('replies with a canned length-gate message and skips the backend call for long content', async () => {
     let called = false;
-    const longContent = '<@123456789012345678> ' + 'a'.repeat(150);
+    const longContent = '<@bot1> ' + 'a'.repeat(2100);
     const message = makeMessage({ content: longContent });
     const api = fakeApiService(async () => {
       called = true;
@@ -122,14 +132,31 @@ describe('handleTagResponse', () => {
     expect(message.replies.length).toBe(1);
   });
 
-  it('sends only non-bot recent messages to the backend, oldest first', async () => {
+  it('sends recent messages oldest first, keeping its own messages labeled and dropping other bots and the triggering message', async () => {
     let sentRecentMessages: unknown;
     const message = makeMessage({
-      content: '<@123456789012345678> o que vocês acham disso?',
+      content: '<@bot1> o que vocês acham disso?',
       recentMessages: [
-        { author: { username: 'marquinhos', bot: true }, content: 'beep boop' },
-        { author: { username: 'ana' }, content: 'mais recente' },
-        { author: { username: 'joao' }, content: 'mais antiga' },
+        {
+          id: 'trigger-message',
+          author: { id: 'user1', username: 'fazendeiro' },
+          content: '<@bot1> o que vocês acham disso?',
+        },
+        {
+          id: 'm3',
+          author: { id: 'bot1', username: 'marquinhos', bot: true },
+          content: 'beep boop',
+        },
+        {
+          id: 'm2',
+          author: { id: 'other-bot', username: 'mee6', bot: true },
+          content: 'spam de bot',
+        },
+        {
+          id: 'm1',
+          author: { id: 'user2', username: 'ana' },
+          content: 'mais antiga',
+        },
       ],
     });
     const api = fakeApiService(async (payload) => {
@@ -138,8 +165,38 @@ describe('handleTagResponse', () => {
     });
     await handleTagResponse(message, api);
     expect(sentRecentMessages).toEqual([
-      { author: 'joao', content: 'mais antiga' },
-      { author: 'ana', content: 'mais recente' },
+      { author: 'ana', content: 'mais antiga' },
+      { author: 'você (bot)', content: 'beep boop' },
     ]);
+  });
+
+  it('strips the bot mention from the content sent to the backend', async () => {
+    let sentContent: unknown;
+    const message = makeMessage({
+      content: '<@bot1> qual a capital do brasil?',
+    });
+    const api = fakeApiService(async (payload) => {
+      sentContent = payload.content;
+      return { data: { status: 'ok', category: 'general_question', reply: 'Brasília.' } };
+    });
+    await handleTagResponse(message, api);
+    expect(sentContent).toBe('qual a capital do brasil?');
+  });
+
+  it('splits replies longer than 2000 characters across multiple messages', async () => {
+    const longReply = ('linha de resposta longa\n'.repeat(200)).trim();
+    const message = makeMessage({ content: '<@bot1> me explica tudo' });
+    const api = fakeApiService(async () => ({
+      data: { status: 'ok', category: 'general_question', reply: longReply },
+    }));
+    await handleTagResponse(message, api);
+    expect(message.replies.length).toBe(1);
+    expect(message.sends.length).toBeGreaterThan(0);
+    for (const chunk of [...message.replies, ...message.sends]) {
+      expect(chunk.length).toBeLessThanOrEqual(2000);
+    }
+    expect(
+      [...message.replies, ...message.sends].join('\n'),
+    ).toBe(longReply);
   });
 });

@@ -7,9 +7,11 @@ import {
 } from './cannedPools';
 import { isGreeting, pickGreeting } from './greeting';
 
-const MAX_TAG_LENGTH = 140;
+const MAX_TAG_LENGTH = 2000;
+const MAX_DISCORD_MESSAGE_LENGTH = 2000;
 
 export interface TagResponseMessage {
+  id: string;
   content: string;
   author: { id: string };
   guildId: string | null;
@@ -18,13 +20,16 @@ export interface TagResponseMessage {
   mentions: { has(userId: string): boolean };
   channel: {
     sendTyping(): Promise<unknown>;
+    send(content: string): Promise<unknown>;
     messages: {
-      fetch(options: {
-        limit: number;
-      }): Promise<
+      fetch(options: { limit: number }): Promise<
         Map<
           string,
-          { author: { username: string; bot?: boolean }; content: string }
+          {
+            id: string;
+            author: { id: string; username: string; bot?: boolean };
+            content: string;
+          }
         >
       >;
     };
@@ -34,6 +39,19 @@ export interface TagResponseMessage {
 
 function pick(pool: string[]): string {
   return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function splitReply(text: string): string[] {
+  const chunks: string[] = [];
+  let rest = text;
+  while (rest.length > MAX_DISCORD_MESSAGE_LENGTH) {
+    let cut = rest.lastIndexOf('\n', MAX_DISCORD_MESSAGE_LENGTH);
+    if (cut <= 0) cut = MAX_DISCORD_MESSAGE_LENGTH;
+    chunks.push(rest.slice(0, cut));
+    rest = rest.slice(cut).trimStart();
+  }
+  chunks.push(rest);
+  return chunks;
 }
 
 export async function handleTagResponse(
@@ -46,7 +64,8 @@ export async function handleTagResponse(
   if (message.channelId !== GuildConfig.DEVANEIOS_CHANNEL_ID) return;
   if (!message.guildId) return;
   if (!message.client.user) return;
-  if (!message.mentions.has(message.client.user.id)) return;
+  const botUserId = message.client.user.id;
+  if (!message.mentions.has(botUserId)) return;
 
   if (isGreeting(message.content)) {
     await message.reply(pickGreeting());
@@ -66,14 +85,20 @@ export async function handleTagResponse(
     });
     const recentMessages = Array.from(recentMessagesCollection.values())
       .reverse()
-      .filter((m) => !m.author.bot)
-      .map((m) => ({ author: m.author.username, content: m.content }));
+      .filter((m) => m.id !== message.id)
+      .filter((m) => !m.author.bot || m.author.id === botUserId)
+      .map((m) => ({
+        author: m.author.id === botUserId ? 'você (bot)' : m.author.username,
+        content: m.content,
+      }));
 
     const response = await apiService.respondToTag({
       userId: message.author.id,
       guildId: message.guildId,
       channelId: message.channelId,
-      content: message.content,
+      content: message.content
+        .replace(new RegExp(`<@!?${botUserId}>`, 'g'), '')
+        .trim(),
       recentMessages,
     });
 
@@ -89,7 +114,11 @@ export async function handleTagResponse(
       return;
     }
 
-    await message.reply(result.reply);
+    const [firstChunk, ...extraChunks] = splitReply(result.reply);
+    await message.reply(firstChunk);
+    for (const chunk of extraChunks) {
+      await message.channel.send(chunk);
+    }
   } catch {
     await message.reply(pick(ERROR_FALLBACK_POOL));
   }

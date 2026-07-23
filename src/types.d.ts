@@ -217,7 +217,10 @@ export interface AddXpResult {
 // AI Chat Types
 export type AiChatCategory =
   | 'general_question'
+  | 'code_technical_question'
   | 'opinion_reference'
+  | 'bot_help_info'
+  | 'user_roast_provocation'
   | 'casual_chat'
   | 'off_topic_unclear'
   | 'guardrail_roast';
