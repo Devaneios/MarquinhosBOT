@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import { envSchema, type Env } from './envSchema';
 
-config();
+config({ quiet: true });
 
 export { envSchema, type Env };
 

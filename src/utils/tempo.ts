@@ -26,7 +26,7 @@ import { PlaybackData } from '@marquinhos/types';
 import { GuildMember, Message, VoiceChannel } from 'discord.js';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 export class TempoDataProvider {
   readonly providerName = 'Tempo Bot';
