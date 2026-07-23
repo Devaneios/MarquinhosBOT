@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test';
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  spyOn,
+} from 'bun:test';
 import { GameManager } from '../src/game/core/GameManager';
 import { GameType } from '../src/game/core/GameTypes';
 import { UserFacingError } from '../src/game/core/UserFacingError';
@@ -23,6 +31,10 @@ afterEach(() => {
   sessionIds.forEach((id) => manager.endSession(id));
 });
 
+afterAll(() => {
+  reportErrorSpy.mockRestore();
+});
+
 describe('handleGameInteraction error escalation', () => {
   it('reports unexpected (non-UserFacingError) errors from handlePlayerAction', async () => {
     const session = manager.createSession(GameType.SLOTS, 'g', 'c', 'host');
@@ -36,14 +48,20 @@ describe('handleGameInteraction error escalation', () => {
     } as any);
 
     let captured = '';
-    await handleGameInteraction('host', 'c', {}, async () => {}, async (msg) => {
-      captured = msg;
-    });
-
-    expect(reportErrorSpy).toHaveBeenCalledWith(
-      expect.any(Error),
-      { origin: 'gameInteraction', logLevel: 'error' },
+    await handleGameInteraction(
+      'host',
+      'c',
+      {},
+      async () => {},
+      async (msg) => {
+        captured = msg;
+      },
     );
+
+    expect(reportErrorSpy).toHaveBeenCalledWith(expect.any(Error), {
+      origin: 'gameInteraction',
+      logLevel: 'error',
+    });
     expect(captured).toBe(
       'Ocorreu um erro ao processar sua ação. Tente novamente.',
     );
@@ -61,9 +79,15 @@ describe('handleGameInteraction error escalation', () => {
     } as any);
 
     let captured = '';
-    await handleGameInteraction('host', 'c', {}, async () => {}, async (msg) => {
-      captured = msg;
-    });
+    await handleGameInteraction(
+      'host',
+      'c',
+      {},
+      async () => {},
+      async (msg) => {
+        captured = msg;
+      },
+    );
 
     expect(reportErrorSpy).not.toHaveBeenCalled();
     expect(captured).toBe('Não é sua vez!');
