@@ -151,7 +151,9 @@ export class MarquinhosApiService {
     recentMessages: { author: string; content: string }[];
     repliedMessage?: { author: string; content: string };
   }): Promise<ApiResponse<AiChatResponse>> {
-    const data = await this.client.post('/api/ai-chat/respond', payload);
+    const data = await this.client.post('/api/ai-chat/respond', payload, {
+      timeout: 120000,
+    });
     return data as ApiResponse<AiChatResponse>;
   }
 

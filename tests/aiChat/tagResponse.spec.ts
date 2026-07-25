@@ -213,6 +213,18 @@ describe('handleTagResponse', () => {
     ).toBe(longReply);
   });
 
+  it('keeps re-triggering the typing indicator while waiting on a slow backend response', async () => {
+    const message = makeMessage({ content: '<@bot1> roda um script pra mim' });
+    const api = fakeApiService(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      return {
+        data: { status: 'ok', category: 'agent_task', reply: 'pronto.' },
+      };
+    });
+    await handleTagResponse(message, api, 8);
+    expect(message.typingCalls.length).toBeGreaterThan(1);
+  });
+
   it('replies with an embed when the backend reports format "embed"', async () => {
     const message = makeMessage({ content: '<@bot1> como resolvo esse erro?' });
     const api = fakeApiService(async () => ({

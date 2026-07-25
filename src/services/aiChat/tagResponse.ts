@@ -73,6 +73,7 @@ export async function handleTagResponse(
     MarquinhosApiService,
     'respondToTag'
   > = MarquinhosApiService.getInstance(),
+  typingIntervalMs = 8000,
 ): Promise<void> {
   if (message.channelId !== GuildConfig.DEVANEIOS_CHANNEL_ID) return;
   if (!message.guildId) return;
@@ -92,75 +93,95 @@ export async function handleTagResponse(
 
   try {
     await message.channel.sendTyping();
+    // Discord's typing indicator expires after ~10s; an agent_task reply can
+    // run a multi-iteration tool-calling loop well past that, so keep
+    // re-triggering it for as long as we're waiting on the backend.
+    const typingInterval = setInterval(() => {
+      message.channel.sendTyping().catch(() => null);
+    }, typingIntervalMs);
 
-    const recentMessagesCollection = await message.channel.messages.fetch({
-      limit: 20,
-    });
-    const recentMessages = Array.from(recentMessagesCollection.values())
-      .reverse()
-      .filter((m) => m.id !== message.id)
-      .filter((m) => !m.author.bot || m.author.id === botUserId)
-      .map((m) => ({
-        author: m.author.id === botUserId ? 'você (bot)' : m.author.username,
-        content: m.content,
-      }));
-
-    let repliedMessage: { author: string; content: string } | undefined;
-    if (message.reference) {
-      try {
-        const referencedMessage = await message.fetchReference();
-        repliedMessage = {
-          author:
-            referencedMessage.author.id === botUserId
-              ? 'você (bot)'
-              : referencedMessage.author.username,
-          content: referencedMessage.content,
-        };
-      } catch {
-        repliedMessage = undefined;
-      }
-    }
-
-    const response = await apiService.respondToTag({
-      userId: message.author.id,
-      guildId: message.guildId,
-      channelId: message.channelId,
-      content: message.content
-        .replace(new RegExp(`<@!?${botUserId}>`, 'g'), '')
-        .trim(),
-      recentMessages,
-      repliedMessage,
-    });
-
-    const result = response.data;
-
-    if (result.status === 'rate_limited') {
-      await message.reply(RATE_LIMITED_MESSAGE);
-      return;
-    }
-
-    if (result.status === 'error' || !result.reply) {
-      await message.reply(pick(ERROR_FALLBACK_POOL));
-      return;
-    }
-
-    if (
-      result.format === 'embed' &&
-      result.reply.length <= MAX_EMBED_DESCRIPTION_LENGTH
-    ) {
-      const embed = baseEmbed(message.client)
-        .setTitle(result.embedTitle ?? DEFAULT_EMBED_TITLE)
-        .setDescription(result.reply);
-      await message.reply({ embeds: [embed] });
-      return;
-    }
-
-    const [firstChunk, ...extraChunks] = splitReply(result.reply);
-    await message.reply(firstChunk);
-    for (const chunk of extraChunks) {
-      await message.channel.send(chunk);
+    try {
+      await respondToTagAndReply(message, apiService, botUserId);
+    } finally {
+      clearInterval(typingInterval);
     }
   } catch {
     await message.reply(pick(ERROR_FALLBACK_POOL));
+  }
+}
+
+async function respondToTagAndReply(
+  message: TagResponseMessage,
+  apiService: Pick<MarquinhosApiService, 'respondToTag'>,
+  botUserId: string,
+): Promise<void> {
+  if (!message.guildId) return;
+
+  const recentMessagesCollection = await message.channel.messages.fetch({
+    limit: 20,
+  });
+  const recentMessages = Array.from(recentMessagesCollection.values())
+    .reverse()
+    .filter((m) => m.id !== message.id)
+    .filter((m) => !m.author.bot || m.author.id === botUserId)
+    .map((m) => ({
+      author: m.author.id === botUserId ? 'você (bot)' : m.author.username,
+      content: m.content,
+    }));
+
+  let repliedMessage: { author: string; content: string } | undefined;
+  if (message.reference) {
+    try {
+      const referencedMessage = await message.fetchReference();
+      repliedMessage = {
+        author:
+          referencedMessage.author.id === botUserId
+            ? 'você (bot)'
+            : referencedMessage.author.username,
+        content: referencedMessage.content,
+      };
+    } catch {
+      repliedMessage = undefined;
+    }
+  }
+
+  const response = await apiService.respondToTag({
+    userId: message.author.id,
+    guildId: message.guildId,
+    channelId: message.channelId,
+    content: message.content
+      .replace(new RegExp(`<@!?${botUserId}>`, 'g'), '')
+      .trim(),
+    recentMessages,
+    repliedMessage,
+  });
+
+  const result = response.data;
+
+  if (result.status === 'rate_limited') {
+    await message.reply(RATE_LIMITED_MESSAGE);
+    return;
+  }
+
+  if (result.status === 'error' || !result.reply) {
+    await message.reply(pick(ERROR_FALLBACK_POOL));
+    return;
+  }
+
+  if (
+    result.format === 'embed' &&
+    result.reply.length <= MAX_EMBED_DESCRIPTION_LENGTH
+  ) {
+    const embed = baseEmbed(message.client)
+      .setTitle(result.embedTitle ?? DEFAULT_EMBED_TITLE)
+      .setDescription(result.reply);
+    await message.reply({ embeds: [embed] });
+    return;
+  }
+
+  const [firstChunk, ...extraChunks] = splitReply(result.reply);
+  await message.reply(firstChunk);
+  for (const chunk of extraChunks) {
+    await message.channel.send(chunk);
   }
 }
