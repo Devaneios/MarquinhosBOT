@@ -1,6 +1,7 @@
 import { GuildConfig } from '@marquinhos/config/guild';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { baseEmbed } from '@marquinhos/utils/discord';
+import { logger } from '@marquinhos/utils/logger';
 import type { EmbedBuilder } from 'discord.js';
 import {
   ERROR_FALLBACK_POOL,
@@ -91,6 +92,11 @@ export async function handleTagResponse(
     return;
   }
 
+  const startedAt = Date.now();
+  logger.info(
+    `[ai-chat] tag recebida user=${message.author.id} channel=${message.channelId} chars=${message.content.length} replied=${Boolean(message.reference)}`,
+  );
+
   try {
     await message.channel.sendTyping();
     // Discord's typing indicator expires after ~10s; an agent_task reply can
@@ -102,10 +108,16 @@ export async function handleTagResponse(
 
     try {
       await respondToTagAndReply(message, apiService, botUserId);
+      logger.info(
+        `[ai-chat] tag respondida user=${message.author.id} ${Date.now() - startedAt}ms`,
+      );
     } finally {
       clearInterval(typingInterval);
     }
-  } catch {
+  } catch (error) {
+    logger.error(
+      `[ai-chat] tag falhou user=${message.author.id} ${Date.now() - startedAt}ms: ${(error as Error).message}\n${(error as Error).stack ?? ''}`,
+    );
     await message.reply(pick(ERROR_FALLBACK_POOL));
   }
 }
@@ -140,7 +152,10 @@ async function respondToTagAndReply(
             : referencedMessage.author.username,
         content: referencedMessage.content,
       };
-    } catch {
+    } catch (error) {
+      logger.warn(
+        `[ai-chat] não consegui buscar a mensagem referenciada: ${(error as Error).message}`,
+      );
       repliedMessage = undefined;
     }
   }

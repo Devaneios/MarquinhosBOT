@@ -232,6 +232,7 @@ export interface AiChatResponse {
   reply?: string;
   format?: 'embed' | 'text';
   embedTitle?: string;
+  traceId?: string;
 }
 
 // Maze Game Types
