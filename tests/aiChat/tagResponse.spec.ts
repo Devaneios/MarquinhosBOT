@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'bun:test';
 import { GuildConfig } from '@marquinhos/config/guild';
 import { handleTagResponse } from '@marquinhos/services/aiChat/tagResponse';
 import type { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
+import { logger } from '@marquinhos/utils/logger';
+import { describe, expect, it, spyOn } from 'bun:test';
 import type { EmbedBuilder } from 'discord.js';
 
 function makeMessage(
@@ -28,7 +29,10 @@ function makeMessage(
     guildId: overrides.guildId ?? GuildConfig.DEVANEIOS_GUILD_ID,
     channelId: overrides.channelId ?? GuildConfig.DEVANEIOS_CHANNEL_ID,
     client: {
-      user: { id: 'bot1', displayAvatarURL: () => 'https://example.com/avatar.png' },
+      user: {
+        id: 'bot1',
+        displayAvatarURL: () => 'https://example.com/avatar.png',
+      },
     },
     mentions: { has: () => overrides.mentionsBot ?? true },
     channel: {
@@ -82,7 +86,9 @@ describe('handleTagResponse', () => {
 
   it('does nothing when the bot is not mentioned', async () => {
     const message = makeMessage({ mentionsBot: false });
-    const api = fakeApiService(async () => ({ data: { status: 'ok', reply: 'x' } }));
+    const api = fakeApiService(async () => ({
+      data: { status: 'ok', reply: 'x' },
+    }));
     await handleTagResponse(message, api);
     expect(message.replies.length).toBe(0);
   });
@@ -113,7 +119,9 @@ describe('handleTagResponse', () => {
   });
 
   it('calls the backend and replies with its reply text for a normal tag', async () => {
-    const message = makeMessage({ content: '<@123456789012345678> qual a capital do brasil?' });
+    const message = makeMessage({
+      content: '<@123456789012345678> qual a capital do brasil?',
+    });
     const api = fakeApiService(async () => ({
       data: { status: 'ok', category: 'general_question', reply: 'Brasília.' },
     }));
@@ -123,26 +131,54 @@ describe('handleTagResponse', () => {
   });
 
   it('replies with the rate-limited message when the backend reports rate_limited', async () => {
-    const message = makeMessage({ content: '<@123456789012345678> qual a capital do brasil?' });
-    const api = fakeApiService(async () => ({ data: { status: 'rate_limited' } }));
+    const message = makeMessage({
+      content: '<@123456789012345678> qual a capital do brasil?',
+    });
+    const api = fakeApiService(async () => ({
+      data: { status: 'rate_limited' },
+    }));
     await handleTagResponse(message, api);
     expect(message.replies).toEqual(['Marquinhos está cansado, volte amanhã']);
   });
 
   it('replies with a canned fallback when the backend reports error', async () => {
-    const message = makeMessage({ content: '<@123456789012345678> qual a capital do brasil?' });
+    const message = makeMessage({
+      content: '<@123456789012345678> qual a capital do brasil?',
+    });
     const api = fakeApiService(async () => ({ data: { status: 'error' } }));
     await handleTagResponse(message, api);
     expect(message.replies.length).toBe(1);
   });
 
   it('replies with a canned fallback when the backend call throws', async () => {
-    const message = makeMessage({ content: '<@123456789012345678> qual a capital do brasil?' });
+    const message = makeMessage({
+      content: '<@123456789012345678> qual a capital do brasil?',
+    });
     const api = fakeApiService(async () => {
       throw new Error('network down');
     });
     await handleTagResponse(message, api);
     expect(message.replies.length).toBe(1);
+  });
+
+  it('logs the underlying error instead of swallowing it when the backend call throws', async () => {
+    const message = makeMessage({
+      content: '<@123456789012345678> qual a capital do brasil?',
+    });
+    const api = fakeApiService(async () => {
+      throw new Error('network down');
+    });
+    const errorSpy = spyOn(logger, 'error').mockImplementation(
+      () => logger as never,
+    );
+
+    try {
+      await handleTagResponse(message, api);
+      expect(errorSpy).toHaveBeenCalled();
+      expect(String(errorSpy.mock.calls[0]?.[0])).toContain('network down');
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 
   it('sends recent messages oldest first, keeping its own messages labeled and dropping other bots and the triggering message', async () => {
@@ -174,7 +210,9 @@ describe('handleTagResponse', () => {
     });
     const api = fakeApiService(async (payload) => {
       sentRecentMessages = payload.recentMessages;
-      return { data: { status: 'ok', category: 'opinion_reference', reply: 'ok' } };
+      return {
+        data: { status: 'ok', category: 'opinion_reference', reply: 'ok' },
+      };
     });
     await handleTagResponse(message, api);
     expect(sentRecentMessages).toEqual([
@@ -190,14 +228,20 @@ describe('handleTagResponse', () => {
     });
     const api = fakeApiService(async (payload) => {
       sentContent = payload.content;
-      return { data: { status: 'ok', category: 'general_question', reply: 'Brasília.' } };
+      return {
+        data: {
+          status: 'ok',
+          category: 'general_question',
+          reply: 'Brasília.',
+        },
+      };
     });
     await handleTagResponse(message, api);
     expect(sentContent).toBe('qual a capital do brasil?');
   });
 
   it('splits replies longer than 2000 characters across multiple messages', async () => {
-    const longReply = ('linha de resposta longa\n'.repeat(200)).trim();
+    const longReply = 'linha de resposta longa\n'.repeat(200).trim();
     const message = makeMessage({ content: '<@bot1> me explica tudo' });
     const api = fakeApiService(async () => ({
       data: { status: 'ok', category: 'general_question', reply: longReply },
@@ -208,9 +252,7 @@ describe('handleTagResponse', () => {
     for (const chunk of [...message.replies, ...message.sends]) {
       expect(chunk.length).toBeLessThanOrEqual(2000);
     }
-    expect(
-      [...message.replies, ...message.sends].join('\n'),
-    ).toBe(longReply);
+    expect([...message.replies, ...message.sends].join('\n')).toBe(longReply);
   });
 
   it('keeps re-triggering the typing indicator while waiting on a slow backend response', async () => {

@@ -151,10 +151,14 @@ export class MarquinhosApiService {
     recentMessages: { author: string; content: string }[];
     repliedMessage?: { author: string; content: string };
   }): Promise<ApiResponse<AiChatResponse>> {
-    const data = await this.client.post('/api/ai-chat/respond', payload, {
+    const startedAt = Date.now();
+    const data = (await this.client.post('/api/ai-chat/respond', payload, {
       timeout: 120000,
-    });
-    return data as ApiResponse<AiChatResponse>;
+    })) as ApiResponse<AiChatResponse>;
+    logger.info(
+      `[ai-chat] respondToTag user=${payload.userId} status=${data.data?.status} category=${data.data?.category ?? '-'} trace=${data.data?.traceId ?? '-'} ${Date.now() - startedAt}ms`,
+    );
+    return data;
   }
 
   async getUserGameStats(
