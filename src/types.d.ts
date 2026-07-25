@@ -223,7 +223,8 @@ export type AiChatCategory =
   | 'user_roast_provocation'
   | 'casual_chat'
   | 'off_topic_unclear'
-  | 'guardrail_roast';
+  | 'guardrail_roast'
+  | 'agent_task';
 
 export interface AiChatResponse {
   status: 'ok' | 'rate_limited' | 'error';
