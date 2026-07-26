@@ -4,6 +4,7 @@ import {
   AiChatResponse,
   ApiError,
   ApiResponse,
+  EmojiReactionResponse,
   LastfmTopListenedPeriod,
   MazeViewportState,
   PlaybackData,
@@ -159,6 +160,14 @@ export class MarquinhosApiService {
       `[ai-chat] respondToTag user=${payload.userId} status=${data.data?.status} category=${data.data?.category ?? '-'} trace=${data.data?.traceId ?? '-'} ${Date.now() - startedAt}ms`,
     );
     return data;
+  }
+
+  async chooseEmojiReactions(payload: {
+    content: string;
+    recentMessages?: { author: string; content: string }[];
+  }): Promise<ApiResponse<EmojiReactionResponse>> {
+    const data = await this.client.post('/api/emoji-reaction/choose', payload);
+    return data as ApiResponse<EmojiReactionResponse>;
   }
 
   async getUserGameStats(
