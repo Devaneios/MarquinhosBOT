@@ -1,53 +1,80 @@
 import { describe, expect, it } from 'bun:test';
 import { GuildConfig } from '@marquinhos/config/guild';
 import { handleContentReaction } from '@marquinhos/services/aiChat/contentReactions';
+import type { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 
-function makeMessage(content: string, channelId: string = GuildConfig.DEVANEIOS_CHANNEL_ID) {
+function makeMessage(
+  content: string,
+  channelId: string = GuildConfig.DEVANEIOS_CHANNEL_ID,
+) {
   const reactions: string[] = [];
-  const replies: string[] = [];
   return {
     content,
     channelId,
     react: async (emoji: string) => {
       reactions.push(emoji);
     },
-    reply: async (text: string) => {
-      replies.push(text);
-    },
     reactions,
-    replies,
   };
 }
 
+function makeApiService(emojis: string[]) {
+  return {
+    chooseEmojiReactions: async () => ({ data: { emojis } }),
+  } as unknown as Pick<MarquinhosApiService, 'chooseEmojiReactions'>;
+}
+
 describe('handleContentReaction', () => {
-  it('reacts when the content is not neutral', async () => {
-    const message = makeMessage('que jogo incrível, adorei');
-    await handleContentReaction(message, () => 1);
-    expect(message.reactions.length).toBe(1);
+  it('reacts with each emoji returned by the API', async () => {
+    const message = makeMessage('kkkkk mano que hilário');
+    await handleContentReaction(
+      message,
+      makeApiService(['😂', 'cavaloemoji:725868757779742787']),
+    );
+    expect(message.reactions).toEqual(['😂', 'cavaloemoji:725868757779742787']);
   });
 
-  it('does not react to neutral content', async () => {
-    const message = makeMessage('vou sair pra comprar pão');
-    await handleContentReaction(message, () => 1);
+  it('does not call the API or react for messages outside the Devaneios channel', async () => {
+    let called = false;
+    const message = makeMessage('kkkkk', 'some-other-channel');
+    const apiService = {
+      chooseEmojiReactions: async () => {
+        called = true;
+        return { data: { emojis: ['😂'] } };
+      },
+    } as unknown as Pick<MarquinhosApiService, 'chooseEmojiReactions'>;
+
+    await handleContentReaction(message, apiService);
+
+    expect(called).toBe(false);
     expect(message.reactions.length).toBe(0);
   });
 
-  it('sends a quirky reply when the random roll is below the threshold', async () => {
-    const message = makeMessage('vou sair pra comprar pão');
-    await handleContentReaction(message, () => 0);
-    expect(message.replies.length).toBe(1);
-  });
+  it('fails soft (does not throw, does not react) when the API call rejects', async () => {
+    const message = makeMessage('kkkkk');
+    const apiService = {
+      chooseEmojiReactions: async () => {
+        throw new Error('network down');
+      },
+    } as unknown as Pick<MarquinhosApiService, 'chooseEmojiReactions'>;
 
-  it('does not send a quirky reply when the random roll is above the threshold', async () => {
-    const message = makeMessage('vou sair pra comprar pão');
-    await handleContentReaction(message, () => 0.5);
-    expect(message.replies.length).toBe(0);
-  });
-
-  it('does not react or reply for messages outside the Devaneios channel', async () => {
-    const message = makeMessage('que jogo incrível, adorei', 'some-other-channel');
-    await handleContentReaction(message, () => 0);
+    await expect(handleContentReaction(message, apiService)).resolves.toBeUndefined();
     expect(message.reactions.length).toBe(0);
-    expect(message.replies.length).toBe(0);
+  });
+
+  it('continues reacting with remaining emojis if one react() call fails', async () => {
+    const reactions: string[] = [];
+    const message = {
+      content: 'kkkkk',
+      channelId: GuildConfig.DEVANEIOS_CHANNEL_ID,
+      react: async (emoji: string) => {
+        if (emoji === 'bad:1') throw new Error('unknown emoji');
+        reactions.push(emoji);
+      },
+    };
+
+    await handleContentReaction(message, makeApiService(['bad:1', '😂']));
+
+    expect(reactions).toEqual(['😂']);
   });
 });

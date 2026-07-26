@@ -235,6 +235,10 @@ export interface AiChatResponse {
   traceId?: string;
 }
 
+export interface EmojiReactionResponse {
+  emojis: string[];
+}
+
 // Maze Game Types
 export interface MazeViewportState {
   sessionId: string;
