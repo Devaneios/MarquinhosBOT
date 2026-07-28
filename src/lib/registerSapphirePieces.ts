@@ -1,5 +1,6 @@
 import { AdminCommand } from '@marquinhos/commands/admin/admin';
 import { ChaosCommand } from '@marquinhos/commands/admin/chaos';
+import { IaCommand } from '@marquinhos/commands/ai/ia';
 import { ApiStatusCommand } from '@marquinhos/commands/dev/apistatus';
 import { GamesCommand } from '@marquinhos/commands/games/games';
 import { TermoCommand } from '@marquinhos/commands/games/termo';
@@ -50,6 +51,7 @@ const commands = [
   ['admin', AdminCommand],
   ['chaos', ChaosCommand],
   ['apistatus', ApiStatusCommand],
+  ['ia', IaCommand],
   ['games', GamesCommand],
   ['termo', TermoCommand],
   ['anom', AnomCommand],

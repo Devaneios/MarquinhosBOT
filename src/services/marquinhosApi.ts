@@ -9,6 +9,8 @@ import {
   MazeViewportState,
   PlaybackData,
   Playlist,
+  ResearchJobResponse,
+  ResearchStartResponse,
   UserAchievement,
   UserLevel,
 } from '@marquinhos/types';
@@ -160,6 +162,49 @@ export class MarquinhosApiService {
       `[ai-chat] respondToTag user=${payload.userId} status=${data.data?.status} category=${data.data?.category ?? '-'} trace=${data.data?.traceId ?? '-'} ${Date.now() - startedAt}ms`,
     );
     return data;
+  }
+
+  async askInThread(payload: {
+    threadId: string;
+    guildId: string;
+    channelId: string;
+    userId: string;
+    content: string;
+    mode?: 'ask' | 'research';
+  }): Promise<ApiResponse<AiChatResponse>> {
+    const startedAt = Date.now();
+    const data = (await this.client.post('/api/ai-chat/thread/ask', payload, {
+      timeout: 120000,
+    })) as ApiResponse<AiChatResponse>;
+    logger.info(
+      `[ai-chat] askInThread thread=${payload.threadId} status=${data.data?.status} trace=${data.data?.traceId ?? '-'} ${Date.now() - startedAt}ms`,
+    );
+    return data;
+  }
+
+  async startResearch(payload: {
+    threadId: string;
+    guildId: string;
+    channelId: string;
+    userId: string;
+    query: string;
+    idempotencyKey: string;
+  }): Promise<ApiResponse<ResearchStartResponse>> {
+    const data = (await this.client.post(
+      '/api/ai-chat/research',
+      payload,
+    )) as ApiResponse<ResearchStartResponse>;
+    logger.info(
+      `[ai-chat] startResearch thread=${payload.threadId} status=${data.data?.status} job=${data.data?.jobId ?? '-'}`,
+    );
+    return data;
+  }
+
+  async getResearchJob(
+    jobId: string,
+  ): Promise<ApiResponse<ResearchJobResponse>> {
+    const data = await this.client.get(`/api/ai-chat/research/${jobId}`);
+    return data as ApiResponse<ResearchJobResponse>;
   }
 
   async chooseEmojiReactions(payload: {
