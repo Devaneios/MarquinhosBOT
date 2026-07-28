@@ -239,6 +239,48 @@ export interface EmojiReactionResponse {
   emojis: string[];
 }
 
+export interface ResearchSource {
+  index: number;
+  url: string;
+  title: string;
+  publishedDate?: string;
+}
+
+export interface ResearchStats {
+  rounds: number;
+  searches: number;
+  fetched: number;
+  relevantSources: number;
+  maxDepth: number;
+  durationMs: number;
+  truncatedByBudget?: boolean;
+}
+
+export interface ResearchProgressEvent {
+  seq: number;
+  stage: string;
+  message: string;
+  createdAt: number;
+}
+
+export interface ResearchStartResponse {
+  status: 'accepted' | 'rate_limited' | 'rejected';
+  jobId?: string;
+  created?: boolean;
+  reply?: string;
+}
+
+export interface ResearchJobResponse {
+  jobId: string;
+  status: 'queued' | 'running' | 'done' | 'error';
+  query: string;
+  progress: ResearchProgressEvent[];
+  report?: string;
+  sources?: ResearchSource[];
+  stats?: ResearchStats;
+  error?: string;
+}
+
 // Maze Game Types
 export interface MazeViewportState {
   sessionId: string;

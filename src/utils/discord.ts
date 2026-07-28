@@ -12,6 +12,35 @@ import {
 } from 'discord.js';
 import { sleep } from './sleep';
 
+export const MAX_DISCORD_MESSAGE_LENGTH = 2000;
+export const MAX_EMBED_DESCRIPTION_LENGTH = 4096;
+
+/**
+ * Splits text into Discord-sized chunks, preferring to break on a blank line,
+ * then a line break, then a space, so a long AI answer or research report does
+ * not get cut mid-word or mid-code-fence.
+ */
+export function splitMessage(
+  text: string,
+  limit: number = MAX_DISCORD_MESSAGE_LENGTH,
+): string[] {
+  const chunks: string[] = [];
+  let rest = text;
+
+  while (rest.length > limit) {
+    const window = rest.slice(0, limit);
+    let cut = window.lastIndexOf('\n\n');
+    if (cut <= 0) cut = window.lastIndexOf('\n');
+    if (cut <= 0) cut = window.lastIndexOf(' ');
+    if (cut <= 0) cut = limit;
+    chunks.push(rest.slice(0, cut).trimEnd());
+    rest = rest.slice(cut).trimStart();
+  }
+
+  if (rest.length > 0) chunks.push(rest);
+  return chunks.length > 0 ? chunks : [''];
+}
+
 export interface BaseEmbedClient {
   user: { displayAvatarURL(): string } | null;
 }

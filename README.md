@@ -15,6 +15,18 @@
 	- Quinta-feira
 	- Sexta-Feira
 	- Bom dia
+
+### IA
+
+Três formas de falar com a IA, todas servidas pela `marquinhos-web-api`:
+
+| Como | O que faz |
+|---|---|
+| `@Marquinhos <mensagem>` | Resposta na hora, em reply, com a persona do Marquinhos e respostas customizadas por tipo de mensagem. Só no canal Devaneios. |
+| `/ia perguntar <pergunta>` | Abre uma **thread** e responde lá, com acesso a busca na web, leitura de páginas, sandbox de código e ao próprio código-fonte. A thread mantém o contexto da conversa — incluindo o raciocínio do modelo — então qualquer pessoa pode continuar perguntando na thread **sem precisar marcar o bot**. |
+| `/ia pesquisar <tema>` | Pesquisa profunda numa thread: planeja as frentes de busca, busca no SearXNG, lê as páginas, cruza as informações e entrega um relatório completo com citações e lista de fontes. Leva alguns minutos e o progresso vai sendo postado na thread. |
+
+O reasoning do modelo nunca é postado na thread — ele é mantido no contexto entre turnos e gravado nos traces da API para debug.
 - **Futuramente:**
     - Implementação de DB para gestão de dinheiro interno de servidor
 	- Implementação de parâmetros no !diga para especificar seu gosto

@@ -1,3 +1,4 @@
+import { handleAiThreadMessage } from '@marquinhos/services/aiChat/aiThreadMessage';
 import { handleContentReaction } from '@marquinhos/services/aiChat/contentReactions';
 import { handleTagResponse } from '@marquinhos/services/aiChat/tagResponse';
 import { spamModerationService } from '@marquinhos/services/spamModeration';
@@ -21,6 +22,15 @@ export class MessageCreateListener extends Listener<
       await spamModerationService.handleMessage(message);
     } catch (error) {
       logger.error('Error in spam moderation listener:', error);
+    }
+
+    // An /ia thread is its own conversation: a message there is a follow-up and
+    // must not also go through the tag flow, which would answer it twice.
+    try {
+      if (await handleAiThreadMessage(message)) return;
+    } catch (error) {
+      logger.error('Error in AI thread handler:', error);
+      return;
     }
 
     try {
