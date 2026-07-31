@@ -16,8 +16,10 @@ export const POLL_TIMEOUT_MS = 25 * 60_000;
 const STAGE_LABELS: Record<string, string> = {
   plan: '🗺️ **Plano**',
   search: '🔎 **Busca**',
+  search_failed: '📵 **Busca falhou**',
   triage: '⚖️ **Triagem**',
   read: '📄 **Leitura**',
+  read_failed: '🚫 **Não abriu**',
   extract: '🧪 **Extração**',
   follow: '🧵 **Novas pistas**',
   reflect: '🤔 **Revisão**',
