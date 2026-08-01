@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Marquinhos Activities</title>
+  </head>
+  <body>
+    <!--
+      Static placeholder, not rendered by React. createRoot(...).render(...)
+      replaces #root's contents entirely, so if this text is still visible,
+      React never mounted at all (script blocked/failed to load) — as
+      opposed to React mounting and then failing partway through.
+    -->
+    <div id="root">static-shell: React has not mounted yet</div>
+    <!--
+      Discord's Activity proxy commonly enforces a CSP without
+      'unsafe-inline', which silently drops inline <script> blocks — so the
+      error overlay must be an external module file, not inline, to be sure
+      it actually runs. Loaded as its own module tag *before* main.tsx: each
+      <script type="module"> is deferred and executes in document order
+      relative to the others, so this always runs first regardless of what
+      main.tsx or any bundler import-reordering does.
+    -->
+    <script type="module" src="/src/errorOverlay.ts"></script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

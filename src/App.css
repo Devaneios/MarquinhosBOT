@@ -1,0 +1,21 @@
+.app {
+  display: flex;
+  place-content: center;
+  place-items: center;
+  height: 100%;
+}
+
+.status {
+  display: flex;
+  place-content: center;
+  place-items: center;
+  height: 100%;
+  color: var(--text-h, #fff);
+  font-family: sans-serif;
+}
+
+.pong-canvas {
+  border-radius: 8px;
+  max-width: 100%;
+  max-height: 100vh;
+}
