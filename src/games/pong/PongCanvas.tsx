@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
+import type { GameMode } from '../../hooks/useDiscordAuth';
 import { wsUrl } from '../../lib/apiBase';
 import { ActivitySocket, type ActivityMessage } from '../../lib/ws';
 import { decodeStateSnapshot, type DecodedSnapshot } from './pongProtocol';
 
 type Side = 'left' | 'right';
+
+const COURT_BG = '#0c0a10';
+const COURT_LINE = '#3a3542';
+const LEFT_COLOR = '#e8332c';
+const RIGHT_COLOR = '#2f9e64';
+const BALL_COLOR = '#f2ede3';
 
 interface PongConfig {
   width: number;
@@ -45,7 +52,13 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-export function PongCanvas({ wsToken }: { wsToken: string }) {
+export function PongCanvas({
+  wsToken,
+  mode,
+}: {
+  wsToken: string;
+  mode: GameMode;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const latestSnapshotRef = useRef<Snapshot | null>(null);
   const prevSnapshotRef = useRef<Snapshot | null>(null);
@@ -115,8 +128,7 @@ export function PongCanvas({ wsToken }: { wsToken: string }) {
       if (predictedYRef.current === null) {
         predictedYRef.current = authoritativeY;
       } else if (
-        Math.abs(authoritativeY - predictedYRef.current) >
-        config.paddleHeight
+        Math.abs(authoritativeY - predictedYRef.current) > config.paddleHeight
       ) {
         predictedYRef.current = authoritativeY;
       } else {
@@ -169,7 +181,7 @@ export function PongCanvas({ wsToken }: { wsToken: string }) {
       if (!latest) {
         if (canvas.width !== config.width) canvas.width = config.width;
         if (canvas.height !== config.height) canvas.height = config.height;
-        ctx.fillStyle = '#111';
+        ctx.fillStyle = COURT_BG;
         ctx.fillRect(0, 0, config.width, config.height);
       } else {
         const state = latest.state;
@@ -213,11 +225,21 @@ export function PongCanvas({ wsToken }: { wsToken: string }) {
         }
         lastFrameTimeRef.current = now;
 
-        ctx.fillStyle = '#111';
+        ctx.fillStyle = COURT_BG;
         ctx.fillRect(0, 0, config.width, config.height);
 
-        ctx.fillStyle = '#fff';
+        ctx.strokeStyle = COURT_LINE;
+        ctx.lineWidth = 4;
+        ctx.setLineDash([24, 20]);
+        ctx.beginPath();
+        ctx.moveTo(config.width / 2, 0);
+        ctx.lineTo(config.width / 2, config.height);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = LEFT_COLOR;
         ctx.fillRect(0, paddleLeft, config.paddleWidth, config.paddleHeight);
+        ctx.fillStyle = RIGHT_COLOR;
         ctx.fillRect(
           config.width - config.paddleWidth,
           paddleRight,
@@ -225,6 +247,7 @@ export function PongCanvas({ wsToken }: { wsToken: string }) {
           config.paddleHeight,
         );
 
+        ctx.fillStyle = BALL_COLOR;
         ctx.beginPath();
         ctx.arc(ballX, ballY, config.ballRadius, 0, Math.PI * 2);
         ctx.fill();
@@ -244,32 +267,68 @@ export function PongCanvas({ wsToken }: { wsToken: string }) {
     };
   }, [wsToken]);
 
+  const p1Name = 'PLAYER 1';
+  const p2Name = mode === 'single' ? 'CPU' : 'PLAYER 2';
+  const winnerName =
+    winner === 'left' ? p1Name : winner === 'right' ? p2Name : '';
+
   return (
-    <div className="pong-container">
-      <canvas ref={canvasRef} className="pong-canvas" />
-      {score ? (
-        <div className="pong-score">
-          {score.left} - {score.right}
+    <div className="pong-screen pong-in-game">
+      <div className="pong-game-header">
+        <div className="pong-game-player pong-game-player-left">
+          <div className="pong-heading pong-game-player-name">{p1Name}</div>
+          <div className="pong-heading pong-game-score">{score?.left ?? 0}</div>
         </div>
-      ) : (
-        <div className="pong-waiting">Waiting for opponent…</div>
-      )}
-      {winner && <div className="pong-winner">{winner} wins!</div>}
-      {winner && (
-        <button
-          type="button"
-          className="pong-restart-button"
-          disabled={requested}
-          onClick={() => {
-            socketRef.current?.send({ type: 'restart' });
-            setRequested(true);
-          }}
-        >
-          {requested
-            ? `Waiting for opponent… (${restartStatus?.votes ?? 1}/${restartStatus?.required ?? 2})`
-            : 'Play Again'}
-        </button>
-      )}
+        <div className="pong-game-player pong-game-player-right">
+          <div className="pong-heading pong-game-player-name">{p2Name}</div>
+          <div className="pong-heading pong-game-score">
+            {score?.right ?? 0}
+          </div>
+        </div>
+      </div>
+
+      <div className="pong-court">
+        <canvas ref={canvasRef} className="pong-canvas" />
+        {!score && (
+          <div className="pong-heading pong-blink-text pong-waiting">
+            WAITING FOR OPPONENT…
+          </div>
+        )}
+        {winner && (
+          <div className="pong-game-over">
+            <div className="pong-heading pong-game-over-title">
+              {winnerName} WINS
+            </div>
+            <div className="pong-heading pong-game-over-score">
+              <span className="pong-game-over-score-left">{score?.left}</span>
+              <span className="pong-game-over-score-sep">—</span>
+              <span className="pong-game-over-score-right">{score?.right}</span>
+            </div>
+            <div className="pong-game-over-actions">
+              <button
+                type="button"
+                className="pong-btn pong-btn-primary"
+                disabled={requested}
+                onClick={() => {
+                  socketRef.current?.send({ type: 'restart' });
+                  setRequested(true);
+                }}
+              >
+                {requested
+                  ? `WAITING… (${restartStatus?.votes ?? 1}/${restartStatus?.required ?? 2})`
+                  : 'REMATCH'}
+              </button>
+              <button
+                type="button"
+                className="pong-btn pong-btn-secondary"
+                onClick={() => window.location.reload()}
+              >
+                MAIN MENU
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

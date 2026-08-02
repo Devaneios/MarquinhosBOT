@@ -1,96 +1,305 @@
-.app {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.app-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-.app-header h1 {
-  font-size: 24px;
-  margin: 0;
-}
-
-.app-status {
-  font-size: 14px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 1px solid var(--accent-border);
-}
-
-.app-main {
+.pong-screen {
   flex: 1;
-  min-height: 0;
-  display: flex;
-  place-content: center;
-  place-items: center;
-  color: var(--text-h, #fff);
-  font-family: sans-serif;
-}
-
-.mode-menu {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 40px;
+}
+
+.pong-status-screen {
   gap: 16px;
-  padding: 32px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
 }
 
-.mode-menu h2 {
-  margin: 0;
+.pong-status-error {
+  color: var(--pong-red);
+  font-size: 18px;
 }
 
-.mode-menu-options {
+.pong-status-error-detail {
+  color: var(--pong-text-dim);
+  font-size: 18px;
+  max-width: 480px;
+  text-align: center;
+}
+
+.pong-blink-text {
+  color: var(--pong-yellow);
+  font-size: 12px;
+  animation: pong-blink 1.2s step-start infinite;
+}
+
+/* Main menu */
+
+.pong-main-menu {
+  gap: 48px;
+}
+
+.pong-main-menu-title {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.pong-logo {
+  font-size: 44px;
+  color: var(--pong-text);
+  text-shadow: 6px 6px 0 var(--pong-red);
+  letter-spacing: 4px;
+  text-align: center;
+}
+
+.pong-main-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 340px;
+}
+
+.pong-main-menu-footer {
+  font-size: 20px;
+  color: var(--pong-text-faint);
+}
+
+/* Mode select */
+
+.pong-screen-title {
+  font-size: 26px;
+  color: var(--pong-text);
+}
+
+.pong-mode-select-options {
+  display: flex;
+  gap: 28px;
+}
+
+.pong-mode-card {
+  width: 260px;
+  padding: 32px 20px;
+  background: var(--pong-panel);
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  border-radius: 0;
+  color: var(--pong-text);
+}
+
+.pong-mode-card:hover {
+  background: var(--pong-panel-hover);
+}
+
+.pong-mode-card:focus-visible {
+  outline: 3px solid var(--pong-yellow);
+  outline-offset: 3px;
+}
+
+.pong-mode-card-red {
+  border: 3px solid var(--pong-red);
+}
+
+.pong-mode-card-green {
+  border: 3px solid var(--pong-green);
+}
+
+.pong-mode-card-title {
+  font-size: 14px;
+}
+
+.pong-mode-card-red .pong-mode-card-title {
+  color: var(--pong-red);
+}
+
+.pong-mode-card-green .pong-mode-card-title {
+  color: var(--pong-green);
+}
+
+.pong-mode-card-subtitle {
+  font-size: 18px;
+  color: var(--pong-text-dim);
+}
+
+/* Settings */
+
+.pong-settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 420px;
+}
+
+.pong-settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pong-settings-label {
+  font-size: 13px;
+  color: var(--pong-text);
+}
+
+.pong-toggle {
+  width: 90px;
+  height: 36px;
+  border: 3px solid var(--pong-text);
+  position: relative;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.pong-toggle:focus-visible {
+  outline: 3px solid var(--pong-yellow);
+  outline-offset: 3px;
+}
+
+.pong-toggle-knob {
+  position: absolute;
+  top: 2px;
+  width: 26px;
+  height: 26px;
+  background: var(--pong-bg);
+  transition: left 0.15s;
+}
+
+.pong-settings-group {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
-.mode-menu-options button {
-  font: inherit;
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: 1px solid var(--accent-border);
-  background: var(--accent-bg);
-  color: var(--accent);
-  cursor: pointer;
+.pong-settings-options {
+  display: flex;
+  gap: 10px;
 }
 
-.mode-menu-options button:hover {
-  background: var(--accent-border);
-  color: var(--text-h, #fff);
+.pong-option-btn {
+  flex: 1;
+  text-align: center;
+  padding: 12px 0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--pong-text);
+  background: transparent;
+  border: 3px solid var(--pong-input-border);
+  border-radius: 0;
+}
+
+.pong-option-btn-large {
+  font-size: 14px;
+}
+
+.pong-option-btn:focus-visible {
+  outline: 3px solid var(--pong-yellow);
+  outline-offset: 3px;
+}
+
+.pong-option-btn-active {
+  color: #121016;
+  background: var(--pong-yellow);
+  border-color: var(--pong-yellow);
+}
+
+/* How to play */
+
+.pong-how-to-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.pong-how-to-key {
+  width: 44px;
+  height: 44px;
+  background: var(--pong-text);
+  color: var(--pong-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border: 3px solid var(--pong-text);
+}
+
+.pong-how-to-hint {
+  font-size: 18px;
+  color: var(--pong-text-dim);
+}
+
+.pong-how-to-note {
+  font-size: 20px;
+  color: var(--pong-yellow);
+  max-width: 480px;
+  text-align: center;
+}
+
+/* In game */
+
+.pong-in-game {
+  padding: 24px 40px;
+  box-sizing: border-box;
+  gap: 0;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.pong-game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.pong-game-player {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pong-game-player-left {
+  align-items: flex-start;
+}
+
+.pong-game-player-right {
+  align-items: flex-end;
+}
+
+.pong-game-player-name {
+  font-size: 12px;
+}
+
+.pong-game-player-left .pong-game-player-name {
+  color: var(--pong-red);
+}
+
+.pong-game-player-right .pong-game-player-name {
+  color: var(--pong-green);
+}
+
+.pong-game-score {
+  font-size: 56px;
+  color: var(--pong-text);
+}
+
+.pong-court {
+  flex: 1;
+  margin-top: 20px;
+  position: relative;
+  border: 3px solid var(--pong-text);
+  background: var(--pong-court-bg);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pong-canvas {
-  border-radius: 8px;
   max-width: 100%;
   max-height: 100%;
-}
-
-.pong-container {
-  position: relative;
-  display: flex;
-  max-width: 100%;
-  max-height: 100%;
-}
-
-.pong-score {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 24px;
-  color: #fff;
+  display: block;
 }
 
 .pong-waiting {
@@ -98,39 +307,49 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 24px;
-  color: #fff;
+  font-size: 14px;
 }
 
-.pong-winner {
+.pong-game-over {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 24px;
-  color: #fff;
+  inset: 0;
+  background: rgba(12, 10, 16, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
 }
 
-.pong-restart-button {
-  position: absolute;
-  left: 50%;
-  bottom: 48px;
-  transform: translateX(-50%);
-  font: inherit;
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: 1px solid var(--accent-border);
-  background: var(--accent-bg);
-  color: var(--accent);
-  cursor: pointer;
+.pong-game-over-title {
+  font-size: 30px;
+  color: var(--pong-text);
+  text-shadow: 5px 5px 0 var(--pong-red);
+  text-align: center;
 }
 
-.pong-restart-button:hover:not(:disabled) {
-  background: var(--accent-border);
-  color: var(--text-h, #fff);
+.pong-game-over-score {
+  font-size: 28px;
+  color: var(--pong-text);
+  display: flex;
+  gap: 24px;
+  align-items: center;
 }
 
-.pong-restart-button:disabled {
-  cursor: default;
-  opacity: 0.7;
+.pong-game-over-score-left {
+  color: var(--pong-red);
+}
+
+.pong-game-over-score-right {
+  color: var(--pong-green);
+}
+
+.pong-game-over-score-sep {
+  font-size: 18px;
+  color: var(--pong-text-faint);
+}
+
+.pong-game-over-actions {
+  display: flex;
+  gap: 18px;
 }

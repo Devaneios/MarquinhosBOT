@@ -1,43 +1,38 @@
 import './App.css';
+import './games/pong/pong-theme.css';
 import { PongCanvas } from './games/pong/PongCanvas';
-import { ModeMenu } from './games/pong/ModeMenu';
+import { PongMenuFlow } from './games/pong/PongMenuFlow';
 import { useDiscordAuth } from './hooks/useDiscordAuth';
-
-function statusText(status: string): string {
-  switch (status) {
-    case 'loading':
-      return 'Connecting…';
-    case 'error':
-      return 'Error';
-    case 'selecting-mode':
-      return 'Choose a mode';
-    case 'connecting':
-      return 'Starting…';
-    case 'ready':
-      return 'Playing';
-    default:
-      return '';
-  }
-}
 
 function App() {
   const auth = useDiscordAuth();
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>Marquinhos Pong</h1>
-        <p className="app-status">{statusText(auth.status)}</p>
-      </header>
-      <main className="app-main">
-        {auth.status === 'loading' && <p>Connecting to Discord…</p>}
-        {auth.status === 'error' && <p>Failed to connect: {auth.error}</p>}
-        {auth.status === 'selecting-mode' && (
-          <ModeMenu onSelect={auth.selectMode} />
-        )}
-        {auth.status === 'connecting' && <p>Starting game…</p>}
-        {auth.status === 'ready' && <PongCanvas wsToken={auth.wsToken} />}
-      </main>
+    <div className="pong-shell">
+      {auth.status === 'loading' && (
+        <div className="pong-screen pong-status-screen">
+          <div className="pong-heading pong-blink-text">CONNECTING…</div>
+        </div>
+      )}
+      {auth.status === 'error' && (
+        <div className="pong-screen pong-status-screen">
+          <div className="pong-heading pong-status-error">
+            CONNECTION FAILED
+          </div>
+          <div className="pong-status-error-detail">{auth.error}</div>
+        </div>
+      )}
+      {auth.status === 'selecting-mode' && (
+        <PongMenuFlow onSelectMode={auth.selectMode} />
+      )}
+      {auth.status === 'connecting' && (
+        <div className="pong-screen pong-status-screen">
+          <div className="pong-heading pong-blink-text">STARTING GAME…</div>
+        </div>
+      )}
+      {auth.status === 'ready' && (
+        <PongCanvas wsToken={auth.wsToken} mode={auth.mode} />
+      )}
     </div>
   );
 }

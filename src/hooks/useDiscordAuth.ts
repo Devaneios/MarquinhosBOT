@@ -9,7 +9,7 @@ type DiscordAuthState =
   | { status: 'error'; error: string }
   | { status: 'selecting-mode'; selectMode: (mode: GameMode) => void }
   | { status: 'connecting' }
-  | { status: 'ready'; wsToken: string };
+  | { status: 'ready'; wsToken: string; mode: GameMode };
 
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -119,7 +119,9 @@ export function useDiscordAuth(): DiscordAuthState {
               mode,
             })
               .then(({ token }) => {
-                if (!cancelled) setState({ status: 'ready', wsToken: token });
+                if (!cancelled) {
+                  setState({ status: 'ready', wsToken: token, mode });
+                }
               })
               .catch((err) => {
                 if (!cancelled) {
