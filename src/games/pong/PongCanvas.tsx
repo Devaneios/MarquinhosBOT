@@ -1,9 +1,9 @@
 import { Application, BlurFilter, Graphics } from 'pixi.js';
 import { useEffect, useRef, useState } from 'react';
-import type { GameMode } from '../../hooks/useDiscordAuth';
 import { wsUrl } from '../../lib/apiBase';
 import { ActivitySocket, type ActivityMessage } from '../../lib/ws';
 import { decodeStateSnapshot, type DecodedSnapshot } from './pongProtocol';
+import type { GameMode } from './types';
 
 type Side = 'left' | 'right';
 
@@ -220,9 +220,11 @@ function drawPaddleTrail(
 export function PongCanvas({
   wsToken,
   mode,
+  onMainMenu,
 }: {
   wsToken: string;
   mode: GameMode;
+  onMainMenu: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const latestSnapshotRef = useRef<Snapshot | null>(null);
@@ -251,6 +253,10 @@ export function PongCanvas({
     required: number;
   } | null>(null);
   const [requested, setRequested] = useState(false);
+  const [pausedOpponent, setPausedOpponent] = useState<{
+    side: Side;
+    timeoutMs: number;
+  } | null>(null);
   const socketRef = useRef<ActivitySocket | null>(null);
 
   useEffect(() => {
@@ -288,6 +294,12 @@ export function PongCanvas({
         setRestartStatus(
           message.payload as { votes: number; required: number },
         );
+      } else if (message.type === 'opponent_disconnected') {
+        setPausedOpponent(
+          message.payload as { side: Side; timeoutMs: number },
+        );
+      } else if (message.type === 'opponent_reconnected') {
+        setPausedOpponent(null);
       }
     });
 
@@ -296,6 +308,7 @@ export function PongCanvas({
       const receivedAt = performance.now();
       prevSnapshotRef.current = latestSnapshotRef.current;
       latestSnapshotRef.current = { state, receivedAt };
+      setPausedOpponent(null);
       setWinner(state.winner);
       setScore(state.score);
       if (state.winner === null) {
@@ -936,6 +949,11 @@ export function PongCanvas({
             WAITING FOR OPPONENT…
           </div>
         )}
+        {pausedOpponent && !winner && (
+          <div className="pong-heading pong-blink-text pong-waiting">
+            OPPONENT DISCONNECTED — WAITING…
+          </div>
+        )}
         {winner && (
           <div className="pong-game-over">
             <div className="pong-heading pong-game-over-title">
@@ -963,7 +981,10 @@ export function PongCanvas({
               <button
                 type="button"
                 className="pong-btn pong-btn-secondary"
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  socketRef.current?.send({ type: 'leave' });
+                  onMainMenu();
+                }}
               >
                 MAIN MENU
               </button>

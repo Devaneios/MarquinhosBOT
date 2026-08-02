@@ -4,7 +4,7 @@ let instance: DiscordSDK | null = null;
 
 // Constructed lazily (instead of at module load) so failures — missing env
 // var, missing frame_id because we're not actually embedded in Discord —
-// surface through useDiscordAuth's try/catch as a visible error instead of
+// surface through useDiscordIdentity's try/catch as a visible error instead of
 // crashing script evaluation before React ever renders anything.
 export function getDiscordSdk(): DiscordSDK {
   if (instance) return instance;

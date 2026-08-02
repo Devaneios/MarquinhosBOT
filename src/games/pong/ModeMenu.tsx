@@ -1,4 +1,4 @@
-import type { GameMode } from '../../hooks/useDiscordAuth';
+import type { GameMode } from './types';
 
 export function ModeMenu({
   onSelect,

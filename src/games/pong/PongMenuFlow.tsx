@@ -1,16 +1,18 @@
 import { useState } from 'react';
-import type { GameMode } from '../../hooks/useDiscordAuth';
 import { HowToPlay } from './HowToPlay';
 import { MainMenu } from './MainMenu';
 import { ModeMenu } from './ModeMenu';
 import { SettingsScreen } from './SettingsScreen';
+import type { GameMode } from './types';
 
 type MenuScreen = 'menu' | 'modeSelect' | 'settings' | 'howTo';
 
 export function PongMenuFlow({
   onSelectMode,
+  onExitToHub,
 }: {
   onSelectMode: (mode: GameMode) => void;
+  onExitToHub: () => void;
 }) {
   const [screen, setScreen] = useState<MenuScreen>('menu');
 
@@ -30,6 +32,7 @@ export function PongMenuFlow({
       onPlay={() => setScreen('modeSelect')}
       onSettings={() => setScreen('settings')}
       onHowTo={() => setScreen('howTo')}
+      onExitToHub={onExitToHub}
     />
   );
 }

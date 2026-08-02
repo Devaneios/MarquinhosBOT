@@ -2,10 +2,12 @@ export function MainMenu({
   onPlay,
   onSettings,
   onHowTo,
+  onExitToHub,
 }: {
   onPlay: () => void;
   onSettings: () => void;
   onHowTo: () => void;
+  onExitToHub: () => void;
 }) {
   return (
     <div className="pong-screen pong-main-menu">
@@ -34,6 +36,13 @@ export function MainMenu({
           onClick={onHowTo}
         >
           HOW TO PLAY
+        </button>
+        <button
+          type="button"
+          className="pong-btn pong-btn-secondary"
+          onClick={onExitToHub}
+        >
+          SWITCH GAME
         </button>
       </div>
       <div className="pong-main-menu-footer">© 2026 ARCADE PIXEL STUDIOS</div>

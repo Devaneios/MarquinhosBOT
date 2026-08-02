@@ -1,37 +1,28 @@
 import './App.css';
 import './games/pong/pong-theme.css';
-import { PongCanvas } from './games/pong/PongCanvas';
-import { PongMenuFlow } from './games/pong/PongMenuFlow';
-import { useDiscordAuth } from './hooks/useDiscordAuth';
+import { Hub } from './hub/Hub';
+import { useDiscordIdentity } from './hooks/useDiscordIdentity';
 
 function App() {
-  const auth = useDiscordAuth();
+  const identity = useDiscordIdentity();
 
   return (
     <div className="pong-shell">
-      {auth.status === 'loading' && (
+      {identity.status === 'loading' && (
         <div className="pong-screen pong-status-screen">
           <div className="pong-heading pong-blink-text">CONNECTING…</div>
         </div>
       )}
-      {auth.status === 'error' && (
+      {identity.status === 'error' && (
         <div className="pong-screen pong-status-screen">
           <div className="pong-heading pong-status-error">
             CONNECTION FAILED
           </div>
-          <div className="pong-status-error-detail">{auth.error}</div>
+          <div className="pong-status-error-detail">{identity.error}</div>
         </div>
       )}
-      {auth.status === 'selecting-mode' && (
-        <PongMenuFlow onSelectMode={auth.selectMode} />
-      )}
-      {auth.status === 'connecting' && (
-        <div className="pong-screen pong-status-screen">
-          <div className="pong-heading pong-blink-text">STARTING GAME…</div>
-        </div>
-      )}
-      {auth.status === 'ready' && (
-        <PongCanvas wsToken={auth.wsToken} mode={auth.mode} />
+      {identity.status === 'ready' && (
+        <Hub identity={identity.identity} onAuthInvalid={identity.reauth} />
       )}
     </div>
   );
