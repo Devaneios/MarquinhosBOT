@@ -9,6 +9,54 @@
   }
 }
 
+@keyframes pong-score-pop {
+  0% {
+    transform: scale(1.7);
+    color: var(--pong-yellow);
+    text-shadow: 0 0 18px var(--pong-yellow);
+  }
+  100% {
+    transform: scale(1);
+    text-shadow: none;
+  }
+}
+
+.pong-score-pop {
+  display: inline-block;
+  animation: pong-score-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes pong-game-over-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes pong-game-over-title-in {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.pong-game-over {
+  animation: pong-game-over-in 200ms ease-out;
+}
+
+.pong-game-over-title {
+  animation: pong-game-over-title-in 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pong-shell * {
     animation: none !important;
