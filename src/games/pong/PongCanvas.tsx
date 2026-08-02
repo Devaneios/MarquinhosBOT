@@ -1,3 +1,4 @@
+import { Application, Graphics } from 'pixi.js';
 import { useEffect, useRef, useState } from 'react';
 import type { GameMode } from '../../hooks/useDiscordAuth';
 import { wsUrl } from '../../lib/apiBase';
@@ -52,6 +53,25 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
+function drawDashedVerticalLine(
+  graphics: Graphics,
+  x: number,
+  height: number,
+  dash = 24,
+  gap = 20,
+  color = COURT_LINE,
+  width = 4,
+) {
+  graphics.clear();
+  let y = 0;
+  while (y < height) {
+    const segmentEnd = Math.min(y + dash, height);
+    graphics.moveTo(x, y).lineTo(x, segmentEnd);
+    y += dash + gap;
+  }
+  graphics.stroke({ width, color });
+}
+
 export function PongCanvas({
   wsToken,
   mode,
@@ -67,7 +87,7 @@ export function PongCanvas({
   const nextSeqRef = useRef(0);
   const currentDirectionRef = useRef<-1 | 0 | 1>(0);
   const predictedYRef = useRef<number | null>(null);
-  const lastFrameTimeRef = useRef<number | null>(null);
+  const appRef = useRef<Application | null>(null);
   const [winner, setWinner] = useState<'left' | 'right' | null>(null);
   const [score, setScore] = useState<{ left: number; right: number } | null>(
     null,
@@ -91,7 +111,6 @@ export function PongCanvas({
     nextSeqRef.current = 0;
     currentDirectionRef.current = 0;
     predictedYRef.current = null;
-    lastFrameTimeRef.current = null;
 
     const unsubscribe = socket.onMessage((message: ActivityMessage) => {
       if (message.type === 'init') {
@@ -165,29 +184,93 @@ export function PongCanvas({
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
 
-    let raf: number;
-    function render() {
-      const canvas = canvasRef.current;
-      const latest = latestSnapshotRef.current;
-      const ctx = canvas?.getContext('2d');
-      if (!canvas || !ctx) {
-        raf = requestAnimationFrame(render);
+    let cancelled = false;
+    let initialized = false;
+    let tick: (() => void) | null = null;
+    let lastConfig: PongConfig = DEFAULT_CONFIG;
+    let centerLine: Graphics;
+    let paddleLeft: Graphics;
+    let paddleRight: Graphics;
+    let ball: Graphics;
+
+    const app = new Application();
+    appRef.current = app;
+
+    function buildScene(config: PongConfig) {
+      centerLine = new Graphics();
+      drawDashedVerticalLine(centerLine, config.width / 2, config.height);
+
+      paddleLeft = new Graphics()
+        .rect(0, 0, config.paddleWidth, config.paddleHeight)
+        .fill(LEFT_COLOR);
+
+      paddleRight = new Graphics()
+        .rect(0, 0, config.paddleWidth, config.paddleHeight)
+        .fill(RIGHT_COLOR);
+      paddleRight.position.x = config.width - config.paddleWidth;
+
+      ball = new Graphics().circle(0, 0, config.ballRadius).fill(BALL_COLOR);
+
+      app.stage.addChild(centerLine, paddleLeft, paddleRight, ball);
+      lastConfig = config;
+    }
+
+    function applyConfigChange(config: PongConfig) {
+      lastConfig = config;
+      app.renderer.resize(config.width, config.height);
+      drawDashedVerticalLine(centerLine, config.width / 2, config.height);
+      paddleLeft
+        .clear()
+        .rect(0, 0, config.paddleWidth, config.paddleHeight)
+        .fill(LEFT_COLOR);
+      paddleRight
+        .clear()
+        .rect(0, 0, config.paddleWidth, config.paddleHeight)
+        .fill(RIGHT_COLOR);
+      paddleRight.position.x = config.width - config.paddleWidth;
+      ball.clear().circle(0, 0, config.ballRadius).fill(BALL_COLOR);
+    }
+
+    (async () => {
+      // Yield a microtask before touching the canvas. React 19 StrictMode
+      // double-invokes this effect synchronously (mount, cleanup, mount)
+      // before any promise settles. If both invocations called app.init()
+      // on the same <canvas>, they'd end up sharing one underlying WebGL
+      // context (getContext() returns the existing context on a second
+      // call) — then the stale instance's cleanup would call destroy(),
+      // which kills that shared context out from under the real instance,
+      // leaving a permanently blank canvas. Checking `cancelled` after a
+      // microtask tick lets the phantom first invocation bail out here,
+      // before it ever calls init(), so only the real instance touches the
+      // canvas.
+      await Promise.resolve();
+      if (cancelled) return;
+
+      await app.init({
+        canvas: canvasRef.current!,
+        width: configRef.current.width,
+        height: configRef.current.height,
+        background: COURT_BG,
+        antialias: true,
+        resolution: window.devicePixelRatio,
+        autoDensity: true,
+      });
+      if (cancelled) {
+        app.destroy({ removeView: false });
         return;
       }
+      initialized = true;
+      buildScene(configRef.current);
 
-      const config = configRef.current;
-      const now = performance.now();
+      tick = () => {
+        const config = configRef.current;
+        if (config !== lastConfig) applyConfigChange(config);
 
-      if (!latest) {
-        if (canvas.width !== config.width) canvas.width = config.width;
-        if (canvas.height !== config.height) canvas.height = config.height;
-        ctx.fillStyle = COURT_BG;
-        ctx.fillRect(0, 0, config.width, config.height);
-      } else {
+        const latest = latestSnapshotRef.current;
+        if (!latest) return;
+
+        const now = performance.now();
         const state = latest.state;
-        if (canvas.width !== config.width) canvas.width = config.width;
-        if (canvas.height !== config.height) canvas.height = config.height;
-
         const prev = prevSnapshotRef.current;
         const interval = prev
           ? latest.receivedAt - prev.receivedAt
@@ -201,18 +284,15 @@ export function PongCanvas({
 
         const ballX = lerp(from.ball.x, state.ball.x, t);
         const ballY = lerp(from.ball.y, state.ball.y, t);
-        let paddleLeft = lerp(from.paddles.left, state.paddles.left, t);
-        let paddleRight = lerp(from.paddles.right, state.paddles.right, t);
+        let leftY = lerp(from.paddles.left, state.paddles.left, t);
+        let rightY = lerp(from.paddles.right, state.paddles.right, t);
 
         const side = sideRef.current;
         if (side) {
           const maxY = config.height - config.paddleHeight;
-          const dt =
-            lastFrameTimeRef.current !== null
-              ? (now - lastFrameTimeRef.current) / 1000
-              : 0;
+          const dt = app.ticker.deltaMS / 1000;
           if (predictedYRef.current === null) {
-            predictedYRef.current = side === 'left' ? paddleLeft : paddleRight;
+            predictedYRef.current = side === 'left' ? leftY : rightY;
           }
           predictedYRef.current = clamp(
             predictedYRef.current +
@@ -220,50 +300,30 @@ export function PongCanvas({
             0,
             maxY,
           );
-          if (side === 'left') paddleLeft = predictedYRef.current;
-          else paddleRight = predictedYRef.current;
+          if (side === 'left') leftY = predictedYRef.current;
+          else rightY = predictedYRef.current;
         }
-        lastFrameTimeRef.current = now;
 
-        ctx.fillStyle = COURT_BG;
-        ctx.fillRect(0, 0, config.width, config.height);
-
-        ctx.strokeStyle = COURT_LINE;
-        ctx.lineWidth = 4;
-        ctx.setLineDash([24, 20]);
-        ctx.beginPath();
-        ctx.moveTo(config.width / 2, 0);
-        ctx.lineTo(config.width / 2, config.height);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.fillStyle = LEFT_COLOR;
-        ctx.fillRect(0, paddleLeft, config.paddleWidth, config.paddleHeight);
-        ctx.fillStyle = RIGHT_COLOR;
-        ctx.fillRect(
-          config.width - config.paddleWidth,
-          paddleRight,
-          config.paddleWidth,
-          config.paddleHeight,
-        );
-
-        ctx.fillStyle = BALL_COLOR;
-        ctx.beginPath();
-        ctx.arc(ballX, ballY, config.ballRadius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      raf = requestAnimationFrame(render);
-    }
-    raf = requestAnimationFrame(render);
+        paddleLeft.position.y = leftY;
+        paddleRight.position.y = rightY;
+        ball.position.set(ballX, ballY);
+      };
+      app.ticker.add(tick);
+    })();
 
     return () => {
-      cancelAnimationFrame(raf);
+      cancelled = true;
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       unsubscribe();
       unsubscribeBinary();
       socket.close();
       socketRef.current = null;
+      if (initialized) {
+        if (tick) app.ticker.remove(tick);
+        app.destroy({ removeView: false });
+      }
+      appRef.current = null;
     };
   }, [wsToken]);
 
