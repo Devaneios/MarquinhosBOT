@@ -1,21 +1,136 @@
 .app {
   display: flex;
-  place-content: center;
-  place-items: center;
+  flex-direction: column;
   height: 100%;
 }
 
-.status {
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-header h1 {
+  font-size: 24px;
+  margin: 0;
+}
+
+.app-status {
+  font-size: 14px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+}
+
+.app-main {
+  flex: 1;
+  min-height: 0;
   display: flex;
   place-content: center;
   place-items: center;
-  height: 100%;
   color: var(--text-h, #fff);
   font-family: sans-serif;
+}
+
+.mode-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.mode-menu h2 {
+  margin: 0;
+}
+
+.mode-menu-options {
+  display: flex;
+  gap: 12px;
+}
+
+.mode-menu-options button {
+  font: inherit;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.mode-menu-options button:hover {
+  background: var(--accent-border);
+  color: var(--text-h, #fff);
 }
 
 .pong-canvas {
   border-radius: 8px;
   max-width: 100%;
-  max-height: 100vh;
+  max-height: 100%;
+}
+
+.pong-container {
+  position: relative;
+  display: flex;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.pong-score {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  color: #fff;
+}
+
+.pong-waiting {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  color: #fff;
+}
+
+.pong-winner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  color: #fff;
+}
+
+.pong-restart-button {
+  position: absolute;
+  left: 50%;
+  bottom: 48px;
+  transform: translateX(-50%);
+  font: inherit;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.pong-restart-button:hover:not(:disabled) {
+  background: var(--accent-border);
+  color: var(--text-h, #fff);
+}
+
+.pong-restart-button:disabled {
+  cursor: default;
+  opacity: 0.7;
 }

@@ -1,43 +1,143 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { wsUrl } from '../../lib/apiBase';
 import { ActivitySocket, type ActivityMessage } from '../../lib/ws';
+import { decodeStateSnapshot, type DecodedSnapshot } from './pongProtocol';
 
-interface PongState {
+type Side = 'left' | 'right';
+
+interface PongConfig {
   width: number;
   height: number;
-  ball: { x: number; y: number };
-  paddles: { left: number; right: number };
-  score: { left: number; right: number };
-  winner: 'left' | 'right' | null;
+  paddleWidth: number;
+  paddleHeight: number;
+  paddleSpeed: number;
+  ballRadius: number;
 }
 
 const PADDLE_WIDTH = 12;
 const PADDLE_HEIGHT = 80;
 const BALL_RADIUS = 8;
+const DEFAULT_WIDTH = 800;
+const DEFAULT_HEIGHT = 480;
+const DEFAULT_TICK_MS = 16;
+const DEFAULT_PADDLE_SPEED = 400;
+const RECONCILE_FACTOR = 0.2;
+
+const DEFAULT_CONFIG: PongConfig = {
+  width: DEFAULT_WIDTH,
+  height: DEFAULT_HEIGHT,
+  paddleWidth: PADDLE_WIDTH,
+  paddleHeight: PADDLE_HEIGHT,
+  paddleSpeed: DEFAULT_PADDLE_SPEED,
+  ballRadius: BALL_RADIUS,
+};
+
+interface Snapshot {
+  state: DecodedSnapshot;
+  receivedAt: number;
+}
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
 
 export function PongCanvas({ wsToken }: { wsToken: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stateRef = useRef<PongState | null>(null);
+  const latestSnapshotRef = useRef<Snapshot | null>(null);
+  const prevSnapshotRef = useRef<Snapshot | null>(null);
+  const sideRef = useRef<Side | null>(null);
+  const configRef = useRef<PongConfig>(DEFAULT_CONFIG);
+  const nextSeqRef = useRef(0);
+  const currentDirectionRef = useRef<-1 | 0 | 1>(0);
+  const predictedYRef = useRef<number | null>(null);
+  const lastFrameTimeRef = useRef<number | null>(null);
+  const [winner, setWinner] = useState<'left' | 'right' | null>(null);
+  const [score, setScore] = useState<{ left: number; right: number } | null>(
+    null,
+  );
+  const [restartStatus, setRestartStatus] = useState<{
+    votes: number;
+    required: number;
+  } | null>(null);
+  const [requested, setRequested] = useState(false);
+  const socketRef = useRef<ActivitySocket | null>(null);
 
   useEffect(() => {
     const socket = new ActivitySocket(
       `${wsUrl('/ws/activity')}?token=${encodeURIComponent(wsToken)}`,
     );
+    socketRef.current = socket;
+    latestSnapshotRef.current = null;
+    prevSnapshotRef.current = null;
+    sideRef.current = null;
+    configRef.current = DEFAULT_CONFIG;
+    nextSeqRef.current = 0;
+    currentDirectionRef.current = 0;
+    predictedYRef.current = null;
+    lastFrameTimeRef.current = null;
+
     const unsubscribe = socket.onMessage((message: ActivityMessage) => {
-      if (message.type === 'state') {
-        stateRef.current = message.payload as PongState;
+      if (message.type === 'init') {
+        const payload = message.payload as { side: Side; config: PongConfig };
+        sideRef.current = payload.side;
+        configRef.current = payload.config;
+      } else if (message.type === 'restart_status') {
+        setRestartStatus(
+          message.payload as { votes: number; required: number },
+        );
       }
     });
+
+    const unsubscribeBinary = socket.onBinaryMessage((data: ArrayBuffer) => {
+      const state = decodeStateSnapshot(data);
+      prevSnapshotRef.current = latestSnapshotRef.current;
+      latestSnapshotRef.current = { state, receivedAt: performance.now() };
+      setWinner(state.winner);
+      setScore(state.score);
+      if (state.winner === null) {
+        setRestartStatus(null);
+        setRequested(false);
+      }
+
+      const side = sideRef.current;
+      if (!side) return;
+      const config = configRef.current;
+      const authoritativeY =
+        side === 'left' ? state.paddles.left : state.paddles.right;
+
+      // Reconcile the local prediction against the server's authoritative
+      // position: nudge it a bit closer on every snapshot to correct for
+      // slow drift, or snap outright on a large desync (e.g. reconnect).
+      if (predictedYRef.current === null) {
+        predictedYRef.current = authoritativeY;
+      } else if (
+        Math.abs(authoritativeY - predictedYRef.current) >
+        config.paddleHeight
+      ) {
+        predictedYRef.current = authoritativeY;
+      } else {
+        predictedYRef.current +=
+          (authoritativeY - predictedYRef.current) * RECONCILE_FACTOR;
+      }
+    });
+
     socket.connect();
 
     const keysDown = new Set<string>();
     function sendInput() {
-      const direction = keysDown.has('ArrowUp')
+      const direction: -1 | 0 | 1 = keysDown.has('ArrowUp')
         ? -1
         : keysDown.has('ArrowDown')
           ? 1
           : 0;
-      socket.send({ type: 'input', payload: { direction } });
+      if (direction === currentDirectionRef.current) return;
+      currentDirectionRef.current = direction;
+      const seq = ++nextSeqRef.current;
+      socket.send({ type: 'input', payload: { direction, seq } });
     }
     function onKeyDown(event: KeyboardEvent) {
       if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
@@ -56,42 +156,78 @@ export function PongCanvas({ wsToken }: { wsToken: string }) {
     let raf: number;
     function render() {
       const canvas = canvasRef.current;
-      const state = stateRef.current;
+      const latest = latestSnapshotRef.current;
       const ctx = canvas?.getContext('2d');
-      if (canvas && ctx && state) {
-        canvas.width = state.width;
-        canvas.height = state.height;
+      if (!canvas || !ctx) {
+        raf = requestAnimationFrame(render);
+        return;
+      }
+
+      const config = configRef.current;
+      const now = performance.now();
+
+      if (!latest) {
+        if (canvas.width !== config.width) canvas.width = config.width;
+        if (canvas.height !== config.height) canvas.height = config.height;
+        ctx.fillStyle = '#111';
+        ctx.fillRect(0, 0, config.width, config.height);
+      } else {
+        const state = latest.state;
+        if (canvas.width !== config.width) canvas.width = config.width;
+        if (canvas.height !== config.height) canvas.height = config.height;
+
+        const prev = prevSnapshotRef.current;
+        const interval = prev
+          ? latest.receivedAt - prev.receivedAt
+          : DEFAULT_TICK_MS;
+        const safeInterval = interval > 0 ? interval : DEFAULT_TICK_MS;
+        const t = Math.min(
+          Math.max((now - latest.receivedAt) / safeInterval, 0),
+          1,
+        );
+        const from = prev ? prev.state : state;
+
+        const ballX = lerp(from.ball.x, state.ball.x, t);
+        const ballY = lerp(from.ball.y, state.ball.y, t);
+        let paddleLeft = lerp(from.paddles.left, state.paddles.left, t);
+        let paddleRight = lerp(from.paddles.right, state.paddles.right, t);
+
+        const side = sideRef.current;
+        if (side) {
+          const maxY = config.height - config.paddleHeight;
+          const dt =
+            lastFrameTimeRef.current !== null
+              ? (now - lastFrameTimeRef.current) / 1000
+              : 0;
+          if (predictedYRef.current === null) {
+            predictedYRef.current = side === 'left' ? paddleLeft : paddleRight;
+          }
+          predictedYRef.current = clamp(
+            predictedYRef.current +
+              currentDirectionRef.current * config.paddleSpeed * dt,
+            0,
+            maxY,
+          );
+          if (side === 'left') paddleLeft = predictedYRef.current;
+          else paddleRight = predictedYRef.current;
+        }
+        lastFrameTimeRef.current = now;
 
         ctx.fillStyle = '#111';
-        ctx.fillRect(0, 0, state.width, state.height);
+        ctx.fillRect(0, 0, config.width, config.height);
 
         ctx.fillStyle = '#fff';
-        ctx.fillRect(0, state.paddles.left, PADDLE_WIDTH, PADDLE_HEIGHT);
+        ctx.fillRect(0, paddleLeft, config.paddleWidth, config.paddleHeight);
         ctx.fillRect(
-          state.width - PADDLE_WIDTH,
-          state.paddles.right,
-          PADDLE_WIDTH,
-          PADDLE_HEIGHT,
+          config.width - config.paddleWidth,
+          paddleRight,
+          config.paddleWidth,
+          config.paddleHeight,
         );
 
         ctx.beginPath();
-        ctx.arc(state.ball.x, state.ball.y, BALL_RADIUS, 0, Math.PI * 2);
+        ctx.arc(ballX, ballY, config.ballRadius, 0, Math.PI * 2);
         ctx.fill();
-
-        ctx.font = '24px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(
-          `${state.score.left} - ${state.score.right}`,
-          state.width / 2,
-          30,
-        );
-        if (state.winner) {
-          ctx.fillText(
-            `${state.winner} wins!`,
-            state.width / 2,
-            state.height / 2,
-          );
-        }
       }
       raf = requestAnimationFrame(render);
     }
@@ -102,9 +238,38 @@ export function PongCanvas({ wsToken }: { wsToken: string }) {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       unsubscribe();
+      unsubscribeBinary();
       socket.close();
+      socketRef.current = null;
     };
   }, [wsToken]);
 
-  return <canvas ref={canvasRef} className="pong-canvas" />;
+  return (
+    <div className="pong-container">
+      <canvas ref={canvasRef} className="pong-canvas" />
+      {score ? (
+        <div className="pong-score">
+          {score.left} - {score.right}
+        </div>
+      ) : (
+        <div className="pong-waiting">Waiting for opponent…</div>
+      )}
+      {winner && <div className="pong-winner">{winner} wins!</div>}
+      {winner && (
+        <button
+          type="button"
+          className="pong-restart-button"
+          disabled={requested}
+          onClick={() => {
+            socketRef.current?.send({ type: 'restart' });
+            setRequested(true);
+          }}
+        >
+          {requested
+            ? `Waiting for opponent… (${restartStatus?.votes ?? 1}/${restartStatus?.required ?? 2})`
+            : 'Play Again'}
+        </button>
+      )}
+    </div>
+  );
 }

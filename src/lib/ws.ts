@@ -4,6 +4,7 @@ export interface ActivityMessage {
 }
 
 type Listener = (message: ActivityMessage) => void;
+type BinaryListener = (data: ArrayBuffer) => void;
 
 const MAX_RECONNECT_DELAY_MS = 10_000;
 
@@ -11,6 +12,7 @@ export class ActivitySocket {
   private url: string;
   private ws: WebSocket | null = null;
   private listeners = new Set<Listener>();
+  private binaryListeners = new Set<BinaryListener>();
   private reconnectAttempts = 0;
   private closedByCaller = false;
 
@@ -21,12 +23,17 @@ export class ActivitySocket {
   connect() {
     this.closedByCaller = false;
     this.ws = new WebSocket(this.url);
+    this.ws.binaryType = 'arraybuffer';
 
     this.ws.onopen = () => {
       this.reconnectAttempts = 0;
     };
 
     this.ws.onmessage = (event) => {
+      if (event.data instanceof ArrayBuffer) {
+        this.binaryListeners.forEach((listener) => listener(event.data));
+        return;
+      }
       let message: ActivityMessage;
       try {
         message = JSON.parse(event.data);
@@ -56,6 +63,11 @@ export class ActivitySocket {
   onMessage(listener: Listener): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
+  }
+
+  onBinaryMessage(listener: BinaryListener): () => void {
+    this.binaryListeners.add(listener);
+    return () => this.binaryListeners.delete(listener);
   }
 
   close() {

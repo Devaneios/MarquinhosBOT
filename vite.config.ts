@@ -9,12 +9,13 @@ export default defineConfig({
   // plain http, and 127.0.0.1 instead of the literal hostname `localhost`,
   // are both rejected outright. basicSsl auto-generates a self-signed cert
   // so `bun dev` serves HTTPS.
-  plugins: [react(), basicSsl()],
+  plugins: [react()],
   server: {
     // Bind every interface (both IPv4 and IPv6) so `localhost` resolves
     // correctly here regardless of which address family the OS/browser/
     // Discord's client picks — Vite's plain default previously bound
     // IPv6-loopback (::1) only, which broke IPv4-only resolvers.
     host: true,
+    allowedHosts: ['marquinhos.frois.net.br'],
   },
 })
