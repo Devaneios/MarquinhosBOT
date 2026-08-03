@@ -107,7 +107,6 @@
 .pong-logo {
   font-size: 44px;
   color: var(--pong-text);
-  text-shadow: 0px 0px 0 var(--pong-red);
   letter-spacing: 4px;
   text-align: center;
 }
