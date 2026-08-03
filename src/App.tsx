@@ -1,5 +1,6 @@
 import './App.css';
 import './games/pong/pong-theme.css';
+import { DevConsole } from './components/DevConsole';
 import { Hub } from './hub/Hub';
 import { useDiscordIdentity } from './hooks/useDiscordIdentity';
 
@@ -24,6 +25,7 @@ function App() {
       {identity.status === 'ready' && (
         <Hub identity={identity.identity} onAuthInvalid={identity.reauth} />
       )}
+      {import.meta.env.DEV && <DevConsole />}
     </div>
   );
 }

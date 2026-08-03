@@ -45,6 +45,7 @@ export function usePongSession(
           setSession({ status: 'ready', wsToken: token, mode });
         })
         .catch((err) => {
+          console.error('Failed to create Pong session', JSON.stringify(err));
           if (cancelledRef.current) return;
           if (isAuthError(err)) {
             onAuthInvalid();
