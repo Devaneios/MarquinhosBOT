@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { wsUrl } from '../../lib/apiBase';
 import { ActivitySocket, type ActivityMessage } from '../../lib/ws';
 import { decodeStateSnapshot, type DecodedSnapshot } from './pongProtocol';
+import { PongSfx } from './sfx';
 import type { GameMode } from './types';
 
 type Side = 'left' | 'right';
@@ -140,6 +141,13 @@ function circleOverlapsPoint(
   return dx * dx + dy * dy <= radius * radius;
 }
 
+function formatElapsed(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
 function drawDashedVerticalLine(
   graphics: Graphics,
   x: number,
@@ -166,11 +174,7 @@ interface PaddleTrailPoint {
 
 function paddleGlowAlpha(now: number, phase: number, flashStart: number) {
   const idle = PADDLE_GLOW_ALPHA_BASE + 0.1 * Math.sin(now * 0.0035 + phase);
-  const hitProgress = clamp(
-    (now - flashStart) / PADDLE_GLOW_DECAY_MS,
-    0,
-    1,
-  );
+  const hitProgress = clamp((now - flashStart) / PADDLE_GLOW_DECAY_MS, 0, 1);
   const hitBoost =
     (PADDLE_GLOW_ALPHA_HIT - PADDLE_GLOW_ALPHA_BASE) *
     (1 - hitProgress) *
@@ -220,20 +224,29 @@ function drawPaddleTrail(
 export function PongCanvas({
   wsToken,
   mode,
+  sound,
   onMainMenu,
 }: {
   wsToken: string;
   mode: GameMode;
+  sound: boolean;
   onMainMenu: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const timerRef = useRef<HTMLDivElement>(null);
   const latestSnapshotRef = useRef<Snapshot | null>(null);
   const prevSnapshotRef = useRef<Snapshot | null>(null);
   const sideRef = useRef<Side | null>(null);
   const configRef = useRef<PongConfig>(DEFAULT_CONFIG);
-  const nextSeqRef = useRef(0);
-  const currentDirectionRef = useRef<-1 | 0 | 1>(0);
-  const predictedYRef = useRef<number | null>(null);
+  const matchStartRef = useRef<number | null>(null);
+  const predictedRef = useRef<{ left: number | null; right: number | null }>({
+    left: null,
+    right: null,
+  });
+  const localDirectionRef = useRef<{ left: -1 | 0 | 1; right: -1 | 0 | 1 }>({
+    left: 0,
+    right: 0,
+  });
   const appRef = useRef<Application | null>(null);
   const touchingLeftRef = useRef(false);
   const touchingRightRef = useRef(false);
@@ -265,14 +278,15 @@ export function PongCanvas({
     const socket = new ActivitySocket(
       `${wsUrl('/ws/activity')}?token=${encodeURIComponent(wsToken)}`,
     );
+    const sfx = new PongSfx(sound);
     socketRef.current = socket;
     latestSnapshotRef.current = null;
     prevSnapshotRef.current = null;
     sideRef.current = null;
     configRef.current = DEFAULT_CONFIG;
-    nextSeqRef.current = 0;
-    currentDirectionRef.current = 0;
-    predictedYRef.current = null;
+    matchStartRef.current = null;
+    predictedRef.current = { left: null, right: null };
+    localDirectionRef.current = { left: 0, right: 0 };
     touchingLeftRef.current = false;
     touchingRightRef.current = false;
     ballSquashStartRef.current = -Infinity;
@@ -284,8 +298,8 @@ export function PongCanvas({
     shakeMagnitudeRef.current = 0;
 
     let spawnHitParticles:
-      | ((side: Side, x: number, y: number, ballSpeed: number) => void)
-      | null = null;
+      ((side: Side, x: number, y: number, ballSpeed: number) => void) | null =
+      null;
 
     const unsubscribe = socket.onMessage((message: ActivityMessage) => {
       if (message.type === 'init') {
@@ -300,9 +314,7 @@ export function PongCanvas({
         );
       } else if (message.type === 'opponent_disconnected') {
         console.warn('[pong-canvas] opponent disconnected', message.payload);
-        setPausedOpponent(
-          message.payload as { side: Side; timeoutMs: number },
-        );
+        setPausedOpponent(message.payload as { side: Side; timeoutMs: number });
       } else if (message.type === 'opponent_reconnected') {
         console.info('[pong-canvas] opponent reconnected');
         setPausedOpponent(null);
@@ -312,13 +324,23 @@ export function PongCanvas({
     const unsubscribeBinary = socket.onBinaryMessage((data: ArrayBuffer) => {
       const state = decodeStateSnapshot(data);
       const receivedAt = performance.now();
+      if (matchStartRef.current === null) matchStartRef.current = receivedAt;
+      const prevScore = prevSnapshotRef.current?.state.score;
       prevSnapshotRef.current = latestSnapshotRef.current;
       latestSnapshotRef.current = { state, receivedAt };
       setPausedOpponent(null);
       setWinner(state.winner);
       setScore(state.score);
+      if (
+        prevScore &&
+        (state.score.left !== prevScore.left ||
+          state.score.right !== prevScore.right)
+      ) {
+        sfx.score();
+      }
       if (state.winner !== prevWinnerRef.current) {
         console.log('[pong-canvas] winner changed', state.winner);
+        if (state.winner !== null) sfx.win();
         prevWinnerRef.current = state.winner;
       }
       if (state.winner === null) {
@@ -368,6 +390,7 @@ export function PongCanvas({
       );
       if (touchingLeft && !touchingLeftRef.current) {
         spawnHitParticles?.('left', leftContact.x, leftContact.y, ballSpeed);
+        sfx.hit();
         ballSquashStartRef.current = receivedAt;
         paddleLeftSquashStartRef.current = receivedAt;
         paddleLeftFlashStartRef.current = receivedAt;
@@ -379,12 +402,8 @@ export function PongCanvas({
         );
       }
       if (touchingRight && !touchingRightRef.current) {
-        spawnHitParticles?.(
-          'right',
-          rightContact.x,
-          rightContact.y,
-          ballSpeed,
-        );
+        spawnHitParticles?.('right', rightContact.x, rightContact.y, ballSpeed);
+        sfx.hit();
         ballSquashStartRef.current = receivedAt;
         paddleRightSquashStartRef.current = receivedAt;
         paddleRightFlashStartRef.current = receivedAt;
@@ -400,48 +419,112 @@ export function PongCanvas({
 
       const side = sideRef.current;
       if (!side) return;
-      const authoritativeY =
-        side === 'left' ? state.paddles.left : state.paddles.right;
+      // In local hot-seat mode this one connection drives both paddles, so
+      // both need client-side prediction/reconciliation, not just the
+      // connection's own registered side.
+      const controlledSides: Side[] =
+        mode === 'local' ? ['left', 'right'] : [side];
 
       // Reconcile the local prediction against the server's authoritative
       // position: nudge it a bit closer on every snapshot to correct for
       // slow drift, or snap outright on a large desync (e.g. reconnect).
-      if (predictedYRef.current === null) {
-        predictedYRef.current = authoritativeY;
-      } else if (
-        Math.abs(authoritativeY - predictedYRef.current) > config.paddleHeight
-      ) {
-        predictedYRef.current = authoritativeY;
-      } else {
-        predictedYRef.current +=
-          (authoritativeY - predictedYRef.current) * RECONCILE_FACTOR;
+      for (const s of controlledSides) {
+        const authoritativeY =
+          s === 'left' ? state.paddles.left : state.paddles.right;
+        const predicted = predictedRef.current[s];
+        if (predicted === null) {
+          predictedRef.current[s] = authoritativeY;
+        } else if (Math.abs(authoritativeY - predicted) > config.paddleHeight) {
+          predictedRef.current[s] = authoritativeY;
+        } else {
+          predictedRef.current[s] =
+            predicted + (authoritativeY - predicted) * RECONCILE_FACTOR;
+        }
       }
     });
 
     socket.connect();
 
-    const keysDown = new Set<string>();
-    function sendInput() {
-      const direction: -1 | 0 | 1 = keysDown.has('ArrowUp')
+    function pauseExit() {
+      console.log('[pong-canvas] pause -> leaving to main menu');
+      socketRef.current?.send({ type: 'leave' });
+      onMainMenu();
+    }
+
+    // In local hot-seat mode this single connection drives both paddles
+    // (W/S -> left, arrows -> right) and every input message must carry an
+    // explicit side. In every other mode arrows control whichever side the
+    // server assigned this connection, and side is omitted from the
+    // message — the server infers it from the sender.
+    let arrowSeq = 0;
+    let wsSeq = 0;
+    const arrowKeysDown = new Set<string>();
+    const wsKeysDown = new Set<string>();
+
+    function sendTrackedInput(
+      side: Side,
+      direction: -1 | 0 | 1,
+      nextSeq: number,
+    ) {
+      if (direction === localDirectionRef.current[side]) return;
+      localDirectionRef.current[side] = direction;
+      socket.send({
+        type: 'input',
+        payload:
+          mode === 'local'
+            ? { direction, seq: nextSeq, side }
+            : { direction, seq: nextSeq },
+      });
+    }
+
+    function sendArrowInput() {
+      const direction: -1 | 0 | 1 = arrowKeysDown.has('ArrowUp')
         ? -1
-        : keysDown.has('ArrowDown')
+        : arrowKeysDown.has('ArrowDown')
           ? 1
           : 0;
-      if (direction === currentDirectionRef.current) return;
-      currentDirectionRef.current = direction;
-      const seq = ++nextSeqRef.current;
-      socket.send({ type: 'input', payload: { direction, seq } });
+      const side: Side =
+        mode === 'local' ? 'right' : (sideRef.current ?? 'left');
+      arrowSeq += 1;
+      sendTrackedInput(side, direction, arrowSeq);
     }
+
+    function sendWsInput() {
+      const direction: -1 | 0 | 1 = wsKeysDown.has('w')
+        ? -1
+        : wsKeysDown.has('s')
+          ? 1
+          : 0;
+      wsSeq += 1;
+      sendTrackedInput('left', direction, wsSeq);
+    }
+
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
-      event.preventDefault();
-      keysDown.add(event.key);
-      sendInput();
+      const key = event.key;
+      const lower = key.toLowerCase();
+      if (key === 'ArrowUp' || key === 'ArrowDown') {
+        event.preventDefault();
+        arrowKeysDown.add(key);
+        sendArrowInput();
+      } else if (mode === 'local' && (lower === 'w' || lower === 's')) {
+        event.preventDefault();
+        wsKeysDown.add(lower);
+        sendWsInput();
+      } else if (key === 'Escape') {
+        event.preventDefault();
+        pauseExit();
+      }
     }
     function onKeyUp(event: KeyboardEvent) {
-      if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
-      keysDown.delete(event.key);
-      sendInput();
+      const key = event.key;
+      const lower = key.toLowerCase();
+      if (key === 'ArrowUp' || key === 'ArrowDown') {
+        arrowKeysDown.delete(key);
+        sendArrowInput();
+      } else if (mode === 'local' && (lower === 'w' || lower === 's')) {
+        wsKeysDown.delete(lower);
+        sendWsInput();
+      }
     }
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
@@ -556,9 +639,7 @@ export function PongCanvas({
       paddleLeftGlow = new Graphics();
       paddleRightGlow = new Graphics();
       paddleLeftGlow.filters = [new BlurFilter({ strength: 10, quality: 3 })];
-      paddleRightGlow.filters = [
-        new BlurFilter({ strength: 10, quality: 3 }),
-      ];
+      paddleRightGlow.filters = [new BlurFilter({ strength: 10, quality: 3 })];
       paddleLeftGlow.alpha = PADDLE_GLOW_ALPHA_BASE;
       paddleRightGlow.alpha = PADDLE_GLOW_ALPHA_BASE;
 
@@ -604,9 +685,7 @@ export function PongCanvas({
       const color = side === 'left' ? LEFT_COLOR : RIGHT_COLOR;
       const baseAngle = side === 'left' ? 0 : Math.PI;
       const count = clamp(
-        Math.round(
-          PARTICLE_BASE_COUNT * (ballSpeed / BALL_SPEED_REFERENCE),
-        ),
+        Math.round(PARTICLE_BASE_COUNT * (ballSpeed / BALL_SPEED_REFERENCE)),
         PARTICLE_MIN_COUNT,
         PARTICLE_MAX_COUNT,
       );
@@ -672,6 +751,12 @@ export function PongCanvas({
         const dtSeconds = dtMs / 1000;
         const now = performance.now();
 
+        if (matchStartRef.current !== null && timerRef.current) {
+          timerRef.current.textContent = formatElapsed(
+            now - matchStartRef.current,
+          );
+        }
+
         particlesGfx.clear();
         particles = particles.filter((particle) => particle.life > 0);
         for (const particle of particles) {
@@ -721,24 +806,32 @@ export function PongCanvas({
         const side = sideRef.current;
         if (side) {
           const maxY = config.height - config.paddleHeight;
-          if (predictedYRef.current === null) {
-            predictedYRef.current = side === 'left' ? leftY : rightY;
+          const controlledSides: Side[] =
+            mode === 'local' ? ['left', 'right'] : [side];
+          for (const s of controlledSides) {
+            if (predictedRef.current[s] === null) {
+              predictedRef.current[s] = s === 'left' ? leftY : rightY;
+            }
+            predictedRef.current[s] = clamp(
+              predictedRef.current[s]! +
+                localDirectionRef.current[s] * config.paddleSpeed * dtSeconds,
+              0,
+              maxY,
+            );
+            if (s === 'left') leftY = predictedRef.current[s]!;
+            else rightY = predictedRef.current[s]!;
           }
-          predictedYRef.current = clamp(
-            predictedYRef.current +
-              currentDirectionRef.current * config.paddleSpeed * dtSeconds,
-            0,
-            maxY,
-          );
-          if (side === 'left') leftY = predictedYRef.current;
-          else rightY = predictedYRef.current;
         }
 
         // --- Ball: frame-to-frame velocity drives heat color, a comet
         // trail, a glow halo, and a direction-aligned stretch. Paddle
         // impacts layer a brief squash on top (ballSquashStartRef). ---
         let frameSpeed = 0;
-        if (prevRenderBallX !== null && prevRenderBallY !== null && dtSeconds > 0) {
+        if (
+          prevRenderBallX !== null &&
+          prevRenderBallY !== null &&
+          dtSeconds > 0
+        ) {
           const fvx = (ballX - prevRenderBallX) / dtSeconds;
           const fvy = (ballY - prevRenderBallY) / dtSeconds;
           frameSpeed = Math.hypot(fvx, fvy);
@@ -832,14 +925,12 @@ export function PongCanvas({
         prevRightCenterY = rightCenterY;
 
         const leftSquashProgress = clamp(
-          (now - paddleLeftSquashStartRef.current) /
-            PADDLE_SQUASH_DURATION_MS,
+          (now - paddleLeftSquashStartRef.current) / PADDLE_SQUASH_DURATION_MS,
           0,
           1,
         );
         const rightSquashProgress = clamp(
-          (now - paddleRightSquashStartRef.current) /
-            PADDLE_SQUASH_DURATION_MS,
+          (now - paddleRightSquashStartRef.current) / PADDLE_SQUASH_DURATION_MS,
           0,
           1,
         );
@@ -882,12 +973,7 @@ export function PongCanvas({
         );
 
         updatePaddleTrail(leftTrailPoints, leftCenterY, leftVelocity, dtMs);
-        updatePaddleTrail(
-          rightTrailPoints,
-          rightCenterY,
-          rightVelocity,
-          dtMs,
-        );
+        updatePaddleTrail(rightTrailPoints, rightCenterY, rightVelocity, dtMs);
         drawPaddleTrail(
           paddleLeftTrail,
           leftTrailPoints,
@@ -917,6 +1003,7 @@ export function PongCanvas({
       unsubscribeBinary();
       socket.close();
       socketRef.current = null;
+      sfx.dispose();
       if (initialized) {
         if (tick) app.ticker.remove(tick);
         app.destroy({ removeView: false });
@@ -941,6 +1028,23 @@ export function PongCanvas({
           >
             {score?.left ?? 0}
           </div>
+        </div>
+        <div className="pong-game-center">
+          <div ref={timerRef} className="pong-heading pong-game-timer">
+            00:00
+          </div>
+          <button
+            type="button"
+            aria-label="Pause game"
+            className="pong-pause-btn"
+            onClick={() => {
+              console.log('[pong-canvas] pause -> leaving to main menu');
+              socketRef.current?.send({ type: 'leave' });
+              onMainMenu();
+            }}
+          >
+            II PAUSE
+          </button>
         </div>
         <div className="pong-game-player pong-game-player-right">
           <div className="pong-heading pong-game-player-name">{p2Name}</div>

@@ -1,21 +1,25 @@
-import { useState } from 'react';
-import type { BotDifficulty } from './types';
+import type { BotDifficulty, WinScore } from './types';
 
 const DIFFICULTIES: BotDifficulty[] = ['easy', 'normal', 'hard'];
-const WIN_SCORES = [5, 11, 21] as const;
+const WIN_SCORES: WinScore[] = [5, 11, 21];
 
 export function SettingsScreen({
   difficulty,
   onDifficultyChange,
+  sound,
+  onSoundChange,
+  winScore,
+  onWinScoreChange,
   onBack,
 }: {
   difficulty: BotDifficulty;
   onDifficultyChange: (difficulty: BotDifficulty) => void;
+  sound: boolean;
+  onSoundChange: (sound: boolean) => void;
+  winScore: WinScore;
+  onWinScoreChange: (winScore: WinScore) => void;
   onBack: () => void;
 }) {
-  const [sound, setSound] = useState(true);
-  const [winScore, setWinScore] = useState<(typeof WIN_SCORES)[number]>(11);
-
   return (
     <div className="pong-screen pong-settings">
       <div className="pong-heading pong-screen-title">SETTINGS</div>
@@ -32,7 +36,7 @@ export function SettingsScreen({
             id="sound-toggle"
             role="switch"
             aria-checked={sound}
-            onClick={() => setSound((v) => !v)}
+            onClick={() => onSoundChange(!sound)}
             className="pong-toggle"
             style={{ background: sound ? '#2f9e64' : '#2a2732' }}
           >
@@ -68,7 +72,7 @@ export function SettingsScreen({
                 key={w}
                 type="button"
                 aria-pressed={winScore === w}
-                onClick={() => setWinScore(w)}
+                onClick={() => onWinScoreChange(w)}
                 className={`pong-option-btn pong-option-btn-large${winScore === w ? ' pong-option-btn-active' : ''}`}
               >
                 {w}

@@ -3,7 +3,7 @@ import { HowToPlay } from './HowToPlay';
 import { MainMenu } from './MainMenu';
 import { ModeMenu } from './ModeMenu';
 import { SettingsScreen } from './SettingsScreen';
-import type { BotDifficulty, GameMode } from './types';
+import type { BotDifficulty, GameMode, WinScore } from './types';
 
 type MenuScreen = 'menu' | 'modeSelect' | 'settings' | 'howTo';
 
@@ -11,11 +11,18 @@ export function PongMenuFlow({
   onSelectMode,
   onExitToHub,
 }: {
-  onSelectMode: (mode: GameMode, difficulty: BotDifficulty) => void;
+  onSelectMode: (
+    mode: GameMode,
+    difficulty: BotDifficulty,
+    winScore: WinScore,
+    sound: boolean,
+  ) => void;
   onExitToHub: () => void;
 }) {
   const [screen, setScreen] = useState<MenuScreen>('menu');
   const [difficulty, setDifficulty] = useState<BotDifficulty>('normal');
+  const [winScore, setWinScore] = useState<WinScore>(11);
+  const [sound, setSound] = useState(true);
 
   function goTo(next: MenuScreen) {
     console.log('[menu] screen change', screen, '->', next);
@@ -25,7 +32,7 @@ export function PongMenuFlow({
   if (screen === 'modeSelect') {
     return (
       <ModeMenu
-        onSelect={(mode) => onSelectMode(mode, difficulty)}
+        onSelect={(mode) => onSelectMode(mode, difficulty, winScore, sound)}
         onBack={() => goTo('menu')}
       />
     );
@@ -35,6 +42,10 @@ export function PongMenuFlow({
       <SettingsScreen
         difficulty={difficulty}
         onDifficultyChange={setDifficulty}
+        sound={sound}
+        onSoundChange={setSound}
+        winScore={winScore}
+        onWinScoreChange={setWinScore}
         onBack={() => goTo('menu')}
       />
     );

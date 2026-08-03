@@ -32,9 +32,7 @@ export function PongGame({
   if (session.status === 'error') {
     return (
       <div className="pong-screen pong-status-screen">
-        <div className="pong-heading pong-status-error">
-          CONNECTION FAILED
-        </div>
+        <div className="pong-heading pong-status-error">CONNECTION FAILED</div>
         <div className="pong-status-error-detail">{session.error}</div>
         <button
           type="button"
@@ -51,6 +49,7 @@ export function PongGame({
     <PongCanvas
       wsToken={session.wsToken}
       mode={session.mode}
+      sound={session.sound}
       onMainMenu={backToMenu}
     />
   );

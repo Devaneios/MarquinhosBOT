@@ -15,6 +15,9 @@ export function MainMenu({
         <div className="pong-heading pong-logo">PONGUINHOS</div>
         <div className="pong-heading pong-blink-text">PRESS PLAY TO START</div>
       </div>
+      <button type="button" className="pong-corner-nav" onClick={onExitToHub}>
+        &lt; ARCADE
+      </button>
       <div className="pong-main-menu-actions">
         <button
           type="button"
@@ -36,13 +39,6 @@ export function MainMenu({
           onClick={onHowTo}
         >
           HOW TO PLAY
-        </button>
-        <button
-          type="button"
-          className="pong-btn pong-btn-secondary"
-          onClick={onExitToHub}
-        >
-          SWITCH GAME
         </button>
       </div>
       <div className="pong-main-menu-footer">© 2026 ARCADE PIXEL STUDIOS</div>

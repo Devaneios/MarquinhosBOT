@@ -2,12 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { apiUrl } from '../../lib/apiBase';
 import { errorMessage, isAuthError, postJson } from '../../lib/http';
-import type { BotDifficulty, GameMode } from './types';
+import type { BotDifficulty, GameMode, WinScore } from './types';
 
 export type PongSessionState =
   | { status: 'selecting-mode' }
   | { status: 'connecting' }
-  | { status: 'ready'; wsToken: string; mode: GameMode }
+  | { status: 'ready'; wsToken: string; mode: GameMode; sound: boolean }
   | { status: 'error'; error: string };
 
 export function usePongSession(
@@ -15,7 +15,12 @@ export function usePongSession(
   onAuthInvalid: () => void,
 ): {
   session: PongSessionState;
-  selectMode: (mode: GameMode, difficulty: BotDifficulty) => void;
+  selectMode: (
+    mode: GameMode,
+    difficulty: BotDifficulty,
+    winScore: WinScore,
+    sound: boolean,
+  ) => void;
   backToMenu: () => void;
 } {
   const [session, setSession] = useState<PongSessionState>({
@@ -35,8 +40,13 @@ export function usePongSession(
   }, []);
 
   const selectMode = useCallback(
-    (mode: GameMode, difficulty: BotDifficulty) => {
-      console.log('[pong] selecting mode', mode, difficulty);
+    (
+      mode: GameMode,
+      difficulty: BotDifficulty,
+      winScore: WinScore,
+      sound: boolean,
+    ) => {
+      console.log('[pong] selecting mode', mode, difficulty, winScore);
       setSession({ status: 'connecting' });
       postJson<{ token: string }>(apiUrl('/activities/ws-session'), {
         accessToken: identity.accessToken,
@@ -44,18 +54,21 @@ export function usePongSession(
         guildId: identity.guildId,
         mode,
         game: 'pong',
+        winningScore: winScore,
         ...(mode === 'single' ? { difficulty } : {}),
       })
         .then(({ token }) => {
           if (cancelledRef.current) return;
           console.info('[pong] session ready', mode);
-          setSession({ status: 'ready', wsToken: token, mode });
+          setSession({ status: 'ready', wsToken: token, mode, sound });
         })
         .catch((err) => {
           console.error('Failed to create Pong session', JSON.stringify(err));
           if (cancelledRef.current) return;
           if (isAuthError(err)) {
-            console.warn('[pong] session creation hit an auth error, reauthing');
+            console.warn(
+              '[pong] session creation hit an auth error, reauthing',
+            );
             onAuthInvalid();
             return;
           }
