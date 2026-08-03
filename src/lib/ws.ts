@@ -14,6 +14,7 @@ export class ActivitySocket {
   private listeners = new Set<Listener>();
   private binaryListeners = new Set<BinaryListener>();
   private reconnectAttempts = 0;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private closedByCaller = false;
 
   constructor(url: string) {
@@ -21,8 +22,12 @@ export class ActivitySocket {
   }
 
   connect() {
+    // close() is terminal. Without this guard a reconnect timer that fires
+    // after the caller closed us would reopen the socket — and, because it
+    // reuses the still-valid session token, silently re-join the room with a
+    // socket nothing holds a reference to and nobody can ever close again.
+    if (this.closedByCaller) return;
     console.info('[ws] connecting', this.url);
-    this.closedByCaller = false;
     this.ws = new WebSocket(this.url);
     this.ws.binaryType = 'arraybuffer';
 
@@ -58,7 +63,7 @@ export class ActivitySocket {
       );
       console.warn(`[ws] closed unexpectedly, reconnecting in ${delay}ms`);
       this.reconnectAttempts += 1;
-      setTimeout(() => this.connect(), delay);
+      this.reconnectTimer = setTimeout(() => this.connect(), delay);
     };
   }
 
@@ -80,8 +85,30 @@ export class ActivitySocket {
     return () => this.binaryListeners.delete(listener);
   }
 
-  close() {
+  // `farewell` is sent right before closing. It exists because a plain send()
+  // is dropped whenever the socket isn't OPEN yet, and a dropped goodbye is
+  // indistinguishable from a network drop on the server — which then holds the
+  // player's slot open instead of detaching them. Queuing it onto `onopen`
+  // makes the goodbye actually arrive.
+  close(farewell?: ActivityMessage) {
     this.closedByCaller = true;
-    this.ws?.close();
+    if (this.reconnectTimer !== null) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
+    const ws = this.ws;
+    if (!ws) return;
+
+    if (farewell && ws.readyState === WebSocket.CONNECTING) {
+      console.info('[ws] deferring farewell until open', farewell.type);
+      ws.onopen = () => {
+        ws.send(JSON.stringify(farewell));
+        ws.close();
+      };
+      return;
+    }
+    if (farewell) this.send(farewell);
+    ws.close();
   }
 }

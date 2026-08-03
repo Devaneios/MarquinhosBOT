@@ -438,6 +438,7 @@
 }
 
 .pong-canvas {
+  border: 3px solid var(--pong-text);
   max-width: 100%;
   max-height: 100%;
   display: block;
@@ -449,6 +450,21 @@
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 14px;
+}
+
+/* Sits above the court rather than over it — a spectator watches a live
+   match, so the badge must not cover the ball. */
+.pong-spectating {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  background: var(--pong-panel);
+  border: 3px solid var(--pong-yellow);
+  color: var(--pong-yellow);
+  font-size: 11px;
+  letter-spacing: 1px;
 }
 
 .pong-game-over {

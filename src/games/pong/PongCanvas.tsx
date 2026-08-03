@@ -271,6 +271,8 @@ export function PongCanvas({
     side: Side;
     timeoutMs: number;
   } | null>(null);
+  const [spectating, setSpectating] = useState(false);
+  const spectatingRef = useRef(false);
   const socketRef = useRef<ActivitySocket | null>(null);
 
   useEffect(() => {
@@ -296,6 +298,9 @@ export function PongCanvas({
     paddleRightFlashStartRef.current = -Infinity;
     shakeStartRef.current = -Infinity;
     shakeMagnitudeRef.current = 0;
+    prevWinnerRef.current = null;
+    spectatingRef.current = false;
+    setSpectating(false);
 
     let spawnHitParticles:
       ((side: Side, x: number, y: number, ballSpeed: number) => void) | null =
@@ -303,10 +308,17 @@ export function PongCanvas({
 
     const unsubscribe = socket.onMessage((message: ActivityMessage) => {
       if (message.type === 'init') {
-        const payload = message.payload as { side: Side; config: PongConfig };
+        const payload = message.payload as {
+          side: Side | null;
+          config: PongConfig;
+        };
+        // A null side means the match already has both players: we watch it
+        // rather than drive a paddle in it.
         console.info('[pong-canvas] assigned side', payload.side);
         sideRef.current = payload.side;
         configRef.current = payload.config;
+        spectatingRef.current = payload.side === null;
+        setSpectating(payload.side === null);
       } else if (message.type === 'restart_status') {
         console.log('[pong-canvas] restart status', message.payload);
         setRestartStatus(
@@ -445,9 +457,11 @@ export function PongCanvas({
 
     socket.connect();
 
+    // Leaving is not sent from here: the unmount cleanup below sends it for
+    // every exit path (menu, hub, auth error, remount), so a match can never
+    // be walked out of without detaching from its session.
     function pauseExit() {
       console.log('[pong-canvas] pause -> leaving to main menu');
-      socketRef.current?.send({ type: 'leave' });
       onMainMenu();
     }
 
@@ -466,6 +480,7 @@ export function PongCanvas({
       direction: -1 | 0 | 1,
       nextSeq: number,
     ) {
+      if (spectatingRef.current) return;
       if (direction === localDirectionRef.current[side]) return;
       localDirectionRef.current[side] = direction;
       socket.send({
@@ -995,13 +1010,16 @@ export function PongCanvas({
     })();
 
     return () => {
-      console.log('[pong-canvas] unmounting, closing socket');
+      console.log('[pong-canvas] unmounting, leaving session');
       cancelled = true;
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       unsubscribe();
       unsubscribeBinary();
-      socket.close();
+      // Every unmount is a departure. Closing without saying so would look
+      // like a network drop, and the server would hold the slot open long
+      // enough for the next mode pick to fall back into this same match.
+      socket.close({ type: 'leave' });
       socketRef.current = null;
       sfx.dispose();
       if (initialized) {
@@ -1039,7 +1057,6 @@ export function PongCanvas({
             className="pong-pause-btn"
             onClick={() => {
               console.log('[pong-canvas] pause -> leaving to main menu');
-              socketRef.current?.send({ type: 'leave' });
               onMainMenu();
             }}
           >
@@ -1059,10 +1076,14 @@ export function PongCanvas({
 
       <div className="pong-court">
         <canvas ref={canvasRef} className="pong-canvas" />
-        {!score && (
-          <div className="pong-heading pong-blink-text pong-waiting">
-            WAITING FOR OPPONENT…
-          </div>
+        {spectating ? (
+          <div className="pong-heading pong-spectating">SPECTATING</div>
+        ) : (
+          !score && (
+            <div className="pong-heading pong-blink-text pong-waiting">
+              WAITING FOR OPPONENT…
+            </div>
+          )
         )}
         {pausedOpponent && !winner && (
           <div className="pong-heading pong-blink-text pong-waiting">
@@ -1080,26 +1101,29 @@ export function PongCanvas({
               <span className="pong-game-over-score-right">{score?.right}</span>
             </div>
             <div className="pong-game-over-actions">
-              <button
-                type="button"
-                className="pong-btn pong-btn-primary"
-                disabled={requested}
-                onClick={() => {
-                  console.log('[pong-canvas] requesting rematch');
-                  socketRef.current?.send({ type: 'restart' });
-                  setRequested(true);
-                }}
-              >
-                {requested
-                  ? `WAITING… (${restartStatus?.votes ?? 1}/${restartStatus?.required ?? 2})`
-                  : 'REMATCH'}
-              </button>
+              {/* A spectator has no vote in the rematch — the server would
+                  reject it anyway, so don't offer a button that does nothing. */}
+              {!spectating && (
+                <button
+                  type="button"
+                  className="pong-btn pong-btn-primary"
+                  disabled={requested}
+                  onClick={() => {
+                    console.log('[pong-canvas] requesting rematch');
+                    socketRef.current?.send({ type: 'restart' });
+                    setRequested(true);
+                  }}
+                >
+                  {requested
+                    ? `WAITING… (${restartStatus?.votes ?? 1}/${restartStatus?.required ?? 2})`
+                    : 'REMATCH'}
+                </button>
+              )}
               <button
                 type="button"
                 className="pong-btn pong-btn-secondary"
                 onClick={() => {
                   console.log('[pong-canvas] leaving to main menu');
-                  socketRef.current?.send({ type: 'leave' });
                   onMainMenu();
                 }}
               >
