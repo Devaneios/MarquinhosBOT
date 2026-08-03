@@ -32,7 +32,10 @@ export function Hub({
         <button
           type="button"
           className="pong-btn pong-btn-primary"
-          onClick={() => setActiveGame('pong')}
+          onClick={() => {
+            console.log('[hub] launching game', 'pong');
+            setActiveGame('pong');
+          }}
         >
           PONG
         </button>

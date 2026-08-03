@@ -3,7 +3,7 @@ import { HowToPlay } from './HowToPlay';
 import { MainMenu } from './MainMenu';
 import { ModeMenu } from './ModeMenu';
 import { SettingsScreen } from './SettingsScreen';
-import type { GameMode } from './types';
+import type { BotDifficulty, GameMode } from './types';
 
 type MenuScreen = 'menu' | 'modeSelect' | 'settings' | 'howTo';
 
@@ -11,28 +11,46 @@ export function PongMenuFlow({
   onSelectMode,
   onExitToHub,
 }: {
-  onSelectMode: (mode: GameMode) => void;
+  onSelectMode: (mode: GameMode, difficulty: BotDifficulty) => void;
   onExitToHub: () => void;
 }) {
   const [screen, setScreen] = useState<MenuScreen>('menu');
+  const [difficulty, setDifficulty] = useState<BotDifficulty>('normal');
+
+  function goTo(next: MenuScreen) {
+    console.log('[menu] screen change', screen, '->', next);
+    setScreen(next);
+  }
 
   if (screen === 'modeSelect') {
     return (
-      <ModeMenu onSelect={onSelectMode} onBack={() => setScreen('menu')} />
+      <ModeMenu
+        onSelect={(mode) => onSelectMode(mode, difficulty)}
+        onBack={() => goTo('menu')}
+      />
     );
   }
   if (screen === 'settings') {
-    return <SettingsScreen onBack={() => setScreen('menu')} />;
+    return (
+      <SettingsScreen
+        difficulty={difficulty}
+        onDifficultyChange={setDifficulty}
+        onBack={() => goTo('menu')}
+      />
+    );
   }
   if (screen === 'howTo') {
-    return <HowToPlay onBack={() => setScreen('menu')} />;
+    return <HowToPlay onBack={() => goTo('menu')} />;
   }
   return (
     <MainMenu
-      onPlay={() => setScreen('modeSelect')}
-      onSettings={() => setScreen('settings')}
-      onHowTo={() => setScreen('howTo')}
-      onExitToHub={onExitToHub}
+      onPlay={() => goTo('modeSelect')}
+      onSettings={() => goTo('settings')}
+      onHowTo={() => goTo('howTo')}
+      onExitToHub={() => {
+        console.log('[menu] exiting to hub');
+        onExitToHub();
+      }}
     />
   );
 }

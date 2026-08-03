@@ -1,12 +1,19 @@
 import { useState } from 'react';
+import type { BotDifficulty } from './types';
 
-const DIFFICULTIES = ['easy', 'normal', 'hard'] as const;
+const DIFFICULTIES: BotDifficulty[] = ['easy', 'normal', 'hard'];
 const WIN_SCORES = [5, 11, 21] as const;
 
-export function SettingsScreen({ onBack }: { onBack: () => void }) {
+export function SettingsScreen({
+  difficulty,
+  onDifficultyChange,
+  onBack,
+}: {
+  difficulty: BotDifficulty;
+  onDifficultyChange: (difficulty: BotDifficulty) => void;
+  onBack: () => void;
+}) {
   const [sound, setSound] = useState(true);
-  const [difficulty, setDifficulty] =
-    useState<(typeof DIFFICULTIES)[number]>('normal');
   const [winScore, setWinScore] = useState<(typeof WIN_SCORES)[number]>(11);
 
   return (
@@ -44,7 +51,7 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
                 key={d}
                 type="button"
                 aria-pressed={difficulty === d}
-                onClick={() => setDifficulty(d)}
+                onClick={() => onDifficultyChange(d)}
                 className={`pong-option-btn${difficulty === d ? ' pong-option-btn-active' : ''}`}
               >
                 {d.toUpperCase()}

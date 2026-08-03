@@ -16,8 +16,10 @@ export type DiscordIdentityState =
   | { status: 'ready'; identity: DiscordIdentity; reauth: () => void };
 
 async function doHandshake(): Promise<DiscordIdentity> {
+  console.log('[auth] starting handshake');
   const discordSdk = getDiscordSdk();
   await discordSdk.ready();
+  console.log('[auth] sdk ready');
 
   const { code } = await discordSdk.commands.authorize({
     client_id: import.meta.env.VITE_DISCORD_CLIENT_ID,
@@ -26,17 +28,27 @@ async function doHandshake(): Promise<DiscordIdentity> {
     prompt: 'none',
     scope: ['identify'],
   });
+  console.log('[auth] got authorization code');
 
   const { access_token } = await postJson<{ access_token: string }>(
     apiUrl('/activities/token'),
     { code },
   );
+  console.log('[auth] exchanged code for access token');
 
   const auth = await discordSdk.commands.authenticate({ access_token });
+  console.log('[auth] authenticated as', auth.user.id);
 
   if (!discordSdk.guildId) {
+    console.error('[auth] missing guildId — not launched inside a server');
     throw new Error('This Activity must be launched inside a server');
   }
+
+  console.info('[auth] handshake complete', {
+    userId: auth.user.id,
+    guildId: discordSdk.guildId,
+    instanceId: discordSdk.instanceId,
+  });
 
   return {
     userId: auth.user.id,
@@ -59,7 +71,10 @@ let cache: { promise: Promise<DiscordIdentity>; settled: boolean } | null = null
 
 export function runAuthFlow(force = false): Promise<DiscordIdentity> {
   if (force && cache?.settled) cache = null;
-  if (cache) return cache.promise;
+  if (cache) {
+    console.log('[auth] reusing in-flight/cached auth attempt');
+    return cache.promise;
+  }
 
   const entry: { promise: Promise<DiscordIdentity>; settled: boolean } = {
     promise: null as unknown as Promise<DiscordIdentity>,
@@ -84,6 +99,7 @@ export function useDiscordIdentity(): DiscordIdentityState {
   });
 
   const reauth = useCallback(() => {
+    console.log('[auth] reauth triggered');
     setState({ status: 'loading' });
     runAuthFlow(true)
       .then((identity) => setState({ status: 'ready', identity, reauth }))
@@ -96,10 +112,14 @@ export function useDiscordIdentity(): DiscordIdentityState {
 
     runAuthFlow()
       .then((identity) => {
-        if (!cancelled) setState({ status: 'ready', identity, reauth });
+        if (cancelled) return;
+        console.info('[auth] identity ready', identity.userId);
+        setState({ status: 'ready', identity, reauth });
       })
       .catch((err) => {
-        if (!cancelled) setState({ status: 'error', error: errorMessage(err) });
+        if (cancelled) return;
+        console.error('[auth] handshake failed', errorMessage(err));
+        setState({ status: 'error', error: errorMessage(err) });
       });
 
     return () => {

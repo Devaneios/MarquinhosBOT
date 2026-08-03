@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import './App.css';
 import './games/pong/pong-theme.css';
 import { DevConsole } from './components/DevConsole';
@@ -6,6 +7,10 @@ import { useDiscordIdentity } from './hooks/useDiscordIdentity';
 
 function App() {
   const identity = useDiscordIdentity();
+
+  useEffect(() => {
+    console.log('[app] identity status', identity.status);
+  }, [identity.status]);
 
   return (
     <div className="pong-shell">

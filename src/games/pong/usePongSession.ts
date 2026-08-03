@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { apiUrl } from '../../lib/apiBase';
 import { errorMessage, isAuthError, postJson } from '../../lib/http';
-import type { GameMode } from './types';
+import type { BotDifficulty, GameMode } from './types';
 
 export type PongSessionState =
   | { status: 'selecting-mode' }
@@ -15,7 +15,7 @@ export function usePongSession(
   onAuthInvalid: () => void,
 ): {
   session: PongSessionState;
-  selectMode: (mode: GameMode) => void;
+  selectMode: (mode: GameMode, difficulty: BotDifficulty) => void;
   backToMenu: () => void;
 } {
   const [session, setSession] = useState<PongSessionState>({
@@ -23,15 +23,20 @@ export function usePongSession(
   });
   const cancelledRef = useRef(false);
 
-  useEffect(
-    () => () => {
+  // StrictMode double-invokes this effect on mount (mount -> cleanup ->
+  // mount), so the cleanup alone would permanently flip cancelledRef to
+  // true after the phantom first pass, silently dropping every future
+  // selectMode() result. Resetting on (re)mount undoes that.
+  useEffect(() => {
+    cancelledRef.current = false;
+    return () => {
       cancelledRef.current = true;
-    },
-    [],
-  );
+    };
+  }, []);
 
   const selectMode = useCallback(
-    (mode: GameMode) => {
+    (mode: GameMode, difficulty: BotDifficulty) => {
+      console.log('[pong] selecting mode', mode, difficulty);
       setSession({ status: 'connecting' });
       postJson<{ token: string }>(apiUrl('/activities/ws-session'), {
         accessToken: identity.accessToken,
@@ -39,15 +44,18 @@ export function usePongSession(
         guildId: identity.guildId,
         mode,
         game: 'pong',
+        ...(mode === 'single' ? { difficulty } : {}),
       })
         .then(({ token }) => {
           if (cancelledRef.current) return;
+          console.info('[pong] session ready', mode);
           setSession({ status: 'ready', wsToken: token, mode });
         })
         .catch((err) => {
           console.error('Failed to create Pong session', JSON.stringify(err));
           if (cancelledRef.current) return;
           if (isAuthError(err)) {
+            console.warn('[pong] session creation hit an auth error, reauthing');
             onAuthInvalid();
             return;
           }
@@ -58,6 +66,7 @@ export function usePongSession(
   );
 
   const backToMenu = useCallback(() => {
+    console.log('[pong] back to mode menu');
     setSession({ status: 'selecting-mode' });
   }, []);
 

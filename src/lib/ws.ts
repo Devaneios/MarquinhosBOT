@@ -21,11 +21,13 @@ export class ActivitySocket {
   }
 
   connect() {
+    console.info('[ws] connecting', this.url);
     this.closedByCaller = false;
     this.ws = new WebSocket(this.url);
     this.ws.binaryType = 'arraybuffer';
 
     this.ws.onopen = () => {
+      console.info('[ws] connected');
       this.reconnectAttempts = 0;
     };
 
@@ -38,17 +40,23 @@ export class ActivitySocket {
       try {
         message = JSON.parse(event.data);
       } catch {
+        console.warn('[ws] failed to parse message', event.data);
         return;
       }
+      console.log('[ws] message', message.type, message.payload);
       this.listeners.forEach((listener) => listener(message));
     };
 
     this.ws.onclose = () => {
-      if (this.closedByCaller) return;
+      if (this.closedByCaller) {
+        console.info('[ws] closed by caller');
+        return;
+      }
       const delay = Math.min(
         1000 * 2 ** this.reconnectAttempts,
         MAX_RECONNECT_DELAY_MS,
       );
+      console.warn(`[ws] closed unexpectedly, reconnecting in ${delay}ms`);
       this.reconnectAttempts += 1;
       setTimeout(() => this.connect(), delay);
     };
@@ -57,7 +65,9 @@ export class ActivitySocket {
   send(message: ActivityMessage) {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
+      return;
     }
+    console.warn('[ws] dropped message, socket not open', message.type);
   }
 
   onMessage(listener: Listener): () => void {

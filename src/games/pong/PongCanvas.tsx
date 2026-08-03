@@ -244,6 +244,7 @@ export function PongCanvas({
   const paddleRightFlashStartRef = useRef(-Infinity);
   const shakeStartRef = useRef(-Infinity);
   const shakeMagnitudeRef = useRef(0);
+  const prevWinnerRef = useRef<Side | null>(null);
   const [winner, setWinner] = useState<'left' | 'right' | null>(null);
   const [score, setScore] = useState<{ left: number; right: number } | null>(
     null,
@@ -260,6 +261,7 @@ export function PongCanvas({
   const socketRef = useRef<ActivitySocket | null>(null);
 
   useEffect(() => {
+    console.log('[pong-canvas] mounting');
     const socket = new ActivitySocket(
       `${wsUrl('/ws/activity')}?token=${encodeURIComponent(wsToken)}`,
     );
@@ -288,17 +290,21 @@ export function PongCanvas({
     const unsubscribe = socket.onMessage((message: ActivityMessage) => {
       if (message.type === 'init') {
         const payload = message.payload as { side: Side; config: PongConfig };
+        console.info('[pong-canvas] assigned side', payload.side);
         sideRef.current = payload.side;
         configRef.current = payload.config;
       } else if (message.type === 'restart_status') {
+        console.log('[pong-canvas] restart status', message.payload);
         setRestartStatus(
           message.payload as { votes: number; required: number },
         );
       } else if (message.type === 'opponent_disconnected') {
+        console.warn('[pong-canvas] opponent disconnected', message.payload);
         setPausedOpponent(
           message.payload as { side: Side; timeoutMs: number },
         );
       } else if (message.type === 'opponent_reconnected') {
+        console.info('[pong-canvas] opponent reconnected');
         setPausedOpponent(null);
       }
     });
@@ -311,6 +317,10 @@ export function PongCanvas({
       setPausedOpponent(null);
       setWinner(state.winner);
       setScore(state.score);
+      if (state.winner !== prevWinnerRef.current) {
+        console.log('[pong-canvas] winner changed', state.winner);
+        prevWinnerRef.current = state.winner;
+      }
       if (state.winner === null) {
         setRestartStatus(null);
         setRequested(false);
@@ -899,6 +909,7 @@ export function PongCanvas({
     })();
 
     return () => {
+      console.log('[pong-canvas] unmounting, closing socket');
       cancelled = true;
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
@@ -970,6 +981,7 @@ export function PongCanvas({
                 className="pong-btn pong-btn-primary"
                 disabled={requested}
                 onClick={() => {
+                  console.log('[pong-canvas] requesting rematch');
                   socketRef.current?.send({ type: 'restart' });
                   setRequested(true);
                 }}
@@ -982,6 +994,7 @@ export function PongCanvas({
                 type="button"
                 className="pong-btn pong-btn-secondary"
                 onClick={() => {
+                  console.log('[pong-canvas] leaving to main menu');
                   socketRef.current?.send({ type: 'leave' });
                   onMainMenu();
                 }}
