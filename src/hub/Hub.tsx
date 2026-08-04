@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { GameId } from '../games/gameId';
 import { PongGame } from '../games/pong/PongGame';
 import type { DiscordIdentity } from '../hooks/useDiscordIdentity';
+import { cn } from '../lib/cn';
 
 interface ArcadeTile {
   id: GameId | null;
@@ -46,11 +47,12 @@ export function Hub({
             key={tile.name}
             type="button"
             disabled={tile.locked}
-            className={`notch-8 flex w-[220px] flex-col items-center gap-3.5 border border-marquinhos-border bg-marquinhos-panel px-4.5 py-7 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent ${
+            className={cn(
+              'notch-8 flex w-[220px] flex-col items-center gap-3.5 border border-marquinhos-border bg-marquinhos-panel px-4.5 py-7 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent',
               tile.locked
                 ? 'cursor-not-allowed'
-                : 'cursor-pointer hover:border-marquinhos-border-hover'
-            }`}
+                : 'cursor-pointer hover:border-marquinhos-border-hover',
+            )}
             onClick={() => {
               if (!tile.id) return;
               console.log('[hub] launching game', tile.id);
@@ -58,7 +60,12 @@ export function Hub({
             }}
           >
             <div
-              className={`font-mono text-sm font-semibold tracking-wide ${tile.locked ? 'text-marquinhos-text-disabled' : 'text-marquinhos-text'}`}
+              className={cn(
+                'font-mono text-sm font-semibold tracking-wide',
+                tile.locked
+                  ? 'text-marquinhos-text-disabled'
+                  : 'text-marquinhos-text',
+              )}
             >
               {tile.name}
             </div>

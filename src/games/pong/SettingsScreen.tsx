@@ -1,3 +1,4 @@
+import { cn } from '../../lib/cn';
 import type { BotDifficulty, WinScore } from './types';
 
 const DIFFICULTIES: BotDifficulty[] = ['easy', 'normal', 'hard'];
@@ -40,14 +41,20 @@ export function SettingsScreen({
             role="switch"
             aria-checked={sound}
             onClick={() => onSoundChange(!sound)}
-            className={`relative h-9 w-[90px] cursor-pointer border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent ${
+            className={cn(
+              'relative h-9 w-[90px] cursor-pointer border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent',
               sound
                 ? 'border-marquinhos-green bg-marquinhos-green/20'
-                : 'border-marquinhos-border bg-marquinhos-panel'
-            }`}
+                : 'border-marquinhos-border bg-marquinhos-panel',
+            )}
           >
             <div
-              className={`absolute top-0.5 h-[26px] w-[26px] transition-[left] duration-150 ${sound ? 'left-[54px] bg-marquinhos-green' : 'left-0.5 bg-marquinhos-text-disabled'}`}
+              className={cn(
+                'absolute top-0.5 h-[26px] w-[26px] transition-[left] duration-150',
+                sound
+                  ? 'left-[54px] bg-marquinhos-green'
+                  : 'left-0.5 bg-marquinhos-text-disabled',
+              )}
             />
           </button>
         </div>
@@ -63,11 +70,12 @@ export function SettingsScreen({
                 type="button"
                 aria-pressed={difficulty === d}
                 onClick={() => onDifficultyChange(d)}
-                className={`${optionBtnBase} ${
+                className={cn(
+                  optionBtnBase,
                   difficulty === d
                     ? 'border-marquinhos-accent bg-marquinhos-accent text-marquinhos-bg'
-                    : 'border-marquinhos-border bg-transparent text-marquinhos-text hover:border-marquinhos-border-hover'
-                }`}
+                    : 'border-marquinhos-border bg-transparent text-marquinhos-text hover:border-marquinhos-border-hover',
+                )}
               >
                 {d.toUpperCase()}
               </button>
@@ -86,11 +94,13 @@ export function SettingsScreen({
                 type="button"
                 aria-pressed={winScore === w}
                 onClick={() => onWinScoreChange(w)}
-                className={`${optionBtnBase} text-sm ${
+                className={cn(
+                  optionBtnBase,
+                  'text-sm',
                   winScore === w
                     ? 'border-marquinhos-accent bg-marquinhos-accent text-marquinhos-bg'
-                    : 'border-marquinhos-border bg-transparent text-marquinhos-text hover:border-marquinhos-border-hover'
-                }`}
+                    : 'border-marquinhos-border bg-transparent text-marquinhos-text hover:border-marquinhos-border-hover',
+                )}
               >
                 {w}
               </button>

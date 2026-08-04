@@ -4,17 +4,17 @@
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', monospace;
   --font-pixel: 'Press Start 2P', monospace;
 
-  --color-marquinhos-bg: #17181a;
-  --color-marquinhos-panel: #1f2123;
-  --color-marquinhos-border: #34363a;
-  --color-marquinhos-border-hover: #565a60;
-  --color-marquinhos-text: #e8e6e1;
-  --color-marquinhos-text-dim: #8b8d90;
-  --color-marquinhos-text-disabled: #565a60;
-  --color-marquinhos-accent: #ffb000;
-  --color-marquinhos-accent-hover: #e6a000;
-  --color-marquinhos-green: #5fbf77;
-  --color-marquinhos-danger: #e5484d;
+  --color-marquinhos-bg: oklch(20.88% 0.0042 264.48);
+  --color-marquinhos-panel: oklch(24.65% 0.0048 248.02);
+  --color-marquinhos-border: oklch(33.25% 0.0075 264.47);
+  --color-marquinhos-border-hover: oklch(46.61% 0.0109 258.36);
+  --color-marquinhos-text: oklch(92.51% 0.0071 88.65);
+  --color-marquinhos-text-dim: oklch(64.27% 0.0050 258.33);
+  --color-marquinhos-text-disabled: oklch(46.61% 0.0109 258.36);
+  --color-marquinhos-accent: oklch(81.24% 0.1704 76.39);
+  --color-marquinhos-accent-hover: oklch(75.45% 0.1577 77.34);
+  --color-marquinhos-green: oklch(72.78% 0.1386 149.91);
+  --color-marquinhos-danger: oklch(62.56% 0.1933 23.03);
 
   --animate-pixel-glow: pixelGlow 3s ease-in-out infinite;
 }

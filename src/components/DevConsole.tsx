@@ -5,10 +5,12 @@ import {
   type CSSProperties,
   type KeyboardEvent,
 } from 'react';
+import { cn } from '../lib/cn';
 
 const MAX_LOGS = 500;
 
-type LogKind = 'log' | 'info' | 'warn' | 'error' | 'command' | 'result' | 'eval-error';
+type LogKind =
+  'log' | 'info' | 'warn' | 'error' | 'command' | 'result' | 'eval-error';
 
 interface LogEntry {
   id: number;
@@ -20,8 +22,10 @@ export function safeStringify(value: unknown): string {
   if (typeof value === 'string') return value;
   if (typeof value === 'undefined') return 'undefined';
   if (typeof value === 'bigint') return `${value}n`;
-  if (typeof value === 'function') return `[Function: ${value.name || 'anonymous'}]`;
-  if (value instanceof Error) return value.stack ?? `${value.name}: ${value.message}`;
+  if (typeof value === 'function')
+    return `[Function: ${value.name || 'anonymous'}]`;
+  if (value instanceof Error)
+    return value.stack ?? `${value.name}: ${value.message}`;
 
   const seen = new WeakSet<object>();
   try {
@@ -73,7 +77,6 @@ const styles: Record<string, CSSProperties> = {
     bottom: 20,
     width: 480,
     height: 360,
-    display: 'flex',
     flexDirection: 'column',
     background: '#0d0d0f',
     border: '1px solid #3f3f46',
@@ -233,7 +236,8 @@ export function DevConsole() {
       const result = (0, eval)(code);
       appendLog('result', safeStringify(result));
     } catch (err) {
-      const text = err instanceof Error ? (err.stack ?? err.message) : String(err);
+      const text =
+        err instanceof Error ? (err.stack ?? err.message) : String(err);
       appendLog('eval-error', text);
     }
   }
@@ -242,52 +246,62 @@ export function DevConsole() {
     if (event.key === 'Enter') runCommand();
   }
 
-  if (!isOpen) {
-    return (
-      <button
-        type="button"
-        style={styles.toggleButton}
-        onClick={() => setIsOpen(true)}
-        aria-label="Open dev console"
-      >
-        {'>_'}
-      </button>
-    );
-  }
-
   return (
-    <div style={styles.window}>
-      <div style={styles.titleBar}>
-        <span style={styles.titleText}>DevConsole</span>
+    <>
+      {!isOpen && (
         <button
           type="button"
-          style={styles.minimizeButton}
-          onClick={() => setIsOpen(false)}
-          aria-label="Minimize dev console"
+          style={styles.toggleButton}
+          onClick={() => setIsOpen(true)}
+          aria-label="Open dev console"
         >
-          {'–'}
+          {'>_'}
         </button>
+      )}
+      <div
+        style={styles.window}
+        className={cn(
+          'transition-discrete duration-200 ease-out starting:opacity-0',
+          isOpen ? 'flex opacity-100' : 'hidden opacity-0',
+        )}
+      >
+        <div style={styles.titleBar}>
+          <span style={styles.titleText}>DevConsole</span>
+          <button
+            type="button"
+            style={styles.minimizeButton}
+            onClick={() => setIsOpen(false)}
+            aria-label="Minimize dev console"
+          >
+            {'–'}
+          </button>
+        </div>
+        <div style={styles.logList} ref={logListRef}>
+          {logs.map((entry) => (
+            <div
+              key={entry.id}
+              style={{ ...styles.logLine, color: colorByKind[entry.kind] }}
+            >
+              {prefixByKind[entry.kind]
+                ? `${prefixByKind[entry.kind]} ${entry.text}`
+                : entry.text}
+            </div>
+          ))}
+        </div>
+        <div style={styles.inputRow}>
+          <span style={styles.prompt}>{'>'}</span>
+          <input
+            name="dev-console-input"
+            style={styles.input}
+            value={inputValue}
+            onChange={(event) => setInputValue(event.target.value)}
+            onKeyDown={handleInputKeyDown}
+            placeholder="Enter JS…"
+            spellCheck={false}
+            autoComplete="off"
+          />
+        </div>
       </div>
-      <div style={styles.logList} ref={logListRef}>
-        {logs.map((entry) => (
-          <div key={entry.id} style={{ ...styles.logLine, color: colorByKind[entry.kind] }}>
-            {prefixByKind[entry.kind] ? `${prefixByKind[entry.kind]} ${entry.text}` : entry.text}
-          </div>
-        ))}
-      </div>
-      <div style={styles.inputRow}>
-        <span style={styles.prompt}>{'>'}</span>
-        <input
-          name="dev-console-input"
-          style={styles.input}
-          value={inputValue}
-          onChange={(event) => setInputValue(event.target.value)}
-          onKeyDown={handleInputKeyDown}
-          placeholder="Enter JS…"
-          spellCheck={false}
-          autoComplete="off"
-        />
-      </div>
-    </div>
+    </>
   );
 }

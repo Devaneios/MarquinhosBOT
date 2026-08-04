@@ -14,9 +14,11 @@
   },
   "dependencies": {
     "@discord/embedded-app-sdk": "^2.5.0",
+    "clsx": "^2.1.1",
     "pixi.js": "^8.19.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
