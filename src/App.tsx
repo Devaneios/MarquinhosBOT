@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { DevConsole } from './components/DevConsole';
 import { useDiscordIdentity } from './hooks/useDiscordIdentity';
-import { Hub } from './hub/Hub';
+import { AppRoutes } from './routes';
 
 function App() {
   const identity = useDiscordIdentity();
@@ -30,7 +31,12 @@ function App() {
         </div>
       )}
       {identity.status === 'ready' && (
-        <Hub identity={identity.identity} onAuthInvalid={identity.reauth} />
+        <MemoryRouter>
+          <AppRoutes
+            identity={identity.identity}
+            onAuthInvalid={identity.reauth}
+          />
+        </MemoryRouter>
       )}
       {import.meta.env.DEV && <DevConsole />}
     </div>

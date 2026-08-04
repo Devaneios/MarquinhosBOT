@@ -1,7 +1,5 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { GameId } from '../games/gameId';
-import { PongGame } from '../games/pong/PongGame';
-import type { DiscordIdentity } from '../hooks/useDiscordIdentity';
 import { cn } from '../lib/cn';
 
 interface ArcadeTile {
@@ -17,24 +15,8 @@ const TILES: ArcadeTile[] = [
   { id: null, name: 'SNAKE', status: 'COMING SOON', locked: true },
 ];
 
-export function Hub({
-  identity,
-  onAuthInvalid,
-}: {
-  identity: DiscordIdentity;
-  onAuthInvalid: () => void;
-}) {
-  const [activeGame, setActiveGame] = useState<GameId | null>(null);
-
-  if (activeGame === 'pong') {
-    return (
-      <PongGame
-        identity={identity}
-        onAuthInvalid={onAuthInvalid}
-        onExit={() => setActiveGame(null)}
-      />
-    );
-  }
+export function Hub() {
+  const navigate = useNavigate();
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-11 p-7">
@@ -56,7 +38,7 @@ export function Hub({
             onClick={() => {
               if (!tile.id) return;
               console.log('[hub] launching game', tile.id);
-              setActiveGame(tile.id);
+              navigate(`/games/${tile.id}`);
             }}
           >
             <div
