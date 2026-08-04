@@ -3,6 +3,9 @@ import type { BotDifficulty, WinScore } from './types';
 const DIFFICULTIES: BotDifficulty[] = ['easy', 'normal', 'hard'];
 const WIN_SCORES: WinScore[] = [5, 11, 21];
 
+const optionBtnBase =
+  'notch-6 flex-1 cursor-pointer border py-3 text-center font-pixel text-[11px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent';
+
 export function SettingsScreen({
   difficulty,
   onDifficultyChange,
@@ -21,13 +24,13 @@ export function SettingsScreen({
   onBack: () => void;
 }) {
   return (
-    <div className="pong-screen pong-settings">
-      <div className="pong-heading pong-screen-title">SETTINGS</div>
-      <div className="pong-settings-body">
-        <div className="pong-settings-row">
+    <div className="flex flex-1 flex-col items-center justify-center gap-12">
+      <div className="font-pixel text-2xl text-marquinhos-text">SETTINGS</div>
+      <div className="flex w-[420px] flex-col gap-7">
+        <div className="flex items-center justify-between">
           <label
             htmlFor="sound-toggle"
-            className="pong-heading pong-settings-label"
+            className="font-pixel text-sm text-marquinhos-text"
           >
             SOUND
           </label>
@@ -37,26 +40,34 @@ export function SettingsScreen({
             role="switch"
             aria-checked={sound}
             onClick={() => onSoundChange(!sound)}
-            className="pong-toggle"
-            style={{ background: sound ? '#2f9e64' : '#2a2732' }}
+            className={`relative h-9 w-[90px] cursor-pointer border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent ${
+              sound
+                ? 'border-marquinhos-green bg-marquinhos-green/20'
+                : 'border-marquinhos-border bg-marquinhos-panel'
+            }`}
           >
             <div
-              className="pong-toggle-knob"
-              style={{ left: sound ? '54px' : '2px' }}
+              className={`absolute top-0.5 h-[26px] w-[26px] transition-[left] duration-150 ${sound ? 'left-[54px] bg-marquinhos-green' : 'left-0.5 bg-marquinhos-text-disabled'}`}
             />
           </button>
         </div>
 
-        <div className="pong-settings-group">
-          <div className="pong-heading pong-settings-label">DIFFICULTY</div>
-          <div className="pong-settings-options">
+        <div className="flex flex-col gap-3">
+          <div className="font-pixel text-sm text-marquinhos-text">
+            DIFFICULTY
+          </div>
+          <div className="flex gap-2.5">
             {DIFFICULTIES.map((d) => (
               <button
                 key={d}
                 type="button"
                 aria-pressed={difficulty === d}
                 onClick={() => onDifficultyChange(d)}
-                className={`pong-option-btn${difficulty === d ? ' pong-option-btn-active' : ''}`}
+                className={`${optionBtnBase} ${
+                  difficulty === d
+                    ? 'border-marquinhos-accent bg-marquinhos-accent text-marquinhos-bg'
+                    : 'border-marquinhos-border bg-transparent text-marquinhos-text hover:border-marquinhos-border-hover'
+                }`}
               >
                 {d.toUpperCase()}
               </button>
@@ -64,16 +75,22 @@ export function SettingsScreen({
           </div>
         </div>
 
-        <div className="pong-settings-group">
-          <div className="pong-heading pong-settings-label">SCORE TO WIN</div>
-          <div className="pong-settings-options">
+        <div className="flex flex-col gap-3">
+          <div className="font-pixel text-sm text-marquinhos-text">
+            SCORE TO WIN
+          </div>
+          <div className="flex gap-2.5">
             {WIN_SCORES.map((w) => (
               <button
                 key={w}
                 type="button"
                 aria-pressed={winScore === w}
                 onClick={() => onWinScoreChange(w)}
-                className={`pong-option-btn pong-option-btn-large${winScore === w ? ' pong-option-btn-active' : ''}`}
+                className={`${optionBtnBase} text-sm ${
+                  winScore === w
+                    ? 'border-marquinhos-accent bg-marquinhos-accent text-marquinhos-bg'
+                    : 'border-marquinhos-border bg-transparent text-marquinhos-text hover:border-marquinhos-border-hover'
+                }`}
               >
                 {w}
               </button>
@@ -81,7 +98,11 @@ export function SettingsScreen({
           </div>
         </div>
       </div>
-      <button type="button" className="pong-btn-back" onClick={onBack}>
+      <button
+        type="button"
+        className="font-pixel cursor-pointer border-none bg-none p-1 text-xs text-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
+        onClick={onBack}
+      >
         &lt; BACK
       </button>
     </div>

@@ -1,9 +1,7 @@
 import { useEffect } from 'react';
-import './App.css';
-import './games/pong/pong-theme.css';
 import { DevConsole } from './components/DevConsole';
-import { Hub } from './hub/Hub';
 import { useDiscordIdentity } from './hooks/useDiscordIdentity';
+import { Hub } from './hub/Hub';
 
 function App() {
   const identity = useDiscordIdentity();
@@ -13,18 +11,22 @@ function App() {
   }, [identity.status]);
 
   return (
-    <div className="pong-shell">
+    <div className="app-shell relative flex h-full w-full flex-col overflow-hidden bg-marquinhos-bg text-marquinhos-text">
       {identity.status === 'loading' && (
-        <div className="pong-screen pong-status-screen">
-          <div className="pong-heading pong-blink-text">CONNECTING…</div>
+        <div className="flex flex-1 flex-col items-center justify-center gap-4">
+          <div className="font-pixel animate-pong-blink text-sm text-marquinhos-accent">
+            CONNECTING…
+          </div>
         </div>
       )}
       {identity.status === 'error' && (
-        <div className="pong-screen pong-status-screen">
-          <div className="pong-heading pong-status-error">
+        <div className="flex flex-1 flex-col items-center justify-center gap-4">
+          <div className="font-pixel text-lg text-marquinhos-danger">
             CONNECTION FAILED
           </div>
-          <div className="pong-status-error-detail">{identity.error}</div>
+          <div className="max-w-[480px] text-center text-marquinhos-text-dim">
+            {identity.error}
+          </div>
         </div>
       )}
       {identity.status === 'ready' && (

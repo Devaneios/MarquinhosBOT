@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
@@ -8,7 +9,7 @@ export default defineConfig({
   // plain http, and 127.0.0.1 instead of the literal hostname `localhost`,
   // are both rejected outright. basicSsl auto-generates a self-signed cert
   // so `bun dev` serves HTTPS.
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   server: {
     // Bind every interface (both IPv4 and IPv6) so `localhost` resolves
     // correctly here regardless of which address family the OS/browser/

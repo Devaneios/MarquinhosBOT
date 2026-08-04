@@ -36,23 +36,35 @@ export function Hub({
   }
 
   return (
-    <div className="pong-screen pong-hub">
-      <div className="pong-heading pong-logo">MARQUINHOS</div>
-      <div className="pong-hub-grid">
+    <div className="flex flex-1 flex-col items-center justify-center gap-11 p-7">
+      <div className="font-pixel animate-pixel-glow text-4xl tracking-widest text-marquinhos-accent">
+        MARQUINHOS
+      </div>
+      <div className="flex max-w-[760px] flex-wrap justify-center gap-6">
         {TILES.map((tile) => (
           <button
             key={tile.name}
             type="button"
             disabled={tile.locked}
-            className={`pong-hub-tile${tile.locked ? ' pong-hub-tile-locked' : ''}`}
+            className={`notch-8 flex w-[220px] flex-col items-center gap-3.5 border border-marquinhos-border bg-marquinhos-panel px-4.5 py-7 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent ${
+              tile.locked
+                ? 'cursor-not-allowed'
+                : 'cursor-pointer hover:border-marquinhos-border-hover'
+            }`}
             onClick={() => {
               if (!tile.id) return;
               console.log('[hub] launching game', tile.id);
               setActiveGame(tile.id);
             }}
           >
-            <div className="pong-heading pong-hub-tile-name">{tile.name}</div>
-            <div className="pong-hub-tile-status">{tile.status}</div>
+            <div
+              className={`font-mono text-sm font-semibold tracking-wide ${tile.locked ? 'text-marquinhos-text-disabled' : 'text-marquinhos-text'}`}
+            >
+              {tile.name}
+            </div>
+            <div className="text-sm text-marquinhos-text-dim">
+              {tile.status}
+            </div>
           </button>
         ))}
       </div>

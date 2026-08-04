@@ -1,5 +1,8 @@
 import type { GameMode } from './types';
 
+const modeCard =
+  'notch-8 flex w-[260px] cursor-pointer flex-col items-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-5 py-8 text-center text-marquinhos-text hover:border-marquinhos-border-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent';
+
 export function ModeMenu({
   onSelect,
   onBack,
@@ -8,35 +11,47 @@ export function ModeMenu({
   onBack: () => void;
 }) {
   return (
-    <div className="pong-screen pong-mode-select">
-      <div className="pong-heading pong-screen-title">SELECT MODE</div>
-      <div className="pong-mode-select-options">
+    <div className="flex flex-1 flex-col items-center justify-center gap-12">
+      <div className="font-pixel text-2xl text-marquinhos-text">
+        SELECT MODE
+      </div>
+      <div className="flex flex-wrap justify-center gap-7">
         <button
           type="button"
-          className="pong-mode-card pong-mode-card-red"
+          className={modeCard}
           onClick={() => onSelect('single')}
         >
-          <div className="pong-heading pong-mode-card-title">1 PLAYER</div>
-          <div className="pong-mode-card-subtitle">VS CPU</div>
+          <div className="font-pixel text-sm text-marquinhos-accent">
+            1 PLAYER
+          </div>
+          <div className="text-lg text-marquinhos-text-dim">VS CPU</div>
         </button>
         <button
           type="button"
-          className="pong-mode-card pong-mode-card-green"
+          className={modeCard}
           onClick={() => onSelect('multi')}
         >
-          <div className="pong-heading pong-mode-card-title">2 PLAYERS</div>
-          <div className="pong-mode-card-subtitle">VS FRIEND</div>
+          <div className="font-pixel text-sm text-marquinhos-green">
+            2 PLAYERS
+          </div>
+          <div className="text-lg text-marquinhos-text-dim">VS FRIEND</div>
         </button>
         <button
           type="button"
-          className="pong-mode-card pong-mode-card-yellow"
+          className={modeCard}
           onClick={() => onSelect('local')}
         >
-          <div className="pong-heading pong-mode-card-title">LOCAL 2P</div>
-          <div className="pong-mode-card-subtitle">SAME DEVICE</div>
+          <div className="font-pixel text-sm text-marquinhos-text">
+            LOCAL 2P
+          </div>
+          <div className="text-lg text-marquinhos-text-dim">SAME DEVICE</div>
         </button>
       </div>
-      <button type="button" className="pong-btn-back" onClick={onBack}>
+      <button
+        type="button"
+        className="font-pixel mt-2 cursor-pointer border-none bg-none p-1 text-xs text-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
+        onClick={onBack}
+      >
         &lt; BACK
       </button>
     </div>

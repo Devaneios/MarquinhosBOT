@@ -8,10 +8,10 @@ import type { GameMode } from './types';
 
 type Side = 'left' | 'right';
 
-const COURT_BG = '#0c0a10';
-const COURT_LINE = '#3a3542';
-const LEFT_COLOR = '#e8332c';
-const RIGHT_COLOR = '#2f9e64';
+const COURT_BG = '#17181a';
+const COURT_LINE = '#34363a';
+const LEFT_COLOR = '#ffb000';
+const RIGHT_COLOR = '#5fbf77';
 
 interface PongConfig {
   width: number;
@@ -1036,25 +1036,30 @@ export function PongCanvas({
     winner === 'left' ? p1Name : winner === 'right' ? p2Name : '';
 
   return (
-    <div className="pong-screen pong-in-game">
-      <div className="pong-game-header">
-        <div className="pong-game-player pong-game-player-left">
-          <div className="pong-heading pong-game-player-name">{p1Name}</div>
+    <div className="box-border flex flex-1 flex-col items-stretch justify-start gap-0 px-10 py-6">
+      <div className="flex items-start justify-between">
+        <div className="flex flex-col items-start gap-1.5">
+          <div className="font-pixel text-xs text-marquinhos-accent">
+            {p1Name}
+          </div>
           <div
             key={`left-${score?.left ?? 0}`}
-            className="pong-heading pong-game-score pong-score-pop"
+            className="font-pixel animate-pong-score-pop inline-block text-5xl text-marquinhos-text"
           >
             {score?.left ?? 0}
           </div>
         </div>
-        <div className="pong-game-center">
-          <div ref={timerRef} className="pong-heading pong-game-timer">
+        <div className="flex flex-col items-center gap-2">
+          <div
+            ref={timerRef}
+            className="font-pixel text-sm text-marquinhos-accent"
+          >
             00:00
           </div>
           <button
             type="button"
             aria-label="Pause game"
-            className="pong-pause-btn"
+            className="font-pixel cursor-pointer border border-marquinhos-border bg-marquinhos-panel px-3.5 py-2 text-[11px] text-marquinhos-text hover:border-marquinhos-border-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
             onClick={() => {
               console.log('[pong-canvas] pause -> leaving to main menu');
               onMainMenu();
@@ -1063,50 +1068,57 @@ export function PongCanvas({
             II PAUSE
           </button>
         </div>
-        <div className="pong-game-player pong-game-player-right">
-          <div className="pong-heading pong-game-player-name">{p2Name}</div>
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="font-pixel text-xs text-marquinhos-green">
+            {p2Name}
+          </div>
           <div
             key={`right-${score?.right ?? 0}`}
-            className="pong-heading pong-game-score pong-score-pop"
+            className="font-pixel animate-pong-score-pop inline-block text-5xl text-marquinhos-text"
           >
             {score?.right ?? 0}
           </div>
         </div>
       </div>
 
-      <div className="pong-court">
-        <canvas ref={canvasRef} className="pong-canvas" />
+      <div className="relative mt-5 flex flex-1 items-center justify-center overflow-hidden border border-marquinhos-border bg-marquinhos-bg">
+        <canvas
+          ref={canvasRef}
+          className="block max-h-full max-w-full border border-marquinhos-border"
+        />
         {spectating ? (
-          <div className="pong-heading pong-spectating">SPECTATING</div>
+          <div className="notch-3 absolute top-3 left-1/2 -translate-x-1/2 border border-marquinhos-accent bg-marquinhos-panel px-2.5 py-1 font-pixel text-[11px] tracking-wide text-marquinhos-accent">
+            SPECTATING
+          </div>
         ) : (
           !score && (
-            <div className="pong-heading pong-blink-text pong-waiting">
+            <div className="font-pixel animate-pong-blink absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-marquinhos-text">
               WAITING FOR OPPONENT…
             </div>
           )
         )}
         {pausedOpponent && !winner && (
-          <div className="pong-heading pong-blink-text pong-waiting">
+          <div className="font-pixel animate-pong-blink absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-marquinhos-text">
             OPPONENT DISCONNECTED — WAITING…
           </div>
         )}
         {winner && (
-          <div className="pong-game-over">
-            <div className="pong-heading pong-game-over-title">
+          <div className="animate-pong-game-over-in absolute inset-0 flex flex-col items-center justify-center gap-8 bg-marquinhos-bg/90">
+            <div className="animate-pong-game-over-title-in font-pixel text-center text-3xl text-marquinhos-text">
               {winnerName} WINS
             </div>
-            <div className="pong-heading pong-game-over-score">
-              <span className="pong-game-over-score-left">{score?.left}</span>
-              <span className="pong-game-over-score-sep">—</span>
-              <span className="pong-game-over-score-right">{score?.right}</span>
+            <div className="font-pixel flex items-center gap-6 text-2xl text-marquinhos-text">
+              <span className="text-marquinhos-accent">{score?.left}</span>
+              <span className="text-lg text-marquinhos-text-dim">—</span>
+              <span className="text-marquinhos-green">{score?.right}</span>
             </div>
-            <div className="pong-game-over-actions">
+            <div className="flex gap-4.5">
               {/* A spectator has no vote in the rematch — the server would
                   reject it anyway, so don't offer a button that does nothing. */}
               {!spectating && (
                 <button
                   type="button"
-                  className="pong-btn pong-btn-primary"
+                  className="notch-6 cursor-pointer border border-marquinhos-accent bg-marquinhos-accent px-6 py-4.5 font-mono text-xs tracking-wide text-marquinhos-bg hover:bg-marquinhos-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent disabled:cursor-not-allowed disabled:bg-marquinhos-panel disabled:text-marquinhos-text-disabled"
                   disabled={requested}
                   onClick={() => {
                     console.log('[pong-canvas] requesting rematch');
@@ -1121,7 +1133,7 @@ export function PongCanvas({
               )}
               <button
                 type="button"
-                className="pong-btn pong-btn-secondary"
+                className="notch-6 cursor-pointer border border-marquinhos-border bg-marquinhos-panel px-6 py-4.5 font-mono text-xs tracking-wide text-marquinhos-text hover:border-marquinhos-border-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
                 onClick={() => {
                   console.log('[pong-canvas] leaving to main menu');
                   onMainMenu();
