@@ -1,7 +1,8 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', monospace;
+  --font-mono:
+    ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', monospace;
   --font-pixel: 'Press Start 2P', monospace;
 
   --color-marquinhos-bg: oklch(20.88% 0.0042 264.48);
@@ -9,7 +10,7 @@
   --color-marquinhos-border: oklch(33.25% 0.0075 264.47);
   --color-marquinhos-border-hover: oklch(46.61% 0.0109 258.36);
   --color-marquinhos-text: oklch(92.51% 0.0071 88.65);
-  --color-marquinhos-text-dim: oklch(64.27% 0.0050 258.33);
+  --color-marquinhos-text-dim: oklch(64.27% 0.005 258.33);
   --color-marquinhos-text-disabled: oklch(46.61% 0.0109 258.36);
   --color-marquinhos-accent: oklch(81.24% 0.1704 76.39);
   --color-marquinhos-accent-hover: oklch(75.45% 0.1577 77.34);
@@ -37,7 +38,8 @@
    the Pong screen, not shared hub design tokens. */
 @theme {
   --animate-pong-blink: pong-blink 1.2s step-start infinite;
-  --animate-pong-score-pop: pong-score-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-pong-score-pop: pong-score-pop 380ms
+    cubic-bezier(0.34, 1.56, 0.64, 1);
   --animate-pong-game-over-in: pong-game-over-in 200ms ease-out;
   --animate-pong-game-over-title-in: pong-game-over-title-in 420ms
     cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -156,6 +158,19 @@
   font-family: var(--font-mono);
   color: var(--color-marquinhos-text);
   background: var(--color-marquinhos-bg);
+  /* Discord exposes safe-area insets on iOS/Android as CSS variables (with a
+     standard env() fallback outside Discord) so the UI isn't obscured by a
+     notch, home indicator, or the client's own rounded corners on mobile. */
+  padding-top: var(--discord-safe-area-inset-top, env(safe-area-inset-top));
+  padding-right: var(
+    --discord-safe-area-inset-right,
+    env(safe-area-inset-right)
+  );
+  padding-bottom: var(
+    --discord-safe-area-inset-bottom,
+    env(safe-area-inset-bottom)
+  );
+  padding-left: var(--discord-safe-area-inset-left, env(safe-area-inset-left));
 }
 
 body {

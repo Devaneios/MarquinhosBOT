@@ -547,6 +547,20 @@ export function PongCanvas({
     let cancelled = false;
     let initialized = false;
     let tick: (() => void) | null = null;
+    let onContextLost: ((event: Event) => void) | null = null;
+    let onContextRestored: (() => void) | null = null;
+    let contextCanvas: HTMLCanvasElement | null = null;
+
+    function onVisibilityChange() {
+      if (!initialized) return;
+      if (document.hidden) {
+        appRef.current?.ticker.stop();
+      } else {
+        prevSnapshotRef.current = null;
+        appRef.current?.ticker.start();
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
     let lastConfig: PongConfig = DEFAULT_CONFIG;
     let centerLine: Graphics;
     let paddleLeft: Graphics;
@@ -757,6 +771,21 @@ export function PongCanvas({
       }
       initialized = true;
       buildScene(configRef.current);
+
+      onContextLost = (event: Event) => {
+        event.preventDefault();
+        app.ticker.stop();
+      };
+      onContextRestored = () => {
+        app.ticker.start();
+      };
+      contextCanvas = canvasRef.current!;
+      contextCanvas.addEventListener('webglcontextlost', onContextLost, false);
+      contextCanvas.addEventListener(
+        'webglcontextrestored',
+        onContextRestored,
+        false,
+      );
 
       tick = () => {
         const config = configRef.current;
@@ -1014,6 +1043,16 @@ export function PongCanvas({
       cancelled = true;
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (contextCanvas && onContextLost) {
+        contextCanvas.removeEventListener('webglcontextlost', onContextLost);
+      }
+      if (contextCanvas && onContextRestored) {
+        contextCanvas.removeEventListener(
+          'webglcontextrestored',
+          onContextRestored,
+        );
+      }
       unsubscribe();
       unsubscribeBinary();
       // Every unmount is a departure. Closing without saying so would look
