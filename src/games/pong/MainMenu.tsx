@@ -15,35 +15,65 @@ export function MainMenu({
   onExitToHub: () => void;
 }) {
   return (
-    <div className="relative flex flex-1 flex-col items-center justify-center gap-12">
-      <div className="flex flex-col items-center gap-3.5">
-        <div className="font-pixel animate-pixel-glow text-4xl tracking-widest text-marquinhos-accent">
-          PONGUINHOS
-        </div>
-        <div className="font-pixel animate-pong-blink text-xs text-marquinhos-text-dim">
-          PRESS PLAY TO START
-        </div>
-      </div>
+    <div className="relative flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(255,176,0,0.12),_transparent_30%),linear-gradient(180deg,_rgba(255,255,255,0.02),_transparent_20%),var(--color-marquinhos-bg)]">
       <button
         type="button"
-        className="font-pixel absolute top-6 left-10 cursor-pointer border-none bg-none text-[11px] text-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
+        className="font-pixel absolute left-4 top-4 z-10 cursor-pointer border-none bg-none text-[11px] text-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent sm:left-6 sm:top-6"
         onClick={onExitToHub}
       >
         &lt; ARCADE
       </button>
-      <div className="flex w-[340px] flex-col gap-4.5">
-        <button type="button" className={btnPrimary} onClick={onPlay}>
-          PLAY
-        </button>
-        <button type="button" className={btnSecondary} onClick={onSettings}>
-          SETTINGS
-        </button>
-        <button type="button" className={btnSecondary} onClick={onHowTo}>
-          HOW TO PLAY
-        </button>
-      </div>
-      <div className="text-lg text-marquinhos-text-dim">
-        © 2026 ARCADE PIXEL STUDIOS
+
+      <div className="flex flex-1 items-center justify-center p-4 sm:p-6">
+        <div className="notch-8 flex w-full max-w-[720px] flex-col items-center gap-7 border border-marquinhos-border bg-marquinhos-panel px-6 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.28)] sm:px-8">
+          <div className="flex flex-col items-center gap-3.5">
+            <div className="font-pixel animate-pixel-glow text-4xl tracking-widest text-marquinhos-accent">
+              PONGUINHOS
+            </div>
+            <div className="font-pixel animate-pong-blink text-xs text-marquinhos-text-dim">
+              PRESS PLAY TO START
+            </div>
+          </div>
+
+          <div className="grid w-full gap-3 sm:max-w-[420px]">
+            <button type="button" className={btnPrimary} onClick={onPlay}>
+              PLAY
+            </button>
+            <button type="button" className={btnSecondary} onClick={onSettings}>
+              SETTINGS
+            </button>
+            <button type="button" className={btnSecondary} onClick={onHowTo}>
+              HOW TO PLAY
+            </button>
+          </div>
+
+          <div className="grid w-full gap-3 sm:grid-cols-3">
+            <div className="notch-6 border border-marquinhos-border bg-black/20 px-3 py-3">
+              <div className="text-[10px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
+                Modes
+              </div>
+              <div className="mt-1 text-sm text-marquinhos-text">
+                Single / Multi / Local
+              </div>
+            </div>
+            <div className="notch-6 border border-marquinhos-border bg-black/20 px-3 py-3">
+              <div className="text-[10px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
+                Style
+              </div>
+              <div className="mt-1 text-sm text-marquinhos-text">
+                Retro framed UI
+              </div>
+            </div>
+            <div className="notch-6 border border-marquinhos-border bg-black/20 px-3 py-3">
+              <div className="text-[10px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
+                Launch
+              </div>
+              <div className="mt-1 text-sm text-marquinhos-text">
+                Ready to play
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getDiscordSdk } from '../discordSdk';
 import { apiUrl } from '../lib/apiBase';
+import { devinfo, devlog } from '../lib/devlog';
 import { errorMessage, postJson } from '../lib/http';
 
 export interface DiscordIdentity {
@@ -12,14 +13,14 @@ export interface DiscordIdentity {
 
 export type DiscordIdentityState =
   | { status: 'loading' }
-  | { status: 'error'; error: string }
+  | { status: 'error'; error: string; reauth: () => void }
   | { status: 'ready'; identity: DiscordIdentity; reauth: () => void };
 
 async function doHandshake(): Promise<DiscordIdentity> {
-  console.log('[auth] starting handshake');
+  devlog('[auth] starting handshake');
   const discordSdk = getDiscordSdk();
   await discordSdk.ready();
-  console.log('[auth] sdk ready');
+  devlog('[auth] sdk ready');
 
   const { code } = await discordSdk.commands.authorize({
     client_id: import.meta.env.VITE_DISCORD_CLIENT_ID,
@@ -28,23 +29,23 @@ async function doHandshake(): Promise<DiscordIdentity> {
     prompt: 'none',
     scope: ['identify'],
   });
-  console.log('[auth] got authorization code');
+  devlog('[auth] got authorization code');
 
   const { access_token } = await postJson<{ access_token: string }>(
     apiUrl('/activities/token'),
     { code },
   );
-  console.log('[auth] exchanged code for access token');
+  devlog('[auth] exchanged code for access token');
 
   const auth = await discordSdk.commands.authenticate({ access_token });
-  console.log('[auth] authenticated as', auth.user.id);
+  devlog('[auth] authenticated as', auth.user.id);
 
   if (!discordSdk.guildId) {
     console.error('[auth] missing guildId — not launched inside a server');
     throw new Error('This Activity must be launched inside a server');
   }
 
-  console.info('[auth] handshake complete', {
+  devinfo('[auth] handshake complete', {
     userId: auth.user.id,
     guildId: discordSdk.guildId,
     instanceId: discordSdk.instanceId,
@@ -67,12 +68,13 @@ async function doHandshake(): Promise<DiscordIdentity> {
 // entry so reauth() doesn't just resolve from stale data — but never evicts
 // an entry that's still in flight, so concurrent forced calls collapse onto
 // one attempt instead of racing two `authorize()` RPCs.
-let cache: { promise: Promise<DiscordIdentity>; settled: boolean } | null = null;
+let cache: { promise: Promise<DiscordIdentity>; settled: boolean } | null =
+  null;
 
 export function runAuthFlow(force = false): Promise<DiscordIdentity> {
   if (force && cache?.settled) cache = null;
   if (cache) {
-    console.log('[auth] reusing in-flight/cached auth attempt');
+    devlog('[auth] reusing in-flight/cached auth attempt');
     return cache.promise;
   }
 
@@ -99,11 +101,13 @@ export function useDiscordIdentity(): DiscordIdentityState {
   });
 
   const reauth = useCallback(() => {
-    console.log('[auth] reauth triggered');
+    devlog('[auth] reauth triggered');
     setState({ status: 'loading' });
     runAuthFlow(true)
       .then((identity) => setState({ status: 'ready', identity, reauth }))
-      .catch((err) => setState({ status: 'error', error: errorMessage(err) }));
+      .catch((err) =>
+        setState({ status: 'error', error: errorMessage(err), reauth }),
+      );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -113,13 +117,13 @@ export function useDiscordIdentity(): DiscordIdentityState {
     runAuthFlow()
       .then((identity) => {
         if (cancelled) return;
-        console.info('[auth] identity ready', identity.userId);
+        devinfo('[auth] identity ready', identity.userId);
         setState({ status: 'ready', identity, reauth });
       })
       .catch((err) => {
         if (cancelled) return;
         console.error('[auth] handshake failed', errorMessage(err));
-        setState({ status: 'error', error: errorMessage(err) });
+        setState({ status: 'error', error: errorMessage(err), reauth });
       });
 
     return () => {

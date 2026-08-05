@@ -37,9 +37,14 @@ export function PongGame({
 
   if (session.status === 'connecting') {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4">
-        <div className="font-pixel animate-pong-blink text-sm text-marquinhos-accent">
-          STARTING GAME…
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
+          <div className="font-pixel animate-pong-blink text-sm tracking-[0.28em] text-marquinhos-accent">
+            STARTING GAME…
+          </div>
+          <div className="max-w-[36ch] text-sm leading-6 text-marquinhos-text-dim">
+            Establishing the session and preparing the match canvas.
+          </div>
         </div>
       </div>
     );
@@ -47,20 +52,22 @@ export function PongGame({
 
   if (session.status === 'error') {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4">
-        <div className="font-pixel text-lg text-marquinhos-danger">
-          CONNECTION FAILED
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="notch-8 flex min-h-[240px] w-full max-w-[560px] flex-col items-center justify-center gap-5 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
+          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-danger">
+            CONNECTION FAILED
+          </div>
+          <div className="max-w-[48ch] text-sm leading-6 text-marquinhos-text-dim">
+            {session.error}
+          </div>
+          <button
+            type="button"
+            className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
+            onClick={toMainMenu}
+          >
+            BACK
+          </button>
         </div>
-        <div className="max-w-[480px] text-center text-marquinhos-text-dim">
-          {session.error}
-        </div>
-        <button
-          type="button"
-          className="notch-6 cursor-pointer border border-marquinhos-border bg-marquinhos-panel px-6 py-4.5 font-mono text-xs tracking-wide text-marquinhos-text hover:border-marquinhos-border-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
-          onClick={toMainMenu}
-        >
-          BACK
-        </button>
       </div>
     );
   }
