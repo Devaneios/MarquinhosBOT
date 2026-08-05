@@ -1,3 +1,5 @@
+import { ServerError } from '@colyseus/sdk';
+
 export class HttpError extends Error {
   readonly status: number;
 
@@ -9,7 +11,11 @@ export class HttpError extends Error {
 }
 
 export function isAuthError(err: unknown): boolean {
-  return err instanceof HttpError && (err.status === 401 || err.status === 403);
+  if (err instanceof HttpError) return err.status === 401 || err.status === 403;
+  // A rejected Room.onAuth (invalid/expired token, roomKey mismatch) is the
+  // only thing our onAuth implementations ever throw, so any ServerError
+  // from a join call is treated as an auth failure.
+  return err instanceof ServerError;
 }
 
 export async function postJson<T>(url: string, body: unknown): Promise<T> {

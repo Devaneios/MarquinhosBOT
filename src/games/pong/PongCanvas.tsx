@@ -1,7 +1,9 @@
+import { Client, type Room } from '@colyseus/sdk';
 import { Application, BlurFilter, Graphics } from 'pixi.js';
 import { useEffect, useRef, useState } from 'react';
-import { wsUrl } from '../../lib/apiBase';
-import { ActivitySocket, type ActivityMessage } from '../../lib/ws';
+import { colyseusUrl } from '../../lib/apiBase';
+import type { WsSession } from '../shared/activitySession';
+import type { ActivityMessage } from '../shared/useColyseusRoom';
 import { decodeStateSnapshot, type DecodedSnapshot } from './pongProtocol';
 import { PongSfx } from './sfx';
 import type { GameMode } from './types';
@@ -222,12 +224,12 @@ function drawPaddleTrail(
 }
 
 export function PongCanvas({
-  wsToken,
+  session,
   mode,
   sound,
   onMainMenu,
 }: {
-  wsToken: string;
+  session: WsSession;
   mode: GameMode;
   sound: boolean;
   onMainMenu: () => void;
@@ -273,15 +275,12 @@ export function PongCanvas({
   } | null>(null);
   const [spectating, setSpectating] = useState(false);
   const spectatingRef = useRef(false);
-  const socketRef = useRef<ActivitySocket | null>(null);
+  const roomRef = useRef<Room | null>(null);
 
   useEffect(() => {
     console.log('[pong-canvas] mounting');
-    const socket = new ActivitySocket(
-      `${wsUrl('/ws/activity')}?token=${encodeURIComponent(wsToken)}`,
-    );
     const sfx = new PongSfx(sound);
-    socketRef.current = socket;
+    let roomCancelled = false;
     latestSnapshotRef.current = null;
     prevSnapshotRef.current = null;
     sideRef.current = null;
@@ -306,7 +305,7 @@ export function PongCanvas({
       ((side: Side, x: number, y: number, ballSpeed: number) => void) | null =
       null;
 
-    const unsubscribe = socket.onMessage((message: ActivityMessage) => {
+    function handleMessage(message: ActivityMessage) {
       if (message.type === 'init') {
         const payload = message.payload as {
           side: Side | null;
@@ -331,9 +330,13 @@ export function PongCanvas({
         console.info('[pong-canvas] opponent reconnected');
         setPausedOpponent(null);
       }
-    });
+    }
 
-    const unsubscribeBinary = socket.onBinaryMessage((data: ArrayBuffer) => {
+    function handleBinary(bytes: Uint8Array) {
+      const data = bytes.buffer.slice(
+        bytes.byteOffset,
+        bytes.byteOffset + bytes.byteLength,
+      ) as ArrayBuffer;
       const state = decodeStateSnapshot(data);
       const receivedAt = performance.now();
       if (matchStartRef.current === null) matchStartRef.current = receivedAt;
@@ -453,9 +456,30 @@ export function PongCanvas({
             predicted + (authoritativeY - predicted) * RECONCILE_FACTOR;
         }
       }
-    });
+    }
 
-    socket.connect();
+    function send(type: string, payload?: unknown) {
+      roomRef.current?.send(type, payload);
+    }
+
+    const client = new Client(colyseusUrl());
+    client
+      .joinOrCreate('pong', { token: session.token, roomKey: session.roomKey })
+      .then((room) => {
+        if (roomCancelled) {
+          room.send('leave');
+          room.leave(true);
+          return;
+        }
+        roomRef.current = room;
+        room.onMessage('*', (type, payload) =>
+          handleMessage({ type: String(type), payload }),
+        );
+        room.onMessage('state', (payload: Uint8Array) => handleBinary(payload));
+      })
+      .catch((err) => {
+        console.error('[pong-canvas] failed to join room', err);
+      });
 
     // Leaving is not sent from here: the unmount cleanup below sends it for
     // every exit path (menu, hub, auth error, remount), so a match can never
@@ -483,13 +507,12 @@ export function PongCanvas({
       if (spectatingRef.current) return;
       if (direction === localDirectionRef.current[side]) return;
       localDirectionRef.current[side] = direction;
-      socket.send({
-        type: 'input',
-        payload:
-          mode === 'local'
-            ? { direction, seq: nextSeq, side }
-            : { direction, seq: nextSeq },
-      });
+      send(
+        'input',
+        mode === 'local'
+          ? { direction, seq: nextSeq, side }
+          : { direction, seq: nextSeq },
+      );
     }
 
     function sendArrowInput() {
@@ -1053,13 +1076,16 @@ export function PongCanvas({
           onContextRestored,
         );
       }
-      unsubscribe();
-      unsubscribeBinary();
-      // Every unmount is a departure. Closing without saying so would look
-      // like a network drop, and the server would hold the slot open long
-      // enough for the next mode pick to fall back into this same match.
-      socket.close({ type: 'leave' });
-      socketRef.current = null;
+      roomCancelled = true;
+      // Every unmount is a departure. Sending 'leave' before disconnecting
+      // (rather than a bare close) is what tells PongRoom to forfeit the
+      // match immediately instead of treating this like a network drop and
+      // holding the slot open for the next mode pick to fall back into.
+      if (roomRef.current) {
+        roomRef.current.send('leave');
+        roomRef.current.leave(true);
+      }
+      roomRef.current = null;
       sfx.dispose();
       if (initialized) {
         if (tick) app.ticker.remove(tick);
@@ -1067,7 +1093,7 @@ export function PongCanvas({
       }
       appRef.current = null;
     };
-  }, [wsToken]);
+  }, [session]);
 
   const p1Name = 'PLAYER 1';
   const p2Name = mode === 'single' ? 'CPU' : 'PLAYER 2';
@@ -1161,7 +1187,7 @@ export function PongCanvas({
                   disabled={requested}
                   onClick={() => {
                     console.log('[pong-canvas] requesting rematch');
-                    socketRef.current?.send({ type: 'restart' });
+                    roomRef.current?.send('restart');
                     setRequested(true);
                   }}
                 >

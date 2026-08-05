@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test';
+import { ServerError } from '@colyseus/sdk';
 import { errorMessage, HttpError, isAuthError, postJson } from './http';
 
 describe('postJson', () => {
@@ -46,6 +47,16 @@ describe('isAuthError', () => {
 
   it('is false for a plain Error', () => {
     expect(isAuthError(new Error('network down'))).toBe(false);
+  });
+
+  // A rejected Colyseus room.onAuth (invalid/expired token, roomKey
+  // mismatch) surfaces as a ServerError from the join call, not an
+  // HttpError — the only reason our onAuth ever throws is an auth failure,
+  // so any ServerError here is treated as one.
+  it('is true for a Colyseus ServerError (rejected onAuth)', () => {
+    expect(isAuthError(new ServerError(4002, 'Invalid or expired session token'))).toBe(
+      true,
+    );
   });
 });
 

@@ -67,7 +67,7 @@ export function PongGame({
 
   return (
     <PongCanvas
-      wsToken={session.wsToken}
+      session={session.session}
       mode={session.mode}
       sound={session.sound}
       onMainMenu={toMainMenu}

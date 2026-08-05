@@ -29,3 +29,13 @@ export function wsUrl(path: string): string {
   }
   return `${apiOrigin().replace(/^http/, 'ws')}${normalized}`;
 }
+
+// colyseus.js's Client takes a single base URL (not a per-call path like
+// wsUrl above) — it appends its own matchmaking/room paths internally.
+export function colyseusUrl(): string {
+  if (isInsideDiscordProxy) {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}/.proxy/colyseus`;
+  }
+  return apiOrigin().replace(/^http/, 'ws');
+}

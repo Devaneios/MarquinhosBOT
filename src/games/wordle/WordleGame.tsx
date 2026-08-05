@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import type { ActivityMessage } from '../../lib/ws';
+import { colyseusUrl } from '../../lib/apiBase';
 import { errorMessage, isAuthError } from '../../lib/http';
-import { fetchWsSessionToken } from '../shared/activitySession';
-import { useActivitySocket } from '../shared/useActivitySocket';
+import { fetchWsSessionToken, type WsSession } from '../shared/activitySession';
+import { useColyseusRoom, type ActivityMessage } from '../shared/useColyseusRoom';
 
 type LetterFeedback = 'correct' | 'present' | 'absent';
 
@@ -15,7 +15,7 @@ interface GuessRow {
 
 type WordleSessionState =
   | { status: 'connecting' }
-  | { status: 'ready'; wsToken: string }
+  | { status: 'ready'; session: WsSession }
   | { status: 'error'; error: string };
 
 // Wordle has no mode selection (it's always a solo guess against the
@@ -34,9 +34,9 @@ function useWordleSession(
     let cancelled = false;
     setState({ status: 'connecting' });
     fetchWsSessionToken({ game: 'wordle', mode: 'single', identity })
-      .then((wsToken) => {
+      .then((session) => {
         if (cancelled) return;
-        setState({ status: 'ready', wsToken });
+        setState({ status: 'ready', session });
       })
       .catch((err) => {
         if (cancelled) return;
@@ -60,35 +60,43 @@ function feedbackClass(feedback: LetterFeedback): string {
   return 'text-marquinhos-text-dim';
 }
 
-function WordleBoard({ wsToken }: { wsToken: string }) {
+function WordleBoard({ session }: { session: WsSession }) {
   const [wordLength, setWordLength] = useState<number | null>(null);
   const [guesses, setGuesses] = useState<GuessRow[]>([]);
   const [solved, setSolved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [input, setInput] = useState('');
 
-  const { send } = useActivitySocket(wsToken, (message: ActivityMessage) => {
-    if (message.type === 'init') {
-      const payload = message.payload as {
-        wordLength: number;
-        guesses: GuessRow[];
-        solved: boolean;
-      };
-      setWordLength(payload.wordLength);
-      setGuesses(payload.guesses);
-      setSolved(payload.solved);
-      setError(null);
-    } else if (message.type === 'guess_result') {
-      const payload = message.payload as { guesses: GuessRow[]; solved: boolean };
-      setGuesses(payload.guesses);
-      setSolved(payload.solved);
-      setError(null);
-      setInput('');
-    } else if (message.type === 'guess_error') {
-      const payload = message.payload as { message: string };
-      setError(payload.message);
-    }
-  });
+  const { send } = useColyseusRoom(
+    'wordle',
+    session,
+    colyseusUrl(),
+    (message: ActivityMessage) => {
+      if (message.type === 'init') {
+        const payload = message.payload as {
+          wordLength: number;
+          guesses: GuessRow[];
+          solved: boolean;
+        };
+        setWordLength(payload.wordLength);
+        setGuesses(payload.guesses);
+        setSolved(payload.solved);
+        setError(null);
+      } else if (message.type === 'guess_result') {
+        const payload = message.payload as {
+          guesses: GuessRow[];
+          solved: boolean;
+        };
+        setGuesses(payload.guesses);
+        setSolved(payload.solved);
+        setError(null);
+        setInput('');
+      } else if (message.type === 'guess_error') {
+        const payload = message.payload as { message: string };
+        setError(payload.message);
+      }
+    },
+  );
 
   function submitGuess() {
     const guess = input.trim();
@@ -189,5 +197,5 @@ export function WordleGame({
     );
   }
 
-  return <WordleBoard wsToken={session.wsToken} />;
+  return <WordleBoard session={session.session} />;
 }

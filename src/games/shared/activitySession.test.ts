@@ -8,16 +8,19 @@ describe('fetchWsSessionToken', () => {
     globalThis.fetch = originalFetch;
   });
 
-  it('posts the identity, game and mode, resolving to the token', async () => {
+  it('posts the identity, game and mode, resolving to the token and roomKey', async () => {
     let capturedBody: unknown;
     globalThis.fetch = (async (_url: unknown, init: RequestInit) => {
       capturedBody = JSON.parse(init.body as string);
-      return new Response(JSON.stringify({ data: { token: 'tok-123' } }), {
-        status: 200,
-      });
+      return new Response(
+        JSON.stringify({
+          data: { token: 'tok-123', roomKey: 'inst-1:wordle:single:user-1' },
+        }),
+        { status: 200 },
+      );
     }) as unknown as typeof fetch;
 
-    const token = await fetchWsSessionToken({
+    const session = await fetchWsSessionToken({
       game: 'wordle',
       mode: 'single',
       identity: {
@@ -28,7 +31,10 @@ describe('fetchWsSessionToken', () => {
       },
     });
 
-    expect(token).toBe('tok-123');
+    expect(session).toEqual({
+      token: 'tok-123',
+      roomKey: 'inst-1:wordle:single:user-1',
+    });
     expect(capturedBody).toEqual({
       accessToken: 'acc-1',
       instanceId: 'inst-1',
@@ -42,9 +48,12 @@ describe('fetchWsSessionToken', () => {
     let capturedBody: unknown;
     globalThis.fetch = (async (_url: unknown, init: RequestInit) => {
       capturedBody = JSON.parse(init.body as string);
-      return new Response(JSON.stringify({ data: { token: 'tok-abc' } }), {
-        status: 200,
-      });
+      return new Response(
+        JSON.stringify({
+          data: { token: 'tok-abc', roomKey: 'inst-1:pong:single:user-1' },
+        }),
+        { status: 200 },
+      );
     }) as unknown as typeof fetch;
 
     await fetchWsSessionToken({

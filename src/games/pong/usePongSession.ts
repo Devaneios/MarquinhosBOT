@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { errorMessage, isAuthError } from '../../lib/http';
-import { fetchWsSessionToken } from '../shared/activitySession';
+import { fetchWsSessionToken, type WsSession } from '../shared/activitySession';
 import type { BotDifficulty, GameMode, WinScore } from './types';
 
 export type PongSessionState =
   | { status: 'selecting-mode' }
   | { status: 'connecting' }
-  | { status: 'ready'; wsToken: string; mode: GameMode; sound: boolean }
+  | { status: 'ready'; session: WsSession; mode: GameMode; sound: boolean }
   | { status: 'error'; error: string };
 
 export function usePongSession(
@@ -57,10 +57,10 @@ export function usePongSession(
           ...(mode === 'single' ? { difficulty } : {}),
         },
       })
-        .then((token) => {
+        .then((session) => {
           if (cancelledRef.current) return;
           console.info('[pong] session ready', mode);
-          setSession({ status: 'ready', wsToken: token, mode, sound });
+          setSession({ status: 'ready', session, mode, sound });
         })
         .catch((err) => {
           console.error('Failed to create Pong session', JSON.stringify(err));
