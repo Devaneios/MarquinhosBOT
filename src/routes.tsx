@@ -1,7 +1,8 @@
+import { Fragment } from 'react';
 import { Route, Routes } from 'react-router-dom';
-import { pongRoutes } from './games/pong/pongRoutes';
-import { Hub } from './hub/Hub';
 import type { DiscordIdentity } from './hooks/useDiscordIdentity';
+import { GAME_REGISTRY } from './games/registry';
+import { Hub } from './hub/Hub';
 
 export function AppRoutes({
   identity,
@@ -13,7 +14,11 @@ export function AppRoutes({
   return (
     <Routes>
       <Route index element={<Hub />} />
-      <Route path="games">{pongRoutes(identity, onAuthInvalid)}</Route>
+      <Route path="games">
+        {GAME_REGISTRY.map((game) => (
+          <Fragment key={game.id}>{game.routes(identity, onAuthInvalid)}</Fragment>
+        ))}
+      </Route>
     </Routes>
   );
 }

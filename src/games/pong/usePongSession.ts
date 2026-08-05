@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { apiUrl } from '../../lib/apiBase';
-import { errorMessage, isAuthError, postJson } from '../../lib/http';
+import { errorMessage, isAuthError } from '../../lib/http';
+import { fetchWsSessionToken } from '../shared/activitySession';
 import type { BotDifficulty, GameMode, WinScore } from './types';
 
 export type PongSessionState =
@@ -48,16 +48,16 @@ export function usePongSession(
     ) => {
       console.log('[pong] selecting mode', mode, difficulty, winScore);
       setSession({ status: 'connecting' });
-      postJson<{ token: string }>(apiUrl('/activities/ws-session'), {
-        accessToken: identity.accessToken,
-        instanceId: identity.instanceId,
-        guildId: identity.guildId,
-        mode,
+      fetchWsSessionToken({
         game: 'pong',
-        winningScore: winScore,
-        ...(mode === 'single' ? { difficulty } : {}),
+        mode,
+        identity,
+        extra: {
+          winningScore: winScore,
+          ...(mode === 'single' ? { difficulty } : {}),
+        },
       })
-        .then(({ token }) => {
+        .then((token) => {
           if (cancelledRef.current) return;
           console.info('[pong] session ready', mode);
           setSession({ status: 'ready', wsToken: token, mode, sound });

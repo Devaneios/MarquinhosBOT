@@ -1,19 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import type { GameId } from '../games/gameId';
+import { GAME_REGISTRY } from '../games/registry';
 import { cn } from '../lib/cn';
-
-interface ArcadeTile {
-  id: GameId | null;
-  name: string;
-  status: string;
-  locked: boolean;
-}
-
-const TILES: ArcadeTile[] = [
-  { id: 'pong', name: 'PONGUINHOS', status: 'PLAY', locked: false },
-  { id: null, name: 'BREAKOUT', status: 'COMING SOON', locked: true },
-  { id: null, name: 'SNAKE', status: 'COMING SOON', locked: true },
-];
 
 export function Hub() {
   const navigate = useNavigate();
@@ -24,38 +11,39 @@ export function Hub() {
         MARQUINHOS
       </div>
       <div className="flex max-w-[760px] flex-wrap justify-center gap-6">
-        {TILES.map((tile) => (
-          <button
-            key={tile.name}
-            type="button"
-            disabled={tile.locked}
-            className={cn(
-              'notch-8 flex w-[220px] flex-col items-center gap-3.5 border border-marquinhos-border bg-marquinhos-panel px-4.5 py-7 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent',
-              tile.locked
-                ? 'cursor-not-allowed'
-                : 'cursor-pointer hover:border-marquinhos-border-hover',
-            )}
-            onClick={() => {
-              if (!tile.id) return;
-              console.log('[hub] launching game', tile.id);
-              navigate(`/games/${tile.id}`);
-            }}
-          >
-            <div
+        {GAME_REGISTRY.map((game) => {
+          const locked = game.status !== 'PLAY';
+          return (
+            <button
+              key={game.id}
+              type="button"
+              disabled={locked}
               className={cn(
-                'font-mono text-sm font-semibold tracking-wide',
-                tile.locked
-                  ? 'text-marquinhos-text-disabled'
-                  : 'text-marquinhos-text',
+                'notch-8 flex w-[220px] flex-col items-center gap-3.5 border border-marquinhos-border bg-marquinhos-panel px-4.5 py-7 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent',
+                locked
+                  ? 'cursor-not-allowed'
+                  : 'cursor-pointer hover:border-marquinhos-border-hover',
               )}
+              onClick={() => {
+                if (locked) return;
+                console.log('[hub] launching game', game.id);
+                navigate(`/games/${game.id}`);
+              }}
             >
-              {tile.name}
-            </div>
-            <div className="text-sm text-marquinhos-text-dim">
-              {tile.status}
-            </div>
-          </button>
-        ))}
+              <div
+                className={cn(
+                  'font-mono text-sm font-semibold tracking-wide',
+                  locked ? 'text-marquinhos-text-disabled' : 'text-marquinhos-text',
+                )}
+              >
+                {game.name}
+              </div>
+              <div className="text-sm text-marquinhos-text-dim">
+                {game.status}
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
