@@ -280,7 +280,7 @@ export function CardsGame({
   const selfSeat = 0;
 
   const localPlayer = room?.players[selfSeat];
-  const activePlayer = room?.players[room.turnSeat];
+  const activePlayer = room && room.players[room.turnSeat];
 
   const createRoom = () => {
     const code = roomCode.trim().toUpperCase() || randomCode();
