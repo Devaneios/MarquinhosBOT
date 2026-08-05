@@ -1,1 +1,1 @@
-export type GameId = 'pong' | 'wordle';
+export type GameId = 'pong' | 'wordle' | 'cards';
