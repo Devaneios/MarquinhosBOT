@@ -6,28 +6,39 @@ on Vite + React + TypeScript. It talks to
 [`marquinhos-api`](../marquinhos-api) for auth (OAuth2 code exchange) and
 real-time multiplayer state (WebSocket).
 
-Currently ships one pilot activity, Pong (`src/games/pong`), built to
-validate the foundation end-to-end — auth flow, proxy handling, and the
-WebSocket transport — rather than as a finished game.
+Pong (`src/games/pong`) and Wordle (`src/games/wordle`) are real activities,
+each backed by a Colyseus room on `marquinhos-api`. Cards
+(`src/games/cards`) is a local-only UI prototype — it has no backend room
+yet and is marked `COMING SOON` in the Hub — built to explore the
+lobby/hand-management UI before wiring it to a real multiplayer backend.
 
 ## Architecture
 
 - `src/discordSdk.ts` — the `DiscordSDK` instance, constructed from
   `VITE_DISCORD_CLIENT_ID`.
-- `src/hooks/useDiscordAuth.ts` — runs the auth sequence on mount:
+- `src/hooks/useDiscordIdentity.ts` — runs the auth sequence on mount:
   `discordSdk.ready()` → `commands.authorize()` → exchange the code for an
   access token via `marquinhos-api`'s `POST /api/activities/token` →
-  `commands.authenticate()` → mint a WS session token via
-  `POST /api/activities/ws-session`.
-- `src/lib/apiBase.ts` — resolves REST/WS URLs depending on whether the app
-  is running inside Discord's Activity proxy (`*.discordsays.com`, requires
-  the `/.proxy/` prefix) or in a plain browser tab during local iteration.
-- `src/lib/ws.ts` — a small reconnecting WebSocket client wrapping the
-  `{ type, payload }` message envelope used by `marquinhos-api`'s realtime
-  server.
-- `src/games/pong/` — the pilot activity: canvas rendering + keyboard input,
-  driven entirely by state broadcasts from the server (the client holds no
+  `commands.authenticate()`.
+- `src/games/shared/activitySession.ts` — mints a game-scoped WS session
+  token (`POST /activities/ws-session`) and its matching Colyseus room key;
+  called per-game (e.g. from `usePongSession`/`useWordleSession`) rather
+  than once at the top of the identity hook.
+- `src/games/shared/useColyseusRoom.ts` — connects to the game's Colyseus
+  room with `@colyseus/sdk`, forwards every room message to the caller, and
+  tracks connection state (`connecting`/`connected`/`disconnected`/`error`)
+  so a game can surface a "connection lost" indicator if the socket drops
+  mid-session. Used by every game with realtime state (Pong, Wordle).
+- `src/lib/apiBase.ts` — resolves REST/Colyseus URLs depending on whether
+  the app is running inside Discord's Activity proxy (`*.discordsays.com`,
+  requires the `/.proxy/` prefix) or in a plain browser tab during local
+  iteration. `colyseusUrl()` gives the single base URL `@colyseus/sdk`'s
+  `Client` needs (it does its own matchmaking/room routing from there).
+- `src/games/pong/` — canvas rendering (Pixi.js) + keyboard input, driven
+  entirely by state broadcasts from the server (the client holds no
   authoritative game state).
+- `src/games/wordle/` — a solo realtime puzzle against the guild's daily
+  word.
 
 ## Local development
 
