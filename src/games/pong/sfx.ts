@@ -15,10 +15,6 @@ export class PongSfx {
     this.enabled = enabled;
   }
 
-  setEnabled(enabled: boolean) {
-    this.enabled = enabled;
-  }
-
   hit() {
     this.beep(HIT);
   }

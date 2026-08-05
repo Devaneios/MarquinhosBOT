@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
+import { devinfo, devlog, devwarn } from '../../lib/devlog';
 import { errorMessage, isAuthError } from '../../lib/http';
 import { fetchWsSessionToken, type WsSession } from '../shared/activitySession';
 import type { BotDifficulty, GameMode, WinScore } from './types';
@@ -46,7 +47,7 @@ export function usePongSession(
       winScore: WinScore,
       sound: boolean,
     ) => {
-      console.log('[pong] selecting mode', mode, difficulty, winScore);
+      devlog('[pong] selecting mode', mode, difficulty, winScore);
       setSession({ status: 'connecting' });
       fetchWsSessionToken({
         game: 'pong',
@@ -59,16 +60,14 @@ export function usePongSession(
       })
         .then((session) => {
           if (cancelledRef.current) return;
-          console.info('[pong] session ready', mode);
+          devinfo('[pong] session ready', mode);
           setSession({ status: 'ready', session, mode, sound });
         })
         .catch((err) => {
           console.error('Failed to create Pong session', JSON.stringify(err));
           if (cancelledRef.current) return;
           if (isAuthError(err)) {
-            console.warn(
-              '[pong] session creation hit an auth error, reauthing',
-            );
+            devwarn('[pong] session creation hit an auth error, reauthing');
             onAuthInvalid();
             return;
           }
@@ -79,7 +78,7 @@ export function usePongSession(
   );
 
   const backToMenu = useCallback(() => {
-    console.log('[pong] back to mode menu');
+    devlog('[pong] back to mode menu');
     setSession({ status: 'selecting-mode' });
   }, []);
 
