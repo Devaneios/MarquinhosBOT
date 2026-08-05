@@ -7,8 +7,8 @@ export default defineConfig({
   // Discord's Activity CSP only allows frame-src https://localhost:* for
   // local dev (confirmed directly from a real CSP violation message) —
   // plain http, and 127.0.0.1 instead of the literal hostname `localhost`,
-  // are both rejected outright. basicSsl auto-generates a self-signed cert
-  // so `bun dev` serves HTTPS.
+  // are both rejected outright. HTTPS is provided by a Cloudflare tunnel
+  // in front of this dev server, not by Vite itself.
   plugins: [react(), tailwindcss()],
   server: {
     // Bind every interface (both IPv4 and IPv6) so `localhost` resolves
