@@ -4,6 +4,6 @@ import { cardsRoutes } from './cardsRoutes';
 export const gameDescriptor: GameDescriptor = {
   id: 'cards',
   name: 'CARD TABLE',
-  status: 'COMING SOON',
+  status: 'PLAY',
   routes: cardsRoutes,
 };

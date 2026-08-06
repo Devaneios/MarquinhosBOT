@@ -6,11 +6,18 @@ on Vite + React + TypeScript. It talks to
 [`marquinhos-api`](../marquinhos-api) for auth (OAuth2 code exchange) and
 real-time multiplayer state (WebSocket).
 
-Pong (`src/games/pong`) and Wordle (`src/games/wordle`) are real activities,
-each backed by a Colyseus room on `marquinhos-api`. Cards
-(`src/games/cards`) is a local-only UI prototype — it has no backend room
-yet and is marked `COMING SOON` in the Hub — built to explore the
-lobby/hand-management UI before wiring it to a real multiplayer backend.
+Pong (`src/games/pong`), Wordle (`src/games/wordle`) and Cards
+(`src/games/cards`) are real activities, each backed by a Colyseus room on
+`marquinhos-api`. Cards is a generic card-table renderer driven entirely by
+server-pushed, per-player-masked state and a server-supplied list of legal
+moves — it has no game rules of its own, only a pluggable `ruleset` id (taken
+from the route, `/games/cards/:ruleset`, defaulting to `truco`).
+
+Adding another card game means a new `GameDefinition` on the server plus, at
+most, an entry in `src/games/cards/rulesets/presentation.tsx` — the one place
+anything game-specific lives on the client (move labels, HUD, seat names). A
+ruleset with no entry there still plays; it just renders raw move ids. The table
+itself never branches on which game it is showing.
 
 ## Architecture
 
