@@ -20,8 +20,7 @@ export function ModeMenu({
               SELECT MODE
             </div>
             <div className="mt-2 text-sm leading-6 text-marquinhos-text-dim">
-              Pick how you want to play the match. Each option keeps the same
-              framed UI language used throughout the app.
+              Pick how you want to play the match.
             </div>
           </div>
           <button

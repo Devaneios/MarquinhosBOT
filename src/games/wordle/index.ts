@@ -3,7 +3,7 @@ import { wordleRoutes } from './wordleRoutes';
 
 export const gameDescriptor: GameDescriptor = {
   id: 'wordle',
-  name: 'WORDLE',
+  name: 'TERMO',
   status: 'PLAY',
   routes: wordleRoutes,
 };

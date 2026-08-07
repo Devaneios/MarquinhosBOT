@@ -46,33 +46,6 @@ export function MainMenu({
               HOW TO PLAY
             </button>
           </div>
-
-          <div className="grid w-full gap-3 sm:grid-cols-3">
-            <div className="notch-6 border border-marquinhos-border bg-black/20 px-3 py-3">
-              <div className="text-[10px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
-                Modes
-              </div>
-              <div className="mt-1 text-sm text-marquinhos-text">
-                Single / Multi / Local
-              </div>
-            </div>
-            <div className="notch-6 border border-marquinhos-border bg-black/20 px-3 py-3">
-              <div className="text-[10px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
-                Style
-              </div>
-              <div className="mt-1 text-sm text-marquinhos-text">
-                Retro framed UI
-              </div>
-            </div>
-            <div className="notch-6 border border-marquinhos-border bg-black/20 px-3 py-3">
-              <div className="text-[10px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
-                Launch
-              </div>
-              <div className="mt-1 text-sm text-marquinhos-text">
-                Ready to play
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

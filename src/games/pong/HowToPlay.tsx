@@ -6,14 +6,8 @@ export function HowToPlay({ onBack }: { onBack: () => void }) {
     <div className="flex flex-1 items-center justify-center p-4 sm:p-6">
       <div className="notch-8 flex w-full max-w-[860px] flex-col gap-6 border border-marquinhos-border bg-marquinhos-panel px-6 py-8 shadow-[0_20px_40px_rgba(0,0,0,0.24)] sm:px-8">
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="font-pixel text-2xl tracking-[0.24em] text-marquinhos-text">
-              HOW TO PLAY
-            </div>
-            <div className="mt-2 text-sm leading-6 text-marquinhos-text-dim">
-              Controls are presented with the same notched, panel-based visual
-              style as the rest of the app.
-            </div>
+          <div className="font-pixel text-2xl tracking-[0.24em] text-marquinhos-text">
+            HOW TO PLAY
           </div>
           <button
             type="button"

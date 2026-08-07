@@ -28,14 +28,8 @@ export function SettingsScreen({
     <div className="flex flex-1 items-center justify-center p-4 sm:p-6">
       <div className="notch-8 flex w-full max-w-[760px] flex-col gap-6 border border-marquinhos-border bg-marquinhos-panel px-6 py-8 shadow-[0_20px_40px_rgba(0,0,0,0.24)] sm:px-8">
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="font-pixel text-2xl tracking-[0.24em] text-marquinhos-text">
-              SETTINGS
-            </div>
-            <div className="mt-2 text-sm leading-6 text-marquinhos-text-dim">
-              Tune the match feel with the same framed and notched controls used
-              by the rest of the app.
-            </div>
+          <div className="font-pixel text-2xl tracking-[0.24em] text-marquinhos-text">
+            SETTINGS
           </div>
           <button
             type="button"
