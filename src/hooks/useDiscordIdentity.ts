@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getDiscordSdk } from '../discordSdk';
+import { discordSdk, isMock } from '../discordSdk';
 import { apiUrl } from '../lib/apiBase';
 import { devinfo, devlog } from '../lib/devlog';
 import { errorMessage, postJson } from '../lib/http';
@@ -18,7 +18,7 @@ export type DiscordIdentityState =
 
 async function doHandshake(): Promise<DiscordIdentity> {
   devlog('[auth] starting handshake');
-  const discordSdk = getDiscordSdk();
+
   await discordSdk.ready();
   devlog('[auth] sdk ready');
 
@@ -31,10 +31,13 @@ async function doHandshake(): Promise<DiscordIdentity> {
   });
   devlog('[auth] got authorization code');
 
-  const { access_token } = await postJson<{ access_token: string }>(
-    apiUrl('/activities/token'),
-    { code },
-  );
+  const access_token = isMock
+    ? 'mock-access-token'
+    : (
+        await postJson<{ access_token: string }>(apiUrl('/activities/token'), {
+          code,
+        })
+      )?.access_token;
   devlog('[auth] exchanged code for access token');
 
   const auth = await discordSdk.commands.authenticate({ access_token });

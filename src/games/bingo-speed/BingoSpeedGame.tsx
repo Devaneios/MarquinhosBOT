@@ -1,0 +1,107 @@
+import { Outlet, useNavigate } from 'react-router-dom';
+import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
+import { BingoSpeedCanvas } from './BingoSpeedCanvas';
+import { useBingoSpeedSession } from './useBingoSpeedSession';
+
+export interface BingoSpeedMenuOutletContext {
+  onSelectMode: (mode: 'multi' | 'single') => void;
+  onExitToHub: () => void;
+}
+
+export function BingoSpeedGame({
+  identity,
+  onAuthInvalid,
+}: {
+  identity: DiscordIdentity;
+  onAuthInvalid: () => void;
+}) {
+  const navigate = useNavigate();
+  const { session, selectMode, backToMenu, claimBingo } =
+    useBingoSpeedSession(identity, onAuthInvalid);
+
+  function toMainMenu() {
+    backToMenu();
+    navigate('/games/bingo-speed', { replace: true });
+  }
+
+  if (session.status === 'selecting-mode') {
+    return (
+      <Outlet
+        context={
+          {
+            onSelectMode: selectMode,
+            onExitToHub: () => navigate('/'),
+          } satisfies BingoSpeedMenuOutletContext
+        }
+      />
+    );
+  }
+
+  if (session.status === 'connecting') {
+    return (
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
+          <div className="font-pixel animate-pong-blink text-sm tracking-[0.28em] text-marquinhos-accent">
+            STARTING GAME…
+          </div>
+          <div className="max-w-[36ch] text-sm leading-6 text-marquinhos-text-dim">
+            Connecting to the bingo room and preparing your card.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (session.status === 'error') {
+    return (
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="notch-8 flex min-h-[240px] w-full max-w-[560px] flex-col items-center justify-center gap-5 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
+          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-danger">
+            CONNECTION FAILED
+          </div>
+          <div className="max-w-[48ch] text-sm leading-6 text-marquinhos-text-dim">
+            {session.error}
+          </div>
+          <button
+            type="button"
+            className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
+            onClick={toMainMenu}
+          >
+            BACK
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (session.status === 'finished') {
+    return (
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="notch-8 flex min-h-[280px] w-full max-w-[560px] flex-col items-center justify-center gap-5 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
+          <div className="font-pixel text-2xl tracking-[0.24em] text-marquinhos-accent">
+            BINGO!
+          </div>
+          <div className="text-lg font-semibold text-marquinhos-text">
+            {session.winner === identity.userId ? 'You won!' : 'Game Over'}
+          </div>
+          <button
+            type="button"
+            className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
+            onClick={toMainMenu}
+          >
+            BACK TO MENU
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <BingoSpeedCanvas
+      card={session.card}
+      drawnNumbers={session.drawnNumbers}
+      onMainMenu={toMainMenu}
+      onClaimBingo={claimBingo}
+    />
+  );
+}
