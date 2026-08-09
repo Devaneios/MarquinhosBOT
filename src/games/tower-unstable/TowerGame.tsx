@@ -6,22 +6,29 @@ import { fetchWsSessionToken, type WsSession } from '../shared/activitySession';
 import { TowerCanvas } from './TowerCanvas';
 
 type TowerSessionState =
+  | { status: 'selecting-mode' }
   | { status: 'connecting' }
   | { status: 'ready'; session: WsSession }
   | { status: 'error'; error: string };
 
 function useTowerSession(
   identity: DiscordIdentity,
+  mode: 'single' | 'multi' | null,
   onAuthInvalid: () => void,
 ): TowerSessionState {
   const [state, setState] = useState<TowerSessionState>({
-    status: 'connecting',
+    status: mode ? 'connecting' : 'selecting-mode',
   });
 
   useEffect(() => {
+    if (!mode) {
+      setState({ status: 'selecting-mode' });
+      return;
+    }
+
     let cancelled = false;
     setState({ status: 'connecting' });
-    fetchWsSessionToken({ game: 'tower-unstable', mode: 'multi', identity })
+    fetchWsSessionToken({ game: 'tower-unstable', mode, identity })
       .then((session) => {
         if (cancelled) return;
         setState({ status: 'ready', session });
@@ -37,7 +44,7 @@ function useTowerSession(
     return () => {
       cancelled = true;
     };
-  }, [identity, onAuthInvalid]);
+  }, [identity, mode, onAuthInvalid]);
 
   return state;
 }
@@ -50,10 +57,46 @@ export function TowerGame({
   onAuthInvalid: () => void;
 }) {
   const navigate = useNavigate();
-  const session = useTowerSession(identity, onAuthInvalid);
+  const [mode, setMode] = useState<'single' | 'multi' | null>(null);
+  const session = useTowerSession(identity, mode, onAuthInvalid);
 
   function toMainMenu() {
     navigate('/', { replace: true });
+  }
+
+  if (session.status === 'selecting-mode') {
+    return (
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
+          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-accent">
+            SELECT MODE
+          </div>
+          <div className="flex gap-4">
+            <button
+              type="button"
+              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
+              onClick={() => setMode('single')}
+            >
+              VS BOT
+            </button>
+            <button
+              type="button"
+              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
+              onClick={() => setMode('multi')}
+            >
+              VS PLAYER
+            </button>
+          </div>
+          <button
+            type="button"
+            className="notch-6 border border-marquinhos-border bg-transparent px-5 py-3 text-sm font-semibold text-marquinhos-text transition hover:bg-marquinhos-panel-hover"
+            onClick={toMainMenu}
+          >
+            BACK
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (session.status === 'connecting') {

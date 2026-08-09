@@ -20,8 +20,11 @@ const LIGHT_SQUARE = 0x2a2c30;
 const DARK_SQUARE = 0x17181a;
 const SELECTED_HIGHLIGHT = 0xffb000;
 const CONTINUE_HIGHLIGHT = 0x5fbf77;
-const BLACK_PIECE = 0x1b1b1b;
-const BLACK_PIECE_BORDER = 0x5a5a5a;
+// Noticeably lighter than DARK_SQUARE (0x17181a) — the old 0x1b1b1b fill
+// was nearly indistinguishable from the square it sits on, leaving only
+// the border ring visible.
+const BLACK_PIECE = 0x3a3d42;
+const BLACK_PIECE_BORDER = 0x8a8d92;
 const RED_PIECE = 0xd94f4f;
 const RED_PIECE_BORDER = 0xffb0b0;
 const KING_RING = 0xffd700;
@@ -82,7 +85,7 @@ export function CheckersBoard({
     }
   }, []);
 
-  const { send } = useColyseusRoom(
+  const { send, connectionState } = useColyseusRoom(
     CHECKERS_GAME_ID,
     session,
     colyseusUrl(),
@@ -110,8 +113,17 @@ export function CheckersBoard({
 
   useEffect(() => {
     let cancelled = false;
+    let initialized = false;
+    let onContextLost: ((event: Event) => void) | null = null;
+    let onContextRestored: (() => void) | null = null;
     const app = new Application();
     appRef.current = app;
+
+    function onVisibilityChange() {
+      if (document.hidden) app.ticker.stop();
+      else app.ticker.start();
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     (async () => {
       // Yields a microtask before touching the canvas so React 19
@@ -134,11 +146,30 @@ export function CheckersBoard({
         app.destroy({ removeView: false });
         return;
       }
+      initialized = true;
 
       const boardLayer = new Container();
       app.stage.addChild(boardLayer);
       boardLayerRef.current = boardLayer;
       redraw();
+
+      onContextLost = (event: Event) => {
+        event.preventDefault();
+        app.ticker.stop();
+      };
+      onContextRestored = () => {
+        app.ticker.start();
+      };
+      canvasRef.current!.addEventListener(
+        'webglcontextlost',
+        onContextLost,
+        false,
+      );
+      canvasRef.current!.addEventListener(
+        'webglcontextrestored',
+        onContextRestored,
+        false,
+      );
     })();
 
     function onPointerDown(event: PointerEvent) {
@@ -202,7 +233,8 @@ export function CheckersBoard({
       for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
           const isDark = (row + col) % 2 === 1;
-          const isSelected = current && current.row === row && current.col === col;
+          const isSelected =
+            current && current.row === row && current.col === col;
           const isContinuing =
             currentState?.mustContinueFrom?.row === row &&
             currentState?.mustContinueFrom?.col === col;
@@ -214,7 +246,12 @@ export function CheckersBoard({
                 ? DARK_SQUARE
                 : LIGHT_SQUARE;
           squares
-            .rect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
+            .rect(
+              col * SQUARE_SIZE,
+              row * SQUARE_SIZE,
+              SQUARE_SIZE,
+              SQUARE_SIZE,
+            )
             .fill(fill);
         }
       }
@@ -254,10 +291,19 @@ export function CheckersBoard({
 
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       canvas?.removeEventListener('pointerdown', onPointerDown);
+      if (canvas && onContextLost) {
+        canvas.removeEventListener('webglcontextlost', onContextLost);
+      }
+      if (canvas && onContextRestored) {
+        canvas.removeEventListener('webglcontextrestored', onContextRestored);
+      }
       redrawFnRef.current = null;
       boardLayerRef.current = null;
-      app.destroy({ removeView: false });
+      if (initialized) {
+        app.destroy({ removeView: false });
+      }
       appRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -268,7 +314,8 @@ export function CheckersBoard({
   }, [state, selected]);
 
   const winnerLabel = state?.winner ? colorLabel(state.winner) : null;
-  const isMyTurn = !!state && !!myColor && state.turn === myColor && !state.winner;
+  const isMyTurn =
+    !!state && !!myColor && state.turn === myColor && !state.winner;
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-5 p-4 sm:p-6">
@@ -304,6 +351,12 @@ export function CheckersBoard({
 
       {notice && (
         <div className="text-sm text-marquinhos-text-dim">{notice}</div>
+      )}
+
+      {(connectionState === 'disconnected' || connectionState === 'error') && (
+        <div className="text-sm text-marquinhos-danger">
+          Connection lost. Reload to reconnect.
+        </div>
       )}
 
       {winnerLabel && (

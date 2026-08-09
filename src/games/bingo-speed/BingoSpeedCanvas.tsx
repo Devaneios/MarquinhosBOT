@@ -1,160 +1,300 @@
-import { useEffect, useRef } from 'react';
-import { Application, Graphics, Container, Text } from 'pixi.js';
-import type { BingoCard } from './types';
+import { Application, Container, Graphics, Text } from 'pixi.js';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { colyseusUrl } from '../../lib/apiBase';
+import { devlog } from '../../lib/devlog';
+import type { WsSession } from '../shared/activitySession';
+import {
+  useColyseusRoom,
+  type ActivityMessage,
+} from '../shared/useColyseusRoom';
+import type {
+  BingoCard,
+  BingoGameEndPayload,
+  BingoInitPayload,
+  BingoNumberDrawnPayload,
+} from './types';
 
-interface BingoSpeedCanvasProps {
-  card: BingoCard | undefined;
-  drawnNumbers: number[];
-  onMainMenu: () => void;
-  onClaimBingo: () => void;
-}
+const GRID_SIZE = 5;
+const CELL_SIZE = 96;
+const CELL_GAP = 4;
+const BOARD_PADDING = 16;
+const BOARD_SIZE = GRID_SIZE * CELL_SIZE;
+const CANVAS_SIZE = BOARD_SIZE + BOARD_PADDING * 2;
+
+const BG_COLOR = '#1a1a1a';
+const CELL_DEFAULT = 0x333333;
+const CELL_MARKED = 0x4ade80;
+const CELL_DRAWN = 0x3b82f6;
+const CELL_BORDER = 0x666666;
+const NUMBER_FONT_SIZE = Math.max(16, CELL_SIZE / 2);
+const FREE_FONT_SIZE = Math.max(10, CELL_SIZE / 4);
 
 export function BingoSpeedCanvas({
-  card,
-  drawnNumbers,
+  session,
+  userId,
   onMainMenu,
-  onClaimBingo,
-}: BingoSpeedCanvasProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+}: {
+  session: WsSession;
+  userId: string;
+  onMainMenu: () => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
-  const cardContainerRef = useRef<Container | null>(null);
+  const cardRef = useRef<BingoCard | null>(null);
+  const drawnRef = useRef<Set<number>>(new Set());
+  const redrawRef = useRef<(() => void) | null>(null);
+  const [cardLoaded, setCardLoaded] = useState(false);
+  const [winner, setWinner] = useState<string | null>(null);
+  const messageHandlerRef = useRef<(message: ActivityMessage) => void>(
+    () => {},
+  );
+
+  const { send, connectionState } = useColyseusRoom(
+    'bingo-speed',
+    session,
+    colyseusUrl(),
+    (message) => messageHandlerRef.current(message),
+  );
+
+  const claimBingo = useCallback(() => {
+    send({ type: 'claim_bingo' });
+  }, [send]);
 
   useEffect(() => {
-    if (!containerRef.current || !card) return;
+    devlog('[bingo-speed-canvas] mounting');
+    cardRef.current = null;
+    drawnRef.current = new Set();
+    setCardLoaded(false);
+    setWinner(null);
 
-    const width = Math.min(window.innerWidth - 40, 600);
-    const height = Math.min(window.innerHeight - 200, 600);
+    messageHandlerRef.current = (message) => {
+      if (message.type === 'init') {
+        const payload = message.payload as BingoInitPayload;
+        devlog('[bingo-speed-canvas] init', payload);
+        cardRef.current = payload.card;
+        drawnRef.current = new Set(payload.state?.drawnNumbers ?? []);
+        setCardLoaded(true);
+        redrawRef.current?.();
+      } else if (message.type === 'number_drawn') {
+        const payload = message.payload as BingoNumberDrawnPayload;
+        drawnRef.current.add(payload.number);
+        redrawRef.current?.();
+      } else if (message.type === 'game_end') {
+        const payload = message.payload as BingoGameEndPayload;
+        devlog('[bingo-speed-canvas] game end', payload);
+        setWinner(payload.winner ?? null);
+      }
+    };
 
-    const app = new Application({
-      width,
-      height,
-      antialias: true,
-      backgroundColor: 0x1a1a1a,
-    });
+    function onVisibilityChange() {
+      if (document.hidden) appRef.current?.ticker.stop();
+      else appRef.current?.ticker.start();
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
-    containerRef.current.appendChild(app.canvas);
+    let cancelled = false;
+    let initialized = false;
+    let onContextLost: ((event: Event) => void) | null = null;
+    let onContextRestored: (() => void) | null = null;
+    let contextCanvas: HTMLCanvasElement | null = null;
+
+    const cellBgs: Graphics[][] = [];
+    const cellTexts: Text[][] = [];
+
+    const app = new Application();
     appRef.current = app;
 
-    const cardContainer = new Container();
-    cardContainer.x = 20;
-    cardContainer.y = 20;
-    app.stage.addChild(cardContainer);
-    cardContainerRef.current = cardContainer;
+    function buildScene() {
+      const board = new Container();
+      for (let row = 0; row < GRID_SIZE; row++) {
+        const bgRow: Graphics[] = [];
+        const textRow: Text[] = [];
+        for (let col = 0; col < GRID_SIZE; col++) {
+          const x = col * CELL_SIZE;
+          const y = row * CELL_SIZE;
 
-    const cellSize = (width - 40) / 5;
-    const drawnSet = new Set(drawnNumbers);
+          const cellBg = new Graphics();
+          cellBg.position.set(x, y);
+          board.addChild(cellBg);
 
-    // Draw bingo card
-    for (let row = 0; row < 5; row++) {
-      for (let col = 0; col < 5; col++) {
-        const number = card.board[row][col];
-        const isMarked = card.marked[row][col];
-        const isDrawn = drawnSet.has(number);
+          const cellText = new Text({
+            text: '',
+            style: {
+              fontFamily: 'Arial',
+              fontSize: NUMBER_FONT_SIZE,
+              fontWeight: 'bold',
+              fill: 0xffffff,
+            },
+          });
+          cellText.anchor.set(0.5);
+          cellText.position.set(x + CELL_SIZE / 2, y + CELL_SIZE / 2);
+          board.addChild(cellText);
 
-        // Draw cell background
-        const cellGraphics = new Graphics();
-        const x = col * cellSize;
-        const y = row * cellSize;
-
-        let backgroundColor = 0x333333;
-        if (isMarked) {
-          backgroundColor = 0x4ade80;
-        } else if (isDrawn) {
-          backgroundColor = 0x3b82f6;
+          bgRow.push(cellBg);
+          textRow.push(cellText);
         }
+        cellBgs.push(bgRow);
+        cellTexts.push(textRow);
+      }
+      board.position.set(BOARD_PADDING, BOARD_PADDING);
+      app.stage.addChild(board);
+    }
 
-        cellGraphics.beginFill(backgroundColor);
-        cellGraphics.drawRect(x, y, cellSize - 2, cellSize - 2);
-        cellGraphics.endFill();
+    function redraw() {
+      const card = cardRef.current;
+      const drawn = drawnRef.current;
+      for (let row = 0; row < GRID_SIZE; row++) {
+        for (let col = 0; col < GRID_SIZE; col++) {
+          const cellBg = cellBgs[row][col];
+          const cellText = cellTexts[row][col];
+          const number = card?.board[row]?.[col] ?? 0;
+          const isMarked = card?.marked[row]?.[col] ?? false;
+          const isDrawn = drawn.has(number);
 
-        // Draw border
-        cellGraphics.lineStyle(1, 0x666666);
-        cellGraphics.drawRect(x, y, cellSize - 2, cellSize - 2);
+          let backgroundColor = CELL_DEFAULT;
+          if (isMarked) backgroundColor = CELL_MARKED;
+          else if (isDrawn) backgroundColor = CELL_DRAWN;
 
-        cardContainer.addChild(cellGraphics);
+          cellBg
+            .clear()
+            .rect(0, 0, CELL_SIZE - CELL_GAP, CELL_SIZE - CELL_GAP)
+            .fill(backgroundColor)
+            .stroke({ width: 1, color: CELL_BORDER });
 
-        // Draw number text
-        if (number !== 0) {
-          const textColor = isMarked ? 0x000000 : 0xffffff;
-          const text = new Text(number.toString(), {
-            fontFamily: 'Arial',
-            fontSize: Math.max(16, cellSize / 2),
-            fill: textColor,
-            fontWeight: 'bold',
-          });
-          text.anchor.set(0.5);
-          text.x = x + cellSize / 2;
-          text.y = y + cellSize / 2;
-          cardContainer.addChild(text);
-        } else {
-          // FREE space
-          const text = new Text('FREE', {
-            fontFamily: 'Arial',
-            fontSize: Math.max(10, cellSize / 4),
-            fill: 0xffffff,
-            fontWeight: 'bold',
-          });
-          text.anchor.set(0.5);
-          text.x = x + cellSize / 2;
-          text.y = y + cellSize / 2;
-          cardContainer.addChild(text);
+          if (!card) {
+            cellText.text = '';
+            continue;
+          }
+          if (number === 0) {
+            cellText.text = 'FREE';
+            cellText.style.fontSize = FREE_FONT_SIZE;
+            cellText.style.fill = 0xffffff;
+          } else {
+            cellText.text = String(number);
+            cellText.style.fontSize = NUMBER_FONT_SIZE;
+            cellText.style.fill = isMarked ? 0x000000 : 0xffffff;
+          }
         }
       }
     }
 
-    const handleResize = () => {
-      const newWidth = Math.min(window.innerWidth - 40, 600);
-      const newHeight = Math.min(window.innerHeight - 200, 600);
-      app.renderer.resize(newWidth, newHeight);
+    (async () => {
+      // Yield a microtask before touching the canvas — see PongCanvas for
+      // the full explanation of why StrictMode's phantom mount/cleanup
+      // pass must bail here rather than reach app.init().
+      await Promise.resolve();
+      if (cancelled) return;
+
+      await app.init({
+        canvas: canvasRef.current!,
+        width: CANVAS_SIZE,
+        height: CANVAS_SIZE,
+        background: BG_COLOR,
+        antialias: true,
+        resolution: window.devicePixelRatio,
+        autoDensity: true,
+      });
+      if (cancelled) {
+        app.destroy({ removeView: false });
+        return;
+      }
+      initialized = true;
+
+      onContextLost = (event: Event) => {
+        event.preventDefault();
+        app.ticker.stop();
+      };
+      onContextRestored = () => {
+        app.ticker.start();
+      };
+      contextCanvas = canvasRef.current!;
+      contextCanvas.addEventListener('webglcontextlost', onContextLost, false);
+      contextCanvas.addEventListener(
+        'webglcontextrestored',
+        onContextRestored,
+        false,
+      );
+
+      buildScene();
+      redrawRef.current = redraw;
+      redraw();
+    })();
+
+    return () => {
+      devlog('[bingo-speed-canvas] unmounting');
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (contextCanvas && onContextLost) {
+        contextCanvas.removeEventListener('webglcontextlost', onContextLost);
+      }
+      if (contextCanvas && onContextRestored) {
+        contextCanvas.removeEventListener(
+          'webglcontextrestored',
+          onContextRestored,
+        );
+      }
+      redrawRef.current = null;
+      messageHandlerRef.current = () => {};
+      if (initialized) {
+        app.destroy({ removeView: false });
+      }
+      appRef.current = null;
     };
-
-    const handleContextLoss = () => {
-      cleanup();
-    };
-
-    window.addEventListener('resize', handleResize);
-    app.canvas.addEventListener('webglcontextlost', handleContextLoss);
-
-    function cleanup() {
-      window.removeEventListener('resize', handleResize);
-      app.canvas.removeEventListener('webglcontextlost', handleContextLoss);
-      cardContainer.destroy();
-      app.destroy();
-    }
-
-    return cleanup;
-  }, [card, drawnNumbers]);
-
-  if (!card) {
-    return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="text-center">
-          <div className="animate-spin text-4xl">⏳</div>
-          <p className="mt-4 text-marquinhos-text-dim">Loading card...</p>
-        </div>
-      </div>
-    );
-  }
+  }, [session]);
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center p-6">
-      <div ref={containerRef} className="mb-6 rounded-lg border border-marquinhos-border" />
-      <div className="flex gap-4">
-        <button
-          type="button"
-          className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-6 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-          onClick={onClaimBingo}
-        >
-          CLAIM BINGO
-        </button>
-        <button
-          type="button"
-          className="notch-6 border border-marquinhos-border px-6 py-3 text-sm font-semibold text-marquinhos-text transition hover:bg-marquinhos-panel"
-          onClick={onMainMenu}
-        >
-          BACK
-        </button>
+    <div className="flex flex-1 flex-col items-center justify-center gap-5 p-4 sm:p-6">
+      <div className="relative flex items-center justify-center overflow-hidden border border-marquinhos-border bg-marquinhos-bg">
+        <canvas ref={canvasRef} className="block max-h-full max-w-full" />
+        {!cardLoaded && (
+          <div className="font-pixel animate-pong-blink absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-marquinhos-text">
+            LOADING CARD…
+          </div>
+        )}
+        {(connectionState === 'disconnected' ||
+          connectionState === 'error') && (
+          <div className="font-pixel absolute top-3 left-1/2 -translate-x-1/2 border border-marquinhos-danger/60 bg-marquinhos-panel px-3 py-1.5 text-[11px] tracking-wide text-marquinhos-danger">
+            CONNECTION LOST — RELOAD TO RECONNECT
+          </div>
+        )}
+        {winner !== null && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-marquinhos-bg/90">
+            <div className="font-pixel text-2xl tracking-[0.24em] text-marquinhos-accent">
+              BINGO!
+            </div>
+            <div className="text-lg font-semibold text-marquinhos-text">
+              {winner === userId ? 'You won!' : 'Game Over'}
+            </div>
+            <button
+              type="button"
+              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
+              onClick={onMainMenu}
+            >
+              BACK TO MENU
+            </button>
+          </div>
+        )}
       </div>
+
+      {winner === null && (
+        <div className="flex gap-4">
+          <button
+            type="button"
+            className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-6 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover disabled:cursor-not-allowed disabled:bg-marquinhos-panel disabled:text-marquinhos-text-disabled"
+            disabled={!cardLoaded}
+            onClick={claimBingo}
+          >
+            CLAIM BINGO
+          </button>
+          <button
+            type="button"
+            className="notch-6 border border-marquinhos-border px-6 py-3 text-sm font-semibold text-marquinhos-text transition hover:bg-marquinhos-panel"
+            onClick={onMainMenu}
+          >
+            BACK
+          </button>
+        </div>
+      )}
     </div>
   );
 }

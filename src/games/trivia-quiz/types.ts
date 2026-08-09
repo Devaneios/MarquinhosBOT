@@ -31,7 +31,14 @@ export interface GameEnd {
   };
 }
 
-export type TriviaQuizMessage = StateUpdate | GameEnd;
+export interface Init {
+  type: 'init';
+  payload: {
+    playerScores: PlayerScore[];
+  };
+}
+
+export type TriviaQuizMessage = StateUpdate | GameEnd | Init;
 
 export interface TriviaQuizSessionState {
   currentQuestion: {

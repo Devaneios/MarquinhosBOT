@@ -4,20 +4,26 @@ import { errorMessage, isAuthError } from '../../lib/http';
 import { fetchWsSessionToken, type WsSession } from '../shared/activitySession';
 
 type RpsSessionState =
+  | { status: 'selecting-mode' }
   | { status: 'connecting' }
   | { status: 'ready'; session: WsSession }
   | { status: 'error'; error: string };
 
 export function useRpsSession(
   identity: DiscordIdentity,
-  mode: 'single' | 'multi',
+  mode: 'single' | 'multi' | null,
   onAuthInvalid: () => void,
 ): RpsSessionState {
   const [state, setState] = useState<RpsSessionState>({
-    status: 'connecting',
+    status: mode ? 'connecting' : 'selecting-mode',
   });
 
   useEffect(() => {
+    if (!mode) {
+      setState({ status: 'selecting-mode' });
+      return;
+    }
+
     let cancelled = false;
     setState({ status: 'connecting' });
     fetchWsSessionToken({

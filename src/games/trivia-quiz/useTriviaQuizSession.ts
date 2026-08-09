@@ -56,7 +56,12 @@ export function useTriviaQuizSession(
 
   const handleMessage = useCallback((message: ActivityMessage) => {
     const msg = message as TriviaQuizMessage;
-    if (msg.type === 'state_update') {
+    if (msg.type === 'init') {
+      setState((prev) => ({
+        ...prev,
+        playerScores: msg.payload.playerScores,
+      }));
+    } else if (msg.type === 'state_update') {
       setState({
         currentQuestion: {
           text: msg.payload.questionText,

@@ -28,7 +28,7 @@ function fakeSdk(overrides: { userIds?: string[] } = {}) {
 }
 
 async function freshRunAuthFlow(sdk: ReturnType<typeof fakeSdk>) {
-  mock.module('../discordSdk', () => ({ getDiscordSdk: () => sdk }));
+  mock.module('../discordSdk', () => ({ discordSdk: sdk, isMock: false }));
   mock.module('../lib/apiBase', () => ({
     apiUrl: (path: string) => `http://fake.test${path}`,
   }));

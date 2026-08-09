@@ -1,36 +1,32 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Client, type Room } from '@colyseus/sdk';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { devinfo, devlog, devwarn } from '../../lib/devlog';
 import { errorMessage, isAuthError } from '../../lib/http';
 import { fetchWsSessionToken, type WsSession } from '../shared/activitySession';
-import { colyseusUrl } from '../../lib/apiBase';
+import type { GameMode } from './types';
 
 export type BingoSpeedSessionState =
   | { status: 'selecting-mode' }
   | { status: 'connecting' }
-  | {
-      status: 'playing';
-      session: WsSession;
-      room: Room;
-      card?: any;
-      drawnNumbers: number[];
-      playerCount: number;
-      gameStarted: boolean;
-    }
-  | { status: 'finished'; winner?: string }
+  | { status: 'ready'; session: WsSession; mode: GameMode }
   | { status: 'error'; error: string };
 
 export function useBingoSpeedSession(
   identity: DiscordIdentity,
   onAuthInvalid: () => void,
-) {
+): {
+  session: BingoSpeedSessionState;
+  selectMode: (mode: GameMode) => void;
+  backToMenu: () => void;
+} {
   const [session, setSession] = useState<BingoSpeedSessionState>({
     status: 'selecting-mode',
   });
-  const roomRef = useRef<Room | null>(null);
   const cancelledRef = useRef(false);
 
+  // Mirrors usePongSession: React 19 StrictMode double-invokes this effect
+  // on mount, so resetting on (re)mount undoes the phantom first cleanup
+  // that would otherwise permanently disable every future selectMode().
   useEffect(() => {
     cancelledRef.current = false;
     return () => {
@@ -39,7 +35,7 @@ export function useBingoSpeedSession(
   }, []);
 
   const selectMode = useCallback(
-    (mode: 'multi' | 'single') => {
+    (mode: GameMode) => {
       devlog('[bingo-speed] selecting mode', mode);
       setSession({ status: 'connecting' });
       fetchWsSessionToken({
@@ -47,75 +43,21 @@ export function useBingoSpeedSession(
         mode,
         identity,
       })
-        .then((wsSession) => {
+        .then((session) => {
           if (cancelledRef.current) return;
-
-          const client = new Client(colyseusUrl());
-
-          return client.joinOrCreate('bingo_speed', {
-            roomKey: wsSession.roomKey,
-            token: wsSession.token,
-          }).then((room: Room) => {
-            if (cancelledRef.current) {
-              room.leave();
-              return;
-            }
-
-            roomRef.current = room;
-            devinfo('[bingo-speed] room joined', mode);
-
-            room.onMessage('init', (data: any) => {
-              if (cancelledRef.current) return;
-              setSession({
-                status: 'playing',
-                session: wsSession,
-                room,
-                card: data.card,
-                drawnNumbers: data.state?.drawnNumbers ?? [],
-                playerCount: data.state?.playerCount ?? 0,
-                gameStarted: data.state?.gameStarted ?? false,
-              });
-            });
-
-            room.onMessage('number_drawn', (data: any) => {
-              if (cancelledRef.current) return;
-              setSession((s) => {
-                if (s.status !== 'playing') return s;
-                return {
-                  ...s,
-                  drawnNumbers: [...s.drawnNumbers, data.number],
-                };
-              });
-            });
-
-            room.onMessage('game_end', (data: any) => {
-              if (cancelledRef.current) return;
-              setSession((s) => ({
-                ...s,
-                status: 'finished',
-                winner: data.winner,
-              }));
-            });
-
-            room.onError(() => {
-              if (cancelledRef.current) return;
-              setSession({
-                status: 'error',
-                error: 'Connection error',
-              });
-            });
-
-            room.onLeave(() => {
-              if (cancelledRef.current) return;
-              setSession({ status: 'selecting-mode' });
-            });
-          });
+          devinfo('[bingo-speed] session ready', mode);
+          setSession({ status: 'ready', session, mode });
         })
         .catch((err) => {
-          console.error('Failed to create Bingo Speed session', JSON.stringify(err));
+          console.error(
+            'Failed to create Bingo Speed session',
+            JSON.stringify(err),
+          );
           if (cancelledRef.current) return;
           if (isAuthError(err)) {
-            devwarn('[bingo-speed] session creation hit an auth error, reauthing');
+            devwarn(
+              '[bingo-speed] session creation hit an auth error, reauthing',
+            );
             onAuthInvalid();
             return;
           }
@@ -127,26 +69,8 @@ export function useBingoSpeedSession(
 
   const backToMenu = useCallback(() => {
     devlog('[bingo-speed] back to mode menu');
-    if (roomRef.current) {
-      roomRef.current.leave();
-      roomRef.current = null;
-    }
     setSession({ status: 'selecting-mode' });
   }, []);
 
-  const claimBingo = useCallback(() => {
-    if (roomRef.current) {
-      roomRef.current.send('claim_bingo', {});
-    }
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (roomRef.current) {
-        roomRef.current.leave();
-      }
-    };
-  }, []);
-
-  return { session, selectMode, backToMenu, claimBingo };
+  return { session, selectMode, backToMenu };
 }

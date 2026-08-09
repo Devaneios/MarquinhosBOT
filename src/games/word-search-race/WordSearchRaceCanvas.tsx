@@ -90,30 +90,64 @@ export function WordSearchRaceCanvas({
     const app = new Application();
     appRef.current = app;
     let cancelled = false;
+    let initialized = false;
     let cellContainer: Container | null = null;
     let selectionGfx: Graphics | null = null;
     let foundGfx: Graphics | null = null;
     let dragging = false;
     let dragStart: Cell | null = null;
     let dragEnd: Cell | null = null;
+    let onContextLost: ((event: Event) => void) | null = null;
+    let onContextRestored: (() => void) | null = null;
+    let contextCanvas: HTMLCanvasElement | null = null;
+
+    function onVisibilityChange() {
+      if (document.hidden) {
+        appRef.current?.ticker.stop();
+      } else {
+        appRef.current?.ticker.start();
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     function drawFound() {
       if (!foundGfx) return;
       foundGfx.clear();
       for (const entry of foundRef.current) {
-        drawLine(foundGfx, entry.start, entry.end, colorForPlayer(entry.userId, selfIdRef.current), 0.35);
+        drawLine(
+          foundGfx,
+          entry.start,
+          entry.end,
+          colorForPlayer(entry.userId, selfIdRef.current),
+          0.35,
+        );
       }
     }
 
-    function drawLine(gfx: Graphics, start: Cell, end: Cell, color: string, alpha: number) {
+    function drawLine(
+      gfx: Graphics,
+      start: Cell,
+      end: Cell,
+      color: string,
+      alpha: number,
+    ) {
       const dr = Math.sign(end.row - start.row);
       const dc = Math.sign(end.col - start.col);
-      const steps = Math.max(Math.abs(end.row - start.row), Math.abs(end.col - start.col));
+      const steps = Math.max(
+        Math.abs(end.row - start.row),
+        Math.abs(end.col - start.col),
+      );
       for (let i = 0; i <= steps; i++) {
         const row = start.row + dr * i;
         const col = start.col + dc * i;
         gfx
-          .roundRect(col * CELL_SIZE + 2, row * CELL_SIZE + 2, CELL_SIZE - 4, CELL_SIZE - 4, 6)
+          .roundRect(
+            col * CELL_SIZE + 2,
+            row * CELL_SIZE + 2,
+            CELL_SIZE - 4,
+            CELL_SIZE - 4,
+            6,
+          )
           .fill({ color, alpha });
       }
     }
@@ -151,6 +185,22 @@ export function WordSearchRaceCanvas({
         app.destroy({ removeView: false });
         return;
       }
+      initialized = true;
+
+      onContextLost = (event: Event) => {
+        event.preventDefault();
+        app.ticker.stop();
+      };
+      onContextRestored = () => {
+        app.ticker.start();
+      };
+      contextCanvas = canvasRef.current!;
+      contextCanvas.addEventListener('webglcontextlost', onContextLost, false);
+      contextCanvas.addEventListener(
+        'webglcontextrestored',
+        onContextRestored,
+        false,
+      );
 
       foundGfx = new Graphics();
       selectionGfx = new Graphics();
@@ -162,10 +212,17 @@ export function WordSearchRaceCanvas({
           const letter = gridRef.current[row]?.[col] ?? '';
           const text = new Text({
             text: letter,
-            style: { fontFamily: 'monospace', fontSize: 16, fill: CELL_TEXT_COLOR },
+            style: {
+              fontFamily: 'monospace',
+              fontSize: 16,
+              fill: CELL_TEXT_COLOR,
+            },
           });
           text.anchor.set(0.5);
-          text.position.set(col * CELL_SIZE + CELL_SIZE / 2, row * CELL_SIZE + CELL_SIZE / 2);
+          text.position.set(
+            col * CELL_SIZE + CELL_SIZE / 2,
+            row * CELL_SIZE + CELL_SIZE / 2,
+          );
           cellContainer.addChild(text);
         }
       }
@@ -207,9 +264,21 @@ export function WordSearchRaceCanvas({
 
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (contextCanvas && onContextLost) {
+        contextCanvas.removeEventListener('webglcontextlost', onContextLost);
+      }
+      if (contextCanvas && onContextRestored) {
+        contextCanvas.removeEventListener(
+          'webglcontextrestored',
+          onContextRestored,
+        );
+      }
       redrawFoundRef.current = null;
       appRef.current = null;
-      app.destroy({ removeView: false }, { children: true, texture: true });
+      if (initialized) {
+        app.destroy({ removeView: false }, { children: true, texture: true });
+      }
     };
     // Grid dimensions never change mid-game; found/selection redraws are
     // handled imperatively via the refs above so this effect only ever

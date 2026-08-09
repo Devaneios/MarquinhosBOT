@@ -19,6 +19,7 @@ import {
 } from './dominoesProtocol';
 
 type SessionState =
+  | { status: 'selecting-mode' }
   | { status: 'connecting' }
   | { status: 'ready'; session: WsSession }
   | { status: 'error'; error: string };
@@ -29,6 +30,8 @@ const CHAIN_TILE_W = 56;
 const CHAIN_TILE_H = 34;
 const HAND_GAP = 10;
 const CHAIN_GAP = 4;
+const CANVAS_WIDTH = 900;
+const CANVAS_HEIGHT = 360;
 const BG_COLOR = 0x17181a;
 const TILE_COLOR = 0xf2ede3;
 const TILE_SELECTED_COLOR = 0xffb000;
@@ -38,14 +41,26 @@ const PIP_COLOR = 0x1c1c1e;
 
 function useDominoesSession(
   identity: DiscordIdentity,
+  mode: 'single' | 'multi' | null,
   onAuthInvalid: () => void,
 ): SessionState {
-  const [state, setState] = useState<SessionState>({ status: 'connecting' });
+  const [state, setState] = useState<SessionState>({
+    status: mode ? 'connecting' : 'selecting-mode',
+  });
 
   useEffect(() => {
+    if (!mode) {
+      setState({ status: 'selecting-mode' });
+      return;
+    }
+
     let cancelled = false;
     setState({ status: 'connecting' });
-    fetchWsSessionToken({ game: 'dominoes-block' as any, mode: 'multi', identity })
+    fetchWsSessionToken({
+      game: 'dominoes-block' as any,
+      mode,
+      identity,
+    })
       .then((session) => {
         if (cancelled) return;
         setState({ status: 'ready', session });
@@ -61,7 +76,7 @@ function useDominoesSession(
     return () => {
       cancelled = true;
     };
-  }, [identity, onAuthInvalid]);
+  }, [identity, mode, onAuthInvalid]);
 
   return state;
 }
@@ -135,9 +150,23 @@ function drawPips(
   }
 }
 
-interface HandTileEntry {
-  tile: Tile;
+// Persistent, pooled display objects for chain/hand tiles: the chain only
+// grows within a match (and resets to empty on rematch), and a hand only
+// shrinks or has tiles substituted; in both cases we never need more display
+// objects than the largest chain/hand this session has ever shown, so pool
+// entries are created once and reused (visible toggled, graphics redrawn)
+// instead of rebuilt every render (see SPEC-pixi-games.md §6.5).
+interface ChainPoolEntry {
   container: Container;
+  gfx: Graphics;
+  divider: Graphics;
+}
+
+interface HandPoolEntry {
+  container: Container;
+  gfx: Graphics;
+  divider: Graphics;
+  tile: Tile | null;
 }
 
 export function DominoesBlockBoard({
@@ -166,6 +195,7 @@ export function DominoesBlockBoard({
   const stateRef = useRef<DominoesClientState | null>(null);
   const selfIdRef = useRef(selfId);
   selfIdRef.current = selfId;
+  const renderRef = useRef<(() => void) | null>(null);
 
   const { send: roomSend, connectionState } = useColyseusRoom(
     'dominoes-block' as any,
@@ -185,7 +215,9 @@ export function DominoesBlockBoard({
         const payload = message.payload as { reason: string };
         setRejection(payload.reason);
       } else if (message.type === 'restart_status') {
-        setRestartStatus(message.payload as { votes: number; required: number });
+        setRestartStatus(
+          message.payload as { votes: number; required: number },
+        );
       } else if (message.type === 'opponent_disconnected') {
         setDisconnectedOpponent(
           message.payload as { userId: string; timeoutMs: number },
@@ -227,12 +259,27 @@ export function DominoesBlockBoard({
 
   useEffect(() => {
     let cancelled = false;
+    let initialized = false;
     const app = new Application();
     appRef.current = app;
-    let handEntries: HandTileEntry[] = [];
     let chainContainer: Container | null = null;
     let handContainer: Container | null = null;
+    const chainPool: ChainPoolEntry[] = [];
+    const handPool: HandPoolEntry[] = [];
     let unsub: (() => void) | null = null;
+    let onContextLost: ((event: Event) => void) | null = null;
+    let onContextRestored: (() => void) | null = null;
+    let contextCanvas: HTMLCanvasElement | null = null;
+
+    function onVisibilityChange() {
+      if (!initialized) return;
+      if (document.hidden) {
+        app.ticker.stop();
+      } else {
+        app.ticker.start();
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     (async () => {
       // Same StrictMode double-invoke guard as PongCanvas: bail before
@@ -242,8 +289,8 @@ export function DominoesBlockBoard({
 
       await app.init({
         canvas: canvasRef.current!,
-        width: 900,
-        height: 360,
+        width: CANVAS_WIDTH,
+        height: CANVAS_HEIGHT,
         background: BG_COLOR,
         antialias: true,
         resolution: window.devicePixelRatio,
@@ -253,103 +300,175 @@ export function DominoesBlockBoard({
         app.destroy({ removeView: false });
         return;
       }
+      initialized = true;
+
+      onContextLost = (event: Event) => {
+        event.preventDefault();
+        app.ticker.stop();
+      };
+      onContextRestored = () => {
+        app.ticker.start();
+      };
+      contextCanvas = canvasRef.current!;
+      contextCanvas.addEventListener('webglcontextlost', onContextLost, false);
+      contextCanvas.addEventListener(
+        'webglcontextrestored',
+        onContextRestored,
+        false,
+      );
 
       chainContainer = new Container();
       handContainer = new Container();
       app.stage.addChild(chainContainer, handContainer);
 
-      function render() {
-        const current = stateRef.current;
-        if (!chainContainer || !handContainer) return;
-        chainContainer.removeChildren();
-        handContainer.removeChildren();
-        handEntries = [];
-        if (!current) return;
-
-        const chainWidth =
-          current.chain.length * (CHAIN_TILE_W + CHAIN_GAP) - CHAIN_GAP;
-        let cx = (app.renderer.width / window.devicePixelRatio - chainWidth) / 2;
-        const cy = 60;
-        for (const tile of current.chain) {
-          const tileContainer = new Container();
+      // Chain tiles never need a click handler, so the pool entry is just
+      // the container + its two Graphics; the divider is static geometry
+      // (only depends on the constant tile size) and is drawn once.
+      function getChainEntry(index: number): ChainPoolEntry {
+        let entry = chainPool[index];
+        if (!entry) {
+          const container = new Container();
           const gfx = new Graphics();
-          drawTileFace(gfx, CHAIN_TILE_W, CHAIN_TILE_H, TILE_COLOR);
-          drawPips(gfx, tile.a, 0, 0, CHAIN_TILE_W / 2, CHAIN_TILE_H);
-          drawPips(gfx, tile.b, CHAIN_TILE_W / 2, 0, CHAIN_TILE_W / 2, CHAIN_TILE_H);
           const divider = new Graphics()
             .moveTo(CHAIN_TILE_W / 2, 2)
             .lineTo(CHAIN_TILE_W / 2, CHAIN_TILE_H - 2)
             .stroke({ width: 1, color: TILE_BORDER });
-          tileContainer.addChild(gfx, divider);
-          tileContainer.position.set(cx, cy);
-          chainContainer.addChild(tileContainer);
+          container.addChild(gfx, divider);
+          entry = { container, gfx, divider };
+          chainPool[index] = entry;
+          chainContainer!.addChild(container);
+        }
+        return entry;
+      }
+
+      // Hand pool entries are reused across turns even though the tile at a
+      // given slot changes hand to hand, so the pointertap handler is wired
+      // once and reads `entry.tile` (mutated every render) rather than
+      // closing over a tile value that would go stale.
+      function getHandEntry(index: number): HandPoolEntry {
+        let entry = handPool[index];
+        if (!entry) {
+          const container = new Container();
+          const gfx = new Graphics();
+          const divider = new Graphics()
+            .moveTo(2, TILE_H / 2)
+            .lineTo(TILE_W - 2, TILE_H / 2)
+            .stroke({ width: 1, color: TILE_BORDER });
+          container.addChild(gfx, divider);
+          entry = { container, gfx, divider, tile: null };
+          const currentEntry = entry;
+          container.on('pointertap', () => {
+            if (currentEntry.tile) handleTileClick(currentEntry.tile);
+          });
+          handPool[index] = entry;
+          handContainer!.addChild(container);
+        }
+        return entry;
+      }
+
+      function render() {
+        const current = stateRef.current;
+        if (!chainContainer || !handContainer) return;
+        if (!current) {
+          for (const entry of chainPool) entry.container.visible = false;
+          for (const entry of handPool) {
+            entry.container.visible = false;
+            entry.tile = null;
+          }
+          return;
+        }
+
+        const chainWidth =
+          current.chain.length * (CHAIN_TILE_W + CHAIN_GAP) - CHAIN_GAP;
+        let cx = (CANVAS_WIDTH - chainWidth) / 2;
+        const cy = 60;
+        current.chain.forEach((tile, index) => {
+          const entry = getChainEntry(index);
+          entry.container.visible = true;
+          entry.container.position.set(cx, cy);
+          drawTileFace(entry.gfx, CHAIN_TILE_W, CHAIN_TILE_H, TILE_COLOR);
+          drawPips(entry.gfx, tile.a, 0, 0, CHAIN_TILE_W / 2, CHAIN_TILE_H);
+          drawPips(
+            entry.gfx,
+            tile.b,
+            CHAIN_TILE_W / 2,
+            0,
+            CHAIN_TILE_W / 2,
+            CHAIN_TILE_H,
+          );
           cx += CHAIN_TILE_W + CHAIN_GAP;
+        });
+        for (let i = current.chain.length; i < chainPool.length; i++) {
+          chainPool[i].container.visible = false;
         }
 
         const hand = current.hand ?? [];
         const handWidth = hand.length * (TILE_W + HAND_GAP) - HAND_GAP;
-        let hx = (app.renderer.width / window.devicePixelRatio - handWidth) / 2;
+        let hx = (CANVAS_WIDTH - handWidth) / 2;
         const hy = 220;
         const isMyTurn = current.currentPlayer === selfIdRef.current;
-        for (const tile of hand) {
+        hand.forEach((tile, index) => {
+          const entry = getHandEntry(index);
+          entry.tile = tile;
           const ends = legalEndsFor(tile, current.leftEnd, current.rightEnd);
-          const playable =
-            current.chain.length === 0 || ends.length > 0;
+          const playable = current.chain.length === 0 || ends.length > 0;
           const isSelected =
             selectedTile !== null && tileMatches(selectedTile, tile);
-
-          const tileContainer = new Container();
-          const gfx = new Graphics();
           const fill = isSelected
             ? TILE_SELECTED_COLOR
             : isMyTurn && playable
               ? TILE_COLOR
               : TILE_DISABLED_COLOR;
-          drawTileFace(gfx, TILE_W, TILE_H, fill);
-          drawPips(gfx, tile.a, 0, 0, TILE_W, TILE_H / 2);
-          drawPips(gfx, tile.b, 0, TILE_H / 2, TILE_W, TILE_H / 2);
-          const divider = new Graphics()
-            .moveTo(2, TILE_H / 2)
-            .lineTo(TILE_W - 2, TILE_H / 2)
-            .stroke({ width: 1, color: TILE_BORDER });
-          tileContainer.addChild(gfx, divider);
-          tileContainer.position.set(hx, hy);
+          drawTileFace(entry.gfx, TILE_W, TILE_H, fill);
+          drawPips(entry.gfx, tile.a, 0, 0, TILE_W, TILE_H / 2);
+          drawPips(entry.gfx, tile.b, 0, TILE_H / 2, TILE_W, TILE_H / 2);
 
-          if (isMyTurn && playable) {
-            tileContainer.eventMode = 'static';
-            tileContainer.cursor = 'pointer';
-            tileContainer.on('pointertap', () => handleTileClick(tile));
-          }
-
-          handContainer.addChild(tileContainer);
-          handEntries.push({ tile, container: tileContainer });
+          entry.container.visible = true;
+          entry.container.position.set(hx, hy);
+          const interactive = isMyTurn && playable;
+          entry.container.eventMode = interactive ? 'static' : 'none';
+          entry.container.cursor = interactive ? 'pointer' : 'default';
           hx += TILE_W + HAND_GAP;
+        });
+        for (let i = hand.length; i < handPool.length; i++) {
+          handPool[i].container.visible = false;
+          handPool[i].tile = null;
         }
       }
 
       render();
       unsub = () => {};
-      (app as unknown as { __dominoesRender?: () => void }).__dominoesRender =
-        render;
+      renderRef.current = render;
     })();
 
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (contextCanvas && onContextLost) {
+        contextCanvas.removeEventListener('webglcontextlost', onContextLost);
+      }
+      if (contextCanvas && onContextRestored) {
+        contextCanvas.removeEventListener(
+          'webglcontextrestored',
+          onContextRestored,
+        );
+      }
       unsub?.();
+      renderRef.current = null;
       appRef.current = null;
-      app.destroy({ removeView: false });
+      if (initialized) {
+        app.destroy({ removeView: false });
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Re-render the Pixi scene whenever the masked state, selection, or our
   // resolved identity changes — the effect above owns the Application and
-  // exposes a render() hook rather than tearing the scene down every time.
+  // exposes a render() hook (renderRef, set inside the init effect once the
+  // scene exists) rather than tearing the scene down every time.
   useEffect(() => {
-    const app = appRef.current as
-      | (Application & { __dominoesRender?: () => void })
-      | null;
-    app?.__dominoesRender?.();
+    renderRef.current?.();
   }, [state, selectedTile]);
 
   const isMyTurn = state?.currentPlayer === selfId;
@@ -382,56 +501,65 @@ export function DominoesBlockBoard({
         )}
 
         {state && (
-          <>
-            <div className="flex flex-wrap items-center justify-center gap-3 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim">
-              {state.players.map((player) => (
-                <div
-                  key={player}
-                  className={cn(
-                    'notch-3 border px-3 py-1.5',
-                    player === state.currentPlayer
-                      ? 'border-marquinhos-accent text-marquinhos-accent'
-                      : 'border-marquinhos-border',
-                  )}
-                >
-                  {player === selfId ? 'YOU' : player.slice(0, 6)} ·{' '}
-                  {state.handCounts[player]}
-                </div>
-              ))}
-              <div className="notch-3 border border-marquinhos-border px-3 py-1.5">
-                BONEYARD · {state.boneyard}
+          <div className="flex flex-wrap items-center justify-center gap-3 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim">
+            {state.players.map((player) => (
+              <div
+                key={player}
+                className={cn(
+                  'notch-3 border px-3 py-1.5',
+                  player === state.currentPlayer
+                    ? 'border-marquinhos-accent text-marquinhos-accent'
+                    : 'border-marquinhos-border',
+                )}
+              >
+                {player === selfId ? 'YOU' : player.slice(0, 6)} ·{' '}
+                {state.handCounts[player]}
               </div>
+            ))}
+            <div className="notch-3 border border-marquinhos-border px-3 py-1.5">
+              BONEYARD · {state.boneyard}
             </div>
+          </div>
+        )}
 
-            <div className="relative notch-8 border border-marquinhos-border bg-[#1c1b1c] shadow-[0_20px_40px_rgba(0,0,0,0.35)]">
-              <canvas ref={canvasRef} className="block" />
+        {/* Always mounted (not gated on `state`) — the Pixi-owning effect
+            below runs once on mount and needs canvasRef.current to already
+            be a real <canvas> element, but `state` only arrives after the
+            WS round-trip completes, well after mount. */}
+        <div
+          className="relative notch-8 border border-marquinhos-border bg-[#1c1b1c] shadow-[0_20px_40px_rgba(0,0,0,0.35)]"
+          hidden={!state}
+        >
+          <canvas ref={canvasRef} className="block" />
 
-              {pendingEnds && pendingEnds.length === 2 && (
-                <div className="absolute bottom-24 left-1/2 flex -translate-x-1/2 gap-3">
-                  {pendingEnds.map((end) => (
-                    <button
-                      key={end}
-                      type="button"
-                      className="notch-6 border border-marquinhos-accent bg-marquinhos-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-black"
-                      onClick={() => selectedTile && sendPlay(selectedTile, end)}
-                    >
-                      Play {end}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-4 py-2 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim"
-                    onClick={() => {
-                      setSelectedTile(null);
-                      setPendingEnds(null);
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
+          {state && pendingEnds && pendingEnds.length === 2 && (
+            <div className="absolute bottom-24 left-1/2 flex -translate-x-1/2 gap-3">
+              {pendingEnds.map((end) => (
+                <button
+                  key={end}
+                  type="button"
+                  className="notch-6 border border-marquinhos-accent bg-marquinhos-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-black"
+                  onClick={() => selectedTile && sendPlay(selectedTile, end)}
+                >
+                  Play {end}
+                </button>
+              ))}
+              <button
+                type="button"
+                className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-4 py-2 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim"
+                onClick={() => {
+                  setSelectedTile(null);
+                  setPendingEnds(null);
+                }}
+              >
+                Cancel
+              </button>
             </div>
+          )}
+        </div>
 
+        {state && (
+          <>
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -519,7 +647,43 @@ export function DominoesBlockGame({
   onAuthInvalid: () => void;
 }) {
   const navigate = useNavigate();
-  const session = useDominoesSession(identity, onAuthInvalid);
+  const [mode, setMode] = useState<'single' | 'multi' | null>(null);
+  const session = useDominoesSession(identity, mode, onAuthInvalid);
+
+  if (session.status === 'selecting-mode') {
+    return (
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
+          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-accent">
+            SELECT MODE
+          </div>
+          <div className="flex gap-4">
+            <button
+              type="button"
+              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
+              onClick={() => setMode('single')}
+            >
+              VS BOT
+            </button>
+            <button
+              type="button"
+              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
+              onClick={() => setMode('multi')}
+            >
+              VS PLAYER
+            </button>
+          </div>
+          <button
+            type="button"
+            className="notch-6 border border-marquinhos-border bg-transparent px-5 py-3 text-sm font-semibold text-marquinhos-text transition hover:bg-marquinhos-panel-hover"
+            onClick={() => navigate('/')}
+          >
+            BACK
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (session.status === 'connecting') {
     return (

@@ -51,9 +51,20 @@ export function BoggleBoard({
 
   useEffect(() => {
     let cancelled = false;
+    let initialized = false;
     let onGlobalPointerUp: (() => void) | null = null;
+    let onContextLost: ((event: Event) => void) | null = null;
+    let onContextRestored: (() => void) | null = null;
+    let contextCanvas: HTMLCanvasElement | null = null;
     const app = new Application();
     appRef.current = app;
+
+    function onVisibilityChange() {
+      if (!initialized) return;
+      if (document.hidden) app.ticker.stop();
+      else app.ticker.start();
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     (async () => {
       await Promise.resolve();
@@ -72,6 +83,22 @@ export function BoggleBoard({
         app.destroy({ removeView: false });
         return;
       }
+      initialized = true;
+
+      onContextLost = (event: Event) => {
+        event.preventDefault();
+        app.ticker.stop();
+      };
+      onContextRestored = () => {
+        app.ticker.start();
+      };
+      contextCanvas = canvasRef.current!;
+      contextCanvas.addEventListener('webglcontextlost', onContextLost, false);
+      contextCanvas.addEventListener(
+        'webglcontextrestored',
+        onContextRestored,
+        false,
+      );
 
       const tiles = new Container();
       const pathLine = new Graphics();
@@ -184,6 +211,16 @@ export function BoggleBoard({
 
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (contextCanvas && onContextLost) {
+        contextCanvas.removeEventListener('webglcontextlost', onContextLost);
+      }
+      if (contextCanvas && onContextRestored) {
+        contextCanvas.removeEventListener(
+          'webglcontextrestored',
+          onContextRestored,
+        );
+      }
       const app = appRef.current;
       if (app?.renderer) {
         if (onGlobalPointerUp) {

@@ -2,13 +2,13 @@ import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { colyseusUrl } from '../../lib/apiBase';
-import { TicTacToeCanvas } from './TicTacToeCanvas';
-import { useTicTacToeSession } from './useTicTacToeSession';
-import type { TicTacToeState } from './useTicTacToeSession';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
+import { TicTacToeCanvas } from './TicTacToeCanvas';
+import type { TicTacToeState } from './useTicTacToeSession';
+import { useTicTacToeSession } from './useTicTacToeSession';
 
 export function TicTacToeGame({
   identity,
@@ -18,10 +18,11 @@ export function TicTacToeGame({
   onAuthInvalid: () => void;
 }) {
   const navigate = useNavigate();
-  const { state: sessionState, selectMode, backToMenu } = useTicTacToeSession(
-    identity,
-    onAuthInvalid,
-  );
+  const {
+    state: sessionState,
+    selectMode,
+    backToMenu,
+  } = useTicTacToeSession(identity, onAuthInvalid);
 
   const [gameState, setGameState] = useState<TicTacToeState>({
     board: [
@@ -40,7 +41,10 @@ export function TicTacToeGame({
 
   const onMessage = useCallback((message: ActivityMessage) => {
     if (message.type === 'init') {
-      const payload = message.payload as { player: string; state: TicTacToeState };
+      const payload = message.payload as {
+        player: string;
+        state: TicTacToeState;
+      };
       setPlayer(payload.player);
       setGameState(payload.state);
     } else if (message.type === 'state_update') {
@@ -59,7 +63,7 @@ export function TicTacToeGame({
     }
   }, []);
 
-  const { send: roomSend } = useColyseusRoom(
+  const { send: roomSend, connectionState } = useColyseusRoom(
     'tic-tac-toe' as any,
     sessionState.status === 'ready' ? sessionState.session.session : null,
     colyseusUrl(),
@@ -153,15 +157,11 @@ export function TicTacToeGame({
     <div className="flex flex-1 flex-col gap-4 p-6">
       <div className="flex items-center justify-between">
         <div className="text-sm font-semibold text-marquinhos-text">
-          {isGameOver ? (
-            gameState.winner ? (
-              `${gameState.winner === player ? 'YOU WIN!' : `PLAYER ${gameState.winner} WINS`}`
-            ) : (
-              'DRAW'
-            )
-          ) : (
-            `${isMyTurn ? 'YOUR' : 'OPPONENT'} TURN (${gameState.currentPlayer})`
-          )}
+          {isGameOver
+            ? gameState.winner
+              ? `${gameState.winner === player ? 'YOU WIN!' : `PLAYER ${gameState.winner} WINS`}`
+              : 'DRAW'
+            : `${isMyTurn ? 'YOUR' : 'OPPONENT'} TURN (${gameState.currentPlayer})`}
         </div>
         <button
           type="button"
@@ -175,6 +175,12 @@ export function TicTacToeGame({
       {error && (
         <div className="notch-4 border border-marquinhos-danger bg-marquinhos-danger/10 px-4 py-2 text-sm text-marquinhos-danger">
           {error}
+        </div>
+      )}
+
+      {(connectionState === 'disconnected' || connectionState === 'error') && (
+        <div className="notch-4 border border-marquinhos-danger bg-marquinhos-danger/10 px-4 py-2 text-sm text-marquinhos-danger">
+          CONNECTION LOST — RELOAD TO RECONNECT
         </div>
       )}
 

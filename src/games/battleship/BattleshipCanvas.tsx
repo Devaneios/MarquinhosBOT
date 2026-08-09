@@ -104,9 +104,7 @@ function paintPending(layer: Container, pendingShips: PendingShip[]) {
     for (let i = 0; i < size; i++) {
       const cx = ship.orientation === 'horizontal' ? ship.x + i : ship.x;
       const cy = ship.orientation === 'horizontal' ? ship.y : ship.y + i;
-      const g = new Graphics()
-        .rect(2, 2, CELL - 4, CELL - 4)
-        .fill(SHIP_COLOR);
+      const g = new Graphics().rect(2, 2, CELL - 4, CELL - 4).fill(SHIP_COLOR);
       g.position.set(cx * CELL, cy * CELL);
       layer.addChild(g);
     }
@@ -144,8 +142,7 @@ export function BattleshipCanvas(props: BattleshipCanvasProps) {
     const app = new Application();
     appRef.current = app;
 
-    const width =
-      props.mode === 'battle' ? BOARD_PX * 2 + GAP : BOARD_PX;
+    const width = props.mode === 'battle' ? BOARD_PX * 2 + GAP : BOARD_PX;
     const height = BOARD_PX;
 
     let ownGrid: Graphics;
@@ -159,6 +156,19 @@ export function BattleshipCanvas(props: BattleshipCanvasProps) {
     let opponentShots: Container | null = null;
     let opponentHitBox: Graphics | null = null;
     let opponentRoot: Container | null = null;
+    let onContextLost: ((event: Event) => void) | null = null;
+    let onContextRestored: (() => void) | null = null;
+    let contextCanvas: HTMLCanvasElement | null = null;
+
+    function onVisibilityChange() {
+      if (!initialized) return;
+      if (document.hidden) {
+        app.ticker.stop();
+      } else {
+        app.ticker.start();
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     function render() {
       const current = propsRef.current;
@@ -200,6 +210,21 @@ export function BattleshipCanvas(props: BattleshipCanvasProps) {
         return;
       }
       initialized = true;
+
+      onContextLost = (event: Event) => {
+        event.preventDefault();
+        app.ticker.stop();
+      };
+      onContextRestored = () => {
+        app.ticker.start();
+      };
+      contextCanvas = canvasRef.current!;
+      contextCanvas.addEventListener('webglcontextlost', onContextLost, false);
+      contextCanvas.addEventListener(
+        'webglcontextrestored',
+        onContextRestored,
+        false,
+      );
 
       ownGrid = new Graphics();
       ownShips = new Container();
@@ -258,6 +283,16 @@ export function BattleshipCanvas(props: BattleshipCanvasProps) {
 
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (contextCanvas && onContextLost) {
+        contextCanvas.removeEventListener('webglcontextlost', onContextLost);
+      }
+      if (contextCanvas && onContextRestored) {
+        contextCanvas.removeEventListener(
+          'webglcontextrestored',
+          onContextRestored,
+        );
+      }
       if (initialized) {
         app.ticker.remove(render);
         app.destroy({ removeView: false });

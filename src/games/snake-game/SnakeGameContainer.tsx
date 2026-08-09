@@ -1,222 +1,82 @@
-import React from 'react';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { SnakeCanvas } from './SnakeCanvas';
 import { useSnakeSession } from './useSnakeSession';
 
-interface SnakeGameContainerProps {
-  identity: DiscordIdentity;
-  onAuthInvalid: () => void;
-}
-
-export const SnakeGameContainer: React.FC<SnakeGameContainerProps> = ({
+export function SnakeGameContainer({
   identity,
   onAuthInvalid,
-}) => {
-  const {
-    sessionState,
-    selectMode,
-    backToMenu,
-    sendDirection,
-    leave,
-    connectionState,
-  } = useSnakeSession(identity, onAuthInvalid);
+}: {
+  identity: DiscordIdentity;
+  onAuthInvalid: () => void;
+}) {
+  const { session, selectMode, backToMenu } = useSnakeSession(
+    identity,
+    onAuthInvalid,
+  );
 
-  if (sessionState.status === 'selecting-mode') {
+  if (session.status === 'selecting-mode') {
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%',
-          height: '100%',
-          gap: '20px',
-          background: '#000',
-          color: '#fff',
-          fontFamily: 'Arial, sans-serif',
-        }}
-      >
-        <h1>SNAKE GAME</h1>
-        <div style={{ display: 'flex', gap: '20px' }}>
+      <div className="flex flex-1 flex-col items-center justify-center gap-5 bg-marquinhos-bg text-marquinhos-text">
+        <h1 className="font-pixel text-2xl">SNAKE GAME</h1>
+        <div className="flex gap-5">
           <button
+            type="button"
+            className="notch-6 cursor-pointer border border-marquinhos-accent bg-marquinhos-accent px-6 py-4 font-mono text-xs tracking-wide text-marquinhos-bg hover:bg-marquinhos-accent-hover"
             onClick={() => selectMode('single')}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#4CAF50',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '16px',
-            }}
           >
-            Single Player
+            SINGLE PLAYER
           </button>
           <button
+            type="button"
+            className="notch-6 cursor-pointer border border-marquinhos-border bg-marquinhos-panel px-6 py-4 font-mono text-xs tracking-wide text-marquinhos-text hover:border-marquinhos-border-hover"
             onClick={() => selectMode('multi')}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#2196F3',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '16px',
-            }}
           >
-            Two Player
+            TWO PLAYER
           </button>
         </div>
       </div>
     );
   }
 
-  if (sessionState.status === 'error') {
+  if (session.status === 'connecting') {
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%',
-          height: '100%',
-          background: '#000',
-          color: '#f00',
-          fontSize: '18px',
-          gap: '20px',
-        }}
-      >
-        <div>Error: {sessionState.error}</div>
-        <button
-          onClick={backToMenu}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#555',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-        >
-          Back
-        </button>
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
+          <div className="font-pixel text-sm tracking-[0.28em] text-marquinhos-accent">
+            STARTING GAME…
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (
-    sessionState.status === 'connecting' ||
-    connectionState === 'connecting'
-  ) {
+  if (session.status === 'error') {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%',
-          height: '100%',
-          background: '#000',
-          color: '#fff',
-          fontSize: '18px',
-        }}
-      >
-        Connecting to game...
-      </div>
-    );
-  }
-
-  if (connectionState === 'error' || connectionState === 'disconnected') {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%',
-          height: '100%',
-          background: '#000',
-          color: '#f00',
-          fontSize: '18px',
-          gap: '20px',
-        }}
-      >
-        <div>Connection {connectionState}</div>
-        <button
-          onClick={backToMenu}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#555',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-        >
-          Back to Menu
-        </button>
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="notch-8 flex min-h-[240px] w-full max-w-[560px] flex-col items-center justify-center gap-5 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
+          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-danger">
+            CONNECTION FAILED
+          </div>
+          <div className="max-w-[48ch] text-sm leading-6 text-marquinhos-text-dim">
+            {session.error}
+          </div>
+          <button
+            type="button"
+            className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
+            onClick={backToMenu}
+          >
+            BACK
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div
-      style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}
-    >
-      <SnakeCanvas
-        state={sessionState.gameState || null}
-        onDirection={sendDirection}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          top: '20px',
-          left: '20px',
-          color: '#0f0',
-          fontFamily: 'monospace',
-          fontSize: '14px',
-          textShadow: '0 0 5px #0f0',
-        }}
-      >
-        {sessionState.gameState && (
-          <>
-            <div>Player 1: {sessionState.gameState.scores?.player1 ?? 0}</div>
-            {sessionState.gameState.snakes?.player2 && (
-              <div>Player 2: {sessionState.gameState.scores?.player2 ?? 0}</div>
-            )}
-            {sessionState.gameState.winner && (
-              <div style={{ marginTop: '20px', fontSize: '18px' }}>
-                Winner: {sessionState.gameState.winner}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '20px',
-          left: '20px',
-        }}
-      >
-        <button
-          onClick={leave}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#f44336',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px',
-          }}
-        >
-          Leave Game
-        </button>
-      </div>
-    </div>
+    <SnakeCanvas
+      session={session.session}
+      mode={session.mode}
+      onMainMenu={backToMenu}
+    />
   );
-};
+}

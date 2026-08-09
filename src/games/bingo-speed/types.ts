@@ -1,31 +1,23 @@
+export type GameMode = 'multi' | 'single';
+
 export interface BingoCard {
   board: number[][];
   marked: boolean[][];
 }
 
-export interface BingoSpeedGameState {
-  status: 'selecting-mode' | 'connecting' | 'playing' | 'finished' | 'error';
-  card?: BingoCard;
-  drawnNumbers: number[];
-  playerCount: number;
-  gameStarted: boolean;
-  winner?: string;
-  error?: string;
+export interface BingoInitPayload {
+  card: BingoCard;
+  state?: {
+    drawnNumbers: number[];
+    playerCount: number;
+    gameStarted: boolean;
+  };
 }
 
-export interface BingoSpeedSession {
-  status: 'selecting-mode' | 'connecting' | 'playing' | 'finished' | 'error';
-  session?: {
-    room: any;
-    card?: BingoCard;
-    userId: string;
-  };
-  card?: BingoCard;
-  drawnNumbers: number[];
-  playerCount: number;
-  gameStarted: boolean;
+export interface BingoNumberDrawnPayload {
+  number: number;
+}
+
+export interface BingoGameEndPayload {
   winner?: string;
-  error?: string;
-  mode: 'multi' | 'single';
-  sound: boolean;
 }

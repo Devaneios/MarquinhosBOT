@@ -7,23 +7,30 @@ import {
 } from '../shared/activitySession';
 
 type WordChainSessionState =
+  | { status: 'selecting-mode' }
   | { status: 'connecting' }
   | { status: 'ready'; session: WsSession }
   | { status: 'error'; error: string };
 
 export function useWordChainSession(
   identity: DiscordIdentity,
+  mode: 'single' | 'multi' | null,
   onAuthInvalid: () => void,
 ): WordChainSessionState {
   const [state, setState] = useState<WordChainSessionState>({
-    status: 'connecting',
+    status: mode ? 'connecting' : 'selecting-mode',
   });
 
   useEffect(() => {
+    if (!mode) {
+      setState({ status: 'selecting-mode' });
+      return;
+    }
+
     let cancelled = false;
     setState({ status: 'connecting' });
 
-    fetchWsSessionToken({ game: 'word-chain', mode: 'multi', identity })
+    fetchWsSessionToken({ game: 'word-chain', mode, identity })
       .then((session) => {
         if (cancelled) return;
         setState({ status: 'ready', session });
@@ -40,7 +47,7 @@ export function useWordChainSession(
     return () => {
       cancelled = true;
     };
-  }, [identity, onAuthInvalid]);
+  }, [identity, mode, onAuthInvalid]);
 
   return state;
 }

@@ -347,7 +347,7 @@ function WordleRaceBoard({ session, userId }: { session: WsSession; userId: stri
   useEffect(() => {
     const el = gridRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [gameState?.currentPlayerGuesses.length]);
+  }, [gameState?.currentPlayerGuesses?.length]);
 
   useEffect(() => {
     return () => window.clearTimeout(shakeTimeout.current);

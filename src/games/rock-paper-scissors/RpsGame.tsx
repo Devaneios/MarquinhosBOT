@@ -81,13 +81,14 @@ function PickButton({
 }
 
 function RpsBoard({
-  playerId,
   session,
 }: {
-  playerId: 'player1' | 'player2';
   session: { token: string; roomKey: string };
 }) {
   const navigate = useNavigate();
+  const [playerId, setPlayerId] = useState<'player1' | 'player2' | null>(
+    null,
+  );
   const [phase, setPhase] = useState<GamePhase>('waiting');
   const [roundState, setRoundState] = useState<RpsState | null>(null);
   const [myPick, setMyPick] = useState<RpsPick | null>(null);
@@ -99,7 +100,10 @@ function RpsBoard({
     session,
     colyseusUrl(),
     (message: ActivityMessage) => {
-      if (message.type === 'game_start') {
+      if (message.type === 'init') {
+        const payload = message.payload as { playerId: 'player1' | 'player2' };
+        setPlayerId(payload.playerId);
+      } else if (message.type === 'game_start') {
         setPhase('playing');
       } else if (message.type === 'round_state') {
         const payload = message.payload as RpsState;
@@ -157,7 +161,7 @@ function RpsBoard({
 
       <main className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto p-4 sm:p-6">
         <div className="notch-8 flex w-full max-w-[600px] flex-col gap-6 border border-marquinhos-border bg-[#1c1b1c] px-4 py-6 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:px-6">
-          {roundState && (
+          {roundState && playerId && (
             <>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1">
@@ -317,7 +321,43 @@ export function RpsGame({
   onAuthInvalid: () => void;
 }) {
   const navigate = useNavigate();
-  const sessionState = useRpsSession(identity, 'multi', onAuthInvalid);
+  const [mode, setMode] = useState<'single' | 'multi' | null>(null);
+  const sessionState = useRpsSession(identity, mode, onAuthInvalid);
+
+  if (sessionState.status === 'selecting-mode') {
+    return (
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
+          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-accent">
+            SELECT MODE
+          </div>
+          <div className="flex gap-4">
+            <button
+              type="button"
+              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
+              onClick={() => setMode('single')}
+            >
+              VS BOT
+            </button>
+            <button
+              type="button"
+              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
+              onClick={() => setMode('multi')}
+            >
+              VS PLAYER
+            </button>
+          </div>
+          <button
+            type="button"
+            className="notch-6 border border-marquinhos-border bg-transparent px-5 py-3 text-sm font-semibold text-marquinhos-text transition hover:bg-marquinhos-panel-hover"
+            onClick={() => navigate('/')}
+          >
+            BACK
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (sessionState.status === 'connecting') {
     return (
@@ -365,10 +405,5 @@ export function RpsGame({
     );
   }
 
-  return (
-    <RpsBoard
-      playerId="player1"
-      session={sessionState.session}
-    />
-  );
+  return <RpsBoard session={sessionState.session} />;
 }

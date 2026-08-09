@@ -56,6 +56,14 @@ export function ConnectFourCanvas({
     let onPointerLeave: (() => void) | null = null;
     let onClick: ((e: MouseEvent) => void) | null = null;
     let canvasEl: HTMLCanvasElement | null = null;
+    let onContextLost: ((event: Event) => void) | null = null;
+    let onContextRestored: (() => void) | null = null;
+
+    function onVisibilityChange() {
+      if (document.hidden) app.ticker.stop();
+      else app.ticker.start();
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     function drawHover(col: number | null) {
       const hover = hoverRef.current;
@@ -136,6 +144,24 @@ export function ConnectFourCanvas({
 
       redraw();
 
+      onContextLost = (event: Event) => {
+        event.preventDefault();
+        app.ticker.stop();
+      };
+      onContextRestored = () => {
+        app.ticker.start();
+      };
+      canvasRef.current!.addEventListener(
+        'webglcontextlost',
+        onContextLost,
+        false,
+      );
+      canvasRef.current!.addEventListener(
+        'webglcontextrestored',
+        onContextRestored,
+        false,
+      );
+
       canvasEl = canvasRef.current;
       const columnFromX = (clientX: number): number | null => {
         if (!canvasEl) return null;
@@ -163,12 +189,20 @@ export function ConnectFourCanvas({
 
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       if (canvasEl) {
         if (onPointerMove)
           canvasEl.removeEventListener('pointermove', onPointerMove);
         if (onPointerLeave)
           canvasEl.removeEventListener('pointerleave', onPointerLeave);
         if (onClick) canvasEl.removeEventListener('click', onClick);
+        if (onContextLost)
+          canvasEl.removeEventListener('webglcontextlost', onContextLost);
+        if (onContextRestored)
+          canvasEl.removeEventListener(
+            'webglcontextrestored',
+            onContextRestored,
+          );
       }
       if (app.renderer) app.destroy({ removeView: false });
       appRef.current = null;

@@ -1,4 +1,4 @@
-import { Application, Graphics, Text, Container } from 'pixi.js';
+import { Application, Graphics } from 'pixi.js';
 import { useEffect, useRef } from 'react';
 
 interface HangmanCanvasProps {
@@ -14,42 +14,62 @@ interface HangmanCanvasProps {
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ';
 
-const HANGMAN_STAGES = [
-  // Stage 0: gallows
-  (gfx: Graphics) => {
-    gfx.lineStyle(2, 0xffffff);
-    gfx.moveTo(20, 250).lineTo(20, 50).lineTo(150, 50).lineTo(150, 70);
-  },
+const GALLOWS_WIDTH = 220;
+const GALLOWS_HEIGHT = 260;
+const GALLOWS_BG = '#17181a';
+const LINE_COLOR = 0xffffff;
+const LINE_WIDTH = 2;
+
+const HANGMAN_STAGES: ((gfx: Graphics) => void)[] = [
+  // Stage 0: gallows post
+  (gfx) =>
+    gfx
+      .moveTo(20, 250)
+      .lineTo(20, 50)
+      .lineTo(150, 50)
+      .lineTo(150, 70)
+      .stroke({ width: LINE_WIDTH, color: LINE_COLOR }),
   // Stage 1: head
-  (gfx: Graphics) => {
-    gfx.circle(150, 90, 20).stroke({ color: 0xffffff, width: 2 });
-  },
+  (gfx) =>
+    gfx.circle(150, 90, 20).stroke({ width: LINE_WIDTH, color: LINE_COLOR }),
   // Stage 2: body
-  (gfx: Graphics) => {
-    gfx.lineStyle(2, 0xffffff);
-    gfx.moveTo(150, 110).lineTo(150, 170);
-  },
+  (gfx) =>
+    gfx
+      .moveTo(150, 110)
+      .lineTo(150, 170)
+      .stroke({ width: LINE_WIDTH, color: LINE_COLOR }),
   // Stage 3: left arm
-  (gfx: Graphics) => {
-    gfx.lineStyle(2, 0xffffff);
-    gfx.moveTo(150, 130).lineTo(120, 150);
-  },
+  (gfx) =>
+    gfx
+      .moveTo(150, 130)
+      .lineTo(120, 150)
+      .stroke({ width: LINE_WIDTH, color: LINE_COLOR }),
   // Stage 4: right arm
-  (gfx: Graphics) => {
-    gfx.lineStyle(2, 0xffffff);
-    gfx.moveTo(150, 130).lineTo(180, 150);
-  },
+  (gfx) =>
+    gfx
+      .moveTo(150, 130)
+      .lineTo(180, 150)
+      .stroke({ width: LINE_WIDTH, color: LINE_COLOR }),
   // Stage 5: left leg
-  (gfx: Graphics) => {
-    gfx.lineStyle(2, 0xffffff);
-    gfx.moveTo(150, 170).lineTo(120, 210);
-  },
+  (gfx) =>
+    gfx
+      .moveTo(150, 170)
+      .lineTo(120, 210)
+      .stroke({ width: LINE_WIDTH, color: LINE_COLOR }),
   // Stage 6: right leg
-  (gfx: Graphics) => {
-    gfx.lineStyle(2, 0xffffff);
-    gfx.moveTo(150, 170).lineTo(180, 210);
-  },
+  (gfx) =>
+    gfx
+      .moveTo(150, 170)
+      .lineTo(180, 210)
+      .stroke({ width: LINE_WIDTH, color: LINE_COLOR }),
 ];
+
+function drawGallows(gfx: Graphics, strikes: number) {
+  gfx.clear();
+  for (let i = 0; i <= strikes && i < HANGMAN_STAGES.length; i++) {
+    HANGMAN_STAGES[i](gfx);
+  }
+}
 
 export function HangmanCanvas({
   revealedWord,
@@ -61,157 +81,153 @@ export function HangmanCanvas({
   onLetterClick,
   disabled,
 }: HangmanCanvasProps) {
-  const canvasRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
+  const gallowsRef = useRef<Graphics | null>(null);
+  const redrawRef = useRef<(() => void) | null>(null);
+  const strikesRef = useRef(strikes);
+  strikesRef.current = strikes;
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    let cancelled = false;
+    let initialized = false;
+    let onContextLost: ((event: Event) => void) | null = null;
+    let onContextRestored: (() => void) | null = null;
+    let contextCanvas: HTMLCanvasElement | null = null;
 
-    const width = 800;
-    const height = 600;
+    function onVisibilityChange() {
+      if (document.hidden) {
+        appRef.current?.ticker.stop();
+      } else {
+        appRef.current?.ticker.start();
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
-    const app = new Application({
-      width,
-      height,
-      antialias: true,
-      preference: 'webgl',
-      autoDensity: true,
-      resizeTo: canvasRef.current,
-    });
-
-    canvasRef.current.appendChild(app.canvas as unknown as HTMLCanvasElement);
+    const app = new Application();
     appRef.current = app;
 
-    const stage = app.stage;
-    stage.sortableChildren = true;
-
-    let cancelled = false;
-
-    const render = () => {
+    (async () => {
+      // Mirrors PongCanvas: React 19 StrictMode double-invokes this effect
+      // before any await settles, so bail here if the phantom first pass's
+      // cleanup already ran.
+      await Promise.resolve();
       if (cancelled) return;
 
-      stage.removeChildren();
-
-      // Draw hangman stages
-      const hangmanGfx = new Graphics();
-      for (let i = 0; i <= strikes; i++) {
-        if (i < HANGMAN_STAGES.length) {
-          HANGMAN_STAGES[i](hangmanGfx);
-        }
-      }
-      stage.addChild(hangmanGfx);
-
-      // Draw word
-      const wordText = new Text(revealedWord, {
-        fontSize: 48,
-        fontFamily: 'Arial',
-        fill: 0xffffff,
-        letterSpacing: 8,
+      await app.init({
+        canvas: canvasRef.current!,
+        width: GALLOWS_WIDTH,
+        height: GALLOWS_HEIGHT,
+        background: GALLOWS_BG,
+        antialias: true,
+        resolution: window.devicePixelRatio,
+        autoDensity: true,
       });
-      wordText.x = 250;
-      wordText.y = 80;
-      stage.addChild(wordText);
-
-      // Draw strikes info
-      const strikesText = new Text(`Strikes: ${strikes}/${maxStrikes}`, {
-        fontSize: 20,
-        fontFamily: 'Arial',
-        fill: strikes >= maxStrikes - 1 ? 0xff6b6b : 0xffffff,
-      });
-      strikesText.x = 250;
-      strikesText.y = 160;
-      stage.addChild(strikesText);
-
-      // Draw game status
-      if (gameOver) {
-        const statusText = new Text(won ? 'YOU WIN!' : 'GAME OVER', {
-          fontSize: 48,
-          fontFamily: 'Arial',
-          fontWeight: 'bold',
-          fill: won ? 0x51cf66 : 0xff6b6b,
-        });
-        statusText.x = 250;
-        statusText.y = 200;
-        stage.addChild(statusText);
-
-        if (!won) {
-          const answerText = new Text(`Answer: ${revealedWord}`, {
-            fontSize: 24,
-            fontFamily: 'Arial',
-            fill: 0xffffff,
-          });
-          answerText.x = 250;
-          answerText.y = 260;
-          stage.addChild(answerText);
-        }
+      if (cancelled) {
+        app.destroy({ removeView: false });
+        return;
       }
+      initialized = true;
 
-      // Draw keyboard
-      const keyboardContainer = new Container();
-      let keyX = 20;
-      let keyY = 350;
+      const gallows = new Graphics();
+      gallowsRef.current = gallows;
+      app.stage.addChild(gallows);
 
-      for (let i = 0; i < ALPHABET.length; i++) {
-        const letter = ALPHABET[i];
-        const isGuessed = guessedLetters.includes(letter.toLowerCase());
+      const redraw = () => drawGallows(gallows, strikesRef.current);
+      redrawRef.current = redraw;
+      redraw();
 
-        const buttonGfx = new Graphics();
-        buttonGfx.rect(keyX, keyY, 40, 40);
-        buttonGfx.fill({
-          color: isGuessed ? 0x495057 : 0x495057,
-          alpha: isGuessed ? 0.5 : 1,
-        });
-        buttonGfx.stroke({
-          color: isGuessed ? 0x6c757d : 0xffffff,
-          width: 2,
-        });
-
-        const letterText = new Text(letter, {
-          fontSize: 14,
-          fontFamily: 'Arial',
-          fontWeight: 'bold',
-          fill: isGuessed ? 0x999999 : 0xffffff,
-        });
-        letterText.x = keyX + 12;
-        letterText.y = keyY + 10;
-
-        const button = new Container();
-        button.addChild(buttonGfx);
-        button.addChild(letterText);
-        button.interactive = !isGuessed && !disabled && !gameOver;
-        button.cursor = button.interactive ? 'pointer' : 'default';
-        button.on('pointerdown', () => {
-          if (!isGuessed && !disabled && !gameOver) {
-            onLetterClick(letter.toLowerCase());
-          }
-        });
-
-        keyboardContainer.addChild(button);
-
-        keyX += 50;
-        if ((i + 1) % 12 === 0) {
-          keyX = 20;
-          keyY += 50;
-        }
-      }
-
-      stage.addChild(keyboardContainer);
-    };
-
-    const renderLoop = () => {
-      render();
-      app.ticker.add(() => {
-        render();
-      });
-    };
-
-    renderLoop();
+      onContextLost = (event: Event) => {
+        event.preventDefault();
+        app.ticker.stop();
+      };
+      onContextRestored = () => {
+        app.ticker.start();
+      };
+      contextCanvas = canvasRef.current!;
+      contextCanvas.addEventListener('webglcontextlost', onContextLost, false);
+      contextCanvas.addEventListener(
+        'webglcontextrestored',
+        onContextRestored,
+        false,
+      );
+    })();
 
     return () => {
       cancelled = true;
-      app.destroy({ removeView: true });
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (contextCanvas && onContextLost) {
+        contextCanvas.removeEventListener('webglcontextlost', onContextLost);
+      }
+      if (contextCanvas && onContextRestored) {
+        contextCanvas.removeEventListener(
+          'webglcontextrestored',
+          onContextRestored,
+        );
+      }
+      redrawRef.current = null;
+      gallowsRef.current = null;
+      if (initialized) {
+        app.destroy({ removeView: false });
+      }
+      appRef.current = null;
     };
-  }, [revealedWord, guessedLetters, strikes, maxStrikes, gameOver, won, onLetterClick, disabled]);
+  }, []);
 
-  return <div ref={canvasRef} style={{ width: '100%', height: '600px' }} />;
+  useEffect(() => {
+    redrawRef.current?.();
+  }, [strikes]);
+
+  return (
+    <div className="flex flex-col items-center gap-5">
+      <div className="relative border border-marquinhos-border bg-marquinhos-bg">
+        <canvas ref={canvasRef} className="block" />
+      </div>
+
+      <div className="flex flex-col items-center gap-2">
+        <div className="font-pixel text-3xl tracking-[0.35em] text-marquinhos-text">
+          {revealedWord}
+        </div>
+        <div
+          className={`text-sm ${strikes >= maxStrikes - 1 ? 'text-marquinhos-danger' : 'text-marquinhos-text-dim'}`}
+        >
+          Strikes: {strikes}/{maxStrikes}
+        </div>
+      </div>
+
+      {gameOver && (
+        <div className="flex flex-col items-center gap-1">
+          <div
+            className={`font-pixel text-2xl ${won ? 'text-marquinhos-green' : 'text-marquinhos-danger'}`}
+          >
+            {won ? 'YOU WIN!' : 'GAME OVER'}
+          </div>
+          {!won && (
+            <div className="text-sm text-marquinhos-text-dim">
+              Answer: {revealedWord}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex max-w-[600px] flex-wrap justify-center gap-1.5">
+        {ALPHABET.split('').map((letter) => {
+          const lower = letter.toLowerCase();
+          const isGuessed = guessedLetters.includes(lower);
+          const isDisabled = isGuessed || disabled || gameOver;
+          return (
+            <button
+              key={letter}
+              type="button"
+              disabled={isDisabled}
+              onClick={() => onLetterClick(lower)}
+              className="notch-3 flex h-10 w-10 items-center justify-center border border-marquinhos-border bg-marquinhos-panel text-sm font-bold text-marquinhos-text hover:border-marquinhos-border-hover disabled:cursor-not-allowed disabled:border-marquinhos-border/60 disabled:text-marquinhos-text-disabled disabled:hover:border-marquinhos-border/60"
+            >
+              {letter}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }

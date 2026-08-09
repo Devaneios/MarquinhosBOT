@@ -45,9 +45,11 @@ export function TowerCanvas({ session, userId, onMainMenu }: Props) {
   } | null>(null);
   const [requested, setRequested] = useState(false);
 
-  const sendLeaveOnDisconnect = useRef((room: { send: (t: string) => void }) => {
-    room.send('leave');
-  }).current;
+  const sendLeaveOnDisconnect = useRef(
+    (room: { send: (t: string) => void }) => {
+      room.send('leave');
+    },
+  ).current;
 
   const { send: roomSend, connectionState } = useColyseusRoom(
     'tower-unstable',
@@ -110,11 +112,19 @@ export function TowerCanvas({ session, userId, onMainMenu }: Props) {
     let contextCanvas: HTMLCanvasElement | null = null;
     let tick: (() => void) | null = null;
 
+    function onVisibilityChange() {
+      if (document.hidden) {
+        appRef.current?.ticker.stop();
+      } else {
+        appRef.current?.ticker.start();
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
     const app = new Application();
     appRef.current = app;
 
-    const canvasHeight =
-      VISIBLE_LEVELS * (3 * BLOCK_HEIGHT + LEVEL_GAP) + 40;
+    const canvasHeight = VISIBLE_LEVELS * (3 * BLOCK_HEIGHT + LEVEL_GAP) + 40;
 
     (async () => {
       await Promise.resolve();
@@ -203,7 +213,10 @@ export function TowerCanvas({ session, userId, onMainMenu }: Props) {
               gfx.eventMode = 'static';
               gfx.cursor = 'pointer';
               gfx.on('pointerdown', () => {
-                roomSend({ type: 'pull', payload: { level: i, position: pos } });
+                roomSend({
+                  type: 'pull',
+                  payload: { level: i, position: pos },
+                });
               });
             }
 
@@ -218,6 +231,7 @@ export function TowerCanvas({ session, userId, onMainMenu }: Props) {
 
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       messageHandlerRef.current = () => {};
       if (contextCanvas && onContextLost) {
         contextCanvas.removeEventListener('webglcontextlost', onContextLost);
@@ -236,7 +250,8 @@ export function TowerCanvas({ session, userId, onMainMenu }: Props) {
     };
   }, [roomSend, userId]);
 
-  const isMyTurn = state?.status === 'playing' && state.currentPlayer === userId;
+  const isMyTurn =
+    state?.status === 'playing' && state.currentPlayer === userId;
   const winnerIsMe = state?.status === 'ended' && state.winner === userId;
 
   return (
@@ -277,7 +292,8 @@ export function TowerCanvas({ session, userId, onMainMenu }: Props) {
 
       {state?.lastPull && (
         <div className="text-xs text-marquinhos-text-dim">
-          Last pull instability: {(state.lastPull.instability * 100).toFixed(1)}%
+          Last pull instability: {(state.lastPull.instability * 100).toFixed(1)}
+          %
         </div>
       )}
 

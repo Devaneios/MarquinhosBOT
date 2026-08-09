@@ -298,6 +298,9 @@ export function PongCanvas({
     sendLeaveOnDisconnect,
   );
 
+  // eslint-disable react-hooks/exhaustive-deps -- intentional [session]-only
+  // deps per §6.2; mode/sound/onMainMenu/roomSend are fixed for the
+  // session's lifetime and MUST NOT retrigger this effect.
   useEffect(() => {
     devlog('[pong-canvas] mounting');
     const sfx = new PongSfx(sound);
@@ -1099,6 +1102,7 @@ export function PongCanvas({
       appRef.current = null;
     };
   }, [session]);
+  // eslint-enable react-hooks/exhaustive-deps
 
   const p1Name = 'PLAYER 1';
   const p2Name = mode === 'single' ? 'CPU' : 'PLAYER 2';

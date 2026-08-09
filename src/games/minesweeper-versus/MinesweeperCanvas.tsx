@@ -46,8 +46,19 @@ export function MinesweeperCanvas({
     const app = new Application();
     appRef.current = app;
     let cancelled = false;
+    let initialized = false;
     let builtWidth = -1;
     let builtHeight = -1;
+    let onContextLost: ((event: Event) => void) | null = null;
+    let onContextRestored: (() => void) | null = null;
+    let contextCanvas: HTMLCanvasElement | null = null;
+
+    function onVisibilityChange() {
+      if (!initialized) return;
+      if (document.hidden) app.ticker.stop();
+      else app.ticker.start();
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     function drawTile(cell: PublicCell, gfx: Graphics, hovered: boolean) {
       gfx.clear();
@@ -179,6 +190,22 @@ export function MinesweeperCanvas({
         app.destroy({ removeView: false });
         return;
       }
+      initialized = true;
+
+      onContextLost = (event: Event) => {
+        event.preventDefault();
+        app.ticker.stop();
+      };
+      onContextRestored = () => {
+        app.ticker.start();
+      };
+      contextCanvas = canvasRef.current!;
+      contextCanvas.addEventListener('webglcontextlost', onContextLost, false);
+      contextCanvas.addEventListener(
+        'webglcontextrestored',
+        onContextRestored,
+        false,
+      );
 
       applyBoardRef.current = (snapshot: BoardSnapshot) => {
         if (snapshot.width !== builtWidth || snapshot.height !== builtHeight) {
@@ -195,7 +222,19 @@ export function MinesweeperCanvas({
 
     return () => {
       cancelled = true;
-      app.destroy({ removeView: false });
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (contextCanvas && onContextLost) {
+        contextCanvas.removeEventListener('webglcontextlost', onContextLost);
+      }
+      if (contextCanvas && onContextRestored) {
+        contextCanvas.removeEventListener(
+          'webglcontextrestored',
+          onContextRestored,
+        );
+      }
+      if (initialized) {
+        app.destroy({ removeView: false });
+      }
       appRef.current = null;
       tilesRef.current = [];
       labelsRef.current = [];
