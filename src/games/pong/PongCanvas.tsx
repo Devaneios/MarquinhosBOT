@@ -1,6 +1,7 @@
 import type { Room } from '@colyseus/sdk';
 import { Application, BlurFilter, Graphics } from 'pixi.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { colyseusUrl } from '../../lib/apiBase';
 import { devinfo, devlog, devwarn } from '../../lib/devlog';
 import type { WsSession } from '../shared/activitySession';
@@ -238,6 +239,7 @@ export function PongCanvas({
   sound: boolean;
   onMainMenu: () => void;
 }) {
+  const { t } = useTranslation(['pong', 'common']);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const timerRef = useRef<HTMLDivElement>(null);
   const latestSnapshotRef = useRef<Snapshot | null>(null);
@@ -1104,8 +1106,8 @@ export function PongCanvas({
   }, [session]);
   // eslint-enable react-hooks/exhaustive-deps
 
-  const p1Name = 'PLAYER 1';
-  const p2Name = mode === 'single' ? 'CPU' : 'PLAYER 2';
+  const p1Name = t('pong:player1');
+  const p2Name = mode === 'single' ? t('pong:cpu') : t('pong:player2');
   const winnerName =
     winner === 'left' ? p1Name : winner === 'right' ? p2Name : '';
 
@@ -1132,14 +1134,14 @@ export function PongCanvas({
           </div>
           <button
             type="button"
-            aria-label="Pause game"
+            aria-label={t('pong:pauseAriaLabel')}
             className="font-pixel cursor-pointer border border-marquinhos-border bg-marquinhos-panel px-3.5 py-2 text-[11px] text-marquinhos-text hover:border-marquinhos-border-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
             onClick={() => {
               devlog('[pong-canvas] pause -> leaving to main menu');
               onMainMenu();
             }}
           >
-            II PAUSE
+            {t('pong:pauseButton')}
           </button>
         </div>
         <div className="flex flex-col items-end gap-1.5">
@@ -1162,30 +1164,30 @@ export function PongCanvas({
         />
         {spectating ? (
           <div className="notch-3 absolute top-3 left-1/2 -translate-x-1/2 border border-marquinhos-accent bg-marquinhos-panel px-2.5 py-1 font-pixel text-[11px] tracking-wide text-marquinhos-accent">
-            SPECTATING
+            {t('pong:spectating')}
           </div>
         ) : (
           !score && (
             <div className="font-pixel animate-pong-blink absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-marquinhos-text">
-              WAITING FOR OPPONENT…
+              {t('pong:waitingForOpponent')}
             </div>
           )
         )}
         {pausedOpponent && !winner && (
           <div className="font-pixel animate-pong-blink absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-marquinhos-text">
-            OPPONENT DISCONNECTED — WAITING…
+            {t('pong:opponentDisconnected')}
           </div>
         )}
         {(connectionState === 'disconnected' ||
           connectionState === 'error') && (
           <div className="font-pixel absolute top-3 left-1/2 -translate-x-1/2 border border-marquinhos-danger/60 bg-marquinhos-panel px-3 py-1.5 text-[11px] tracking-wide text-marquinhos-danger">
-            CONNECTION LOST — RELOAD TO RECONNECT
+            {t('common:connectionLost')}
           </div>
         )}
         {winner && (
           <div className="animate-pong-game-over-in absolute inset-0 flex flex-col items-center justify-center gap-8 bg-marquinhos-bg/90">
             <div className="animate-pong-game-over-title-in font-pixel text-center text-3xl text-marquinhos-text">
-              {winnerName} WINS
+              {winnerName} {t('pong:wins')}
             </div>
             <div className="font-pixel flex items-center gap-6 text-2xl text-marquinhos-text">
               <span className="text-marquinhos-accent">{score?.left}</span>
@@ -1207,8 +1209,13 @@ export function PongCanvas({
                   }}
                 >
                   {requested
-                    ? `WAITING… (${restartStatus?.votes ?? 1}/${restartStatus?.required ?? (mode === 'multi' ? 2 : 1)})`
-                    : 'REMATCH'}
+                    ? t('pong:waitingVotes', {
+                        votes: restartStatus?.votes ?? 1,
+                        required:
+                          restartStatus?.required ??
+                          (mode === 'multi' ? 2 : 1),
+                      })
+                    : t('pong:rematch')}
                 </button>
               )}
               <button
@@ -1219,7 +1226,7 @@ export function PongCanvas({
                   onMainMenu();
                 }}
               >
-                MAIN MENU
+                {t('common:mainMenu')}
               </button>
             </div>
           </div>
