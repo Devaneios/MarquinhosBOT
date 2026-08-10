@@ -34,13 +34,3 @@ export interface SubmitErrorPayload {
 export interface GameOverPayload {
   results: { userId: string; score: number; words: string[] }[];
 }
-
-export const SUBMIT_ERROR_MESSAGES: Record<SubmitErrorPayload['reason'], string> = {
-  not_started: 'Game has not started yet',
-  already_ended: "Time's up",
-  unknown_player: 'Not part of this game',
-  invalid_path: 'Letters must be adjacent and unused',
-  too_short: 'Words need 3+ letters',
-  not_a_word: 'Not a real word',
-  already_found: 'You already found that word',
-};

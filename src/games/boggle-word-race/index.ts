@@ -8,7 +8,6 @@ import { boggleRoutes } from './boggleRoutes';
 // correctly ahead of that wiring.
 export const gameDescriptor: GameDescriptor = {
   id: 'boggle-word-race' as GameId,
-  name: 'BOGGLE WORD RACE',
   status: 'PLAY',
   routes: boggleRoutes,
 };
