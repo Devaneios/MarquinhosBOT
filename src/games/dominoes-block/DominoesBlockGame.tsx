@@ -1,6 +1,14 @@
 import { Application, Container, Graphics } from 'pixi.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import {
+  ConnectingScreen,
+  EndScreen,
+  ErrorScreen,
+  GameHeader,
+  ModeSelectScreen,
+} from '../../components/game-shell';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { colyseusUrl } from '../../lib/apiBase';
 import { cn } from '../../lib/cn';
@@ -57,7 +65,7 @@ function useDominoesSession(
     let cancelled = false;
     setState({ status: 'connecting' });
     fetchWsSessionToken({
-      game: 'dominoes-block' as any,
+      game: 'dominoes-block',
       mode,
       identity,
     })
@@ -177,6 +185,7 @@ export function DominoesBlockBoard({
   selfId: string;
 }) {
   const navigate = useNavigate();
+  const { t } = useTranslation(['dominoes-block', 'common']);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
   const [state, setState] = useState<DominoesClientState | null>(null);
@@ -198,7 +207,7 @@ export function DominoesBlockBoard({
   const renderRef = useRef<(() => void) | null>(null);
 
   const { send: roomSend, connectionState } = useColyseusRoom(
-    'dominoes-block' as any,
+    'dominoes-block',
     session,
     colyseusUrl(),
     (message: ActivityMessage) => {
@@ -477,26 +486,19 @@ export function DominoesBlockBoard({
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-marquinhos-bg">
-      <header className="flex items-center justify-between gap-4 border-b border-marquinhos-border bg-black/10 px-4 py-3 sm:px-6">
-        <div className="font-pixel text-sm tracking-[0.28em] text-marquinhos-accent sm:text-base">
-          DOMINOES
-        </div>
-        <button
-          type="button"
-          className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-4 py-2 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
-          onClick={() => {
-            roomSend({ type: 'leave' });
-            navigate('/');
-          }}
-        >
-          Back
-        </button>
-      </header>
+      <GameHeader
+        titleKey="dominoes-block.name"
+        titleNs="games"
+        onBack={() => {
+          roomSend({ type: 'leave' });
+          navigate('/');
+        }}
+      />
 
       <main className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 overflow-y-auto p-4 sm:p-6">
         {!state && (
           <div className="font-pixel animate-pong-blink text-sm text-marquinhos-accent">
-            WAITING FOR PLAYERS…
+            {t('waitingPlayers')}
           </div>
         )}
 
@@ -512,12 +514,12 @@ export function DominoesBlockBoard({
                     : 'border-marquinhos-border',
                 )}
               >
-                {player === selfId ? 'YOU' : player.slice(0, 6)} ·{' '}
+                {player === selfId ? t('common:you') : player.slice(0, 6)} ·{' '}
                 {state.handCounts[player]}
               </div>
             ))}
             <div className="notch-3 border border-marquinhos-border px-3 py-1.5">
-              BONEYARD · {state.boneyard}
+              {t('boneyard')} · {state.boneyard}
             </div>
           </div>
         )}
@@ -541,7 +543,9 @@ export function DominoesBlockBoard({
                   className="notch-6 border border-marquinhos-accent bg-marquinhos-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-black"
                   onClick={() => selectedTile && sendPlay(selectedTile, end)}
                 >
-                  Play {end}
+                  {t('playEnd', {
+                    end: t(end === 'left' ? 'endLeft' : 'endRight'),
+                  })}
                 </button>
               ))}
               <button
@@ -552,8 +556,35 @@ export function DominoesBlockBoard({
                   setPendingEnds(null);
                 }}
               >
-                Cancel
+                {t('cancel')}
               </button>
+            </div>
+          )}
+
+          {matchOver && (
+            <div className="absolute inset-0">
+              <EndScreen
+                outcomeKey={
+                  state?.blocked
+                    ? 'outcomeBlocked'
+                    : winners?.includes(selfId ?? '')
+                      ? 'outcomeWin'
+                      : 'outcomeGameOver'
+                }
+                outcomeNs="dominoes-block"
+                onPlayAgain={
+                  restartRequested
+                    ? undefined
+                    : () => {
+                        roomSend({ type: 'restart' });
+                        setRestartRequested(true);
+                      }
+                }
+                onBackToHub={() => {
+                  roomSend({ type: 'leave' });
+                  navigate('/');
+                }}
+              />
             </div>
           )}
         </div>
@@ -567,7 +598,7 @@ export function DominoesBlockBoard({
                 className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-5 py-2.5 text-xs uppercase tracking-[0.2em] text-marquinhos-text transition hover:border-marquinhos-border-hover disabled:cursor-not-allowed disabled:opacity-40"
                 onClick={() => roomSend({ type: 'pass' })}
               >
-                Pass
+                {t('pass')}
               </button>
             </div>
 
@@ -577,59 +608,23 @@ export function DominoesBlockBoard({
 
             {disconnectedOpponent && !matchOver && (
               <div className="font-pixel animate-pong-blink text-sm text-marquinhos-text">
-                OPPONENT DISCONNECTED — WAITING…
+                {t('opponentDisconnected')}
+              </div>
+            )}
+
+            {matchOver && restartRequested && (
+              <div className="text-xs text-marquinhos-text-dim">
+                {t('waitingRematch', {
+                  votes: restartStatus?.votes ?? 1,
+                  required: restartStatus?.required ?? state.players.length,
+                })}
               </div>
             )}
 
             {(connectionState === 'disconnected' ||
               connectionState === 'error') && (
               <div className="notch-6 border border-marquinhos-danger/40 bg-marquinhos-danger/10 p-3 text-center text-sm text-marquinhos-danger">
-                Connection lost. Reload to reconnect.
-              </div>
-            )}
-
-            {matchOver && (
-              <div className="notch-8 flex flex-col items-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-6 text-center">
-                <div className="font-pixel text-lg text-marquinhos-accent">
-                  {state.blocked
-                    ? 'BLOCKED GAME'
-                    : winners?.includes(selfId ?? '')
-                      ? 'YOU WIN'
-                      : 'GAME OVER'}
-                </div>
-                {winners && (
-                  <div className="text-sm text-marquinhos-text-dim">
-                    Winner{winners.length > 1 ? 's' : ''}:{' '}
-                    {winners
-                      .map((w) => (w === selfId ? 'You' : w.slice(0, 6)))
-                      .join(', ')}
-                  </div>
-                )}
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    disabled={restartRequested}
-                    className="notch-6 border border-marquinhos-accent bg-marquinhos-accent px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-black disabled:opacity-50"
-                    onClick={() => {
-                      roomSend({ type: 'restart' });
-                      setRestartRequested(true);
-                    }}
-                  >
-                    {restartRequested
-                      ? `Waiting… (${restartStatus?.votes ?? 1}/${restartStatus?.required ?? state.players.length})`
-                      : 'Rematch'}
-                  </button>
-                  <button
-                    type="button"
-                    className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-2.5 text-xs uppercase tracking-[0.2em] text-marquinhos-text"
-                    onClick={() => {
-                      roomSend({ type: 'leave' });
-                      navigate('/');
-                    }}
-                  >
-                    Main Menu
-                  </button>
-                </div>
+                {t('common:connectionLost')}
               </div>
             )}
           </>
@@ -652,82 +647,42 @@ export function DominoesBlockGame({
 
   if (session.status === 'selecting-mode') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-accent">
-            SELECT MODE
-          </div>
-          <div className="flex gap-4">
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={() => setMode('single')}
-            >
-              VS BOT
-            </button>
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={() => setMode('multi')}
-            >
-              VS PLAYER
-            </button>
-          </div>
-          <button
-            type="button"
-            className="notch-6 border border-marquinhos-border bg-transparent px-5 py-3 text-sm font-semibold text-marquinhos-text transition hover:bg-marquinhos-panel-hover"
-            onClick={() => navigate('/')}
-          >
-            BACK
-          </button>
-        </div>
-      </div>
+      <ModeSelectScreen
+        onBack={() => navigate('/')}
+        options={[
+          {
+            key: 'single',
+            labelKey: 'vsBot',
+            labelNs: 'common',
+            onSelect: () => setMode('single'),
+          },
+          {
+            key: 'multi',
+            labelKey: 'vsPlayer',
+            labelNs: 'common',
+            onSelect: () => setMode('multi'),
+          },
+        ]}
+      />
     );
   }
 
   if (session.status === 'connecting') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel animate-pong-blink text-sm tracking-[0.28em] text-marquinhos-accent">
-            STARTING GAME…
-          </div>
-          <div className="max-w-[36ch] text-sm leading-6 text-marquinhos-text-dim">
-            Connecting to the table and waiting for other players.
-          </div>
-        </div>
-      </div>
+      <ConnectingScreen
+        subtitleKey="connectingSubtitle"
+        subtitleNs="dominoes-block"
+      />
     );
   }
 
   if (session.status === 'error') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[560px] flex-col items-center justify-center gap-5 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-danger">
-            CONNECTION FAILED
-          </div>
-          <div className="max-w-[48ch] text-sm leading-6 text-marquinhos-text-dim">
-            {session.error}
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={onAuthInvalid}
-            >
-              Retry auth
-            </button>
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-3 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
-              onClick={() => navigate('/')}
-            >
-              Back
-            </button>
-          </div>
-        </div>
-      </div>
+      <ErrorScreen
+        message={session.error}
+        onRetryAuth={onAuthInvalid}
+        onBack={() => navigate('/')}
+      />
     );
   }
 
