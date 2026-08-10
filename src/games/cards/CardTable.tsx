@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { ConnectingScreen, ErrorScreen } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { colyseusUrl } from '../../lib/apiBase';
 import type { WsSession } from '../shared/activitySession';
@@ -23,7 +25,9 @@ import {
   moveLabel,
   presentationFor,
   seatLabel,
+  titleKeyFor,
   type RulesetPresentation,
+  type Translate,
 } from './rulesets/presentation';
 import { useCardTableSession } from './useCardTableSession';
 
@@ -38,7 +42,8 @@ function CardTableBoard({
   ruleset: string;
 }) {
   const navigate = useNavigate();
-  const presentation = presentationFor(ruleset);
+  const { t } = useTranslation(['cards', 'common']);
+  const presentation = presentationFor(ruleset, t);
   const [view, setView] = useState<TableView | null>(null);
   const [mySeatIndex, setMySeatIndex] = useState<number | null>(null);
   const [rejection, setRejection] = useState<string | null>(null);
@@ -78,7 +83,7 @@ function CardTableBoard({
         case 'move_rejected':
           setRejection(
             (message.payload as { reason?: string })?.reason ??
-              'Jogada inválida',
+              t('cards:invalidMove'),
           );
           break;
         case 'match_over':
@@ -118,10 +123,10 @@ function CardTableBoard({
       <div className="flex flex-1 items-center justify-center p-6">
         <div className="notch-8 flex min-h-[200px] w-full max-w-[480px] flex-col items-center justify-center gap-3 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
           <div className="font-pixel animate-pong-blink text-sm tracking-[0.28em] text-marquinhos-accent">
-            AGUARDANDO MESA…
+            {t('cards:waitingTable')}
           </div>
           <div className="max-w-[36ch] text-sm leading-6 text-marquinhos-text-dim">
-            Aguardando os outros jogadores se conectarem à mesa.
+            {t('cards:waitingTableSubtitle')}
           </div>
         </div>
       </div>
@@ -138,26 +143,35 @@ function CardTableBoard({
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(255,176,0,0.12),_transparent_35%),linear-gradient(180deg,_rgba(255,255,255,0.02),_transparent_18%),var(--color-marquinhos-bg)] text-marquinhos-text">
-      <header className="flex items-center justify-between gap-3 border-b border-marquinhos-border bg-black/10 px-4 py-3 sm:px-6">
+      {/*
+        Not a <GameHeader>: presentation.title is a fully-resolved translated
+        string (built via t() in rulesets/presentation.tsx), not a lookup key,
+        so it can't go through GameHeader's titleKey/titleNs contract. This
+        copies GameHeader's "bar" variant markup/classNames exactly to stay
+        visually identical while rendering the resolved title directly.
+      */}
+      <header className="flex items-center justify-between gap-4 border-b border-marquinhos-border bg-black/10 px-4 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-3 py-2 text-xs uppercase tracking-[0.22em] text-marquinhos-text-dim transition hover:border-marquinhos-border-hover hover:text-marquinhos-text"
-          >
-            Back
-          </button>
-          <div className="font-pixel text-sm tracking-[0.28em] text-marquinhos-accent">
+          <div className="font-pixel text-sm tracking-[0.28em] text-marquinhos-accent sm:text-base">
             {presentation.title}
           </div>
           {spectating && (
             <div className="notch-6 border border-marquinhos-border px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-marquinhos-text-dim">
-              Assistindo
+              {t('cards:spectatingBadge')}
             </div>
           )}
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {presentation.hud?.(view)}
+        <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {presentation.hud?.(view)}
+          </div>
+          <button
+            type="button"
+            className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-4 py-2 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
+            onClick={() => navigate('/')}
+          >
+            {t('common:back')}
+          </button>
         </div>
       </header>
 
@@ -171,7 +185,7 @@ function CardTableBoard({
           {view.seats.map((seat) => (
             <SeatShell
               key={seat.seatIndex}
-              title={seatLabel(presentation, seat.seatIndex)}
+              title={seatLabel(presentation, seat.seatIndex, t)}
               occupied={Boolean(seat.playerId)}
               active={view.currentSeat === seat.seatIndex}
             >
@@ -179,25 +193,29 @@ function CardTableBoard({
                 <div className="flex flex-col gap-2">
                   <PlayerBadge
                     name={seat.playerId}
-                    subtitle={seat.teamId ? `Time ${seat.teamId}` : 'Jogador'}
-                    meta={handMeta(view.hands[seat.seatIndex]?.count)}
+                    subtitle={
+                      seat.teamId
+                        ? t('cards:teamWithId', { team: seat.teamId })
+                        : t('cards:playerLabel')
+                    }
+                    meta={handMeta(view.hands[seat.seatIndex]?.count, t)}
                     isLocal={seat.seatIndex === mySeatIndex}
                     active={view.currentSeat === seat.seatIndex}
                   />
                   {disconnected?.seatIndex === seat.seatIndex && (
                     <div className="text-[10px] uppercase tracking-[0.18em] text-marquinhos-danger">
-                      Desconectado
+                      {t('cards:disconnectedLabel')}
                     </div>
                   )}
                   {timedOut === seat.playerId && (
                     <div className="text-[10px] uppercase tracking-[0.18em] text-marquinhos-text-dim">
-                      Tempo esgotado
+                      {t('cards:timeoutLabel')}
                     </div>
                   )}
                 </div>
               ) : (
                 <div className="flex h-full items-center justify-center text-sm text-marquinhos-text-disabled">
-                  Aguardando jogador
+                  {t('cards:waitingPlayerSeat')}
                 </div>
               )}
             </SeatShell>
@@ -207,7 +225,7 @@ function CardTableBoard({
         <div className="notch-8 flex min-h-[140px] flex-1 items-center justify-center gap-3 border border-marquinhos-border bg-black/20 p-4">
           {view.table.length === 0 && (
             <div className="text-sm text-marquinhos-text-disabled">
-              Mesa vazia — aguardando jogadas.
+              {t('cards:emptyTable')}
             </div>
           )}
           {view.table.map((played) => (
@@ -217,7 +235,7 @@ function CardTableBoard({
             >
               <CardFace card={played.card} />
               <div className="text-[10px] uppercase tracking-[0.2em] text-marquinhos-text-dim">
-                {seatLabel(presentation, played.seatIndex)}
+                {seatLabel(presentation, played.seatIndex, t)}
               </div>
             </div>
           ))}
@@ -231,20 +249,22 @@ function CardTableBoard({
 
         {disconnected && (
           <div className="notch-6 border border-marquinhos-danger/40 bg-marquinhos-danger/10 p-3 text-sm text-marquinhos-danger">
-            Um jogador caiu. Aguardando reconexão por{' '}
-            {Math.round(disconnected.timeoutMs / 1000)}s antes de encerrar a
-            partida.
+            {t('cards:disconnectNotice', {
+              seconds: Math.round(disconnected.timeoutMs / 1000),
+            })}
           </div>
         )}
 
         <div className="notch-8 border border-marquinhos-border bg-marquinhos-panel p-4">
           <div className="text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
-            {spectating ? 'Mesa' : 'Sua mão'}
+            {spectating ? t('cards:tableLabel') : t('cards:yourHandLabel')}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {(myHand?.cards.length ?? 0) === 0 && (
               <div className="text-sm text-marquinhos-text-disabled">
-                {spectating ? 'Você está assistindo.' : 'Sem cartas.'}
+                {spectating
+                  ? t('cards:spectatingNotice')
+                  : t('cards:noCards')}
               </div>
             )}
             {(myHand?.cards ?? []).map((card, index) => (
@@ -273,7 +293,7 @@ function CardTableBoard({
                 }
                 className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-4 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Jogar carta selecionada
+                {t('cards:playSelectedCard')}
               </button>
               {otherMoves.map((legalMove) => (
                 <button
@@ -287,7 +307,7 @@ function CardTableBoard({
               ))}
               {playCardMoves.length === 0 && otherMoves.length === 0 && (
                 <div className="py-3 text-sm text-marquinhos-text-dim">
-                  Aguardando os outros jogadores…
+                  {t('cards:waitingOthers')}
                 </div>
               )}
             </div>
@@ -302,7 +322,7 @@ function CardTableBoard({
           {(connectionState === 'disconnected' ||
             connectionState === 'error') && (
             <div className="notch-6 mt-4 border border-marquinhos-danger/40 bg-marquinhos-danger/10 p-3 text-sm text-marquinhos-danger">
-              Conexão perdida. Recarregue para reconectar.
+              {t('common:connectionLost')}
             </div>
           )}
         </div>
@@ -336,9 +356,12 @@ function cardKey(card: MaskedCard, index: number): string {
   return isHiddenCard(card) ? `hidden-${index}` : card.id;
 }
 
-function handMeta(count: number | undefined): string | undefined {
+function handMeta(
+  count: number | undefined,
+  t: Translate,
+): string | undefined {
   if (count === undefined) return undefined;
-  return count === 1 ? '1 carta' : `${count} cartas`;
+  return t('cards:cardCount', { count });
 }
 
 function HandCard({
@@ -387,19 +410,26 @@ function MatchOverOverlay({
   onRestart: () => void;
   onBack: () => void;
 }) {
+  const { t } = useTranslation(['cards', 'common']);
   const winners = scoreboard.filter((entry) => entry.position === 1);
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-black/70 p-6">
       <div className="notch-8 flex w-full max-w-[520px] flex-col items-center gap-5 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.32)]">
         <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-accent">
-          FIM DA PARTIDA
+          {t('cards:matchOverTitle')}
         </div>
         <div className="flex flex-col gap-1 text-sm text-marquinhos-text">
-          <div className="text-marquinhos-text-dim">Vencedores</div>
+          <div className="text-marquinhos-text-dim">
+            {t('cards:winnersLabel')}
+          </div>
           {winners.map((entry) => (
             <div key={entry.userId} className="font-semibold">
-              {entry.userId}
-              {entry.points !== undefined ? ` — ${entry.points}` : ''}
+              {entry.points !== undefined
+                ? t('cards:scoreboardEntryWithPoints', {
+                    name: entry.userId,
+                    points: entry.points,
+                  })
+                : entry.userId}
             </div>
           ))}
         </div>
@@ -408,7 +438,10 @@ function MatchOverOverlay({
         </div>
         {restartStatus && (
           <div className="text-sm text-marquinhos-text-dim">
-            Revanche: {restartStatus.votes}/{restartStatus.required} jogadores
+            {t('cards:rematchVotes', {
+              votes: restartStatus.votes,
+              required: restartStatus.required,
+            })}
           </div>
         )}
         <div className="flex flex-wrap items-center justify-center gap-3">
@@ -419,7 +452,9 @@ function MatchOverOverlay({
               onClick={onRestart}
               className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {restartRequested ? 'Aguardando os outros…' : 'Jogar de novo'}
+              {restartRequested
+                ? t('cards:waitingRematch')
+                : t('cards:playAgainButton')}
             </button>
           )}
           <button
@@ -427,7 +462,7 @@ function MatchOverOverlay({
             onClick={onBack}
             className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-3 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
           >
-            Back
+            {t('common:backToHub')}
           </button>
         </div>
       </div>
@@ -448,51 +483,20 @@ export function CardTable({
 }) {
   const navigate = useNavigate();
   const session = useCardTableSession(identity, ruleset, onAuthInvalid);
-  const presentation = presentationFor(ruleset);
 
   if (session.status === 'connecting') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel animate-pong-blink text-sm tracking-[0.28em] text-marquinhos-accent">
-            ENTRANDO NA MESA…
-          </div>
-          <div className="text-sm text-marquinhos-text-dim">
-            {presentation.title}
-          </div>
-        </div>
-      </div>
+      <ConnectingScreen subtitleKey={titleKeyFor(ruleset)} subtitleNs="cards" />
     );
   }
 
   if (session.status === 'error') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[560px] flex-col items-center justify-center gap-5 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-danger">
-            FALHA NA CONEXÃO
-          </div>
-          <div className="max-w-[48ch] text-sm leading-6 text-marquinhos-text-dim">
-            {session.error}
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={onAuthInvalid}
-            >
-              Retry auth
-            </button>
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-3 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
-              onClick={() => navigate('/')}
-            >
-              Back
-            </button>
-          </div>
-        </div>
-      </div>
+      <ErrorScreen
+        message={session.error}
+        onRetryAuth={onAuthInvalid}
+        onBack={() => navigate('/')}
+      />
     );
   }
 

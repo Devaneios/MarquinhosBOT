@@ -2,6 +2,12 @@ import type { ReactNode } from 'react';
 import { HUDStat } from '../components/HUDStat';
 import type { TableView, TrucoView } from '../core/types';
 
+// A minimal stand-in for react-i18next's TFunction: presentation.tsx is not a
+// component (its hud/statusLine closures get called from inside CardTable's
+// render, not as hooks themselves), so it takes whatever `t` its caller
+// already resolved via useTranslation() rather than calling the hook itself.
+export type Translate = (key: string, options?: Record<string, unknown>) => string;
+
 // Everything about a card game that is *presentation* rather than rules: what to
 // call its moves, what to put in the HUD, how to label its seats.
 //
@@ -25,38 +31,52 @@ export interface RulesetPresentation {
   statusLine?: (view: TableView) => string | null;
 }
 
-const TRUCO_TEAM_LABEL: Record<string, string> = { A: 'Time A', B: 'Time B' };
+// Ruleset id → the cards.json key holding its (unresolved) title. Exposed so
+// screens that only need the key — not the fully resolved string — such as
+// ConnectingScreen's subtitleKey prop, can look it up themselves.
+const TITLE_KEYS: Record<string, string> = {
+  truco: 'trucoTitle',
+  'truco-1v1': 'truco1v1Title',
+};
+
+export function titleKeyFor(ruleset: string): string {
+  return TITLE_KEYS[ruleset] ?? 'genericTitle';
+}
 
 // Shared by every Truco variant: the move ladder, HUD and status line read
 // off TrucoView regardless of seat count, so only the title and seat labels
 // actually differ between the 4-player (dupla) and 2-player (1v1) tables.
 function trucoPresentation(
-  title: string,
+  t: Translate,
+  titleKey: string,
   seatLabels: string[],
 ): RulesetPresentation {
   return {
-    title,
+    title: t(`cards:${titleKey}`),
     moveLabels: {
-      call_truco: 'Pedir truco',
-      accept: 'Aceitar',
-      raise: 'Aumentar',
-      fold: 'Correr',
+      call_truco: t('cards:moveCallTruco'),
+      accept: t('cards:moveAccept'),
+      raise: t('cards:moveRaise'),
+      fold: t('cards:moveFold'),
     },
     seatLabels,
     hud: (view) => {
       const truco = view as TrucoView;
       return (
         <>
-          <HUDStat label="Time A" value={String(truco.matchScore?.A ?? 0)} />
-          <HUDStat label="Time B" value={String(truco.matchScore?.B ?? 0)} />
+          <HUDStat label={t('cards:teamA')} value={String(truco.matchScore?.A ?? 0)} />
+          <HUDStat label={t('cards:teamB')} value={String(truco.matchScore?.B ?? 0)} />
           <HUDStat
-            label="Valor da mão"
+            label={t('cards:handValue')}
             value={String(truco.currentStake ?? 1)}
           />
           {truco.vira?.rank && (
             <HUDStat
-              label="Vira"
-              value={`${truco.vira.rank}${truco.vira.suit ? ` ${truco.vira.suit}` : ''}`}
+              label={t('cards:viraLabel')}
+              value={t('cards:viraValue', {
+                rank: truco.vira.rank,
+                suit: truco.vira.suit ? ` ${truco.vira.suit}` : '',
+              })}
             />
           )}
         </>
@@ -71,34 +91,39 @@ function trucoPresentation(
         return null;
       }
       const caller = truco.callingTeam
-        ? (TRUCO_TEAM_LABEL[truco.callingTeam] ?? truco.callingTeam)
-        : 'A outra equipe';
-      return `${caller} pediu ${truco.pendingCallLevel}. Aceitar, aumentar ou correr?`;
+        ? t(`cards:team${truco.callingTeam}`)
+        : t('cards:theOtherTeam');
+      return t('cards:pendingCall', {
+        caller,
+        level: truco.pendingCallLevel,
+      });
     },
   };
 }
 
-const truco = trucoPresentation('TRUCO', [
-  'Você',
-  'Esquerda',
-  'Parceiro',
-  'Direita',
-]);
-const truco1v1 = trucoPresentation('TRUCO 1X1', ['Você', 'Adversário']);
-
-const PRESENTATIONS: Record<string, RulesetPresentation> = {
-  truco,
-  'truco-1v1': truco1v1,
-};
-
-const GENERIC: RulesetPresentation = { title: 'CARD TABLE' };
-
-export function presentationFor(ruleset: string): RulesetPresentation {
-  return PRESENTATIONS[ruleset] ?? GENERIC;
+export function presentationFor(
+  ruleset: string,
+  t: Translate,
+): RulesetPresentation {
+  if (ruleset === 'truco') {
+    return trucoPresentation(t, TITLE_KEYS.truco, [
+      t('common:you'),
+      t('cards:seatLeft'),
+      t('cards:seatPartner'),
+      t('cards:seatRight'),
+    ]);
+  }
+  if (ruleset === 'truco-1v1') {
+    return trucoPresentation(t, TITLE_KEYS['truco-1v1'], [
+      t('common:you'),
+      t('cards:seatOpponent'),
+    ]);
+  }
+  return { title: t('cards:genericTitle') };
 }
 
 export function isKnownRuleset(ruleset: string): boolean {
-  return ruleset in PRESENTATIONS;
+  return ruleset in TITLE_KEYS;
 }
 
 export function moveLabel(
@@ -113,6 +138,10 @@ export function moveLabel(
 export function seatLabel(
   presentation: RulesetPresentation,
   seatIndex: number,
+  t: Translate,
 ): string {
-  return presentation.seatLabels?.[seatIndex] ?? `Lugar ${seatIndex + 1}`;
+  return (
+    presentation.seatLabels?.[seatIndex] ??
+    t('cards:seatFallback', { n: seatIndex + 1 })
+  );
 }

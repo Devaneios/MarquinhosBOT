@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '../../../lib/cn';
 
 export function SeatShell({
@@ -12,6 +13,8 @@ export function SeatShell({
   active?: boolean;
   children: ReactNode;
 }) {
+  const { t } = useTranslation('cards');
+
   return (
     <div
       className={cn(
@@ -24,7 +27,7 @@ export function SeatShell({
     >
       <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
         <span>{title}</span>
-        <span>{occupied ? 'Occupied' : 'Empty'}</span>
+        <span>{occupied ? t('cards:occupiedLabel') : t('cards:emptyLabel')}</span>
       </div>
       <div className="mt-3 flex-1">{children}</div>
     </div>

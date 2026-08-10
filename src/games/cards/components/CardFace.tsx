@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '../../../lib/cn';
 import type { Card } from '../core/types';
 
@@ -52,6 +53,7 @@ export function CardFace({
 // position in a zone, so rendering a back in place preserves the real shape of
 // the pile (how many cards, and where the face-up ones sit among them).
 export function CardBack({ small }: { small?: boolean }) {
+  const { t } = useTranslation('cards');
   return (
     <div
       className={cn(
@@ -60,7 +62,7 @@ export function CardBack({ small }: { small?: boolean }) {
           : SHELL,
         'border-marquinhos-border bg-[repeating-linear-gradient(45deg,rgba(255,255,255,0.06)_0_6px,transparent_6px_12px)] bg-marquinhos-panel',
       )}
-      aria-label="Carta virada"
+      aria-label={t('cards:hiddenCardAriaLabel')}
     />
   );
 }
