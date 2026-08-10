@@ -1,5 +1,13 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import {
+  ConnectingScreen,
+  EndScreen,
+  ErrorScreen,
+  GameHeader,
+  ModeSelectScreen,
+} from '../../components/game-shell';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { colyseusUrl } from '../../lib/apiBase';
 import { cn } from '../../lib/cn';
@@ -33,10 +41,10 @@ const PICK_ICONS: Record<RpsPick, string> = {
   scissors: '✂️',
 };
 
-const PICK_LABELS: Record<RpsPick, string> = {
-  rock: 'Pedra',
-  paper: 'Papel',
-  scissors: 'Tesoura',
+const PICK_LABEL_KEYS: Record<RpsPick, string> = {
+  rock: 'pickRock',
+  paper: 'pickPaper',
+  scissors: 'pickScissors',
 };
 
 function PickButton({
@@ -54,6 +62,8 @@ function PickButton({
   isOtherPick: boolean;
   isWinner: boolean;
 }) {
+  const { t } = useTranslation(['rock-paper-scissors', 'common']);
+
   return (
     <button
       type="button"
@@ -69,11 +79,11 @@ function PickButton({
     >
       <div className="text-4xl sm:text-5xl">{PICK_ICONS[pick]}</div>
       <div className="text-xs font-semibold uppercase tracking-[0.2em] text-marquinhos-text-dim">
-        {PICK_LABELS[pick]}
+        {t(PICK_LABEL_KEYS[pick])}
       </div>
       {isMyPick && (
         <div className="absolute -top-2 right-2 text-[10px] font-bold uppercase text-marquinhos-accent">
-          Você
+          {t('common:you')}
         </div>
       )}
     </button>
@@ -86,6 +96,7 @@ function RpsBoard({
   session: { token: string; roomKey: string };
 }) {
   const navigate = useNavigate();
+  const { t } = useTranslation(['rock-paper-scissors', 'common']);
   const [playerId, setPlayerId] = useState<'player1' | 'player2' | null>(
     null,
   );
@@ -146,27 +157,25 @@ function RpsBoard({
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(255,176,0,0.12),_transparent_30%),linear-gradient(180deg,_rgba(255,255,255,0.02),_transparent_20%),var(--color-marquinhos-bg)]">
-      <header className="flex items-center justify-between gap-4 border-b border-marquinhos-border bg-black/10 px-4 py-3 sm:px-6">
-        <div className="font-pixel text-sm tracking-[0.28em] text-marquinhos-accent sm:text-base">
-          PEDRA, PAPEL OU TESOURA
-        </div>
-        <button
-          type="button"
-          className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-4 py-2 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
-          onClick={() => navigate('/')}
-        >
-          Back
-        </button>
-      </header>
+      <GameHeader
+        titleKey="rock-paper-scissors.name"
+        titleNs="games"
+        onBack={() => navigate('/')}
+      />
 
       <main className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto p-4 sm:p-6">
-        <div className="notch-8 flex w-full max-w-[600px] flex-col gap-6 border border-marquinhos-border bg-[#1c1b1c] px-4 py-6 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:px-6">
-          {roundState && playerId && (
+        <div
+          className={cn(
+            'notch-8 relative flex w-full max-w-[600px] flex-col gap-6 border border-marquinhos-border bg-[#1c1b1c] px-4 py-6 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:px-6',
+            phase === 'match_end' && 'min-h-[320px]',
+          )}
+        >
+          {roundState && playerId && phase !== 'match_end' && (
             <>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1">
                   <div className="text-center text-xs uppercase tracking-[0.24em] text-marquinhos-text-dim">
-                    Placar
+                    {t('score')}
                   </div>
                   <div className="text-center font-pixel text-2xl sm:text-3xl">
                     {playerId === 'player1'
@@ -176,7 +185,7 @@ function RpsBoard({
                 </div>
                 <div className="flex-1">
                   <div className="text-center text-xs uppercase tracking-[0.24em] text-marquinhos-text-dim">
-                    Rodada
+                    {t('round')}
                   </div>
                   <div className="text-center font-pixel text-2xl sm:text-3xl">
                     {roundState.round} / {Math.ceil(roundState.bestOf / 2) + 1}
@@ -187,7 +196,7 @@ function RpsBoard({
               {phase === 'playing' && (
                 <div className="flex flex-col gap-4">
                   <div className="text-center text-sm uppercase tracking-[0.2em] text-marquinhos-text-dim">
-                    Escolha sua jogada
+                    {t('chooseMove')}
                   </div>
                   <div className="flex justify-center gap-3">
                     {(['rock', 'paper', 'scissors'] as const).map((pick) => (
@@ -207,7 +216,7 @@ function RpsBoard({
                   </div>
                   {roundState.submitted.length === 1 && (
                     <div className="text-center text-xs text-marquinhos-text-dim">
-                      Aguardando o adversário...
+                      {t('waitingOpponent')}
                     </div>
                   )}
                 </div>
@@ -225,24 +234,24 @@ function RpsBoard({
                         ]}
                       </div>
                       <div className="text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim">
-                        Você
+                        {t('common:you')}
                       </div>
                     </div>
                     <div className="flex flex-col items-center justify-center">
                       {roundResult.winner === null && (
                         <div className="font-pixel text-lg text-marquinhos-accent">
-                          EMPATE
+                          {t('draw')}
                         </div>
                       )}
                       {roundResult.winner === playerId && (
                         <div className="font-pixel text-lg text-marquinhos-accent">
-                          GANHOU!
+                          {t('roundWin')}
                         </div>
                       )}
                       {roundResult.winner &&
                         roundResult.winner !== playerId && (
                         <div className="font-pixel text-lg text-marquinhos-danger">
-                          PERDEU
+                          {t('roundLose')}
                         </div>
                       )}
                     </div>
@@ -255,41 +264,10 @@ function RpsBoard({
                         ]}
                       </div>
                       <div className="text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim">
-                        Adversário
+                        {t('opponent')}
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-
-              {phase === 'match_end' && (
-                <div className="flex flex-col gap-4">
-                  {isPlayerWinning ? (
-                    <>
-                      <div className="notch-6 flex items-center justify-center gap-3 border border-marquinhos-accent bg-marquinhos-accent/10 px-4 py-4">
-                        <div className="text-2xl">🏆</div>
-                        <div className="font-semibold text-marquinhos-accent">
-                          Você venceu o jogo!
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="notch-6 flex items-center justify-center gap-3 border border-marquinhos-danger bg-marquinhos-danger/10 px-4 py-4">
-                        <div className="text-2xl">💔</div>
-                        <div className="font-semibold text-marquinhos-danger">
-                          Você perdeu o jogo!
-                        </div>
-                      </div>
-                    </>
-                  )}
-                  <button
-                    type="button"
-                    className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-                    onClick={() => navigate('/')}
-                  >
-                    Voltar
-                  </button>
                 </div>
               )}
 
@@ -301,10 +279,20 @@ function RpsBoard({
             </>
           )}
 
+          {phase === 'match_end' && roundState && playerId && (
+            <div className="absolute inset-0">
+              <EndScreen
+                outcomeKey={isPlayerWinning ? 'outcomeWin' : 'outcomeLose'}
+                outcomeNs="rock-paper-scissors"
+                onBackToHub={() => navigate('/')}
+              />
+            </div>
+          )}
+
           {(connectionState === 'disconnected' ||
             connectionState === 'error') && (
             <div className="notch-6 border border-marquinhos-danger/40 bg-marquinhos-danger/10 p-3 text-center text-sm text-marquinhos-danger">
-              Connection lost. Reload to reconnect.
+              {t('common:connectionLost')}
             </div>
           )}
         </div>
@@ -326,82 +314,42 @@ export function RpsGame({
 
   if (sessionState.status === 'selecting-mode') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-accent">
-            SELECT MODE
-          </div>
-          <div className="flex gap-4">
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={() => setMode('single')}
-            >
-              VS BOT
-            </button>
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={() => setMode('multi')}
-            >
-              VS PLAYER
-            </button>
-          </div>
-          <button
-            type="button"
-            className="notch-6 border border-marquinhos-border bg-transparent px-5 py-3 text-sm font-semibold text-marquinhos-text transition hover:bg-marquinhos-panel-hover"
-            onClick={() => navigate('/')}
-          >
-            BACK
-          </button>
-        </div>
-      </div>
+      <ModeSelectScreen
+        onBack={() => navigate('/')}
+        options={[
+          {
+            key: 'single',
+            labelKey: 'vsBot',
+            labelNs: 'common',
+            onSelect: () => setMode('single'),
+          },
+          {
+            key: 'multi',
+            labelKey: 'vsPlayer',
+            labelNs: 'common',
+            onSelect: () => setMode('multi'),
+          },
+        ]}
+      />
     );
   }
 
   if (sessionState.status === 'connecting') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel animate-pong-blink text-sm tracking-[0.28em] text-marquinhos-accent">
-            STARTING GAME…
-          </div>
-          <div className="max-w-[36ch] text-sm leading-6 text-marquinhos-text-dim">
-            Conectando à sessão em tempo real e aguardando adversário.
-          </div>
-        </div>
-      </div>
+      <ConnectingScreen
+        subtitleKey="connectingSubtitle"
+        subtitleNs="rock-paper-scissors"
+      />
     );
   }
 
   if (sessionState.status === 'error') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[560px] flex-col items-center justify-center gap-5 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-danger">
-            CONNECTION FAILED
-          </div>
-          <div className="max-w-[48ch] text-sm leading-6 text-marquinhos-text-dim">
-            {sessionState.error}
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={onAuthInvalid}
-            >
-              Retry auth
-            </button>
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-3 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
-              onClick={() => navigate('/')}
-            >
-              Back
-            </button>
-          </div>
-        </div>
-      </div>
+      <ErrorScreen
+        message={sessionState.error}
+        onRetryAuth={onAuthInvalid}
+        onBack={() => navigate('/')}
+      />
     );
   }
 
