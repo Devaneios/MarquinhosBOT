@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import {
+  ConnectingScreen,
+  ErrorScreen,
+  GameHeader,
+} from '../../components/game-shell';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { colyseusUrl } from '../../lib/apiBase';
 import { cn } from '../../lib/cn';
@@ -207,13 +213,14 @@ function Keyboard({
   onEnter: () => void;
   onBackspace: () => void;
 }) {
+  const { t } = useTranslation('wordle');
   return (
     <div className="flex flex-col items-center gap-1.5">
       {KB_ROWS.map((row, i) => (
         <div key={row} className="flex justify-center gap-1.5">
           {i === KB_ROWS.length - 1 && (
             <KeyButton
-              label="ENTER"
+              label={t('enter')}
               wide
               disabled={disabled}
               onClick={onEnter}
@@ -244,6 +251,7 @@ function Keyboard({
 
 function WordleBoard({ session }: { session: WsSession }) {
   const navigate = useNavigate();
+  const { t } = useTranslation(['wordle', 'common']);
   const [wordLength, setWordLength] = useState<number | null>(null);
   const [guesses, setGuesses] = useState<GuessRow[]>([]);
   const [solved, setSolved] = useState(false);
@@ -349,28 +357,18 @@ function WordleBoard({ session }: { session: WsSession }) {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(255,176,0,0.12),_transparent_30%),linear-gradient(180deg,_rgba(255,255,255,0.02),_transparent_20%),var(--color-marquinhos-bg)]">
-      <header className="flex items-center justify-between gap-4 border-b border-marquinhos-border bg-black/10 px-4 py-3 sm:px-6">
-        <div>
-          <div className="font-pixel text-sm tracking-[0.28em] text-marquinhos-accent sm:text-base">
-            TERMO
-          </div>
-        </div>
-        <button
-          type="button"
-          className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-4 py-2 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
-          onClick={() => navigate('/')}
-        >
-          Back
-        </button>
-      </header>
+      <GameHeader
+        titleKey="wordle.name"
+        titleNs="games"
+        onBack={() => navigate('/')}
+      />
 
       <main className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto p-4 sm:p-6">
         <div className="notch-8 flex w-full max-w-[420px] flex-col gap-4 border border-marquinhos-border bg-[#1c1b1c] px-4 py-5 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:px-6 sm:py-6">
           {solved && (
             <div className="notch-6 flex items-center justify-between gap-3 border border-marquinhos-border bg-black/25 px-4 py-3">
               <div className="text-sm font-semibold text-marquinhos-text">
-                Acertou em {guesses.length}{' '}
-                {guesses.length === 1 ? 'tentativa' : 'tentativas'}.
+                {t('wordle:solved', { count: guesses.length })}
               </div>
               <div
                 className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em]"
@@ -380,7 +378,7 @@ function WordleBoard({ session }: { session: WsSession }) {
                   color: '#98d68f',
                 }}
               >
-                Resolvido
+                {t('wordle:solvedBadge')}
               </div>
             </div>
           )}
@@ -404,7 +402,7 @@ function WordleBoard({ session }: { session: WsSession }) {
 
             {wordLength !== null && (
               <div className="text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
-                {wordLength} letras · tentativa {attemptNumber}
+                {t('wordle:progress', { letters: wordLength, attempt: attemptNumber })}
               </div>
             )}
 
@@ -426,7 +424,7 @@ function WordleBoard({ session }: { session: WsSession }) {
           {(connectionState === 'disconnected' ||
             connectionState === 'error') && (
             <div className="notch-6 border border-marquinhos-danger/40 bg-marquinhos-danger/10 p-3 text-center text-sm text-marquinhos-danger">
-              Connection lost. Reload to reconnect.
+              {t('common:connectionLost')}
             </div>
           )}
         </div>
@@ -447,47 +445,17 @@ export function WordleGame({
 
   if (session.status === 'connecting') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel animate-pong-blink text-sm tracking-[0.28em] text-marquinhos-accent">
-            STARTING GAME…
-          </div>
-          <div className="max-w-[36ch] text-sm leading-6 text-marquinhos-text-dim">
-            Connecting to the realtime session and loading the current puzzle.
-          </div>
-        </div>
-      </div>
+      <ConnectingScreen subtitleKey="connectingSubtitle" subtitleNs="wordle" />
     );
   }
 
   if (session.status === 'error') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[560px] flex-col items-center justify-center gap-5 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-danger">
-            CONNECTION FAILED
-          </div>
-          <div className="max-w-[48ch] text-sm leading-6 text-marquinhos-text-dim">
-            {session.error}
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={onAuthInvalid}
-            >
-              Retry auth
-            </button>
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-3 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
-              onClick={() => navigate('/')}
-            >
-              Back
-            </button>
-          </div>
-        </div>
-      </div>
+      <ErrorScreen
+        message={session.error}
+        onRetryAuth={onAuthInvalid}
+        onBack={() => navigate('/')}
+      />
     );
   }
 

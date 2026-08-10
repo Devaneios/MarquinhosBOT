@@ -23,7 +23,6 @@ import { gameDescriptor as wordSearchRace } from './word-search-race';
 
 export interface GameDescriptor {
   id: GameId;
-  name: string;
   status: 'PLAY' | 'COMING SOON';
   routes: (identity: DiscordIdentity, onAuthInvalid: () => void) => JSX.Element;
 }
