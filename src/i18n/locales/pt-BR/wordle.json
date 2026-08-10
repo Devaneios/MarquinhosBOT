@@ -1,0 +1,8 @@
+{
+  "connectingSubtitle": "Conectando à sessão em tempo real e carregando a palavra do dia.",
+  "solved_one": "Acertou em {{count}} tentativa.",
+  "solved_other": "Acertou em {{count}} tentativas.",
+  "solvedBadge": "Resolvido",
+  "progress": "{{letters}} letras · tentativa {{attempt}}",
+  "enter": "ENTER"
+}

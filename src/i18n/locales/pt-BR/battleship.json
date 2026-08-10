@@ -1,0 +1,19 @@
+{
+  "placeFleet": "Posicione sua frota",
+  "shipCarrier": "Porta-aviões",
+  "shipBattleship": "Encouraçado",
+  "shipCruiser": "Cruzador",
+  "shipSubmarine": "Submarino",
+  "shipDestroyer": "Contratorpedeiro",
+  "orientationLabel": "Orientação",
+  "orientationHorizontal": "horizontal",
+  "orientationVertical": "vertical",
+  "reset": "Reiniciar",
+  "confirmFleet": "Confirmar frota",
+  "waitingMatch": "Aguardando o início da partida…",
+  "fleetPlaced": "Frota posicionada. Aguardando o adversário…",
+  "youWon": "Você venceu!",
+  "youLost": "Você perdeu.",
+  "yourTurn": "Sua vez — atire no tabuleiro à direita",
+  "opponentTurn": "Vez do adversário"
+}

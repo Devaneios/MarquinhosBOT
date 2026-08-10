@@ -1,0 +1,78 @@
+{
+  "cards": {
+    "name": "MESA DE CARTAS",
+    "blurb": "Mesa de cartas local — lobby, gerenciamento de mão e fim de partida, ainda sem conexão com um backend multiplayer real."
+  },
+  "pong": {
+    "name": "PONGUINHOS",
+    "blurb": "Ação arcade retrô e competitiva, com fluxo de menus, configurações e partidas locais ou online."
+  },
+  "wordle": {
+    "name": "TERMO",
+    "blurb": "Desafio de palavras solo conectado ao backend em tempo real e à sessão da atividade do Discord."
+  },
+  "tic-tac-toe": {
+    "name": "JOGO DA VELHA",
+    "blurb": "Duelo clássico na grade 3x3 — o primeiro a alinhar três símbolos vence."
+  },
+  "connect-four": {
+    "name": "CONECTA 4",
+    "blurb": "Solte discos em uma grade 7x6 e conecte quatro antes do adversário."
+  },
+  "hangman": {
+    "name": "FORCA",
+    "blurb": "Adivinhe a palavra oculta letra por letra antes de esgotar as tentativas."
+  },
+  "battleship": {
+    "name": "BATALHA NAVAL",
+    "blurb": "Posicione sua frota e depois troque tiros às cegas até afundar todos os navios."
+  },
+  "checkers": {
+    "name": "DAMAS",
+    "blurb": "Movimentos na diagonal, capturas obrigatórias e promoção a dama em um tabuleiro 8x8."
+  },
+  "rock-paper-scissors": {
+    "name": "PEDRA, PAPEL OU TESOURA",
+    "blurb": "Disputa simultânea de melhor de N rodadas."
+  },
+  "wordle-race": {
+    "name": "CORRIDA DO TERMO",
+    "blurb": "Termo multiplayer em tempo real — todos tentam acertar a mesma palavra primeiro."
+  },
+  "minesweeper-versus": {
+    "name": "CAMPO MINADO VERSUS",
+    "blurb": "Campo minado compartilhado, clique em tempo real — células seguras pontuam, minas custam caro."
+  },
+  "trivia-quiz": {
+    "name": "QUIZ",
+    "blurb": "Quiz para até 8 jogadores, com cronômetro e pontuação por velocidade."
+  },
+  "dominoes-block": {
+    "name": "DOMINÓ",
+    "blurb": "Dominó clássico de bloqueio — encaixe as pontas das peças e esvazie sua mão primeiro."
+  },
+  "word-search-race": {
+    "name": "CAÇA-PALAVRAS",
+    "blurb": "Grade de letras compartilhada, palavras escondidas — encontre-as antes de todo mundo."
+  },
+  "bingo-speed": {
+    "name": "BINGO RELÂMPAGO",
+    "blurb": "Números sorteados a cada poucos segundos — a primeira linha completa vence."
+  },
+  "tower-unstable": {
+    "name": "TORRE INSTÁVEL",
+    "blurb": "Retire blocos de uma torre instável sem derrubá-la na sua vez."
+  },
+  "boggle-word-race": {
+    "name": "CORRIDA DE PALAVRAS",
+    "blurb": "Trace letras adjacentes para formar palavras antes de o cronômetro de 3 minutos zerar."
+  },
+  "word-chain": {
+    "name": "CORRENTE DE PALAVRAS",
+    "blurb": "Diga uma palavra que comece com a última letra da anterior — 10 segundos por vez."
+  },
+  "snake-game": {
+    "name": "COBRINHA",
+    "blurb": "Faça sua cobrinha crescer, desvie das paredes e de si mesma, e sobreviva mais que o adversário."
+  }
+}
