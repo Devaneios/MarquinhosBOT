@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import {
+  ConnectingScreen,
+  ErrorScreen,
+  GameHeader,
+} from '../../components/game-shell';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { colyseusUrl } from '../../lib/apiBase';
 import { errorMessage, isAuthError } from '../../lib/http';
@@ -69,6 +75,7 @@ function formatRemaining(ms: number): string {
 
 function Board({ session, selfId }: { session: WsSession; selfId: string }) {
   const navigate = useNavigate();
+  const { t } = useTranslation(['word-search-race', 'common']);
   const [init, setInit] = useState<InitPayload | null>(null);
   const [found, setFound] = useState<FoundWord[]>([]);
   const [scores, setScores] = useState<Record<string, number>>({});
@@ -115,9 +122,10 @@ function Board({ session, selfId }: { session: WsSession; selfId: string }) {
 
   if (!init) {
     return (
-      <div className="flex flex-1 items-center justify-center p-6 text-marquinhos-text-dim">
-        Loading puzzle…
-      </div>
+      <ConnectingScreen
+        subtitleKey="loadingPuzzle"
+        subtitleNs="word-search-race"
+      />
     );
   }
 
@@ -126,21 +134,16 @@ function Board({ session, selfId }: { session: WsSession; selfId: string }) {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-marquinhos-bg">
-      <header className="flex items-center justify-between gap-4 border-b border-marquinhos-border bg-black/10 px-4 py-3 sm:px-6">
-        <div className="font-pixel text-sm tracking-[0.28em] text-marquinhos-accent sm:text-base">
-          WORD SEARCH RACE
-        </div>
-        <div className="font-pixel text-sm text-marquinhos-accent">
-          {gameOver ? '00:00' : formatRemaining(remainingMs)}
-        </div>
-        <button
-          type="button"
-          className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-4 py-2 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
-          onClick={() => navigate('/')}
-        >
-          Back
-        </button>
-      </header>
+      <GameHeader
+        titleKey="word-search-race.name"
+        titleNs="games"
+        onBack={() => navigate('/')}
+        right={
+          <div className="font-pixel text-sm text-marquinhos-accent">
+            {gameOver ? '00:00' : formatRemaining(remainingMs)}
+          </div>
+        }
+      />
 
       <main className="flex min-h-0 flex-1 flex-col items-center gap-4 overflow-y-auto p-4 sm:flex-row sm:items-start sm:justify-center sm:p-6">
         <div className="relative">
@@ -157,7 +160,9 @@ function Board({ session, selfId }: { session: WsSession; selfId: string }) {
           {gameOver && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-marquinhos-bg/90">
               <div className="font-pixel text-lg text-marquinhos-accent">
-                {gameOver.reason === 'completed' ? 'ALL WORDS FOUND' : "TIME'S UP"}
+                {gameOver.reason === 'completed'
+                  ? t('word-search-race:allWordsFound')
+                  : t('word-search-race:timesUp')}
               </div>
             </div>
           )}
@@ -166,7 +171,7 @@ function Board({ session, selfId }: { session: WsSession; selfId: string }) {
         <div className="flex w-full max-w-[260px] flex-col gap-4">
           <div className="notch-6 flex flex-col gap-2 border border-marquinhos-border bg-marquinhos-panel p-4">
             <div className="text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim">
-              Words
+              {t('word-search-race:words')}
             </div>
             <div className="flex flex-wrap gap-1.5">
               {init.words.map((word) => {
@@ -195,11 +200,11 @@ function Board({ session, selfId }: { session: WsSession; selfId: string }) {
 
           <div className="notch-6 flex flex-col gap-2 border border-marquinhos-border bg-marquinhos-panel p-4">
             <div className="text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim">
-              Scores
+              {t('word-search-race:scores')}
             </div>
             {rankedScores.length === 0 && (
               <div className="text-xs text-marquinhos-text-dim">
-                No words found yet.
+                {t('word-search-race:noWordsFound')}
               </div>
             )}
             {rankedScores.map(([userId, score]) => (
@@ -208,7 +213,7 @@ function Board({ session, selfId }: { session: WsSession; selfId: string }) {
                 className="flex items-center justify-between text-sm"
                 style={{ color: colorForPlayer(userId, selfId) }}
               >
-                <span>{userId === selfId ? 'You' : userId}</span>
+                <span>{userId === selfId ? t('common:you') : userId}</span>
                 <span>{score}</span>
               </div>
             ))}
@@ -223,7 +228,7 @@ function Board({ session, selfId }: { session: WsSession; selfId: string }) {
           {(connectionState === 'disconnected' ||
             connectionState === 'error') && (
             <div className="notch-6 border border-marquinhos-danger/40 bg-marquinhos-danger/10 p-3 text-center text-sm text-marquinhos-danger">
-              Connection lost. Reload to reconnect.
+              {t('common:connectionLost')}
             </div>
           )}
         </div>
@@ -244,47 +249,20 @@ export function WordSearchRaceGame({
 
   if (session.status === 'connecting') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel animate-pong-blink text-sm tracking-[0.28em] text-marquinhos-accent">
-            STARTING GAME…
-          </div>
-          <div className="max-w-[36ch] text-sm leading-6 text-marquinhos-text-dim">
-            Connecting to the realtime session and loading the puzzle.
-          </div>
-        </div>
-      </div>
+      <ConnectingScreen
+        subtitleKey="connectingSubtitle"
+        subtitleNs="word-search-race"
+      />
     );
   }
 
   if (session.status === 'error') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[560px] flex-col items-center justify-center gap-5 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-danger">
-            CONNECTION FAILED
-          </div>
-          <div className="max-w-[48ch] text-sm leading-6 text-marquinhos-text-dim">
-            {session.error}
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={onAuthInvalid}
-            >
-              Retry auth
-            </button>
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-3 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
-              onClick={() => navigate('/')}
-            >
-              Back
-            </button>
-          </div>
-        </div>
-      </div>
+      <ErrorScreen
+        message={session.error}
+        onRetryAuth={onAuthInvalid}
+        onBack={() => navigate('/')}
+      />
     );
   }
 
