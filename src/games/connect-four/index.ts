@@ -8,7 +8,6 @@ import { connectFourRoutes } from './connectFourRoutes';
 // added to GAME_REGISTRY here. Cast removed the same moment that lands.
 export const gameDescriptor: GameDescriptor = {
   id: 'connect-four' as GameId,
-  name: 'CONECTA 4',
   status: 'PLAY',
   routes: connectFourRoutes,
 };
