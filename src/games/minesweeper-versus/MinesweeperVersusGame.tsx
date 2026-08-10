@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import {
+  ConnectingScreen,
+  EndScreen,
+  ErrorScreen,
+  GameHeader,
+} from '../../components/game-shell';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { colyseusUrl } from '../../lib/apiBase';
 import { errorMessage, isAuthError } from '../../lib/http';
@@ -81,6 +88,7 @@ function applyRevealToBoard(
 
 function MinesweeperBoard({ session }: { session: WsSession }) {
   const navigate = useNavigate();
+  const { t } = useTranslation('common');
   const [board, setBoard] = useState<BoardSnapshot | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -116,18 +124,11 @@ function MinesweeperBoard({ session }: { session: WsSession }) {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[var(--color-marquinhos-bg)]">
-      <header className="flex items-center justify-between gap-4 border-b border-marquinhos-border bg-black/10 px-4 py-3 sm:px-6">
-        <div className="font-pixel text-sm tracking-[0.28em] text-marquinhos-accent sm:text-base">
-          MINESWEEPER VERSUS
-        </div>
-        <button
-          type="button"
-          className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-4 py-2 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
-          onClick={() => navigate('/')}
-        >
-          Back
-        </button>
-      </header>
+      <GameHeader
+        titleKey="minesweeper-versus.name"
+        titleNs="games"
+        onBack={() => navigate('/')}
+      />
 
       <main className="flex min-h-0 flex-1 flex-col items-center gap-4 overflow-y-auto p-4 sm:p-6">
         <div className="flex w-full max-w-[560px] flex-wrap items-center justify-center gap-2">
@@ -144,17 +145,12 @@ function MinesweeperBoard({ session }: { session: WsSession }) {
         <div className="relative flex items-center justify-center overflow-hidden border border-marquinhos-border bg-marquinhos-bg">
           <MinesweeperCanvas board={board} onReveal={revealTile} />
           {board?.gameOver && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-marquinhos-bg/90">
-              <div className="font-pixel text-2xl text-marquinhos-text">
-                BOARD CLEARED
-              </div>
-              <button
-                type="button"
-                className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-6 py-4 font-mono text-xs tracking-wide text-marquinhos-text hover:border-marquinhos-border-hover"
-                onClick={() => navigate('/')}
-              >
-                MAIN MENU
-              </button>
+            <div className="absolute inset-0">
+              <EndScreen
+                outcomeKey="boardCleared"
+                outcomeNs="minesweeper-versus"
+                onBackToHub={() => navigate('/')}
+              />
             </div>
           )}
         </div>
@@ -168,7 +164,7 @@ function MinesweeperBoard({ session }: { session: WsSession }) {
         {(connectionState === 'disconnected' ||
           connectionState === 'error') && (
           <div className="notch-6 border border-marquinhos-danger/40 bg-marquinhos-danger/10 p-3 text-center text-sm text-marquinhos-danger">
-            Connection lost. Reload to reconnect.
+            {t('connectionLost')}
           </div>
         )}
       </main>
@@ -188,47 +184,20 @@ export function MinesweeperVersusGame({
 
   if (session.status === 'connecting') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel animate-pong-blink text-sm tracking-[0.28em] text-marquinhos-accent">
-            STARTING GAME…
-          </div>
-          <div className="max-w-[36ch] text-sm leading-6 text-marquinhos-text-dim">
-            Connecting to the shared minefield.
-          </div>
-        </div>
-      </div>
+      <ConnectingScreen
+        subtitleKey="connectingSubtitle"
+        subtitleNs="minesweeper-versus"
+      />
     );
   }
 
   if (session.status === 'error') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[560px] flex-col items-center justify-center gap-5 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-danger">
-            CONNECTION FAILED
-          </div>
-          <div className="max-w-[48ch] text-sm leading-6 text-marquinhos-text-dim">
-            {session.error}
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={onAuthInvalid}
-            >
-              Retry auth
-            </button>
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-3 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
-              onClick={() => navigate('/')}
-            >
-              Back
-            </button>
-          </div>
-        </div>
-      </div>
+      <ErrorScreen
+        message={session.error}
+        onRetryAuth={onAuthInvalid}
+        onBack={() => navigate('/')}
+      />
     );
   }
 
