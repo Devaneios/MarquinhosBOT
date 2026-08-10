@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/cn';
 
 interface WordChainBoardProps {
@@ -15,11 +16,13 @@ export function WordChainBoard({
   winner,
   usedWords,
 }: WordChainBoardProps) {
+  const { t } = useTranslation('word-chain');
+
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
       <div className="notch-6 border border-marquinhos-border bg-marquinhos-panel p-4">
         <div className="text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
-          Jogadores
+          {t('players')}
         </div>
         <div className="mt-3 flex flex-col gap-2">
           {players.map((player) => (
@@ -35,7 +38,9 @@ export function WordChainBoard({
               </span>
               <span className="flex items-center gap-2 text-xs uppercase tracking-[0.18em]">
                 {currentTurn === player.userId && !gameOver && (
-                  <span className="text-marquinhos-accent">Vez</span>
+                  <span className="text-marquinhos-accent">
+                    {t('turnLabel')}
+                  </span>
                 )}
                 <span
                   className={
@@ -54,11 +59,11 @@ export function WordChainBoard({
 
       <div className="notch-6 flex-1 border border-marquinhos-border bg-black/20 p-4">
         <div className="text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
-          Palavras usadas
+          {t('usedWordsLabel')}
         </div>
         {usedWords.length === 0 ? (
           <div className="mt-3 text-sm text-marquinhos-text-disabled">
-            Nenhuma palavra ainda.
+            {t('noWordsYet')}
           </div>
         ) : (
           <div className="mt-3 flex flex-wrap gap-2">
@@ -77,11 +82,11 @@ export function WordChainBoard({
       {gameOver && (
         <div className="notch-6 border border-marquinhos-danger/40 bg-marquinhos-danger/10 p-4 text-center">
           <div className="font-pixel text-sm tracking-[0.24em] text-marquinhos-danger">
-            JOGO TERMINADO
+            {t('gameOverTitle')}
           </div>
           {winner && (
             <div className="mt-2 text-sm text-marquinhos-accent">
-              {winner} venceu!
+              {t('playerWon', { player: winner })}
             </div>
           )}
         </div>

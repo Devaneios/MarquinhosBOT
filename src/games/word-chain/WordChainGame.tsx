@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import {
+  ConnectingScreen,
+  ErrorScreen,
+  GameHeader,
+  ModeSelectScreen,
+} from '../../components/game-shell';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { colyseusUrl } from '../../lib/apiBase';
 import { cn } from '../../lib/cn';
@@ -28,6 +35,7 @@ export function WordChainGame({
   onAuthInvalid: () => void;
 }) {
   const navigate = useNavigate();
+  const { t } = useTranslation(['word-chain', 'common']);
   const [mode, setMode] = useState<'single' | 'multi' | null>(null);
   const session = useWordChainSession(identity, mode, onAuthInvalid);
   const [gameState, setGameState] = useState<GameState>({
@@ -93,7 +101,7 @@ export function WordChainGame({
     setInputValue('');
 
     submitTimeoutRef.current = setTimeout(() => {
-      setError('No response from server');
+      setError(t('word-chain:noResponse'));
     }, 5000);
   }
 
@@ -108,101 +116,49 @@ export function WordChainGame({
 
   if (session.status === 'selecting-mode') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-accent">
-            SELECIONAR MODO
-          </div>
-          <div className="flex gap-4">
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={() => setMode('single')}
-            >
-              VS BOT
-            </button>
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={() => setMode('multi')}
-            >
-              VS JOGADOR
-            </button>
-          </div>
-          <button
-            type="button"
-            className="notch-6 border border-marquinhos-border bg-transparent px-5 py-3 text-sm font-semibold text-marquinhos-text transition hover:bg-marquinhos-panel-hover"
-            onClick={() => navigate('/')}
-          >
-            VOLTAR
-          </button>
-        </div>
-      </div>
+      <ModeSelectScreen
+        onBack={() => navigate('/')}
+        options={[
+          {
+            key: 'single',
+            labelKey: 'vsBot',
+            labelNs: 'common',
+            onSelect: () => setMode('single'),
+          },
+          {
+            key: 'multi',
+            labelKey: 'vsPlayer',
+            labelNs: 'common',
+            onSelect: () => setMode('multi'),
+          },
+        ]}
+      />
     );
   }
 
   if (session.status === 'connecting') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel animate-pong-blink text-sm tracking-[0.28em] text-marquinhos-accent">
-            INICIANDO JOGO…
-          </div>
-          <div className="max-w-[36ch] text-sm leading-6 text-marquinhos-text-dim">
-            Conectando à sessão em tempo real e carregando o jogo.
-          </div>
-        </div>
-      </div>
+      <ConnectingScreen subtitleKey="connectingSubtitle" subtitleNs="word-chain" />
     );
   }
 
   if (session.status === 'error') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[560px] flex-col items-center justify-center gap-5 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-danger">
-            FALHA NA CONEXÃO
-          </div>
-          <div className="max-w-[48ch] text-sm leading-6 text-marquinhos-text-dim">
-            {session.error}
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={onAuthInvalid}
-            >
-              Tentar novamente
-            </button>
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-3 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
-              onClick={() => navigate('/')}
-            >
-              Voltar
-            </button>
-          </div>
-        </div>
-      </div>
+      <ErrorScreen
+        message={session.error}
+        onRetryAuth={onAuthInvalid}
+        onBack={() => navigate('/')}
+      />
     );
   }
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(255,176,0,0.12),_transparent_30%),linear-gradient(180deg,_rgba(255,255,255,0.02),_transparent_20%),var(--color-marquinhos-bg)]">
-      <header className="flex items-center justify-between gap-4 border-b border-marquinhos-border bg-black/10 px-4 py-3 sm:px-6">
-        <div>
-          <div className="font-pixel text-sm tracking-[0.28em] text-marquinhos-accent sm:text-base">
-            CORRENTE DE PALAVRAS
-          </div>
-        </div>
-        <button
-          type="button"
-          className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-4 py-2 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
-          onClick={() => navigate('/')}
-        >
-          Voltar
-        </button>
-      </header>
+      <GameHeader
+        titleKey="word-chain.name"
+        titleNs="games"
+        onBack={() => navigate('/')}
+      />
 
       <main className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 sm:p-6">
         <div className="relative flex-1 rounded-lg border border-marquinhos-border bg-black/20 overflow-hidden">
@@ -215,7 +171,7 @@ export function WordChainGame({
           />
           {pausedOpponent && !isGameOver && (
             <div className="notch-3 font-pixel animate-pong-blink absolute top-3 left-1/2 -translate-x-1/2 border border-marquinhos-accent bg-marquinhos-panel px-2.5 py-1 text-[11px] tracking-wide text-marquinhos-accent">
-              OPONENTE DESCONECTADO — AGUARDANDO…
+              {t('word-chain:opponentDisconnected')}
             </div>
           )}
         </div>
@@ -224,8 +180,10 @@ export function WordChainGame({
           <div className="notch-8 flex flex-col gap-3 border border-marquinhos-border bg-marquinhos-panel px-4 py-4 shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
             <div className="text-sm text-marquinhos-text-dim">
               {isCurrentPlayer
-                ? 'Sua vez! Digite uma palavra começando com:'
-                : `Aguardando ${gameState.currentTurn}...`}
+                ? t('word-chain:yourTurnPrompt')
+                : t('word-chain:waitingForTurn', {
+                    player: gameState.currentTurn,
+                  })}
             </div>
 
             {gameState.currentWord && (
@@ -249,7 +207,7 @@ export function WordChainGame({
                 }}
                 onKeyDown={handleKeyDown}
                 disabled={!isCurrentPlayer || isGameOver}
-                placeholder="Digite uma palavra..."
+                placeholder={t('word-chain:inputPlaceholder')}
                 className={cn(
                   'flex-1 rounded-md border border-marquinhos-border bg-black/25 px-3 py-2 text-sm text-marquinhos-text placeholder-marquinhos-text-dim focus:outline-none focus:ring-2 focus:ring-marquinhos-accent disabled:opacity-50 disabled:cursor-not-allowed',
                 )}
@@ -260,7 +218,7 @@ export function WordChainGame({
                 disabled={!isCurrentPlayer || isGameOver || !inputValue.trim()}
                 className="notch-6 border border-marquinhos-accent bg-marquinhos-accent px-4 py-2 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Enviar
+                {t('word-chain:submit')}
               </button>
             </div>
 
@@ -273,19 +231,19 @@ export function WordChainGame({
         {isGameOver && (
           <div className="notch-8 border border-marquinhos-border bg-marquinhos-panel px-4 py-6 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
             <div className="font-pixel text-lg text-marquinhos-accent mb-2">
-              JOGO TERMINADO
+              {t('word-chain:gameOverTitle')}
             </div>
             <div className="text-sm text-marquinhos-text mb-4">
               {gameState.winner === identity.userId
-                ? 'Você venceu!'
-                : `${gameState.winner} venceu!`}
+                ? t('word-chain:youWon')
+                : t('word-chain:playerWon', { player: gameState.winner })}
             </div>
             <button
               type="button"
               className="notch-6 border border-marquinhos-accent bg-marquinhos-accent px-5 py-2 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
               onClick={() => navigate('/')}
             >
-              Voltar ao Menu
+              {t('common:backToHub')}
             </button>
           </div>
         )}
@@ -293,7 +251,7 @@ export function WordChainGame({
         {(connectionState === 'disconnected' ||
           connectionState === 'error') && (
           <div className="notch-6 border border-marquinhos-danger/40 bg-marquinhos-danger/10 p-3 text-center text-sm text-marquinhos-danger">
-            Conexão perdida. Recarregue para reconectar.
+            {t('common:connectionLost')}
           </div>
         )}
       </main>
