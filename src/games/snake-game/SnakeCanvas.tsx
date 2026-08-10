@@ -1,6 +1,7 @@
 import type { Room } from '@colyseus/sdk';
 import { Application, Graphics } from 'pixi.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { colyseusUrl } from '../../lib/apiBase';
 import { devinfo, devlog, devwarn } from '../../lib/devlog';
 import type { WsSession } from '../shared/activitySession';
@@ -136,6 +137,7 @@ export function SnakeCanvas({
   mode: SnakeMode;
   onMainMenu: () => void;
 }) {
+  const { t } = useTranslation(['snake-game', 'common']);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
   const configRef = useRef<SnakePublicConfig>(DEFAULT_CONFIG);
@@ -353,24 +355,29 @@ export function SnakeCanvas({
   }, [session]);
   // eslint-enable react-hooks/exhaustive-deps
 
+  const p1Label = t('snake-game:player1');
+  const p2Label = t('snake-game:player2');
   const p1Score = scores?.player1 ?? 0;
   const p2Score = mode === 'single' ? undefined : scores?.player2;
-  const p2Name = 'Player 2';
   const winnerLabel =
     winner === playerId
-      ? 'YOU WIN'
+      ? t('snake-game:youWin')
       : winner
-        ? `${winner === 'player2' ? p2Name : winner} WINS`
+        ? t('snake-game:playerWins', {
+            name: winner === 'player2' ? p2Label : p1Label,
+          })
         : '';
 
   return (
     <div className="relative flex flex-1 items-center justify-center overflow-hidden">
       <canvas ref={canvasRef} className="block max-h-full max-w-full" />
       <div className="absolute top-3 left-3 font-mono text-sm text-marquinhos-green">
-        <div>Player 1: {p1Score}</div>
+        <div>
+          {p1Label}: {p1Score}
+        </div>
         {p2Score !== undefined && (
           <div>
-            {p2Name}: {p2Score}
+            {p2Label}: {p2Score}
           </div>
         )}
       </div>
@@ -379,16 +386,16 @@ export function SnakeCanvas({
         className="font-pixel absolute bottom-3 left-3 cursor-pointer border border-marquinhos-border bg-marquinhos-panel px-3.5 py-2 text-[11px] text-marquinhos-text hover:border-marquinhos-border-hover"
         onClick={onMainMenu}
       >
-        LEAVE GAME
+        {t('snake-game:leaveGame')}
       </button>
       {(connectionState === 'disconnected' || connectionState === 'error') && (
         <div className="font-pixel absolute top-3 left-1/2 -translate-x-1/2 border border-marquinhos-danger/60 bg-marquinhos-panel px-3 py-1.5 text-[11px] tracking-wide text-marquinhos-danger">
-          CONNECTION LOST — RELOAD TO RECONNECT
+          {t('common:connectionLost')}
         </div>
       )}
       {pausedOpponent && !winner && (
         <div className="font-pixel absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-marquinhos-text">
-          OPPONENT DISCONNECTED — WAITING…
+          {t('snake-game:opponentDisconnected')}
         </div>
       )}
       {winner && (
@@ -401,7 +408,7 @@ export function SnakeCanvas({
             className="notch-6 cursor-pointer border border-marquinhos-border bg-marquinhos-panel px-6 py-4.5 font-mono text-xs tracking-wide text-marquinhos-text hover:border-marquinhos-border-hover"
             onClick={onMainMenu}
           >
-            MAIN MENU
+            {t('common:mainMenu')}
           </button>
         </div>
       )}
