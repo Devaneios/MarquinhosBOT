@@ -7,7 +7,6 @@ import { checkersRoutes } from './checkersRoutes';
 // the whole wiring step left for this game.
 export const gameDescriptor: GameDescriptor = {
   id: 'checkers' as GameId,
-  name: 'CHECKERS',
   status: 'PLAY',
   routes: checkersRoutes,
 };

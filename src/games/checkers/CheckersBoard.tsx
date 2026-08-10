@@ -1,5 +1,7 @@
 import { Application, Container, Graphics } from 'pixi.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { GameHeader } from '../../components/game-shell';
 import { colyseusUrl } from '../../lib/apiBase';
 import { devlog } from '../../lib/devlog';
 import type { GameId } from '../gameId';
@@ -34,8 +36,8 @@ function samePos(a: Position | null, b: Position | null): boolean {
   return a.row === b.row && a.col === b.col;
 }
 
-function colorLabel(color: Color): string {
-  return color === 'black' ? 'BLACK' : 'RED';
+function colorKey(color: Color): 'colorBlack' | 'colorRed' {
+  return color === 'black' ? 'colorBlack' : 'colorRed';
 }
 
 export function CheckersBoard({
@@ -47,6 +49,7 @@ export function CheckersBoard({
   mode: GameMode;
   onMainMenu: () => void;
 }) {
+  const { t } = useTranslation(['checkers', 'common', 'games']);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
   const boardLayerRef = useRef<Container | null>(null);
@@ -77,13 +80,13 @@ export function CheckersBoard({
       setState(message.payload as CheckersState);
     } else if (message.type === 'move_rejected') {
       setSelected(null);
-      setNotice('That move is not legal.');
+      setNotice(t('checkers:moveRejected'));
     } else if (message.type === 'opponent_disconnected') {
-      setNotice('Opponent disconnected — waiting for them to reconnect…');
+      setNotice(t('checkers:opponentDisconnected'));
     } else if (message.type === 'opponent_reconnected') {
       setNotice(null);
     }
-  }, []);
+  }, [t]);
 
   const { send, connectionState } = useColyseusRoom(
     CHECKERS_GAME_ID,
@@ -313,23 +316,26 @@ export function CheckersBoard({
     redrawFnRef.current?.();
   }, [state, selected]);
 
-  const winnerLabel = state?.winner ? colorLabel(state.winner) : null;
   const isMyTurn =
     !!state && !!myColor && state.turn === myColor && !state.winner;
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-5 p-4 sm:p-6">
-      <div className="flex w-full max-w-[520px] items-center justify-between">
-        <button
-          type="button"
-          className="font-pixel cursor-pointer border-none bg-none text-[11px] text-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
-          onClick={onMainMenu}
-        >
-          &lt; MENU
-        </button>
-        <div className="font-pixel text-xs tracking-[0.2em] text-marquinhos-text-dim">
-          {myColor ? `YOU: ${colorLabel(myColor)}` : ''}
-        </div>
+      <div className="w-full max-w-[520px]">
+        <GameHeader
+          titleKey="checkers.name"
+          titleNs="games"
+          onBack={onMainMenu}
+          backLabel={t('checkers:menuLabel')}
+          variant="minimal"
+          right={
+            myColor ? (
+              <div className="font-pixel text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim">
+                {t('common:you')}: {t(`checkers:${colorKey(myColor)}`)}
+              </div>
+            ) : undefined
+          }
+        />
       </div>
 
       <div className="notch-8 border border-marquinhos-border bg-marquinhos-panel p-3 shadow-[0_20px_40px_rgba(0,0,0,0.28)]">
@@ -340,12 +346,14 @@ export function CheckersBoard({
       </div>
 
       <div className="font-pixel text-sm tracking-[0.2em] text-marquinhos-text-dim">
-        {winnerLabel
-          ? `${winnerLabel} WINS`
+        {state?.winner
+          ? t('checkers:wins', { color: t(`checkers:${colorKey(state.winner)}`) })
           : isMyTurn
-            ? 'YOUR TURN'
+            ? t('checkers:yourTurn')
             : state
-              ? `${colorLabel(state.turn)} TO MOVE`
+              ? t('checkers:turnToMove', {
+                  color: t(`checkers:${colorKey(state.turn)}`),
+                })
               : ''}
       </div>
 
@@ -355,11 +363,11 @@ export function CheckersBoard({
 
       {(connectionState === 'disconnected' || connectionState === 'error') && (
         <div className="text-sm text-marquinhos-danger">
-          Connection lost. Reload to reconnect.
+          {t('common:connectionLost')}
         </div>
       )}
 
-      {winnerLabel && (
+      {state?.winner && (
         <div className="flex gap-3">
           {mode === 'multi' && (
             <button
@@ -367,7 +375,7 @@ export function CheckersBoard({
               className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
               onClick={() => send({ type: 'restart' })}
             >
-              PLAY AGAIN
+              {t('common:playAgain')}
             </button>
           )}
           <button
@@ -375,7 +383,7 @@ export function CheckersBoard({
             className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-5 py-3 text-sm text-marquinhos-text hover:border-marquinhos-border-hover"
             onClick={onMainMenu}
           >
-            MAIN MENU
+            {t('common:mainMenu')}
           </button>
         </div>
       )}
