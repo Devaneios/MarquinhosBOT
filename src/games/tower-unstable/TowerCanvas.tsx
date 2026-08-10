@@ -1,5 +1,7 @@
 import { Application, Graphics } from 'pixi.js';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { GameHeader } from '../../components/game-shell';
 import { colyseusUrl } from '../../lib/apiBase';
 import type { WsSession } from '../shared/activitySession';
 import {
@@ -28,6 +30,7 @@ interface Props {
 }
 
 export function TowerCanvas({ session, userId, onMainMenu }: Props) {
+  const { t } = useTranslation(['tower-unstable', 'common']);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
   const stateRef = useRef<TowerState | null>(null);
@@ -255,91 +258,94 @@ export function TowerCanvas({ session, userId, onMainMenu }: Props) {
   const winnerIsMe = state?.status === 'ended' && state.winner === userId;
 
   return (
-    <div className="flex flex-1 flex-col items-center gap-4 p-6">
-      <header className="flex w-full max-w-[420px] items-center justify-between">
-        <div className="font-pixel text-sm tracking-[0.28em] text-marquinhos-accent">
-          UNSTABLE TOWER
-        </div>
-        <button
-          type="button"
-          className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-4 py-2 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim"
-          onClick={onMainMenu}
-        >
-          Back
-        </button>
-      </header>
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <GameHeader
+        titleKey="tower-unstable.name"
+        titleNs="games"
+        onBack={onMainMenu}
+      />
 
-      {!joined && (
-        <div className="text-sm text-marquinhos-danger">
-          Match is already full — you are spectating.
-        </div>
-      )}
-
-      <div className="relative border border-marquinhos-border bg-marquinhos-bg">
-        <canvas ref={canvasRef} className="block" />
-        {!state && (
-          <div className="font-pixel animate-pong-blink absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-marquinhos-text">
-            WAITING FOR OPPONENT…
+      <main className="flex min-h-0 flex-1 flex-col items-center gap-4 overflow-y-auto p-6">
+        {!joined && (
+          <div className="text-sm text-marquinhos-danger">
+            {t('tower-unstable:spectating')}
           </div>
         )}
-      </div>
 
-      {state && state.status === 'playing' && (
-        <div className="text-sm text-marquinhos-text-dim">
-          {isMyTurn ? 'Your turn — pull a block' : "Opponent's turn"}
+        <div className="relative border border-marquinhos-border bg-marquinhos-bg">
+          <canvas ref={canvasRef} className="block" />
+          {!state && (
+            <div className="font-pixel animate-pong-blink absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-marquinhos-text">
+              {t('tower-unstable:waitingOpponent')}
+            </div>
+          )}
         </div>
-      )}
 
-      {state?.lastPull && (
-        <div className="text-xs text-marquinhos-text-dim">
-          Last pull instability: {(state.lastPull.instability * 100).toFixed(1)}
-          %
-        </div>
-      )}
-
-      {error && <div className="text-sm text-marquinhos-danger">{error}</div>}
-
-      {opponentDisconnected && (
-        <div className="font-pixel animate-pong-blink text-sm text-marquinhos-text">
-          OPPONENT DISCONNECTED — WAITING…
-        </div>
-      )}
-
-      {(connectionState === 'disconnected' || connectionState === 'error') && (
-        <div className="text-sm text-marquinhos-danger">
-          Connection lost. Reload to reconnect.
-        </div>
-      )}
-
-      {state?.status === 'ended' && (
-        <div className="flex flex-col items-center gap-4">
-          <div className="font-pixel text-2xl text-marquinhos-text">
-            {winnerIsMe ? 'YOU WIN' : 'TOWER TOPPLED'}
+        {state && state.status === 'playing' && (
+          <div className="text-sm text-marquinhos-text-dim">
+            {isMyTurn
+              ? t('tower-unstable:yourTurn')
+              : t('tower-unstable:opponentTurn')}
           </div>
-          <div className="flex gap-4">
-            <button
-              type="button"
-              className="notch-6 cursor-pointer border border-marquinhos-accent bg-marquinhos-accent px-6 py-3 font-mono text-xs tracking-wide text-marquinhos-bg disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={requested}
-              onClick={() => {
-                roomSend({ type: 'restart' });
-                setRequested(true);
-              }}
-            >
-              {requested
-                ? `WAITING… (${restartStatus?.votes ?? 1}/${restartStatus?.required ?? 2})`
-                : 'REMATCH'}
-            </button>
-            <button
-              type="button"
-              className="notch-6 cursor-pointer border border-marquinhos-border bg-marquinhos-panel px-6 py-3 font-mono text-xs tracking-wide text-marquinhos-text"
-              onClick={onMainMenu}
-            >
-              MAIN MENU
-            </button>
+        )}
+
+        {state?.lastPull && (
+          <div className="text-xs text-marquinhos-text-dim">
+            {t('tower-unstable:lastPullInstability', {
+              percent: (state.lastPull.instability * 100).toFixed(1),
+            })}
           </div>
-        </div>
-      )}
+        )}
+
+        {error && <div className="text-sm text-marquinhos-danger">{error}</div>}
+
+        {opponentDisconnected && (
+          <div className="font-pixel animate-pong-blink text-sm text-marquinhos-text">
+            {t('tower-unstable:opponentDisconnected')}
+          </div>
+        )}
+
+        {(connectionState === 'disconnected' || connectionState === 'error') && (
+          <div className="text-sm text-marquinhos-danger">
+            {t('common:connectionLost')}
+          </div>
+        )}
+
+        {state?.status === 'ended' && (
+          <div className="flex flex-col items-center gap-4">
+            <div className="font-pixel text-2xl text-marquinhos-text">
+              {winnerIsMe
+                ? t('tower-unstable:youWin')
+                : t('tower-unstable:towerToppled')}
+            </div>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                className="notch-6 cursor-pointer border border-marquinhos-accent bg-marquinhos-accent px-6 py-3 font-mono text-xs tracking-wide text-marquinhos-bg disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={requested}
+                onClick={() => {
+                  roomSend({ type: 'restart' });
+                  setRequested(true);
+                }}
+              >
+                {requested
+                  ? t('tower-unstable:waitingRematch', {
+                      votes: restartStatus?.votes ?? 1,
+                      required: restartStatus?.required ?? 2,
+                    })
+                  : t('tower-unstable:rematch')}
+              </button>
+              <button
+                type="button"
+                className="notch-6 cursor-pointer border border-marquinhos-border bg-marquinhos-panel px-6 py-3 font-mono text-xs tracking-wide text-marquinhos-text"
+                onClick={onMainMenu}
+              >
+                {t('common:mainMenu')}
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
