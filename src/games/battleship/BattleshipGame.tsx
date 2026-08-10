@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import {
+  ConnectingScreen,
+  ErrorScreen,
+  GameHeader,
+  ModeSelectScreen,
+} from '../../components/game-shell';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { colyseusUrl } from '../../lib/apiBase';
 import { errorMessage, isAuthError } from '../../lib/http';
@@ -118,13 +125,21 @@ function PlacementPanel({
   onReset: () => void;
   error: string | null;
 }) {
+  const { t } = useTranslation('battleship');
   const placedTypes = new Set(pendingShips.map((s) => s.type));
   const allPlaced = placedTypes.size === SHIP_ORDER.length;
+  const shipLabelKey: Record<ShipType, string> = {
+    carrier: 'shipCarrier',
+    battleship: 'shipBattleship',
+    cruiser: 'shipCruiser',
+    submarine: 'shipSubmarine',
+    destroyer: 'shipDestroyer',
+  };
 
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="text-sm uppercase tracking-[0.2em] text-marquinhos-text-dim">
-        Place your fleet
+        {t('placeFleet')}
       </div>
       <div className="flex flex-wrap gap-2">
         {SHIP_ORDER.map((type) => (
@@ -139,7 +154,7 @@ function PlacementPanel({
                 : 'border-marquinhos-border bg-marquinhos-panel text-marquinhos-text-dim'
             }`}
           >
-            {type} ({SHIP_SIZES[type]})
+            {t(shipLabelKey[type])} ({SHIP_SIZES[type]})
           </button>
         ))}
       </div>
@@ -149,14 +164,19 @@ function PlacementPanel({
           onClick={onToggleOrientation}
           className="notch-4 border border-marquinhos-border bg-marquinhos-panel px-3 py-2 text-xs uppercase tracking-[0.14em] text-marquinhos-text-dim"
         >
-          Orientation: {orientation}
+          {t('orientationLabel')}:{' '}
+          {t(
+            orientation === 'horizontal'
+              ? 'orientationHorizontal'
+              : 'orientationVertical',
+          )}
         </button>
         <button
           type="button"
           onClick={onReset}
           className="notch-4 border border-marquinhos-border bg-marquinhos-panel px-3 py-2 text-xs uppercase tracking-[0.14em] text-marquinhos-text-dim"
         >
-          Reset
+          {t('reset')}
         </button>
       </div>
       {error && <div className="text-sm text-marquinhos-danger">{error}</div>}
@@ -166,7 +186,7 @@ function PlacementPanel({
         onClick={onSubmit}
         className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
       >
-        Confirm fleet
+        {t('confirmFleet')}
       </button>
     </div>
   );
@@ -174,6 +194,7 @@ function PlacementPanel({
 
 function BattleshipBoard({ session }: { session: WsSession }) {
   const navigate = useNavigate();
+  const { t } = useTranslation(['battleship', 'common']);
   const [side, setSide] = useState<BattleshipSide | null>(null);
   const [state, setState] = useState<BattleshipStateView | null>(null);
   const [pendingShips, setPendingShips] = useState<PendingShip[]>([]);
@@ -252,23 +273,16 @@ function BattleshipBoard({ session }: { session: WsSession }) {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[var(--color-marquinhos-bg)]">
-      <header className="flex items-center justify-between gap-4 border-b border-marquinhos-border bg-black/10 px-4 py-3 sm:px-6">
-        <div className="font-pixel text-sm tracking-[0.28em] text-marquinhos-accent sm:text-base">
-          BATTLESHIP
-        </div>
-        <button
-          type="button"
-          className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-4 py-2 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim"
-          onClick={() => navigate('/')}
-        >
-          Back
-        </button>
-      </header>
+      <GameHeader
+        titleKey="battleship.name"
+        titleNs="games"
+        onBack={() => navigate('/')}
+      />
 
       <main className="flex min-h-0 flex-1 flex-col items-center gap-4 overflow-y-auto p-4 sm:p-6">
         {!state && (
           <div className="text-sm text-marquinhos-text-dim">
-            Waiting for the match to start…
+            {t('battleship:waitingMatch')}
           </div>
         )}
 
@@ -305,7 +319,7 @@ function BattleshipBoard({ session }: { session: WsSession }) {
 
         {state && phase === 'placement' && mySelfReady && (
           <div className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-6 py-4 text-sm text-marquinhos-text-dim">
-            Fleet placed. Waiting for the opponent…
+            {t('battleship:fleetPlaced')}
           </div>
         )}
 
@@ -314,11 +328,11 @@ function BattleshipBoard({ session }: { session: WsSession }) {
             <div className="text-sm uppercase tracking-[0.2em] text-marquinhos-text-dim">
               {phase === 'ended'
                 ? state.winner === side
-                  ? 'You won!'
-                  : 'You lost.'
+                  ? t('battleship:youWon')
+                  : t('battleship:youLost')
                 : myTurn
-                  ? 'Your turn — fire on the right board'
-                  : "Opponent's turn"}
+                  ? t('battleship:yourTurn')
+                  : t('battleship:opponentTurn')}
             </div>
             <BattleshipCanvas
               mode="battle"
@@ -338,7 +352,7 @@ function BattleshipBoard({ session }: { session: WsSession }) {
         {(connectionState === 'disconnected' ||
           connectionState === 'error') && (
           <div className="notch-6 border border-marquinhos-danger/40 bg-marquinhos-danger/10 p-3 text-center text-sm text-marquinhos-danger">
-            Connection lost. Reload to reconnect.
+            {t('common:connectionLost')}
           </div>
         )}
       </main>
@@ -359,79 +373,37 @@ export function BattleshipGame({
 
   if (session.status === 'selecting-mode') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-accent">
-            SELECT MODE
-          </div>
-          <div className="flex gap-4">
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={() => setMode('single')}
-            >
-              VS BOT
-            </button>
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={() => setMode('multi')}
-            >
-              VS PLAYER
-            </button>
-          </div>
-          <button
-            type="button"
-            className="notch-6 border border-marquinhos-border bg-transparent px-5 py-3 text-sm font-semibold text-marquinhos-text transition hover:bg-marquinhos-panel-hover"
-            onClick={() => navigate('/')}
-          >
-            BACK
-          </button>
-        </div>
-      </div>
+      <ModeSelectScreen
+        onBack={() => navigate('/')}
+        options={[
+          {
+            key: 'single',
+            labelKey: 'vsBot',
+            labelNs: 'common',
+            onSelect: () => setMode('single'),
+          },
+          {
+            key: 'multi',
+            labelKey: 'vsPlayer',
+            labelNs: 'common',
+            onSelect: () => setMode('multi'),
+          },
+        ]}
+      />
     );
   }
 
   if (session.status === 'connecting') {
-    return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[520px] flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel animate-pong-blink text-sm tracking-[0.28em] text-marquinhos-accent">
-            STARTING GAME…
-          </div>
-        </div>
-      </div>
-    );
+    return <ConnectingScreen />;
   }
 
   if (session.status === 'error') {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="notch-8 flex min-h-[240px] w-full max-w-[560px] flex-col items-center justify-center gap-5 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-          <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-danger">
-            CONNECTION FAILED
-          </div>
-          <div className="max-w-[48ch] text-sm leading-6 text-marquinhos-text-dim">
-            {session.error}
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={onAuthInvalid}
-            >
-              Retry auth
-            </button>
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-3 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
-              onClick={() => navigate('/')}
-            >
-              Back
-            </button>
-          </div>
-        </div>
-      </div>
+      <ErrorScreen
+        message={session.error}
+        onRetryAuth={onAuthInvalid}
+        onBack={() => navigate('/')}
+      />
     );
   }
 
