@@ -1,31 +1,9 @@
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { GameHeader } from '../components/game-shell';
 import type { GameId } from '../games/gameId';
 import { GAME_REGISTRY } from '../games/registry';
 import { cn } from '../lib/cn';
-
-const GAME_BLURBS: Record<GameId, string> = {
-  cards:
-    'Local card table prototype — lobby, hand management, and endgame flow, not yet wired to a real multiplayer backend.',
-  pong: 'Retro competitive arcade action with menu flow, settings, and local or online play.',
-  wordle:
-    'Solo word challenge connected to the realtime backend and Discord activity session.',
-  'tic-tac-toe': 'Classic 3x3 grid duel — first to line up three wins.',
-  'connect-four': 'Drop discs down a 7x6 grid and connect four before your opponent does.',
-  hangman: 'Guess the hidden word letter by letter before you run out of strikes.',
-  battleship: 'Place your fleet, then trade blind shots until every ship is sunk.',
-  checkers: 'Diagonal moves, mandatory jumps, and king promotions on an 8x8 board.',
-  'rock-paper-scissors': 'Simultaneous-reveal best-of-N showdown.',
-  'wordle-race': 'Real-time multiplayer Wordle — same word, everyone racing to solve it first.',
-  'minesweeper-versus': 'Shared minefield, real-time clicking — safe tiles score, mines cost you.',
-  'trivia-quiz': 'Party trivia for up to 8 players with countdown timers and speed-based scoring.',
-  'dominoes-block': 'Classic block dominoes — match tile ends and empty your hand first.',
-  'word-search-race': 'Shared letter grid, hidden words — find them before anyone else does.',
-  'bingo-speed': 'Numbers drawn every few seconds — first completed line wins.',
-  'tower-unstable': 'Pull blocks from a wobbling tower without bringing it down on your turn.',
-  'boggle-word-race': 'Trace adjacent letters to build words before the 3-minute timer runs out.',
-  'word-chain': 'Name a word starting with the last letter of the previous one — 10 seconds per turn.',
-  'snake-game': 'Grow your snake, dodge the walls and yourself, outlast your opponent.',
-};
 
 const GAME_ACCENTS: Record<GameId, string> = {
   cards: 'var(--color-marquinhos-accent)',
@@ -51,24 +29,24 @@ const GAME_ACCENTS: Record<GameId, string> = {
 
 export function Hub() {
   const navigate = useNavigate();
+  const { t } = useTranslation(['common', 'games']);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(255,176,0,0.12),_transparent_30%),linear-gradient(180deg,_rgba(255,255,255,0.02),_transparent_20%),var(--color-marquinhos-bg)] text-marquinhos-text">
-      <header className="flex items-center justify-between gap-4 border-b border-marquinhos-border bg-black/10 px-4 py-3 sm:px-6">
-        <div className="min-w-0">
-          <div className="font-pixel text-sm tracking-[0.32em] text-marquinhos-accent sm:text-base">
-            MARQUINHOS ARCADE
+      <GameHeader
+        titleKey="brand"
+        titleNs="common"
+        right={
+          <div className="hidden items-center gap-2 sm:flex">
+            <div className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-3 py-2 text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
+              {t('common:ready')}
+            </div>
+            <div className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-3 py-2 text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
+              {t('common:roomsHint')}
+            </div>
           </div>
-        </div>
-        <div className="hidden items-center gap-2 sm:flex">
-          <div className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-3 py-2 text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
-            Ready
-          </div>
-          <div className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-3 py-2 text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
-            2–4 player rooms
-          </div>
-        </div>
-      </header>
+        }
+      />
 
       <main className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4 sm:p-6">
         <section>
@@ -102,16 +80,20 @@ export function Hub() {
                           : 'border-marquinhos-green/40 text-marquinhos-green',
                       )}
                     >
-                      {game.status}
+                      {t(
+                        game.status === 'PLAY'
+                          ? 'common:play'
+                          : 'common:comingSoon',
+                      )}
                     </div>
                     <div
                       className="font-pixel text-sm leading-snug tracking-[0.16em]"
                       style={{ color: locked ? undefined : accent }}
                     >
-                      {game.name}
+                      {t(`games:${game.id}.name`)}
                     </div>
                     <div className="text-xs leading-5 text-marquinhos-text-dim">
-                      {GAME_BLURBS[game.id] ?? 'Game experience'}
+                      {t(`games:${game.id}.blurb`)}
                     </div>
                   </button>
                 );
