@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -15,6 +15,7 @@ import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
+import './keycap.css';
 
 type LetterFeedback = 'correct' | 'present' | 'absent';
 type KeyState = LetterFeedback | 'unused';
@@ -32,11 +33,44 @@ type WordleSessionState =
 // Colors lifted straight from the bot's termo canvas theme
 // (MarquinhosBOT src/ui/theme.ts) so the activity board reads as the same
 // game as the Discord slash command.
-const FEEDBACK_COLORS: Record<KeyState, { bg: string; text: string }> = {
-  correct: { bg: '#588157', text: '#E8E8E8' },
-  present: { bg: '#C0A054', text: '#1C1C1E' },
-  absent: { bg: '#3A3A3C', text: '#E8E8E8' },
-  unused: { bg: '#818384', text: '#1C1C1E' },
+const FEEDBACK_COLORS: Record<
+  KeyState,
+  {
+    bg: string;
+    text: string;
+    base: [string, string];
+    cap: [string, string];
+    surface: [string, string];
+  }
+> = {
+  correct: {
+    bg: '#588157',
+    text: '#E8E8E8',
+    base: ['#4a7a4a', '#3d6b3d'],
+    cap: ['#4a7a4a', '#3d6b3d'],
+    surface: ['#356335', '#4a7a4a'],
+  },
+  present: {
+    bg: '#C0A054',
+    text: '#1C1C1E',
+    base: ['#b8944a', '#a07e3a'],
+    cap: ['#b8944a', '#a07e3a'],
+    surface: ['#8a6e30', '#b8944a'],
+  },
+  absent: {
+    bg: '#3A3A3C',
+    text: '#E8E8E8',
+    base: ['#424242', '#343434'],
+    cap: ['#424242', '#343434'],
+    surface: ['#2d2d2d', '#424242'],
+  },
+  unused: {
+    bg: '#818384',
+    text: '#1C1C1E',
+    base: ['#6e6e6e', '#5a5a5a'],
+    cap: ['#6e6e6e', '#5a5a5a'],
+    surface: ['#555555', '#6e6e6e'],
+  },
 };
 
 const KB_ROWS = ['qwertyuiop', 'asdfghjklç', 'zxcvbnm'];
@@ -189,13 +223,33 @@ function KeyButton({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      style={{ backgroundColor: colors.bg, color: colors.text }}
+      style={
+        {
+          '--base-from': colors.base[0],
+          '--base-to': colors.base[1],
+          '--cap-from': colors.cap[0],
+          '--cap-to': colors.cap[1],
+          '--surface-from': colors.surface[0],
+          '--surface-to': colors.surface[1],
+          '--key-text': colors.text,
+        } as React.CSSProperties
+      }
       className={cn(
-        'flex h-10 shrink-0 cursor-pointer items-center justify-center rounded-md text-xs font-bold uppercase shadow-[0_2px_3px_rgba(0,0,0,0.4)] transition active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50',
-        wide ? 'min-w-[46px] px-2 text-[10px] sm:min-w-[52px]' : 'w-7 sm:w-8',
+        'keycap shrink-0 border-none pt-0 shadow-[0_4px_2px_0_rgba(0,0,0,0.4)] transition-[scale] duration-100 ease-in-out disabled:opacity-50',
+        disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+        wide ? 'min-w-11.5 sm:min-w-13' : '',
       )}
     >
-      {label}
+      <span className="keycap-cap inline-block border-none p-1.5 shadow-[0_4px_6px_rgba(0,0,0,0.3),0_-1px_0_rgba(0,0,0,0.2)] transition-[scale] duration-100 ease-in-out">
+        <span
+          className={cn(
+            'keycap-text block rounded-[50px] font-bold uppercase',
+            wide ? 'px-2 py-1.5 text-[10px]' : 'px-2.5 py-1.5 text-xs',
+          )}
+        >
+          {label}
+        </span>
+      </span>
     </button>
   );
 }
@@ -217,15 +271,14 @@ function Keyboard({
   return (
     <div className="flex flex-col items-center gap-1.5">
       {KB_ROWS.map((row, i) => (
-        <div key={row} className="flex justify-center gap-1.5">
-          {i === KB_ROWS.length - 1 && (
-            <KeyButton
-              label={t('enter')}
-              wide
-              disabled={disabled}
-              onClick={onEnter}
-            />
+        <div
+          key={row}
+          className={cn(
+            'flex justify-center gap-1.5',
+            i === KB_ROWS.length - 2 ? 'pl-10' : '',
+            i === KB_ROWS.length - 1 ? 'pl-15' : '',
           )}
+        >
           {row.split('').map((letter) => (
             <KeyButton
               key={letter}
@@ -236,11 +289,14 @@ function Keyboard({
             />
           ))}
           {i === KB_ROWS.length - 1 && (
+            <KeyButton label="⌫" disabled={disabled} onClick={onBackspace} />
+          )}
+          {i === KB_ROWS.length - 1 && (
             <KeyButton
-              label="⌫"
-              wide
+              label={t('enter')}
+
               disabled={disabled}
-              onClick={onBackspace}
+              onClick={onEnter}
             />
           )}
         </div>
@@ -356,7 +412,7 @@ function WordleBoard({ session }: { session: WsSession }) {
   const attemptNumber = guesses.length + (solved ? 0 : 1);
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(255,176,0,0.12),_transparent_30%),linear-gradient(180deg,_rgba(255,255,255,0.02),_transparent_20%),var(--color-marquinhos-bg)]">
+    <div className="flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,176,0,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_20%),var(--color-marquinhos-bg)]">
       <GameHeader
         titleKey="wordle.name"
         titleNs="games"
@@ -364,7 +420,7 @@ function WordleBoard({ session }: { session: WsSession }) {
       />
 
       <main className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto p-4 sm:p-6">
-        <div className="notch-8 flex w-full max-w-[420px] flex-col gap-4 border border-marquinhos-border bg-[#1c1b1c] px-4 py-5 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:px-6 sm:py-6">
+        <div className="notch-8 flex w-full flex-col gap-4 border border-marquinhos-border bg-[#1c1b1c] px-4 py-5 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:px-6 sm:py-6">
           {solved && (
             <div className="notch-6 flex items-center justify-between gap-3 border border-marquinhos-border bg-black/25 px-4 py-3">
               <div className="text-sm font-semibold text-marquinhos-text">
@@ -402,7 +458,10 @@ function WordleBoard({ session }: { session: WsSession }) {
 
             {wordLength !== null && (
               <div className="text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
-                {t('wordle:progress', { letters: wordLength, attempt: attemptNumber })}
+                {t('wordle:progress', {
+                  letters: wordLength,
+                  attempt: attemptNumber,
+                })}
               </div>
             )}
 

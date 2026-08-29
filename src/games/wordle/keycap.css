@@ -1,0 +1,28 @@
+.keycap {
+  --inset: 4px;
+  --rad: 8px;
+  --base-from: #6e6e6e;
+  --base-to: #5a5a5a;
+  --cap-from: #6e6e6e;
+  --cap-to: #5a5a5a;
+  --surface-from: #555555;
+  --surface-to: #6e6e6e;
+  --key-text: #1c1c1e;
+
+  background: linear-gradient(to bottom, var(--base-from), var(--base-to));
+  border-radius: calc(var(--rad) + var(--inset));
+
+  &:active {
+    scale: 0.93;
+  }
+}
+
+.keycap-cap {
+  background: linear-gradient(to bottom, var(--cap-from), var(--cap-to));
+  border-radius: var(--rad);
+  color: var(--key-text);
+}
+
+.keycap-text {
+  background: linear-gradient(to bottom, var(--surface-from), var(--surface-to));
+}
