@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -209,12 +209,14 @@ function KeyButton({
   state,
   wide,
   disabled,
+  pressed,
   onClick,
 }: {
   label: string;
   state?: LetterFeedback;
   wide?: boolean;
   disabled?: boolean;
+  pressed?: boolean;
   onClick: () => void;
 }) {
   const colors = FEEDBACK_COLORS[state ?? 'unused'];
@@ -238,6 +240,7 @@ function KeyButton({
         'keycap shrink-0 border-none pt-0 shadow-[0_4px_2px_0_rgba(0,0,0,0.4)] transition-[scale] duration-100 ease-in-out disabled:opacity-50',
         disabled ? 'cursor-not-allowed' : 'cursor-pointer',
         wide ? 'min-w-11.5 sm:min-w-13' : '',
+        pressed && 'keycap-pressed',
       )}
     >
       <span className="keycap-cap inline-block border-none p-1.5 shadow-[0_4px_6px_rgba(0,0,0,0.3),0_-1px_0_rgba(0,0,0,0.2)] transition-[scale] duration-100 ease-in-out">
@@ -256,12 +259,14 @@ function KeyButton({
 
 function Keyboard({
   letterStates,
+  pressedKeys,
   disabled,
   onKey,
   onEnter,
   onBackspace,
 }: {
   letterStates: Record<string, LetterFeedback>;
+  pressedKeys: ReadonlySet<string>;
   disabled: boolean;
   onKey: (letter: string) => void;
   onEnter: () => void;
@@ -284,17 +289,23 @@ function Keyboard({
               key={letter}
               label={letter}
               state={letterStates[letter]}
+              pressed={pressedKeys.has(letter)}
               disabled={disabled}
               onClick={() => onKey(letter)}
             />
           ))}
           {i === KB_ROWS.length - 1 && (
-            <KeyButton label="⌫" disabled={disabled} onClick={onBackspace} />
+            <KeyButton
+              label="⌫"
+              pressed={pressedKeys.has('Backspace')}
+              disabled={disabled}
+              onClick={onBackspace}
+            />
           )}
           {i === KB_ROWS.length - 1 && (
             <KeyButton
               label={t('enter')}
-
+              pressed={pressedKeys.has('Enter')}
               disabled={disabled}
               onClick={onEnter}
             />
@@ -316,6 +327,10 @@ function WordleBoard({ session }: { session: WsSession }) {
   const [shake, setShake] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
   const shakeTimeout = useRef<number | undefined>(undefined);
+  const [pressedKeys, setPressedKeys] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const pressTimers = useRef<Map<string, number>>(new Map());
 
   const { send, connectionState } = useColyseusRoom(
     'wordle',
@@ -389,9 +404,57 @@ function WordleBoard({ session }: { session: WsSession }) {
     send({ type: 'guess', payload: { guess: currentGuess } });
   }
 
+  const pressKey = useCallback((key: string) => {
+    const timer = pressTimers.current.get(key);
+    if (timer !== undefined) window.clearTimeout(timer);
+    pressTimers.current.delete(key);
+    setPressedKeys((prev) => {
+      if (prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+  }, []);
+
+  const releaseKey = useCallback((key: string) => {
+    const MIN_PRESS_MS = 100;
+    const timer = pressTimers.current.get(key);
+    if (timer !== undefined) window.clearTimeout(timer);
+    pressTimers.current.set(
+      key,
+      window.setTimeout(() => {
+        pressTimers.current.delete(key);
+        setPressedKeys((prev) => {
+          if (!prev.has(key)) return prev;
+          const next = new Set(prev);
+          next.delete(key);
+          return next;
+        });
+      }, MIN_PRESS_MS),
+    );
+  }, []);
+
   useEffect(() => {
+    return () => {
+      for (const timer of pressTimers.current.values()) {
+        window.clearTimeout(timer);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    function resolveVirtualKey(event: KeyboardEvent): string | null {
+      if (event.key === 'Enter') return 'Enter';
+      if (event.key === 'Backspace') return 'Backspace';
+      if (event.key.length !== 1) return null;
+      const key = normalizeKey(event.key);
+      return KB_LETTERS.has(key) ? key : null;
+    }
+
     function onKeyDown(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const vk = resolveVirtualKey(event);
+      if (vk !== null) pressKey(vk);
       if (event.key === 'Enter') {
         submitGuess();
         return;
@@ -404,10 +467,20 @@ function WordleBoard({ session }: { session: WsSession }) {
       const key = normalizeKey(event.key);
       if (KB_LETTERS.has(key)) typeLetter(key);
     }
+
+    function onKeyUp(event: KeyboardEvent) {
+      const vk = resolveVirtualKey(event);
+      if (vk !== null) releaseKey(vk);
+    }
+
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [solved, wordLength, currentGuess]);
+  }, [solved, wordLength, currentGuess, pressKey, releaseKey]);
 
   const attemptNumber = guesses.length + (solved ? 0 : 1);
 
@@ -420,7 +493,7 @@ function WordleBoard({ session }: { session: WsSession }) {
       />
 
       <main className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto p-4 sm:p-6">
-        <div className="notch-8 flex w-full flex-col gap-4 border border-marquinhos-border bg-[#1c1b1c] px-4 py-5 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:px-6 sm:py-6">
+        <div className="notch-8 flex w-fit flex-col gap-4 border border-marquinhos-border bg-[#1c1b1c] px-4 py-8 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:px-6 sm:py-6">
           {solved && (
             <div className="notch-6 flex items-center justify-between gap-3 border border-marquinhos-border bg-black/25 px-4 py-3">
               <div className="text-sm font-semibold text-marquinhos-text">
@@ -474,6 +547,7 @@ function WordleBoard({ session }: { session: WsSession }) {
 
           <Keyboard
             letterStates={letterStates}
+            pressedKeys={pressedKeys}
             disabled={solved || wordLength === null}
             onKey={typeLetter}
             onEnter={submitGuess}

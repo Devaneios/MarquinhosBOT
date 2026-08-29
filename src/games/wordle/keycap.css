@@ -12,7 +12,8 @@
   background: linear-gradient(to bottom, var(--base-from), var(--base-to));
   border-radius: calc(var(--rad) + var(--inset));
 
-  &:active {
+  &:active,
+  &.keycap-pressed {
     scale: 0.93;
   }
 }
