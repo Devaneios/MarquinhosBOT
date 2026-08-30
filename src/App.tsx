@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
 import { ConnectingScreen, ErrorScreen } from './components/game-shell';
 import { DevConsole } from './components/DevConsole';
+import { isMobilePlatform } from './discordSdk';
 import { useDiscordIdentity } from './hooks/useDiscordIdentity';
 import { devlog } from './lib/devlog';
 import { AppRoutes } from './routes';
@@ -16,7 +17,7 @@ function App() {
   }, [identity.status]);
 
   return (
-    <div className="app-shell relative flex h-full w-full flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(255,176,0,0.12),_transparent_32%),linear-gradient(180deg,_rgba(255,255,255,0.02),_transparent_20%),var(--color-marquinhos-bg)] text-marquinhos-text">
+    <div className="app-shell relative flex h-full w-full flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,176,0,0.12),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_20%),var(--color-marquinhos-bg)] text-marquinhos-text">
       {identity.status === 'loading' && (
         <ConnectingScreen subtitleKey="connectingSubtitle" subtitleNs="common" />
       )}
@@ -39,7 +40,7 @@ function App() {
         </MemoryRouter>
       )}
 
-      {import.meta.env.DEV && <DevConsole />}
+      {import.meta.env.DEV && !isMobilePlatform() && <DevConsole />}
     </div>
   );
 }

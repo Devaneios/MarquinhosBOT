@@ -1,4 +1,4 @@
-import { DiscordSDK, DiscordSDKMock } from '@discord/embedded-app-sdk';
+import { DiscordSDK, DiscordSDKMock, Platform } from '@discord/embedded-app-sdk';
 
 export const isMock = window.self === window.top && import.meta.env.DEV;
 const MOCK_GUILD_ID = '123456789012345678';
@@ -31,3 +31,16 @@ export const discordSdk: DiscordSDK | DiscordSDKMock = new Proxy(
     },
   },
 );
+
+// `platform` is read straight off the URL in the SDK constructor, so this is
+// stable from the first render — but getDiscordSdk() throws when the client id
+// or Discord's own query params (frame_id, instance_id, platform) are missing,
+// and callers here run outside useDiscordIdentity's error handling, so a
+// failure has to degrade instead of blanking the app.
+export function isMobilePlatform(): boolean {
+  try {
+    return getDiscordSdk().platform === Platform.MOBILE;
+  } catch {
+    return false;
+  }
+}

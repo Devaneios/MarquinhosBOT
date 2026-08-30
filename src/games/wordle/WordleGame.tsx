@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -73,7 +79,7 @@ const FEEDBACK_COLORS: Record<
   },
 };
 
-const KB_ROWS = ['qwertyuiop', 'asdfghjklç', 'zxcvbnm'];
+const KB_ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
 const KB_LETTERS = new Set(KB_ROWS.join(''));
 
 function normalizeKey(ch: string): string {
@@ -207,14 +213,14 @@ function CurrentRowView({
 function KeyButton({
   label,
   state,
-  wide,
+  variant,
   disabled,
   pressed,
   onClick,
 }: {
   label: string;
   state?: LetterFeedback;
-  wide?: boolean;
+  variant?: 'medium' | 'wide';
   disabled?: boolean;
   pressed?: boolean;
   onClick: () => void;
@@ -237,19 +243,15 @@ function KeyButton({
         } as React.CSSProperties
       }
       className={cn(
-        'keycap shrink-0 border-none pt-0 shadow-[0_4px_2px_0_rgba(0,0,0,0.4)] transition-[scale] duration-100 ease-in-out disabled:opacity-50',
+        'keycap border-none transition-[scale] duration-100 ease-in-out disabled:opacity-50',
         disabled ? 'cursor-not-allowed' : 'cursor-pointer',
-        wide ? 'min-w-11.5 sm:min-w-13' : '',
+        variant === 'medium' && 'keycap-medium',
+        variant === 'wide' && 'keycap-wide',
         pressed && 'keycap-pressed',
       )}
     >
-      <span className="keycap-cap inline-block border-none p-1.5 shadow-[0_4px_6px_rgba(0,0,0,0.3),0_-1px_0_rgba(0,0,0,0.2)] transition-[scale] duration-100 ease-in-out">
-        <span
-          className={cn(
-            'keycap-text block rounded-[50px] font-bold uppercase',
-            wide ? 'px-2 py-1.5 text-[10px]' : 'px-2.5 py-1.5 text-xs',
-          )}
-        >
+      <span className="keycap-cap border-none transition-[scale] duration-100 ease-in-out">
+        <span className="keycap-text rounded-[50px] font-bold uppercase">
           {label}
         </span>
       </span>
@@ -272,16 +274,15 @@ function Keyboard({
   onEnter: () => void;
   onBackspace: () => void;
 }) {
-  const { t } = useTranslation('wordle');
   return (
-    <div className="flex flex-col items-center gap-1.5">
+    <div className="termo-keyboard">
       {KB_ROWS.map((row, i) => (
         <div
           key={row}
           className={cn(
-            'flex justify-center gap-1.5',
-            i === KB_ROWS.length - 2 ? 'pl-10' : '',
-            i === KB_ROWS.length - 1 ? 'pl-15' : '',
+            'termo-keyboard-row',
+            i === KB_ROWS.length - 2 ? 'termo-keyboard-row-home' : '',
+            i === KB_ROWS.length - 1 ? 'termo-keyboard-row-bottom' : '',
           )}
         >
           {row.split('').map((letter) => (
@@ -297,6 +298,7 @@ function Keyboard({
           {i === KB_ROWS.length - 1 && (
             <KeyButton
               label="⌫"
+              variant="medium"
               pressed={pressedKeys.has('Backspace')}
               disabled={disabled}
               onClick={onBackspace}
@@ -304,7 +306,8 @@ function Keyboard({
           )}
           {i === KB_ROWS.length - 1 && (
             <KeyButton
-              label={t('enter')}
+              label="⏎"
+              variant="wide"
               pressed={pressedKeys.has('Enter')}
               disabled={disabled}
               onClick={onEnter}
@@ -484,6 +487,21 @@ function WordleBoard({ session }: { session: WsSession }) {
 
   const attemptNumber = guesses.length + (solved ? 0 : 1);
 
+  // Below `sm` the keyboard leaves the card and spans the full viewport so the
+  // keys get every pixel of width; from `sm` up it sits inside the card as
+  // before. The card's notch-8 clip-path would crop a breakout from inside, so
+  // the two positions are real DOM nodes and the breakpoint picks one.
+  const keyboard = (
+    <Keyboard
+      letterStates={letterStates}
+      pressedKeys={pressedKeys}
+      disabled={solved || wordLength === null}
+      onKey={typeLetter}
+      onEnter={submitGuess}
+      onBackspace={backspace}
+    />
+  );
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,176,0,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_20%),var(--color-marquinhos-bg)]">
       <GameHeader
@@ -492,8 +510,8 @@ function WordleBoard({ session }: { session: WsSession }) {
         onBack={() => navigate('/')}
       />
 
-      <main className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto p-4 sm:p-6">
-        <div className="notch-8 flex w-fit flex-col gap-4 border border-marquinhos-border bg-[#1c1b1c] px-4 py-8 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:px-6 sm:py-6">
+      <main className="flex min-h-0 flex-1 items-stretch justify-center overflow-hidden p-2 sm:items-center sm:overflow-y-auto sm:p-6">
+        <div className="notch-8 flex w-full flex-1 flex-col gap-3 border border-marquinhos-border bg-[#1c1b1c] px-2 py-3 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:w-fit sm:min-w-[33.75rem] sm:flex-none sm:gap-4 sm:px-6 sm:py-6">
           {solved && (
             <div className="notch-6 flex items-center justify-between gap-3 border border-marquinhos-border bg-black/25 px-4 py-3">
               <div className="text-sm font-semibold text-marquinhos-text">
@@ -512,10 +530,10 @@ function WordleBoard({ session }: { session: WsSession }) {
             </div>
           )}
 
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 sm:flex-none">
             <div
               ref={gridRef}
-              className="flex max-h-[42vh] flex-col gap-1.5 overflow-y-auto py-1 sm:gap-2"
+              className="flex min-h-0 flex-initial flex-col gap-1.5 overflow-y-auto py-1 sm:max-h-[42vh] sm:flex-none sm:gap-2"
             >
               {guesses.map((row, i) => (
                 <GuessRowView key={i} row={row} />
@@ -545,14 +563,7 @@ function WordleBoard({ session }: { session: WsSession }) {
             )}
           </div>
 
-          <Keyboard
-            letterStates={letterStates}
-            pressedKeys={pressedKeys}
-            disabled={solved || wordLength === null}
-            onKey={typeLetter}
-            onEnter={submitGuess}
-            onBackspace={backspace}
-          />
+          <div className="hidden sm:contents">{keyboard}</div>
 
           {(connectionState === 'disconnected' ||
             connectionState === 'error') && (
@@ -562,6 +573,8 @@ function WordleBoard({ session }: { session: WsSession }) {
           )}
         </div>
       </main>
+
+      <div className="pb-16 sm:hidden">{keyboard}</div>
     </div>
   );
 }
