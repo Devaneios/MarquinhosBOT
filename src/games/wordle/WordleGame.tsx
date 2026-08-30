@@ -188,23 +188,55 @@ function GuessRowView({ row }: { row: GuessRow }) {
 }
 
 function CurrentRowView({
-  value,
+  letters,
+  activeIndex,
   wordLength,
   shake,
+  disabled,
+  inputRefs,
+  onFocusCell,
+  onKeyDownCell,
 }: {
-  value: string;
+  letters: string[];
+  activeIndex: number;
   wordLength: number;
   shake: boolean;
+  disabled: boolean;
+  inputRefs: React.MutableRefObject<(HTMLInputElement | null)[]>;
+  onFocusCell: (i: number) => void;
+  onKeyDownCell: (i: number, e: React.KeyboardEvent<HTMLInputElement>) => void;
 }) {
-  const letters = Array.from({ length: wordLength }, (_, i) =>
-    (value[i] ?? '').toUpperCase(),
-  );
+  const { t } = useTranslation('wordle');
   return (
     <div
       className={cn('flex gap-1.5 sm:gap-2', shake && 'animate-termo-shake')}
     >
-      {letters.map((letter, i) => (
-        <Tile key={i} letter={letter} />
+      {Array.from({ length: wordLength }, (_, i) => (
+        <input
+          key={i}
+          ref={(el) => {
+            inputRefs.current[i] = el;
+          }}
+          value={(letters[i] ?? '').toUpperCase()}
+          readOnly
+          disabled={disabled}
+          onFocus={() => onFocusCell(i)}
+          onKeyDown={(e) => onKeyDownCell(i, e)}
+          onClick={() => onFocusCell(i)}
+          inputMode="text"
+          autoComplete="off"
+          aria-label={t('letterAriaLabel', { position: i + 1 })}
+          className={cn(
+            'flex h-11 w-11 items-center justify-center rounded-md border bg-transparent text-center font-pixel text-lg font-bold uppercase caret-transparent sm:h-12 sm:w-12',
+            'cursor-default appearance-none outline-none',
+            letters[i]
+              ? 'border-marquinhos-border-hover'
+              : 'border-marquinhos-border/60',
+            i === activeIndex &&
+              !disabled &&
+              'border-marquinhos-blue ring-2 ring-inset ring-marquinhos-blue',
+          )}
+        />
       ))}
     </div>
   );
@@ -231,6 +263,7 @@ function KeyButton({
       type="button"
       disabled={disabled}
       onClick={onClick}
+      onMouseDown={(e) => e.preventDefault()}
       style={
         {
           '--base-from': colors.base[0],
@@ -326,7 +359,9 @@ function WordleBoard({ session }: { session: WsSession }) {
   const [guesses, setGuesses] = useState<GuessRow[]>([]);
   const [solved, setSolved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentGuess, setCurrentGuess] = useState('');
+  const [currentLetters, setCurrentLetters] = useState<string[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [shake, setShake] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
   const shakeTimeout = useRef<number | undefined>(undefined);
@@ -350,6 +385,8 @@ function WordleBoard({ session }: { session: WsSession }) {
         setGuesses(payload.guesses);
         setSolved(payload.solved);
         setError(null);
+        setCurrentLetters(Array(payload.wordLength).fill(''));
+        setActiveIndex(0);
       } else if (message.type === 'guess_result') {
         const payload = message.payload as {
           guesses: GuessRow[];
@@ -358,7 +395,8 @@ function WordleBoard({ session }: { session: WsSession }) {
         setGuesses(payload.guesses);
         setSolved(payload.solved);
         setError(null);
-        setCurrentGuess('');
+        setCurrentLetters((prev) => prev.map(() => ''));
+        setActiveIndex(0);
       } else if (message.type === 'guess_error') {
         const payload = message.payload as { message: string };
         setError(payload.message);
@@ -387,24 +425,41 @@ function WordleBoard({ session }: { session: WsSession }) {
   function typeLetter(letter: string) {
     if (solved || wordLength === null) return;
     setError(null);
-    setCurrentGuess((prev) =>
-      prev.length < wordLength ? prev + letter : prev,
-    );
+    setCurrentLetters((prev) => {
+      const next = [...prev];
+      next[activeIndex] = letter;
+      return next;
+    });
+    setActiveIndex((prev) => Math.min(prev + 1, wordLength - 1));
   }
 
   function backspace() {
-    if (solved) return;
+    if (solved || wordLength === null) return;
     setError(null);
-    setCurrentGuess((prev) => prev.slice(0, -1));
+    const hasLetter = currentLetters[activeIndex] !== '';
+    setCurrentLetters((prev) => {
+      const next = [...prev];
+      const idx = hasLetter ? activeIndex : Math.max(activeIndex - 1, 0);
+      next[idx] = '';
+      return next;
+    });
+    if (!hasLetter) setActiveIndex((prev) => Math.max(prev - 1, 0));
+  }
+
+  function moveActive(delta: number) {
+    if (wordLength === null) return;
+    setActiveIndex((prev) =>
+      Math.min(Math.max(prev + delta, 0), wordLength - 1),
+    );
   }
 
   function submitGuess() {
     if (solved || wordLength === null) return;
-    if (currentGuess.length !== wordLength) {
+    if (currentLetters.some((l) => l === '')) {
       triggerShake();
       return;
     }
-    send({ type: 'guess', payload: { guess: currentGuess } });
+    send({ type: 'guess', payload: { guess: currentLetters.join('') } });
   }
 
   const pressKey = useCallback((key: string) => {
@@ -458,17 +513,6 @@ function WordleBoard({ session }: { session: WsSession }) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       const vk = resolveVirtualKey(event);
       if (vk !== null) pressKey(vk);
-      if (event.key === 'Enter') {
-        submitGuess();
-        return;
-      }
-      if (event.key === 'Backspace') {
-        backspace();
-        return;
-      }
-      if (event.key.length !== 1) return;
-      const key = normalizeKey(event.key);
-      if (KB_LETTERS.has(key)) typeLetter(key);
     }
 
     function onKeyUp(event: KeyboardEvent) {
@@ -482,8 +526,42 @@ function WordleBoard({ session }: { session: WsSession }) {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [solved, wordLength, currentGuess, pressKey, releaseKey]);
+  }, [pressKey, releaseKey]);
+
+  useEffect(() => {
+    if (solved || wordLength === null) return;
+    inputRefs.current[activeIndex]?.focus();
+  }, [activeIndex, guesses.length, wordLength, solved]);
+
+  function onKeyDownCell(_i: number, e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitGuess();
+      return;
+    }
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      backspace();
+      return;
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      moveActive(-1);
+      return;
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      moveActive(1);
+      return;
+    }
+    if (e.key.length !== 1) return;
+    const key = normalizeKey(e.key);
+    if (KB_LETTERS.has(key)) {
+      e.preventDefault();
+      typeLetter(key);
+    }
+  }
 
   const attemptNumber = guesses.length + (solved ? 0 : 1);
 
@@ -540,9 +618,14 @@ function WordleBoard({ session }: { session: WsSession }) {
               ))}
               {!solved && wordLength !== null && (
                 <CurrentRowView
-                  value={currentGuess}
+                  letters={currentLetters}
+                  activeIndex={activeIndex}
                   wordLength={wordLength}
                   shake={shake}
+                  disabled={solved || wordLength === null}
+                  inputRefs={inputRefs}
+                  onFocusCell={setActiveIndex}
+                  onKeyDownCell={onKeyDownCell}
                 />
               )}
             </div>

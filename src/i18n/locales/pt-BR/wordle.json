@@ -4,5 +4,6 @@
   "solved_other": "Acertou em {{count}} tentativas.",
   "solvedBadge": "Resolvido",
   "progress": "{{letters}} letras · tentativa {{attempt}}",
-  "enter": "ENTER"
+  "enter": "ENTER",
+  "letterAriaLabel": "Letra {{position}}"
 }
