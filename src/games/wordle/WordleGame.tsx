@@ -629,7 +629,7 @@ function WordleBoard({ session }: { session: WsSession }) {
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 sm:flex-none">
             <div
               ref={gridRef}
-              className="flex min-h-0 flex-initial flex-col gap-1.5 overflow-x-hidden overflow-y-auto px-1.5 py-1 sm:max-h-[42vh] sm:flex-none sm:gap-2"
+              className="scrollbar-hide flex min-h-0 flex-initial flex-col gap-1.5 overflow-x-hidden overflow-y-auto px-1.5 py-1 sm:max-h-[42vh] sm:flex-none sm:gap-2"
             >
               {guesses.map((row, i) => (
                 <GuessRowView key={i} row={row} />

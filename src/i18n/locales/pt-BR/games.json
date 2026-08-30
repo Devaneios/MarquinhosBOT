@@ -4,11 +4,11 @@
     "blurb": "Mesa de cartas local — lobby, gerenciamento de mão e fim de partida, ainda sem conexão com um backend multiplayer real."
   },
   "pong": {
-    "name": "PONGUINHOS",
+    "name": "Ponguinhos",
     "blurb": "Ação arcade retrô e competitiva, com fluxo de menus, configurações e partidas locais ou online."
   },
   "wordle": {
-    "name": "TERMO",
+    "name": "Terminhos",
     "blurb": "Desafio de palavras solo conectado ao backend em tempo real e à sessão da atividade do Discord."
   },
   "tic-tac-toe": {
