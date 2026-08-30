@@ -365,6 +365,7 @@ function WordleBoard({ session }: { session: WsSession }) {
   const [shake, setShake] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
   const shakeTimeout = useRef<number | undefined>(undefined);
+  const errorTimeout = useRef<number | undefined>(undefined);
   const [pressedKeys, setPressedKeys] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
@@ -384,6 +385,7 @@ function WordleBoard({ session }: { session: WsSession }) {
         setWordLength(payload.wordLength);
         setGuesses(payload.guesses);
         setSolved(payload.solved);
+        window.clearTimeout(errorTimeout.current);
         setError(null);
         setCurrentLetters(Array(payload.wordLength).fill(''));
         setActiveIndex(0);
@@ -394,12 +396,15 @@ function WordleBoard({ session }: { session: WsSession }) {
         };
         setGuesses(payload.guesses);
         setSolved(payload.solved);
+        window.clearTimeout(errorTimeout.current);
         setError(null);
         setCurrentLetters((prev) => prev.map(() => ''));
         setActiveIndex(0);
       } else if (message.type === 'guess_error') {
         const payload = message.payload as { message: string };
         setError(payload.message);
+        window.clearTimeout(errorTimeout.current);
+        errorTimeout.current = window.setTimeout(() => setError(null), 2500);
         triggerShake();
       }
     },
@@ -413,7 +418,10 @@ function WordleBoard({ session }: { session: WsSession }) {
   }, [guesses.length]);
 
   useEffect(() => {
-    return () => window.clearTimeout(shakeTimeout.current);
+    return () => {
+      window.clearTimeout(shakeTimeout.current);
+      window.clearTimeout(errorTimeout.current);
+    };
   }, []);
 
   function triggerShake() {
@@ -424,6 +432,7 @@ function WordleBoard({ session }: { session: WsSession }) {
 
   function typeLetter(letter: string) {
     if (solved || wordLength === null) return;
+    window.clearTimeout(errorTimeout.current);
     setError(null);
     setCurrentLetters((prev) => {
       const next = [...prev];
@@ -435,6 +444,7 @@ function WordleBoard({ session }: { session: WsSession }) {
 
   function backspace() {
     if (solved || wordLength === null) return;
+    window.clearTimeout(errorTimeout.current);
     setError(null);
     const hasLetter = currentLetters[activeIndex] !== '';
     setCurrentLetters((prev) => {
@@ -581,12 +591,20 @@ function WordleBoard({ session }: { session: WsSession }) {
   );
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,176,0,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_20%),var(--color-marquinhos-bg)]">
+    <div className="relative flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,176,0,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_20%),var(--color-marquinhos-bg)]">
       <GameHeader
         titleKey="wordle.name"
         titleNs="games"
         onBack={() => navigate('/')}
       />
+
+      {error && (
+        <div className="pointer-events-none absolute inset-x-0 top-20 z-20 flex justify-center px-4">
+          <div className="notch-6 pointer-events-auto animate-termo-toast-in border border-marquinhos-danger/40 bg-[#1c1b1c] px-4 py-2 text-center text-sm text-marquinhos-danger shadow-[0_10px_30px_rgba(0,0,0,0.4)]">
+            {error}
+          </div>
+        </div>
+      )}
 
       <main className="flex min-h-0 flex-1 items-stretch justify-center overflow-hidden p-2 sm:items-center sm:overflow-y-auto sm:p-6">
         <div className="notch-8 flex w-full flex-1 flex-col gap-3 border border-marquinhos-border bg-[#1c1b1c] px-2 py-3 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:w-fit sm:min-w-[33.75rem] sm:flex-none sm:gap-4 sm:px-6 sm:py-6">
@@ -611,7 +629,7 @@ function WordleBoard({ session }: { session: WsSession }) {
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 sm:flex-none">
             <div
               ref={gridRef}
-              className="flex min-h-0 flex-initial flex-col gap-1.5 overflow-y-auto py-1 sm:max-h-[42vh] sm:flex-none sm:gap-2"
+              className="flex min-h-0 flex-initial flex-col gap-1.5 overflow-x-hidden overflow-y-auto px-1.5 py-1 sm:max-h-[42vh] sm:flex-none sm:gap-2"
             >
               {guesses.map((row, i) => (
                 <GuessRowView key={i} row={row} />
@@ -636,12 +654,6 @@ function WordleBoard({ session }: { session: WsSession }) {
                   letters: wordLength,
                   attempt: attemptNumber,
                 })}
-              </div>
-            )}
-
-            {error && (
-              <div className="text-center text-sm text-marquinhos-danger">
-                {error}
               </div>
             )}
           </div>
