@@ -9,7 +9,7 @@ const WIN: BeepSpec = { frequency: 660, durationSeconds: 0.3 };
 
 export class PongSfx {
   private ctx: AudioContext | null = null;
-  private enabled: boolean;
+  private readonly enabled: boolean;
 
   constructor(enabled: boolean) {
     this.enabled = enabled;

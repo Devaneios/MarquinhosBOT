@@ -1,4 +1,4 @@
-import type { MutableRefObject } from 'react';
+import type { KeyboardEvent, RefObject } from 'react';
 import type { WsSession } from '../shared/activitySession';
 
 export type LetterFeedback = 'correct' | 'present' | 'absent';
@@ -35,10 +35,10 @@ export interface CurrentRowProps {
   wordLength: number;
   shake: boolean;
   disabled: boolean;
-  inputRefs: MutableRefObject<(HTMLInputElement | null)[]>;
+  inputRefs: RefObject<(HTMLInputElement | null)[]>;
   onFocusCell: (index: number) => void;
   onKeyDownCell: (
     index: number,
-    event: React.KeyboardEvent<HTMLInputElement>,
+    event: KeyboardEvent<HTMLInputElement>,
   ) => void;
 }

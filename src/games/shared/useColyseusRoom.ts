@@ -115,7 +115,7 @@ export function useColyseusRoom(
     )
       .then((room) => {
         if (cancelled) {
-          room.leave(true);
+          void room.leave(true);
           return;
         }
         roomRef.current = room;
@@ -134,7 +134,7 @@ export function useColyseusRoom(
       cancelled = true;
       if (roomRef.current) {
         onBeforeLeaveRef.current?.(roomRef.current);
-        roomRef.current.leave(true);
+        void roomRef.current.leave(true);
       }
       roomRef.current = null;
     };

@@ -29,7 +29,7 @@ export interface HiddenCard {
 export type MaskedCard = Card | HiddenCard;
 
 export function isHiddenCard(card: MaskedCard): card is HiddenCard {
-  return (card as HiddenCard).hidden === true;
+  return (card as HiddenCard).hidden;
 }
 
 // One zone (hand, discard, stock, ...) as this viewer is allowed to see it.

@@ -233,7 +233,7 @@ export function DevConsole() {
     try {
       // Indirect eval runs in global scope (like a real DevTools console)
       // instead of closing over this component's local variables.
-      const result = (0, eval)(code);
+      const result = globalThis.eval(code);
       appendLog('result', safeStringify(result));
     } catch (err) {
       const text =
