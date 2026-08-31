@@ -32,7 +32,7 @@ export function Hub() {
   const { t } = useTranslation(['common', 'games']);
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(255,176,0,0.12),_transparent_30%),linear-gradient(180deg,_rgba(255,255,255,0.02),_transparent_20%),var(--color-marquinhos-bg)] text-marquinhos-text">
+    <div className="flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,176,0,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_20%),var(--color-marquinhos-bg)] text-marquinhos-text">
       <GameHeader
         titleKey="brand"
         titleNs="common"
@@ -51,7 +51,7 @@ export function Hub() {
       <main className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4 sm:p-6">
         <section>
           <div className="notch-8 border border-marquinhos-border bg-marquinhos-panel p-3 shadow-[0_20px_40px_rgba(0,0,0,0.28)] sm:p-7">
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-3">
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(250px,1fr))] sm:gap-3">
               {GAME_REGISTRY.map((game) => {
                 const locked = game.status !== 'PLAY';
                 const accent = GAME_ACCENTS[game.id];
@@ -62,7 +62,7 @@ export function Hub() {
                     disabled={locked}
                     style={{ borderColor: locked ? undefined : accent }}
                     className={cn(
-                      'notch-8 relative flex aspect-[4/5] flex-col justify-end gap-2 border px-3 py-3 text-left shadow-[0_12px_24px_rgba(0,0,0,0.16)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent sm:aspect-[2/3] sm:px-4 sm:py-4',
+                      'notch-8 relative flex aspect-4/2 flex-col gap-2 border px-3 py-3 text-left shadow-[0_12px_24px_rgba(0,0,0,0.16)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent sm:px-4 sm:py-4',
                       locked
                         ? 'cursor-not-allowed border-marquinhos-border bg-black/15 opacity-70'
                         : 'cursor-pointer bg-marquinhos-bg transition hover:-translate-y-0.5',
@@ -73,27 +73,10 @@ export function Hub() {
                     }}
                   >
                     <div
-                      className={cn(
-                        'absolute left-3 top-3 rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-[0.2em] sm:left-4 sm:top-4 sm:px-2.5 sm:py-1 sm:text-[10px]',
-                        locked
-                          ? 'border-marquinhos-border text-marquinhos-text-dim'
-                          : 'border-marquinhos-green/40 text-marquinhos-green',
-                      )}
-                    >
-                      {t(
-                        game.status === 'PLAY'
-                          ? 'common:play'
-                          : 'common:comingSoon',
-                      )}
-                    </div>
-                    <div
-                      className="font-pixel text-[10px] leading-snug tracking-[0.08em] break-words sm:text-sm sm:tracking-[0.16em] sm:break-normal"
+                      className="font-pixel text-[10px] leading-snug tracking-[0.08em] break-words sm:text-xl sm:tracking-[0.16em] sm:break-normal"
                       style={{ color: locked ? undefined : accent }}
                     >
                       {t(`games:${game.id}.name`)}
-                    </div>
-                    <div className="hidden text-xs leading-5 text-marquinhos-text-dim sm:block">
-                      {t(`games:${game.id}.blurb`)}
                     </div>
                   </button>
                 );
