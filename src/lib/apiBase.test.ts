@@ -20,7 +20,9 @@ describe('colyseusUrl', () => {
 
   it('returns the local API origin (ws-swapped) outside the proxy', async () => {
     setLocation('localhost');
-    const { colyseusUrl, apiUrl } = await import(`./apiBase?local-${Date.now()}`);
+    const { colyseusUrl, apiUrl } = await import(
+      `./apiBase?local-${Date.now()}`
+    );
 
     // apiUrl() already proves what apiOrigin() resolves to in this env
     // (`${origin}/api${path}`) — derive the expected ws-swapped origin from

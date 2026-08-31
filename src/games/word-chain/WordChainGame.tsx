@@ -14,8 +14,8 @@ import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
-import { useWordChainSession } from './useWordChainSession';
-import { WordChainBoard } from './WordChainBoard';
+import { WordChainBoard } from './components/WordChainBoard';
+import { useWordChainSession } from './hooks/useWordChainSession';
 
 interface GameState {
   currentWord: string;
@@ -138,7 +138,10 @@ export function WordChainGame({
 
   if (session.status === 'connecting') {
     return (
-      <ConnectingScreen subtitleKey="connectingSubtitle" subtitleNs="word-chain" />
+      <ConnectingScreen
+        subtitleKey="connectingSubtitle"
+        subtitleNs="word-chain"
+      />
     );
   }
 

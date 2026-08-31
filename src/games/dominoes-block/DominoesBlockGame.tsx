@@ -24,7 +24,7 @@ import {
   type ChainEnd,
   type DominoesClientState,
   type Tile,
-} from './dominoesProtocol';
+} from './protocol';
 
 type SessionState =
   | { status: 'selecting-mode' }

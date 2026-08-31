@@ -1,4 +1,8 @@
-import { DiscordSDK, DiscordSDKMock, Platform } from '@discord/embedded-app-sdk';
+import {
+  DiscordSDK,
+  DiscordSDKMock,
+  Platform,
+} from '@discord/embedded-app-sdk';
 
 export const isMock = window.self === window.top && import.meta.env.DEV;
 const MOCK_GUILD_ID = '123456789012345678';

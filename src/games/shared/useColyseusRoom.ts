@@ -1,7 +1,7 @@
 import { Client, type Room } from '@colyseus/sdk';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { GameId } from '../gameId';
 import { devinfo, devwarn } from '../../lib/devlog';
+import type { GameId } from '../gameId';
 import type { WsSession } from './activitySession';
 
 export interface ActivityMessage {

@@ -27,7 +27,9 @@ export function SeatShell({
     >
       <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
         <span>{title}</span>
-        <span>{occupied ? t('cards:occupiedLabel') : t('cards:emptyLabel')}</span>
+        <span>
+          {occupied ? t('cards:occupiedLabel') : t('cards:emptyLabel')}
+        </span>
       </div>
       <div className="mt-3 flex-1">{children}</div>
     </div>

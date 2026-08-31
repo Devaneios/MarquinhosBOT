@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ConnectingScreen, ErrorScreen } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
+import { LeaderboardScreen } from './components/LeaderboardScreen';
 import { MenuScreen } from './components/MenuScreen';
 import { QuestionScreen } from './components/QuestionScreen';
-import { LeaderboardScreen } from './components/LeaderboardScreen';
-import { useTriviaQuizSession } from './useTriviaQuizSession';
+import { useTriviaQuizSession } from './hooks/useTriviaQuizSession';
 
 type Scene = 'menu' | 'game' | 'leaderboard' | 'error';
 
@@ -44,7 +44,10 @@ export const TriviaQuizGame: React.FC<TriviaQuizGameProps> = ({
 
   if (sessionStatus.status === 'connecting') {
     return (
-      <ConnectingScreen subtitleKey="connectingSubtitle" subtitleNs="trivia-quiz" />
+      <ConnectingScreen
+        subtitleKey="connectingSubtitle"
+        subtitleNs="trivia-quiz"
+      />
     );
   }
 

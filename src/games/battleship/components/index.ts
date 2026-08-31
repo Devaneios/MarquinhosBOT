@@ -1,0 +1,1 @@
+export { BattleshipCanvas } from './BattleshipCanvas';

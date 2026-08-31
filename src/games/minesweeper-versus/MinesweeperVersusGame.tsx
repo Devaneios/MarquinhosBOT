@@ -15,12 +15,8 @@ import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
-import { MinesweeperCanvas } from './MinesweeperCanvas';
-import type {
-  BoardSnapshot,
-  GameOverPayload,
-  RevealPayload,
-} from './minesweeperProtocol';
+import { MinesweeperCanvas } from './components/MinesweeperCanvas';
+import type { BoardSnapshot, GameOverPayload, RevealPayload } from './protocol';
 
 type SessionState =
   | { status: 'connecting' }

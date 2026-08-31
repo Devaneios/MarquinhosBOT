@@ -1,17 +1,22 @@
 import { describe, expect, it, mock } from 'bun:test';
 
 function fakeRoom() {
-  const messageHandlers: Record<string, (type: unknown, payload: unknown) => void> = {};
+  const messageHandlers: Record<
+    string,
+    (type: unknown, payload: unknown) => void
+  > = {};
   const dropHandlers: Array<(code: number, reason?: string) => void> = [];
   const reconnectHandlers: Array<() => void> = [];
   const leaveHandlers: Array<(code: number, reason?: string) => void> = [];
   const errorHandlers: Array<(code: number, message?: string) => void> = [];
   return {
     roomId: 'room-1',
-    onMessage: mock((type: string, cb: (type: unknown, payload: unknown) => void) => {
-      messageHandlers[type] = cb;
-      return () => delete messageHandlers[type];
-    }),
+    onMessage: mock(
+      (type: string, cb: (type: unknown, payload: unknown) => void) => {
+        messageHandlers[type] = cb;
+        return () => delete messageHandlers[type];
+      },
+    ),
     onDrop: mock((cb: (code: number, reason?: string) => void) => {
       dropHandlers.push(cb);
     }),
@@ -95,7 +100,9 @@ describe('connectToRoom', () => {
     );
     room.emit('guess_result', { attempts: 1 });
 
-    expect(received).toEqual([{ type: 'guess_result', payload: { attempts: 1 } }]);
+    expect(received).toEqual([
+      { type: 'guess_result', payload: { attempts: 1 } },
+    ]);
   });
 
   it('propagates a rejected join (e.g. invalid token) to the caller', async () => {
@@ -123,7 +130,9 @@ describe('wireRoomLifecycle', () => {
     const mod = await freshModule({ joinOrCreate: async () => room });
     const states: string[] = [];
 
-    mod.wireRoomLifecycle(room, 'wordle', (state: string) => states.push(state));
+    mod.wireRoomLifecycle(room, 'wordle', (state: string) =>
+      states.push(state),
+    );
     room.emitReconnect();
 
     expect(states).toEqual(['connected']);
@@ -134,7 +143,9 @@ describe('wireRoomLifecycle', () => {
     const mod = await freshModule({ joinOrCreate: async () => room });
     const states: string[] = [];
 
-    mod.wireRoomLifecycle(room, 'wordle', (state: string) => states.push(state));
+    mod.wireRoomLifecycle(room, 'wordle', (state: string) =>
+      states.push(state),
+    );
     room.emitLeave(1000, 'normal close');
 
     expect(states).toEqual(['disconnected']);
@@ -145,7 +156,9 @@ describe('wireRoomLifecycle', () => {
     const mod = await freshModule({ joinOrCreate: async () => room });
     const states: string[] = [];
 
-    mod.wireRoomLifecycle(room, 'wordle', (state: string) => states.push(state));
+    mod.wireRoomLifecycle(room, 'wordle', (state: string) =>
+      states.push(state),
+    );
     room.emitDrop(1006);
 
     expect(states).toEqual([]);
@@ -156,7 +169,9 @@ describe('wireRoomLifecycle', () => {
     const mod = await freshModule({ joinOrCreate: async () => room });
     const states: string[] = [];
 
-    mod.wireRoomLifecycle(room, 'wordle', (state: string) => states.push(state));
+    mod.wireRoomLifecycle(room, 'wordle', (state: string) =>
+      states.push(state),
+    );
     room.emitError(4000, 'boom');
 
     expect(states).toEqual([]);

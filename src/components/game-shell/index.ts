@@ -9,6 +9,6 @@ export type { GameFooterProps } from './GameFooter';
 export { GameHeader } from './GameHeader';
 export type { GameHeaderProps } from './GameHeader';
 export { HowToPlayScreen } from './HowToPlayScreen';
-export type { HowToPlaySection, HowToPlayScreenProps } from './HowToPlayScreen';
+export type { HowToPlayScreenProps, HowToPlaySection } from './HowToPlayScreen';
 export { ModeSelectScreen } from './ModeSelectScreen';
 export type { ModeOption, ModeSelectScreenProps } from './ModeSelectScreen';

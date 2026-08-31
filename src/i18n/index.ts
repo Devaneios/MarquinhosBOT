@@ -18,9 +18,9 @@ import ticTacToe from './locales/pt-BR/tic-tac-toe.json';
 import towerUnstable from './locales/pt-BR/tower-unstable.json';
 import triviaQuiz from './locales/pt-BR/trivia-quiz.json';
 import wordChain from './locales/pt-BR/word-chain.json';
-import wordle from './locales/pt-BR/wordle.json';
-import wordleRace from './locales/pt-BR/wordle-race.json';
 import wordSearchRace from './locales/pt-BR/word-search-race.json';
+import wordleRace from './locales/pt-BR/wordle-race.json';
+import wordle from './locales/pt-BR/wordle.json';
 
 void i18next.use(initReactI18next).init({
   lng: 'pt-BR',

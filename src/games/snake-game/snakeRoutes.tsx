@@ -1,6 +1,6 @@
 import { Route } from 'react-router-dom';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { SnakeGameContainer } from './SnakeGameContainer';
+import { SnakeGame } from './SnakeGame';
 
 export function snakeRoutes(
   identity: DiscordIdentity,
@@ -9,9 +9,7 @@ export function snakeRoutes(
   return (
     <Route
       path="snake-game"
-      element={
-        <SnakeGameContainer identity={identity} onAuthInvalid={onAuthInvalid} />
-      }
+      element={<SnakeGame identity={identity} onAuthInvalid={onAuthInvalid} />}
     />
   );
 }

@@ -9,9 +9,7 @@ export function boggleRoutes(
   return (
     <Route
       path="boggle-word-race"
-      element={
-        <BoggleGame identity={identity} onAuthInvalid={onAuthInvalid} />
-      }
+      element={<BoggleGame identity={identity} onAuthInvalid={onAuthInvalid} />}
     />
   );
 }

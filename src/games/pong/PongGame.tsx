@@ -1,9 +1,9 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { ConnectingScreen, ErrorScreen } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { PongCanvas } from './PongCanvas';
-import type { PongMenuOutletContext } from './PongMenuFlow';
-import { usePongSession } from './usePongSession';
+import { PongCanvas } from './components/PongCanvas';
+import type { PongMenuOutletContext } from './hooks/PongMenuFlow';
+import { usePongSession } from './hooks/usePongSession';
 
 export function PongGame({
   identity,

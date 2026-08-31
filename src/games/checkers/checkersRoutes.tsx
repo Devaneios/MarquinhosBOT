@@ -1,10 +1,13 @@
 import { Route, useNavigate } from 'react-router-dom';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { CheckersGame } from './CheckersGame';
-import { CheckersMenuFlow, useCheckersMenuContext } from './CheckersMenuFlow';
-import { HowToPlay } from './HowToPlay';
-import { MainMenu } from './MainMenu';
-import { ModeMenu } from './ModeMenu';
+import { HowToPlay } from './components/HowToPlay';
+import { MainMenu } from './components/MainMenu';
+import { ModeMenu } from './components/ModeMenu';
+import {
+  CheckersMenuFlow,
+  useCheckersMenuContext,
+} from './hooks/CheckersMenuFlow';
 
 function MainMenuRoute() {
   const navigate = useNavigate();
@@ -21,9 +24,7 @@ function MainMenuRoute() {
 function ModeMenuRoute() {
   const navigate = useNavigate();
   const { onSelectMode } = useCheckersMenuContext();
-  return (
-    <ModeMenu onSelect={onSelectMode} onBack={() => navigate('..')} />
-  );
+  return <ModeMenu onSelect={onSelectMode} onBack={() => navigate('..')} />;
 }
 
 function HowToPlayRoute() {

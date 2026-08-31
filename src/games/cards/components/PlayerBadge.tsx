@@ -28,9 +28,7 @@ export function PlayerBadge({
           <div className="truncate text-sm font-semibold text-marquinhos-text">
             {name}
           </div>
-          <div className="text-[11px] text-marquinhos-text-dim">
-            {subtitle}
-          </div>
+          <div className="text-[11px] text-marquinhos-text-dim">{subtitle}</div>
         </div>
         {meta && (
           <div className="text-right text-[11px] text-marquinhos-text-dim">

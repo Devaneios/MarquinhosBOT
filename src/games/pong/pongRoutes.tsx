@@ -1,11 +1,11 @@
 import { Route, useNavigate } from 'react-router-dom';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { HowToPlay } from './HowToPlay';
-import { MainMenu } from './MainMenu';
-import { ModeMenu } from './ModeMenu';
+import { HowToPlay } from './components/HowToPlay';
+import { MainMenu } from './components/MainMenu';
+import { ModeMenu } from './components/ModeMenu';
+import { SettingsScreen } from './components/SettingsScreen';
+import { PongMenuFlow, usePongMenuContext } from './hooks/PongMenuFlow';
 import { PongGame } from './PongGame';
-import { PongMenuFlow, usePongMenuContext } from './PongMenuFlow';
-import { SettingsScreen } from './SettingsScreen';
 
 function MainMenuRoute() {
   const navigate = useNavigate();
@@ -60,9 +60,7 @@ export function pongRoutes(
   return (
     <Route
       path="pong"
-      element={
-        <PongGame identity={identity} onAuthInvalid={onAuthInvalid} />
-      }
+      element={<PongGame identity={identity} onAuthInvalid={onAuthInvalid} />}
     >
       <Route element={<PongMenuFlow />}>
         <Route index element={<MainMenuRoute />} />

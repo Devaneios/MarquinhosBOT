@@ -261,7 +261,13 @@ interface GameState {
   currentPlayerExhausted: boolean;
 }
 
-function WordleRaceBoard({ session, userId }: { session: WsSession; userId: string }) {
+function WordleRaceBoard({
+  session,
+  userId,
+}: {
+  session: WsSession;
+  userId: string;
+}) {
   const navigate = useNavigate();
   const { t } = useTranslation(['wordle-race', 'common']);
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -323,7 +329,9 @@ function WordleRaceBoard({ session, userId }: { session: WsSession; userId: stri
           firstSolver: boolean;
         };
         if (payload.firstSolver) {
-          setGameState((prev) => (prev ? { ...prev, firstSolver: payload.userId } : prev));
+          setGameState((prev) =>
+            prev ? { ...prev, firstSolver: payload.userId } : prev,
+          );
         }
       } else if (message.type === 'player_exhausted') {
         const payload = message.payload as { userId: string };
@@ -382,11 +390,7 @@ function WordleRaceBoard({ session, userId }: { session: WsSession; userId: stri
   }
 
   function backspace() {
-    if (
-      gameState?.currentPlayerSolved ||
-      gameState?.gameOver ||
-      !gameState
-    )
+    if (gameState?.currentPlayerSolved || gameState?.gameOver || !gameState)
       return;
     setError(null);
     setCurrentGuess((prev) => prev.slice(0, -1));
@@ -437,7 +441,9 @@ function WordleRaceBoard({ session, userId }: { session: WsSession; userId: stri
     return <ConnectingScreen />;
   }
 
-  const attemptNumber = gameState.currentPlayerGuesses.length + (gameState.currentPlayerSolved ? 0 : 1);
+  const attemptNumber =
+    gameState.currentPlayerGuesses.length +
+    (gameState.currentPlayerSolved ? 0 : 1);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(255,176,0,0.12),_transparent_30%),linear-gradient(180deg,_rgba(255,255,255,0.02),_transparent_20%),var(--color-marquinhos-bg)]">
@@ -596,7 +602,5 @@ export function WordleRaceGame({
     );
   }
 
-  return (
-    <WordleRaceBoard session={session.session} userId={identity.userId} />
-  );
+  return <WordleRaceBoard session={session.session} userId={identity.userId} />;
 }

@@ -1,0 +1,1 @@
+export { HangmanCanvas } from './HangmanCanvas';

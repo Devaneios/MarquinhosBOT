@@ -13,9 +13,9 @@ import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
-import { TicTacToeCanvas } from './TicTacToeCanvas';
-import type { TicTacToeState } from './useTicTacToeSession';
-import { useTicTacToeSession } from './useTicTacToeSession';
+import { TicTacToeCanvas } from './components/TicTacToeCanvas';
+import type { TicTacToeState } from './hooks/useTicTacToeSession';
+import { useTicTacToeSession } from './hooks/useTicTacToeSession';
 
 export function TicTacToeGame({
   identity,

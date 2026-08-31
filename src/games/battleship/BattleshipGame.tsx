@@ -10,13 +10,15 @@ import {
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { colyseusUrl } from '../../lib/apiBase';
 import { errorMessage, isAuthError } from '../../lib/http';
-import type { GameId } from '../gameId';
 import { fetchWsSessionToken, type WsSession } from '../shared/activitySession';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
-import { BattleshipCanvas, type PendingShip } from './BattleshipCanvas';
+import {
+  BattleshipCanvas,
+  type PendingShip,
+} from './components/BattleshipCanvas';
 import {
   BOARD_SIZE,
   SHIP_ORDER,
@@ -32,7 +34,7 @@ import {
 // serially, to avoid every game's PR colliding on the same line) — this
 // cast is the one place that gap is bridged so the rest of this file can
 // use the real GameId-typed helpers untouched.
-const GAME_ID = 'battleship' as unknown as GameId;
+const GAME_ID = 'battleship';
 
 type SessionState =
   | { status: 'selecting-mode' }
@@ -78,9 +80,7 @@ function useBattleshipSession(
   return state;
 }
 
-function cellsFor(
-  ship: PendingShip,
-): { x: number; y: number }[] {
+function cellsFor(ship: PendingShip): { x: number; y: number }[] {
   const size = SHIP_SIZES[ship.type];
   return Array.from({ length: size }, (_, i) => ({
     x: ship.orientation === 'horizontal' ? ship.x + i : ship.x,
@@ -88,10 +88,7 @@ function cellsFor(
   }));
 }
 
-function isValidPlacement(
-  ship: PendingShip,
-  others: PendingShip[],
-): boolean {
+function isValidPlacement(ship: PendingShip, others: PendingShip[]): boolean {
   const cells = cellsFor(ship);
   if (
     cells.some(
@@ -247,9 +244,7 @@ function BattleshipBoard({ session }: { session: WsSession }) {
     if (!isValidPlacement(ship, pendingShips)) return;
     const next = [...pendingShips, ship];
     setPendingShips(next);
-    const nextType = SHIP_ORDER.find(
-      (t) => !next.some((s) => s.type === t),
-    );
+    const nextType = SHIP_ORDER.find((t) => !next.some((s) => s.type === t));
     setSelectedType(nextType ?? null);
   }
 

@@ -17,9 +17,9 @@ import { gameDescriptor as ticTacToe } from './tic-tac-toe';
 import { gameDescriptor as towerUnstable } from './tower-unstable';
 import { gameDescriptor as triviaQuiz } from './trivia-quiz';
 import { gameDescriptor as wordChain } from './word-chain';
+import { gameDescriptor as wordSearchRace } from './word-search-race';
 import { gameDescriptor as wordle } from './wordle';
 import { gameDescriptor as wordleRace } from './wordle-race';
-import { gameDescriptor as wordSearchRace } from './word-search-race';
 
 export interface GameDescriptor {
   id: GameId;

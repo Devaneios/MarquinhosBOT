@@ -11,8 +11,11 @@ import {
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { colyseusUrl } from '../../lib/apiBase';
 import { cn } from '../../lib/cn';
-import { useColyseusRoom, type ActivityMessage } from '../shared/useColyseusRoom';
-import { useRpsSession } from './useRpsSession';
+import {
+  useColyseusRoom,
+  type ActivityMessage,
+} from '../shared/useColyseusRoom';
+import { useRpsSession } from './hooks/useRpsSession';
 
 type RpsPick = 'rock' | 'paper' | 'scissors';
 
@@ -97,9 +100,7 @@ function RpsBoard({
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation(['rock-paper-scissors', 'common']);
-  const [playerId, setPlayerId] = useState<'player1' | 'player2' | null>(
-    null,
-  );
+  const [playerId, setPlayerId] = useState<'player1' | 'player2' | null>(null);
   const [phase, setPhase] = useState<GamePhase>('waiting');
   const [roundState, setRoundState] = useState<RpsState | null>(null);
   const [myPick, setMyPick] = useState<RpsPick | null>(null);
@@ -227,11 +228,13 @@ function RpsBoard({
                   <div className="flex justify-around gap-4">
                     <div className="flex flex-col items-center gap-2">
                       <div className="text-4xl sm:text-5xl">
-                        {PICK_ICONS[
-                          playerId === 'player1'
-                            ? roundResult.p1Pick
-                            : roundResult.p2Pick
-                        ]}
+                        {
+                          PICK_ICONS[
+                            playerId === 'player1'
+                              ? roundResult.p1Pick
+                              : roundResult.p2Pick
+                          ]
+                        }
                       </div>
                       <div className="text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim">
                         {t('common:you')}
@@ -250,18 +253,20 @@ function RpsBoard({
                       )}
                       {roundResult.winner &&
                         roundResult.winner !== playerId && (
-                        <div className="font-pixel text-lg text-marquinhos-danger">
-                          {t('roundLose')}
-                        </div>
-                      )}
+                          <div className="font-pixel text-lg text-marquinhos-danger">
+                            {t('roundLose')}
+                          </div>
+                        )}
                     </div>
                     <div className="flex flex-col items-center gap-2">
                       <div className="text-4xl sm:text-5xl">
-                        {PICK_ICONS[
-                          playerId === 'player1'
-                            ? roundResult.p2Pick
-                            : roundResult.p1Pick
-                        ]}
+                        {
+                          PICK_ICONS[
+                            playerId === 'player1'
+                              ? roundResult.p2Pick
+                              : roundResult.p1Pick
+                          ]
+                        }
                       </div>
                       <div className="text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim">
                         {t('opponent')}

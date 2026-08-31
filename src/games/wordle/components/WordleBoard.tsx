@@ -5,7 +5,7 @@ import { GameHeader } from '../../../components/game-shell';
 import { Keyboard } from '../../../components/keyboard';
 import type { WsSession } from '../../shared/activitySession';
 import { FEEDBACK_COLORS, KEYBOARD_ROWS } from '../constants';
-import { useWordleBoard } from '../useWordleBoard';
+import { useWordleBoard } from '../hooks/useWordleBoard';
 import { CurrentRow } from './CurrentRow';
 import { GuessRow } from './GuessRow';
 

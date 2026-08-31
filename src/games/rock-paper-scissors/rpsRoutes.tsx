@@ -9,9 +9,7 @@ export function rpsRoutes(
   return (
     <Route
       path="rock-paper-scissors"
-      element={
-        <RpsGame identity={identity} onAuthInvalid={onAuthInvalid} />
-      }
+      element={<RpsGame identity={identity} onAuthInvalid={onAuthInvalid} />}
     />
   );
 }

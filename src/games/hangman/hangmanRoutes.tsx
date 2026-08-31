@@ -9,7 +9,9 @@ export function hangmanRoutes(
   return (
     <Route
       path="hangman"
-      element={<HangmanGame identity={identity} onAuthInvalid={onAuthInvalid} />}
+      element={
+        <HangmanGame identity={identity} onAuthInvalid={onAuthInvalid} />
+      }
     />
   );
 }

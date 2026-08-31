@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from 'bun:test';
 import { ServerError } from '@colyseus/sdk';
+import { afterEach, describe, expect, it } from 'bun:test';
 import { errorMessage, HttpError, isAuthError, postJson } from './http';
 
 describe('postJson', () => {
@@ -54,9 +54,9 @@ describe('isAuthError', () => {
   // HttpError — the only reason our onAuth ever throws is an auth failure,
   // so any ServerError here is treated as one.
   it('is true for a Colyseus ServerError (rejected onAuth)', () => {
-    expect(isAuthError(new ServerError(4002, 'Invalid or expired session token'))).toBe(
-      true,
-    );
+    expect(
+      isAuthError(new ServerError(4002, 'Invalid or expired session token')),
+    ).toBe(true);
   });
 });
 

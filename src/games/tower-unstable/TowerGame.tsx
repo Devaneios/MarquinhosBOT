@@ -8,7 +8,7 @@ import {
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { errorMessage, isAuthError } from '../../lib/http';
 import { fetchWsSessionToken, type WsSession } from '../shared/activitySession';
-import { TowerCanvas } from './TowerCanvas';
+import { TowerCanvas } from './components/TowerCanvas';
 
 type TowerSessionState =
   | { status: 'selecting-mode' }

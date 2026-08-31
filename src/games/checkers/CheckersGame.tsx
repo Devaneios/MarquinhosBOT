@@ -1,9 +1,9 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { ConnectingScreen, ErrorScreen } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { CheckersBoard } from './CheckersBoard';
-import type { CheckersMenuOutletContext } from './CheckersMenuFlow';
-import { useCheckersSession } from './useCheckersSession';
+import { CheckersBoard } from './components/CheckersBoard';
+import type { CheckersMenuOutletContext } from './hooks/CheckersMenuFlow';
+import { useCheckersSession } from './hooks/useCheckersSession';
 
 export function CheckersGame({
   identity,
@@ -38,7 +38,10 @@ export function CheckersGame({
 
   if (session.status === 'connecting') {
     return (
-      <ConnectingScreen subtitleKey="connectingSubtitle" subtitleNs="checkers" />
+      <ConnectingScreen
+        subtitleKey="connectingSubtitle"
+        subtitleNs="checkers"
+      />
     );
   }
 

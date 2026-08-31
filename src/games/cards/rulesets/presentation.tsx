@@ -6,7 +6,10 @@ import type { TableView, TrucoView } from '../core/types';
 // component (its hud/statusLine closures get called from inside CardTable's
 // render, not as hooks themselves), so it takes whatever `t` its caller
 // already resolved via useTranslation() rather than calling the hook itself.
-export type Translate = (key: string, options?: Record<string, unknown>) => string;
+export type Translate = (
+  key: string,
+  options?: Record<string, unknown>,
+) => string;
 
 // Everything about a card game that is *presentation* rather than rules: what to
 // call its moves, what to put in the HUD, how to label its seats.
@@ -64,8 +67,14 @@ function trucoPresentation(
       const truco = view as TrucoView;
       return (
         <>
-          <HUDStat label={t('cards:teamA')} value={String(truco.matchScore?.A ?? 0)} />
-          <HUDStat label={t('cards:teamB')} value={String(truco.matchScore?.B ?? 0)} />
+          <HUDStat
+            label={t('cards:teamA')}
+            value={String(truco.matchScore?.A ?? 0)}
+          />
+          <HUDStat
+            label={t('cards:teamB')}
+            value={String(truco.matchScore?.B ?? 0)}
+          />
           <HUDStat
             label={t('cards:handValue')}
             value={String(truco.currentStake ?? 1)}

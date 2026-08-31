@@ -1,0 +1,1 @@
+export { SnakeCanvas } from './SnakeCanvas';

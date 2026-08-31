@@ -13,9 +13,9 @@ import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
-import { ConnectFourCanvas } from './ConnectFourCanvas';
-import { ConnectFourModeMenu } from './ConnectFourModeMenu';
-import { useConnectFourSession } from './useConnectFourSession';
+import { ConnectFourCanvas } from './components/ConnectFourCanvas';
+import { ConnectFourModeMenu } from './components/ConnectFourModeMenu';
+import { useConnectFourSession } from './hooks/useConnectFourSession';
 import type { ConnectFourState, Disc } from './types';
 
 // See useConnectFourSession.ts — 'connect-four' isn't in GameId until the

@@ -15,14 +15,14 @@ import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
-import { BoggleBoard } from './BoggleBoard';
+import { BoggleBoard } from './components/BoggleBoard';
 import {
   type Cell,
   type GameOverPayload,
   type InitPayload,
   type SubmitErrorPayload,
   type WordAcceptedPayload,
-} from './boggleProtocol';
+} from './protocol';
 
 // gameId.ts (a shared registry file) hasn't been wired up for this game yet
 // — see the shared brief's "hard constraints". Casting the id locally here
@@ -120,9 +120,9 @@ function BoggleBoardScreen({
   const [grid, setGrid] = useState<string[][] | null>(null);
   const [scores, setScores] = useState<Map<string, ScoreEntry>>(new Map());
   const [myWords, setMyWords] = useState<string[]>([]);
-  const [lastError, setLastError] = useState<SubmitErrorPayload['reason'] | null>(
-    null,
-  );
+  const [lastError, setLastError] = useState<
+    SubmitErrorPayload['reason'] | null
+  >(null);
   const [timeRemainingMs, setTimeRemainingMs] = useState<number | null>(null);
   const [finalResults, setFinalResults] = useState<
     GameOverPayload['results'] | null
@@ -223,7 +223,8 @@ function BoggleBoardScreen({
       />
 
       <div className="box-border flex flex-1 flex-col items-stretch justify-start gap-4 px-10 py-6">
-        {(connectionState === 'disconnected' || connectionState === 'error') && (
+        {(connectionState === 'disconnected' ||
+          connectionState === 'error') && (
           <div className="font-pixel text-center text-[11px] text-marquinhos-danger">
             {t('common:connectionLost')}
           </div>

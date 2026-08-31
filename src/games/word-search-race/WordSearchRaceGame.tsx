@@ -14,8 +14,11 @@ import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
-import type { Cell, FoundWord } from './WordSearchRaceCanvas';
-import { colorForPlayer, WordSearchRaceCanvas } from './WordSearchRaceCanvas';
+import type { Cell, FoundWord } from './components/WordSearchRaceCanvas';
+import {
+  colorForPlayer,
+  WordSearchRaceCanvas,
+} from './components/WordSearchRaceCanvas';
 
 type SessionState =
   | { status: 'connecting' }
@@ -183,7 +186,10 @@ function Board({ session, selfId }: { session: WsSession; selfId: string }) {
                     style={
                       foundEntry
                         ? {
-                            borderColor: colorForPlayer(foundEntry.userId, selfId),
+                            borderColor: colorForPlayer(
+                              foundEntry.userId,
+                              selfId,
+                            ),
                             color: colorForPlayer(foundEntry.userId, selfId),
                             textDecoration: 'line-through',
                             opacity: 0.7,

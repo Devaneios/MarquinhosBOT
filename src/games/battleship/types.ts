@@ -1,10 +1,6 @@
 export type BattleshipSide = 'p1' | 'p2';
 export type ShipType =
-  | 'carrier'
-  | 'battleship'
-  | 'cruiser'
-  | 'submarine'
-  | 'destroyer';
+  'carrier' | 'battleship' | 'cruiser' | 'submarine' | 'destroyer';
 export type Orientation = 'horizontal' | 'vertical';
 export type Phase = 'placement' | 'battle' | 'ended';
 

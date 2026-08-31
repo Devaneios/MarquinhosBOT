@@ -14,7 +14,7 @@ import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
-import { HangmanCanvas } from './HangmanCanvas';
+import { HangmanCanvas } from './components/HangmanCanvas';
 
 type HangmanSessionState =
   | { status: 'connecting' }
@@ -134,7 +134,9 @@ function HangmanBoard({ session }: { session: WsSession }) {
             gameOver={gameOver}
             won={won}
             onLetterClick={guessLetter}
-            disabled={connectionState === 'disconnected' || connectionState === 'error'}
+            disabled={
+              connectionState === 'disconnected' || connectionState === 'error'
+            }
           />
 
           {error && (

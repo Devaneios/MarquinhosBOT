@@ -7,7 +7,9 @@ interface LeaderboardScreenProps {
   leaderboard: PlayerScore[];
 }
 
-export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ leaderboard }) => {
+export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
+  leaderboard,
+}) => {
   const navigate = useNavigate();
   const { t } = useTranslation(['trivia-quiz', 'common']);
 
@@ -28,9 +30,13 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ leaderboar
                 {index + 1}
               </div>
               <div className="flex-1">
-                <div className="text-sm font-semibold text-marquinhos-text">{entry.userId}</div>
+                <div className="text-sm font-semibold text-marquinhos-text">
+                  {entry.userId}
+                </div>
               </div>
-              <div className="text-lg font-bold text-marquinhos-accent">{entry.score}</div>
+              <div className="text-lg font-bold text-marquinhos-accent">
+                {entry.score}
+              </div>
             </div>
           ))}
         </div>
