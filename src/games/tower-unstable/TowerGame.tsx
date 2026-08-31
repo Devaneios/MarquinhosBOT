@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ConnectingScreen,
@@ -6,53 +6,8 @@ import {
   ModeSelectScreen,
 } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { errorMessage, isAuthError } from '../../lib/http';
-import { fetchWsSessionToken, type WsSession } from '../shared/activitySession';
 import { TowerCanvas } from './components/TowerCanvas';
-
-type TowerSessionState =
-  | { status: 'selecting-mode' }
-  | { status: 'connecting' }
-  | { status: 'ready'; session: WsSession }
-  | { status: 'error'; error: string };
-
-function useTowerSession(
-  identity: DiscordIdentity,
-  mode: 'single' | 'multi' | null,
-  onAuthInvalid: () => void,
-): TowerSessionState {
-  const [state, setState] = useState<TowerSessionState>({
-    status: mode ? 'connecting' : 'selecting-mode',
-  });
-
-  useEffect(() => {
-    if (!mode) {
-      setState({ status: 'selecting-mode' });
-      return;
-    }
-
-    let cancelled = false;
-    setState({ status: 'connecting' });
-    fetchWsSessionToken({ game: 'tower-unstable', mode, identity })
-      .then((session) => {
-        if (cancelled) return;
-        setState({ status: 'ready', session });
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        if (isAuthError(err)) {
-          onAuthInvalid();
-          return;
-        }
-        setState({ status: 'error', error: errorMessage(err) });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [identity, mode, onAuthInvalid]);
-
-  return state;
-}
+import { useTowerSession } from './hooks/useTowerSession';
 
 export function TowerGame({
   identity,

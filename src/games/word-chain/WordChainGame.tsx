@@ -16,16 +16,11 @@ import {
 } from '../shared/useColyseusRoom';
 import { WordChainBoard } from './components/WordChainBoard';
 import { useWordChainSession } from './hooks/useWordChainSession';
-
-interface GameState {
-  currentWord: string;
-  currentTurn: string;
-  usedWords: string[];
-  players: { userId: string; alive: boolean }[];
-  gameOver: boolean;
-  winner: string | null;
-  userId: string;
-}
+import type {
+  GameState,
+  OpponentDisconnectedPayload,
+  WordRejectedPayload,
+} from './types';
 
 export function WordChainGame({
   identity,
@@ -69,14 +64,11 @@ export function WordChainGame({
         const payload = message.payload as Partial<GameState>;
         setGameState((prev) => ({ ...prev, ...payload }));
       } else if (message.type === 'word_rejected') {
-        const payload = message.payload as { error: string };
+        const payload = message.payload as WordRejectedPayload;
         setError(payload.error);
         setInputValue('');
       } else if (message.type === 'opponent_disconnected') {
-        const payload = message.payload as {
-          userId: string;
-          timeoutMs: number;
-        };
+        const payload = message.payload as OpponentDisconnectedPayload;
         setPausedOpponent(payload);
       } else if (message.type === 'opponent_reconnected') {
         setPausedOpponent(null);

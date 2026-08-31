@@ -8,14 +8,13 @@ import {
 } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { colyseusUrl } from '../../lib/apiBase';
-import { errorMessage, isAuthError } from '../../lib/http';
-import type { GameId } from '../gameId';
-import { fetchWsSessionToken, type WsSession } from '../shared/activitySession';
+import type { WsSession } from '../shared/activitySession';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
 import { BoggleBoard } from './components/BoggleBoard';
+import { useBoggleSession } from './hooks/useBoggleSession';
 import {
   type Cell,
   type GameOverPayload,
@@ -23,28 +22,8 @@ import {
   type SubmitErrorPayload,
   type WordAcceptedPayload,
 } from './protocol';
-
-// gameId.ts (a shared registry file) hasn't been wired up for this game yet
-// — see the shared brief's "hard constraints". Casting the id locally here
-// is the documented way to plug in without touching that file.
-const GAME_ID = 'boggle-word-race' as GameId;
-
-type BoggleSessionState =
-  | { status: 'connecting' }
-  | { status: 'ready'; session: WsSession }
-  | { status: 'error'; error: string };
-
-interface ScoreEntry {
-  score: number;
-  wordCount: number;
-}
-
-function formatClock(ms: number): string {
-  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-}
+import type { ScoreEntry } from './types';
+import { formatClock } from './utils';
 
 export function BoggleGame({
   identity,
@@ -54,30 +33,7 @@ export function BoggleGame({
   onAuthInvalid: () => void;
 }) {
   const navigate = useNavigate();
-  const [session, setSession] = useState<BoggleSessionState>({
-    status: 'connecting',
-  });
-  const cancelledRef = useRef(false);
-
-  useEffect(() => {
-    cancelledRef.current = false;
-    fetchWsSessionToken({ game: GAME_ID, mode: 'multi', identity })
-      .then((s) => {
-        if (cancelledRef.current) return;
-        setSession({ status: 'ready', session: s });
-      })
-      .catch((err) => {
-        if (cancelledRef.current) return;
-        if (isAuthError(err)) {
-          onAuthInvalid();
-          return;
-        }
-        setSession({ status: 'error', error: errorMessage(err) });
-      });
-    return () => {
-      cancelledRef.current = true;
-    };
-  }, [identity, onAuthInvalid]);
+  const session = useBoggleSession(identity, onAuthInvalid);
 
   if (session.status === 'connecting') {
     return (
@@ -133,7 +89,7 @@ function BoggleBoardScreen({
   );
 
   const { send, connectionState } = useColyseusRoom(
-    GAME_ID,
+    'boggle-word-race',
     session,
     colyseusUrl(),
     (message) => messageHandlerRef.current(message),

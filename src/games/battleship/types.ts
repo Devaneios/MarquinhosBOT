@@ -4,6 +4,13 @@ export type ShipType =
 export type Orientation = 'horizontal' | 'vertical';
 export type Phase = 'placement' | 'battle' | 'ended';
 
+export interface PendingShip {
+  type: ShipType;
+  x: number;
+  y: number;
+  orientation: Orientation;
+}
+
 export const SHIP_SIZES: Record<ShipType, number> = {
   carrier: 5,
   battleship: 4,

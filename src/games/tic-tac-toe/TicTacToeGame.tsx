@@ -72,7 +72,7 @@ export function TicTacToeGame({
   }, []);
 
   const { send: roomSend, connectionState } = useColyseusRoom(
-    'tic-tac-toe' as any,
+    'tic-tac-toe',
     sessionState.status === 'ready' ? sessionState.session.session : null,
     colyseusUrl(),
     onMessage,

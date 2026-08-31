@@ -4,8 +4,7 @@ import {
   BOARD_SIZE,
   SHIP_SIZES,
   type BoardView,
-  type Orientation,
-  type ShipType,
+  type PendingShip,
 } from '../types';
 
 const CELL = 30;
@@ -20,13 +19,6 @@ const MISS_COLOR = '#5c6773';
 const HIT_COLOR = '#ff6b4a';
 const PREVIEW_OK = 'rgba(95,191,119,0.55)';
 const PREVIEW_BAD = 'rgba(224,80,80,0.55)';
-
-export interface PendingShip {
-  type: ShipType;
-  x: number;
-  y: number;
-  orientation: Orientation;
-}
 
 export interface BattleshipCanvasProps {
   mode: 'placement' | 'battle';

@@ -8,73 +8,25 @@ import {
 } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
 import { colyseusUrl } from '../../lib/apiBase';
-import { errorMessage, isAuthError } from '../../lib/http';
-import { fetchWsSessionToken, type WsSession } from '../shared/activitySession';
+import type { WsSession } from '../shared/activitySession';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
-import type { Cell, FoundWord } from './components/WordSearchRaceCanvas';
 import {
   colorForPlayer,
   WordSearchRaceCanvas,
 } from './components/WordSearchRaceCanvas';
-
-type SessionState =
-  | { status: 'connecting' }
-  | { status: 'ready'; session: WsSession }
-  | { status: 'error'; error: string };
-
-interface InitPayload {
-  size: number;
-  grid: string[][];
-  words: string[];
-  found: FoundWord[];
-  scores: Record<string, number>;
-  deadline: number;
-  ended: boolean;
-}
-
-function useWordSearchRaceSession(
-  identity: DiscordIdentity,
-  onAuthInvalid: () => void,
-): SessionState {
-  const [state, setState] = useState<SessionState>({ status: 'connecting' });
-
-  useEffect(() => {
-    let cancelled = false;
-    setState({ status: 'connecting' });
-    fetchWsSessionToken({
-      game: 'word-search-race',
-      mode: 'multi',
-      identity,
-    })
-      .then((session) => {
-        if (cancelled) return;
-        setState({ status: 'ready', session });
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        if (isAuthError(err)) {
-          onAuthInvalid();
-          return;
-        }
-        setState({ status: 'error', error: errorMessage(err) });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [identity, onAuthInvalid]);
-
-  return state;
-}
-
-function formatRemaining(ms: number): string {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-}
+import { useWordSearchRaceSession } from './hooks/useWordSearchRaceSession';
+import type {
+  Cell,
+  FoundWord,
+  GameOverPayload,
+  InitPayload,
+  SelectErrorPayload,
+  WordFoundPayload,
+} from './types';
+import { formatRemaining } from './utils';
 
 function Board({ session, selfId }: { session: WsSession; selfId: string }) {
   const navigate = useNavigate();
@@ -98,20 +50,15 @@ function Board({ session, selfId }: { session: WsSession; selfId: string }) {
         setScores(payload.scores);
         setGameOver(payload.ended ? { reason: 'completed' } : null);
       } else if (message.type === 'word_found') {
-        const payload = message.payload as FoundWord & {
-          scores: Record<string, number>;
-        };
+        const payload = message.payload as WordFoundPayload;
         setFound((prev) => [...prev, payload]);
         setScores(payload.scores);
         setSelectError(null);
       } else if (message.type === 'select_error') {
-        const payload = message.payload as { message: string };
+        const payload = message.payload as SelectErrorPayload;
         setSelectError(payload.message);
       } else if (message.type === 'game_over') {
-        const payload = message.payload as {
-          reason: string;
-          scores: Record<string, number>;
-        };
+        const payload = message.payload as GameOverPayload;
         setScores(payload.scores);
         setGameOver({ reason: payload.reason });
       }

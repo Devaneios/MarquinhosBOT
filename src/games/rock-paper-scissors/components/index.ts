@@ -1,0 +1,1 @@
+export { RpsBoard } from './RpsBoard';

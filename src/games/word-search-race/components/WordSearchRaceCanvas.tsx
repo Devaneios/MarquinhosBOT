@@ -1,17 +1,7 @@
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { useEffect, useRef } from 'react';
-
-export interface Cell {
-  row: number;
-  col: number;
-}
-
-export interface FoundWord {
-  word: string;
-  userId: string;
-  start: Cell;
-  end: Cell;
-}
+import type { Cell, FoundWord } from '../types';
+import { snapToLine } from '../utils';
 
 const CELL_SIZE = 32;
 const GRID_BG = '#17181a';
@@ -35,30 +25,6 @@ export function colorForPlayer(userId: string, selfId: string): string {
     hash = (hash * 31 + userId.charCodeAt(i)) >>> 0;
   }
   return PLAYER_PALETTE[hash % PLAYER_PALETTE.length]!;
-}
-
-// Snaps a raw drag endpoint onto the nearest of the 8 straight-line
-// directions from `start` — dragging slightly off-axis still selects a
-// clean horizontal/vertical/diagonal run instead of an invalid line the
-// server would reject.
-function snapToLine(start: Cell, raw: Cell): Cell {
-  const dr = raw.row - start.row;
-  const dc = raw.col - start.col;
-  const ar = Math.abs(dr);
-  const ac = Math.abs(dc);
-  if (ar === 0 && ac === 0) return start;
-
-  let dirR = dr === 0 ? 0 : Math.sign(dr);
-  let dirC = dc === 0 ? 0 : Math.sign(dc);
-  let steps = Math.max(ar, ac);
-
-  if (dirR !== 0 && dirC !== 0 && ar !== ac) {
-    if (ar > ac) dirC = 0;
-    else dirR = 0;
-    steps = dirR === 0 || dirC === 0 ? Math.max(ar, ac) : Math.min(ar, ac);
-  }
-
-  return { row: start.row + dirR * steps, col: start.col + dirC * steps };
 }
 
 export function WordSearchRaceCanvas({
