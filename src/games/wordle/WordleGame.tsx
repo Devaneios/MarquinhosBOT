@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ConnectingScreen, ErrorScreen } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { WordleBoard } from './components/WordleBoard';
+import { WordleBoard } from './components';
 import { useWordleSession } from './useWordleSession';
 
 export function WordleGame({

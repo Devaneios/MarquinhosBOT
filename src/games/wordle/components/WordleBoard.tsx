@@ -94,7 +94,7 @@ export function WordleBoard({ session }: { session: WsSession }) {
                   activeIndex={board.activeIndex}
                   wordLength={board.wordLength}
                   shake={board.shake}
-                  disabled={board.solved || board.wordLength === null}
+                  disabled={board.solved || !!board.wordLength}
                   inputRefs={board.inputRefs}
                   onFocusCell={board.setActiveIndex}
                   onKeyDownCell={board.onKeyDownCell}
