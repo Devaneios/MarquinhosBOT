@@ -61,7 +61,7 @@ export function WordleBoard({ session }: { session: WsSession }) {
       )}
 
       <main className="flex min-h-0 flex-1 items-stretch justify-center overflow-hidden p-2 sm:items-center sm:overflow-y-auto sm:p-6">
-        <div className="notch-8 flex w-full flex-1 flex-col gap-3 border border-marquinhos-border bg-[#1c1b1c] px-2 py-3 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:w-fit sm:min-w-[33.75rem] sm:flex-none sm:gap-4 sm:px-6 sm:py-6">
+        <div className="notch-8 flex w-full flex-1 flex-col gap-3 border border-marquinhos-border bg-[#1c1b1c] px-2 py-3 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:w-fit sm:min-w-135 sm:flex-none sm:gap-4 sm:px-6 sm:py-6">
           {board.solved && (
             <div className="notch-6 flex items-center justify-between gap-3 border border-marquinhos-border bg-black/25 px-4 py-3">
               <div className="text-sm font-semibold text-marquinhos-text">

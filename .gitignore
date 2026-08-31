@@ -17,6 +17,10 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 .idea
+!.idea/
+.idea/*
+!.idea/inspectionProfiles/
+!.idea/inspectionProfiles/Project_Default.xml
 .DS_Store
 *.suo
 *.ntvs*
