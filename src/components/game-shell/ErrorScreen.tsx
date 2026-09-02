@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 export interface ErrorScreenProps {
   message: string;
   onRetryAuth?: () => void;
-  onBack: () => void;
+  onBack?: () => void;
   backLabel?: string;
+  hint?: string;
 }
 
 export function ErrorScreen({
@@ -12,6 +13,7 @@ export function ErrorScreen({
   onRetryAuth,
   onBack,
   backLabel,
+  hint,
 }: ErrorScreenProps) {
   const { t } = useTranslation('common');
 
@@ -34,14 +36,21 @@ export function ErrorScreen({
               {t('retryAuth')}
             </button>
           )}
-          <button
-            type="button"
-            className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-3 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
-            onClick={onBack}
-          >
-            {backLabel ?? t('back')}
-          </button>
+          {onBack && (
+            <button
+              type="button"
+              className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-3 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
+              onClick={onBack}
+            >
+              {backLabel ?? t('back')}
+            </button>
+          )}
         </div>
+        {hint && (
+          <div className="max-w-[48ch] text-xs leading-5 text-marquinhos-text-dim/80">
+            {hint}
+          </div>
+        )}
       </div>
     </div>
   );

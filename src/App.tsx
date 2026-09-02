@@ -29,8 +29,7 @@ function App() {
         <ErrorScreen
           message={identity.error}
           onRetryAuth={identity.reauth}
-          onBack={() => window.location.reload()}
-          backLabel={t('reload')}
+          hint={t('authTimeoutHint')}
         />
       )}
 

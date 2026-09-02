@@ -20,7 +20,6 @@ async function freshDiscordSdkModule() {
       constructCount += 1;
     }, close),
     Platform: { MOBILE: 'mobile', DESKTOP: 'desktop' },
-    RPCCloseCodes: { CLOSE_NORMAL: 1000 },
   }));
   (globalThis as unknown as { window: unknown }).window = {
     self: {},

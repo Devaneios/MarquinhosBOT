@@ -34,9 +34,15 @@ export function getDiscordSdk(): DiscordSDK | DiscordSDKMock {
 // builds a fresh one and re-sends the handshake.
 //
 // Deliberately does NOT call instance.close(): that posts an RPC CLOSE
-// message to Discord's client, which treats it as "this activity is done"
-// and tears down the iframe — unrecoverable from inside the page, and the
-// opposite of what a reset-and-retry needs.
+// message to Discord's client, which treats it as "this activity is done" —
+// and per a Discord SDK maintainer, the SDK "is designed to support only one
+// 'ready handshake' per iframe mounted" (discord/embedded-app-sdk#41). Once
+// that one handshake is spent, Discord stops listening to this iframe
+// entirely, so close() (like everything else sent from here) goes nowhere —
+// confirmed in practice: neither a reload, a fresh handshake, nor an
+// explicit close() recovers a dead connection. The only fix is the user
+// closing and relaunching the Activity from Discord itself, which nothing on
+// this page can trigger.
 export function resetDiscordSdk(): void {
   instance = null;
 }
