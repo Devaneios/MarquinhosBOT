@@ -9,6 +9,8 @@
   "connectionFailed": "FALHA NA CONEXÃO",
   "connectionLost": "CONEXÃO PERDIDA — RECARREGUE PARA RECONECTAR",
   "retryAuth": "Tentar novamente",
+  "authTimeout": "Autenticação expirou após {{seconds}} segundos",
+  "mustLaunchInServer": "Esta atividade precisa ser aberta dentro de um servidor",
   "reload": "Recarregar",
   "selectMode": "SELECIONAR MODO",
   "vsBot": "VS BOT",

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { discordSdk, isMock } from '../discordSdk';
+import { tImperative } from '../i18n/i18nImperative';
 import { apiUrl } from '../lib/apiBase';
 import { devinfo, devlog } from '../lib/devlog';
 import { errorMessage, postJson } from '../lib/http';
@@ -17,7 +18,6 @@ export type DiscordIdentityState =
   | { status: 'ready'; identity: DiscordIdentity; reauth: () => void };
 
 const AUTH_TIMEOUT_MS = 15_000;
-const AUTH_TIMEOUT_MESSAGE = 'Authentication timed out after 15 seconds';
 
 async function doHandshake(): Promise<DiscordIdentity> {
   devlog('[auth] starting handshake');
@@ -48,7 +48,7 @@ async function doHandshake(): Promise<DiscordIdentity> {
 
   if (!discordSdk.guildId) {
     console.error('[auth] missing guildId — not launched inside a server');
-    throw new Error('This Activity must be launched inside a server');
+    throw new Error(tImperative('mustLaunchInServer', 'common'));
   }
 
   devinfo('[auth] handshake complete', {
@@ -71,7 +71,14 @@ let cache: { promise: Promise<DiscordIdentity>; settled: boolean } | null =
 function withTimeout<T>(promise: Promise<T>): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const timeoutId = setTimeout(
-      () => reject(new Error(AUTH_TIMEOUT_MESSAGE)),
+      () =>
+        reject(
+          new Error(
+            tImperative('authTimeout', 'common', {
+              seconds: AUTH_TIMEOUT_MS / 1000,
+            }),
+          ),
+        ),
       AUTH_TIMEOUT_MS,
     );
 
