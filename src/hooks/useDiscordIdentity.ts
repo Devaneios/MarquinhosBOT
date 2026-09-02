@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { discordSdk, isMock } from '../discordSdk';
 import { apiUrl } from '../lib/apiBase';
 import { devinfo, devlog } from '../lib/devlog';
@@ -15,6 +15,9 @@ export type DiscordIdentityState =
   | { status: 'loading' }
   | { status: 'error'; error: string; reauth: () => void }
   | { status: 'ready'; identity: DiscordIdentity; reauth: () => void };
+
+const AUTH_TIMEOUT_MS = 15_000;
+const AUTH_TIMEOUT_MESSAGE = 'Authentication timed out after 15 seconds';
 
 async function doHandshake(): Promise<DiscordIdentity> {
   devlog('[auth] starting handshake');
@@ -62,17 +65,28 @@ async function doHandshake(): Promise<DiscordIdentity> {
   };
 }
 
-// Discord's client only tolerates one `authorize` RPC in flight at a time —
-// a second call while the first hasn't finished authenticating yet fails
-// with "Already authing". React StrictMode mounts this hook's effect twice,
-// and reauth() can in principle be triggered twice in the same tick, so
-// every caller in the same window has to await the same in-flight attempt
-// instead of starting its own. `force` evicts a *settled* (resolved) cache
-// entry so reauth() doesn't just resolve from stale data — but never evicts
-// an entry that's still in flight, so concurrent forced calls collapse onto
-// one attempt instead of racing two `authorize()` RPCs.
 let cache: { promise: Promise<DiscordIdentity>; settled: boolean } | null =
   null;
+
+function withTimeout<T>(promise: Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(
+      () => reject(new Error(AUTH_TIMEOUT_MESSAGE)),
+      AUTH_TIMEOUT_MS,
+    );
+
+    promise.then(
+      (value) => {
+        clearTimeout(timeoutId);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      },
+    );
+  });
+}
 
 export function runAuthFlow(force = false): Promise<DiscordIdentity> {
   if (force && cache?.settled) cache = null;
@@ -85,7 +99,7 @@ export function runAuthFlow(force = false): Promise<DiscordIdentity> {
     promise: null as unknown as Promise<DiscordIdentity>,
     settled: false,
   };
-  entry.promise = doHandshake()
+  entry.promise = withTimeout(doHandshake())
     .then((identity) => {
       entry.settled = true;
       return identity;
@@ -102,29 +116,38 @@ export function useDiscordIdentity(): DiscordIdentityState {
   const [state, setState] = useState<DiscordIdentityState>({
     status: 'loading',
   });
+  const authAttemptRef = useRef(0);
 
   const reauth = useCallback(() => {
+    const attempt = ++authAttemptRef.current;
     devlog('[auth] reauth triggered');
+    cache = null;
     setState({ status: 'loading' });
     runAuthFlow(true)
-      .then((identity) => setState({ status: 'ready', identity, reauth }))
-      .catch((err) =>
-        setState({ status: 'error', error: errorMessage(err), reauth }),
+      .then((identity) => {
+        if (attempt !== authAttemptRef.current) return;
+        setState({ status: 'ready', identity, reauth });
+      })
+      .catch(
+        (err) =>
+          attempt === authAttemptRef.current &&
+          setState({ status: 'error', error: errorMessage(err), reauth }),
       );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     let cancelled = false;
+    const attempt = ++authAttemptRef.current;
 
     runAuthFlow()
       .then((identity) => {
-        if (cancelled) return;
+        if (cancelled || attempt !== authAttemptRef.current) return;
         devinfo('[auth] identity ready', identity.userId);
         setState({ status: 'ready', identity, reauth });
       })
       .catch((err) => {
-        if (cancelled) return;
+        if (cancelled || attempt !== authAttemptRef.current) return;
         console.error('[auth] handshake failed', errorMessage(err));
         setState({ status: 'error', error: errorMessage(err), reauth });
       });
