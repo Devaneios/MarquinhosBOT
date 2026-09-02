@@ -27,6 +27,20 @@ export function getDiscordSdk(): DiscordSDK | DiscordSDKMock {
   return instance;
 }
 
+// The SDK only sends its handshake once, in its constructor — if that one
+// round-trip is ever lost, the singleton is wedged forever (ready() awaits an
+// eventBus.once(READY, ...) that will never fire again). Callers that hit a
+// handshake failure must drop the instance here so the next getDiscordSdk()
+// builds a fresh one and re-sends the handshake.
+//
+// Deliberately does NOT call instance.close(): that posts an RPC CLOSE
+// message to Discord's client, which treats it as "this activity is done"
+// and tears down the iframe — unrecoverable from inside the page, and the
+// opposite of what a reset-and-retry needs.
+export function resetDiscordSdk(): void {
+  instance = null;
+}
+
 export const discordSdk: DiscordSDK | DiscordSDKMock = new Proxy(
   {} as DiscordSDK,
   {

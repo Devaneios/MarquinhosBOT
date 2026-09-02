@@ -211,15 +211,21 @@
     <div id="root"></div>
     <!--
       Discord's Activity proxy commonly enforces a CSP without
-      'unsafe-inline', which silently drops inline <script> blocks — so both
-      the error overlay and the mount-overlay removal logic must be external
-      module files, not inline, to be sure they actually run. Each is loaded
-      as its own module tag *before* main.tsx: every <script type="module">
-      is deferred and executes in document order relative to the others, so
-      these always run first regardless of what main.tsx or any bundler
-      import-reordering does.
+      'unsafe-inline', which silently drops inline <script> blocks — so the
+      error overlay, the Discord auth handshake, and the mount-overlay
+      removal logic must all be external module files, not inline, to be
+      sure they actually run. Each is loaded as its own module tag *before*
+      main.tsx: every <script type="module"> is deferred and executes in
+      document order relative to the others, so these always run first
+      regardless of what main.tsx or any bundler import-reordering does.
+
+      discordAuth.ts in particular must not be reached only via main.tsx's
+      import graph: if that graph fails to evaluate (a broken module, a bad
+      HMR update) the handshake still has to start and keep running on its
+      own — React only ever reads its result, never triggers it.
     -->
     <script type="module" src="/src/errorOverlay.ts"></script>
+    <script type="module" src="/src/discordAuth.ts"></script>
     <script type="module" src="/src/removeMountOverlay.ts"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
