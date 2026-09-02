@@ -8,7 +8,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/press-start-2p-v16-latin-regular.woff2') format('woff2');
+  src: url('./assets/fonts/press-start-2p-v16-latin-regular.woff2') format('woff2');
 }
 
 @theme {
@@ -218,22 +218,24 @@
   flex-direction: column;
   box-sizing: border-box;
   overflow: hidden;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono), monospace;
   color: var(--color-marquinhos-text);
   background: var(--color-marquinhos-bg);
-  /* Discord exposes safe-area insets on iOS/Android as CSS variables (with a
-     standard env() fallback outside Discord) so the UI isn't obscured by a
-     notch, home indicator, or the client's own rounded corners on mobile. */
-  padding-top: var(--discord-safe-area-inset-top, env(safe-area-inset-top));
-  padding-right: var(
-    --discord-safe-area-inset-right,
-    env(safe-area-inset-right)
-  );
-  padding-bottom: var(
-    --discord-safe-area-inset-bottom,
-    env(safe-area-inset-bottom)
-  );
-  padding-left: var(--discord-safe-area-inset-left, env(safe-area-inset-left));
+  padding-top: var(--discord-safe-area-inset-top);
+  padding-right: var(--discord-safe-area-inset-right);
+  padding-bottom: var(--discord-safe-area-inset-bottom);
+  padding-left: var(--discord-safe-area-inset-left);
+}
+
+/* Discord's Activity SDK sets these on the root element's inline style at
+   runtime (which always wins over this rule regardless of specificity), so
+   the env() values here only serve as a declared default: before the SDK is
+   ready, and outside Discord entirely, where it's never set at all. */
+:root {
+  --discord-safe-area-inset-top: env(safe-area-inset-top);
+  --discord-safe-area-inset-right: env(safe-area-inset-right);
+  --discord-safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --discord-safe-area-inset-left: env(safe-area-inset-left);
 }
 
 body {
