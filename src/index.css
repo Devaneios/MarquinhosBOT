@@ -1,5 +1,16 @@
 @import 'tailwindcss';
 
+/* Self-hosted instead of loaded from Google Fonts: Discord's Activity CSP
+   only allows requests to this app's own mapped origins, so fonts.googleapis.com
+   / fonts.gstatic.com get silently blocked inside the real Discord client. */
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/press-start-2p-v16-latin-regular.woff2') format('woff2');
+}
+
 @theme {
   --font-mono:
     ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', monospace;
