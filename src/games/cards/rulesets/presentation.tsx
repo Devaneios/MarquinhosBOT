@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { HUDStat } from '../components/HUDStat';
+import { HUDStat } from '../components';
 import type { TableView, TrucoView } from '../core/types';
 
 // A minimal stand-in for react-i18next's TFunction: presentation.tsx is not a

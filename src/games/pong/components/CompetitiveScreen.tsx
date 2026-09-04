@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { DiscordIdentity } from '../../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { apiUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
 import { errorMessage, postJson } from '../../../lib/http';

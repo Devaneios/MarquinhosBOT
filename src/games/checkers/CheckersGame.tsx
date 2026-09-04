@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { ConnectingScreen, ErrorScreen } from '../../components/game-shell';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { CheckersBoard } from './components/CheckersBoard';
+import type { DiscordIdentity } from '../../discordAuth.ts';
+import { CheckersBoard } from './components';
 import type { CheckersMenuOutletContext } from './hooks/CheckersMenuFlow';
 import { useCheckersSession } from './hooks/useCheckersSession';
 

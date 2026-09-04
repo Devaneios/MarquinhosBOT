@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Room } from '@colyseus/sdk';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../discordAuth.ts';
 import type { GameId } from '../gameId';
 import { colyseusUrl } from '../../lib/apiBase';
 import { devwarn } from '../../lib/devlog';

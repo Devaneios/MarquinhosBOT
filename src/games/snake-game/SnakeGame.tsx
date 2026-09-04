@@ -4,8 +4,8 @@ import {
   ErrorScreen,
   ModeSelectScreen,
 } from '../../components/game-shell';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { SnakeCanvas } from './components/SnakeCanvas';
+import type { DiscordIdentity } from '../../discordAuth.ts';
+import { SnakeCanvas } from './components';
 import { useSnakeSession } from './hooks/useSnakeSession';
 
 export function SnakeGame({

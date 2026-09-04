@@ -1,10 +1,10 @@
 import { Route, useNavigate } from 'react-router-dom';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../discordAuth.ts';
 import { CompetitiveScreen } from './components/CompetitiveScreen';
-import { HowToPlay } from './components/HowToPlay';
-import { MainMenu } from './components/MainMenu';
-import { ModeMenu } from './components/ModeMenu';
-import { SettingsScreen } from './components/SettingsScreen';
+import { HowToPlay } from './components';
+import { MainMenu } from './components';
+import { ModeMenu } from './components';
+import { SettingsScreen } from './components';
 import { PongMenuFlow, usePongMenuContext } from './hooks/PongMenuFlow';
 import { PongGame } from './PongGame';
 

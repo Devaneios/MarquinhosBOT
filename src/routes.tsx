@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { GAME_REGISTRY } from './games/registry';
-import type { DiscordIdentity } from './hooks/useDiscordIdentity';
+import type { DiscordIdentity } from './discordAuth.ts';
 import { Hub } from './hub/Hub';
 import { RoomRoute } from './rooms/RoomRoute';
 

@@ -1,11 +1,11 @@
 import { Route, useNavigate, useOutletContext } from 'react-router-dom';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../discordAuth.ts';
 import {
   BingoSpeedGame,
   type BingoSpeedMenuOutletContext,
 } from './BingoSpeedGame';
-import { MainMenu } from './components/MainMenu';
-import { ModeMenu } from './components/ModeMenu';
+import { MainMenu } from './components';
+import { ModeMenu } from './components';
 
 function MainMenuRoute() {
   const navigate = useNavigate();

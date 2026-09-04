@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { DiscordIdentity } from '../../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import { errorMessage, isAuthError } from '../../../lib/http';
 import {

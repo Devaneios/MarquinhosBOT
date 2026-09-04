@@ -1,4 +1,4 @@
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../discordAuth.ts';
 import { apiUrl } from '../../lib/apiBase';
 import { postJson } from '../../lib/http';
 import type { GameId } from '../gameId';

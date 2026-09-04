@@ -1,6 +1,6 @@
 import { Route } from 'react-router-dom';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { MinesweeperVersusGame } from './MinesweeperVersusGame';
+import type { DiscordIdentity } from '../../discordAuth.ts';
+import { MinesweeperVersusGame } from './components';
 
 export function minesweeperVersusRoutes(
   identity: DiscordIdentity,

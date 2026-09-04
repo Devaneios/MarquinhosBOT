@@ -6,7 +6,7 @@ import {
   ErrorScreen,
   GameHeader,
 } from '../../../components/game-shell';
-import type { DiscordIdentity } from '../../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import {
   useColyseusRoom,

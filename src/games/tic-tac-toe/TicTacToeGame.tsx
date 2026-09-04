@@ -7,13 +7,13 @@ import {
   GameHeader,
   ModeSelectScreen,
 } from '../../components/game-shell';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../discordAuth.ts';
 import { colyseusUrl } from '../../lib/apiBase';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
-import { TicTacToeCanvas } from './components/TicTacToeCanvas';
+import { TicTacToeCanvas } from './components';
 import type { TicTacToeState } from './hooks/useTicTacToeSession';
 import { useTicTacToeSession } from './hooks/useTicTacToeSession';
 

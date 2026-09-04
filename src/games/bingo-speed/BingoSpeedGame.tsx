@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { ConnectingScreen, ErrorScreen } from '../../components/game-shell';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { BingoSpeedCanvas } from './components/BingoSpeedCanvas';
+import type { DiscordIdentity } from '../../discordAuth.ts';
+import { BingoSpeedCanvas } from './components';
 import { useBingoSpeedSession } from './hooks/useBingoSpeedSession';
 
 export interface BingoSpeedMenuOutletContext {

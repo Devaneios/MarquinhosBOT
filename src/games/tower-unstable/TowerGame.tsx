@@ -5,8 +5,8 @@ import {
   ErrorScreen,
   ModeSelectScreen,
 } from '../../components/game-shell';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { TowerCanvas } from './components/TowerCanvas';
+import type { DiscordIdentity } from '../../discordAuth.ts';
+import { TowerCanvas } from './components';
 import { useTowerSession } from './hooks/useTowerSession';
 
 export function TowerGame({

@@ -5,8 +5,8 @@ import {
   ErrorScreen,
   ModeSelectScreen,
 } from '../../components/game-shell';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { RpsBoard } from './components/RpsBoard';
+import type { DiscordIdentity } from '../../discordAuth.ts';
+import { RpsBoard } from './components';
 import { useRpsSession } from './hooks/useRpsSession';
 
 export function RpsGame({

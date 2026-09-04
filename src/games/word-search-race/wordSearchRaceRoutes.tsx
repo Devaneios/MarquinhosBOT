@@ -1,5 +1,5 @@
 import { Route } from 'react-router-dom';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../discordAuth.ts';
 import { WordSearchRaceGame } from './WordSearchRaceGame';
 
 export function wordSearchRaceRoutes(

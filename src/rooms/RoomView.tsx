@@ -6,7 +6,7 @@ import {
   RoomConnectionProvider,
   useRoomConnectionContext,
 } from '../games/shared/RoomConnectionProvider';
-import type { DiscordIdentity } from '../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../discordAuth.ts';
 
 function RoomBoard({ identity }: { identity: DiscordIdentity }) {
   const ctx = useRoomConnectionContext();

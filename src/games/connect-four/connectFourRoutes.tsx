@@ -1,6 +1,6 @@
 import { Route } from 'react-router-dom';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { ConnectFourGame } from './ConnectFourGame';
+import type { DiscordIdentity } from '../../discordAuth.ts';
+import { ConnectFourGame } from './components';
 
 export function connectFourRoutes(
   identity: DiscordIdentity,

@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../discordAuth.ts';
 
 // This route used to connect directly in 'multi' mode via
 // useHangmanSession/useGameSession with no roomId ever supplied — which

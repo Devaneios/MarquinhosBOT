@@ -5,8 +5,8 @@ import {
   ErrorScreen,
   ModeSelectScreen,
 } from '../../components/game-shell';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { DominoesBlockBoard } from './components/DominoesBlockBoard';
+import type { DiscordIdentity } from '../../discordAuth.ts';
+import { DominoesBlockBoard } from './components';
 import { useDominoesSession } from './hooks/useDominoesSession';
 
 export function DominoesBlockGame({

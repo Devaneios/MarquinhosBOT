@@ -9,7 +9,7 @@ import {
 import type { GameId } from '../../games/gameId';
 import { GAME_REGISTRY } from '../../games/registry';
 import { isQueueEligible } from '../../games/shared/queueEligibility';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../discordAuth.ts';
 import { getParticipantDisplayNames } from '../../lib/discordParticipants';
 
 export interface RoomReadyInfo {

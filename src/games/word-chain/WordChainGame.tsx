@@ -7,14 +7,14 @@ import {
   GameHeader,
   ModeSelectScreen,
 } from '../../components/game-shell';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../discordAuth.ts';
 import { colyseusUrl } from '../../lib/apiBase';
 import { cn } from '../../lib/cn';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
-import { WordChainBoard } from './components/WordChainBoard';
+import { WordChainBoard } from './components';
 import { useWordChainSession } from './hooks/useWordChainSession';
 import type {
   GameState,

@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from 'bun:test';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../discordAuth.ts';
 import type { RoomListing } from '../../games/shared/activitySession';
 
 const identity: DiscordIdentity = {

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { RoomLobbyScreen, type RoomReadyInfo } from '../components/game-shell';
 import type { GameId } from '../games/gameId';
-import type { DiscordIdentity } from '../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../discordAuth.ts';
 import { RoomView } from './RoomView';
 
 export function RoomRoute({ identity }: { identity: DiscordIdentity }) {

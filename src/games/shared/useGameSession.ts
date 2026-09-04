@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../discordAuth.ts';
 import { errorMessage, isAuthError } from '../../lib/http';
 import type { GameId } from '../gameId';
 import { fetchWsSessionToken, type WsSession } from './activitySession';

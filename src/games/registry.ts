@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import type { DiscordIdentity } from '../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../discordAuth.ts';
 import { gameDescriptor as battleship } from './battleship';
 import { gameDescriptor as bingoSpeed } from './bingo-speed';
 import { gameDescriptor as boggleWordRace } from './boggle-word-race';

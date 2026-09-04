@@ -1,6 +1,6 @@
 import { Route } from 'react-router-dom';
-import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
-import { BattleshipGame } from './BattleshipGame';
+import type { DiscordIdentity } from '../../discordAuth.ts';
+import { BattleshipGame } from './components';
 
 export function battleshipRoutes(
   identity: DiscordIdentity,

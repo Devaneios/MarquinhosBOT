@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ConnectingScreen, ErrorScreen } from '../../../components/game-shell';
-import type { DiscordIdentity } from '../../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
 import {

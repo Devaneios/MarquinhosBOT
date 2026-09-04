@@ -7,7 +7,7 @@ import {
   GameHeader,
   ModeSelectScreen,
 } from '../../../components/game-shell';
-import type { DiscordIdentity } from '../../../hooks/useDiscordIdentity';
+import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
 import {
