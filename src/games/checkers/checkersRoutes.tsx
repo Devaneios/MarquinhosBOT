@@ -24,7 +24,18 @@ function MainMenuRoute() {
 function ModeMenuRoute() {
   const navigate = useNavigate();
   const { onSelectMode } = useCheckersMenuContext();
-  return <ModeMenu onSelect={onSelectMode} onBack={() => navigate('..')} />;
+  return (
+    <ModeMenu
+      onSelect={(mode) => {
+        if (mode === 'multi') {
+          navigate('/rooms?create=checkers');
+          return;
+        }
+        onSelectMode(mode);
+      }}
+      onBack={() => navigate('..')}
+    />
+  );
 }
 
 function HowToPlayRoute() {

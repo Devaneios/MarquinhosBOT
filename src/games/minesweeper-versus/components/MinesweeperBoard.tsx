@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import {
-  ConnectingScreen,
   EndScreen,
-  ErrorScreen,
   GameHeader,
 } from '../../../components/game-shell';
 import type { DiscordIdentity } from '../../../hooks/useDiscordIdentity';
@@ -14,7 +12,6 @@ import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import { useMinesweeperSession } from '../hooks/useMinesweeperSession';
 import type {
   BoardSnapshot,
   GameOverPayload,
@@ -109,34 +106,17 @@ export function MinesweeperBoard({ session }: { session: WsSession }) {
   );
 }
 
-export function MinesweeperVersusGame({
-  identity,
-  onAuthInvalid,
-}: {
+// This route used to connect directly in 'multi' mode via
+// useMinesweeperSession/useGameSession with no roomId ever supplied — which
+// crashes today independent of the Rooms feature (the server's roomKey()
+// requires a roomId for mode 'multi', unconditionally). Minesweeper Versus
+// has no mode selector to redirect the way Tasks 9-13's games did, so the
+// fix is redirecting this route itself straight into the Rooms lobby,
+// pre-selecting this game. Full room-board support is tracked separately —
+// this is only the live-bug fix.
+export function MinesweeperVersusGame(_props: {
   identity: DiscordIdentity;
   onAuthInvalid: () => void;
 }) {
-  const navigate = useNavigate();
-  const session = useMinesweeperSession(identity, onAuthInvalid);
-
-  if (session.status === 'connecting') {
-    return (
-      <ConnectingScreen
-        subtitleKey="connectingSubtitle"
-        subtitleNs="minesweeper-versus"
-      />
-    );
-  }
-
-  if (session.status === 'error') {
-    return (
-      <ErrorScreen
-        message={session.error}
-        onRetryAuth={onAuthInvalid}
-        onBack={() => navigate('/')}
-      />
-    );
-  }
-
-  return <MinesweeperBoard session={session.session} />;
+  return <Navigate to="/rooms?create=minesweeper-versus" replace />;
 }

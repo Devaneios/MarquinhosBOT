@@ -36,7 +36,7 @@ export function SnakeGame({
             key: 'multi',
             labelKey: 'twoPlayer',
             labelNs: 'snake-game',
-            onSelect: () => selectMode('multi'),
+            onSelect: () => navigate('/rooms?create=snake-game'),
           },
         ]}
       />

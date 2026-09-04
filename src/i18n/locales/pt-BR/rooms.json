@@ -1,0 +1,23 @@
+{
+  "title": "SALAS",
+  "hubTile": "Salas",
+  "createRoom": "Criar sala",
+  "joinRoom": "Entrar",
+  "noRoomsOpen": "Nenhuma sala aberta no momento",
+  "selectGame": "Escolher jogo",
+  "enableQueue": "Ativar fila de espera",
+  "hostBadge": "Anfitrião",
+  "playerRole": "Jogando",
+  "spectatorRole": "Assistindo",
+  "queuedRole": "Na fila",
+  "switchGame": "Trocar de jogo",
+  "giveUpSeat": "Ceder vaga",
+  "leaveRoom": "Sair da sala",
+  "actionRejected": "Ação não permitida agora",
+  "spectatingNoLiveView": "Assistindo — sem visualização ao vivo para este jogo ainda",
+  "roomConnectionLost": "Conexão com a sala perdida",
+  "playerCount": "{{count}} jogador",
+  "playerCount_other": "{{count}} jogadores",
+  "spectatorCount": "{{count}} assistindo",
+  "queueDepth": "{{count}} na fila"
+}

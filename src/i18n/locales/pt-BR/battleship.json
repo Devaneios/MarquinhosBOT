@@ -15,5 +15,9 @@
   "youWon": "Você venceu!",
   "youLost": "Você perdeu.",
   "yourTurn": "Sua vez — atire no tabuleiro à direita",
-  "opponentTurn": "Vez do adversário"
+  "opponentTurn": "Vez do adversário",
+  "player1Turn": "Vez do Jogador 1",
+  "player2Turn": "Vez do Jogador 2",
+  "player1Wins": "Jogador 1 venceu!",
+  "player2Wins": "Jogador 2 venceu!"
 }

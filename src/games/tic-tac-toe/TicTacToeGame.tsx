@@ -64,7 +64,11 @@ export function TicTacToeGame({
         moveCount: number;
       };
       setGameState(payload);
-    } else if (message.type === 'move_error') {
+    } else if (message.type === 'action_rejected') {
+      // ticTacToeAdapter.ts (server) sends ACTION_REJECTED ('action_rejected')
+      // for a rejected move, not 'move_error' — a pre-existing mismatch with
+      // this client code, found and fixed while adding room support (see the
+      // matching note in checkers).
       const payload = message.payload as { error: string };
       setError(payload.error);
       setTimeout(() => setError(''), 3000);
@@ -101,7 +105,7 @@ export function TicTacToeGame({
             key: 'multi',
             labelKey: 'vsPlayer',
             labelNs: 'common',
-            onSelect: () => selectMode('multi'),
+            onSelect: () => navigate('/rooms?create=tic-tac-toe'),
           },
         ]}
       />

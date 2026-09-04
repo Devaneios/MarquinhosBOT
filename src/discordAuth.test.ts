@@ -36,6 +36,11 @@ async function freshDiscordAuthModule(sdk: ReturnType<typeof fakeSdk>) {
   }));
   mock.module('./lib/apiBase', () => ({
     apiUrl: (path: string) => `http://fake.test${path}`,
+    // mock.module replaces this for the whole bun test process, not just
+    // this file — keep this mock's shape matching every real export, or a
+    // different test file that transitively loads the real module later in
+    // the same run gets this stub instead and breaks on a missing export.
+    colyseusUrl: () => 'ws://fake.test',
   }));
   // Importing this module has an immediate side effect: it starts the
   // handshake right away (see discordAuth.ts) — that's the behavior under

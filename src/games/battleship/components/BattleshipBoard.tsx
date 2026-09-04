@@ -221,7 +221,7 @@ export function BattleshipGame({
             key: 'multi',
             labelKey: 'vsPlayer',
             labelNs: 'common',
-            onSelect: () => setMode('multi'),
+            onSelect: () => navigate('/rooms?create=battleship'),
           },
         ]}
       />

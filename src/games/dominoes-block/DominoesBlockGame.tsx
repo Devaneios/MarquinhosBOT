@@ -35,7 +35,7 @@ export function DominoesBlockGame({
             key: 'multi',
             labelKey: 'vsPlayer',
             labelNs: 'common',
-            onSelect: () => setMode('multi'),
+            onSelect: () => navigate('/rooms?create=dominoes-block'),
           },
         ]}
       />

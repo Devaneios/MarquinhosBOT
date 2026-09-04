@@ -19,7 +19,13 @@ function ModeMenuRoute() {
     useOutletContext<BingoSpeedMenuOutletContext>();
   return (
     <ModeMenu
-      onSelect={(mode) => selectMode(mode)}
+      onSelect={(mode) => {
+        if (mode === 'multi') {
+          navigate('/rooms?create=bingo-speed');
+          return;
+        }
+        selectMode(mode);
+      }}
       onBack={() => navigate('..')}
     />
   );

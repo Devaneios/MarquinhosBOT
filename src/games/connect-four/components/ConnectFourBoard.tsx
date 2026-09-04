@@ -207,7 +207,13 @@ export function ConnectFourGame({
   if (session.status === 'selecting-mode') {
     return (
       <ConnectFourModeMenu
-        onSelect={selectMode}
+        onSelect={(mode) => {
+          if (mode === 'multi') {
+            navigate('/rooms?create=connect-four');
+            return;
+          }
+          selectMode(mode);
+        }}
         onExitToHub={() => navigate('/')}
       />
     );

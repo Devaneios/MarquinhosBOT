@@ -9,11 +9,13 @@ export function MainMenu({
   onPlay,
   onSettings,
   onHowTo,
+  onCompetitive,
   onExitToHub,
 }: {
   onPlay: () => void;
   onSettings: () => void;
   onHowTo: () => void;
+  onCompetitive: () => void;
   onExitToHub: () => void;
 }) {
   const { t } = useTranslation(['pong', 'common', 'games']);
@@ -45,6 +47,13 @@ export function MainMenu({
             </button>
             <button type="button" className={btnSecondary} onClick={onSettings}>
               {t('common:settings')}
+            </button>
+            <button
+              type="button"
+              className={btnSecondary}
+              onClick={onCompetitive}
+            >
+              {t('competitive')}
             </button>
             <button type="button" className={btnSecondary} onClick={onHowTo}>
               {t('common:howToPlay')}

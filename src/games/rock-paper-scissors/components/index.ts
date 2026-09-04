@@ -1,1 +1,2 @@
-export { RpsBoard } from './RpsBoard';
+export { PickButton, RpsBoard } from './RpsBoard';
+export { RpsRoomBoard } from './RpsRoomBoard';

@@ -1,5 +1,6 @@
 import { Route, useNavigate } from 'react-router-dom';
 import type { DiscordIdentity } from '../../hooks/useDiscordIdentity';
+import { CompetitiveScreen } from './components/CompetitiveScreen';
 import { HowToPlay } from './components/HowToPlay';
 import { MainMenu } from './components/MainMenu';
 import { ModeMenu } from './components/ModeMenu';
@@ -15,6 +16,7 @@ function MainMenuRoute() {
       onPlay={() => navigate('mode')}
       onSettings={() => navigate('settings')}
       onHowTo={() => navigate('how-to')}
+      onCompetitive={() => navigate('competitive')}
       onExitToHub={onExitToHub}
     />
   );
@@ -22,10 +24,13 @@ function MainMenuRoute() {
 
 function ModeMenuRoute() {
   const navigate = useNavigate();
-  const { difficulty, winScore, sound, onSelectMode } = usePongMenuContext();
+  const { difficulty, winScore, sound, ruleset, bestOf, ranked, onSelectMode } =
+    usePongMenuContext();
   return (
     <ModeMenu
-      onSelect={(mode) => onSelectMode(mode, difficulty, winScore, sound)}
+      onSelect={(mode) =>
+        onSelectMode(mode, difficulty, winScore, sound, ruleset, bestOf, ranked)
+      }
       onBack={() => navigate('..')}
     />
   );
@@ -33,8 +38,20 @@ function ModeMenuRoute() {
 
 function SettingsScreenRoute() {
   const navigate = useNavigate();
-  const { difficulty, setDifficulty, sound, setSound, winScore, setWinScore } =
-    usePongMenuContext();
+  const {
+    difficulty,
+    setDifficulty,
+    sound,
+    setSound,
+    winScore,
+    setWinScore,
+    ruleset,
+    setRuleset,
+    bestOf,
+    setBestOf,
+    ranked,
+    setRanked,
+  } = usePongMenuContext();
   return (
     <SettingsScreen
       difficulty={difficulty}
@@ -43,6 +60,12 @@ function SettingsScreenRoute() {
       onSoundChange={setSound}
       winScore={winScore}
       onWinScoreChange={setWinScore}
+      ruleset={ruleset}
+      onRulesetChange={setRuleset}
+      bestOf={bestOf}
+      onBestOfChange={setBestOf}
+      ranked={ranked}
+      onRankedChange={setRanked}
       onBack={() => navigate('..')}
     />
   );
@@ -51,6 +74,13 @@ function SettingsScreenRoute() {
 function HowToPlayRoute() {
   const navigate = useNavigate();
   return <HowToPlay onBack={() => navigate('..')} />;
+}
+
+function CompetitiveScreenRoute({ identity }: { identity: DiscordIdentity }) {
+  const navigate = useNavigate();
+  return (
+    <CompetitiveScreen identity={identity} onBack={() => navigate('..')} />
+  );
 }
 
 export function pongRoutes(
@@ -67,6 +97,10 @@ export function pongRoutes(
         <Route path="mode" element={<ModeMenuRoute />} />
         <Route path="settings" element={<SettingsScreenRoute />} />
         <Route path="how-to" element={<HowToPlayRoute />} />
+        <Route
+          path="competitive"
+          element={<CompetitiveScreenRoute identity={identity} />}
+        />
       </Route>
     </Route>
   );

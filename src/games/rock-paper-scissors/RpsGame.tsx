@@ -35,7 +35,7 @@ export function RpsGame({
             key: 'multi',
             labelKey: 'vsPlayer',
             labelNs: 'common',
-            onSelect: () => setMode('multi'),
+            onSelect: () => navigate('/rooms?create=rock-paper-scissors'),
           },
         ]}
       />

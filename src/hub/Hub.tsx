@@ -29,7 +29,7 @@ const GAME_ACCENTS: Record<GameId, string> = {
 
 export function Hub() {
   const navigate = useNavigate();
-  const { t } = useTranslation(['common', 'games']);
+  const { t } = useTranslation(['common', 'games', 'rooms']);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,176,0,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_20%),var(--color-marquinhos-bg)] text-marquinhos-text">
@@ -52,6 +52,19 @@ export function Hub() {
         <section>
           <div className="notch-8 border border-marquinhos-border bg-marquinhos-panel p-3 shadow-[0_20px_40px_rgba(0,0,0,0.28)] sm:p-7">
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(250px,1fr))] sm:gap-3">
+              <button
+                type="button"
+                style={{ borderColor: 'var(--color-marquinhos-accent)' }}
+                className="notch-8 relative flex aspect-4/2 flex-col gap-2 border bg-marquinhos-bg px-3 py-3 text-left shadow-[0_12px_24px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent sm:px-4 sm:py-4"
+                onClick={() => navigate('/rooms')}
+              >
+                <div
+                  className="font-pixel text-[10px] leading-snug tracking-[0.08em] break-words sm:text-xl sm:tracking-[0.16em] sm:break-normal"
+                  style={{ color: 'var(--color-marquinhos-accent)' }}
+                >
+                  {t('rooms:hubTile')}
+                </div>
+              </button>
               {GAME_REGISTRY.map((game) => {
                 const locked = game.status !== 'PLAY';
                 const accent = GAME_ACCENTS[game.id];

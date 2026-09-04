@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it } from 'bun:test';
 
+// Preserved and restored per test, not deleted — bun's test environment now
+// has a real, process-wide happy-dom `window` (see bunfig.toml's preload),
+// which every other test file's component rendering depends on staying
+// intact for the rest of the run. Deleting `globalThis.window` here would
+// silently break any test file that happens to run afterward.
+const originalWindow = globalThis.window;
+
 function setLocation(hostname: string, protocol = 'https:') {
   (globalThis as unknown as { window: unknown }).window = {
     location: { hostname, protocol, host: hostname },
@@ -8,7 +15,7 @@ function setLocation(hostname: string, protocol = 'https:') {
 
 describe('colyseusUrl', () => {
   afterEach(() => {
-    delete (globalThis as { window?: unknown }).window;
+    (globalThis as { window?: unknown }).window = originalWindow;
   });
 
   it('returns the Discord proxy endpoint when inside the proxy', async () => {

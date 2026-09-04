@@ -1,4 +1,13 @@
-import { describe, expect, it, mock } from 'bun:test';
+import { afterEach, describe, expect, it, mock } from 'bun:test';
+
+// Preserved and restored, not left overwritten — bun's test environment has
+// a real, process-wide happy-dom `window` (see bunfig.toml's preload) that
+// other test files' component rendering depends on staying intact.
+const originalWindow = globalThis.window;
+
+afterEach(() => {
+  (globalThis as { window?: unknown }).window = originalWindow;
+});
 
 function fakeSdkClass(onConstruct: () => void, close: ReturnType<typeof mock>) {
   return class {

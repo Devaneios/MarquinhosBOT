@@ -6,7 +6,13 @@ import {
   fetchWsSessionToken,
   type WsSession,
 } from '../../shared/activitySession';
-import type { BotDifficulty, GameMode, WinScore } from '../types';
+import type {
+  BestOf,
+  BotDifficulty,
+  GameMode,
+  PongRulesetId,
+  WinScore,
+} from '../types';
 
 export type PongSessionState =
   | { status: 'selecting-mode' }
@@ -24,6 +30,9 @@ export function usePongSession(
     difficulty: BotDifficulty,
     winScore: WinScore,
     sound: boolean,
+    ruleset: PongRulesetId,
+    bestOf: BestOf,
+    ranked: boolean,
   ) => void;
   backToMenu: () => void;
 } {
@@ -49,6 +58,9 @@ export function usePongSession(
       difficulty: BotDifficulty,
       winScore: WinScore,
       sound: boolean,
+      ruleset: PongRulesetId,
+      bestOf: BestOf,
+      ranked: boolean,
     ) => {
       devlog('[pong] selecting mode', mode, difficulty, winScore);
       setSession({ status: 'connecting' });
@@ -58,6 +70,8 @@ export function usePongSession(
         identity,
         extra: {
           winningScore: winScore,
+          ruleset,
+          options: { bestOf, ranked },
           ...(mode === 'single' ? { difficulty } : {}),
         },
       })

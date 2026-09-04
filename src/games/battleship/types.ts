@@ -68,3 +68,15 @@ export interface BattleshipStateView {
   opponent: BoardView;
   placementReady: Record<BattleshipSide, boolean>;
 }
+
+// What a non-participant (spectator/queued) receives instead — see
+// marquinhos-api's spectatorViewFor(): both fleets masked symmetrically,
+// since a non-participant has no "own" side.
+export interface BattleshipSpectatorStateView {
+  phase: Phase;
+  turn: BattleshipSide | null;
+  winner: BattleshipSide | null;
+  p1: BoardView;
+  p2: BoardView;
+  placementReady: Record<BattleshipSide, boolean>;
+}

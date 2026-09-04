@@ -12,3 +12,7 @@ export { HowToPlayScreen } from './HowToPlayScreen';
 export type { HowToPlayScreenProps, HowToPlaySection } from './HowToPlayScreen';
 export { ModeSelectScreen } from './ModeSelectScreen';
 export type { ModeOption, ModeSelectScreenProps } from './ModeSelectScreen';
+export { RoomHeader } from './RoomHeader';
+export type { RoomHeaderProps } from './RoomHeader';
+export { RoomLobbyScreen } from './RoomLobbyScreen';
+export type { RoomLobbyScreenProps, RoomReadyInfo } from './RoomLobbyScreen';

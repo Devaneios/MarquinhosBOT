@@ -3,17 +3,57 @@ import { Application, BlurFilter, Graphics } from 'pixi.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { colyseusUrl } from '../../../lib/apiBase';
+import { cn } from '../../../lib/cn';
 import { devinfo, devlog, devwarn } from '../../../lib/devlog';
 import type { WsSession } from '../../shared/activitySession';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
+import { LocalPaddlePredictor, PongSnapshotBuffer } from '../netcode';
 import { decodeStateSnapshot, type DecodedSnapshot } from '../protocol';
-import type { GameMode } from '../types';
+import type { GameMode, PongSide } from '../types';
 import { PongSfx } from './sfx';
 
 type Side = 'left' | 'right';
+
+interface PongLobbyState {
+  hostUserId: string | null;
+  started: boolean;
+  config: {
+    ruleset: string;
+    targetScore: number;
+    bestOf: number;
+    ranked: boolean;
+  };
+  players: {
+    userId: string;
+    displayName: string;
+    slot: number;
+    side: PongSide;
+    team: number;
+    connected: boolean;
+    ready: boolean;
+  }[];
+  spectators: string[];
+}
+
+const LOBBY_RULESETS = [
+  'classic-1v1',
+  'doubles-2v2',
+  'quad-elimination',
+  'superpong',
+  'rebound',
+  'breakout',
+  'brick-battle',
+  'multiball',
+  'powerup-battle',
+  'radial-solo',
+  'radial-duel',
+  'pong-tennis',
+  'air-hockey',
+  'coop-keep-alive',
+] as const;
 
 const COURT_BG = '#17181a';
 const COURT_LINE = '#34363a';
@@ -27,6 +67,7 @@ interface PongConfig {
   paddleHeight: number;
   paddleSpeed: number;
   ballRadius: number;
+  cornerGap?: number;
 }
 
 const PADDLE_WIDTH = 12;
@@ -34,9 +75,7 @@ const PADDLE_HEIGHT = 80;
 const BALL_RADIUS = 8;
 const DEFAULT_WIDTH = 800;
 const DEFAULT_HEIGHT = 480;
-const DEFAULT_TICK_MS = 16;
 const DEFAULT_PADDLE_SPEED = 400;
-const RECONCILE_FACTOR = 0.2;
 const PARTICLE_MIN_SPEED = 60;
 const PARTICLE_MAX_SPEED = 220;
 const PARTICLE_RADIUS = 3;
@@ -245,12 +284,13 @@ export function PongCanvas({
   const latestSnapshotRef = useRef<Snapshot | null>(null);
   const prevSnapshotRef = useRef<Snapshot | null>(null);
   const sideRef = useRef<Side | null>(null);
+  const assignmentRef = useRef<{
+    slot: number;
+    side: PongSide;
+    team: number;
+  } | null>(null);
   const configRef = useRef<PongConfig>(DEFAULT_CONFIG);
   const matchStartRef = useRef<number | null>(null);
-  const predictedRef = useRef<{ left: number | null; right: number | null }>({
-    left: null,
-    right: null,
-  });
   const localDirectionRef = useRef<{ left: -1 | 0 | 1; right: -1 | 0 | 1 }>({
     left: 0,
     right: 0,
@@ -265,11 +305,19 @@ export function PongCanvas({
   const paddleRightFlashStartRef = useRef(-Infinity);
   const shakeStartRef = useRef(-Infinity);
   const shakeMagnitudeRef = useRef(0);
-  const prevWinnerRef = useRef<Side | null>(null);
-  const [winner, setWinner] = useState<'left' | 'right' | null>(null);
+  const prevWinnerRef = useRef<number | null>(null);
   const [score, setScore] = useState<{ left: number; right: number } | null>(
     null,
   );
+  const [matchStats, setMatchStats] = useState<{
+    ruleset: string;
+    score: number[];
+    gamesWon: number[];
+    lives: number[];
+    winnerSlot: number | null;
+    phase: string;
+    phaseRemainingMs: number;
+  } | null>(null);
   const [restartStatus, setRestartStatus] = useState<{
     votes: number;
     required: number;
@@ -280,6 +328,9 @@ export function PongCanvas({
     timeoutMs: number;
   } | null>(null);
   const [spectating, setSpectating] = useState(false);
+  const [lobby, setLobby] = useState<PongLobbyState | null>(null);
+  const [selfUserId, setSelfUserId] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
   const spectatingRef = useRef(false);
   const messageHandlerRef = useRef<(message: ActivityMessage) => void>(
     () => {},
@@ -309,9 +360,9 @@ export function PongCanvas({
     latestSnapshotRef.current = null;
     prevSnapshotRef.current = null;
     sideRef.current = null;
+    assignmentRef.current = null;
     configRef.current = DEFAULT_CONFIG;
     matchStartRef.current = null;
-    predictedRef.current = { left: null, right: null };
     localDirectionRef.current = { left: 0, right: 0 };
     touchingLeftRef.current = false;
     touchingRightRef.current = false;
@@ -325,6 +376,24 @@ export function PongCanvas({
     prevWinnerRef.current = null;
     spectatingRef.current = false;
     setSpectating(false);
+    setLobby(null);
+    setSelfUserId(null);
+    setReady(false);
+    const snapshotBuffer = new PongSnapshotBuffer(100, 100);
+    const predictors: Partial<Record<Side, LocalPaddlePredictor>> = {};
+    const authoritative: Partial<
+      Record<Side, { position: number; ack: number; at: number }>
+    > = {};
+
+    function predictorFor(side: Side) {
+      const config = configRef.current;
+      predictors[side] ??= new LocalPaddlePredictor({
+        min: config.cornerGap ?? 0,
+        max: config.height - config.paddleHeight - (config.cornerGap ?? 0),
+        speed: config.paddleSpeed,
+      });
+      return predictors[side]!;
+    }
 
     let spawnHitParticles:
       ((side: Side, x: number, y: number, ballSpeed: number) => void) | null =
@@ -333,25 +402,55 @@ export function PongCanvas({
     function handleJsonMessage(message: ActivityMessage) {
       if (message.type === 'init') {
         const payload = message.payload as {
-          side: Side | null;
+          side: PongSide | null;
+          selfUserId: string;
+          assignment: {
+            slot: number;
+            side: PongSide;
+            team: number;
+          } | null;
           config: PongConfig;
+          lobby: PongLobbyState;
         };
         // A null side means the match already has both players: we watch it
         // rather than drive a paddle in it.
         devinfo('[pong-canvas] assigned side', payload.side);
-        sideRef.current = payload.side;
+        assignmentRef.current = payload.assignment;
+        setSelfUserId(payload.selfUserId);
+        sideRef.current =
+          payload.side === 'left' || payload.side === 'right'
+            ? payload.side
+            : null;
         configRef.current = payload.config;
-        spectatingRef.current = payload.side === null;
-        setSpectating(payload.side === null);
+        spectatingRef.current = payload.assignment === null;
+        setSpectating(payload.assignment === null);
+        setLobby(payload.lobby);
+        const own = payload.lobby.players.find(
+          (player) => player.slot === payload.assignment?.slot,
+        );
+        setReady(own?.ready ?? false);
+      } else if (message.type === 'lobby_state') {
+        const payload = message.payload as PongLobbyState;
+        setLobby(payload);
+        const own = payload.players.find(
+          (player) => player.slot === assignmentRef.current?.slot,
+        );
+        setReady(own?.ready ?? false);
       } else if (message.type === 'restart_status') {
         devlog('[pong-canvas] restart status', message.payload);
         setRestartStatus(
           message.payload as { votes: number; required: number },
         );
-      } else if (message.type === 'opponent_disconnected') {
+      } else if (
+        message.type === 'opponent_disconnected' ||
+        message.type === 'player_disconnected'
+      ) {
         devwarn('[pong-canvas] opponent disconnected', message.payload);
         setPausedOpponent(message.payload as { side: Side; timeoutMs: number });
-      } else if (message.type === 'opponent_reconnected') {
+      } else if (
+        message.type === 'opponent_reconnected' ||
+        message.type === 'player_reconnected'
+      ) {
         devinfo('[pong-canvas] opponent reconnected');
         setPausedOpponent(null);
       }
@@ -364,26 +463,35 @@ export function PongCanvas({
       ) as ArrayBuffer;
       const state = decodeStateSnapshot(data);
       const receivedAt = performance.now();
+      snapshotBuffer.push(state, receivedAt);
       if (matchStartRef.current === null) matchStartRef.current = receivedAt;
-      const prevScore = prevSnapshotRef.current?.state.score;
+      const prevScore = prevSnapshotRef.current?.state.classicScore;
       prevSnapshotRef.current = latestSnapshotRef.current;
       latestSnapshotRef.current = { state, receivedAt };
       setPausedOpponent(null);
-      setWinner(state.winner);
-      setScore(state.score);
+      setScore(state.classicScore);
+      setMatchStats({
+        ruleset: state.ruleset,
+        score: state.score,
+        gamesWon: state.gamesWon,
+        lives: state.lives,
+        winnerSlot: state.winnerSlot,
+        phase: state.phase,
+        phaseRemainingMs: state.phaseRemainingMs,
+      });
       if (
         prevScore &&
-        (state.score.left !== prevScore.left ||
-          state.score.right !== prevScore.right)
+        (state.classicScore.left !== prevScore.left ||
+          state.classicScore.right !== prevScore.right)
       ) {
         sfx.score();
       }
-      if (state.winner !== prevWinnerRef.current) {
-        devlog('[pong-canvas] winner changed', state.winner);
-        if (state.winner !== null) sfx.win();
-        prevWinnerRef.current = state.winner;
+      if (state.winnerSlot !== prevWinnerRef.current) {
+        devlog('[pong-canvas] winner changed', state.winnerSlot);
+        if (state.winnerSlot !== null) sfx.win();
+        prevWinnerRef.current = state.winnerSlot;
       }
-      if (state.winner === null) {
+      if (state.winnerSlot === null) {
         setRestartStatus(null);
         setRequested(false);
       }
@@ -404,7 +512,7 @@ export function PongCanvas({
         state.ball.x,
         state.ball.y,
         0,
-        state.paddles.left,
+        state.classicPaddles.left,
         config.paddleWidth,
         config.paddleHeight,
       );
@@ -412,7 +520,7 @@ export function PongCanvas({
         state.ball.x,
         state.ball.y,
         config.width - config.paddleWidth,
-        state.paddles.right,
+        state.classicPaddles.right,
         config.paddleWidth,
         config.paddleHeight,
       );
@@ -465,21 +573,22 @@ export function PongCanvas({
       const controlledSides: Side[] =
         mode === 'local' ? ['left', 'right'] : [side];
 
-      // Reconcile the local prediction against the server's authoritative
-      // position: nudge it a bit closer on every snapshot to correct for
-      // slow drift, or snap outright on a large desync (e.g. reconnect).
       for (const s of controlledSides) {
         const authoritativeY =
-          s === 'left' ? state.paddles.left : state.paddles.right;
-        const predicted = predictedRef.current[s];
-        if (predicted === null) {
-          predictedRef.current[s] = authoritativeY;
-        } else if (Math.abs(authoritativeY - predicted) > config.paddleHeight) {
-          predictedRef.current[s] = authoritativeY;
-        } else {
-          predictedRef.current[s] =
-            predicted + (authoritativeY - predicted) * RECONCILE_FACTOR;
-        }
+          s === 'left' ? state.classicPaddles.left : state.classicPaddles.right;
+        const slot = s === 'left' ? 0 : 1;
+        authoritative[s] = {
+          position: authoritativeY,
+          ack: state.acks[slot] ?? 0,
+          at:
+            snapshotBuffer.localTimeForServer(state.serverTimeMs) ?? receivedAt,
+        };
+        predictorFor(s).reconcile(
+          authoritativeY,
+          state.acks[slot] ?? 0,
+          authoritative[s]!.at,
+          receivedAt,
+        );
       }
     }
 
@@ -510,8 +619,8 @@ export function PongCanvas({
     // explicit side. In every other mode arrows control whichever side the
     // server assigned this connection, and side is omitted from the
     // message — the server infers it from the sender.
-    let arrowSeq = 0;
-    let wsSeq = 0;
+    const seqBySide: Record<Side, number> = { left: 0, right: 0 };
+    const seqBySlot: Record<number, number> = {};
     const arrowKeysDown = new Set<string>();
     const wsKeysDown = new Set<string>();
 
@@ -523,6 +632,11 @@ export function PongCanvas({
       if (spectatingRef.current) return;
       if (direction === localDirectionRef.current[side]) return;
       localDirectionRef.current[side] = direction;
+      predictorFor(side).push({
+        seq: nextSeq,
+        sentAt: performance.now(),
+        axis: direction,
+      });
       send(
         'input',
         mode === 'local'
@@ -532,6 +646,22 @@ export function PongCanvas({
     }
 
     function sendArrowInput() {
+      const assigned = assignmentRef.current;
+      if (
+        mode !== 'local' &&
+        assigned &&
+        (assigned.side === 'top' || assigned.side === 'bottom')
+      ) {
+        const direction: -1 | 0 | 1 = arrowKeysDown.has('ArrowLeft')
+          ? -1
+          : arrowKeysDown.has('ArrowRight')
+            ? 1
+            : 0;
+        const seq = (seqBySlot[assigned.slot] ?? 0) + 1;
+        seqBySlot[assigned.slot] = seq;
+        send('input', { direction, seq });
+        return;
+      }
       const direction: -1 | 0 | 1 = arrowKeysDown.has('ArrowUp')
         ? -1
         : arrowKeysDown.has('ArrowDown')
@@ -539,8 +669,8 @@ export function PongCanvas({
           : 0;
       const side: Side =
         mode === 'local' ? 'right' : (sideRef.current ?? 'left');
-      arrowSeq += 1;
-      sendTrackedInput(side, direction, arrowSeq);
+      seqBySide[side] += 1;
+      sendTrackedInput(side, direction, seqBySide[side]);
     }
 
     function sendWsInput() {
@@ -549,14 +679,19 @@ export function PongCanvas({
         : wsKeysDown.has('s')
           ? 1
           : 0;
-      wsSeq += 1;
-      sendTrackedInput('left', direction, wsSeq);
+      seqBySide.left += 1;
+      sendTrackedInput('left', direction, seqBySide.left);
     }
 
     function onKeyDown(event: KeyboardEvent) {
       const key = event.key;
       const lower = key.toLowerCase();
-      if (key === 'ArrowUp' || key === 'ArrowDown') {
+      if (
+        key === 'ArrowUp' ||
+        key === 'ArrowDown' ||
+        key === 'ArrowLeft' ||
+        key === 'ArrowRight'
+      ) {
         event.preventDefault();
         arrowKeysDown.add(key);
         sendArrowInput();
@@ -572,7 +707,12 @@ export function PongCanvas({
     function onKeyUp(event: KeyboardEvent) {
       const key = event.key;
       const lower = key.toLowerCase();
-      if (key === 'ArrowUp' || key === 'ArrowDown') {
+      if (
+        key === 'ArrowUp' ||
+        key === 'ArrowDown' ||
+        key === 'ArrowLeft' ||
+        key === 'ArrowRight'
+      ) {
         arrowKeysDown.delete(key);
         sendArrowInput();
       } else if (mode === 'local' && (lower === 'w' || lower === 's')) {
@@ -580,8 +720,107 @@ export function PongCanvas({
         sendWsInput();
       }
     }
+    let activePointerId: number | null = null;
+    let lastPointerSentAt = -Infinity;
+
+    function sendPointerTarget(event: PointerEvent) {
+      if (spectatingRef.current) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const now = performance.now();
+      if (now - lastPointerSentAt < 8) return;
+      lastPointerSentAt = now;
+      const rect = canvas.getBoundingClientRect();
+      const assignedSide = assignmentRef.current?.side;
+      const target =
+        assignedSide === 'top' || assignedSide === 'bottom'
+          ? clamp((event.clientX - rect.left) / rect.width, 0, 1)
+          : clamp((event.clientY - rect.top) / rect.height, 0, 1);
+      if (
+        mode !== 'local' &&
+        assignedSide &&
+        assignedSide !== 'left' &&
+        assignedSide !== 'right'
+      ) {
+        const slot = assignmentRef.current?.slot ?? 0;
+        const seq = (seqBySlot[slot] ?? 0) + 1;
+        seqBySlot[slot] = seq;
+        send('input', { target, seq });
+        return;
+      }
+      const side: Side =
+        mode === 'local'
+          ? event.clientX < rect.left + rect.width / 2
+            ? 'left'
+            : 'right'
+          : (sideRef.current ?? 'left');
+      seqBySide[side] += 1;
+      predictorFor(side).push({
+        seq: seqBySide[side],
+        sentAt: now,
+        target,
+      });
+      localDirectionRef.current[side] = 0;
+      send(
+        'input',
+        mode === 'local'
+          ? { target, seq: seqBySide[side], side }
+          : { target, seq: seqBySide[side] },
+      );
+    }
+
+    function onPointerDown(event: PointerEvent) {
+      if (spectatingRef.current) return;
+      activePointerId = event.pointerId;
+      canvasRef.current?.setPointerCapture(event.pointerId);
+      event.preventDefault();
+      sendPointerTarget(event);
+    }
+
+    function onPointerMove(event: PointerEvent) {
+      if (event.pointerId !== activePointerId) return;
+      event.preventDefault();
+      sendPointerTarget(event);
+    }
+
+    function onPointerEnd(event: PointerEvent) {
+      if (event.pointerId !== activePointerId) return;
+      activePointerId = null;
+      event.preventDefault();
+      const canvas = canvasRef.current;
+      const assigned = assignmentRef.current;
+      if (!canvas || !assigned || spectatingRef.current) return;
+      if (mode === 'local') {
+        const rect = canvas.getBoundingClientRect();
+        const side: Side =
+          event.clientX < rect.left + rect.width / 2 ? 'left' : 'right';
+        seqBySide[side] += 1;
+        send('input', {
+          direction: 0,
+          seq: seqBySide[side],
+          side,
+          action: 'release',
+        });
+      } else {
+        const classicSide =
+          assigned.side === 'left' || assigned.side === 'right'
+            ? assigned.side
+            : null;
+        const seq = classicSide
+          ? (seqBySide[classicSide] += 1)
+          : (seqBySlot[assigned.slot] ?? 0) + 1;
+        if (!classicSide) seqBySlot[assigned.slot] = seq;
+        send('input', { direction: 0, seq, action: 'release' });
+      }
+    }
+
+    const pointerCanvas = canvasRef.current;
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
+    pointerCanvas?.addEventListener('pointerdown', onPointerDown);
+    pointerCanvas?.addEventListener('pointermove', onPointerMove);
+    pointerCanvas?.addEventListener('pointerup', onPointerEnd);
+    pointerCanvas?.addEventListener('pointercancel', onPointerEnd);
 
     let cancelled = false;
     let initialized = false;
@@ -614,6 +853,7 @@ export function PongCanvas({
     let ballGlow: Graphics;
     let ballTrail: Graphics;
     let particlesGfx: Graphics;
+    let variantEntities: Graphics;
 
     interface Particle {
       x: number;
@@ -727,6 +967,7 @@ export function PongCanvas({
 
       ball = new Graphics();
       particlesGfx = new Graphics();
+      variantEntities = new Graphics();
 
       drawStaticGeometry(config);
 
@@ -743,6 +984,7 @@ export function PongCanvas({
         paddleRightFlash,
         ballGlow,
         ball,
+        variantEntities,
         particlesGfx,
       );
       lastConfig = config;
@@ -776,6 +1018,12 @@ export function PongCanvas({
     function applyConfigChange(config: PongConfig) {
       lastConfig = config;
       app.renderer.resize(config.width, config.height);
+      const canvas = canvasRef.current;
+      if (canvas) {
+        canvas.style.width = `min(100%, ${config.width}px)`;
+        canvas.style.height = 'auto';
+        canvas.style.aspectRatio = `${config.width} / ${config.height}`;
+      }
       drawDashedVerticalLine(centerLine, config.width / 2, config.height);
       drawStaticGeometry(config);
     }
@@ -810,6 +1058,12 @@ export function PongCanvas({
       }
       initialized = true;
       buildScene(configRef.current);
+      const canvas = canvasRef.current;
+      if (canvas) {
+        canvas.style.width = `min(100%, ${configRef.current.width}px)`;
+        canvas.style.height = 'auto';
+        canvas.style.aspectRatio = `${configRef.current.width} / ${configRef.current.height}`;
+      }
 
       onContextLost = (event: Event) => {
         event.preventDefault();
@@ -866,25 +1120,96 @@ export function PongCanvas({
           app.stage.position.set(0, 0);
         }
 
-        const latest = latestSnapshotRef.current;
-        if (!latest) return;
+        const sample = snapshotBuffer.sample(now);
+        if (!sample) return;
 
-        const state = latest.state;
-        const prev = prevSnapshotRef.current;
-        const interval = prev
-          ? latest.receivedAt - prev.receivedAt
-          : DEFAULT_TICK_MS;
-        const safeInterval = interval > 0 ? interval : DEFAULT_TICK_MS;
-        const t = Math.min(
-          Math.max((now - latest.receivedAt) / safeInterval, 0),
-          1,
-        );
-        const from = prev ? prev.state : state;
+        const state = sample.state;
+        const ballX = state.ball.x;
+        const ballY = state.ball.y;
+        let leftY = state.classicPaddles.left;
+        let rightY = state.classicPaddles.right;
 
-        const ballX = lerp(from.ball.x, state.ball.x, t);
-        const ballY = lerp(from.ball.y, state.ball.y, t);
-        let leftY = lerp(from.paddles.left, state.paddles.left, t);
-        let rightY = lerp(from.paddles.right, state.paddles.right, t);
+        const classic = state.ruleset === 'classic-1v1';
+        paddleLeft.visible = classic;
+        paddleRight.visible = classic;
+        paddleLeftGlow.visible = classic;
+        paddleRightGlow.visible = classic;
+        paddleLeftTrail.visible = classic;
+        paddleRightTrail.visible = classic;
+        paddleLeftFlash.visible = classic;
+        paddleRightFlash.visible = classic;
+        variantEntities.clear();
+        if (!classic) {
+          if (state.arena === 'circular') {
+            variantEntities
+              .circle(
+                config.width / 2,
+                config.height / 2,
+                Math.min(config.width, config.height) * 0.46,
+              )
+              .stroke({ width: 3, color: COURT_LINE });
+          }
+          for (const brick of state.bricks) {
+            if (!brick.active) continue;
+            variantEntities
+              .rect(brick.x, brick.y, brick.width, brick.height)
+              .fill({ color: 0x5f6670, alpha: 0.85 })
+              .stroke({ width: 1, color: 0xaeb4bd });
+          }
+          for (const paddle of state.paddles) {
+            if (!paddle.active) continue;
+            const color = paddle.team % 2 === 0 ? LEFT_COLOR : RIGHT_COLOR;
+            if (paddle.orientation === 'radial') {
+              const radius = Math.min(config.width, config.height) * 0.46;
+              const start = paddle.angle - paddle.arc / 2;
+              variantEntities
+                .moveTo(
+                  config.width / 2 + Math.cos(start) * radius,
+                  config.height / 2 + Math.sin(start) * radius,
+                )
+                .arc(
+                  config.width / 2,
+                  config.height / 2,
+                  radius,
+                  start,
+                  paddle.angle + paddle.arc / 2,
+                )
+                .stroke({ width: paddle.width, color });
+            } else {
+              variantEntities
+                .rect(
+                  paddle.x,
+                  paddle.y,
+                  paddle.width * paddle.sizeMultiplier,
+                  paddle.height * paddle.sizeMultiplier,
+                )
+                .fill(color);
+            }
+            if (paddle.shield > 0) {
+              variantEntities
+                .rect(
+                  paddle.x - 4,
+                  paddle.y - 4,
+                  paddle.width * paddle.sizeMultiplier + 8,
+                  paddle.height * paddle.sizeMultiplier + 8,
+                )
+                .stroke({ width: 2, color: 0x58d8ff });
+            }
+          }
+          for (const extraBall of state.balls.slice(1)) {
+            if (!extraBall.active) continue;
+            variantEntities
+              .circle(extraBall.x, extraBall.y, extraBall.radius)
+              .fill(BALL_COLOR_NUM);
+          }
+          for (const powerUp of state.powerUps) {
+            if (!powerUp.active) continue;
+            variantEntities
+              .circle(powerUp.x, powerUp.y, powerUp.radius)
+              .fill(0xffd84a)
+              .stroke({ width: 2, color: 0xffffff });
+          }
+        }
 
         const side = sideRef.current;
         if (side) {
@@ -892,17 +1217,16 @@ export function PongCanvas({
           const controlledSides: Side[] =
             mode === 'local' ? ['left', 'right'] : [side];
           for (const s of controlledSides) {
-            if (predictedRef.current[s] === null) {
-              predictedRef.current[s] = s === 'left' ? leftY : rightY;
-            }
-            predictedRef.current[s] = clamp(
-              predictedRef.current[s]! +
-                localDirectionRef.current[s] * config.paddleSpeed * dtSeconds,
-              0,
-              maxY,
+            const latestAuthority = authoritative[s];
+            if (!latestAuthority) continue;
+            const predicted = predictorFor(s).reconcile(
+              latestAuthority.position,
+              latestAuthority.ack,
+              latestAuthority.at,
+              now,
             );
-            if (s === 'left') leftY = predictedRef.current[s]!;
-            else rightY = predictedRef.current[s]!;
+            if (s === 'left') leftY = clamp(predicted, 0, maxY);
+            else rightY = clamp(predicted, 0, maxY);
           }
         }
 
@@ -1082,6 +1406,10 @@ export function PongCanvas({
       cancelled = true;
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      pointerCanvas?.removeEventListener('pointerdown', onPointerDown);
+      pointerCanvas?.removeEventListener('pointermove', onPointerMove);
+      pointerCanvas?.removeEventListener('pointerup', onPointerEnd);
+      pointerCanvas?.removeEventListener('pointercancel', onPointerEnd);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       if (contextCanvas && onContextLost) {
         contextCanvas.removeEventListener('webglcontextlost', onContextLost);
@@ -1106,13 +1434,30 @@ export function PongCanvas({
   }, [session]);
   // eslint-enable react-hooks/exhaustive-deps
 
-  const p1Name = t('pong:player1');
-  const p2Name = mode === 'single' ? t('pong:cpu') : t('pong:player2');
+  const soloChallenge =
+    matchStats?.ruleset === 'breakout' ||
+    matchStats?.ruleset === 'radial-solo' ||
+    matchStats?.ruleset === 'coop-keep-alive';
+  const p1Name = soloChallenge ? t('pong:scoreLabel') : t('pong:player1');
+  const p2Name = soloChallenge
+    ? ''
+    : mode === 'single'
+      ? t('pong:cpu')
+      : t('pong:player2');
+  const winnerSlot = matchStats?.winnerSlot ?? null;
   const winnerName =
-    winner === 'left' ? p1Name : winner === 'right' ? p2Name : '';
+    lobby?.players.find((player) => player.slot === winnerSlot)?.displayName ??
+    (winnerSlot === 0
+      ? p1Name
+      : winnerSlot === 1
+        ? p2Name
+        : t('pong:roundOver'));
+  const gameOver = winnerSlot !== null || matchStats?.phase === 'series-over';
+  const readyPlayers =
+    lobby?.players.filter((player) => player.ready).length ?? 0;
 
   return (
-    <div className="box-border flex flex-1 flex-col items-stretch justify-start gap-0 px-10 py-6">
+    <div className="box-border flex flex-1 flex-col items-stretch justify-start gap-0 px-4 py-4 sm:px-10 sm:py-6">
       <div className="flex items-start justify-between">
         <div className="flex flex-col items-start gap-1.5">
           <div className="font-pixel text-xs text-marquinhos-accent">
@@ -1144,7 +1489,12 @@ export function PongCanvas({
             {t('pong:pauseButton')}
           </button>
         </div>
-        <div className="flex flex-col items-end gap-1.5">
+        <div
+          className={cn(
+            'flex flex-col items-end gap-1.5',
+            soloChallenge && 'invisible',
+          )}
+        >
           <div className="font-pixel text-xs text-marquinhos-green">
             {p2Name}
           </div>
@@ -1157,11 +1507,172 @@ export function PongCanvas({
         </div>
       </div>
 
-      <div className="relative mt-5 flex flex-1 items-center justify-center overflow-hidden border border-marquinhos-border bg-marquinhos-bg">
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {score ? `${p1Name} ${score.left}, ${p2Name} ${score.right}` : ''}
+      </div>
+
+      {matchStats && matchStats.score.length > 2 && (
+        <div
+          className="mt-3 grid grid-cols-4 gap-2"
+          aria-label={t('pong:lives')}
+        >
+          {matchStats.score.slice(0, 4).map((value, slot) => (
+            <div
+              key={slot}
+              className="border border-marquinhos-border bg-marquinhos-panel px-2 py-1.5 text-center font-pixel text-[10px] text-marquinhos-text"
+            >
+              P{slot + 1} {value}
+              {matchStats.lives[slot] !== undefined &&
+              matchStats.lives[slot] > 0
+                ? ` · ${matchStats.lives[slot]} ${t('pong:lives')}`
+                : ''}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="relative mt-5 flex aspect-[5/3] w-full flex-none items-center justify-center overflow-hidden border border-marquinhos-border bg-marquinhos-bg sm:aspect-auto sm:flex-1">
         <canvas
           ref={canvasRef}
-          className="block max-h-full max-w-full border border-marquinhos-border"
+          className="block !h-auto max-h-full max-w-full touch-none border border-marquinhos-border"
         />
+        {mode === 'multi' && lobby && !lobby.started && (
+          <div className="absolute inset-0 flex items-center justify-center bg-marquinhos-bg/95 p-4">
+            <div className="notch-6 w-full max-w-md border border-marquinhos-border bg-marquinhos-panel p-5">
+              <div className="font-pixel text-center text-lg text-marquinhos-text">
+                {t('pong:lobbyTitle')}
+              </div>
+              <div className="mt-2 text-center font-pixel text-[10px] text-marquinhos-text-dim">
+                {t('pong:playersReady', {
+                  ready: readyPlayers,
+                  total: lobby.players.length,
+                })}
+              </div>
+              {lobby.hostUserId === selfUserId && (
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <select
+                    value={lobby.config.ruleset}
+                    onChange={(event) =>
+                      roomSend({
+                        type: 'lobby_config',
+                        payload: { ruleset: event.target.value },
+                      })
+                    }
+                    className="col-span-2 min-w-0 border border-marquinhos-border bg-marquinhos-bg px-2 py-2 font-mono text-xs text-marquinhos-text"
+                  >
+                    {LOBBY_RULESETS.map((ruleset) => (
+                      <option key={ruleset} value={ruleset}>
+                        {t(`pong:rulesets.${ruleset}`)}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={lobby.config.targetScore}
+                    onChange={(event) =>
+                      roomSend({
+                        type: 'lobby_config',
+                        payload: { targetScore: Number(event.target.value) },
+                      })
+                    }
+                    className="border border-marquinhos-border bg-marquinhos-bg px-2 py-2 font-pixel text-[10px] text-marquinhos-text"
+                    aria-label={t('pong:winScoreLabel')}
+                  >
+                    {[7, 10, 11, 15, 21].map((target) => (
+                      <option key={target} value={target}>
+                        {target} PT
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={lobby.config.bestOf}
+                    onChange={(event) =>
+                      roomSend({
+                        type: 'lobby_config',
+                        payload: { bestOf: Number(event.target.value) },
+                      })
+                    }
+                    className="border border-marquinhos-border bg-marquinhos-bg px-2 py-2 font-pixel text-[10px] text-marquinhos-text"
+                    aria-label={t('pong:bestOfLabel')}
+                  >
+                    <option value={1}>BO1</option>
+                    <option value={3}>BO3</option>
+                    <option value={5}>BO5</option>
+                  </select>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={lobby.config.ranked}
+                    disabled={
+                      lobby.config.ruleset !== 'classic-1v1' &&
+                      lobby.config.ruleset !== 'quad-elimination'
+                    }
+                    onClick={() =>
+                      roomSend({
+                        type: 'lobby_config',
+                        payload: { ranked: !lobby.config.ranked },
+                      })
+                    }
+                    className={cn(
+                      'col-span-2 border px-2 py-2 font-pixel text-[10px] disabled:opacity-40',
+                      lobby.config.ranked
+                        ? 'border-marquinhos-green text-marquinhos-green'
+                        : 'border-marquinhos-border text-marquinhos-text-dim',
+                    )}
+                  >
+                    {t('pong:rankedLabel')}
+                  </button>
+                </div>
+              )}
+              <div className="mt-4 grid gap-2">
+                {lobby.players.map((player) => (
+                  <div
+                    key={player.userId}
+                    className="flex items-center justify-between border border-marquinhos-border bg-marquinhos-bg px-3 py-2"
+                  >
+                    <span className="truncate font-mono text-sm text-marquinhos-text">
+                      {player.displayName}
+                    </span>
+                    <span
+                      className={cn(
+                        'font-pixel text-[9px]',
+                        player.ready
+                          ? 'text-marquinhos-green'
+                          : 'text-marquinhos-text-disabled',
+                      )}
+                    >
+                      {player.ready ? t('pong:ready') : '...'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {!spectating && (
+                <button
+                  type="button"
+                  className="notch-6 mt-4 w-full border border-marquinhos-accent bg-marquinhos-accent px-4 py-3 font-pixel text-[11px] text-marquinhos-bg"
+                  onClick={() =>
+                    roomSend({ type: 'ready', payload: { ready: !ready } })
+                  }
+                >
+                  {ready ? t('pong:notReady') : t('pong:ready')}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+        {(mode !== 'multi' || lobby?.started) &&
+          (matchStats?.phase === 'countdown' ||
+            matchStats?.phase === 'serving') && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-marquinhos-bg/45 font-pixel text-5xl text-marquinhos-text">
+              {matchStats.phase === 'countdown'
+                ? Math.max(1, Math.ceil(matchStats.phaseRemainingMs / 1000))
+                : t('pong:serve')}
+            </div>
+          )}
+        {matchStats?.phase === 'point-scored' && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/10 font-pixel text-xl text-marquinhos-text">
+            {t('pong:pointScored')}
+          </div>
+        )}
         {spectating ? (
           <div className="notch-3 absolute top-3 left-1/2 -translate-x-1/2 border border-marquinhos-accent bg-marquinhos-panel px-2.5 py-1 font-pixel text-[11px] tracking-wide text-marquinhos-accent">
             {t('pong:spectating')}
@@ -1173,7 +1684,7 @@ export function PongCanvas({
             </div>
           )
         )}
-        {pausedOpponent && !winner && (
+        {pausedOpponent && !gameOver && (
           <div className="font-pixel animate-pong-blink absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-marquinhos-text">
             {t('pong:opponentDisconnected')}
           </div>
@@ -1184,15 +1695,19 @@ export function PongCanvas({
             {t('common:connectionLost')}
           </div>
         )}
-        {winner && (
+        {gameOver && (
           <div className="animate-pong-game-over-in absolute inset-0 flex flex-col items-center justify-center gap-8 bg-marquinhos-bg/90">
             <div className="animate-pong-game-over-title-in font-pixel text-center text-3xl text-marquinhos-text">
-              {winnerName} {t('pong:wins')}
+              {winnerSlot === null
+                ? winnerName
+                : `${winnerName} ${t('pong:wins')}`}
             </div>
             <div className="font-pixel flex items-center gap-6 text-2xl text-marquinhos-text">
-              <span className="text-marquinhos-accent">{score?.left}</span>
-              <span className="text-lg text-marquinhos-text-dim">—</span>
-              <span className="text-marquinhos-green">{score?.right}</span>
+              {matchStats?.score.map((value, slot) => (
+                <span key={slot} className="text-marquinhos-accent">
+                  {value}
+                </span>
+              ))}
             </div>
             <div className="flex gap-4.5">
               {/* A spectator has no vote in the rematch — the server would

@@ -18,7 +18,7 @@ import type {
   RpsState,
 } from '../types';
 
-function PickButton({
+export function PickButton({
   pick,
   onClick,
   disabled,

@@ -39,7 +39,7 @@ export function TowerGame({
             key: 'multi',
             labelKey: 'vsPlayer',
             labelNs: 'common',
-            onSelect: () => setMode('multi'),
+            onSelect: () => navigate('/rooms?create=tower-unstable'),
           },
         ]}
       />

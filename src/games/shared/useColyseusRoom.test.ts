@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from 'bun:test';
 
-function fakeRoom() {
+export function fakeRoom() {
   const messageHandlers: Record<
     string,
     (type: unknown, payload: unknown) => void
@@ -9,6 +9,7 @@ function fakeRoom() {
   const reconnectHandlers: Array<() => void> = [];
   const leaveHandlers: Array<(code: number, reason?: string) => void> = [];
   const errorHandlers: Array<(code: number, message?: string) => void> = [];
+  const stateChangeHandlers: Array<(state: unknown) => void> = [];
   return {
     roomId: 'room-1',
     onMessage: mock(
@@ -29,6 +30,13 @@ function fakeRoom() {
     onError: mock((cb: (code: number, message?: string) => void) => {
       errorHandlers.push(cb);
     }),
+    onStateChange: mock((cb: (state: unknown) => void) => {
+      stateChangeHandlers.push(cb);
+      return () => {
+        const i = stateChangeHandlers.indexOf(cb);
+        if (i >= 0) stateChangeHandlers.splice(i, 1);
+      };
+    }),
     send: mock((_type: string, _payload?: unknown) => {}),
     leave: mock(async (_consented?: boolean) => 0),
     emit(type: string, payload: unknown) {
@@ -45,6 +53,9 @@ function fakeRoom() {
     },
     emitError(code = 4000, message?: string) {
       errorHandlers.forEach((h) => h(code, message));
+    },
+    emitStateChange(state: unknown) {
+      stateChangeHandlers.forEach((h) => h(state));
     },
   };
 }
@@ -67,9 +78,9 @@ async function freshModule(client: {
 }
 
 describe('connectToRoom', () => {
-  it('joins the given game with the session token and roomKey', async () => {
+  it('joins the generic "match" room type, passing the game id and session token/roomKey as options', async () => {
     const room = fakeRoom();
-    const joinOrCreate = mock(async (_game: string, _options: unknown) => room);
+    const joinOrCreate = mock(async (_roomType: string, _options: unknown) => room);
     const mod = await freshModule({ joinOrCreate });
 
     await mod.connectToRoom(
@@ -79,9 +90,10 @@ describe('connectToRoom', () => {
       () => {},
     );
 
-    expect(joinOrCreate).toHaveBeenCalledWith('wordle', {
+    expect(joinOrCreate).toHaveBeenCalledWith('match', {
       token: 'tok-1',
       roomKey: 'inst-1:wordle:single:user-1',
+      game: 'wordle',
     });
   });
 

@@ -17,8 +17,8 @@ import type {
   SnakeSegment,
 } from '../types';
 
-const CELL_SIZE = 20;
-const BG_COLOR = '#000000';
+export const CELL_SIZE = 20;
+export const BG_COLOR = '#000000';
 const GRID_COLOR = '#222222';
 const SNAKE_COLORS: Record<string, number> = {
   player1: 0x00ff00,
@@ -29,20 +29,20 @@ const FOOD_COLOR = '#ff0000';
 // Server ticks (and broadcasts state) at ~150ms (FIXED_DT_MS in
 // SnakeSession); a slightly shorter interpolation window keeps the render
 // from visibly lagging behind fresh input on direction changes.
-const INTERP_MS = 120;
+export const INTERP_MS = 120;
 // A segment moving more than one cell between snapshots is a wrap-around
 // (or a respawn), not continuous motion — lerping that would draw a snake
 // sliding diagonally across the whole board, so snap instead.
 const MAX_LERP_CELLS = 1;
 
-const DEFAULT_CONFIG: SnakePublicConfig = {
+export const DEFAULT_CONFIG: SnakePublicConfig = {
   width: 20,
   height: 20,
   initialSnakeLength: 3,
   winningScore: 10,
 };
 
-const KEY_TO_DIRECTION: Record<string, SnakeDirection> = {
+export const KEY_TO_DIRECTION: Record<string, SnakeDirection> = {
   arrowup: 'up',
   w: 'up',
   arrowdown: 'down',
@@ -53,7 +53,7 @@ const KEY_TO_DIRECTION: Record<string, SnakeDirection> = {
   d: 'right',
 };
 
-function drawGrid(gfx: Graphics, config: SnakePublicConfig) {
+export function drawGrid(gfx: Graphics, config: SnakePublicConfig) {
   gfx.clear();
   for (let x = 0; x <= config.width; x++) {
     gfx
@@ -72,7 +72,7 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-function clamp(value: number, min: number, max: number): number {
+export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
@@ -90,7 +90,7 @@ function lerpSegment(
   return { x: lerp(prev.x, latest.x, t), y: lerp(prev.y, latest.y, t) };
 }
 
-function drawEntities(
+export function drawEntities(
   gfx: Graphics,
   state: SnakeGameState,
   prevState: SnakeGameState | null,

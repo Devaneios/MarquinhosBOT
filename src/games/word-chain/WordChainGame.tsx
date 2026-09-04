@@ -63,7 +63,11 @@ export function WordChainGame({
       } else if (message.type === 'state') {
         const payload = message.payload as Partial<GameState>;
         setGameState((prev) => ({ ...prev, ...payload }));
-      } else if (message.type === 'word_rejected') {
+      } else if (message.type === 'action_rejected') {
+        // wordChainAdapter.ts (server) sends ACTION_REJECTED
+        // ('action_rejected') for a rejected word, not 'word_rejected' —
+        // same bug class found in Checkers/Tic-Tac-Toe/TowerUnstable, fixed
+        // here too.
         const payload = message.payload as WordRejectedPayload;
         setError(payload.error);
         setInputValue('');
@@ -121,7 +125,7 @@ export function WordChainGame({
             key: 'multi',
             labelKey: 'vsPlayer',
             labelNs: 'common',
-            onSelect: () => setMode('multi'),
+            onSelect: () => navigate('/rooms?create=word-chain'),
           },
         ]}
       />

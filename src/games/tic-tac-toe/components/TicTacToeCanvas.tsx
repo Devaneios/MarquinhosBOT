@@ -7,6 +7,11 @@ interface TicTacToeCanvasProps {
   player: string;
   onMove: (row: number, col: number) => void;
   gameOver: boolean;
+  // 'player' | null both permit moves — null is the existing non-room
+  // single/direct-multiplayer path (useColyseusRoom returns role: null
+  // outside a RoomConnectionProvider), which must keep working unchanged.
+  // Only 'spectator'/'queued' (a room view's non-seated viewers) block it.
+  role?: 'player' | 'spectator' | 'queued' | null;
 }
 
 export function TicTacToeCanvas({
@@ -14,6 +19,7 @@ export function TicTacToeCanvas({
   player,
   onMove,
   gameOver,
+  role = null,
 }: TicTacToeCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
@@ -23,6 +29,7 @@ export function TicTacToeCanvas({
   const playerRef = useRef(player);
   const gameOverRef = useRef(gameOver);
   const onMoveRef = useRef(onMove);
+  const roleRef = useRef(role);
   const renderBoardRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -37,6 +44,9 @@ export function TicTacToeCanvas({
   useEffect(() => {
     onMoveRef.current = onMove;
   }, [onMove]);
+  useEffect(() => {
+    roleRef.current = role;
+  }, [role]);
 
   // The board is rendered by one function, built once the scene exists
   // (renderBoardRef, set inside the init effect below); this effect is just
@@ -125,6 +135,8 @@ export function TicTacToeCanvas({
           cellGraphic.on('pointerdown', () => {
             if (
               !gameOverRef.current &&
+              roleRef.current !== 'spectator' &&
+              roleRef.current !== 'queued' &&
               stateRef.current.currentPlayer === playerRef.current
             ) {
               onMoveRef.current(row, col);
