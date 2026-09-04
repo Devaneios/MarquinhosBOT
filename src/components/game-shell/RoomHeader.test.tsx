@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from 'bun:test';
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 import {
   RoomConnectionContext,
   type RoomState,
