@@ -1,5 +1,7 @@
 /node_modules
 /out
+marquinhos.db
+marquinhos.db*
 
 .env
 node_modules/
@@ -140,3 +142,13 @@ test-output/
 .AppleDouble
 .LSOverride
 .codex
+
+# cert files
+*.pem
+*.crt
+*.key.worktrees/
+.superpowers/
+!.idea/
+.idea/*
+!.idea/inspectionProfiles/
+!.idea/inspectionProfiles/Project_Default.xml

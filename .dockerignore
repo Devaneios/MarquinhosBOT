@@ -1,0 +1,43 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+
+# Git
+.git
+.gitignore
+.github
+
+# Environment
+.env
+.env.*
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+
+# Documentation
+README.md
+README-EN.md
+docs
+
+# Config files
+.prettierrc
+.prettierignore
+prettier.config.js
+.eslintrc
+.eslintignore
+eslint.config.js
+nodemon.json
+
+# Misc
+.DS_Store
+*.md
