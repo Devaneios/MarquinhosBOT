@@ -1,0 +1,31 @@
+{
+  "name": "marquinhos-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.1",
+    "@commitlint/config-conventional": "^21.2.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8",
+    "prettier": "3.9.4",
+    "turbo": "^2.0.0",
+    "typescript": "^6.0.3"
+  },
+  "trustedDependencies": [
+    "esbuild",
+    "ffmpeg-static",
+    "sharp",
+    "skia-canvas"
+  ]
+}
