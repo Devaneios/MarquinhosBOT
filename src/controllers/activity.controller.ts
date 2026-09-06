@@ -17,7 +17,7 @@ import {
 } from 'services/activity/pong/PongTournamentService';
 import { roomKey } from 'services/activity/roomKey';
 import { mintWsSessionToken } from 'services/activity/wsSessionToken';
-import { DiscordService } from 'services/discord';
+import { DiscordGuildMembershipError, DiscordService } from 'services/discord';
 import { logger } from 'utils/logger';
 
 const generateRoomId = customAlphabet('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 6);
@@ -59,8 +59,8 @@ class ActivityController {
         return res.status(401).json({ message: 'Invalid access token' });
       }
       const isMember = await this.discordService.isGuildMember(
+        accessToken,
         guildId,
-        user.id,
       );
       if (!isMember) {
         return res
@@ -88,7 +88,12 @@ class ActivityController {
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
       }
-      if (!(await this.discordService.isGuildMember(input.guildId, user.id))) {
+      if (
+        !(await this.discordService.isGuildMember(
+          input.accessToken,
+          input.guildId,
+        ))
+      ) {
         return res
           .status(403)
           .json({ message: 'Not a member of the specified guild' });
@@ -125,7 +130,7 @@ class ActivityController {
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
       }
-      if (!(await this.discordService.isGuildMember(guildId, user.id))) {
+      if (!(await this.discordService.isGuildMember(accessToken, guildId))) {
         return res
           .status(403)
           .json({ message: 'Not a member of the specified guild' });
@@ -212,8 +217,8 @@ class ActivityController {
       }
       if (mode === 'multi') {
         const isMember = await this.discordService.isGuildMember(
+          accessToken,
           guildId,
-          user.id,
         );
         if (!isMember) {
           return res
@@ -301,8 +306,8 @@ class ActivityController {
         return res.status(401).json({ message: 'Invalid access token' });
       }
       const isMember = await this.discordService.isGuildMember(
+        accessToken,
         guildId,
-        user.id,
       );
       if (!isMember) {
         return res
@@ -319,6 +324,11 @@ class ActivityController {
       return res.status(200).json({ data });
     } catch (error) {
       logger.error('activity.controller.list_rooms_failed', { error });
+      if (error instanceof DiscordGuildMembershipError) {
+        return res
+          .status(503)
+          .json({ message: 'Discord membership service unavailable' });
+      }
       return res.status(500).json({ message: 'Unknown Error' });
     }
   };

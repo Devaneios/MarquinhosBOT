@@ -15,6 +15,7 @@ import { CheckersRoom } from 'realtime/CheckersRoom';
 import { ConnectFourRoom } from 'realtime/ConnectFourRoom';
 import { DominoesBlockRoom } from 'realtime/DominoesBlockRoom';
 import { HangmanRoom } from 'realtime/HangmanRoom';
+import { MatchRoom } from 'realtime/MatchRoom';
 import { MinesweeperRoom } from 'realtime/MinesweeperRoom';
 import { PongRoom } from 'realtime/PongRoom';
 import { RpsRoom } from 'realtime/RpsRoom';
@@ -196,6 +197,7 @@ const httpServer = http.createServer(app);
 const gameServer = new ColyseusServer({
   transport: new WebSocketTransport({ server: httpServer }),
 });
+gameServer.define('match', MatchRoom).filterBy(['roomKey']);
 gameServer.define('pong', PongRoom).filterBy(['roomKey']);
 gameServer.define('wordle', WordleRoom).filterBy(['roomKey']);
 gameServer.define('cards', CardTableRoom).filterBy(['roomKey']);

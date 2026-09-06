@@ -255,11 +255,11 @@ describe('ActivityController.getWsSessionToken', () => {
   });
 
   it('checks membership against the guild claimed in the request, for the resolved user', async () => {
-    const seen: { guildId: string; userId: string }[] = [];
+    const seen: { token: string; guildId: string }[] = [];
     const fakeService = {
       getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async (guildId: string, userId: string) => {
-        seen.push({ guildId, userId });
+      isGuildMember: async (token: string, guildId: string) => {
+        seen.push({ token, guildId });
         return true;
       },
     } as unknown as DiscordService;
@@ -275,7 +275,7 @@ describe('ActivityController.getWsSessionToken', () => {
 
     await controller.getWsSessionToken(req, res as any);
 
-    expect(seen).toEqual([{ guildId: 'guild-1', userId: 'user-1' }]);
+    expect(seen).toEqual([{ token: 'tok_abc', guildId: 'guild-1' }]);
   });
 
   it('returns 500 when DiscordService throws', async () => {
