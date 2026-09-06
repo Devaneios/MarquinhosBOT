@@ -53,6 +53,7 @@
       "dependencies": {
         "@colyseus/schema": "^4.0.30",
         "@colyseus/testing": "^0.17.11",
+        "@colyseus/ws-transport": "^0.17.13",
         "axios": "^1.18.1",
         "cheerio": "^1.2.0",
         "colyseus": "^0.17.10",
