@@ -24,6 +24,7 @@
     "typescript": "^6.0.3"
   },
   "trustedDependencies": [
+    "cpu-features",
     "esbuild",
     "ffmpeg-static",
     "sharp",
