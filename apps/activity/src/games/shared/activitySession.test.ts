@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it } from 'bun:test';
-import { createRoom, fetchWsSessionToken, getAvailableRooms } from './activitySession';
+import {
+  createRoom,
+  fetchWsSessionToken,
+  getAvailableRooms,
+} from './activitySession';
 
 describe('fetchWsSessionToken', () => {
   const originalFetch = globalThis.fetch;
@@ -107,7 +111,11 @@ describe('createRoom', () => {
       capturedBody = JSON.parse(init.body as string);
       return new Response(
         JSON.stringify({
-          data: { roomId: 'ABC123', token: 'tok-456', roomKey: 'inst-1:ABC123:tic-tac-toe:multi' },
+          data: {
+            roomId: 'ABC123',
+            token: 'tok-456',
+            roomKey: 'inst-1:ABC123:tic-tac-toe:multi',
+          },
         }),
         { status: 200 },
       );

@@ -23,7 +23,10 @@ export function ConnectFourRoomBoard() {
     if (!ctx) return;
     return ctx.subscribe((message) => {
       if (message.type === 'init') {
-        const payload = message.payload as { disc: Disc | null; state: ConnectFourState };
+        const payload = message.payload as {
+          disc: Disc | null;
+          state: ConnectFourState;
+        };
         setMySide(payload.disc);
         setState(payload.state);
       } else if (message.type === 'state') {
@@ -32,7 +35,8 @@ export function ConnectFourRoomBoard() {
     });
   }, [ctx]);
 
-  const isMyTurn = !!state && !state.winner && !state.isDraw && mySide === state.currentTurn;
+  const isMyTurn =
+    !!state && !state.winner && !state.isDraw && mySide === state.currentTurn;
   const role = ctx?.role ?? null;
   const interactive = isMyTurn && role !== 'spectator' && role !== 'queued';
 

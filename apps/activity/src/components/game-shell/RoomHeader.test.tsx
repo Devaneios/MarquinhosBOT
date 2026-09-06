@@ -1,5 +1,11 @@
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
-import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React, { type ReactNode } from 'react';
 import {
   RoomConnectionContext,
@@ -14,7 +20,9 @@ mock.module('../../lib/discordParticipants', () => ({
 function wrapWith(value: React.ContextType<typeof RoomConnectionContext>) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <RoomConnectionContext.Provider value={value}>{children}</RoomConnectionContext.Provider>
+      <RoomConnectionContext.Provider value={value}>
+        {children}
+      </RoomConnectionContext.Provider>
     );
   };
 }
@@ -30,7 +38,11 @@ function baseRoomState(overrides: Partial<RoomState> = {}): RoomState {
   };
 }
 
-function baseValue(overrides: Partial<NonNullable<React.ContextType<typeof RoomConnectionContext>>>) {
+function baseValue(
+  overrides: Partial<
+    NonNullable<React.ContextType<typeof RoomConnectionContext>>
+  >,
+) {
   return {
     send: mock(() => {}),
     connectionState: 'connected' as const,
@@ -56,7 +68,10 @@ describe('RoomHeader', () => {
   it('shows the switch-game control only to the host', async () => {
     await renderHeader(
       () => {},
-      baseValue({ isHost: true, roomState: baseRoomState({ hostUserId: 'me' }) }),
+      baseValue({
+        isHost: true,
+        roomState: baseRoomState({ hostUserId: 'me' }),
+      }),
     );
     expect(screen.getByText(/trocar de jogo/i)).toBeTruthy();
   });
@@ -64,7 +79,10 @@ describe('RoomHeader', () => {
   it('hides the switch-game control from a non-host', async () => {
     await renderHeader(
       () => {},
-      baseValue({ isHost: false, roomState: baseRoomState({ hostUserId: 'someone-else' }) }),
+      baseValue({
+        isHost: false,
+        roomState: baseRoomState({ hostUserId: 'someone-else' }),
+      }),
     );
     expect(screen.queryByText(/trocar de jogo/i)).toBeNull();
   });
@@ -72,7 +90,10 @@ describe('RoomHeader', () => {
   it('shows the queue toggle only for a queue-eligible game, host-only', async () => {
     await renderHeader(
       () => {},
-      baseValue({ isHost: true, roomState: baseRoomState({ game: 'tic-tac-toe' }) }),
+      baseValue({
+        isHost: true,
+        roomState: baseRoomState({ game: 'tic-tac-toe' }),
+      }),
     );
     expect(screen.getByText(/ativar fila de espera/i)).toBeTruthy();
   });
@@ -98,7 +119,10 @@ describe('RoomHeader', () => {
 
     fireEvent.click(screen.getByRole('checkbox'));
 
-    expect(send).toHaveBeenCalledWith({ type: 'toggle_queue', payload: { enabled: true } });
+    expect(send).toHaveBeenCalledWith({
+      type: 'toggle_queue',
+      payload: { enabled: true },
+    });
   });
 
   it('shows "give up seat" only for a seated player when the queue is non-empty and no match is in progress', async () => {
@@ -123,7 +147,9 @@ describe('RoomHeader', () => {
       () => {},
       baseValue({
         role: 'player',
-        roomState: baseRoomState({ members: [{ userId: 'me', role: 'player' }] }),
+        roomState: baseRoomState({
+          members: [{ userId: 'me', role: 'player' }],
+        }),
       }),
     );
 
@@ -140,7 +166,8 @@ describe('RoomHeader', () => {
   });
 
   it('shows a rejection banner when an action_rejected message arrives, then clears it', async () => {
-    let deliver: ((message: { type: string; payload?: unknown }) => void) | null = null;
+    let deliver:
+      ((message: { type: string; payload?: unknown }) => void) | null = null;
     await renderHeader(
       () => {},
       baseValue({
@@ -152,7 +179,10 @@ describe('RoomHeader', () => {
     );
 
     await act(async () => {
-      deliver?.({ type: 'action_rejected', payload: { error: 'Only the host can switch games' } });
+      deliver?.({
+        type: 'action_rejected',
+        payload: { error: 'Only the host can switch games' },
+      });
     });
 
     await waitFor(() =>

@@ -1,5 +1,5 @@
-import { describe, expect, it, mock } from 'bun:test';
 import { act, render } from '@testing-library/react';
+import { describe, expect, it, mock } from 'bun:test';
 import type { DominoesClientState, Tile } from '../protocol';
 
 interface FakeContainer {
@@ -139,7 +139,9 @@ describe('DominoesBlockCanvas move gating', () => {
     const onTileClick = mock((_tile: Tile) => {});
     await renderCanvas({ role: 'player', onTileClick });
 
-    createdContainers.find((c) => c.handlers.pointertap)?.handlers.pointertap?.();
+    createdContainers
+      .find((c) => c.handlers.pointertap)
+      ?.handlers.pointertap?.();
 
     expect(onTileClick).toHaveBeenCalledWith(HAND[0]);
   });
@@ -148,7 +150,9 @@ describe('DominoesBlockCanvas move gating', () => {
     const onTileClick = mock((_tile: Tile) => {});
     await renderCanvas({ role: null, onTileClick });
 
-    createdContainers.find((c) => c.handlers.pointertap)?.handlers.pointertap?.();
+    createdContainers
+      .find((c) => c.handlers.pointertap)
+      ?.handlers.pointertap?.();
 
     expect(onTileClick).toHaveBeenCalledWith(HAND[0]);
   });

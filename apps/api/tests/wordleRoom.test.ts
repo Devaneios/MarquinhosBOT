@@ -1,13 +1,12 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
+import { randomUUID } from 'node:crypto';
 
 // Set in-memory db BEFORE any imports that load the db module — mirrors
 // tests/wordle.spec.ts so this suite doesn't touch the real marquinhos.db.
 process.env.SQLITE_PATH = ':memory:';
 
-const { Server } = await import('colyseus');
-const { WebSocketTransport } = await import('@colyseus/ws-transport');
-const { boot } = await import('@colyseus/testing');
 const { WordleRoom } = await import('../src/realtime/WordleRoom');
+const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
 const { roomKey } = await import('../src/services/activity/roomKey');
@@ -16,19 +15,20 @@ const { getValidationSet } = await import('../src/services/wordle');
 type ColyseusTestServer = import('@colyseus/testing').ColyseusTestServer;
 
 let colyseus: ColyseusTestServer;
+const testRunId = randomUUID();
 
 beforeAll(async () => {
-  const gameServer = new Server({ transport: new WebSocketTransport() });
-  gameServer.define('wordle', WordleRoom).filterBy(['roomKey']);
-  colyseus = await boot(gameServer);
+  colyseus = await bootColyseusTestServer((server) => {
+    server.define('wordle', WordleRoom).filterBy(['roomKey']);
+  });
 });
 
 afterEach(async () => {
-  await colyseus.cleanup();
+  if (colyseus) await colyseus.cleanup();
 });
 
 afterAll(async () => {
-  await colyseus.shutdown();
+  if (colyseus) await colyseus.shutdown();
 });
 
 function sessionFor(userId: string, guildId: string) {
@@ -36,7 +36,13 @@ function sessionFor(userId: string, guildId: string) {
   const game = 'wordle' as const;
   const mode = 'single' as const;
   const key = roomKey({ instanceId, game, mode, userId });
-  const token = mintWsSessionToken({ userId, instanceId, guildId, mode, game });
+  const token = mintWsSessionToken({
+    userId,
+    instanceId,
+    guildId: `${guildId}-${testRunId}`,
+    mode,
+    game,
+  });
   return { token, roomKey: key };
 }
 

@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'bun:test';
 import {
   GREETING_POOL,
   isGreeting,
   pickGreeting,
 } from '@marquinhos/services/aiChat/greeting';
+import { describe, expect, it } from 'bun:test';
 
 describe('isGreeting', () => {
   it('detects a plain "oi"', () => {

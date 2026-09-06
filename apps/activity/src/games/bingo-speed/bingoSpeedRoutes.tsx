@@ -4,8 +4,7 @@ import {
   BingoSpeedGame,
   type BingoSpeedMenuOutletContext,
 } from './BingoSpeedGame';
-import { MainMenu } from './components';
-import { ModeMenu } from './components';
+import { MainMenu, ModeMenu } from './components';
 
 function MainMenuRoute() {
   const navigate = useNavigate();

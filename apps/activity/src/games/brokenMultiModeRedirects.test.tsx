@@ -1,5 +1,5 @@
-import { describe, expect, it, mock } from 'bun:test';
 import { render } from '@testing-library/react';
+import { describe, expect, it, mock } from 'bun:test';
 import * as realRouterDom from 'react-router-dom';
 
 // Regression coverage for a live bug found while investigating Task 16:
@@ -24,19 +24,28 @@ mock.module('react-router-dom', () => ({
   },
 }));
 
-const identity = { userId: 'u1', guildId: 'g1', instanceId: 'i1', accessToken: 'acc' };
+const identity = {
+  userId: 'u1',
+  guildId: 'g1',
+  instanceId: 'i1',
+  accessToken: 'acc',
+};
 
 describe('games with no mode selector redirect straight to the Rooms lobby', () => {
   it('WordleRaceGame redirects to /rooms?create=wordle-race', async () => {
     captured.to = null;
-    const { WordleRaceGame } = await import(`./wordle-race/WordleRaceGame.tsx?${Math.random()}`);
+    const { WordleRaceGame } = await import(
+      `./wordle-race/WordleRaceGame.tsx?${Math.random()}`
+    );
     render(<WordleRaceGame identity={identity} onAuthInvalid={() => {}} />);
     expect(captured.to as string | null).toBe('/rooms?create=wordle-race');
   });
 
   it('HangmanGame redirects to /rooms?create=hangman', async () => {
     captured.to = null;
-    const { HangmanGame } = await import(`./hangman/HangmanGame.tsx?${Math.random()}`);
+    const { HangmanGame } = await import(
+      `./hangman/HangmanGame.tsx?${Math.random()}`
+    );
     render(<HangmanGame identity={identity} onAuthInvalid={() => {}} />);
     expect(captured.to as string | null).toBe('/rooms?create=hangman');
   });
@@ -46,8 +55,12 @@ describe('games with no mode selector redirect straight to the Rooms lobby', () 
     const { MinesweeperVersusGame } = await import(
       `./minesweeper-versus/components/MinesweeperBoard.tsx?${Math.random()}`
     );
-    render(<MinesweeperVersusGame identity={identity} onAuthInvalid={() => {}} />);
-    expect(captured.to as string | null).toBe('/rooms?create=minesweeper-versus');
+    render(
+      <MinesweeperVersusGame identity={identity} onAuthInvalid={() => {}} />,
+    );
+    expect(captured.to as string | null).toBe(
+      '/rooms?create=minesweeper-versus',
+    );
   });
 
   it('WordSearchRaceGame redirects to /rooms?create=word-search-race', async () => {
@@ -61,7 +74,9 @@ describe('games with no mode selector redirect straight to the Rooms lobby', () 
 
   it('BoggleGame redirects to /rooms?create=boggle-word-race', async () => {
     captured.to = null;
-    const { BoggleGame } = await import(`./boggle-word-race/BoggleGame.tsx?${Math.random()}`);
+    const { BoggleGame } = await import(
+      `./boggle-word-race/BoggleGame.tsx?${Math.random()}`
+    );
     render(<BoggleGame identity={identity} onAuthInvalid={() => {}} />);
     expect(captured.to as string | null).toBe('/rooms?create=boggle-word-race');
   });

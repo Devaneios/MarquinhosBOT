@@ -1,12 +1,16 @@
 import { useTranslation } from 'react-i18next';
-import { ConnectingScreen, ErrorScreen, RoomHeader } from '../components/game-shell';
+import {
+  ConnectingScreen,
+  ErrorScreen,
+  RoomHeader,
+} from '../components/game-shell';
+import type { DiscordIdentity } from '../discordAuth.ts';
 import type { GameId } from '../games/gameId';
 import { GAME_REGISTRY } from '../games/registry';
 import {
   RoomConnectionProvider,
   useRoomConnectionContext,
 } from '../games/shared/RoomConnectionProvider';
-import type { DiscordIdentity } from '../discordAuth.ts';
 
 function RoomBoard({ identity }: { identity: DiscordIdentity }) {
   const ctx = useRoomConnectionContext();
@@ -16,9 +20,14 @@ function RoomBoard({ identity }: { identity: DiscordIdentity }) {
   // existing ConnectingScreen/ErrorScreen pattern from App.tsx's own
   // identity-loading states, not a bespoke room-specific spinner/error UI.
   if (ctx?.connectionState === 'connecting' || !ctx) {
-    return <ConnectingScreen subtitleKey="connectingSubtitle" subtitleNs="common" />;
+    return (
+      <ConnectingScreen subtitleKey="connectingSubtitle" subtitleNs="common" />
+    );
   }
-  if (ctx.connectionState === 'error' || ctx.connectionState === 'disconnected') {
+  if (
+    ctx.connectionState === 'error' ||
+    ctx.connectionState === 'disconnected'
+  ) {
     return <ErrorScreen message={t('roomConnectionLost')} />;
   }
   if (!ctx.roomState) return null; // connected, first state sync not yet received — one frame, no UI needed

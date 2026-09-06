@@ -2,7 +2,12 @@ import { describe, expect, it, mock } from 'bun:test';
 
 async function freshModule(
   getParticipants: () => Promise<{
-    participants: Array<{ id: string; nickname?: string; global_name?: string | null; username: string }>;
+    participants: Array<{
+      id: string;
+      nickname?: string;
+      global_name?: string | null;
+      username: string;
+    }>;
   }>,
 ) {
   mock.module('../discordSdk', () => ({
@@ -13,14 +18,21 @@ async function freshModule(
     },
   }));
   const mod = await import(`./discordParticipants.ts?${Math.random()}`);
-  return mod.getParticipantDisplayNames as () => Promise<Record<string, string>>;
+  return mod.getParticipantDisplayNames as () => Promise<
+    Record<string, string>
+  >;
 }
 
 describe('getParticipantDisplayNames', () => {
   it('maps userId to the best available display name (nickname > global_name > username)', async () => {
     const getParticipantDisplayNames = await freshModule(async () => ({
       participants: [
-        { id: 'u1', nickname: 'Nick', global_name: 'Global', username: 'user1' },
+        {
+          id: 'u1',
+          nickname: 'Nick',
+          global_name: 'Global',
+          username: 'user1',
+        },
         { id: 'u2', global_name: 'Global2', username: 'user2' },
         { id: 'u3', username: 'user3' },
       ],

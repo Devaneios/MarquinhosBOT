@@ -30,7 +30,10 @@ export function TicTacToeRoomBoard() {
     if (!ctx) return;
     return ctx.subscribe((message) => {
       if (message.type === 'init') {
-        const payload = message.payload as { player: string; state: TicTacToeState };
+        const payload = message.payload as {
+          player: string;
+          state: TicTacToeState;
+        };
         setPlayer(payload.player);
         setGameState(payload.state);
       } else if (message.type === 'state_update') {
@@ -57,7 +60,9 @@ export function TicTacToeRoomBoard() {
         player={player}
         role={ctx?.role ?? null}
         gameOver={isGameOver}
-        onMove={(row, col) => ctx?.send({ type: 'move', payload: { row, col } })}
+        onMove={(row, col) =>
+          ctx?.send({ type: 'move', payload: { row, col } })
+        }
       />
     </div>
   );

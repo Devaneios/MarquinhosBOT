@@ -77,7 +77,13 @@ describe('SnakeEngine', () => {
 
     const initialCount = getMutableState(engine).food.length;
 
-    engine.tick();
+    const random = Math.random;
+    Math.random = () => 1;
+    try {
+      engine.tick();
+    } finally {
+      Math.random = random;
+    }
 
     const after = engine.getState();
     expect(after.food.length).toBe(initialCount);

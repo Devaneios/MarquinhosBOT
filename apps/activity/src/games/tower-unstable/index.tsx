@@ -1,5 +1,5 @@
-import { TowerRoomBoard } from './components';
 import type { GameDescriptor } from '../registry';
+import { TowerRoomBoard } from './components';
 import { towerRoutes } from './towerRoutes';
 
 export const gameDescriptor: GameDescriptor = {

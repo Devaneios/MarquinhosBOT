@@ -1,9 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
 
-const { Server } = await import('colyseus');
-const { WebSocketTransport } = await import('@colyseus/ws-transport');
-const { boot } = await import('@colyseus/testing');
 const { PongRoom } = await import('../src/realtime/PongRoom');
+const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
 const { roomKey } = await import('../src/services/activity/roomKey');
@@ -13,17 +11,17 @@ type ColyseusTestServer = import('@colyseus/testing').ColyseusTestServer;
 let colyseus: ColyseusTestServer;
 
 beforeAll(async () => {
-  const gameServer = new Server({ transport: new WebSocketTransport() });
-  gameServer.define('pong', PongRoom).filterBy(['roomKey']);
-  colyseus = await boot(gameServer);
+  colyseus = await bootColyseusTestServer((server) => {
+    server.define('pong', PongRoom).filterBy(['roomKey']);
+  });
 });
 
 afterEach(async () => {
-  await colyseus.cleanup();
+  if (colyseus) await colyseus.cleanup();
 });
 
 afterAll(async () => {
-  await colyseus.shutdown();
+  if (colyseus) await colyseus.shutdown();
 });
 
 function wait(ms: number): Promise<void> {

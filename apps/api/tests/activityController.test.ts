@@ -66,6 +66,28 @@ describe('ActivityController.exchangeToken', () => {
 });
 
 describe('ActivityController.getWsSessionToken', () => {
+  it('returns 400 for a multi-mode session without a roomId', async () => {
+    const fakeService = {
+      getDiscordUser: async () => ({ id: 'user-1' }),
+      isGuildMember: async () => true,
+    } as unknown as DiscordService;
+    const controller = new ActivityController(fakeService);
+    const res = makeRes();
+
+    await controller.getWsSessionToken(
+      makeReq({
+        accessToken: 'tok_abc',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        mode: 'multi',
+        game: 'pong',
+      }),
+      res as any,
+    );
+
+    expect(res.getStatus()).toBe(400);
+  });
+
   it('mints a WS session token bound to the resolved Discord user and instance', async () => {
     const fakeService = {
       getDiscordUser: async () => ({ id: 'user-1' }),
@@ -151,6 +173,7 @@ describe('ActivityController.getWsSessionToken', () => {
       guildId: 'guild-1',
       mode: 'multi',
       game: 'pong',
+      roomId: 'ROOM01',
     });
     const res = makeRes();
 
@@ -174,6 +197,7 @@ describe('ActivityController.getWsSessionToken', () => {
       instanceId: 'inst-1',
       guildId: 'guild-1',
       mode: 'multi',
+      roomId: 'ROOM01',
     });
     const res = makeRes();
 
@@ -194,6 +218,7 @@ describe('ActivityController.getWsSessionToken', () => {
       instanceId: 'inst-1',
       guildId: 'guild-not-mine',
       mode: 'multi',
+      roomId: 'ROOM01',
     });
     const res = makeRes();
 
@@ -270,6 +295,7 @@ describe('ActivityController.getWsSessionToken', () => {
       instanceId: 'inst-1',
       guildId: 'guild-1',
       mode: 'multi',
+      roomId: 'ROOM01',
     });
     const res = makeRes();
 
@@ -292,6 +318,7 @@ describe('ActivityController.getWsSessionToken', () => {
       instanceId: 'inst-1',
       guildId: 'guild-1',
       mode: 'multi',
+      roomId: 'ROOM01',
     });
     const res = makeRes();
 
@@ -360,6 +387,7 @@ describe('ActivityController.getWsSessionToken', () => {
       instanceId: 'inst-1',
       guildId: 'guild-1',
       mode: 'multi',
+      roomId: 'ROOM01',
     });
     const res = makeRes();
 

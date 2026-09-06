@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'bun:test';
 import { GuildConfig } from '@marquinhos/config/guild';
 import { handleContentReaction } from '@marquinhos/services/aiChat/contentReactions';
 import type { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
+import { describe, expect, it } from 'bun:test';
 
 function makeMessage(
   content: string,
@@ -58,7 +58,9 @@ describe('handleContentReaction', () => {
       },
     } as unknown as Pick<MarquinhosApiService, 'chooseEmojiReactions'>;
 
-    await expect(handleContentReaction(message, apiService)).resolves.toBeUndefined();
+    await expect(
+      handleContentReaction(message, apiService),
+    ).resolves.toBeUndefined();
     expect(message.reactions.length).toBe(0);
   });
 

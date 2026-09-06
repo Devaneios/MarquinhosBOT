@@ -1,9 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
 
-const { Server } = await import('colyseus');
-const { WebSocketTransport } = await import('@colyseus/ws-transport');
-const { boot } = await import('@colyseus/testing');
 const { CardTableRoom } = await import('../src/realtime/CardTableRoom');
+const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
 const { roomKey } = await import('../src/services/activity/roomKey');
@@ -14,17 +12,17 @@ type TestClient = Awaited<ReturnType<ColyseusTestServer['connectTo']>>;
 let colyseus: ColyseusTestServer;
 
 beforeAll(async () => {
-  const gameServer = new Server({ transport: new WebSocketTransport() });
-  gameServer.define('cards', CardTableRoom).filterBy(['roomKey']);
-  colyseus = await boot(gameServer);
+  colyseus = await bootColyseusTestServer((server) => {
+    server.define('cards', CardTableRoom).filterBy(['roomKey']);
+  });
 });
 
 afterEach(async () => {
-  await colyseus.cleanup();
+  if (colyseus) await colyseus.cleanup();
 });
 
 afterAll(async () => {
-  await colyseus.shutdown();
+  if (colyseus) await colyseus.shutdown();
 });
 
 function wait(ms: number): Promise<void> {
@@ -35,13 +33,22 @@ function sessionFor(userId: string) {
   const instanceId = 'inst-1';
   const game = 'cards' as const;
   const ruleset = 'truco';
-  const key = roomKey({ instanceId, game, mode: 'multi', userId, ruleset });
+  const roomId = 'ROOM01';
+  const key = roomKey({
+    instanceId,
+    game,
+    mode: 'multi',
+    userId,
+    roomId,
+    ruleset,
+  });
   const token = mintWsSessionToken({
     userId,
     instanceId,
     guildId: 'guild-1',
     mode: 'multi',
     game,
+    roomId,
     ruleset,
   });
   return { token, roomKey: key };

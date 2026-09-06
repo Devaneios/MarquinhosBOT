@@ -145,7 +145,9 @@ export function useColyseusRoom(
 
   return {
     send,
-    connectionState: roomContext ? roomContext.connectionState : connectionState,
+    connectionState: roomContext
+      ? roomContext.connectionState
+      : connectionState,
     role: roomContext ? roomContext.role : null,
   };
 }

@@ -86,7 +86,10 @@ describe('reportError', () => {
     const { client, fetchUser, send } = fakeClient(async () => undefined);
     setDiscordClient(client);
 
-    reportError(new Error('boom'), { origin: 'test-origin', logLevel: 'error' });
+    reportError(new Error('boom'), {
+      origin: 'test-origin',
+      logLevel: 'error',
+    });
     await flushPendingErrors();
 
     expect(fetchUser).toHaveBeenCalledWith('test-dm-user-id');
@@ -99,7 +102,10 @@ describe('reportError', () => {
     });
     setDiscordClient(client);
 
-    reportError(new Error('boom'), { origin: 'test-origin', logLevel: 'error' });
+    reportError(new Error('boom'), {
+      origin: 'test-origin',
+      logLevel: 'error',
+    });
     await flushPendingErrors();
     await flushPendingErrors();
 
@@ -117,7 +123,10 @@ describe('reportError', () => {
     });
     setDiscordClient(client);
 
-    reportError(new Error('boom'), { origin: 'test-origin', logLevel: 'error' });
+    reportError(new Error('boom'), {
+      origin: 'test-origin',
+      logLevel: 'error',
+    });
     await flushPendingErrors();
     await flushPendingErrors();
     await flushPendingErrors();

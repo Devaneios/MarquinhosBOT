@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { DiscordIdentity } from '../../discordAuth.ts';
+import type { GameId } from '../../games/gameId';
+import { GAME_REGISTRY } from '../../games/registry';
 import {
   createRoom,
   fetchWsSessionToken,
   getAvailableRooms,
   type RoomListing,
 } from '../../games/shared/activitySession';
-import type { GameId } from '../../games/gameId';
-import { GAME_REGISTRY } from '../../games/registry';
 import { isQueueEligible } from '../../games/shared/queueEligibility';
-import type { DiscordIdentity } from '../../discordAuth.ts';
 import { getParticipantDisplayNames } from '../../lib/discordParticipants';
 
 export interface RoomReadyInfo {
@@ -46,13 +46,14 @@ export function RoomLobbyScreen({
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([getAvailableRooms(identity), getParticipantDisplayNames()]).then(
-      ([roomList, participantNames]) => {
-        if (cancelled) return;
-        setRooms(roomList);
-        setNames(participantNames);
-      },
-    );
+    Promise.all([
+      getAvailableRooms(identity),
+      getParticipantDisplayNames(),
+    ]).then(([roomList, participantNames]) => {
+      if (cancelled) return;
+      setRooms(roomList);
+      setNames(participantNames);
+    });
     return () => {
       cancelled = true;
     };
@@ -87,7 +88,11 @@ export function RoomLobbyScreen({
     setBusy(true);
     setActionRejected(false);
     try {
-      const room = await createRoom({ game: selectedGame, identity, queueEnabled });
+      const room = await createRoom({
+        game: selectedGame,
+        identity,
+        queueEnabled,
+      });
       onRoomReady({
         roomId: room.roomId,
         token: room.token,
@@ -124,9 +129,12 @@ export function RoomLobbyScreen({
               onClick={() => handleJoin(room)}
             >
               <span>
-                <span className="font-semibold">{t(`games:${room.game}.name`)}</span>
+                <span className="font-semibold">
+                  {t(`games:${room.game}.name`)}
+                </span>
                 {' — '}
-                {room.roomId} · {names[room.hostUserId] ?? room.hostUserId.slice(0, 8)}
+                {room.roomId} ·{' '}
+                {names[room.hostUserId] ?? room.hostUserId.slice(0, 8)}
               </span>
               <span className="text-xs text-marquinhos-text-dim">
                 {t('rooms:playerCount', { count: room.playerCount })}

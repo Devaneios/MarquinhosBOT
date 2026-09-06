@@ -812,9 +812,9 @@ describe('DeepResearchService analysis', () => {
 describe('DeepResearchService resilience', () => {
   it('keeps going when one sub-query search fails', async () => {
     const searxng = {
-      search: mock(async (query: string) => {
+      searchDetailed: mock(async (query: string) => {
         if (query === 'x definicao') throw new Error('searxng 503');
-        return [hit('https://b.com/2')];
+        return { hits: [hit('https://b.com/2')], unresponsiveEngines: [] };
       }),
     } as unknown as SearxngClient;
 

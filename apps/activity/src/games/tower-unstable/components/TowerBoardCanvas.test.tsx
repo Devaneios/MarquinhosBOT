@@ -1,5 +1,5 @@
-import { describe, expect, it, mock } from 'bun:test';
 import { act, render } from '@testing-library/react';
+import { describe, expect, it, mock } from 'bun:test';
 import type { TowerState } from '../types';
 
 interface FakeGraphics {
@@ -32,7 +32,11 @@ function installPixiMock() {
       }
     }
     class Application {
-      stage = { removeChildren: () => {}, addChild: () => {}, position: { set: () => {} } };
+      stage = {
+        removeChildren: () => {},
+        addChild: () => {},
+        position: { set: () => {} },
+      };
       // The real pixi ticker calls its registered fn every frame;
       // TowerBoardCanvas only ever renders through that callback (no
       // synchronous initial render like some other games' canvases), so
@@ -78,7 +82,9 @@ async function renderCanvas(props: {
   onPull: (level: number, position: number) => void;
 }) {
   installPixiMock();
-  const { TowerBoardCanvas } = await import(`./TowerBoardCanvas.tsx?${Math.random()}`);
+  const { TowerBoardCanvas } = await import(
+    `./TowerBoardCanvas.tsx?${Math.random()}`
+  );
   await act(async () => {
     render(
       <TowerBoardCanvas

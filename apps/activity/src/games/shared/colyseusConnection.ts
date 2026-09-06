@@ -34,7 +34,11 @@ export function connectToRoom(
 ): Promise<Room> {
   const client = new Client(endpoint);
   return client
-    .joinOrCreate('match', { token: session.token, roomKey: session.roomKey, game })
+    .joinOrCreate('match', {
+      token: session.token,
+      roomKey: session.roomKey,
+      game,
+    })
     .then((room) => {
       room.onMessage('*', (type, payload) =>
         onMessage({ type: String(type), payload }),

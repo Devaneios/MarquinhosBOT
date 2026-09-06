@@ -33,6 +33,9 @@ export interface WsSessionPayload {
 const WS_SESSION_TTL_MS = 5 * 60_000;
 
 export function mintWsSessionToken(payload: WsSessionPayload): string {
+  if (payload.mode === 'multi' && !payload.roomId) {
+    throw new Error('roomId is required for mode "multi"');
+  }
   const token = encryptToken(
     JSON.stringify(payload),
     Date.now() + WS_SESSION_TTL_MS,
@@ -66,8 +69,11 @@ export function verifyWsSessionToken(token: string): WsSessionPayload | null {
           ? parsed?.ruleset === undefined || isPongRulesetId(parsed.ruleset)
           : parsed?.ruleset === undefined;
     const hasValidRoomId =
-      (typeof parsed?.roomId === 'string' && parsed.roomId.length > 0) ||
-      parsed?.roomId === undefined;
+      parsed?.roomId === undefined ||
+      (typeof parsed?.roomId === 'string' && parsed.roomId.length > 0);
+    const hasRequiredRoomId =
+      parsed?.mode !== 'multi' ||
+      (typeof parsed?.roomId === 'string' && parsed.roomId.length > 0);
     const hasValidOptions =
       parsed?.options === undefined ||
       (typeof parsed.options === 'object' &&
@@ -91,6 +97,7 @@ export function verifyWsSessionToken(token: string): WsSessionPayload | null {
       hasValidWinningScore &&
       hasValidRuleset &&
       hasValidRoomId &&
+      hasRequiredRoomId &&
       hasValidOptions
     ) {
       return {

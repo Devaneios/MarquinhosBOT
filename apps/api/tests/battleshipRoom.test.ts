@@ -1,26 +1,24 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
 
-const { Server } = await import('colyseus');
-const { WebSocketTransport } = await import('@colyseus/ws-transport');
-const { boot } = await import('@colyseus/testing');
 const { BattleshipRoom } = await import('../src/realtime/BattleshipRoom');
+const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
 
 type ColyseusTestServer = import('@colyseus/testing').ColyseusTestServer;
 
 let colyseus: ColyseusTestServer;
 
 beforeAll(async () => {
-  const gameServer = new Server({ transport: new WebSocketTransport() });
-  gameServer.define('battleship', BattleshipRoom).filterBy(['roomKey']);
-  colyseus = await boot(gameServer);
+  colyseus = await bootColyseusTestServer((server) => {
+    server.define('battleship', BattleshipRoom).filterBy(['roomKey']);
+  });
 });
 
 afterEach(async () => {
-  await colyseus.cleanup();
+  if (colyseus) await colyseus.cleanup();
 });
 
 afterAll(async () => {
-  await colyseus.shutdown();
+  if (colyseus) await colyseus.shutdown();
 });
 
 // Full auth-flow coverage (valid tokens joining, placing, firing over the
@@ -57,6 +55,7 @@ describe('BattleshipRoom', () => {
       guildId: 'guild-1',
       mode: 'multi',
       game: 'wordle',
+      roomId: 'ROOM01',
     });
     const room = await colyseus.createRoom('battleship', {
       roomKey: 'inst-1:battleship:multi',

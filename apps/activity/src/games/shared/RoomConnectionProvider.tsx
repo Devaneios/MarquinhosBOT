@@ -1,16 +1,23 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Room } from '@colyseus/sdk';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import type { DiscordIdentity } from '../../discordAuth.ts';
-import type { GameId } from '../gameId';
 import { colyseusUrl } from '../../lib/apiBase';
 import { devwarn } from '../../lib/devlog';
+import type { GameId } from '../gameId';
+import type { WsSession } from './activitySession';
 import {
   connectToRoom,
   wireRoomLifecycle,
   type ActivityMessage,
   type ColyseusConnectionState,
 } from './colyseusConnection';
-import type { WsSession } from './activitySession';
 
 export interface RoomMember {
   userId: string;
@@ -37,7 +44,8 @@ interface RoomConnectionContextValue {
 
 // Exported (not just the hook below) so tests can wrap components directly
 // with a fixed context value, without spinning up a real provider/connection.
-export const RoomConnectionContext = createContext<RoomConnectionContextValue | null>(null);
+export const RoomConnectionContext =
+  createContext<RoomConnectionContextValue | null>(null);
 
 export function useRoomConnectionContext(): RoomConnectionContextValue | null {
   return useContext(RoomConnectionContext);
@@ -59,7 +67,8 @@ export function RoomConnectionProvider({
 }) {
   const roomRef = useRef<Room | null>(null);
   const listenersRef = useRef(new Set<(message: ActivityMessage) => void>());
-  const [connectionState, setConnectionState] = useState<ColyseusConnectionState>('connecting');
+  const [connectionState, setConnectionState] =
+    useState<ColyseusConnectionState>('connecting');
   const [roomState, setRoomState] = useState<RoomState | null>(null);
 
   useEffect(() => {
@@ -73,7 +82,9 @@ export function RoomConnectionProvider({
         if (cancelled) return;
         roomRef.current = room;
         setConnectionState('connected');
-        room.onStateChange((state: unknown) => setRoomState(state as RoomState));
+        room.onStateChange((state: unknown) =>
+          setRoomState(state as RoomState),
+        );
         wireRoomLifecycle(room, game, (state) => {
           if (!cancelled) setConnectionState(state);
         });
@@ -109,12 +120,21 @@ export function RoomConnectionProvider({
     };
   };
 
-  const role = roomState?.members.find((m) => m.userId === identity.userId)?.role ?? null;
+  const role =
+    roomState?.members.find((m) => m.userId === identity.userId)?.role ?? null;
   const isHost = roomState?.hostUserId === identity.userId;
 
   return (
     <RoomConnectionContext.Provider
-      value={{ send, connectionState, roomState, role, currentUserId: identity.userId, isHost, subscribe }}
+      value={{
+        send,
+        connectionState,
+        roomState,
+        role,
+        currentUserId: identity.userId,
+        isHost,
+        subscribe,
+      }}
     >
       {children}
     </RoomConnectionContext.Provider>

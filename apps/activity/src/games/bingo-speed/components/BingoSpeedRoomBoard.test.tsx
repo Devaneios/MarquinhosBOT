@@ -1,5 +1,5 @@
-import { describe, expect, it, mock } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, mock } from 'bun:test';
 import { RoomConnectionContext } from '../../shared/RoomConnectionProvider';
 
 mock.module('./BingoSpeedBoardCanvas', () => ({
@@ -7,7 +7,11 @@ mock.module('./BingoSpeedBoardCanvas', () => ({
   CANVAS_SIZE: 500,
 }));
 
-function baseValue(overrides: Partial<NonNullable<React.ContextType<typeof RoomConnectionContext>>>) {
+function baseValue(
+  overrides: Partial<
+    NonNullable<React.ContextType<typeof RoomConnectionContext>>
+  >,
+) {
   return {
     send: mock(() => {}),
     connectionState: 'connected' as const,
@@ -26,11 +30,16 @@ function baseValue(overrides: Partial<NonNullable<React.ContextType<typeof RoomC
   };
 }
 
-async function renderRoomBoard(value: NonNullable<React.ContextType<typeof RoomConnectionContext>>) {
-  let deliver: ((message: { type: string; payload?: unknown }) => void) | null = null;
+async function renderRoomBoard(
+  value: NonNullable<React.ContextType<typeof RoomConnectionContext>>,
+) {
+  let deliver: ((message: { type: string; payload?: unknown }) => void) | null =
+    null;
   const finalValue = {
     ...value,
-    subscribe: (onMessage: (message: { type: string; payload?: unknown }) => void) => {
+    subscribe: (
+      onMessage: (message: { type: string; payload?: unknown }) => void,
+    ) => {
       deliver = onMessage;
       return () => {};
     },
@@ -48,7 +57,10 @@ async function renderRoomBoard(value: NonNullable<React.ContextType<typeof RoomC
   await act(async () => {
     deliver?.({
       type: 'init',
-      payload: { card: { board: [[1]], marked: [[false]] }, state: { drawnNumbers: [] } },
+      payload: {
+        card: { board: [[1]], marked: [[false]] },
+        state: { drawnNumbers: [] },
+      },
     });
   });
 }

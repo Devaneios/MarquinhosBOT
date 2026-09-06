@@ -1,8 +1,14 @@
-import { describe, expect, test } from 'bun:test';
-import { groupByRarity, RARITY_ORDER, RARITY_LABELS } from '@marquinhos/formatters/achievements';
+import {
+  groupByRarity,
+  RARITY_LABELS,
+  RARITY_ORDER,
+} from '@marquinhos/formatters/achievements';
 import { UserAchievement } from '@marquinhos/types';
+import { describe, expect, test } from 'bun:test';
 
-const makeAchievement = (rarity: UserAchievement['rarity']): UserAchievement => ({
+const makeAchievement = (
+  rarity: UserAchievement['rarity'],
+): UserAchievement => ({
   userId: '1',
   guildId: '1',
   achievementId: 'a',

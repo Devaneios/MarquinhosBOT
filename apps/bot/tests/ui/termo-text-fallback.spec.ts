@@ -22,7 +22,14 @@ describe('formatGuessesAsText', () => {
       formatGuessesAsText([
         {
           guess: 'brasil',
-          feedback: ['absent', 'absent', 'absent', 'absent', 'absent', 'absent'],
+          feedback: [
+            'absent',
+            'absent',
+            'absent',
+            'absent',
+            'absent',
+            'absent',
+          ],
         },
       ]),
     ).toBe('BRASIL: ⬛⬛⬛⬛⬛⬛');
@@ -48,7 +55,10 @@ describe('formatGuessesAsText', () => {
   test('uppercases diacritic letters', () => {
     expect(
       formatGuessesAsText([
-        { guess: 'ação', feedback: ['correct', 'present', 'absent', 'correct'] },
+        {
+          guess: 'ação',
+          feedback: ['correct', 'present', 'absent', 'correct'],
+        },
       ]),
     ).toBe('AÇÃO: 🟩🟨⬛🟩');
   });

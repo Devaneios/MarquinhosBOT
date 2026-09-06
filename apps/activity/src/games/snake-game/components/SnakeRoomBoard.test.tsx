@@ -1,5 +1,5 @@
-import { describe, expect, it, mock } from 'bun:test';
 import { act, render } from '@testing-library/react';
+import { describe, expect, it, mock } from 'bun:test';
 import { RoomConnectionContext } from '../../shared/RoomConnectionProvider';
 
 function installPixiMock() {
@@ -35,7 +35,11 @@ function installPixiMock() {
   });
 }
 
-function baseValue(overrides: Partial<NonNullable<React.ContextType<typeof RoomConnectionContext>>>) {
+function baseValue(
+  overrides: Partial<
+    NonNullable<React.ContextType<typeof RoomConnectionContext>>
+  >,
+) {
   return {
     send: mock(() => {}),
     connectionState: 'connected' as const,
@@ -54,9 +58,13 @@ function baseValue(overrides: Partial<NonNullable<React.ContextType<typeof RoomC
   };
 }
 
-async function renderRoomBoard(value: NonNullable<React.ContextType<typeof RoomConnectionContext>>) {
+async function renderRoomBoard(
+  value: NonNullable<React.ContextType<typeof RoomConnectionContext>>,
+) {
   installPixiMock();
-  const { SnakeRoomBoard } = await import(`./SnakeRoomBoard.tsx?${Math.random()}`);
+  const { SnakeRoomBoard } = await import(
+    `./SnakeRoomBoard.tsx?${Math.random()}`
+  );
   await act(async () => {
     render(
       <RoomConnectionContext.Provider value={value}>
@@ -97,6 +105,9 @@ describe('SnakeRoomBoard input gating', () => {
 
     pressArrowUp();
 
-    expect(send).toHaveBeenCalledWith({ type: 'input', payload: { direction: 'up' } });
+    expect(send).toHaveBeenCalledWith({
+      type: 'input',
+      payload: { direction: 'up' },
+    });
   });
 });

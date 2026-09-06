@@ -8,10 +8,9 @@ import * as errorHandling from '../src/utils/errorHandling';
 import { HttpClient } from '../src/utils/httpClient';
 
 describe('handleApiResponseError', () => {
-  const reportErrorSpy = spyOn(
-    errorHandling,
-    'reportError',
-  ).mockImplementation(() => {});
+  const reportErrorSpy = spyOn(errorHandling, 'reportError').mockImplementation(
+    () => {},
+  );
 
   beforeEach(() => {
     reportErrorSpy.mockClear();

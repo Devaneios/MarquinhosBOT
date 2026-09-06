@@ -1,9 +1,9 @@
-import { describe, expect, test } from 'bun:test';
 import {
   createProgressBar,
   getBadgeForLevel,
   getColorForLevel,
 } from '@marquinhos/formatters/level';
+import { describe, expect, test } from 'bun:test';
 
 describe('createProgressBar', () => {
   test('returns 10 filled at 100%', () => {

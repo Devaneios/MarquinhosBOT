@@ -76,7 +76,9 @@ export function DominoesBlockRoomBoard() {
                 className="notch-6 border border-marquinhos-accent bg-marquinhos-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-black"
                 onClick={() => selectedTile && sendPlay(selectedTile, end)}
               >
-                {t('playEnd', { end: t(end === 'left' ? 'endLeft' : 'endRight') })}
+                {t('playEnd', {
+                  end: t(end === 'left' ? 'endLeft' : 'endRight'),
+                })}
               </button>
             ))}
             <button
@@ -93,7 +95,9 @@ export function DominoesBlockRoomBoard() {
         )}
       </div>
 
-      {rejection && <div className="text-sm text-marquinhos-danger">{rejection}</div>}
+      {rejection && (
+        <div className="text-sm text-marquinhos-danger">{rejection}</div>
+      )}
     </div>
   );
 }

@@ -530,7 +530,7 @@ export class MatchRoom extends Room {
   }
 
   override onDispose() {
-    this.adapter.onDispose(this.session);
+    this.adapter?.onDispose(this.session);
   }
 
   private switchGame(game: GameId) {

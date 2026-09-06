@@ -1,7 +1,12 @@
+import {
+  buildNowPlayingEmbed,
+  buildTrackAddedEmbed,
+} from '@marquinhos/formatters/music';
 import { describe, expect, test } from 'bun:test';
-import { buildNowPlayingEmbed, buildTrackAddedEmbed } from '@marquinhos/formatters/music';
 
-const mockClient = { user: { displayAvatarURL: () => 'https://avatar.url' } } as any;
+const mockClient = {
+  user: { displayAvatarURL: () => 'https://avatar.url' },
+} as any;
 const mockTrack = {
   title: 'Test Track',
   url: 'https://track.url',

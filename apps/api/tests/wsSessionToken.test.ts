@@ -6,6 +6,18 @@ import {
 import { encryptToken } from 'utils/crypto';
 
 describe('mintWsSessionToken / verifyWsSessionToken', () => {
+  it('rejects minting a multi-mode token without a roomId', () => {
+    expect(() =>
+      mintWsSessionToken({
+        userId: 'user-1',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        mode: 'multi',
+        game: 'pong',
+      }),
+    ).toThrow('roomId is required');
+  });
+
   it('round-trips the userId, instanceId, guildId, mode and game', () => {
     const token = mintWsSessionToken({
       userId: 'user-1',
@@ -13,6 +25,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
       guildId: 'guild-1',
       mode: 'multi',
       game: 'pong',
+      roomId: 'ROOM01',
     });
     expect(verifyWsSessionToken(token)).toEqual({
       userId: 'user-1',
@@ -20,6 +33,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
       guildId: 'guild-1',
       mode: 'multi',
       game: 'pong',
+      roomId: 'ROOM01',
     });
   });
 
@@ -50,6 +64,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
       guildId: 'guild-1',
       mode: 'multi',
       game: 'pong',
+      roomId: 'ROOM01',
     });
     expect(verifyWsSessionToken(token)).toEqual({
       userId: 'user-1',
@@ -58,6 +73,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
       guildId: 'guild-1',
       mode: 'multi',
       game: 'pong',
+      roomId: 'ROOM01',
     });
   });
 
@@ -132,6 +148,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
       guildId: 'guild-1',
       mode: 'multi',
       game: 'pong',
+      roomId: 'ROOM01',
     });
     const tampered = `${token.slice(0, -4)}abcd`;
     expect(verifyWsSessionToken(tampered)).toBeNull();
@@ -201,6 +218,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
       guildId: 'guild-1',
       mode: 'multi',
       game: 'cards',
+      roomId: 'ROOM01',
       ruleset: 'truco',
       options: { seed: 42 },
     });
@@ -211,6 +229,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
       mode: 'multi',
       game: 'cards',
       ruleset: 'truco',
+      roomId: 'ROOM01',
       options: { seed: 42 },
     });
   });
@@ -236,6 +255,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
         guildId: 'guild-1',
         mode: 'multi',
         game: 'cards',
+        roomId: 'ROOM01',
         ruleset: 'poker',
       }),
     )!;
@@ -249,6 +269,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
       guildId: 'guild-1',
       mode: 'multi',
       game: 'pong',
+      roomId: 'ROOM01',
     });
     expect(verifyWsSessionToken(token)).toEqual({
       userId: 'user-1',
@@ -256,6 +277,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
       guildId: 'guild-1',
       mode: 'multi',
       game: 'pong',
+      roomId: 'ROOM01',
     });
   });
 

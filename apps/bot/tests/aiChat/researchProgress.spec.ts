@@ -27,7 +27,9 @@ function makeThread() {
   } as unknown as AiThreadChannel & { sent: string[] };
 }
 
-function job(overrides: Partial<ResearchJobResponse> = {}): ResearchJobResponse {
+function job(
+  overrides: Partial<ResearchJobResponse> = {},
+): ResearchJobResponse {
   return {
     jobId: 'job-1',
     status: 'running',
@@ -52,7 +54,9 @@ const noWait = async () => undefined;
 describe('formatProgress', () => {
   it('labels a known stage with an icon', () => {
     expect(formatProgress('plan', 'tracei o plano')).toContain('Plano');
-    expect(formatProgress('plan', 'tracei o plano')).toContain('tracei o plano');
+    expect(formatProgress('plan', 'tracei o plano')).toContain(
+      'tracei o plano',
+    );
   });
 
   it('falls back to the raw stage name for an unknown stage', () => {
@@ -64,7 +68,12 @@ describe('formatSources', () => {
   it('renders numbered markdown links matching the citation numbers', () => {
     const text = formatSources([
       { index: 1, url: 'https://a.com', title: 'Fonte A' },
-      { index: 2, url: 'https://b.com', title: 'Fonte B', publishedDate: '2026-01-02' },
+      {
+        index: 2,
+        url: 'https://b.com',
+        title: 'Fonte B',
+        publishedDate: '2026-01-02',
+      },
     ]);
 
     expect(text).toContain('## Fontes');
@@ -109,7 +118,9 @@ describe('followResearchJob', () => {
   it('posts progress events and then the finished report', async () => {
     const thread = makeThread();
     const api = makeApi([
-      job({ progress: [{ seq: 1, stage: 'plan', message: 'plano', createdAt: 1 }] }),
+      job({
+        progress: [{ seq: 1, stage: 'plan', message: 'plano', createdAt: 1 }],
+      }),
       job({
         status: 'done',
         progress: [
@@ -144,7 +155,9 @@ describe('followResearchJob', () => {
   });
 
   it('never posts the same progress event twice', async () => {
-    const progress = [{ seq: 1, stage: 'plan', message: 'plano unico', createdAt: 1 }];
+    const progress = [
+      { seq: 1, stage: 'plan', message: 'plano unico', createdAt: 1 },
+    ];
     const thread = makeThread();
     const api = makeApi([
       job({ progress }),
@@ -160,7 +173,9 @@ describe('followResearchJob', () => {
 
   it('reports the API error message when the job fails', async () => {
     const thread = makeThread();
-    const api = makeApi([job({ status: 'error', error: 'searxng fora do ar' })]);
+    const api = makeApi([
+      job({ status: 'error', error: 'searxng fora do ar' }),
+    ]);
 
     await followResearchJob(thread, 'job-1', { apiService: api, wait: noWait });
 
@@ -230,7 +245,9 @@ describe('followResearchJob', () => {
 
   it('splits a report too long for one Discord message', async () => {
     const thread = makeThread();
-    const long = Array.from({ length: 400 }, (_, i) => `achado ${i}`).join('\n');
+    const long = Array.from({ length: 400 }, (_, i) => `achado ${i}`).join(
+      '\n',
+    );
     const api = makeApi([job({ status: 'done', report: long })]);
 
     await followResearchJob(thread, 'job-1', { apiService: api, wait: noWait });

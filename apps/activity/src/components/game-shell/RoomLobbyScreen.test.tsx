@@ -1,5 +1,5 @@
-import { describe, expect, it, mock } from 'bun:test';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, mock } from 'bun:test';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import type { RoomListing } from '../../games/shared/activitySession';
 
@@ -47,11 +47,17 @@ describe('RoomLobbyScreen', () => {
         mode: 'multi',
       },
     ]);
-    const { RoomLobbyScreen } = await import(`./RoomLobbyScreen.tsx?${Math.random()}`);
+    const { RoomLobbyScreen } = await import(
+      `./RoomLobbyScreen.tsx?${Math.random()}`
+    );
     const onRoomReady = mock(() => {});
 
     render(
-      <RoomLobbyScreen identity={identity} onRoomReady={onRoomReady} onBack={() => {}} />,
+      <RoomLobbyScreen
+        identity={identity}
+        onRoomReady={onRoomReady}
+        onBack={() => {}}
+      />,
     );
 
     await waitFor(() => expect(screen.getByText(/ROOM01/i)).toBeTruthy());
@@ -71,13 +77,19 @@ describe('RoomLobbyScreen', () => {
 
   it('shows a message when no rooms are open', async () => {
     mockDeps([]);
-    const { RoomLobbyScreen } = await import(`./RoomLobbyScreen.tsx?${Math.random()}`);
-
-    render(<RoomLobbyScreen identity={identity} onRoomReady={() => {}} onBack={() => {}} />);
-
-    await waitFor(() =>
-      expect(screen.getByText(/nenhuma sala/i)).toBeTruthy(),
+    const { RoomLobbyScreen } = await import(
+      `./RoomLobbyScreen.tsx?${Math.random()}`
     );
+
+    render(
+      <RoomLobbyScreen
+        identity={identity}
+        onRoomReady={() => {}}
+        onBack={() => {}}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText(/nenhuma sala/i)).toBeTruthy());
   });
 
   it('creates a room for the selected game and calls onRoomReady', async () => {
@@ -88,7 +100,9 @@ describe('RoomLobbyScreen', () => {
         roomKey: 'key-2',
       }),
     });
-    const { RoomLobbyScreen } = await import(`./RoomLobbyScreen.tsx?${Math.random()}`);
+    const { RoomLobbyScreen } = await import(
+      `./RoomLobbyScreen.tsx?${Math.random()}`
+    );
     const onRoomReady = mock(() => {});
 
     render(
@@ -116,10 +130,18 @@ describe('RoomLobbyScreen', () => {
 
   it('calls onBack when the back button is pressed', async () => {
     mockDeps([]);
-    const { RoomLobbyScreen } = await import(`./RoomLobbyScreen.tsx?${Math.random()}`);
+    const { RoomLobbyScreen } = await import(
+      `./RoomLobbyScreen.tsx?${Math.random()}`
+    );
     const onBack = mock(() => {});
 
-    render(<RoomLobbyScreen identity={identity} onRoomReady={() => {}} onBack={onBack} />);
+    render(
+      <RoomLobbyScreen
+        identity={identity}
+        onRoomReady={() => {}}
+        onBack={onBack}
+      />,
+    );
 
     await waitFor(() => expect(screen.getByText(/nenhuma sala/i)).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: /voltar/i }));

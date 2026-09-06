@@ -23,7 +23,10 @@ export interface BingoSpeedBoardCanvasProps {
   drawnNumbers: Set<number>;
 }
 
-export function BingoSpeedBoardCanvas({ card, drawnNumbers }: BingoSpeedBoardCanvasProps) {
+export function BingoSpeedBoardCanvas({
+  card,
+  drawnNumbers,
+}: BingoSpeedBoardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
   const cardRef = useRef(card);
@@ -66,7 +69,12 @@ export function BingoSpeedBoardCanvas({ card, drawnNumbers }: BingoSpeedBoardCan
 
           const cellText = new Text({
             text: '',
-            style: { fontFamily: 'Arial', fontSize: NUMBER_FONT_SIZE, fontWeight: 'bold', fill: 0xffffff },
+            style: {
+              fontFamily: 'Arial',
+              fontSize: NUMBER_FONT_SIZE,
+              fontWeight: 'bold',
+              fill: 0xffffff,
+            },
           });
           cellText.anchor.set(0.5);
           cellText.position.set(x + CELL_SIZE / 2, y + CELL_SIZE / 2);
@@ -148,7 +156,11 @@ export function BingoSpeedBoardCanvas({ card, drawnNumbers }: BingoSpeedBoardCan
       };
       contextCanvas = canvasRef.current!;
       contextCanvas.addEventListener('webglcontextlost', onContextLost, false);
-      contextCanvas.addEventListener('webglcontextrestored', onContextRestored, false);
+      contextCanvas.addEventListener(
+        'webglcontextrestored',
+        onContextRestored,
+        false,
+      );
 
       buildScene();
       redrawRef.current = redraw;
@@ -162,7 +174,10 @@ export function BingoSpeedBoardCanvas({ card, drawnNumbers }: BingoSpeedBoardCan
         contextCanvas.removeEventListener('webglcontextlost', onContextLost);
       }
       if (contextCanvas && onContextRestored) {
-        contextCanvas.removeEventListener('webglcontextrestored', onContextRestored);
+        contextCanvas.removeEventListener(
+          'webglcontextrestored',
+          onContextRestored,
+        );
       }
       redrawRef.current = null;
       if (initialized) {

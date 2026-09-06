@@ -1,5 +1,5 @@
-import { describe, expect, it, mock } from 'bun:test';
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { describe, expect, it, mock } from 'bun:test';
 import type { ReactNode } from 'react';
 import { fakeRoom } from './useColyseusRoom.test';
 // Static import, deliberately NOT cache-busted with a random query string:
@@ -12,7 +12,9 @@ import { fakeRoom } from './useColyseusRoom.test';
 import { RoomConnectionProvider } from './RoomConnectionProvider';
 
 async function freshUseColyseusRoom(room: ReturnType<typeof fakeRoom>) {
-  const joinOrCreate = mock(async (_roomType: string, _options: unknown) => room);
+  const joinOrCreate = mock(
+    async (_roomType: string, _options: unknown) => room,
+  );
   mock.module('@colyseus/sdk', () => ({
     Client: class {
       joinOrCreate = joinOrCreate;
@@ -31,7 +33,12 @@ async function freshUseColyseusRoom(room: ReturnType<typeof fakeRoom>) {
   return { useColyseusRoom: hookMod.useColyseusRoom, joinOrCreate };
 }
 
-const identity = { userId: 'user-a', guildId: 'g', instanceId: 'i', accessToken: 'x' };
+const identity = {
+  userId: 'user-a',
+  guildId: 'g',
+  instanceId: 'i',
+  accessToken: 'x',
+};
 const session = { token: 't', roomKey: 'k' };
 
 describe('RoomConnectionProvider + useColyseusRoom', () => {
@@ -40,18 +47,29 @@ describe('RoomConnectionProvider + useColyseusRoom', () => {
     const { useColyseusRoom, joinOrCreate } = await freshUseColyseusRoom(room);
 
     const wrapper = ({ children }: { children: ReactNode }) => (
-      <RoomConnectionProvider roomId="ROOM01" session={session} game="tic-tac-toe" queueEnabled={false} identity={identity}>
+      <RoomConnectionProvider
+        roomId="ROOM01"
+        session={session}
+        game="tic-tac-toe"
+        queueEnabled={false}
+        identity={identity}
+      >
         {children}
       </RoomConnectionProvider>
     );
 
     const messages: unknown[] = [];
     const { result } = renderHook(
-      () => useColyseusRoom('tic-tac-toe', session, 'ws://x', (m: unknown) => messages.push(m)),
+      () =>
+        useColyseusRoom('tic-tac-toe', session, 'ws://x', (m: unknown) =>
+          messages.push(m),
+        ),
       { wrapper },
     );
 
-    await waitFor(() => expect(result.current.connectionState).toBe('connected'));
+    await waitFor(() =>
+      expect(result.current.connectionState).toBe('connected'),
+    );
     expect(joinOrCreate).toHaveBeenCalledTimes(1);
 
     act(() => {
@@ -69,7 +87,9 @@ describe('RoomConnectionProvider + useColyseusRoom', () => {
     act(() => {
       room.emit('state_update', { foo: 'bar' });
     });
-    expect(messages).toEqual([{ type: 'state_update', payload: { foo: 'bar' } }]);
+    expect(messages).toEqual([
+      { type: 'state_update', payload: { foo: 'bar' } },
+    ]);
   });
 
   it('does not establish its own connection when inside the provider (only the provider calls joinOrCreate)', async () => {
@@ -77,12 +97,21 @@ describe('RoomConnectionProvider + useColyseusRoom', () => {
     const { useColyseusRoom, joinOrCreate } = await freshUseColyseusRoom(room);
 
     const wrapper = ({ children }: { children: ReactNode }) => (
-      <RoomConnectionProvider roomId="ROOM02" session={session} game="tic-tac-toe" queueEnabled={false} identity={identity}>
+      <RoomConnectionProvider
+        roomId="ROOM02"
+        session={session}
+        game="tic-tac-toe"
+        queueEnabled={false}
+        identity={identity}
+      >
         {children}
       </RoomConnectionProvider>
     );
 
-    renderHook(() => useColyseusRoom('tic-tac-toe', session, 'ws://x', () => {}), { wrapper });
+    renderHook(
+      () => useColyseusRoom('tic-tac-toe', session, 'ws://x', () => {}),
+      { wrapper },
+    );
 
     await waitFor(() => expect(joinOrCreate).toHaveBeenCalledTimes(1));
     // The hook itself never calls joinOrCreate a second time even though it
@@ -96,7 +125,13 @@ describe('RoomConnectionProvider + useColyseusRoom', () => {
     const { useColyseusRoom } = await freshUseColyseusRoom(room);
 
     const wrapper = ({ children }: { children: ReactNode }) => (
-      <RoomConnectionProvider roomId="ROOM03" session={session} game="tic-tac-toe" queueEnabled={false} identity={identity}>
+      <RoomConnectionProvider
+        roomId="ROOM03"
+        session={session}
+        game="tic-tac-toe"
+        queueEnabled={false}
+        identity={identity}
+      >
         {children}
       </RoomConnectionProvider>
     );
@@ -106,7 +141,9 @@ describe('RoomConnectionProvider + useColyseusRoom', () => {
       { wrapper },
     );
 
-    await waitFor(() => expect(result.current.connectionState).toBe('connected'));
+    await waitFor(() =>
+      expect(result.current.connectionState).toBe('connected'),
+    );
     result.current.send({ type: 'move', payload: { row: 0, col: 0 } });
 
     expect(room.send).toHaveBeenCalledWith('move', { row: 0, col: 0 });
@@ -120,7 +157,9 @@ describe('RoomConnectionProvider + useColyseusRoom', () => {
       useColyseusRoom('tic-tac-toe', session, 'ws://x', () => {}),
     );
 
-    await waitFor(() => expect(result.current.connectionState).toBe('connected'));
+    await waitFor(() =>
+      expect(result.current.connectionState).toBe('connected'),
+    );
     expect(result.current.role).toBe(null);
     expect(joinOrCreate).toHaveBeenCalledTimes(1);
   });

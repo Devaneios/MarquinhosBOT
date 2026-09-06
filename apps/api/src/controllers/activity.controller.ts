@@ -216,6 +216,11 @@ class ActivityController {
         return res.status(401).json({ message: 'Invalid access token' });
       }
       if (mode === 'multi') {
+        if (!roomId) {
+          return res
+            .status(400)
+            .json({ message: 'roomId is required for multi mode' });
+        }
         const isMember = await this.discordService.isGuildMember(
           accessToken,
           guildId,
@@ -254,7 +259,7 @@ class ActivityController {
           });
         }
       }
-      const resolvedRoomId = mode === 'multi' ? (roomId ?? 'PONG') : roomId;
+      const resolvedRoomId = roomId;
       const displayName =
         typeof user.global_name === 'string' && user.global_name.length > 0
           ? user.global_name

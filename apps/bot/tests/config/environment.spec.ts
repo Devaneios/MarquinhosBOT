@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test';
 import { envSchema } from '@marquinhos/config/envSchema';
+import { describe, expect, test } from 'bun:test';
 
 describe('env schema', () => {
   test('parses valid environment', () => {

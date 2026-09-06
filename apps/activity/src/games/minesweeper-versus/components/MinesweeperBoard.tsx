@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate } from 'react-router-dom';
-import {
-  EndScreen,
-  GameHeader,
-} from '../../../components/game-shell';
+import { EndScreen, GameHeader } from '../../../components/game-shell';
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';

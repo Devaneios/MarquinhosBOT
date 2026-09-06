@@ -25,7 +25,12 @@ export interface TowerBoardCanvasProps {
   role?: 'player' | 'spectator' | 'queued' | null;
 }
 
-export function TowerBoardCanvas({ state, userId, onPull, role = null }: TowerBoardCanvasProps) {
+export function TowerBoardCanvas({
+  state,
+  userId,
+  onPull,
+  role = null,
+}: TowerBoardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
   const stateRef = useRef<TowerState | null>(state);
@@ -89,7 +94,11 @@ export function TowerBoardCanvas({ state, userId, onPull, role = null }: TowerBo
       };
       contextCanvas = canvasRef.current!;
       contextCanvas.addEventListener('webglcontextlost', onContextLost, false);
-      contextCanvas.addEventListener('webglcontextrestored', onContextRestored, false);
+      contextCanvas.addEventListener(
+        'webglcontextrestored',
+        onContextRestored,
+        false,
+      );
 
       function render() {
         const current = stateRef.current;
@@ -138,7 +147,9 @@ export function TowerBoardCanvas({ state, userId, onPull, role = null }: TowerBo
                   ? BLOCK_ELIGIBLE_COLOR
                   : BLOCK_COLOR
                 : BLOCK_INELIGIBLE_COLOR;
-            gfx.roundRect(0, 0, BLOCK_WIDTH, BLOCK_HEIGHT, 2).fill({ color, alpha: present ? 1 : 0.25 });
+            gfx
+              .roundRect(0, 0, BLOCK_WIDTH, BLOCK_HEIGHT, 2)
+              .fill({ color, alpha: present ? 1 : 0.25 });
             gfx.position.set(x, y);
 
             if (present && eligible && isMyTurn) {
@@ -165,7 +176,10 @@ export function TowerBoardCanvas({ state, userId, onPull, role = null }: TowerBo
         contextCanvas.removeEventListener('webglcontextlost', onContextLost);
       }
       if (contextCanvas && onContextRestored) {
-        contextCanvas.removeEventListener('webglcontextrestored', onContextRestored);
+        contextCanvas.removeEventListener(
+          'webglcontextrestored',
+          onContextRestored,
+        );
       }
       if (initialized) {
         if (tick) app.ticker.remove(tick);

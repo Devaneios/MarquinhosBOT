@@ -1,9 +1,7 @@
 import { Route, useNavigate } from 'react-router-dom';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { CheckersGame } from './CheckersGame';
-import { HowToPlay } from './components';
-import { MainMenu } from './components';
-import { ModeMenu } from './components';
+import { HowToPlay, MainMenu, ModeMenu } from './components';
 import {
   CheckersMenuFlow,
   useCheckersMenuContext,

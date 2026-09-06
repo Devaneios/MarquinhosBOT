@@ -80,7 +80,9 @@ async function freshModule(client: {
 describe('connectToRoom', () => {
   it('joins the generic "match" room type, passing the game id and session token/roomKey as options', async () => {
     const room = fakeRoom();
-    const joinOrCreate = mock(async (_roomType: string, _options: unknown) => room);
+    const joinOrCreate = mock(
+      async (_roomType: string, _options: unknown) => room,
+    );
     const mod = await freshModule({ joinOrCreate });
 
     await mod.connectToRoom(

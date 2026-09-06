@@ -35,7 +35,8 @@ export function RoomHeader({ onLeave }: RoomHeaderProps) {
   const isHost = ctx?.isHost ?? false;
   const role = ctx?.role ?? null;
   const queueEligible = roomState ? isQueueEligible(roomState.game) : false;
-  const queueHasWaiters = roomState?.members.some((m) => m.role === 'queued') ?? false;
+  const queueHasWaiters =
+    roomState?.members.some((m) => m.role === 'queued') ?? false;
   const matchInProgress = roomState?.matchInProgress ?? false;
 
   function send(type: string, payload?: unknown) {
@@ -56,7 +57,9 @@ export function RoomHeader({ onLeave }: RoomHeaderProps) {
               <input
                 type="checkbox"
                 checked={roomState?.queueEnabled ?? false}
-                onChange={(event) => send('toggle_queue', { enabled: event.target.checked })}
+                onChange={(event) =>
+                  send('toggle_queue', { enabled: event.target.checked })
+                }
               />
               {t('rooms:enableQueue')}
             </label>
@@ -113,8 +116,10 @@ export function RoomHeader({ onLeave }: RoomHeaderProps) {
           {roomState.members.map((member) => (
             <span key={member.userId}>
               {names[member.userId] ?? member.userId.slice(0, 8)}
-              {member.userId === roomState.hostUserId ? ` (${t('rooms:hostBadge')})` : ''} —{' '}
-              {t(`rooms:${member.role}Role`)}
+              {member.userId === roomState.hostUserId
+                ? ` (${t('rooms:hostBadge')})`
+                : ''}{' '}
+              — {t(`rooms:${member.role}Role`)}
             </span>
           ))}
         </div>

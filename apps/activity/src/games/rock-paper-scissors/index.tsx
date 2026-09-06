@@ -1,5 +1,5 @@
-import { RpsRoomBoard } from './components';
 import type { GameDescriptor } from '../registry';
+import { RpsRoomBoard } from './components';
 import { rpsRoutes } from './rpsRoutes';
 
 export const gameDescriptor: GameDescriptor = {

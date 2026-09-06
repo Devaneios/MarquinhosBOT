@@ -1,5 +1,5 @@
-import { describe, expect, it, mock } from 'bun:test';
 import { act, render } from '@testing-library/react';
+import { describe, expect, it, mock } from 'bun:test';
 import { RoomConnectionContext } from '../../shared/RoomConnectionProvider';
 
 const capturedProps: Array<{ interactive: boolean }> = [];
@@ -11,7 +11,9 @@ mock.module('./ConnectFourCanvas', () => ({
   },
 }));
 
-async function renderRoomBoard(value: React.ContextType<typeof RoomConnectionContext>) {
+async function renderRoomBoard(
+  value: React.ContextType<typeof RoomConnectionContext>,
+) {
   capturedProps.length = 0;
   const { ConnectFourRoomBoard } = await import(
     `./ConnectFourRoomBoard.tsx?${Math.random()}`
@@ -25,7 +27,11 @@ async function renderRoomBoard(value: React.ContextType<typeof RoomConnectionCon
   });
 }
 
-function baseValue(overrides: Partial<NonNullable<React.ContextType<typeof RoomConnectionContext>>>) {
+function baseValue(
+  overrides: Partial<
+    NonNullable<React.ContextType<typeof RoomConnectionContext>>
+  >,
+) {
   return {
     send: mock(() => {}),
     connectionState: 'connected' as const,
@@ -58,7 +64,8 @@ describe('ConnectFourRoomBoard interactivity', () => {
   });
 
   it('is interactive for a seated player once it is their turn', async () => {
-    let deliver: ((message: { type: string; payload?: unknown }) => void) | null = null;
+    let deliver:
+      ((message: { type: string; payload?: unknown }) => void) | null = null;
     await renderRoomBoard(
       baseValue({
         role: 'player',
@@ -102,7 +109,9 @@ describe('ConnectFourRoomBoard interactivity', () => {
     );
     await act(async () => {
       render(
-        <RoomConnectionContext.Provider value={baseValue({ send, role: 'player' })}>
+        <RoomConnectionContext.Provider
+          value={baseValue({ send, role: 'player' })}
+        >
           <ConnectFourRoomBoard />
         </RoomConnectionContext.Provider>,
       );

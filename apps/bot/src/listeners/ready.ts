@@ -91,8 +91,7 @@ async function rotateTermoWord(client: Client<true>): Promise<void> {
         if (!channelId) continue;
 
         const channel = client.channels.cache.get(channelId) as
-          | TextChannel
-          | undefined;
+          TextChannel | undefined;
         if (!channel) continue;
 
         await sendTermoCrossword(client, guildId, channel);
@@ -312,8 +311,7 @@ async function broadcastTermoStats(client: Client<true>): Promise<void> {
         continue;
 
       const channel = client.channels.cache.get(channelId) as
-        | TextChannel
-        | undefined;
+        TextChannel | undefined;
       if (!channel) continue;
 
       const embed = new EmbedBuilder()

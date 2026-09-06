@@ -85,5 +85,9 @@
   min-width: 0;
   font-size: var(--key-font);
   line-height: 1;
-  background: linear-gradient(to bottom, var(--surface-from), var(--surface-to));
+  background: linear-gradient(
+    to bottom,
+    var(--surface-from),
+    var(--surface-to)
+  );
 }

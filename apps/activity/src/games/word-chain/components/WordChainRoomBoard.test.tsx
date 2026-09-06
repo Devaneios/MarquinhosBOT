@@ -1,9 +1,13 @@
-import { describe, expect, it, mock } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, mock } from 'bun:test';
 import { RoomConnectionContext } from '../../shared/RoomConnectionProvider';
 import { WordChainRoomBoard } from './WordChainRoomBoard';
 
-function baseValue(overrides: Partial<NonNullable<React.ContextType<typeof RoomConnectionContext>>>) {
+function baseValue(
+  overrides: Partial<
+    NonNullable<React.ContextType<typeof RoomConnectionContext>>
+  >,
+) {
   return {
     send: mock(() => {}),
     connectionState: 'connected' as const,
@@ -26,11 +30,16 @@ function baseValue(overrides: Partial<NonNullable<React.ContextType<typeof RoomC
   };
 }
 
-async function renderRoomBoard(value: NonNullable<React.ContextType<typeof RoomConnectionContext>>) {
-  let deliver: ((message: { type: string; payload?: unknown }) => void) | null = null;
+async function renderRoomBoard(
+  value: NonNullable<React.ContextType<typeof RoomConnectionContext>>,
+) {
+  let deliver: ((message: { type: string; payload?: unknown }) => void) | null =
+    null;
   const finalValue = {
     ...value,
-    subscribe: (onMessage: (message: { type: string; payload?: unknown }) => void) => {
+    subscribe: (
+      onMessage: (message: { type: string; payload?: unknown }) => void,
+    ) => {
       deliver = onMessage;
       return () => {};
     },
@@ -61,15 +70,19 @@ async function renderRoomBoard(value: NonNullable<React.ContextType<typeof RoomC
 }
 
 describe('WordChainRoomBoard input gating', () => {
-  it("disables the word input for a spectator, since their userId never matches currentTurn", async () => {
-    await renderRoomBoard(baseValue({ currentUserId: 'user-c', role: 'spectator' }));
+  it('disables the word input for a spectator, since their userId never matches currentTurn', async () => {
+    await renderRoomBoard(
+      baseValue({ currentUserId: 'user-c', role: 'spectator' }),
+    );
 
     const input = screen.getByPlaceholderText(/./) as HTMLInputElement;
     expect(input.disabled).toBe(true);
   });
 
-  it("enables the word input for the seated player whose turn it is", async () => {
-    await renderRoomBoard(baseValue({ currentUserId: 'user-a', role: 'player' }));
+  it('enables the word input for the seated player whose turn it is', async () => {
+    await renderRoomBoard(
+      baseValue({ currentUserId: 'user-a', role: 'player' }),
+    );
 
     const input = screen.getByPlaceholderText(/./) as HTMLInputElement;
     expect(input.disabled).toBe(false);
@@ -77,12 +90,17 @@ describe('WordChainRoomBoard input gating', () => {
 
   it('sends a word message when the current player submits', async () => {
     const send = mock(() => {});
-    await renderRoomBoard(baseValue({ send, currentUserId: 'user-a', role: 'player' }));
+    await renderRoomBoard(
+      baseValue({ send, currentUserId: 'user-a', role: 'player' }),
+    );
 
     const input = screen.getByPlaceholderText(/./) as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'amora' } });
     fireEvent.keyDown(input, { key: 'Enter' });
 
-    expect(send).toHaveBeenCalledWith({ type: 'word', payload: { word: 'amora' } });
+    expect(send).toHaveBeenCalledWith({
+      type: 'word',
+      payload: { word: 'amora' },
+    });
   });
 });

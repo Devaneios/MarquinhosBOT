@@ -104,12 +104,18 @@ export function WordChainRoomBoard() {
           <div className="text-sm text-marquinhos-text-dim">
             {isCurrentPlayer
               ? t('word-chain:yourTurnPrompt')
-              : t('word-chain:waitingForTurn', { player: gameState.currentTurn })}
+              : t('word-chain:waitingForTurn', {
+                  player: gameState.currentTurn,
+                })}
           </div>
 
           {gameState.currentWord && (
             <div className="font-pixel text-2xl text-marquinhos-accent">
-              "{gameState.currentWord[gameState.currentWord.length - 1].toUpperCase()}"
+              "
+              {gameState.currentWord[
+                gameState.currentWord.length - 1
+              ].toUpperCase()}
+              "
             </div>
           )}
 
@@ -137,7 +143,9 @@ export function WordChainRoomBoard() {
             </button>
           </div>
 
-          {error && <div className="text-sm text-marquinhos-danger">{error}</div>}
+          {error && (
+            <div className="text-sm text-marquinhos-danger">{error}</div>
+          )}
         </div>
       )}
 

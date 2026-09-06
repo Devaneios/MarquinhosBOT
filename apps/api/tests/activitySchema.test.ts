@@ -37,6 +37,22 @@ describe('activityTokenExchangeSchema', () => {
 });
 
 describe('activityWsSessionSchema', () => {
+  it('rejects a multi-mode payload without a roomId', async () => {
+    expect(
+      activityWsSessionSchema.parseAsync({
+        body: {
+          accessToken: 'tok_abc',
+          instanceId: 'inst-1',
+          guildId: 'guild-1',
+          mode: 'multi',
+          game: 'pong',
+        },
+        query: {},
+        params: {},
+      }),
+    ).rejects.toThrow();
+  });
+
   it('accepts a payload with accessToken, instanceId, guildId, mode and game', async () => {
     expect(
       activityWsSessionSchema.parseAsync({
@@ -46,6 +62,7 @@ describe('activityWsSessionSchema', () => {
           guildId: 'guild-1',
           mode: 'multi',
           game: 'pong',
+          roomId: 'ROOM01',
         },
         query: {},
         params: {},
@@ -219,6 +236,7 @@ describe('activityWsSessionSchema', () => {
           guildId: 'guild-1',
           mode: 'multi',
           game: 'cards',
+          roomId: 'ROOM01',
         },
         query: {},
         params: {},

@@ -1,5 +1,5 @@
-import { SnakeRoomBoard } from './components';
 import type { GameDescriptor } from '../registry';
+import { SnakeRoomBoard } from './components';
 import { snakeRoutes } from './snakeRoutes';
 
 export const gameDescriptor: GameDescriptor = {

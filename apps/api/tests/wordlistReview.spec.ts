@@ -39,10 +39,9 @@ describe('WordleService wordlist review', () => {
 
     expect(next.index).toBe(1);
     const row = db
-      .query<
-        { is_banned: number | null },
-        { $word: string }
-      >('SELECT is_banned FROM wordlist_review WHERE word = $word')
+      .query<{ is_banned: number | null }, { $word: string }>(
+        'SELECT is_banned FROM wordlist_review WHERE word = $word',
+      )
       .get({ $word: first.word as string });
     expect(row?.is_banned).toBe(0);
   });
@@ -52,10 +51,9 @@ describe('WordleService wordlist review', () => {
     service.submitReviewDecision(first.word as string, 'remove');
 
     const row = db
-      .query<
-        { is_banned: number | null },
-        { $word: string }
-      >('SELECT is_banned FROM wordlist_review WHERE word = $word')
+      .query<{ is_banned: number | null }, { $word: string }>(
+        'SELECT is_banned FROM wordlist_review WHERE word = $word',
+      )
       .get({ $word: first.word as string });
     expect(row?.is_banned).toBe(1);
   });

@@ -1,9 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
 
-const { Server } = await import('colyseus');
-const { WebSocketTransport } = await import('@colyseus/ws-transport');
-const { boot } = await import('@colyseus/testing');
 const { MatchRoom } = await import('../src/realtime/MatchRoom');
+const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
 const { roomKey } = await import('../src/services/activity/roomKey');
@@ -82,17 +80,17 @@ async function concludedMatchWithQueue(roomId: string) {
 }
 
 beforeAll(async () => {
-  const gameServer = new Server({ transport: new WebSocketTransport() });
-  gameServer.define('match', MatchRoom).filterBy(['roomKey']);
-  colyseus = await boot(gameServer);
+  colyseus = await bootColyseusTestServer((server) => {
+    server.define('match', MatchRoom).filterBy(['roomKey']);
+  });
 });
 
 afterEach(async () => {
-  await colyseus.cleanup();
+  if (colyseus) await colyseus.cleanup();
 });
 
 afterAll(async () => {
-  await colyseus.shutdown();
+  if (colyseus) await colyseus.shutdown();
 });
 
 describe('MatchRoom', () => {

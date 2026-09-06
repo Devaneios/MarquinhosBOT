@@ -35,9 +35,13 @@ function BattleshipPlayerView() {
   const [side, setSide] = useState<BattleshipSide | null>(null);
   const [state, setState] = useState<BattleshipStateView | null>(null);
   const [pendingShips, setPendingShips] = useState<PendingShip[]>([]);
-  const [selectedType, setSelectedType] = useState<ShipType | null>(SHIP_ORDER[0] ?? null);
+  const [selectedType, setSelectedType] = useState<ShipType | null>(
+    SHIP_ORDER[0] ?? null,
+  );
   const [orientation, setOrientation] = useState<Orientation>('horizontal');
-  const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(null);
+  const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(
+    null,
+  );
   const [placementError, setPlacementError] = useState<string | null>(null);
   const [fireError, setFireError] = useState<string | null>(null);
 
@@ -66,7 +70,10 @@ function BattleshipPlayerView() {
 
   const previewValid = useMemo(() => {
     if (!hoverCell || !selectedType) return false;
-    return isValidPlacement({ type: selectedType, orientation, ...hoverCell }, pendingShips);
+    return isValidPlacement(
+      { type: selectedType, orientation, ...hoverCell },
+      pendingShips,
+    );
   }, [hoverCell, selectedType, orientation, pendingShips]);
 
   function placeSelectedAt(cell: { x: number; y: number }) {
@@ -75,7 +82,9 @@ function BattleshipPlayerView() {
     if (!isValidPlacement(ship, pendingShips)) return;
     const next = [...pendingShips, ship];
     setPendingShips(next);
-    const nextType = SHIP_ORDER.find((type) => !next.some((s) => s.type === type));
+    const nextType = SHIP_ORDER.find(
+      (type) => !next.some((s) => s.type === type),
+    );
     setSelectedType(nextType ?? null);
   }
 
@@ -100,7 +109,9 @@ function BattleshipPlayerView() {
   return (
     <div className="flex flex-1 flex-col items-center gap-4 overflow-y-auto p-4 sm:p-6">
       {!state && (
-        <div className="text-sm text-marquinhos-text-dim">{t('battleship:waitingMatch')}</div>
+        <div className="text-sm text-marquinhos-text-dim">
+          {t('battleship:waitingMatch')}
+        </div>
       )}
 
       {state && phase === 'placement' && !mySelfReady && (
@@ -120,7 +131,9 @@ function BattleshipPlayerView() {
             orientation={orientation}
             onSelectType={setSelectedType}
             onToggleOrientation={() =>
-              setOrientation((o) => (o === 'horizontal' ? 'vertical' : 'horizontal'))
+              setOrientation((o) =>
+                o === 'horizontal' ? 'vertical' : 'horizontal',
+              )
             }
             onSubmit={submitFleet}
             onReset={() => {
@@ -154,9 +167,13 @@ function BattleshipPlayerView() {
             ownBoard={state.own}
             opponentBoard={state.opponent}
             canFire={phase === 'battle' && myTurn}
-            onClickOpponentCell={(cell) => ctx?.send({ type: 'fire', payload: cell })}
+            onClickOpponentCell={(cell) =>
+              ctx?.send({ type: 'fire', payload: cell })
+            }
           />
-          {fireError && <div className="text-sm text-marquinhos-danger">{fireError}</div>}
+          {fireError && (
+            <div className="text-sm text-marquinhos-danger">{fireError}</div>
+          )}
         </div>
       )}
     </div>
@@ -189,8 +206,16 @@ function BattleshipSpectatorView() {
     <div className="flex flex-1 flex-col items-center gap-4 overflow-y-auto p-4 sm:p-6">
       <div className="text-sm uppercase tracking-[0.2em] text-marquinhos-text-dim">
         {state.phase === 'ended'
-          ? t(state.winner === 'p1' ? 'battleship:player1Wins' : 'battleship:player2Wins')
-          : t(state.turn === 'p1' ? 'battleship:player1Turn' : 'battleship:player2Turn')}
+          ? t(
+              state.winner === 'p1'
+                ? 'battleship:player1Wins'
+                : 'battleship:player2Wins',
+            )
+          : t(
+              state.turn === 'p1'
+                ? 'battleship:player1Turn'
+                : 'battleship:player2Turn',
+            )}
       </div>
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
         <BattleshipCanvas mode="battle" ownBoard={state.p1} canFire={false} />

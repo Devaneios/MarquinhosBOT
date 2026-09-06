@@ -155,7 +155,7 @@ export class AiThreadService {
             traceId: trace.traceId || undefined,
           };
         }
-        return Promise.reject(error);
+        throw error;
       }
 
       await this.compactIfNeeded(request.threadId, trace);

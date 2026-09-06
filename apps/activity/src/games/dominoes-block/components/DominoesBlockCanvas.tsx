@@ -22,21 +22,62 @@ const TILE_DISABLED_COLOR = 0x4a4a4c;
 const TILE_BORDER = 0x1c1c1e;
 const PIP_COLOR = 0x1c1c1e;
 
-function drawTileFace(gfx: Graphics, width: number, height: number, fill: number) {
-  gfx.clear().roundRect(0, 0, width, height, 6).fill(fill).stroke({ width: 2, color: TILE_BORDER });
+function drawTileFace(
+  gfx: Graphics,
+  width: number,
+  height: number,
+  fill: number,
+) {
+  gfx
+    .clear()
+    .roundRect(0, 0, width, height, 6)
+    .fill(fill)
+    .stroke({ width: 2, color: TILE_BORDER });
 }
 
 const PIP_LAYOUTS: Record<number, [number, number][]> = {
   0: [],
   1: [[1, 1]],
-  2: [[0, 0], [2, 2]],
-  3: [[0, 0], [1, 1], [2, 2]],
-  4: [[0, 0], [0, 2], [2, 0], [2, 2]],
-  5: [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]],
-  6: [[0, 0], [1, 0], [2, 0], [0, 2], [1, 2], [2, 2]],
+  2: [
+    [0, 0],
+    [2, 2],
+  ],
+  3: [
+    [0, 0],
+    [1, 1],
+    [2, 2],
+  ],
+  4: [
+    [0, 0],
+    [0, 2],
+    [2, 0],
+    [2, 2],
+  ],
+  5: [
+    [0, 0],
+    [0, 2],
+    [1, 1],
+    [2, 0],
+    [2, 2],
+  ],
+  6: [
+    [0, 0],
+    [1, 0],
+    [2, 0],
+    [0, 2],
+    [1, 2],
+    [2, 2],
+  ],
 };
 
-function drawPips(gfx: Graphics, value: number, x: number, y: number, w: number, h: number) {
+function drawPips(
+  gfx: Graphics,
+  value: number,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+) {
   const pad = Math.min(w, h) * 0.16;
   const cellW = (w - pad * 2) / 2;
   const cellH = (h - pad * 2) / 2;
@@ -144,7 +185,11 @@ export function DominoesBlockCanvas({
       };
       contextCanvas = canvasRef.current!;
       contextCanvas.addEventListener('webglcontextlost', onContextLost, false);
-      contextCanvas.addEventListener('webglcontextrestored', onContextRestored, false);
+      contextCanvas.addEventListener(
+        'webglcontextrestored',
+        onContextRestored,
+        false,
+      );
 
       chainContainer = new Container();
       handContainer = new Container();
@@ -180,7 +225,8 @@ export function DominoesBlockCanvas({
           entry = { container, gfx, divider, tile: null };
           const currentEntry = entry;
           container.on('pointertap', () => {
-            if (roleRef.current === 'spectator' || roleRef.current === 'queued') return;
+            if (roleRef.current === 'spectator' || roleRef.current === 'queued')
+              return;
             if (currentEntry.tile) onTileClickRef.current(currentEntry.tile);
           });
           handPool[index] = entry;
@@ -201,7 +247,8 @@ export function DominoesBlockCanvas({
           return;
         }
 
-        const chainWidth = current.chain.length * (CHAIN_TILE_W + CHAIN_GAP) - CHAIN_GAP;
+        const chainWidth =
+          current.chain.length * (CHAIN_TILE_W + CHAIN_GAP) - CHAIN_GAP;
         let cx = (CANVAS_WIDTH - chainWidth) / 2;
         const cy = 60;
         current.chain.forEach((tile, index) => {
@@ -210,7 +257,14 @@ export function DominoesBlockCanvas({
           entry.container.position.set(cx, cy);
           drawTileFace(entry.gfx, CHAIN_TILE_W, CHAIN_TILE_H, TILE_COLOR);
           drawPips(entry.gfx, tile.a, 0, 0, CHAIN_TILE_W / 2, CHAIN_TILE_H);
-          drawPips(entry.gfx, tile.b, CHAIN_TILE_W / 2, 0, CHAIN_TILE_W / 2, CHAIN_TILE_H);
+          drawPips(
+            entry.gfx,
+            tile.b,
+            CHAIN_TILE_W / 2,
+            0,
+            CHAIN_TILE_W / 2,
+            CHAIN_TILE_H,
+          );
           cx += CHAIN_TILE_W + CHAIN_GAP;
         });
         for (let i = current.chain.length; i < chainPool.length; i++) {
@@ -231,7 +285,8 @@ export function DominoesBlockCanvas({
           const ends = legalEndsFor(tile, current.leftEnd, current.rightEnd);
           const playable = current.chain.length === 0 || ends.length > 0;
           const isSelected =
-            selectedTileRef.current !== null && tileMatches(selectedTileRef.current, tile);
+            selectedTileRef.current !== null &&
+            tileMatches(selectedTileRef.current, tile);
           const fill = isSelected
             ? TILE_SELECTED_COLOR
             : isMyTurn && playable
@@ -265,7 +320,10 @@ export function DominoesBlockCanvas({
         contextCanvas.removeEventListener('webglcontextlost', onContextLost);
       }
       if (contextCanvas && onContextRestored) {
-        contextCanvas.removeEventListener('webglcontextrestored', onContextRestored);
+        contextCanvas.removeEventListener(
+          'webglcontextrestored',
+          onContextRestored,
+        );
       }
       renderRef.current = null;
       appRef.current = null;

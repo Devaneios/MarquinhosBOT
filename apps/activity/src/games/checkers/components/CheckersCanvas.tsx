@@ -122,7 +122,11 @@ export function CheckersCanvas({
       onContextRestored = () => {
         app.ticker.start();
       };
-      canvasRef.current!.addEventListener('webglcontextlost', onContextLost, false);
+      canvasRef.current!.addEventListener(
+        'webglcontextlost',
+        onContextLost,
+        false,
+      );
       canvasRef.current!.addEventListener(
         'webglcontextrestored',
         onContextRestored,
@@ -145,7 +149,8 @@ export function CheckersCanvas({
     }
 
     function handleSquareClick(pos: Position) {
-      if (roleRef.current === 'spectator' || roleRef.current === 'queued') return;
+      if (roleRef.current === 'spectator' || roleRef.current === 'queued')
+        return;
       const currentState = stateRef.current;
       const color = myColorRef.current;
       if (!currentState || !color) return;
@@ -189,7 +194,8 @@ export function CheckersCanvas({
       for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
           const isDark = (row + col) % 2 === 1;
-          const isSelected = current && current.row === row && current.col === col;
+          const isSelected =
+            current && current.row === row && current.col === col;
           const isContinuing =
             currentState?.mustContinueFrom?.row === row &&
             currentState?.mustContinueFrom?.col === col;
@@ -200,7 +206,14 @@ export function CheckersCanvas({
               : isDark
                 ? DARK_SQUARE
                 : LIGHT_SQUARE;
-          squares.rect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE).fill(fill);
+          squares
+            .rect(
+              col * SQUARE_SIZE,
+              row * SQUARE_SIZE,
+              SQUARE_SIZE,
+              SQUARE_SIZE,
+            )
+            .fill(fill);
         }
       }
       layer.addChild(squares);
@@ -216,10 +229,16 @@ export function CheckersCanvas({
           const cx = col * SQUARE_SIZE + SQUARE_SIZE / 2;
           const cy = row * SQUARE_SIZE + SQUARE_SIZE / 2;
           const fillColor = piece.color === 'black' ? BLACK_PIECE : RED_PIECE;
-          const borderColor = piece.color === 'black' ? BLACK_PIECE_BORDER : RED_PIECE_BORDER;
-          pieces.circle(cx, cy, radius).fill(fillColor).stroke({ width: 2, color: borderColor });
+          const borderColor =
+            piece.color === 'black' ? BLACK_PIECE_BORDER : RED_PIECE_BORDER;
+          pieces
+            .circle(cx, cy, radius)
+            .fill(fillColor)
+            .stroke({ width: 2, color: borderColor });
           if (piece.king) {
-            pieces.circle(cx, cy, radius * 0.5).stroke({ width: 3, color: KING_RING });
+            pieces
+              .circle(cx, cy, radius * 0.5)
+              .stroke({ width: 3, color: KING_RING });
           }
         }
       }

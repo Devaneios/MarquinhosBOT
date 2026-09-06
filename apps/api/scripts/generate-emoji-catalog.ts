@@ -54,9 +54,9 @@ const customEmojis: CustomEmojiEntry[] = devaneiosEmojis.map((entry) => ({
 
 writeFileSync(
   STANDARD_OUTPUT_PATH,
-  `${JSON.stringify(standardEmojis, null, 2)  }\n`,
+  `${JSON.stringify(standardEmojis, null, 2)}\n`,
 );
-writeFileSync(CUSTOM_OUTPUT_PATH, `${JSON.stringify(customEmojis, null, 2)  }\n`);
+writeFileSync(CUSTOM_OUTPUT_PATH, `${JSON.stringify(customEmojis, null, 2)}\n`);
 
 console.log(`standardEmojis: ${standardEmojis.length} entries`);
 console.log(`customEmojis: ${customEmojis.length} entries`);

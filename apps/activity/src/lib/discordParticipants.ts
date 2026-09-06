@@ -6,9 +6,12 @@ import { devwarn } from './devlog';
 // left, or the command failed) — callers fall back to a truncated userId for
 // any id not present, matching the convention Minesweeper's board already
 // established rather than duplicating that fallback here.
-export async function getParticipantDisplayNames(): Promise<Record<string, string>> {
+export async function getParticipantDisplayNames(): Promise<
+  Record<string, string>
+> {
   try {
-    const { participants } = await discordSdk.commands.getActivityInstanceConnectedParticipants();
+    const { participants } =
+      await discordSdk.commands.getActivityInstanceConnectedParticipants();
     const result: Record<string, string> = {};
     for (const p of participants) {
       result[p.id] = p.nickname ?? p.global_name ?? p.username;

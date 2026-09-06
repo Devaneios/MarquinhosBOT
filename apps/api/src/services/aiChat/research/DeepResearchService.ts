@@ -104,6 +104,13 @@ export interface DeepResearchResult {
 
 type QueryOrigin = 'plan' | 'source' | 'reflection';
 
+interface SearchBatch {
+  hitsByQuery: SearchHit[][];
+  errors: string[];
+  unresponsiveEngines: string[];
+  searches: number;
+}
+
 /** Why a selected page produced no source, so the thread can say it out loud. */
 type ReadOutcome =
   | { ok: true; source: Omit<NumberedExtraction, 'index'> }
@@ -365,6 +372,7 @@ export class DeepResearchService {
     let maxDepth = 0;
     let searchErrors = 0;
     let truncatedByBudget = false;
+    let reflectionGaps: string[] = [];
 
     while (round < MAX_ROUNDS && frontier.size > 0) {
       if (this.now() >= loopDeadlineAt) {
@@ -412,11 +420,12 @@ export class DeepResearchService {
           .map((entry) => `- ${entry.query}`)
           .join('\n')}`,
       );
-      const { hitsByQuery, errors } = await this.search(
-        entries.map((entry) => entry.query),
-        trace,
-      );
-      searchesUsed += entries.length;
+      const { hitsByQuery, errors, unresponsiveEngines, searches } =
+        await this.search(
+          entries.map((entry) => entry.query),
+          trace,
+        );
+      searchesUsed += searches;
       if (errors.length > 0) {
         searchErrors += errors.length;
         report(
@@ -424,6 +433,23 @@ export class DeepResearchService {
           `${errors.length} de ${entries.length} busca(s) falharam: ${errors[0]}`,
         );
       }
+
+      const rawHitCount = hitsByQuery.reduce(
+        (total, hits) => total + hits.length,
+        0,
+      );
+      const siftMessage =
+        unresponsiveEngines.length > 0
+          ? `Motores sem resposta: ${unresponsiveEngines.join(', ')}.`
+          : rawHitCount > 0 &&
+              hitsByQuery.every((hits) =>
+                hits.every((hit) => visited.has(normalizeUrl(hit.url))),
+              )
+            ? 'Resultados já lidos nesta rodada.'
+            : rawHitCount === 0
+              ? 'Nenhum resultado encontrado para estas consultas.'
+              : `${rawHitCount} resultado(s) encontrado(s) para triagem.`;
+      report('sift', siftMessage);
 
       const candidates = rankHits(hitsByQuery, {
         maxPerDomain: MAX_PER_DOMAIN,
@@ -443,6 +469,7 @@ export class DeepResearchService {
             Math.min(SOURCES_PER_ROUND, remainingFetches),
             round,
             trace,
+            reflectionGaps,
           )
         : [];
       report(
@@ -506,12 +533,22 @@ export class DeepResearchService {
         );
 
         const added = frontier.push(followUps, roundDepth + 1, 'source');
-        if (added.length > 0) {
+        const dropped = followUps.length - added.length;
+        if (added.length > 0 || dropped > 0) {
           report(
             'follow',
-            `As fontes abriram ${added.length} pista(s) nova(s):\n${added
-              .map((entry) => `- ${entry.query}`)
-              .join('\n')}`,
+            [
+              added.length > 0
+                ? `As fontes abriram ${added.length} pista(s) nova(s):\n${added
+                    .map((entry) => `- ${entry.query}`)
+                    .join('\n')}`
+                : '',
+              dropped > 0
+                ? `${dropped} pista(s) foram descartadas por exceder a profundidade máxima.`
+                : '',
+            ]
+              .filter(Boolean)
+              .join('\n'),
           );
         }
       }
@@ -528,6 +565,7 @@ export class DeepResearchService {
         round,
         trace,
       );
+      reflectionGaps = reflection.gaps;
       frontier.push(reflection.followUpQueries, roundDepth + 1, 'reflection');
 
       if (reflection.sufficient && this.floorMet(plan, extractions, round)) {
@@ -651,17 +689,23 @@ export class DeepResearchService {
   private async search(
     queries: string[],
     trace: TraceContext,
-  ): Promise<{ hitsByQuery: SearchHit[][]; errors: string[] }> {
+  ): Promise<SearchBatch> {
     const errors: string[] = [];
+    const unresponsiveEngines = new Set<string>();
+    let searches = 0;
     const hitsByQuery = await mapWithConcurrency(
       queries,
       SEARCH_CONCURRENCY,
       async (query) => {
         try {
-          const hits = await this.searxng.search(query, {
+          searches++;
+          const response = await this.searxng.searchDetailed(query, {
             limit: HITS_PER_QUERY,
-            language: 'pt-BR',
           });
+          for (const engine of response.unresponsiveEngines) {
+            unresponsiveEngines.add(engine);
+          }
+          const hits = response.hits;
           if (hits.length > 0) return hits;
 
           // Every term is ANDed by the engines behind SearXNG, so a long
@@ -675,10 +719,14 @@ export class DeepResearchService {
             query,
             shortened,
           });
-          return await this.searxng.search(shortened, {
+          searches++;
+          const retry = await this.searxng.searchDetailed(shortened, {
             limit: HITS_PER_QUERY,
-            language: 'pt-BR',
           });
+          for (const engine of retry.unresponsiveEngines) {
+            unresponsiveEngines.add(engine);
+          }
+          return retry.hits;
         } catch (error) {
           // One dead sub-query must not kill the round; the other angles still
           // produce a report. But a search that errored is not a search that
@@ -694,7 +742,12 @@ export class DeepResearchService {
         }
       },
     );
-    return { hitsByQuery, errors };
+    return {
+      hitsByQuery,
+      errors,
+      unresponsiveEngines: [...unresponsiveEngines],
+      searches,
+    };
   }
 
   /**
@@ -709,6 +762,7 @@ export class DeepResearchService {
     limit: number,
     round: number,
     trace: TraceContext,
+    gaps: string[],
   ): Promise<RankedHit[]> {
     const byUrl = new Map(candidates.map((hit) => [hit.url, hit]));
 
@@ -728,6 +782,7 @@ export class DeepResearchService {
                 snippet: hit.snippet,
                 queryAgreement: hit.queryAgreement,
               })),
+              gaps,
             ),
           },
         ],

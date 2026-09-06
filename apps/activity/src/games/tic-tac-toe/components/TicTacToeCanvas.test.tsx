@@ -1,5 +1,5 @@
-import { describe, expect, it, mock } from 'bun:test';
 import { act, render } from '@testing-library/react';
+import { describe, expect, it, mock } from 'bun:test';
 
 interface FakeGraphics {
   handlers: Record<string, () => void>;
@@ -59,7 +59,9 @@ async function renderCanvas(props: {
   onMove: (row: number, col: number) => void;
 }) {
   installPixiMock();
-  const { TicTacToeCanvas } = await import(`./TicTacToeCanvas.tsx?${Math.random()}`);
+  const { TicTacToeCanvas } = await import(
+    `./TicTacToeCanvas.tsx?${Math.random()}`
+  );
   await act(async () => {
     render(
       <TicTacToeCanvas

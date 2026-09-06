@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
-import type { GamePhase, RoundResult, RpsErrorPayload, RpsPick, RpsState } from '../types';
+import type {
+  GamePhase,
+  RoundResult,
+  RpsErrorPayload,
+  RpsPick,
+  RpsState,
+} from '../types';
 import { PickButton } from './RpsBoard';
 
 // Renders Rock-Paper-Scissors inside a multiplayer Room view — driven by

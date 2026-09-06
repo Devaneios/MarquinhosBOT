@@ -15,7 +15,10 @@ export function CheckersRoomBoard() {
     if (!ctx) return;
     return ctx.subscribe((message) => {
       if (message.type === 'init') {
-        const payload = message.payload as { color: Color | null; state: CheckersState };
+        const payload = message.payload as {
+          color: Color | null;
+          state: CheckersState;
+        };
         setMyColor(payload.color);
         setState(payload.state);
       } else if (message.type === 'state') {
@@ -34,7 +37,9 @@ export function CheckersRoomBoard() {
         state={state}
         myColor={myColor}
         role={ctx?.role ?? null}
-        onMove={(from, to) => ctx?.send({ type: 'move', payload: { from, to } })}
+        onMove={(from, to) =>
+          ctx?.send({ type: 'move', payload: { from, to } })
+        }
         clearSelectionSignal={clearSelectionSignal}
       />
     </div>

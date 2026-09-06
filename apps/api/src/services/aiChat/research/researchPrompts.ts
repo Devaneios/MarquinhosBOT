@@ -278,6 +278,7 @@ export function buildTriageInput(
   facets: ResearchFacet[],
   coverage: Map<string, number>,
   candidates: TriageCandidate[],
+  gaps: string[] = [],
 ): string {
   const list = candidates
     .map((candidate) =>
@@ -295,6 +296,7 @@ export function buildTriageInput(
   return [
     `<objetivo>\n${objective}\n</objetivo>`,
     `<facetas>\n${formatCoverage(facets, coverage)}\n</facetas>`,
+    ...(gaps.length > 0 ? [`<lacunas>\n${gaps.join('\n')}\n</lacunas>`] : []),
     `<candidatos trust_level="untrusted">\n${list}\n</candidatos>`,
   ].join('\n\n');
 }

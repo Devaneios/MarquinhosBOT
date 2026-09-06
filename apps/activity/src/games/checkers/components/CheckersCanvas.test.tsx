@@ -1,5 +1,5 @@
-import { describe, expect, it, mock } from 'bun:test';
 import { act, render } from '@testing-library/react';
+import { describe, expect, it, mock } from 'bun:test';
 import type { CheckersState } from '../types';
 
 function installPixiMock() {
@@ -41,10 +41,15 @@ const stateWithForcedContinuation: CheckersState = {
 
 async function renderCanvas(props: {
   role: 'player' | 'spectator' | 'queued' | null;
-  onMove: (from: { row: number; col: number }, to: { row: number; col: number }) => void;
+  onMove: (
+    from: { row: number; col: number },
+    to: { row: number; col: number },
+  ) => void;
 }) {
   installPixiMock();
-  const { CheckersCanvas } = await import(`./CheckersCanvas.tsx?${Math.random()}`);
+  const { CheckersCanvas } = await import(
+    `./CheckersCanvas.tsx?${Math.random()}`
+  );
   const { container } = await (async () => {
     let result: ReturnType<typeof render> | null = null;
     await act(async () => {
@@ -64,7 +69,14 @@ async function renderCanvas(props: {
 
   const canvas = container.querySelector('canvas')!;
   Object.defineProperty(canvas, 'getBoundingClientRect', {
-    value: () => ({ left: 0, top: 0, width: 480, height: 480, right: 480, bottom: 480 }),
+    value: () => ({
+      left: 0,
+      top: 0,
+      width: 480,
+      height: 480,
+      right: 480,
+      bottom: 480,
+    }),
     configurable: true,
   });
   return canvas;
@@ -76,7 +88,11 @@ describe('CheckersCanvas move gating (forced-continuation click)', () => {
     const canvas = await renderCanvas({ role: 'spectator', onMove });
 
     canvas.dispatchEvent(
-      new PointerEvent('pointerdown', { clientX: 190, clientY: 190, bubbles: true }),
+      new PointerEvent('pointerdown', {
+        clientX: 190,
+        clientY: 190,
+        bubbles: true,
+      }),
     );
 
     expect(onMove).not.toHaveBeenCalled();
@@ -87,7 +103,11 @@ describe('CheckersCanvas move gating (forced-continuation click)', () => {
     const canvas = await renderCanvas({ role: 'queued', onMove });
 
     canvas.dispatchEvent(
-      new PointerEvent('pointerdown', { clientX: 190, clientY: 190, bubbles: true }),
+      new PointerEvent('pointerdown', {
+        clientX: 190,
+        clientY: 190,
+        bubbles: true,
+      }),
     );
 
     expect(onMove).not.toHaveBeenCalled();
@@ -98,7 +118,11 @@ describe('CheckersCanvas move gating (forced-continuation click)', () => {
     const canvas = await renderCanvas({ role: 'player', onMove });
 
     canvas.dispatchEvent(
-      new PointerEvent('pointerdown', { clientX: 190, clientY: 190, bubbles: true }),
+      new PointerEvent('pointerdown', {
+        clientX: 190,
+        clientY: 190,
+        bubbles: true,
+      }),
     );
 
     expect(onMove).toHaveBeenCalledWith({ row: 2, col: 2 }, { row: 3, col: 3 });
@@ -109,7 +133,11 @@ describe('CheckersCanvas move gating (forced-continuation click)', () => {
     const canvas = await renderCanvas({ role: null, onMove });
 
     canvas.dispatchEvent(
-      new PointerEvent('pointerdown', { clientX: 190, clientY: 190, bubbles: true }),
+      new PointerEvent('pointerdown', {
+        clientX: 190,
+        clientY: 190,
+        bubbles: true,
+      }),
     );
 
     expect(onMove).toHaveBeenCalledWith({ row: 2, col: 2 }, { row: 3, col: 3 });
