@@ -2,7 +2,7 @@ name: CI / Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
     paths:
       - apps/api/**
       - package.json
@@ -10,7 +10,7 @@ on:
       - turbo.json
       - .lintstagedrc.json
       - .husky/**
-      - .github/workflows/api.yml
+      - .github/workflows/api-develop.yml
 
 jobs:
   build:

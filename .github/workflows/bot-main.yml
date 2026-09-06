@@ -10,11 +10,11 @@ on:
       - turbo.json
       - .lintstagedrc.json
       - .husky/**
-      - .github/workflows/bot.yml
+      - .github/workflows/bot-main.yml
 
 jobs:
   build:
-    runs-on: [self-hosted, Linux, X64, devaneios-runner]
+    runs-on: [self-hosted, Linux, X64, hostinger-runner]
 
     steps:
       - uses: actions/checkout@v7
@@ -50,7 +50,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: [self-hosted, Linux, X64, devaneios-runner]
+    runs-on: [self-hosted, Linux, X64, hostinger-runner]
 
     steps:
       - uses: actions/checkout@v7

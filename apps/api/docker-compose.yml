@@ -12,8 +12,6 @@ services:
     environment:
       - NODE_ENV=production
       - SQLITE_PATH=/app/data/marquinhos.db
-    ports:
-      - "3106:3106"
     volumes:
       - /etc/ssl/dvns-certificate.crt:/app/dvns-certificate.crt:ro
       - /etc/ssl/dvns-private.key:/app/dvns-private.key:ro
@@ -23,6 +21,7 @@ services:
       # docs/superpowers/plans/2026-07-24-agentic-tool-calling.md.
       - /var/run/docker.sock:/var/run/docker.sock
     restart: on-failure:5
+    stop_grace_period: 30s
     healthcheck:
       test: ['CMD', 'pgrep', '-f', 'bun']
       interval: 30s
