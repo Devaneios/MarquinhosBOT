@@ -52,7 +52,7 @@
     "typescript": "^6.0.3"
   },
   "scripts": {
-    "build": "bun build src/index.ts --target=bun --outdir=./dist --sourcemap=external",
+    "build": "bun build src/index.ts --target=bun --external cpu-features --outdir=./dist --sourcemap=external",
     "dev": "bun --watch src/index.ts",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\"",
