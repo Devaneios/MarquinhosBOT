@@ -6,7 +6,7 @@
     "rootDir": "src",
     "outDir": "dist",
     "moduleResolution": "bundler",
-    "types": ["bun-types"],
+    "types": ["bun"],
     "importHelpers": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
