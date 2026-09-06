@@ -34,7 +34,7 @@ async function doHandshake(): Promise<DiscordIdentity> {
     response_type: 'code',
     state: '',
     prompt: 'none',
-    scope: ['identify'],
+    scope: ['identify', 'guilds.members.read'],
   });
   devlog('[auth] got authorization code');
 
