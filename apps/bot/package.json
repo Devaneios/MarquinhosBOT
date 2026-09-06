@@ -14,8 +14,7 @@
     "lint:fix": "eslint 'src/**/*.ts' --fix",
     "lint:check": "eslint 'src/**/*.ts' --max-warnings=0",
     "format": "prettier --write \"src/**/*.ts\" && bun run lint:fix",
-    "format:check": "prettier --check \"src/**/*.ts\" && bun run lint:check",
-    "prepare": "husky"
+    "format:check": "prettier --check \"src/**/*.ts\" && bun run lint:check"
   },
   "author": "",
   "license": "GPL-3.0",
@@ -43,8 +42,6 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.5.0",
-    "@commitlint/config-conventional": "^20.5.0",
     "@types/bun": "^1.3.11",
     "@types/color": "^4.2.1",
     "@types/fuzzy-search": "^2.1.5",
@@ -55,18 +52,10 @@
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^5.5.5",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "prettier-plugin-organize-imports": "^4.3.0",
     "typescript": "^6.0.2"
   },
-  "trustedDependencies": [
-    "esbuild",
-    "ffmpeg-static",
-    "sharp",
-    "skia-canvas"
-  ],
   "engines": {
     "bun": ">=1.0.0"
   },
@@ -78,11 +67,5 @@
     "picomatch": "4.0.4",
     "tar": "7.5.13",
     "undici": "6.24.1"
-  },
-  "lint-staged": {
-    "src/**/*.ts": [
-      "eslint --fix",
-      "prettier --write"
-    ]
   }
 }

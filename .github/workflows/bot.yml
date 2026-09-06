@@ -3,6 +3,14 @@ name: CI / Deploy
 on:
   push:
     branches: [main]
+    paths:
+      - apps/bot/**
+      - package.json
+      - bun.lock
+      - turbo.json
+      - .lintstagedrc.json
+      - .husky/**
+      - .github/workflows/bot.yml
 
 jobs:
   build:
@@ -26,19 +34,19 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Type check
-        run: bun run typecheck
+        run: bun run --filter marquinhosbot typecheck
 
       - name: Lint check
-        run: bun run lint:check
+        run: bun run --filter marquinhosbot lint:check
 
       - name: Format check
-        run: bun run format:check
+        run: bun run --filter marquinhosbot format:check
 
       - name: Test
-        run: bun test
+        run: bun run --filter marquinhosbot test
 
       - name: Build
-        run: bun run build
+        run: bun run --filter marquinhosbot build
 
   deploy:
     needs: build
@@ -49,7 +57,7 @@ jobs:
 
       - name: Build Docker image (with layer cache)
         run: |
-          docker compose -f docker-compose.yml build \
+          docker compose -f apps/bot/docker-compose.yml build \
             --build-arg BUILDKIT_INLINE_CACHE=1
 
       - name: Tag image with commit SHA
@@ -66,8 +74,8 @@ jobs:
 
       - name: Swap container
         run: |
-          docker compose -f docker-compose.yml down || true
-          docker compose -f docker-compose.yml up -d --no-build
+          docker compose -f apps/bot/docker-compose.yml down || true
+          docker compose -f apps/bot/docker-compose.yml up -d --no-build
 
       - name: Wait for healthy status
         run: |
@@ -82,10 +90,10 @@ jobs:
           docker logs marquinhosbot --tail 100 2>&1 || true
           echo "--- Container inspect ---"
           docker inspect marquinhosbot --format='ExitCode={{.State.ExitCode}} Status={{.State.Status}} Error={{.State.Error}}' 2>&1 || true
-          docker compose -f docker-compose.yml down || true
+          docker compose -f apps/bot/docker-compose.yml down || true
           if docker image inspect marquinhosbot:previous &>/dev/null; then
             docker tag marquinhosbot:previous marquinhosbot:latest
-            docker compose -f docker-compose.yml up -d --no-build || true
+            docker compose -f apps/bot/docker-compose.yml up -d --no-build || true
           fi
           exit 1
 

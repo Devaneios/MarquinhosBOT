@@ -1,6 +1,8 @@
 services:
   marquinhosbot:
-    build: .
+    build:
+      context: ../..
+      dockerfile: apps/bot/Dockerfile
     image: marquinhosbot:latest
     container_name: marquinhosbot
     env_file:

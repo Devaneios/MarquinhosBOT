@@ -11,12 +11,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 COPY package.json bun.lock* ./
+COPY apps/bot/package.json ./apps/bot/package.json
+COPY apps/api/package.json ./apps/api/package.json
+COPY apps/activity/package.json ./apps/activity/package.json
 
 RUN bun install --frozen-lockfile
 
-COPY tsconfig.json ./
-COPY src/ ./src/
+COPY apps/bot/tsconfig.json ./apps/bot/tsconfig.json
+COPY apps/bot/src/ ./apps/bot/src/
 
+WORKDIR /app/apps/bot
 RUN bun run build
 
 # ── Stage 2: runtime ─────────────────────────────────────────────
@@ -33,11 +37,14 @@ WORKDIR /app
 RUN groupadd marquinhos && useradd -g marquinhos marquinhos
 
 COPY package.json bun.lock* ./
+COPY apps/bot/package.json ./apps/bot/package.json
 
 # Reuse pre-compiled node_modules — no build toolchain needed at runtime
 COPY --from=builder /app/node_modules ./node_modules
 
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/apps/bot/dist ./apps/bot/dist
+
+WORKDIR /app/apps/bot
 
 USER marquinhos
 

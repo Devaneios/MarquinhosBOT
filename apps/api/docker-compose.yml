@@ -1,7 +1,8 @@
 services:
   marquinhos-web-api:
     build:
-      context: .
+      context: ../..
+      dockerfile: apps/api/Dockerfile
       args:
         DOCKER_GID: ${DOCKER_GID:-999}
     image: marquinhos-web-api:latest

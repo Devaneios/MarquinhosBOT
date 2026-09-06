@@ -3,6 +3,14 @@ name: CI / Deploy
 on:
   push:
     branches: [main]
+    paths:
+      - apps/api/**
+      - package.json
+      - bun.lock
+      - turbo.json
+      - .lintstagedrc.json
+      - .husky/**
+      - .github/workflows/api.yml
 
 jobs:
   build:
@@ -26,13 +34,13 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Type check
-        run: bun run typecheck
+        run: bun run --filter marquinhos-web-api typecheck
 
       - name: Test
-        run: bun run test
+        run: bun run --filter marquinhos-web-api test
 
       - name: Build
-        run: bun run build
+        run: bun run --filter marquinhos-web-api build
 
   deploy:
     needs: build
@@ -43,13 +51,13 @@ jobs:
 
       - name: Build Docker image (with layer cache)
         run: |
-          docker compose -f docker-compose.yml build \
+          docker compose -f apps/api/docker-compose.yml build \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --build-arg DOCKER_GID=$(getent group docker | cut -d: -f3)
 
       - name: Build sandbox image
         run: |
-          docker build -f docker/sandbox.Dockerfile -t marquinhos-sandbox:latest .
+          docker build -f apps/api/docker/sandbox.Dockerfile -t marquinhos-sandbox:latest .
 
       - name: Tag image with commit SHA
         run: |
@@ -65,8 +73,8 @@ jobs:
 
       - name: Swap container
         run: |
-          docker compose -f docker-compose.yml down || true
-          docker compose -f docker-compose.yml up -d --no-build
+          docker compose -f apps/api/docker-compose.yml down || true
+          docker compose -f apps/api/docker-compose.yml up -d --no-build
 
       - name: Wait for healthy status
         run: |
@@ -81,10 +89,10 @@ jobs:
           docker logs marquinhos-web-api --tail 100 2>&1 || true
           echo "--- Container inspect ---"
           docker inspect marquinhos-web-api --format='ExitCode={{.State.ExitCode}} Status={{.State.Status}} Error={{.State.Error}}' 2>&1 || true
-          docker compose -f docker-compose.yml down || true
+          docker compose -f apps/api/docker-compose.yml down || true
           if docker image inspect marquinhos-web-api:previous &>/dev/null; then
             docker tag marquinhos-web-api:previous marquinhos-web-api:latest
-            docker compose -f docker-compose.yml up -d --no-build || true
+            docker compose -f apps/api/docker-compose.yml up -d --no-build || true
           fi
           exit 1
 

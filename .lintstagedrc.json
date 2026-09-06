@@ -1,0 +1,14 @@
+{
+  "apps/bot/src/**/*.ts": [
+    "prettier --write",
+    "cd apps/bot && eslint --fix"
+  ],
+  "apps/api/src/**/*.ts": [
+    "prettier --write",
+    "cd apps/api && eslint --fix"
+  ],
+  "apps/activity/src/**/*.{ts,tsx}": [
+    "prettier --write",
+    "cd apps/activity && oxlint --fix"
+  ]
+}

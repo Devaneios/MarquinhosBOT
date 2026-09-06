@@ -5,7 +5,7 @@ services:
       - NODE_ENV=development
       - SQLITE_PATH=/app/data/marquinhos.db
     volumes:
-      - ./.env:/app/.env:ro
+      - ./.env:/app/apps/api/.env:ro
       - marquinhos-sqlite-data:/app/data
     ports:
       - "3106:3106"
