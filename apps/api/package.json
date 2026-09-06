@@ -57,7 +57,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
-    "test": "bun test",
+    "test": "MARQUINHOS_SECRET_KEY=test OPENAI_API_KEY=test bun test",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "clean": "rm -rf dist/ .logs/",
