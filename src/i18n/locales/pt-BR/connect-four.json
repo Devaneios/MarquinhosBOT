@@ -1,0 +1,15 @@
+{
+  "connectingSubtitle": "Conectando à sessão em tempo real e preparando o tabuleiro.",
+  "player1": "JOGADOR 1",
+  "player2": "JOGADOR 2",
+  "cpu": "CPU",
+  "playerWins": "{{player}} VENCEU",
+  "draw": "EMPATE",
+  "yourTurn": "SUA VEZ",
+  "opponentTurn": "VEZ DO ADVERSÁRIO",
+  "waitingOpponent": "Aguardando adversário…",
+  "opponentDisconnected": "Adversário desconectado — reconectando…",
+  "backToMode": "MENU",
+  "rematch": "Revanche",
+  "rematchWithVotes": "Revanche ({{votes}}/{{required}})"
+}

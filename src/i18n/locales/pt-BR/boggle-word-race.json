@@ -1,0 +1,16 @@
+{
+  "connectingSubtitle": "Sincronizando com a sessão em tempo real e preparando o tabuleiro.",
+  "loadingBoard": "CARREGANDO TABULEIRO…",
+  "scoreboard": "PLACAR",
+  "playerLabel": "Jogador {{id}}",
+  "timesUp": "TEMPO ESGOTADO",
+  "submitError": {
+    "not_started": "O jogo ainda não começou",
+    "already_ended": "O tempo acabou",
+    "unknown_player": "Você não faz parte desta partida",
+    "invalid_path": "As letras precisam ser adjacentes e ainda não usadas",
+    "too_short": "As palavras precisam ter 3 letras ou mais",
+    "not_a_word": "Essa não é uma palavra válida",
+    "already_found": "Você já encontrou essa palavra"
+  }
+}

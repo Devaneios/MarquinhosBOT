@@ -1,0 +1,16 @@
+{
+  "connectingSubtitle": "Conectando à sessão em tempo real e aguardando adversário.",
+  "pickRock": "Pedra",
+  "pickPaper": "Papel",
+  "pickScissors": "Tesoura",
+  "score": "Placar",
+  "round": "Rodada",
+  "chooseMove": "Escolha sua jogada",
+  "waitingOpponent": "Aguardando o adversário...",
+  "draw": "EMPATE",
+  "roundWin": "GANHOU!",
+  "roundLose": "PERDEU",
+  "opponent": "Adversário",
+  "outcomeWin": "Você venceu o jogo!",
+  "outcomeLose": "Você perdeu o jogo!"
+}

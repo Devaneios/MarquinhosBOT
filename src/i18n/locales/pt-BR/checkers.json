@@ -1,0 +1,17 @@
+{
+  "connectingSubtitle": "Preparando a sessão e montando o tabuleiro.",
+  "pressPlayToStart": "APERTE JOGAR PARA COMEÇAR",
+  "menuLabel": "MENU",
+  "colorBlack": "PRETO",
+  "colorRed": "VERMELHO",
+  "yourTurn": "SUA VEZ",
+  "turnToMove": "{{color}} JOGA",
+  "wins": "{{color}} VENCEU",
+  "moveRejected": "Esse movimento não é válido.",
+  "opponentDisconnected": "Adversário desconectado — aguardando reconexão…",
+  "movesHeading": "MOVIMENTOS",
+  "movesBody": "Toque em uma peça e depois em uma casa destacada para movê-la na diagonal, um passo à frente. Damas (peças coroadas) se movem na diagonal em qualquer direção.",
+  "jumpsHeading": "CAPTURAS",
+  "jumpsBody": "Salte sobre uma peça adversária adjacente para capturá-la. Se a peça puder saltar de novo após o pouso, ela deve continuar saltando antes de passar a vez.",
+  "footnote": "CAPTURAS SÃO OBRIGATÓRIAS — SE HOUVER CAPTURA DISPONÍVEL, VOCÊ DEVE REALIZÁ-LA. CHEGUE À ÚLTIMA FILEIRA PARA VIRAR DAMA. VENÇA CAPTURANDO TODAS AS PEÇAS INIMIGAS OU DEIXANDO-AS SEM MOVIMENTOS."
+}

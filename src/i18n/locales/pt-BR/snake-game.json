@@ -1,0 +1,10 @@
+{
+  "singlePlayer": "1 JOGADOR",
+  "twoPlayer": "2 JOGADORES",
+  "player1": "Jogador 1",
+  "player2": "Jogador 2",
+  "leaveGame": "SAIR DA PARTIDA",
+  "opponentDisconnected": "ADVERSÁRIO DESCONECTADO — AGUARDANDO…",
+  "youWin": "VOCÊ VENCEU",
+  "playerWins": "{{name}} VENCEU"
+}

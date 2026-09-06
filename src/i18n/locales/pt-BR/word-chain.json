@@ -1,0 +1,16 @@
+{
+  "connectingSubtitle": "Conectando à sessão em tempo real e carregando o jogo.",
+  "opponentDisconnected": "OPONENTE DESCONECTADO — AGUARDANDO…",
+  "yourTurnPrompt": "Sua vez! Digite uma palavra começando com:",
+  "waitingForTurn": "Aguardando {{player}}...",
+  "inputPlaceholder": "Digite uma palavra...",
+  "submit": "Enviar",
+  "noResponse": "Sem resposta do servidor",
+  "gameOverTitle": "JOGO TERMINADO",
+  "youWon": "Você venceu!",
+  "playerWon": "{{player}} venceu!",
+  "players": "Jogadores",
+  "turnLabel": "Vez",
+  "usedWordsLabel": "Palavras usadas",
+  "noWordsYet": "Nenhuma palavra ainda."
+}

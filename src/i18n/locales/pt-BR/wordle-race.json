@@ -1,0 +1,13 @@
+{
+  "connectingSubtitle": "Conectando à sessão multiplayer.",
+  "solved_one": "Acertou em {{count}} tentativa.",
+  "solved_other": "Acertou em {{count}} tentativas.",
+  "solvedBadge": "Resolvido",
+  "progress": "{{letters}} letras · tentativa {{attempt}}",
+  "enter": "ENTER",
+  "players": "JOGADORES",
+  "solvedCheck": "✓ Resolveu",
+  "noAttemptsLeft": "✗ Sem tentativas",
+  "attemptsRemaining_one": "{{count}} tentativa restante",
+  "attemptsRemaining_other": "{{count}} tentativas restantes"
+}

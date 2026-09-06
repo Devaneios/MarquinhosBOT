@@ -1,0 +1,89 @@
+.termo-keyboard {
+  container-type: inline-size;
+
+  --key-u: min(2.75rem, calc(100cqw / 11.5));
+  --kb-gap: calc(var(--key-u) * 0.12);
+  --key-h: calc(var(--key-u) * 1.2);
+  --key-font: max(14px, calc(var(--key-u) * 0.306));
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  column-gap: var(--kb-gap);
+  row-gap: calc(var(--kb-gap) * 1.8);
+  width: 100%;
+}
+
+.termo-keyboard-row {
+  display: flex;
+  gap: var(--kb-gap);
+  padding-right: 8px;
+}
+
+.termo-keyboard-row-home {
+  padding-right: 36px;
+}
+
+.termo-keyboard-row-bottom {
+  padding-right: 8px;
+}
+
+.keycap {
+  --inset: calc(var(--key-u) * 0.102);
+  --rad: calc(var(--key-u) * 0.204);
+  --base-from: #6e6e6e;
+  --base-to: #5a5a5a;
+  --cap-from: #6e6e6e;
+  --cap-to: #5a5a5a;
+  --surface-from: #555555;
+  --surface-to: #6e6e6e;
+  --key-text: #1c1c1e;
+
+  flex: none;
+  width: var(--key-u);
+  height: var(--key-h);
+  background: linear-gradient(to bottom, var(--base-from), var(--base-to));
+  border-radius: calc(var(--rad) + var(--inset));
+  box-shadow: 0 var(--inset) calc(var(--inset) * 0.5) 0 rgba(0, 0, 0, 0.4);
+
+  &:active,
+  &.keycap-pressed {
+    scale: 0.93;
+  }
+}
+
+.keycap-medium {
+  width: calc(var(--key-u) * 1.2);
+}
+
+.keycap-wide {
+  width: calc(var(--key-u) * 1.3);
+
+  & .keycap-text {
+    font-size: calc(var(--key-font) * 1.5);
+  }
+}
+
+.keycap-cap {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  padding: calc(var(--key-u) * 0.153);
+  background: linear-gradient(to bottom, var(--cap-from), var(--cap-to));
+  border-radius: var(--rad);
+  color: var(--key-text);
+  box-shadow:
+    0 var(--inset) calc(var(--inset) * 1.5) rgba(0, 0, 0, 0.3),
+    0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.keycap-text {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  font-size: var(--key-font);
+  line-height: 1;
+  background: linear-gradient(to bottom, var(--surface-from), var(--surface-to));
+}

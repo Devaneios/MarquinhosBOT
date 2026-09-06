@@ -152,3 +152,15 @@ test-output/
 .idea/*
 !.idea/inspectionProfiles/
 !.idea/inspectionProfiles/Project_Default.xml
+
+# Vite and frontend local files
+pnpm-debug.log*
+dist-ssr
+*.local
+
+# Windows project files
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
