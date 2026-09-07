@@ -157,17 +157,27 @@ export class DiscordService {
   ): Promise<ActivityTokenExchangeResult> => {
     const body = buildActivityTokenExchangeBody(code);
 
-    const response = await axios.post(
-      'https://discord.com/api/oauth2/token',
-      body,
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+    try {
+      const response = await axios.post(
+        'https://discord.com/api/oauth2/token',
+        body,
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
         },
-      },
-    );
+      );
 
-    return response.data;
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `Discord activity token exchange failed (status ${error.response?.status}): ${JSON.stringify(error.response?.data)}`,
+          { cause: error },
+        );
+      }
+      throw error;
+    }
   };
 
   refreshToken = async (refresh_token: string) => {
