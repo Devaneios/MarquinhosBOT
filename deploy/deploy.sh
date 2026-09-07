@@ -28,6 +28,7 @@ tag_rollback_image() {
 
   current_image=$(docker inspect --format '{{.Config.Image}}' "$container" 2>/dev/null || true)
   [[ -n "$current_image" ]] && docker tag "$current_image" "$image:rollback"
+  return 0
 }
 
 tag_sandbox_rollback_image() {
@@ -35,6 +36,7 @@ tag_sandbox_rollback_image() {
 
   current_image=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' marquinhos-api 2>/dev/null | sed -n 's/^SANDBOX_IMAGE=//p')
   [[ -n "$current_image" ]] && docker tag "$current_image" marquinhos-sandbox:rollback
+  return 0
 }
 
 backup_api_data() {
