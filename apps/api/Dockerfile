@@ -39,6 +39,7 @@ RUN addgroup -S marquinhos && adduser -S marquinhos -G marquinhos \
 
 COPY package.json bun.lock* ./
 COPY apps/api/package.json ./apps/api/package.json
+COPY apps/api/tsconfig.json ./apps/api/tsconfig.json
 
 # Reuse pre-compiled node_modules — no build toolchain needed at runtime
 COPY --from=builder /app/node_modules ./node_modules
@@ -54,7 +55,7 @@ WORKDIR /app/apps/api
 
 RUN mkdir -p /app/data && chown marquinhos:marquinhos /app/data
 
-RUN bun -e "await import('express'); await import('colyseus'); await import('unpdf')"
+RUN bun -e "const pkg = await Bun.file('/app/apps/api/package.json').json(); for (const name of Object.keys(pkg.dependencies)) { try { await import(name) } catch (error) { throw new Error(name + ': ' + error.message) } } process.env.SQLITE_PATH = ':memory:'; await import('database/sqlite'); process.exit(0)"
 
 USER marquinhos
 
