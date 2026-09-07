@@ -103,12 +103,13 @@ jobs:
           docker tag marquinhos-web-api:latest marquinhos-web-api:${{ github.sha }}
 
       - name: Scan image for CVEs
-        run: |
-          trivy image \
-            --format table \
-            --exit-code 0 \
-            --severity HIGH,CRITICAL \
-            marquinhos-web-api:${{ github.sha }}
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: marquinhos-web-api:${{ github.sha }}
+          format: table
+          exit-code: "0"
+          severity: HIGH,CRITICAL
 
       - name: Swap container
         run: |
