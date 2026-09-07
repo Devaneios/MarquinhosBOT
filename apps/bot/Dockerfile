@@ -41,10 +41,13 @@ COPY apps/bot/package.json ./apps/bot/package.json
 
 # Reuse pre-compiled node_modules — no build toolchain needed at runtime
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/bot/node_modules ./apps/bot/node_modules
 
 COPY --from=builder /app/apps/bot/dist ./apps/bot/dist
 
 WORKDIR /app/apps/bot
+
+RUN bun -e "import('@meonode/canvas')"
 
 USER marquinhos
 
