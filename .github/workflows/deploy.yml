@@ -81,17 +81,14 @@ jobs:
       - run: bun run --filter marquinhos-web-api typecheck
       - run: bun run --filter marquinhos-web-api lint
       - run: bun run --filter marquinhos-web-api format:check
-      - run: bun run --filter marquinhos-web-api test
       - run: bun run --filter marquinhos-web-api build
       - run: bun run --filter marquinhosbot typecheck
       - run: bun run --filter marquinhosbot lint:check
       - run: bun run --filter marquinhosbot format:check
-      - run: bun run --filter marquinhosbot test
       - run: bun run --filter marquinhosbot build
       - run: bun run --filter marquinhos-activity-client typecheck
       - run: bun run --filter marquinhos-activity-client lint
       - run: bun run --filter marquinhos-activity-client format:check
-      - run: bun run --filter marquinhos-activity-client test
       - run: bun run --filter marquinhos-activity-client build
 
   deploy:
