@@ -1,0 +1,8 @@
+{
+  "connectingSubtitle": "Conectando à sessão e preparando a partida.",
+  "youWinBang": "VOCÊ VENCEU!",
+  "playerWins": "JOGADOR {{player}} VENCE",
+  "draw": "EMPATE",
+  "turnYour": "SUA VEZ ({{player}})",
+  "turnOpponent": "VEZ DO ADVERSÁRIO ({{player}})"
+}

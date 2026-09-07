@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Marquinhos Activities</title>
+    <style>
+      #react-mount-overlay {
+        isolation: isolate;
+        overflow: hidden;
+        background:
+          repeating-linear-gradient(
+            180deg,
+            transparent 0px,
+            transparent 97px,
+            rgb(255 255 255 / 0.18) 123px,
+            rgb(255 255 255 / 0.18) 137px,
+            transparent 163px,
+            transparent 260px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent 0 88px,
+            rgb(255 0 102 / 0.08) 88px 90px,
+            transparent 90px 178px,
+            rgb(0 255 255 / 0.07) 178px 180px,
+            transparent 180px 360px
+          ),
+          repeating-linear-gradient(0deg, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 4px),
+          oklch(12% 0.018 264.48);
+        background-size: 100% 260px, 360px 100%, 100% 100%, auto;
+        animation: mount-background-shift 4s linear infinite;
+      }
+
+      #react-mount-overlay > h1 {
+        position: relative;
+        z-index: 1;
+        padding: 0 16px;
+        text-align: center;
+        text-shadow:
+          3px 0 rgb(0 255 255 / 0.8),
+          -3px 0 rgb(255 0 102 / 0.8);
+        animation: mount-text-glitch 1.35s steps(1, end) infinite;
+      }
+
+      #react-mount-overlay > h2 {
+        position: relative;
+        z-index: 1;
+        padding: 0 16px;
+        text-align: center;
+      }
+
+      #react-mount-overlay::before,
+      #react-mount-overlay::after {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        content: '';
+      }
+
+      #react-mount-overlay::before {
+        background: repeating-linear-gradient(
+          0deg,
+          transparent 0 3px,
+          rgb(255 255 255 / 0.06) 3px 4px
+        );
+        mix-blend-mode: screen;
+        animation: mount-scanlines 1.2s linear infinite;
+      }
+
+      #react-mount-overlay::after {
+        background:
+          linear-gradient(
+            90deg,
+            transparent 0 47%,
+            rgb(0 255 255 / 0.2) 49%,
+            rgb(255 0 102 / 0.2) 51%,
+            transparent 53%
+          ),
+          linear-gradient(
+            180deg,
+            transparent 0 49%,
+            rgb(255 255 255 / 0.11) 49.5% 50.5%,
+            transparent 51%
+          );
+        mix-blend-mode: screen;
+        filter: contrast(1.25) saturate(1.4);
+        opacity: 0;
+        animation: mount-glitch 4s steps(1, end) infinite;
+      }
+
+      @keyframes mount-background-shift {
+        0% {
+          background-position: 0 0, 0 0, 0 0, 0 0;
+        }
+        100% {
+          background-position: 0 260px, 360px 0, 0 0, 0 0;
+        }
+      }
+
+      @keyframes mount-scanlines {
+        from {
+          transform: translateY(0);
+        }
+        to {
+          transform: translateY(4px);
+        }
+      }
+
+      @keyframes mount-glitch {
+        0%,
+        88%,
+        100% {
+          opacity: 0;
+          transform: translate(0);
+        }
+        89% {
+          opacity: 0.45;
+          transform: translate(-8px, 2px) skewX(-3deg);
+        }
+        90.5% {
+          opacity: 0.35;
+          transform: translate(6px, -1px) skewX(4deg);
+        }
+        92% {
+          opacity: 0.4;
+          transform: translate(-2px, 1px);
+        }
+        93% {
+          opacity: 0;
+          transform: translate(0);
+        }
+      }
+
+      @keyframes mount-text-glitch {
+        0%,
+        68%,
+        100% {
+          transform: translate(0);
+        }
+        69% {
+          transform: translate(-10px, 1px);
+        }
+        71% {
+          transform: translate(12px, -2px);
+        }
+        73% {
+          transform: translate(-4px, 1px);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #react-mount-overlay::before,
+        #react-mount-overlay::after {
+          animation: none;
+        }
+
+        #react-mount-overlay,
+        #react-mount-overlay > h1 {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg style="position: absolute; width: 0; height: 0">
+      <filter id="crt-wave">
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.004 0.06"
+          numOctaves="2"
+          seed="7"
+          result="crt-wave-noise"
+        >
+          <animate
+            attributeName="baseFrequency"
+            values="0.004 0.06;0.006 0.08;0.004 0.06"
+            dur="7s"
+            repeatCount="indefinite"
+          />
+        </feTurbulence>
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="crt-wave-noise"
+          scale="6"
+          xChannelSelector="R"
+          yChannelSelector="G"
+        />
+      </filter>
+    </svg>
+    <div
+      id="react-mount-overlay"
+      style="
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font: 16px/1.5 monospace;
+        filter: url(#crt-wave);
+      "
+    >
+      <h1>REACT FOI DE F TOTAL</h1>
+      <h2>MARQUINHOS FOI DE BASE</h2>
+    </div>
+    <div id="root"></div>
+    <!--
+      Discord's Activity proxy commonly enforces a CSP without
+      'unsafe-inline', which silently drops inline <script> blocks — so the
+      error overlay, the Discord auth handshake, and the mount-overlay
+      removal logic must all be external module files, not inline, to be
+      sure they actually run. Each is loaded as its own module tag *before*
+      main.tsx: every <script type="module"> is deferred and executes in
+      document order relative to the others, so these always run first
+      regardless of what main.tsx or any bundler import-reordering does.
+
+      discordAuth.ts in particular must not be reached only via main.tsx's
+      import graph: if that graph fails to evaluate (a broken module, a bad
+      HMR update) the handshake still has to start and keep running on its
+      own — React only ever reads its result, never triggers it.
+    -->
+    <script type="module" src="/src/errorOverlay.ts"></script>
+    <script type="module" src="/src/discordAuth.ts"></script>
+    <script type="module" src="/src/removeMountOverlay.ts"></script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

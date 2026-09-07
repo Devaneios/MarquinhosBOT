@@ -1,0 +1,13 @@
+{
+  "connectingSubtitle": "Conectando à sessão em tempo real e aguardando um adversário.",
+  "spectating": "A partida já está cheia — você está assistindo.",
+  "waitingOpponent": "AGUARDANDO ADVERSÁRIO…",
+  "yourTurn": "Sua vez — puxe um bloco",
+  "opponentTurn": "Vez do adversário",
+  "lastPullInstability": "Instabilidade do último puxão: {{percent}}%",
+  "opponentDisconnected": "ADVERSÁRIO DESCONECTADO — AGUARDANDO…",
+  "youWin": "VOCÊ VENCEU",
+  "towerToppled": "TORRE DESABOU",
+  "rematch": "REVANCHE",
+  "waitingRematch": "AGUARDANDO… ({{votes}}/{{required}})"
+}

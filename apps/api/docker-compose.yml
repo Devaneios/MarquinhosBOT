@@ -1,0 +1,50 @@
+services:
+  marquinhos-web-api:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      args:
+        DOCKER_GID: ${DOCKER_GID:-999}
+    image: marquinhos-web-api:latest
+    container_name: marquinhos-web-api
+    env_file:
+      - ./.env
+    environment:
+      - NODE_ENV=production
+      - SQLITE_PATH=/app/data/marquinhos.db
+    volumes:
+      - /etc/ssl/dvns-certificate.crt:/app/dvns-certificate.crt:ro
+      - /etc/ssl/dvns-private.key:/app/dvns-private.key:ro
+      - marquinhos-sqlite-data:/app/data
+      # Lets SandboxManager create/manage sibling "marquinhos-sandbox"
+      # containers via dockerode. Accepted risk, chosen deliberately — see
+      # docs/superpowers/plans/2026-07-24-agentic-tool-calling.md.
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: on-failure:5
+    stop_grace_period: 30s
+    healthcheck:
+      test: ['CMD', 'pgrep', '-f', 'bun']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    networks:
+      - marquinhos-net
+    logging:
+      driver: json-file
+      options:
+        max-size: '100m'
+        max-file: '10'
+
+networks:
+  marquinhos-net:
+    external: true
+
+volumes:
+  marquinhos-sqlite-data:
+    driver: local

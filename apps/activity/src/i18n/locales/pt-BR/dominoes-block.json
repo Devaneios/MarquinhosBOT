@@ -1,0 +1,15 @@
+{
+  "connectingSubtitle": "Conectando à mesa e aguardando outros jogadores.",
+  "waitingPlayers": "AGUARDANDO JOGADORES…",
+  "boneyard": "MONTE",
+  "pass": "PASSAR",
+  "playEnd": "Jogar {{end}}",
+  "endLeft": "esquerda",
+  "endRight": "direita",
+  "cancel": "Cancelar",
+  "opponentDisconnected": "ADVERSÁRIO DESCONECTADO — AGUARDANDO…",
+  "outcomeBlocked": "JOGO BLOQUEADO",
+  "outcomeWin": "VOCÊ VENCEU",
+  "outcomeGameOver": "FIM DE JOGO",
+  "waitingRematch": "Aguardando revanche… ({{votes}}/{{required}})"
+}

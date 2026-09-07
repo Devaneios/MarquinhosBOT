@@ -37,9 +37,7 @@ prettier.config.js
 .eslintignore
 eslint.config.js
 nodemon.json
-tsconfig.dev.json
 
 # Misc
 .DS_Store
 *.md
-

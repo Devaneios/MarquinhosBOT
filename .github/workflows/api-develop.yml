@@ -1,0 +1,144 @@
+name: CI / Deploy
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - apps/api/**
+      - package.json
+      - bun.lock
+      - turbo.json
+      - .lintstagedrc.json
+      - .husky/**
+      - .github/workflows/api-develop.yml
+
+jobs:
+  build:
+    runs-on: [self-hosted, Linux, X64, devaneios-runner]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Type check
+        run: bun run --filter marquinhos-web-api typecheck
+
+      - name: Test
+        run: bun run --filter marquinhos-web-api test
+
+      - name: Build
+        run: bun run --filter marquinhos-web-api build
+
+  deploy:
+    needs: build
+    runs-on: [self-hosted, Linux, X64, devaneios-runner]
+    environment: development
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write deployment environment
+        env:
+          HTTP_PORT: ${{ vars.HTTP_PORT }}
+          HTTPS_PORT: ${{ vars.HTTPS_PORT }}
+          BENCH_GUILD_ID: ${{ vars.BENCH_GUILD_ID }}
+          MARQUINHOS_API_KEY: ${{ secrets.MARQUINHOS_API_KEY }}
+          MARQUINHOS_SECRET_KEY: ${{ secrets.MARQUINHOS_SECRET_KEY }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID }}
+          DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+          DISCORD_REDIRECT_URI: ${{ vars.DISCORD_REDIRECT_URI }}
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+          LASTFM_SHARED_SECRET: ${{ secrets.LASTFM_SHARED_SECRET }}
+          LASTFM_REDIRECT_URI: ${{ vars.LASTFM_REDIRECT_URI }}
+          SPOTIFY_CLIENT_ID: ${{ vars.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
+          KNOWLEDGE_BASE_URL: ${{ vars.KNOWLEDGE_BASE_URL }}
+          KNOWLEDGE_BASE_API_KEY: ${{ secrets.KNOWLEDGE_BASE_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          OPENAI_REASONING_EFFORT: ${{ vars.OPENAI_REASONING_EFFORT }}
+          SEARXNG_URL: ${{ vars.SEARXNG_URL }}
+          AI_THREAD_TOKEN_BUDGET: ${{ vars.AI_THREAD_TOKEN_BUDGET }}
+          AI_THREAD_RETENTION_DAYS: ${{ vars.AI_THREAD_RETENTION_DAYS }}
+          AI_RESEARCH_MAX_ROUNDS: ${{ vars.AI_RESEARCH_MAX_ROUNDS }}
+          AI_RESEARCH_MAX_SEARCHES: ${{ vars.AI_RESEARCH_MAX_SEARCHES }}
+          AI_RESEARCH_MAX_FETCHES: ${{ vars.AI_RESEARCH_MAX_FETCHES }}
+          AI_RESEARCH_DEADLINE_MS: ${{ vars.AI_RESEARCH_DEADLINE_MS }}
+          AI_RESEARCH_RETENTION_DAYS: ${{ vars.AI_RESEARCH_RETENTION_DAYS }}
+          AI_TRACE_ENABLED: ${{ vars.AI_TRACE_ENABLED }}
+          AI_TRACE_RETENTION_DAYS: ${{ vars.AI_TRACE_RETENTION_DAYS }}
+          LOG_LEVEL: ${{ vars.LOG_LEVEL }}
+          MARQUINHOS_CRYPTO_SALT: ${{ vars.MARQUINHOS_CRYPTO_SALT }}
+          WORDLE_TIMEZONE: ${{ vars.WORDLE_TIMEZONE }}
+          SANDBOX_MIRROR_PATH: ${{ vars.SANDBOX_MIRROR_PATH }}
+        run: .github/scripts/write-deploy-env.sh api apps/api/.env
+
+      - name: Build Docker image (with layer cache)
+        run: |
+          docker compose -f apps/api/docker-compose.yml build \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --build-arg DOCKER_GID=$(getent group docker | cut -d: -f3)
+
+      - name: Build sandbox image
+        run: |
+          docker build -f apps/api/docker/sandbox.Dockerfile -t marquinhos-sandbox:latest .
+
+      - name: Tag image with commit SHA
+        run: |
+          docker tag marquinhos-web-api:latest marquinhos-web-api:${{ github.sha }}
+
+      - name: Scan image for CVEs
+        run: |
+          trivy image \
+            --format table \
+            --exit-code 0 \
+            --severity HIGH,CRITICAL \
+            marquinhos-web-api:${{ github.sha }}
+
+      - name: Swap container
+        run: |
+          docker compose -f apps/api/docker-compose.yml down || true
+          docker compose -f apps/api/docker-compose.yml up -d --no-build
+
+      - name: Wait for healthy status
+        run: |
+          for i in $(seq 1 12); do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' marquinhos-web-api 2>/dev/null || echo "missing")
+            echo "Attempt $i/12: $STATUS"
+            [ "$STATUS" = "healthy" ] && { echo "marquinhos-web-api is healthy"; exit 0; }
+            sleep 5
+          done
+          echo "Health check timed out — rolling back"
+          echo "--- Container logs ---"
+          docker logs marquinhos-web-api --tail 100 2>&1 || true
+          echo "--- Container inspect ---"
+          docker inspect marquinhos-web-api --format='ExitCode={{.State.ExitCode}} Status={{.State.Status}} Error={{.State.Error}}' 2>&1 || true
+          docker compose -f apps/api/docker-compose.yml down || true
+          if docker image inspect marquinhos-web-api:previous &>/dev/null; then
+            docker tag marquinhos-web-api:previous marquinhos-web-api:latest
+            docker compose -f apps/api/docker-compose.yml up -d --no-build || true
+          fi
+          exit 1
+
+      - name: Tag successful image as previous (for rollback)
+        if: success()
+        run: docker tag marquinhos-web-api:${{ github.sha }} marquinhos-web-api:previous
+
+      - name: Remove generated environment file
+        if: always()
+        run: rm -f -- apps/api/.env

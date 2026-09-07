@@ -1,5 +1,7 @@
 /node_modules
 /out
+marquinhos.db
+marquinhos.db*
 
 .env
 node_modules/
@@ -140,3 +142,26 @@ test-output/
 .AppleDouble
 .LSOverride
 .codex
+.turbo/
+
+# cert files
+*.pem
+*.crt
+*.key.worktrees/
+.superpowers/
+!.idea/
+.idea/*
+!.idea/inspectionProfiles/
+!.idea/inspectionProfiles/Project_Default.xml
+
+# Vite and frontend local files
+pnpm-debug.log*
+dist-ssr
+*.local
+
+# Windows project files
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

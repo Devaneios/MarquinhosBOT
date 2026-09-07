@@ -1,0 +1,14 @@
+{
+  "apps/bot/src/**/*.ts": [
+    "prettier --write",
+    "bun --cwd apps/bot node_modules/.bin/eslint --fix"
+  ],
+  "apps/api/src/**/*.ts": [
+    "prettier --write",
+    "bun --cwd apps/api node_modules/.bin/eslint --fix"
+  ],
+  "apps/activity/src/**/*.{ts,tsx}": [
+    "prettier --write",
+    "bun --cwd apps/activity node_modules/.bin/oxlint --fix"
+  ]
+}

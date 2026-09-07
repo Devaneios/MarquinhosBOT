@@ -1,0 +1,124 @@
+name: CI / Deploy
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - apps/bot/**
+      - package.json
+      - bun.lock
+      - turbo.json
+      - .lintstagedrc.json
+      - .husky/**
+      - .github/workflows/bot-develop.yml
+
+jobs:
+  build:
+    runs-on: [self-hosted, Linux, X64, devaneios-runner]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-download-url: "https://github.com/oven-sh/bun/releases/latest/download/bun-linux-x64.zip"
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Type check
+        run: bun run --filter marquinhosbot typecheck
+
+      - name: Lint check
+        run: bun run --filter marquinhosbot lint:check
+
+      - name: Format check
+        run: bun run --filter marquinhosbot format:check
+
+      - name: Test
+        run: bun run --filter marquinhosbot test
+
+      - name: Build
+        run: bun run --filter marquinhosbot build
+
+  deploy:
+    needs: build
+    runs-on: [self-hosted, Linux, X64, devaneios-runner]
+    environment: development
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Write deployment environment
+        env:
+          MARQUINHOS_TOKEN: ${{ secrets.MARQUINHOS_TOKEN }}
+          MARQUINHOS_API_URL: ${{ vars.MARQUINHOS_API_URL }}
+          MARQUINHOS_API_KEY: ${{ secrets.MARQUINHOS_API_KEY }}
+          MARQUINHOS_CLIENT_ID: ${{ vars.MARQUINHOS_CLIENT_ID }}
+          MARQUINHOS_ERROR_DM_USER_ID: ${{ vars.MARQUINHOS_ERROR_DM_USER_ID }}
+          MARQUINHOS_DECRYPTION_KEY: ${{ secrets.MARQUINHOS_DECRYPTION_KEY }}
+          MARQUINHOS_WEB_URL: ${{ vars.MARQUINHOS_WEB_URL }}
+          DEEZER_ARL_COOKIE: ${{ secrets.DEEZER_ARL_COOKIE }}
+          GUILD_MAIN_CHANNEL_ID: ${{ vars.GUILD_MAIN_CHANNEL_ID }}
+          GUILD_EXTERNAL_ROLE_ID: ${{ vars.GUILD_EXTERNAL_ROLE_ID }}
+          GUILD_NEWCOMERS_CHANNEL_ID: ${{ vars.GUILD_NEWCOMERS_CHANNEL_ID }}
+          MARQUINHOS_SPREADSHEET_ID: ${{ vars.MARQUINHOS_SPREADSHEET_ID }}
+          MARQUINHOS_SPREADSHEET_API_KEY: ${{ secrets.MARQUINHOS_SPREADSHEET_API_KEY }}
+        run: .github/scripts/write-deploy-env.sh bot apps/bot/.env
+
+      - name: Build Docker image (with layer cache)
+        run: |
+          docker compose -f apps/bot/docker-compose.yml build \
+            --build-arg BUILDKIT_INLINE_CACHE=1
+
+      - name: Tag image with commit SHA
+        run: |
+          docker tag marquinhosbot:latest marquinhosbot:${{ github.sha }}
+
+      - name: Scan image for CVEs
+        run: |
+          trivy image \
+            --format table \
+            --exit-code 0 \
+            --severity HIGH,CRITICAL \
+            marquinhosbot:${{ github.sha }}
+
+      - name: Swap container
+        run: |
+          docker compose -f apps/bot/docker-compose.yml down || true
+          docker compose -f apps/bot/docker-compose.yml up -d --no-build
+
+      - name: Wait for healthy status
+        run: |
+          for i in $(seq 1 12); do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' marquinhosbot 2>/dev/null || echo "missing")
+            echo "Attempt $i/12: $STATUS"
+            [ "$STATUS" = "healthy" ] && { echo "Marquinhos is healthy"; exit 0; }
+            sleep 15
+          done
+          echo "Health check timed out — rolling back"
+          echo "--- Container logs ---"
+          docker logs marquinhosbot --tail 100 2>&1 || true
+          echo "--- Container inspect ---"
+          docker inspect marquinhosbot --format='ExitCode={{.State.ExitCode}} Status={{.State.Status}} Error={{.State.Error}}' 2>&1 || true
+          docker compose -f apps/bot/docker-compose.yml down || true
+          if docker image inspect marquinhosbot:previous &>/dev/null; then
+            docker tag marquinhosbot:previous marquinhosbot:latest
+            docker compose -f apps/bot/docker-compose.yml up -d --no-build || true
+          fi
+          exit 1
+
+      - name: Tag successful image as previous (for rollback)
+        if: success()
+        run: docker tag marquinhosbot:${{ github.sha }} marquinhosbot:previous
+
+      - name: Remove generated environment file
+        if: always()
+        run: rm -f -- apps/bot/.env
