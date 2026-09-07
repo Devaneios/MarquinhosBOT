@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euxo pipefail
+set -euo pipefail
 
 if [[ $# -ne 1 ]]; then
   echo "usage: $0 <api|bot|activity|all>" >&2
@@ -34,7 +34,7 @@ tag_rollback_image() {
 tag_sandbox_rollback_image() {
   local current_image
 
-  current_image=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' marquinhos-api 2>/dev/null | sed -n 's/^SANDBOX_IMAGE=//p')
+  current_image=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' marquinhos-api 2>/dev/null | sed -n 's/^SANDBOX_IMAGE=//p' || true)
   [[ -n "$current_image" ]] && docker tag "$current_image" marquinhos-sandbox:rollback
   return 0
 }
