@@ -27,7 +27,7 @@ RUN bun run build
 FROM oven/bun:1.4.2-debian AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg procps \
+    curl ffmpeg procps \
     libpixman-1-0 libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
     libgif7 libjpeg62-turbo \
     && rm -rf /var/lib/apt/lists/*
@@ -52,6 +52,6 @@ RUN bun -e "const { default: sharp } = await import('sharp'); await sharp({ crea
 USER marquinhos
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD pgrep -f "bun" || exit 1
+    CMD curl --fail --silent http://127.0.0.1:3001/healthz || exit 1
 
 CMD ["bun", "dist/index.js"]

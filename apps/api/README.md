@@ -38,7 +38,6 @@ Required environment variables (`.env`):
 | Variable | Purpose |
 |---|---|
 | `HTTP_PORT` | Port the HTTP server listens on |
-| `HTTPS_PORT` | Port for HTTPS (if configured) |
 | `NODE_ENV` | `development` / `production` |
 | `SQLITE_PATH` | Path to the SQLite database file |
 | `MARQUINHOS_API_KEY` | Shared secret for bot-to-API requests (`Authorization: Bearer`) |
@@ -47,7 +46,8 @@ Required environment variables (`.env`):
 | `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` / `DISCORD_REDIRECT_URI` | Discord OAuth config |
 | `LASTFM_API_KEY` / `LASTFM_SHARED_SECRET` / `LASTFM_REDIRECT_URI` | Last.fm scrobbling OAuth |
 | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | Spotify metadata lookups |
-| `CORS_ORIGINS` | Comma-separated allowlist (defaults to `localhost:4200` + prod web app) |
+| `CORS_ORIGINS` | Comma-separated allowlist; required in production |
+| `MARQUINHOS_CRYPTO_SALT` | Salt used to derive the encryption key; required in production |
 | `KNOWLEDGE_BASE_URL` | Base URL of the local devaneios-chats RAG service (e.g. `http://devaneios-rag:8420`), used by the bot to look up server lore/history. Optional — omit to run without it. |
 | `KNOWLEDGE_BASE_API_KEY` | Bearer token sent to `KNOWLEDGE_BASE_URL`. Must match that service's `RAG_API_KEY`. |
 | `OPENAI_API_KEY` | OpenAI credentials for every AI feature |

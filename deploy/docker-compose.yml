@@ -1,0 +1,98 @@
+name: marquinhos
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+      args:
+        DOCKER_GID: ${DOCKER_GID:?DOCKER_GID is required}
+    image: marquinhos-api:${DEPLOY_IMAGE_TAG:?DEPLOY_IMAGE_TAG is required}
+    container_name: marquinhos-api
+    env_file:
+      - ./api.env
+    environment:
+      CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required}
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:?DISCORD_BOT_TOKEN is required}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:?DISCORD_CLIENT_ID is required}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:?DISCORD_CLIENT_SECRET is required}
+      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:?DISCORD_REDIRECT_URI is required}
+      HTTP_PORT: 3000
+      LASTFM_API_KEY: ${LASTFM_API_KEY:?LASTFM_API_KEY is required}
+      LASTFM_REDIRECT_URI: ${LASTFM_REDIRECT_URI:?LASTFM_REDIRECT_URI is required}
+      LASTFM_SHARED_SECRET: ${LASTFM_SHARED_SECRET:?LASTFM_SHARED_SECRET is required}
+      MARQUINHOS_API_KEY: ${MARQUINHOS_API_KEY:?MARQUINHOS_API_KEY is required}
+      MARQUINHOS_CRYPTO_SALT: ${MARQUINHOS_CRYPTO_SALT:?MARQUINHOS_CRYPTO_SALT is required}
+      MARQUINHOS_SECRET_KEY: ${MARQUINHOS_SECRET_KEY:?MARQUINHOS_SECRET_KEY is required}
+      NODE_ENV: production
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY is required}
+      SANDBOX_IMAGE: marquinhos-sandbox:${DEPLOY_IMAGE_TAG:?DEPLOY_IMAGE_TAG is required}
+      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:?SPOTIFY_CLIENT_ID is required}
+      SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET:?SPOTIFY_CLIENT_SECRET is required}
+      SQLITE_PATH: /app/data/marquinhos.db
+    volumes:
+      - marquinhos-api-data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${SANDBOX_MIRROR_PATH:-/opt/marquinhos/sandbox-mirror}:${SANDBOX_MIRROR_PATH:-/opt/marquinhos/sandbox-mirror}:ro
+    restart: unless-stopped
+    stop_grace_period: 30s
+    networks:
+      - marquinhos
+
+  sandbox:
+    build:
+      context: ..
+      dockerfile: apps/api/docker/sandbox.Dockerfile
+    image: marquinhos-sandbox:${DEPLOY_IMAGE_TAG:?DEPLOY_IMAGE_TAG is required}
+    profiles: [build]
+
+  bot:
+    build:
+      context: ..
+      dockerfile: apps/bot/Dockerfile
+    image: marquinhos-bot:${DEPLOY_IMAGE_TAG:?DEPLOY_IMAGE_TAG is required}
+    container_name: marquinhos-bot
+    env_file:
+      - ./bot.env
+    environment:
+      MARQUINHOS_API_KEY: ${MARQUINHOS_API_KEY:?MARQUINHOS_API_KEY is required}
+      MARQUINHOS_API_URL: http://api:3000
+      MARQUINHOS_CLIENT_ID: ${DISCORD_CLIENT_ID:?DISCORD_CLIENT_ID is required}
+      MARQUINHOS_TOKEN: ${MARQUINHOS_TOKEN:?MARQUINHOS_TOKEN is required}
+      NODE_ENV: production
+    restart: unless-stopped
+    stop_grace_period: 30s
+    networks:
+      - marquinhos
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: deploy/activity.Dockerfile
+      args:
+        VITE_API_ORIGIN: ${VITE_API_ORIGIN:?VITE_API_ORIGIN is required}
+        VITE_DISCORD_CLIENT_ID: ${VITE_DISCORD_CLIENT_ID:?VITE_DISCORD_CLIENT_ID is required}
+    image: marquinhos-activity:${DEPLOY_IMAGE_TAG:?DEPLOY_IMAGE_TAG is required}
+    container_name: marquinhos-gateway
+    restart: unless-stopped
+    networks:
+      - marquinhos
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: marquinhos-cloudflared
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN is required}
+    depends_on:
+      gateway:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - marquinhos
+
+networks:
+  marquinhos:
+    name: marquinhos
+
+volumes:
+  marquinhos-api-data:
+    name: marquinhos-api-data

@@ -1,8 +1,8 @@
 import { WebSocketTransport } from '@colyseus/ws-transport';
 import { Server as ColyseusServer } from 'colyseus';
+import { validateProductionEnvironment } from 'config/environment';
 import cors from 'cors';
 import 'database/sqlite';
-import dotenv from 'dotenv';
 import type { Express, NextFunction, Request, Response } from 'express';
 import express from 'express';
 import http from 'http';
@@ -49,7 +49,7 @@ import { GamificationService } from 'services/gamification';
 import { getValidationSet } from 'services/wordle';
 import { logger } from 'utils/logger';
 
-dotenv.config();
+validateProductionEnvironment();
 
 const app: Express = express();
 
@@ -58,12 +58,10 @@ const app: Express = express();
 // express-rate-limit keys off the real client IP instead of the tunnel's.
 app.set('trust proxy', 1);
 
-const allowlist = (
-  process.env.CORS_ORIGINS ??
-  'http://localhost:5173/,https://marquinhos-74154.web.app'
-)
+const allowlist = (process.env.CORS_ORIGINS ?? '')
   .split(',')
-  .map((s) => s.trim());
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 const corsOptionsDelegate = function (req: Request, callback: Function) {
   let corsOptions;

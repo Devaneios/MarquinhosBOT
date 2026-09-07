@@ -47,11 +47,22 @@ const client = new SapphireClient({
   loadMessageCommandListeners: false,
 });
 
+const healthServer = Bun.serve({
+  hostname: '127.0.0.1',
+  port: Number(process.env.HEALTHCHECK_PORT ?? 3001),
+  fetch() {
+    return new Response(client.isReady() ? 'ok\n' : 'not ready\n', {
+      status: client.isReady() ? 200 : 503,
+    });
+  },
+});
+
 registerSapphirePieces();
 
 function registerShutdownHooks() {
   const cleanup = () => {
     logger.info('Shutting down gracefully...');
+    healthServer.stop(true);
     GameManager.getInstance().destroy();
     client.destroy();
     process.exit(0);

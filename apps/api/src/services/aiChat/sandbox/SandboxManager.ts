@@ -3,7 +3,7 @@ import { db as defaultDb } from 'database/sqlite';
 import type { DockerClient } from 'services/aiChat/sandbox/DockerClient';
 import { logger } from 'utils/logger';
 
-const SANDBOX_IMAGE = 'marquinhos-sandbox:latest';
+const SANDBOX_IMAGE = process.env.SANDBOX_IMAGE ?? 'marquinhos-sandbox:latest';
 const MEMORY_BYTES = 256 * 1024 * 1024;
 const NANO_CPUS = 1_000_000_000;
 const PIDS_LIMIT = 128;

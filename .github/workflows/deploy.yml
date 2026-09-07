@@ -1,0 +1,195 @@
+name: Deploy
+
+on:
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+    inputs:
+      component:
+        description: Component to deploy
+        required: true
+        default: all
+        type: choice
+        options: [all, api, bot, activity]
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      component: ${{ steps.component.outputs.component }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - id: component
+        env:
+          DISPATCH_COMPONENT: ${{ inputs.component }}
+          EVENT_BEFORE: ${{ github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_SHA: ${{ github.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "component=$DISPATCH_COMPONENT" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          files=$(git diff --name-only "$EVENT_BEFORE" "$EVENT_SHA" 2>/dev/null || git show --format='' --name-only "$EVENT_SHA")
+          api=false
+          bot=false
+          activity=false
+          while IFS= read -r file; do
+            case "$file" in
+              apps/api/*) api=true ;;
+              apps/bot/*) bot=true ;;
+              apps/activity/*) activity=true ;;
+              package.json|bun.lock|turbo.json|deploy/*|.github/scripts/*|.github/workflows/*) api=true; bot=true; activity=true ;;
+            esac
+          done <<< "$files"
+          count=0
+          $api && ((count += 1))
+          $bot && ((count += 1))
+          $activity && ((count += 1))
+          if ((count == 0)); then
+            component=none
+          elif ((count == 1)); then
+            $api && component=api
+            $bot && component=bot
+            $activity && component=activity
+          else
+            component=all
+          fi
+          echo "component=$component" >> "$GITHUB_OUTPUT"
+
+  verify:
+    needs: changes
+    if: needs.changes.outputs.component != 'none'
+    runs-on: ${{ github.ref_name == 'main' && 'hostinger-runner' || 'devaneios-runner' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - run: bun install --frozen-lockfile
+      - run: bun run test:deploy-env
+      - run: bun run --filter marquinhos-web-api typecheck
+      - run: bun run --filter marquinhos-web-api lint
+      - run: bun run --filter marquinhos-web-api format:check
+      - run: bun run --filter marquinhos-web-api test
+      - run: bun run --filter marquinhos-web-api build
+      - run: bun run --filter marquinhosbot typecheck
+      - run: bun run --filter marquinhosbot lint:check
+      - run: bun run --filter marquinhosbot format:check
+      - run: bun run --filter marquinhosbot test
+      - run: bun run --filter marquinhosbot build
+      - run: bun run --filter marquinhos-activity-client typecheck
+      - run: bun run --filter marquinhos-activity-client lint
+      - run: bun run --filter marquinhos-activity-client format:check
+      - run: bun run --filter marquinhos-activity-client test
+      - run: bun run --filter marquinhos-activity-client build
+
+  deploy:
+    needs: [changes, verify]
+    if: needs.changes.outputs.component != 'none'
+    runs-on: ${{ github.ref_name == 'main' && 'hostinger-runner' || 'devaneios-runner' }}
+    environment: ${{ github.ref_name == 'main' && 'production' || 'development' }}
+    concurrency:
+      group: deploy-${{ github.ref_name == 'main' && 'production' || 'development' }}
+      cancel-in-progress: false
+    env:
+      AI_RESEARCH_DEADLINE_MS: ${{ vars.AI_RESEARCH_DEADLINE_MS }}
+      AI_RESEARCH_MAX_FETCHES: ${{ vars.AI_RESEARCH_MAX_FETCHES }}
+      AI_RESEARCH_MAX_ROUNDS: ${{ vars.AI_RESEARCH_MAX_ROUNDS }}
+      AI_RESEARCH_RETENTION_DAYS: ${{ vars.AI_RESEARCH_RETENTION_DAYS }}
+      AI_THREAD_RETENTION_DAYS: ${{ vars.AI_THREAD_RETENTION_DAYS }}
+      AI_THREAD_TOKEN_BUDGET: ${{ vars.AI_THREAD_TOKEN_BUDGET }}
+      AI_TRACE_ENABLED: ${{ vars.AI_TRACE_ENABLED }}
+      AI_TRACE_RETENTION_DAYS: ${{ vars.AI_TRACE_RETENTION_DAYS }}
+      BACKUP_DIR: ${{ vars.BACKUP_DIR }}
+      CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
+      CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
+      DEEZER_ARL_COOKIE: ${{ secrets.DEEZER_ARL_COOKIE }}
+      DEPLOY_IMAGE_TAG: ${{ github.sha }}
+      DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+      DISCORD_CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID }}
+      DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+      DISCORD_REDIRECT_URI: ${{ vars.DISCORD_REDIRECT_URI }}
+      GUILD_EXTERNAL_ROLE_ID: ${{ vars.GUILD_EXTERNAL_ROLE_ID }}
+      GUILD_MAIN_CHANNEL_ID: ${{ vars.GUILD_MAIN_CHANNEL_ID }}
+      GUILD_NEWCOMERS_CHANNEL_ID: ${{ vars.GUILD_NEWCOMERS_CHANNEL_ID }}
+      KNOWLEDGE_BASE_API_KEY: ${{ secrets.KNOWLEDGE_BASE_API_KEY }}
+      KNOWLEDGE_BASE_URL: ${{ vars.KNOWLEDGE_BASE_URL }}
+      LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+      LASTFM_REDIRECT_URI: ${{ vars.LASTFM_REDIRECT_URI }}
+      LASTFM_SHARED_SECRET: ${{ secrets.LASTFM_SHARED_SECRET }}
+      LOG_LEVEL: ${{ vars.LOG_LEVEL }}
+      MARQUINHOS_API_KEY: ${{ secrets.MARQUINHOS_API_KEY }}
+      MARQUINHOS_CRYPTO_SALT: ${{ secrets.MARQUINHOS_CRYPTO_SALT }}
+      MARQUINHOS_DECRYPTION_KEY: ${{ secrets.MARQUINHOS_DECRYPTION_KEY }}
+      MARQUINHOS_ERROR_DM_USER_ID: ${{ vars.MARQUINHOS_ERROR_DM_USER_ID }}
+      MARQUINHOS_SECRET_KEY: ${{ secrets.MARQUINHOS_SECRET_KEY }}
+      MARQUINHOS_SPREADSHEET_API_KEY: ${{ secrets.MARQUINHOS_SPREADSHEET_API_KEY }}
+      MARQUINHOS_SPREADSHEET_ID: ${{ vars.MARQUINHOS_SPREADSHEET_ID }}
+      MARQUINHOS_TOKEN: ${{ secrets.MARQUINHOS_TOKEN }}
+      MARQUINHOS_WEB_URL: ${{ vars.MARQUINHOS_WEB_URL }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+      OPENAI_REASONING_EFFORT: ${{ vars.OPENAI_REASONING_EFFORT }}
+      SANDBOX_MIRROR_PATH: ${{ vars.SANDBOX_MIRROR_PATH }}
+      SEARXNG_URL: ${{ vars.SEARXNG_URL }}
+      SPOTIFY_CLIENT_ID: ${{ vars.SPOTIFY_CLIENT_ID }}
+      SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+      VITE_API_ORIGIN: ${{ vars.VITE_API_ORIGIN }}
+      VITE_DISCORD_CLIENT_ID: ${{ vars.VITE_DISCORD_CLIENT_ID }}
+      WORDLE_TIMEZONE: ${{ vars.WORDLE_TIMEZONE }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write deployment environment
+        run: bash .github/scripts/write-deploy-env.sh deploy/.env
+
+      - name: Deploy
+        env:
+          COMPONENT: ${{ needs.changes.outputs.component }}
+        run: bash deploy/deploy.sh "$COMPONENT"
+
+      - name: Scan API image
+        if: needs.changes.outputs.component == 'api' || needs.changes.outputs.component == 'all'
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: marquinhos-api:${{ github.sha }}
+          format: table
+          exit-code: '0'
+          severity: HIGH,CRITICAL
+
+      - name: Scan bot image
+        if: needs.changes.outputs.component == 'bot' || needs.changes.outputs.component == 'all'
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: marquinhos-bot:${{ github.sha }}
+          format: table
+          exit-code: '0'
+          severity: HIGH,CRITICAL
+
+      - name: Scan Activity image
+        if: needs.changes.outputs.component == 'activity' || needs.changes.outputs.component == 'all'
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: marquinhos-activity:${{ github.sha }}
+          format: table
+          exit-code: '0'
+          severity: HIGH,CRITICAL
+
+      - name: Remove generated environment files
+        if: always()
+        run: rm -f -- deploy/.env deploy/api.env deploy/bot.env
