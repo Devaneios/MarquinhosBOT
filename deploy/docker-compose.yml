@@ -17,7 +17,7 @@ services:
       DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:?DISCORD_CLIENT_ID is required}
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:?DISCORD_CLIENT_SECRET is required}
       DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:?DISCORD_REDIRECT_URI is required}
-      HTTP_PORT: 3000
+      HTTP_PORT: 3106
       LASTFM_API_KEY: ${LASTFM_API_KEY:?LASTFM_API_KEY is required}
       LASTFM_REDIRECT_URI: ${LASTFM_REDIRECT_URI:?LASTFM_REDIRECT_URI is required}
       LASTFM_SHARED_SECRET: ${LASTFM_SHARED_SECRET:?LASTFM_SHARED_SECRET is required}
@@ -34,6 +34,8 @@ services:
       - marquinhos-api-data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
       - ${SANDBOX_MIRROR_PATH:-/opt/marquinhos/sandbox-mirror}:${SANDBOX_MIRROR_PATH:-/opt/marquinhos/sandbox-mirror}:ro
+    ports:
+      - "127.0.0.1:3106:3106"
     restart: unless-stopped
     stop_grace_period: 30s
     networks:
@@ -56,7 +58,7 @@ services:
       - ./bot.env
     environment:
       MARQUINHOS_API_KEY: ${MARQUINHOS_API_KEY:?MARQUINHOS_API_KEY is required}
-      MARQUINHOS_API_URL: http://api:3000
+      MARQUINHOS_API_URL: http://api:3106
       MARQUINHOS_CLIENT_ID: ${DISCORD_CLIENT_ID:?DISCORD_CLIENT_ID is required}
       MARQUINHOS_TOKEN: ${MARQUINHOS_TOKEN:?MARQUINHOS_TOKEN is required}
       NODE_ENV: production
@@ -74,6 +76,8 @@ services:
         VITE_DISCORD_CLIENT_ID: ${VITE_DISCORD_CLIENT_ID:?VITE_DISCORD_CLIENT_ID is required}
     image: marquinhos-activity:${DEPLOY_IMAGE_TAG}
     container_name: marquinhos-gateway
+    ports:
+      - "127.0.0.1:5173:80"
     restart: unless-stopped
     networks:
       - marquinhos
