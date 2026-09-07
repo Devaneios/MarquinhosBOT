@@ -12,6 +12,7 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
+    "test:deploy-env": "bash .github/scripts/write-deploy-env.test.sh",
     "prepare": "husky"
   },
   "devDependencies": {

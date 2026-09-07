@@ -8,7 +8,7 @@ services:
     image: marquinhos-web-api:latest
     container_name: marquinhos-web-api
     env_file:
-      - /etc/marquinhos/marquinhos-api.conf
+      - ./.env
     environment:
       - NODE_ENV=production
       - SQLITE_PATH=/app/data/marquinhos.db

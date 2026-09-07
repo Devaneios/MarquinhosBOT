@@ -51,9 +51,27 @@ jobs:
   deploy:
     needs: build
     runs-on: [self-hosted, Linux, X64, hostinger-runner]
+    environment: production
 
     steps:
       - uses: actions/checkout@v7
+
+      - name: Write deployment environment
+        env:
+          MARQUINHOS_TOKEN: ${{ secrets.MARQUINHOS_TOKEN }}
+          MARQUINHOS_API_URL: ${{ vars.MARQUINHOS_API_URL }}
+          MARQUINHOS_API_KEY: ${{ secrets.MARQUINHOS_API_KEY }}
+          MARQUINHOS_CLIENT_ID: ${{ vars.MARQUINHOS_CLIENT_ID }}
+          MARQUINHOS_ERROR_DM_USER_ID: ${{ vars.MARQUINHOS_ERROR_DM_USER_ID }}
+          MARQUINHOS_DECRYPTION_KEY: ${{ secrets.MARQUINHOS_DECRYPTION_KEY }}
+          MARQUINHOS_WEB_URL: ${{ vars.MARQUINHOS_WEB_URL }}
+          DEEZER_ARL_COOKIE: ${{ secrets.DEEZER_ARL_COOKIE }}
+          GUILD_MAIN_CHANNEL_ID: ${{ vars.GUILD_MAIN_CHANNEL_ID }}
+          GUILD_EXTERNAL_ROLE_ID: ${{ vars.GUILD_EXTERNAL_ROLE_ID }}
+          GUILD_NEWCOMERS_CHANNEL_ID: ${{ vars.GUILD_NEWCOMERS_CHANNEL_ID }}
+          MARQUINHOS_SPREADSHEET_ID: ${{ vars.MARQUINHOS_SPREADSHEET_ID }}
+          MARQUINHOS_SPREADSHEET_API_KEY: ${{ secrets.MARQUINHOS_SPREADSHEET_API_KEY }}
+        run: .github/scripts/write-deploy-env.sh bot apps/bot/.env
 
       - name: Build Docker image (with layer cache)
         run: |
@@ -100,3 +118,7 @@ jobs:
       - name: Tag successful image as previous (for rollback)
         if: success()
         run: docker tag marquinhosbot:${{ github.sha }} marquinhosbot:previous
+
+      - name: Remove generated environment file
+        if: always()
+        run: rm -f -- apps/bot/.env

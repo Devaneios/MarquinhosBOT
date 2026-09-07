@@ -6,7 +6,7 @@ services:
     image: marquinhosbot:latest
     container_name: marquinhosbot
     env_file:
-      - /etc/marquinhos/marquinhos.conf
+      - ./.env
     environment:
       - NODE_ENV=production
     restart: on-failure:5

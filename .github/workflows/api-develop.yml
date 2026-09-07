@@ -45,9 +45,48 @@ jobs:
   deploy:
     needs: build
     runs-on: [self-hosted, Linux, X64, devaneios-runner]
+    environment: development
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Write deployment environment
+        env:
+          HTTP_PORT: ${{ vars.HTTP_PORT }}
+          HTTPS_PORT: ${{ vars.HTTPS_PORT }}
+          BENCH_GUILD_ID: ${{ vars.BENCH_GUILD_ID }}
+          MARQUINHOS_API_KEY: ${{ secrets.MARQUINHOS_API_KEY }}
+          MARQUINHOS_SECRET_KEY: ${{ secrets.MARQUINHOS_SECRET_KEY }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID }}
+          DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+          DISCORD_REDIRECT_URI: ${{ vars.DISCORD_REDIRECT_URI }}
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+          LASTFM_SHARED_SECRET: ${{ secrets.LASTFM_SHARED_SECRET }}
+          LASTFM_REDIRECT_URI: ${{ vars.LASTFM_REDIRECT_URI }}
+          SPOTIFY_CLIENT_ID: ${{ vars.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
+          KNOWLEDGE_BASE_URL: ${{ vars.KNOWLEDGE_BASE_URL }}
+          KNOWLEDGE_BASE_API_KEY: ${{ secrets.KNOWLEDGE_BASE_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          OPENAI_REASONING_EFFORT: ${{ vars.OPENAI_REASONING_EFFORT }}
+          SEARXNG_URL: ${{ vars.SEARXNG_URL }}
+          AI_THREAD_TOKEN_BUDGET: ${{ vars.AI_THREAD_TOKEN_BUDGET }}
+          AI_THREAD_RETENTION_DAYS: ${{ vars.AI_THREAD_RETENTION_DAYS }}
+          AI_RESEARCH_MAX_ROUNDS: ${{ vars.AI_RESEARCH_MAX_ROUNDS }}
+          AI_RESEARCH_MAX_SEARCHES: ${{ vars.AI_RESEARCH_MAX_SEARCHES }}
+          AI_RESEARCH_MAX_FETCHES: ${{ vars.AI_RESEARCH_MAX_FETCHES }}
+          AI_RESEARCH_DEADLINE_MS: ${{ vars.AI_RESEARCH_DEADLINE_MS }}
+          AI_RESEARCH_RETENTION_DAYS: ${{ vars.AI_RESEARCH_RETENTION_DAYS }}
+          AI_TRACE_ENABLED: ${{ vars.AI_TRACE_ENABLED }}
+          AI_TRACE_RETENTION_DAYS: ${{ vars.AI_TRACE_RETENTION_DAYS }}
+          LOG_LEVEL: ${{ vars.LOG_LEVEL }}
+          MARQUINHOS_CRYPTO_SALT: ${{ vars.MARQUINHOS_CRYPTO_SALT }}
+          WORDLE_TIMEZONE: ${{ vars.WORDLE_TIMEZONE }}
+          SANDBOX_MIRROR_PATH: ${{ vars.SANDBOX_MIRROR_PATH }}
+        run: .github/scripts/write-deploy-env.sh api apps/api/.env
 
       - name: Build Docker image (with layer cache)
         run: |
@@ -99,3 +138,7 @@ jobs:
       - name: Tag successful image as previous (for rollback)
         if: success()
         run: docker tag marquinhos-web-api:${{ github.sha }} marquinhos-web-api:previous
+
+      - name: Remove generated environment file
+        if: always()
+        run: rm -f -- apps/api/.env
