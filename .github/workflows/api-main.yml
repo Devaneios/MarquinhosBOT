@@ -1,4 +1,4 @@
-name: CI / Deploy
+name: API / Production
 
 on:
   push:

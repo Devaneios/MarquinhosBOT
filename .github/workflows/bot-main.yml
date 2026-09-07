@@ -1,4 +1,4 @@
-name: CI / Deploy
+name: Bot / Production
 
 on:
   push:
