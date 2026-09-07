@@ -31,6 +31,19 @@ function ticTacToeCreds(userId: string, roomId: string) {
   return { key, token };
 }
 
+async function waitUntil(
+  condition: () => boolean,
+  { timeoutMs = 2000, intervalMs = 10 } = {},
+): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (!condition()) {
+    if (Date.now() > deadline) {
+      throw new Error('waitUntil: condition not met within timeout');
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+}
+
 // Plays out the exact move sequence used throughout this file: X (user-a)
 // completes the top row on move 5, with O (user-b) losing.
 async function playXWinsTopRow(
@@ -1569,7 +1582,7 @@ describe('MatchRoom', () => {
       clientA.send('pull', { level: 3.5, position: 0 });
       clientA.send('pull', { level: 'not-a-number', position: 0 });
       clientA.send('pull', {});
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await waitUntil(() => errors.length >= 3);
 
       expect(errors.length).toBe(3);
       expect((errors[0] as { error: string }).error).toBe(
@@ -1584,7 +1597,7 @@ describe('MatchRoom', () => {
       });
       const laterMessages: unknown[] = [];
       clientD.onMessage('init', (msg) => laterMessages.push(msg));
-      await room.waitForNextPatch();
+      await waitUntil(() => laterMessages.length > 0);
       expect(laterMessages.length).toBeGreaterThan(0);
 
       clientA.leave();
