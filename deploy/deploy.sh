@@ -30,6 +30,13 @@ tag_rollback_image() {
   [[ -n "$current_image" ]] && docker tag "$current_image" "$image:rollback"
 }
 
+tag_sandbox_rollback_image() {
+  local current_image
+
+  current_image=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' marquinhos-api 2>/dev/null | sed -n 's/^SANDBOX_IMAGE=//p')
+  [[ -n "$current_image" ]] && docker tag "$current_image" marquinhos-sandbox:rollback
+}
+
 backup_api_data() {
   local timestamp
 
@@ -64,7 +71,7 @@ rollback_activity() {
 deploy_api() {
   backup_api_data
   tag_rollback_image marquinhos-api marquinhos-api
-  tag_rollback_image marquinhos-sandbox marquinhos-sandbox
+  tag_sandbox_rollback_image
   compose build api sandbox
   if ! compose up --detach --no-deps --force-recreate --wait --wait-timeout 90 api; then
     docker logs marquinhos-api --tail 200 2>&1 || true
