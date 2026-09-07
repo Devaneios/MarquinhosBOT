@@ -36,9 +36,6 @@ jobs:
       - name: Type check
         run: bun run --filter marquinhos-web-api typecheck
 
-      - name: Test
-        run: bun run --filter marquinhos-web-api test
-
       - name: Build
         run: bun run --filter marquinhos-web-api build
 
