@@ -98,7 +98,6 @@ deploy_activity() {
     rollback_activity || true
     exit 1
   fi
-  compose up --detach --no-deps --force-recreate cloudflared
 }
 
 case "$component" in

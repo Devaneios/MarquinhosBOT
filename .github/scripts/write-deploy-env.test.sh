@@ -11,7 +11,6 @@ if env -i PATH="$PATH" "$script_dir/write-deploy-env.sh" "$test_dir/missing.env"
 fi
 
 export BACKUP_DIR="$test_dir/backups"
-export CLOUDFLARE_TUNNEL_TOKEN='tunnel-token'
 export CORS_ORIGINS='https://one.example.test,https://two.example.test'
 export DEPLOY_IMAGE_TAG='abc123'
 export DISCORD_BOT_TOKEN='discord-bot-token'

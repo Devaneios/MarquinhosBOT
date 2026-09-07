@@ -7,7 +7,7 @@ services:
       dockerfile: apps/api/Dockerfile
       args:
         DOCKER_GID: ${DOCKER_GID:?DOCKER_GID is required}
-    image: marquinhos-api:${DEPLOY_IMAGE_TAG:?DEPLOY_IMAGE_TAG is required}
+    image: marquinhos-api:${DEPLOY_IMAGE_TAG}
     container_name: marquinhos-api
     env_file:
       - ./api.env
@@ -43,14 +43,14 @@ services:
     build:
       context: ..
       dockerfile: apps/api/docker/sandbox.Dockerfile
-    image: marquinhos-sandbox:${DEPLOY_IMAGE_TAG:?DEPLOY_IMAGE_TAG is required}
+    image: marquinhos-sandbox:${DEPLOY_IMAGE_TAG}
     profiles: [build]
 
   bot:
     build:
       context: ..
       dockerfile: apps/bot/Dockerfile
-    image: marquinhos-bot:${DEPLOY_IMAGE_TAG:?DEPLOY_IMAGE_TAG is required}
+    image: marquinhos-bot:${DEPLOY_IMAGE_TAG}
     container_name: marquinhos-bot
     env_file:
       - ./bot.env
@@ -72,19 +72,8 @@ services:
       args:
         VITE_API_ORIGIN: ${VITE_API_ORIGIN:?VITE_API_ORIGIN is required}
         VITE_DISCORD_CLIENT_ID: ${VITE_DISCORD_CLIENT_ID:?VITE_DISCORD_CLIENT_ID is required}
-    image: marquinhos-activity:${DEPLOY_IMAGE_TAG:?DEPLOY_IMAGE_TAG is required}
+    image: marquinhos-activity:${DEPLOY_IMAGE_TAG}
     container_name: marquinhos-gateway
-    restart: unless-stopped
-    networks:
-      - marquinhos
-
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: marquinhos-cloudflared
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN is required}
-    depends_on:
-      gateway:
-        condition: service_healthy
     restart: unless-stopped
     networks:
       - marquinhos

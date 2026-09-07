@@ -112,7 +112,6 @@ jobs:
       AI_TRACE_ENABLED: ${{ vars.AI_TRACE_ENABLED }}
       AI_TRACE_RETENTION_DAYS: ${{ vars.AI_TRACE_RETENTION_DAYS }}
       BACKUP_DIR: ${{ vars.BACKUP_DIR }}
-      CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
       CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
       DEEZER_ARL_COOKIE: ${{ secrets.DEEZER_ARL_COOKIE }}
       DEPLOY_IMAGE_TAG: ${{ github.sha }}
