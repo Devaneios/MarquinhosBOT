@@ -11,6 +11,8 @@ on:
       - .lintstagedrc.json
       - .husky/**
       - .github/workflows/bot-main.yml
+      - .github/scripts/write-deploy-env.sh
+  workflow_dispatch:
 
 jobs:
   build:
