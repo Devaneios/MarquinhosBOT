@@ -1797,18 +1797,8 @@ describe('MatchRoom', () => {
       });
       await room.waitForNextPatch();
 
-      const stateUpdates: {
-        playerScores: { userId: string; score: number }[];
-      }[] = [];
-      clientA.onMessage(
-        'state_update',
-        (msg: { playerScores: { userId: string; score: number }[] }) =>
-          stateUpdates.push(msg),
-      );
-
       clientA.send('answer', { answerIndex: 999 });
       clientA.send('answer', { answerIndex: 1.5 });
-      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Proves the room/process survived: a fresh client can still connect
       // and get seated as a spectator with a valid ack.
@@ -1816,21 +1806,21 @@ describe('MatchRoom', () => {
         token: triviaCreds('user-c', 'ROOM09d').token,
         roomKey: key,
       });
-      const laterMessages: unknown[] = [];
-      clientC.onMessage('init', (msg) => laterMessages.push(msg));
-      await room.waitForNextPatch();
-      expect(laterMessages.length).toBeGreaterThan(0);
+      const [messageType, init] = await clientC.waitForNextMessage();
+      expect(messageType).toBe('init');
+      expect(init).toBeDefined();
 
       // Proves the malformed submissions above never consumed user-b's
       // answer slot for the question: user-b can still submit the correct
       // answer and score points for it.
       clientB.send('answer', { answerIndex: 1 });
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const userBScore = stateUpdates
-        .flatMap((s) => s.playerScores)
-        .filter((p) => p.userId === 'user-b')
-        .at(-1)?.score;
+      const [updateType, update] = await clientA.waitForNextMessage();
+      expect(updateType).toBe('state_update');
+      const userBScore = (
+        update as {
+          playerScores: { userId: string; score: number }[];
+        }
+      ).playerScores.find((p) => p.userId === 'user-b')?.score;
       expect(userBScore).toBeGreaterThan(0);
 
       clientA.leave();
