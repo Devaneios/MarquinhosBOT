@@ -9,13 +9,13 @@
   },
   "wordle": {
     "name": "Terminhos",
-    "blurb": "Descubra a palavra usando as pistas de cada tentativa.",
+    "blurb": "Descubra.",
     "category": "Palavras · Solo",
-    "previewCaption": "Cada tentativa, uma pista.",
+    "previewCaption": "Letras, letrinhas",
     "hints": {
-      "correct": "Verde: posição certa.",
-      "present": "Amarelo: outra posição.",
-      "absent": "Cinza: letra ausente."
+      "correct": "Verde:",
+      "present": "Amarelo: err",
+      "absent": "Cinza: errado"
     }
   },
   "tic-tac-toe": {
