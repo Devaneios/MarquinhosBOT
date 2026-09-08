@@ -164,6 +164,17 @@ export class TermoCommand extends MarquinhosCommand {
 
     if (result.solved) {
       try {
+        // Claim before announcing, not after: the poller (ready.ts) races
+        // this same win, and claiming after sending would leave a window
+        // where both this command and the poller see it as unannounced and
+        // both post it.
+        const claimRes = await api.markWordleAnnounced(
+          userId,
+          interaction.guildId!,
+        );
+        const claimed = (claimRes.data as { claimed?: boolean })?.claimed;
+        if (!claimed) return;
+
         const name =
           (interaction.member as GuildMember).nickname ||
           interaction.user.displayName ||
@@ -172,7 +183,6 @@ export class TermoCommand extends MarquinhosCommand {
           'Alguém';
 
         await announceTermoWin(this.container.client, channel, name, result);
-        await api.markWordleAnnounced(userId, interaction.guildId!);
       } catch {
         /* silently ignore */
       }

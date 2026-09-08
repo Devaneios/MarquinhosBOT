@@ -373,6 +373,14 @@ async function broadcastTermoWins(client: Client<true>): Promise<void> {
 
       for (const win of wins) {
         try {
+          // Claim before announcing, not after: /termo's own instant
+          // announcement races this poller, and claiming after sending
+          // would leave a window where both see the win as unannounced and
+          // both post it.
+          const claimRes = await api.markWordleAnnounced(win.userId, guildId);
+          const claimed = (claimRes.data as { claimed?: boolean })?.claimed;
+          if (!claimed) continue;
+
           const member = await guild?.members
             .fetch(win.userId)
             .catch(() => null);
@@ -381,7 +389,6 @@ async function broadcastTermoWins(client: Client<true>): Promise<void> {
           await announceTermoWin(client, channel, name, win, {
             showPlayButton: true,
           });
-          await api.markWordleAnnounced(win.userId, guildId);
         } catch (err) {
           logger.warn(
             `Terminhos win announcer: failed for user ${win.userId} in guild ${guildId}:`,

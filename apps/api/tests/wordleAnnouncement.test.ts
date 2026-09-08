@@ -44,6 +44,24 @@ describe('WordleService announcement tracking', () => {
     expect(service.getUnannouncedWins(guildId)).toEqual([]);
   });
 
+  it('returns true for the first claim and false for a repeat claim of the same win', () => {
+    const service = new WordleService();
+    const guildId = `guild-${crypto.randomUUID()}`;
+    const userId = 'user-e';
+
+    solveDaily(service, userId, guildId);
+
+    expect(service.markAnnounced(userId, guildId)).toBe(true);
+    expect(service.markAnnounced(userId, guildId)).toBe(false);
+  });
+
+  it('returns false when claiming a win that was never solved', () => {
+    const service = new WordleService();
+    const guildId = `guild-${crypto.randomUUID()}`;
+
+    expect(service.markAnnounced('user-f', guildId)).toBe(false);
+  });
+
   it('returns nothing for a guild with no solved sessions today', () => {
     const service = new WordleService();
     const guildId = `guild-${crypto.randomUUID()}`;

@@ -239,8 +239,8 @@ export default class WordleController {
     }
 
     try {
-      service.markAnnounced(userId, guildId);
-      res.json({ message: 'Vitória marcada como anunciada.' });
+      const claimed = service.markAnnounced(userId, guildId);
+      res.json({ data: { claimed } });
     } catch (err) {
       console.error('WordleController.markAnnounced error:', err);
       res.status(500).json({ message: 'Erro interno.' });

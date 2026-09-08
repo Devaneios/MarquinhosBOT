@@ -506,18 +506,29 @@ export class WordleService {
     };
   }
 
-  markAnnounced(userId: string, guildId: string): void {
+  // Atomically claims the right to announce this win: only the first
+  // caller (the /termo command's synchronous send, or the poller racing
+  // it) gets `claimed: true` back, since the WHERE clause only matches a
+  // row that hasn't been claimed yet. Callers must claim *before* building
+  // and sending the announcement, not after — claiming after sending still
+  // leaves a window where both the command and the poller can observe the
+  // win as unannounced and both send it.
+  markAnnounced(userId: string, guildId: string): boolean {
     const today = getRecifeDate();
     const now = Math.floor(Date.now() / 1000);
-    db.query(
-      `UPDATE wordle_sessions SET announced_at = $now
-       WHERE user_id = $user_id AND guild_id = $guild_id AND word_date = $word_date AND solved = 1`,
-    ).run({
-      $now: now,
-      $user_id: userId,
-      $guild_id: guildId,
-      $word_date: today,
-    });
+    const result = db
+      .query(
+        `UPDATE wordle_sessions SET announced_at = $now
+         WHERE user_id = $user_id AND guild_id = $guild_id AND word_date = $word_date
+           AND solved = 1 AND announced_at IS NULL`,
+      )
+      .run({
+        $now: now,
+        $user_id: userId,
+        $guild_id: guildId,
+        $word_date: today,
+      });
+    return result.changes > 0;
   }
 
   getUnannouncedWins(guildId: string): {
