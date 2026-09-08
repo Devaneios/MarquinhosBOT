@@ -1,3 +1,4 @@
+import { announceTermoWin } from '@marquinhos/commands/games/announceTermoWin';
 import { GuildConfig } from '@marquinhos/config/guild';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
@@ -43,6 +44,7 @@ export class ReadyListener extends Listener<typeof Events.ClientReady> {
     startBichoGame(client);
     startTermoScheduler(client);
     startTermoStatsBroadcast(client);
+    startTermoWinAnnouncer(client);
     startWednesdayImageScheduler(client);
   }
 }
@@ -342,6 +344,68 @@ async function broadcastTermoStats(client: Client<true>): Promise<void> {
       });
     }
   }
+}
+
+async function broadcastTermoWins(client: Client<true>): Promise<void> {
+  const guilds = client.guilds.cache;
+
+  for (const [guildId] of guilds) {
+    try {
+      const cfgRes = await api.getWordleConfig(guildId);
+      const channelId = (cfgRes.data as { channelId?: string })?.channelId;
+      if (!channelId) continue;
+
+      const winsRes = await api.getUnannouncedWordleWins(guildId);
+      const wins = winsRes.data as
+        | {
+            userId: string;
+            guesses: { guess: string; feedback: LetterFeedback[] }[];
+            attempts: number;
+          }[]
+        | undefined;
+      if (!wins || wins.length === 0) continue;
+
+      const channel = client.channels.cache.get(channelId) as
+        TextChannel | undefined;
+      if (!channel) continue;
+
+      const guild = client.guilds.cache.get(guildId);
+
+      for (const win of wins) {
+        try {
+          const member = await guild?.members
+            .fetch(win.userId)
+            .catch(() => null);
+          const name = member?.nickname || member?.displayName || 'Alguém';
+
+          await announceTermoWin(client, channel, name, win, {
+            showPlayButton: true,
+          });
+          await api.markWordleAnnounced(win.userId, guildId);
+        } catch (err) {
+          logger.warn(
+            `Terminhos win announcer: failed for user ${win.userId} in guild ${guildId}:`,
+            err,
+          );
+          reportError(err, {
+            origin: `ready.broadcastTermoWins:${guildId}:${win.userId}`,
+            logLevel: 'error',
+          });
+        }
+      }
+    } catch (err) {
+      logger.warn(`Terminhos win announcer: failed for guild ${guildId}:`, err);
+      reportError(err, {
+        origin: `ready.broadcastTermoWins:${guildId}`,
+        logLevel: 'error',
+      });
+    }
+  }
+}
+
+function startTermoWinAnnouncer(client: Client<true>): void {
+  const FIFTEEN_SECONDS = 15 * 1000;
+  setInterval(() => broadcastTermoWins(client), FIFTEEN_SECONDS);
 }
 
 function startTermoStatsBroadcast(client: Client<true>): void {

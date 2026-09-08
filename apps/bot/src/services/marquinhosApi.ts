@@ -456,6 +456,22 @@ export class MarquinhosApiService {
     );
   }
 
+  async markWordleAnnounced(
+    userId: string,
+    guildId: string,
+  ): Promise<ApiResponse> {
+    const data = await this.client.post('/api/wordle/mark-announced', {
+      userId,
+      guildId,
+    });
+    return data as ApiResponse;
+  }
+
+  async getUnannouncedWordleWins(guildId: string): Promise<ApiResponse> {
+    const data = await this.client.get(`/api/wordle/unannounced/${guildId}`);
+    return data as ApiResponse;
+  }
+
   async validateWordleGuess(
     guildId: string,
     guess: string,

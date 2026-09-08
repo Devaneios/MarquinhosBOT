@@ -43,6 +43,11 @@ export class TermoButtonsHandler extends InteractionHandler {
       return;
     }
 
+    if (btn.customId === TERMO_BUTTON_IDS.play) {
+      await btn.launchActivity();
+      return;
+    }
+
     await btn.deferUpdate();
 
     const response = await api.getUserWordleSession(btn.user.id, btn.guildId);

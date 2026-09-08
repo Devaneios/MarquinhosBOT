@@ -228,6 +228,48 @@ export default class WordleController {
     }
   }
 
+  markAnnounced(req: Request, res: Response): void {
+    const { userId, guildId } = req.body as {
+      userId?: string;
+      guildId?: string;
+    };
+    if (!userId || !guildId) {
+      res.status(400).json({ message: 'userId e guildId são obrigatórios.' });
+      return;
+    }
+
+    try {
+      service.markAnnounced(userId, guildId);
+      res.json({ message: 'Vitória marcada como anunciada.' });
+    } catch (err) {
+      console.error('WordleController.markAnnounced error:', err);
+      res.status(500).json({ message: 'Erro interno.' });
+    }
+  }
+
+  getUnannouncedWins(
+    req: Request<
+      GuildIdParams,
+      Record<string, unknown>,
+      Record<string, unknown>
+    >,
+    res: Response,
+  ): void {
+    const { guildId } = req.params;
+    if (!guildId) {
+      res.status(400).json({ message: 'guildId é obrigatório.' });
+      return;
+    }
+
+    try {
+      const data = service.getUnannouncedWins(guildId);
+      res.json({ data });
+    } catch (err) {
+      console.error('WordleController.getUnannouncedWins error:', err);
+      res.status(500).json({ message: 'Erro interno.' });
+    }
+  }
+
   getStreak(
     req: Request<
       UserGuildIdParams,

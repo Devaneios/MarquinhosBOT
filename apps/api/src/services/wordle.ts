@@ -506,6 +506,43 @@ export class WordleService {
     };
   }
 
+  markAnnounced(userId: string, guildId: string): void {
+    const today = getRecifeDate();
+    const now = Math.floor(Date.now() / 1000);
+    db.query(
+      `UPDATE wordle_sessions SET announced_at = $now
+       WHERE user_id = $user_id AND guild_id = $guild_id AND word_date = $word_date AND solved = 1`,
+    ).run({
+      $now: now,
+      $user_id: userId,
+      $guild_id: guildId,
+      $word_date: today,
+    });
+  }
+
+  getUnannouncedWins(guildId: string): {
+    userId: string;
+    guesses: { guess: string; feedback: LetterFeedback[] }[];
+    attempts: number;
+  }[] {
+    const today = getRecifeDate();
+    const rows = db
+      .query<
+        { user_id: string; guesses: string; attempts: number },
+        { $guild_id: string; $word_date: string }
+      >(
+        `SELECT user_id, guesses, attempts FROM wordle_sessions
+         WHERE guild_id = $guild_id AND word_date = $word_date AND solved = 1 AND announced_at IS NULL`,
+      )
+      .all({ $guild_id: guildId, $word_date: today });
+
+    return rows.map((row) => ({
+      userId: row.user_id,
+      guesses: JSON.parse(row.guesses),
+      attempts: row.attempts,
+    }));
+  }
+
   validateGuess(
     guildId: string,
     guess: string,

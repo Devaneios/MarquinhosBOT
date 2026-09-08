@@ -50,6 +50,16 @@ router.get(
   checkToken,
   wordle.getConfig.bind(wordle) as unknown as express.RequestHandler,
 );
+router.post(
+  '/mark-announced',
+  checkToken,
+  wordle.markAnnounced.bind(wordle) as unknown as express.RequestHandler,
+);
+router.get(
+  '/unannounced/:guildId',
+  checkToken,
+  wordle.getUnannouncedWins.bind(wordle) as unknown as express.RequestHandler,
+);
 router.get(
   '/streak/:userId/:guildId',
   checkToken,

@@ -213,6 +213,12 @@ try {
   // Column already exists — safe to ignore
 }
 
+try {
+  db.run('ALTER TABLE wordle_sessions ADD COLUMN announced_at INTEGER');
+} catch {
+  // Column already exists — safe to ignore
+}
+
 db.run(`
   CREATE TABLE IF NOT EXISTS wordlist_review (
     word      TEXT    NOT NULL PRIMARY KEY,

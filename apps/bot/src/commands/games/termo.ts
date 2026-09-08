@@ -1,19 +1,15 @@
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
-import {
-  buildResultImage,
-  type LetterFeedback,
-} from '@marquinhos/ui/screens/termo';
-import { baseEmbed } from '@marquinhos/utils/discord';
+import { type LetterFeedback } from '@marquinhos/ui/screens/termo';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import {
-  AttachmentBuilder,
   GuildMember,
   MessageFlags,
   type AutocompleteInteraction,
   type ChatInputCommandInteraction,
 } from 'discord.js';
+import { announceTermoWin } from './announceTermoWin';
 import { buildKeyboardAttachment, buildTermoActionRow } from './termoResponse';
 
 interface WordleGuessResult {
@@ -168,42 +164,15 @@ export class TermoCommand extends MarquinhosCommand {
 
     if (result.solved) {
       try {
-        const resultBuffer = await buildResultImage(result.guesses);
-        const resultAttachment = new AttachmentBuilder(resultBuffer, {
-          name: 'resultado.png',
-        });
         const name =
           (interaction.member as GuildMember).nickname ||
           interaction.user.displayName ||
           interaction.user.username ||
-          interaction.user.globalName;
+          interaction.user.globalName ||
+          'Alguém';
 
-        const solvedMessage =
-          result.attempts === 1
-            ? 'acertou de primeira!'
-            : `acertou em ${result.attempts} tentativa${result.attempts > 1 ? 's' : ''}!`;
-
-        const embed = baseEmbed(this.container.client)
-          .setTitle(`${name} ${solvedMessage}`)
-          .setColor(0x588157)
-          .setImage('attachment://resultado.png');
-
-        await channel.send({
-          embeds: [embed],
-          files: [resultAttachment],
-        });
-
-        if (result.guesses.length === 1) {
-          const msg = await channel.send(
-            `TAPORRA ${name} EU NUNCA ACREDITEI! ESPERO QUE NUNCA MAIS CONSIGA!`,
-          );
-          msg.react(':marquinhosverao:1192666622356361367');
-        } else if (result.guesses.length === 2) {
-          const msg = await channel.send(
-            `OLOCO ${name} QUASE HEIN! DA PRÓXIMA VAI SER NO MÍNIMO 5!`,
-          );
-          msg.react(':marquinhosverao:1192666622356361367');
-        }
+        await announceTermoWin(this.container.client, channel, name, result);
+        await api.markWordleAnnounced(userId, interaction.guildId!);
       } catch {
         /* silently ignore */
       }
