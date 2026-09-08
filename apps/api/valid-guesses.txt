@@ -1,17 +1,16 @@
-aabora
-aaboras
 aatrox
 aavora
 aavoras
 ababe
-ababeis
 ababes
-ababil
-ababis
 ababuí
 ababuís
 ababá
 ababás
+abacate
+abacates
+abacaxi
+abacaxis
 abacaí
 abacaís
 abacto
@@ -406,8 +405,6 @@ ablua
 abluam
 abluans
 abluas
-ablublue
-ablublues
 abluem
 abluens
 ablui
@@ -509,8 +506,6 @@ abortas
 aborte
 aborted
 aborteds
-aborterror
-aborterrores
 abortes
 aborto
 abortos
@@ -745,8 +740,6 @@ abígeos
 abútua
 abútuas
 acaba
-acabadno
-acabadnos
 acabado
 acabados
 acabai
@@ -940,8 +933,6 @@ acaçá
 acaçás
 acaém
 acaéns
-acbabe
-acbabes
 accent
 accents
 accenture
@@ -1092,7 +1083,6 @@ acessares
 acessas
 acesse
 acesses
-acessibility
 acesso
 acessos
 acessíveis
@@ -1445,8 +1435,6 @@ acostumei
 acostumeis
 acostumou
 acostumous
-acostunmado
-acostunmados
 acotar
 acotares
 acouti
@@ -2024,8 +2012,6 @@ adobar
 adobares
 adobas
 adobe
-adobefresco
-adobefrescos
 adobes
 adobo
 adobos
@@ -2082,13 +2068,9 @@ adorarias
 adoras
 adore
 adorei
-adoreih
-adoreihs
 adoreis
 adorem
 adorens
-adorent
-adorents
 adores
 adorna
 adornas
@@ -2144,8 +2126,6 @@ adoçães
 adoção
 adoçãos
 adoções
-adprivacy
-adprivacys
 adquirido
 adquiridos
 adquirindo
@@ -2211,8 +2191,6 @@ adufar
 adufares
 adufas
 adufe
-adufepe
-adufepes
 adufes
 adufo
 adufos
@@ -2290,6 +2268,7 @@ advires
 advirá
 advirás
 advoga
+advogado
 advogados
 advogar
 advogares
@@ -3442,7 +3421,6 @@ airão
 airãos
 airóis
 airões
-aisjsisjs
 aislar
 aislares
 aisso
@@ -3530,7 +3508,6 @@ ajimez
 ajimezes
 ajobó
 ajobós
-ajodoidjoaij
 ajoelho
 ajoelhos
 ajoiar
@@ -3541,8 +3518,6 @@ ajouje
 ajoujes
 ajoujo
 ajoujos
-ajsaisuai
-ajsaisuais
 ajuaga
 ajuagas
 ajuba
@@ -3555,8 +3530,6 @@ ajudais
 ajudam
 ajudando
 ajudandos
-ajudano
-ajudanos
 ajudans
 ajudar
 ajudaram
@@ -3861,8 +3834,6 @@ alcoba
 alcobas
 alcofa
 alcofas
-alcoholbot
-alcoholbots
 alcopo
 alcopos
 alcora
@@ -4123,7 +4094,6 @@ algosos
 algoz
 algoze
 algozes
-algrimas
 alguais
 algual
 algum
@@ -4215,7 +4185,6 @@ aliene
 alienes
 alieno
 alienos
-alienpls
 aliens
 alies
 aligar
@@ -4515,8 +4484,6 @@ alsine
 alsines
 alsino
 alsinos
-alsnaldna
-alsnaldnas
 alsol
 alsona
 alsonas
@@ -5038,6 +5005,8 @@ ambude
 ambudes
 ambulante
 ambulantes
+ambulância
+ambulâncias
 ambuá
 ambuás
 ambuí
@@ -5846,8 +5815,6 @@ angualres
 anguia
 anguias
 angula
-angulact
-angulacts
 angular
 angulares
 angularjs
@@ -7089,8 +7056,6 @@ aquiri
 aquiris
 aquiro
 aquiros
-aquivo
-aquivos
 aquoso
 aquosos
 aquém
@@ -7851,8 +7816,6 @@ arraca
 arracas
 arrace
 arraces
-arradaram
-arradarans
 arraia
 arraias
 arraie
@@ -8618,6 +8581,8 @@ astras
 astre
 astres
 astro
+astronauta
+astronautas
 astronomia
 astronomias
 astros
@@ -9433,10 +9398,6 @@ ausente
 ausentes
 ausentou
 ausentous
-ausgagsgaya
-ausgagsgayas
-aushahsha
-aushahshas
 ausia
 ausias
 ausio
@@ -9850,8 +9811,6 @@ awares
 aways
 awesome
 awesomes
-awusidjid
-awusidjids
 axabó
 axabós
 axada
@@ -10321,7 +10280,6 @@ bacelas
 bacelo
 bacelos
 bachi
-bachirxx
 bachis
 baché
 bachés
@@ -13768,8 +13726,6 @@ brinco
 brincos
 brincou
 brincous
-brincquedo
-brincquedos
 brincá
 brincás
 brinda
@@ -15102,6 +15058,7 @@ cactais
 cactal
 cacto
 cactos
+cactus
 cacuais
 cacual
 cacubi
@@ -17388,8 +17345,6 @@ cavala
 cavalas
 cavaleiros
 cavalo
-cavaloemoji
-cavaloemojis
 cavalos
 cavam
 cavani
@@ -19758,8 +19713,6 @@ cloud
 clouds
 clown
 clowns
-clownsob
-clownsobs
 clteres
 clube
 clubes
@@ -25615,8 +25568,6 @@ desliza
 deslizar
 deslizares
 deslizas
-deslmado
-deslmados
 deslocamento
 deslogando
 deslogandos
@@ -25759,7 +25710,6 @@ desvias
 desvie
 desvies
 desvio
-desviopadrao
 desvios
 desvirtuado
 desvirtuados
@@ -25833,11 +25783,7 @@ devagar
 devagares
 devais
 devam
-devaneier
-devaneieres
-devaneiers
 devaneio
-devaneiors
 devaneios
 devans
 devas
@@ -25911,7 +25857,6 @@ devote
 devotes
 devoto
 devotos
-devscansados
 devtools
 devândalo
 devândalos
@@ -25919,8 +25864,6 @@ devém
 devéns
 devêm
 devêns
-dewajodie
-dewajodies
 dewar
 dewares
 dextra
@@ -26076,9 +26019,6 @@ diecos
 diedro
 diedros
 diego
-diegoboy
-diegoboys
-diegocs
 diegos
 dieguei
 diegueis
@@ -26316,7 +26256,6 @@ diosma
 diosmas
 dioso
 diosos
-diowejadweja
 dioxia
 dioxias
 dipigo
@@ -26429,12 +26368,9 @@ discas
 disciplina
 disciplinas
 disco
-disconfiguro
 disconnect
 disconnected
 disconnects
-disconnecy
-disconnecys
 discord
 discordando
 discordandos
@@ -26629,8 +26565,6 @@ ditote
 ditotes
 ditou
 ditous
-dittohype
-dittohypes
 ditua
 dituas
 diuca
@@ -27384,7 +27318,6 @@ driving
 drivings
 driça
 driças
-drmáticos
 droca
 drocas
 drofa
@@ -27571,8 +27504,6 @@ duludis
 dulçor
 dulçores
 dumas
-dumasxd
-dumasxds
 dumba
 dumbas
 dumbest
@@ -27823,8 +27754,6 @@ dérbi
 dérbis
 déreis
 dérris
-détestent
-détestents
 déuns
 dévio
 dévios
@@ -28331,8 +28260,6 @@ egídio
 egídios
 egípcia
 egípcias
-ehatever
-ehateveres
 eicha
 eichas
 eilish
@@ -28436,6 +28363,8 @@ eledá
 eledás
 eledê
 eledês
+elefante
+elefantes
 elefas
 elege
 elegei
@@ -28501,6 +28430,8 @@ eleva
 elevada
 elevadas
 elevado
+elevador
+elevadores
 elevados
 elevai
 elevais
@@ -28628,6 +28559,8 @@ embair
 embaires
 embaiu
 embaius
+embaixador
+embaixadores
 embaixo
 embaixos
 embaiá
@@ -28772,14 +28705,14 @@ emergencial
 emerges
 emergi
 emergis
+emergência
+emergências
 emerja
 emerjas
 emerso
 emersos
 emexo
 emexos
-emfim
-emfins
 emicon
 emicons
 emigra
@@ -29646,8 +29579,6 @@ entidade
 entidades
 entire
 entires
-entnedi
-entnedis
 entoa
 entoai
 entoais
@@ -29743,8 +29674,6 @@ entro
 entros
 entrou
 entrous
-entrtou
-entrtous
 entrós
 entuna
 entunas
@@ -29768,6 +29697,8 @@ enveja
 envejas
 envelheceu
 envelheceus
+envelope
+envelopes
 enveses
 envia
 enviada
@@ -29843,6 +29774,8 @@ enxido
 enxidos
 enxino
 enxinos
+enxofre
+enxofres
 enxota
 enxotas
 enxote
@@ -30003,8 +29936,6 @@ eqüino
 eqüinos
 erado
 erados
-eralmente
-eralmentes
 eramos
 eramá
 eramás
@@ -30375,6 +30306,10 @@ escore
 escores
 escoro
 escoros
+escorpiães
+escorpião
+escorpiãos
+escorpiões
 escota
 escotas
 escote
@@ -30545,6 +30480,8 @@ esmares
 esmear
 esmeares
 esmera
+esmeralda
+esmeraldas
 esmeras
 esmere
 esmeres
@@ -30572,12 +30509,12 @@ esnobo
 esnobos
 esnoga
 esnogas
-esoclher
-esoclheres
 espace
 espaces
 espada
 espadas
+espaguete
+espaguetes
 espala
 espalas
 espalhando
@@ -30614,10 +30551,10 @@ específico
 específicos
 espelhando
 espelhandos
+espelho
+espelhos
 espelunca
 espeluncas
-espeondance
-espeondances
 espera
 esperado
 esperados
@@ -30729,7 +30666,6 @@ espote
 espotes
 espouso
 espousos
-esprimentar
 espru
 esprus
 esprém
@@ -30802,14 +30738,11 @@ esquisito
 esquisitos
 esquizo
 esquizos
-esqusitos
 essar
 essares
 essas
 essenciais
 essencial
-essensia
-essensias
 essentiais
 essential
 esses
@@ -31030,6 +30963,8 @@ estourares
 estous
 estoy
 estoys
+estrada
+estradas
 estraga
 estragar
 estragares
@@ -31186,8 +31121,6 @@ etarismo
 etarismos
 etarra
 etarras
-etcoetera
-etcoeteras
 etedi
 etedis
 eteno
@@ -31209,6 +31142,8 @@ etilo
 etilos
 etino
 etinos
+etiqueta
+etiquetas
 etita
 etitas
 etite
@@ -31247,6 +31182,8 @@ eubazo
 eubazos
 eubeu
 eubeus
+eucalipto
+eucaliptos
 eudema
 eudemas
 eudylux
@@ -31427,8 +31364,6 @@ exacto
 exactos
 exagerando
 exagerandos
-exagtamente
-exagtamentes
 exala
 exalai
 exalais
@@ -31488,7 +31423,6 @@ exarous
 exatamente
 exatamentes
 exatas
-exatatamente
 exato
 exator
 exatores
@@ -31845,6 +31779,8 @@ exploraçãos
 explorações
 explore
 explores
+explosivo
+explosivos
 explosães
 explosão
 explosãos
@@ -31964,8 +31900,8 @@ exumo
 exumos
 exumou
 exumous
-exuplsar
-exuplsares
+exército
+exércitos
 exício
 exícios
 exíguo
@@ -32065,12 +32001,10 @@ factível
 factívéis
 facuis
 facul
-faculdad
 faculdaddy
 faculdaddys
 faculdade
 faculdades
-faculdads
 facães
 facão
 facãos
@@ -32753,8 +32687,6 @@ fazians
 fazias
 fazivel
 fazivéis
-faznedo
-faznedos
 fazvor
 fazvores
 façais
@@ -32885,8 +32817,6 @@ feelings
 feeria
 feerias
 feias
-feicebuk
-feicebuks
 feicho
 feichos
 feieza
@@ -34121,8 +34051,6 @@ flútuo
 flútuos
 flûte
 flûtes
-fnidancij
-fnidancijs
 fobado
 fobados
 fobar
@@ -34190,7 +34118,6 @@ fofocando
 fofocandos
 fofocar
 fofocares
-fofocars
 fofocas
 fofoco
 fofocos
@@ -35623,8 +35550,6 @@ fuxico
 fuxicos
 fuxicá
 fuxicás
-fuydnedo
-fuydnedos
 fuzas
 fuzeis
 fuzil
@@ -35975,13 +35900,10 @@ gabonas
 gabou
 gabous
 gabriel
-gabrielel
 gabrieli
 gabrielis
-gabrielkris
 gabrielle
 gabrielles
-gabrieléis
 gabriéis
 gabro
 gabros
@@ -37263,7 +37185,6 @@ gigantesca
 gigantescas
 gigantesco
 gigantescos
-giggabits
 gigoga
 gigogas
 gigolô
@@ -37468,8 +37389,6 @@ glide
 glides
 glifo
 glifos
-glifosfato
-glifosfatos
 glioma
 gliomas
 gliose
@@ -38512,10 +38431,8 @@ grotãos
 grotões
 group
 groups
-growlith
 growlithe
 growlithes
-growliths
 groçaí
 groçaís
 gruau
@@ -38876,8 +38793,6 @@ guichê
 guichês
 guico
 guicos
-guicraft
-guicrafts
 guicó
 guicós
 guidom
@@ -38899,16 +38814,12 @@ guild
 guilda
 guildas
 guilds
-guilerme
-guilermes
 guilha
 guilhas
 guilherme
 guilhermes
 guilho
 guilhos
-guilhrme
-guilhrmes
 guillermo
 guillermos
 guimba
@@ -39261,9 +39172,6 @@ hacka
 hackapride
 hackaprides
 hackas
-hackatagrers
-hackatagro
-hackatagros
 hackateiros
 hackathon
 hackathons
@@ -39484,8 +39392,6 @@ havaianas
 havan
 havana
 havanas
-havangelion
-havangelions
 havano
 havanos
 havans
@@ -39517,8 +39423,6 @@ hazard
 hazards
 haúça
 haúças
-headcannon
-headcannons
 header
 headeres
 heading
@@ -39526,8 +39430,6 @@ headings
 health
 healths
 heaps
-hearbeat
-hearbeats
 heavy
 heavys
 heber
@@ -39567,7 +39469,6 @@ heliões
 hellblade
 hellblades
 helldivers
-helldrivers
 hello
 hellos
 helly
@@ -39642,8 +39543,6 @@ hermes
 herocrafting
 heroku
 herokus
-heroo
-heroos
 herpes
 herpo
 herpos
@@ -39657,11 +39556,7 @@ heréu
 heréus
 herói
 heróis
-heróon
-heróons
 herôo
-herôon
-herôons
 herôos
 hesita
 hesitas
@@ -39792,6 +39687,8 @@ hipocrisia
 hipocrisias
 hipopo
 hipopos
+hipopótamo
+hipopótamos
 hippie
 hippies
 hipsi
@@ -39813,8 +39710,6 @@ hirto
 hirtos
 hispar
 hispares
-hissom
-hissons
 histo
 historinha
 historinhas
@@ -39928,8 +39823,6 @@ honrou
 honrous
 hooked
 hookeds
-hoombe
-hoombes
 hopak
 hopaks
 horais
@@ -40036,7 +39929,6 @@ howdy
 howdys
 howling
 howlings
-hsjaiskaoks
 https
 huambo
 huambos
@@ -40348,8 +40240,6 @@ iboga
 ibogas
 ibope
 ibopes
-ibrigado
-ibrigados
 ibéria
 ibérias
 ibério
@@ -40386,8 +40276,6 @@ icipó
 icipós
 icloud
 iclouds
-icnito
-icnitos
 iconais
 iconal
 icones
@@ -40413,8 +40301,6 @@ idado
 idados
 idaíta
 idaítas
-iddiotic
-iddiotics
 ideado
 ideados
 ideais
@@ -40493,8 +40379,6 @@ ietim
 ietins
 ifante
 ifantes
-ifnerno
-ifnernos
 ifood
 ifoods
 ifrita
@@ -40828,7 +40712,6 @@ imida
 imidas
 imido
 imidos
-imigas
 imigo
 imigos
 imigra
@@ -40932,8 +40815,6 @@ impeli
 impelis
 impene
 impenes
-impeortante
-impeortantes
 impera
 imperas
 impere
@@ -40992,8 +40873,6 @@ importous
 imports
 importunar
 importunares
-importunsr
-importunsres
 importância
 importâncias
 imporá
@@ -41028,8 +40907,6 @@ impunes
 impuro
 impuros
 impus
-impussivbro
-impussivbros
 imputa
 imputas
 impute
@@ -41164,8 +41041,6 @@ incidi
 incidis
 incido
 incidos
-incirvel
-incirvéis
 incisa
 incisas
 inciso
@@ -41415,8 +41290,6 @@ infecções
 infeliz
 infelizes
 infelizmente
-infenro
-infenros
 infere
 inferes
 inferi
@@ -41437,7 +41310,6 @@ infetos
 infido
 infidos
 infiel
-infiiltração
 infiltrado
 infiltrados
 infinita
@@ -41665,8 +41537,6 @@ inocência
 inocências
 inoma
 inomas
-inorar
-inorares
 inose
 inoses
 inova
@@ -41779,8 +41649,6 @@ instalado
 instalados
 instalando
 instalandos
-instalano
-instalanos
 instalar
 instalares
 instalariam
@@ -41882,7 +41750,6 @@ inteligentes
 inteligência
 intelligence
 intellij
-intellijegue
 intellijs
 intended
 intendeds
@@ -42441,7 +42308,6 @@ isento
 isentos
 ishizuo
 ishizuos
-isjesusagain
 islado
 islados
 islame
@@ -42492,7 +42358,6 @@ isspo
 isspos
 issue
 issues
-isteites
 istmo
 istmos
 isuria
@@ -42573,8 +42438,6 @@ itaúba
 itaúbas
 itaúna
 itaúnas
-itegead
-itegeads
 items
 itens
 iteque
@@ -42617,13 +42480,8 @@ itrita
 itritas
 itrol
 itróis
-itscarlos
 itself
 itselfs
-itsmarconi
-itsmarconis
-ittakestwo
-ittakestwos
 ituano
 ituanos
 ituaçu
@@ -42673,8 +42531,6 @@ ivoti
 ivotis
 ivowlq
 ivowlqs
-iwannabe
-iwannabes
 ixanto
 ixantos
 ixode
@@ -43525,8 +43381,6 @@ joldra
 joldras
 joliz
 jolizes
-jongador
-jongadores
 jongar
 jongares
 jongo
@@ -43597,8 +43451,6 @@ jovens
 joviais
 jovial
 joycons
-joyvixtor
-joyvixtores
 joçais
 joçal
 joíba
@@ -43788,7 +43640,6 @@ jungo
 jungos
 junho
 junhos
-juniagss
 juninho
 juninhos
 junino
@@ -44049,8 +43900,6 @@ kakakaa
 kakakaas
 kakakak
 kakakaks
-kakskaj
-kakskajs
 kalimann
 kalimanns
 kalina
@@ -44100,7 +43949,6 @@ karol
 karolaine
 karolaines
 karóis
-kasahsuahs
 kassadin
 kassadins
 katarina
@@ -44121,8 +43969,6 @@ keirin
 keirins
 kekekek
 kekekeks
-kekwait
-kekwaits
 kelper
 kelperes
 kelpie
@@ -44139,6 +43985,8 @@ kenga
 kengas
 kensington
 kensingtons
+ketchup
+ketchups
 keyarray
 keyarrays
 keynotes
@@ -44245,8 +44093,6 @@ kuanza
 kuanzas
 kubeo
 kubeos
-kubischek
-kubischeks
 kubitschek
 kubitscheks
 kuduro
@@ -44771,6 +44617,8 @@ larafi
 larafis
 larafã
 larafãs
+laranja
+laranjas
 laranjinha
 laranjinhas
 larapa
@@ -45181,8 +45029,6 @@ legend
 legendas
 legends
 legibilidade
-legibilidae
-legibilidaes
 legis
 legislaçães
 legislação
@@ -45246,8 +45092,6 @@ leira
 leirar
 leirares
 leiras
-leirfet
-leirfets
 leiria
 leirias
 leirã
@@ -45296,7 +45140,6 @@ leixães
 leixão
 leixãos
 leixões
-lejendes
 lelelê
 lelelês
 lemane
@@ -45441,8 +45284,6 @@ lereis
 lerem
 lerens
 leres
-lerese
-lereses
 leria
 leriam
 lerians
@@ -45898,8 +45739,6 @@ limit
 limita
 limitado
 limitados
-limitah
-limitahs
 limitar
 limitares
 limitas
@@ -46021,8 +45860,6 @@ lingeries
 linguagem
 linguagens
 linguas
-linguasuave
-linguasuaves
 linguiça
 linguiças
 lingães
@@ -46054,15 +45891,8 @@ linkares
 linke
 linkedin
 linkedins
-linkedisney
-linkedisneys
-linkedn
-linkedns
 linkes
-linketinder
 links
-linobill
-linobills
 linose
 linoses
 linque
@@ -46074,7 +45904,6 @@ lintéis
 linuron
 linurons
 linus
-linusperfect
 linux
 liocel
 liocéis
@@ -46192,7 +46021,6 @@ litina
 litinas
 litor
 litores
-litrles
 litro
 litros
 litrães
@@ -46200,8 +46028,6 @@ litrão
 litrãos
 litrões
 little
-littlebed
-littlebeds
 littles
 litura
 lituras
@@ -46565,8 +46391,6 @@ loona
 loonas
 loonaverso
 loonaversos
-looque
-looques
 lopano
 lopanos
 lopes
@@ -46690,8 +46514,6 @@ louco
 loucos
 loucura
 loucuras
-loudel
-loudéis
 louis
 lounge
 lounges
@@ -46771,7 +46593,6 @@ lucanos
 lucas
 lucena
 lucenas
-luchaos
 luchar
 luchares
 lucian
@@ -46780,7 +46601,6 @@ lucianos
 lucians
 lucina
 lucinas
-luckhaos
 lucky
 luckys
 lucos
@@ -47028,10 +46848,6 @@ lyndo
 lyndos
 lyreais
 lyreal
-lyricalia
-lyricalias
-lyricalipse
-lyricalipses
 lyrics
 lytics
 lábaro
@@ -48615,8 +48431,6 @@ maratas
 marati
 maratis
 maratona
-maratonacin
-maratonacins
 maratonas
 maratá
 maratás
@@ -48664,8 +48478,6 @@ marche
 marches
 marcho
 marchos
-marcinhabot
-marcinhabots
 marcio
 marcios
 marco
@@ -48807,7 +48619,6 @@ maroto
 marotos
 marova
 marovas
-marqiunhos
 marque
 marquei
 marqueis
@@ -49041,8 +48852,6 @@ matetê
 matetês
 mateu
 mateus
-mateuse
-mateuses
 mateva
 matevas
 matheus
@@ -49171,7 +48980,6 @@ maxita
 maxitas
 maxixe
 maxixes
-maxmuns
 maxona
 maxonas
 maxubi
@@ -49264,8 +49072,6 @@ meaçães
 meação
 meaçãos
 meações
-mebaar
-mebaares
 mebila
 mebilas
 mebuze
@@ -49320,9 +49126,6 @@ medicas
 medicações
 medicina
 medicinas
-mediciner
-medicineres
-mediciners
 medico
 medicos
 medicá
@@ -49644,8 +49447,6 @@ menininhos
 menino
 meninos
 menins
-meninuhfinn
-meninuhfinns
 meninó
 meninós
 menir
@@ -49713,8 +49514,6 @@ mentores
 mentoria
 mentorias
 mentos
-mentre
-mentres
 mentóis
 menuro
 menuros
@@ -49759,8 +49558,6 @@ mercis
 mercê
 mercês
 merda
-merdambuco
-merdambucos
 merdao
 merdaos
 merdas
@@ -49977,7 +49774,6 @@ metis
 metiê
 metiês
 metodol
-metodolers
 metodologia
 metodologias
 metodóis
@@ -49993,7 +49789,6 @@ metrópole
 metrópoles
 metrô
 metrôs
-meudeus
 mexais
 mexam
 mexans
@@ -50192,8 +49987,6 @@ miguéis
 migués
 miina
 miinas
-miiode
-miiodes
 miite
 miites
 mijada
@@ -50332,8 +50125,6 @@ mimados
 mimai
 mimais
 mimam
-mimandy
-mimandys
 mimans
 mimar
 mimara
@@ -50412,9 +50203,6 @@ mineradores
 minerando
 minerandos
 mines
-minescraft
-minescrafter
-minescrafts
 minete
 minetes
 minga
@@ -50528,8 +50316,6 @@ mirava
 miravas
 miraí
 miraís
-mircosoft
-mircosofts
 mirei
 mireis
 mirem
@@ -50589,8 +50375,6 @@ mirãos
 mirões
 miscar
 miscares
-miscro
-miscros
 misela
 miselas
 misericordia
@@ -50752,8 +50536,6 @@ miúças
 mnese
 mneses
 mnhas
-mniaro
-mniaros
 moado
 moados
 moafa
@@ -50886,8 +50668,6 @@ modero
 moderos
 modestia
 modestias
-modeuzo
-modeuzos
 modificaçães
 modificação
 modificaçãos
@@ -51305,8 +51085,6 @@ monose
 monoses
 monoxó
 monoxós
-monsagem
-monsagens
 monsanto
 monsantos
 monso
@@ -51498,7 +51276,6 @@ mornal
 mornar
 mornares
 mornas
-mornels
 mornez
 mornezes
 morning
@@ -53130,8 +52907,6 @@ nalga
 nalgas
 nalgo
 nalgos
-nalgum
-nalguns
 namaz
 namazes
 namban
@@ -53140,8 +52915,6 @@ nambi
 nambis
 nambu
 nambus
-nambuu
-nambuus
 named
 nameds
 names
@@ -53361,8 +53134,6 @@ natrãos
 natrões
 natuba
 natubas
-natueais
-natueal
 natura
 naturais
 natural
@@ -53420,8 +53191,6 @@ navêgo
 navêgos
 nayeon
 nayeons
-nayeonynyt
-nayeonynyts
 nazaré
 nazarés
 nazista
@@ -53588,9 +53357,6 @@ neocon
 neocons
 neocor
 neocores
-neongeneshit
-neopiridin
-neopiridins
 neovim
 neovins
 nepais
@@ -53609,8 +53375,6 @@ neque
 neques
 nerais
 neral
-nercenaria
-nercenarias
 nerds
 neres
 nerfar
@@ -53732,10 +53496,6 @@ nevão
 nevãos
 nevões
 newcomers
-newscanner
-newscanneres
-newserver
-newserveres
 newsletter
 newsletteres
 newsroom
@@ -53874,8 +53634,6 @@ nigela
 nigelas
 nigelo
 nigelos
-niggalolao
-niggalolaos
 night
 nightmares
 nights
@@ -54005,8 +53763,6 @@ nivelo
 nivelos
 niver
 niveres
-niversario
-niversarios
 nivoso
 nivosos
 niçace
@@ -54111,8 +53867,6 @@ nolana
 nolanas
 nolina
 nolinas
-nolsominio
-nolsominios
 nomeadas
 nomeai
 nomeais
@@ -54352,7 +54106,6 @@ noçães
 noção
 noçãos
 noções
-nsiskaosjaks
 nuance
 nuances
 nuança
@@ -54392,7 +54145,6 @@ nukinis
 nulas
 nullidade
 nullidades
-nullscoaling
 numanice
 numanices
 numas
@@ -54763,10 +54515,6 @@ oberares
 obesas
 obeso
 obesos
-obgrigado
-obgrigados
-obipom
-obipons
 obiru
 obirus
 object
@@ -55028,8 +54776,6 @@ octona
 octonas
 octono
 octonos
-octorphe
-octorphes
 octuais
 octual
 ocular
@@ -55219,8 +54965,6 @@ oficina
 oficinas
 oficio
 oficios
-ofigle
-ofigles
 ofiope
 ofiopes
 ofira
@@ -55265,8 +55009,6 @@ ogamo
 ogamos
 ogano
 oganos
-ogcode
-ogcodes
 ogiera
 ogieras
 ogita
@@ -55317,8 +55059,6 @@ oirana
 oiranas
 oirar
 oirares
-oiriccardo
-oiriccardos
 oiriço
 oiriços
 oirudo
@@ -55341,8 +55081,6 @@ oitães
 oitão
 oitãos
 oitões
-oiwejaoiwa
-oiwejaoiwas
 ojíbua
 ojíbuas
 okayass
@@ -55466,8 +55204,6 @@ olivel
 olivo
 olivos
 olivéis
-olmafi
-olmafis
 olmeca
 olmecas
 olmedo
@@ -55508,8 +55244,6 @@ olíveo
 olíveos
 omado
 omados
-omagem
-omagens
 omagra
 omagras
 omalá
@@ -55526,10 +55260,6 @@ ombrã
 ombrãs
 omecio
 omecios
-omegakekw
-omegakekws
-omegaluis
-omegalul
 omelê
 omelês
 omento
@@ -55675,8 +55405,6 @@ onjudo
 onjudos
 online
 onlines
-onone
-onones
 onosma
 onosmas
 ontem
@@ -55722,8 +55450,6 @@ opala
 opalas
 opcionais
 opcional
-opdikasod
-opdikasods
 opengl
 opengls
 opening
@@ -55733,10 +55459,8 @@ opensources
 openssl
 openssls
 opera
-operaciona
 operacionais
 operacional
-operacionas
 operador
 operadora
 operadoras
@@ -55915,8 +55639,6 @@ orandos
 orang
 orange
 oranges
-orangku
-orangkus
 orangs
 orante
 orantes
@@ -56053,8 +55775,6 @@ original
 origins
 origma
 origmas
-orilha
-orilhas
 orita
 oritas
 orite
@@ -56330,8 +56050,6 @@ otose
 otoses
 ototó
 ototós
-otpokemon
-otpokemons
 otuque
 otuques
 otária
@@ -56411,8 +56129,6 @@ outback
 outbacks
 outdent
 outdents
-outiva
-outivas
 outlet
 outlets
 outliers
@@ -56428,10 +56144,7 @@ outra
 outras
 outrem
 outrens
-outri
-outris
 outro
-outrogerador
 outrora
 outroras
 outros
@@ -56521,8 +56234,6 @@ override
 overrides
 overview
 overviews
-oveva
-ovevas
 oviado
 oviados
 oviela
@@ -56658,14 +56369,11 @@ oótide
 oótides
 oótoma
 oótomas
-paadar
-paadares
 paanga
 paangas
 paari
 paaris
 pabllo
-pabllochella
 pabllos
 pabola
 pabolas
@@ -57167,8 +56875,6 @@ palude
 paludes
 paluta
 palutas
-palword
-palwords
 palworld
 palworlds
 palães
@@ -58263,7 +57969,6 @@ pedreiro
 pedreiros
 pedreses
 pedro
-pedrokivs
 pedros
 pedrães
 pedrão
@@ -58278,10 +57983,6 @@ peele
 peeles
 peencher
 peencheres
-peepohide
-peepohides
-peepopray
-peepoprays
 peepwth
 peepwths
 pegada
@@ -58931,8 +58632,6 @@ perguntinhas
 perguntou
 perguntous
 perifa
-perifacode
-perifacodes
 perifas
 periferia
 periferias
@@ -59259,8 +58958,6 @@ pfsense
 pfsenses
 phaser
 phaseres
-phasminho
-phasminhos
 phasmophobia
 philips
 photoshopado
@@ -60402,6 +60099,8 @@ planem
 planens
 planes
 planet
+planeta
+planetas
 planets
 planilha
 planilhas
@@ -60446,8 +60145,6 @@ platal
 platex
 platforms
 platina
-platinadah
-platinadahs
 platinado
 platinados
 platinas
@@ -61039,8 +60736,6 @@ ponçó
 ponçós
 poochyena
 poochyenas
-poochyiena
-poochyienas
 poodle
 poodles
 poperi
@@ -61491,8 +61186,6 @@ pracinha
 pracinhas
 prado
 prados
-pradouiui
-pradouiuis
 praga
 pragais
 pragal
@@ -61774,8 +61467,6 @@ prepaoru
 prepaorus
 prepara
 preparado
-preparadoh
-preparadohs
 preparados
 preparando
 preparandos
@@ -62126,8 +61817,6 @@ procurava
 procuravas
 procurei
 procureis
-procurnado
-procurnados
 procá
 procás
 product
@@ -62216,12 +61905,8 @@ projetado
 projetados
 projetinho
 projetinhos
-projetinjo
-projetinjos
-projetioners
 projeto
 projeton
-projetoners
 projetons
 projetos
 projetães
@@ -62323,8 +62008,6 @@ propósitos
 propôs
 propõe
 propões
-proramming
-prorammings
 prorrogada
 prorrogadas
 prosa
@@ -64079,10 +63762,6 @@ racoses
 racum
 racuns
 radar
-radarcorona
-radarcoronas
-radarcovid
-radarcovids
 radares
 radia
 radiai
@@ -64382,8 +64061,6 @@ randias
 random
 randomizar
 randomizares
-randomkey
-randomkeys
 randons
 ranfar
 ranfares
@@ -64505,8 +64182,6 @@ rapidez
 rapidezes
 rapidinho
 rapidinhos
-rapidinoh
-rapidinohs
 rapidon
 rapidons
 rapidães
@@ -66497,8 +66172,6 @@ respondis
 respondo
 respondos
 responds
-respondudah
-respondudahs
 response
 responses
 responsivo
@@ -66526,8 +66199,6 @@ ressoo
 ressoos
 ressoá
 ressoás
-ressucitar
-ressucitares
 ressóis
 resta
 restai
@@ -66985,7 +66656,6 @@ richard
 richards
 richie
 richies
-richmeister
 ricina
 ricinas
 rickon
@@ -67155,8 +66825,6 @@ riomar
 riomares
 riota
 riotas
-riotxarcane
-riotxarcanes
 ripada
 ripadas
 ripado
@@ -67699,8 +67367,6 @@ rongó
 rongós
 ronha
 ronhas
-roniquito
-roniquitos
 ronizika
 ronizikas
 ronque
@@ -70883,8 +70549,6 @@ sharp
 sharpness
 sharps
 shawee
-shaweebot
-shaweebots
 shawees
 sheet
 sheets
@@ -71168,7 +70832,6 @@ simpatizos
 simple
 simples
 simplesmente
-simplesoes
 simplifica
 simplificada
 simplificar
@@ -71311,7 +70974,6 @@ sirage
 sirages
 sirali
 siralis
-sirborrys
 sirena
 sirenas
 sirene
@@ -71483,8 +71145,6 @@ skipei
 skipeis
 skipped
 skippeds
-skullblush
-skullblushs
 skyblock
 skyblocks
 skylab
@@ -71728,8 +71388,6 @@ socães
 socão
 socãos
 socões
-sodabigsad
-sodabigsads
 sodade
 sodades
 sodado
@@ -71791,7 +71449,6 @@ sofrês
 softa
 softas
 software
-softwaregore
 softwares
 sofware
 sofwares
@@ -71813,8 +71470,6 @@ soidãos
 soidões
 soila
 soilas
-soilfleet
-soilfleets
 sointegro
 sointegros
 soirée
@@ -72178,8 +71833,6 @@ soquires
 sorais
 soraka
 sorakas
-sorakinha
-sorakinhas
 soral
 sorar
 sorares
@@ -72539,8 +72192,6 @@ stents
 steps
 stereo
 stereos
-sthefanye
-sthefanyes
 sticar
 sticares
 stick
@@ -72587,7 +72238,6 @@ stramings
 strass
 strategy
 strategys
-stratosfear
 stratosphere
 strawberry
 strawberrys
@@ -73919,8 +73569,6 @@ taboa
 taboas
 taboca
 tabocas
-tabrincando
-tabrincandos
 tabua
 tabuais
 tabual
@@ -74102,8 +73750,6 @@ taguá
 taguás
 tahine
 tahines
-tahmliette
-tahmliettes
 tahmmy
 tahmmys
 taiaçu
@@ -75057,8 +74703,6 @@ tecerás
 teces
 teceu
 teceus
-techlinked
-techlinkeds
 technicais
 technical
 techno
@@ -75687,9 +75331,6 @@ testas
 testava
 testavas
 teste
-testedezmeis
-testedezmil
-testedezmis
 testei
 testeis
 testem
@@ -75761,8 +75402,6 @@ texano
 texanos
 texto
 textos
-textoteste
-textotestes
 textães
 textão
 textãos
@@ -75810,8 +75449,6 @@ teúdo
 teúdos
 tftzinho
 tftzinhos
-thalesluna
-thaleslunas
 thalixcx
 thank
 thankfully
@@ -76000,8 +75637,6 @@ tiloses
 tiloso
 tilosos
 tilta
-tiltadinhah
-tiltadinhahs
 tiltado
 tiltados
 tiltas
@@ -76488,6 +76123,8 @@ tocos
 tocou
 tocous
 todas
+toddy
+toddys
 todes
 todinha
 todinhas
@@ -77081,8 +76718,6 @@ totais
 total
 totalmente
 totalmentes
-totaltime
-totaltimes
 totano
 totanos
 totem
@@ -77169,8 +76804,6 @@ trabalhava
 trabalhavas
 trabalhei
 trabalheis
-trabalhin
-trabalhins
 trabalho
 trabalhos
 trabalhou
@@ -79416,8 +79049,6 @@ umirins
 umiris
 umlaut
 umlauts
-umnmapscan
-umnmapscans
 umpada
 umpadas
 unacceptable
@@ -79779,8 +79410,6 @@ urgot
 urgots
 urida
 uridas
-urielzitoo
-urielzitoos
 urina
 urinai
 urinais
@@ -80295,8 +79924,6 @@ vaiou
 vaious
 vaipe
 vaipes
-vaisefuder
-vaisefuderes
 vaisi
 vaisis
 vaivai
@@ -80457,8 +80084,6 @@ vanila
 vanilas
 vanilla
 vanillas
-vanillixe
-vanillixes
 vanilux
 vanini
 vaninis
@@ -81420,7 +81045,6 @@ victin
 victins
 victo
 victor
-victordotwav
 victores
 victorluizz
 victos
@@ -82475,8 +82099,6 @@ wafer
 waferes
 waffle
 waffles
-wafflesgrf
-wafflesgrfs
 wagner
 wagneres
 waiká
@@ -82505,7 +82127,6 @@ wanano
 wananos
 wanessa
 wanessas
-wanktogether
 wanna
 wannas
 wants
@@ -82535,8 +82156,6 @@ wattpad
 wattpads
 watusi
 watusis
-wavesorting
-wavesortings
 wayback
 waybacks
 wazari
@@ -82576,8 +82195,6 @@ webusbs
 webview
 webviews
 weights
-wejoijeowia
-wejoijeowias
 welcome
 welcomed
 welcomeds
@@ -82586,8 +82203,6 @@ wenge
 wenges
 wetransfer
 wetransferes
-whateverr
-whateverres
 whats
 whatsapp
 whatsapps
@@ -82612,8 +82227,6 @@ whitelist
 whitelista
 whitelistas
 whitelists
-whitelisy
-whitelisys
 whites
 whois
 whole
@@ -82630,8 +82243,6 @@ width
 widths
 wikipedia
 wikipedias
-wildclown
-wildclowns
 william
 willians
 windirstat
@@ -82654,7 +82265,6 @@ wischash
 wischashs
 within
 withins
-withinsecure
 without
 withouts
 witoto
@@ -83072,8 +82682,6 @@ xoguns
 xongas
 xopotó
 xopotós
-xoprocurar
-xoprocurares
 xorca
 xorcas
 xordo
@@ -83153,6 +82761,8 @@ yacht
 yachts
 yakisoba
 yakisobas
+yakult
+yakults
 yakuza
 yakuzas
 yankee
@@ -83166,7 +82776,6 @@ yerdreel
 yerdreéis
 yield
 yields
-yodabless
 yogurt
 yogurts
 yoshi
@@ -83185,8 +82794,6 @@ yukee
 yukees
 yuppie
 yuppies
-yuribrando
-yuribrandos
 yuumi
 yuumis
 yvonne
@@ -83386,8 +82993,6 @@ zebral
 zebrar
 zebrares
 zebras
-zebrikska
-zebrikskas
 zebro
 zebros
 zebrum
@@ -84899,8 +84504,6 @@ zônulas
 úrnulas
 úsnea
 úsneas
-úsnico
-úsnicos
 úteis
 útero
 úteros
