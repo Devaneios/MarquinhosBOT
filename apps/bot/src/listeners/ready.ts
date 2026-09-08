@@ -1,16 +1,15 @@
 import { announceTermoWin } from '@marquinhos/commands/games/announceTermoWin';
+import { buildDailyLeaderboardAttachment } from '@marquinhos/commands/games/termoLeaderboardImage';
+import { buildTermoWinActionRow } from '@marquinhos/commands/games/termoResponse';
 import { GuildConfig } from '@marquinhos/config/guild';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
   buildCrosswordImage,
-  buildTermoLeaderboardImage,
   buildWordHiddenPreviewImage,
-  denseRanks,
-  type DailyEntry,
   type LetterFeedback,
 } from '@marquinhos/ui/screens/termo';
 import { getBicho } from '@marquinhos/utils/bichoGame';
-import { baseEmbed, fetchAvatarBuffer } from '@marquinhos/utils/discord';
+import { baseEmbed } from '@marquinhos/utils/discord';
 import { reportError } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { resourcePath } from '@marquinhos/utils/resources';
@@ -216,47 +215,10 @@ async function sendTermoLeaderboard(
   channel: TextChannel,
 ): Promise<void> {
   try {
-    const response = await api.getWordleLeaderboard(guildId, 'daily');
-    const rawEntries = response.data as {
-      userId: string;
-      attempts: number;
-      solved: boolean;
-    }[];
-    const { groupStreak } = response;
+    const leaderboard = await buildDailyLeaderboardAttachment(client, guildId);
+    if (!leaderboard) return;
 
-    if (rawEntries.length === 0) return;
-
-    const guild = client.guilds.cache.get(guildId);
-    if (!guild) return;
-
-    const userIds = rawEntries.map((e) => e.userId);
-    const membersCollection = await guild.members
-      .fetch({ user: userIds })
-      .catch(() => null);
-
-    const ranks = denseRanks(
-      rawEntries.map((e) => (e.solved ? `s:${e.attempts}` : 'u')),
-    );
-    const entries: DailyEntry[] = await Promise.all(
-      rawEntries.map(async (e, i) => {
-        const member = membersCollection?.get(e.userId);
-        const avatar = member ? await fetchAvatarBuffer(member) : undefined;
-        return {
-          rank: ranks[i],
-          displayName: member?.displayName ?? `<@${e.userId}>`,
-          attempts: e.attempts,
-          solved: e.solved,
-          avatar,
-        };
-      }),
-    );
-
-    const buffer = await buildTermoLeaderboardImage(
-      entries,
-      'daily',
-      groupStreak,
-    );
-    const attachment = new AttachmentBuilder(buffer, {
+    const attachment = new AttachmentBuilder(leaderboard.buffer, {
       name: 'terminhos-ranking.png',
     });
 
@@ -300,10 +262,7 @@ async function broadcastTermoStats(client: Client<true>): Promise<void> {
       const statsRes = await api.getWordleStats(guildId);
       const stats = statsRes.data as {
         wordDate?: string;
-        playersCount: number;
         winnersCount: number;
-        avgAttempts: number;
-        wordLength: number;
       };
 
       if (
@@ -316,25 +275,30 @@ async function broadcastTermoStats(client: Client<true>): Promise<void> {
         TextChannel | undefined;
       if (!channel) continue;
 
+      const leaderboard = await buildDailyLeaderboardAttachment(
+        client,
+        guildId,
+      );
+      if (!leaderboard) continue;
+
+      const attachment = new AttachmentBuilder(leaderboard.buffer, {
+        name: 'termo-status.png',
+      });
+
       const embed = new EmbedBuilder()
         .setTitle('Status do Termo')
-        .addFields(
-          {
-            name: 'Jogadores',
-            value: String(stats.playersCount),
-            inline: true,
-          },
-          { name: 'Acertos', value: String(stats.winnersCount), inline: true },
-          { name: 'Média', value: stats.avgAttempts.toFixed(1), inline: true },
-          { name: 'Letras', value: String(stats.wordLength), inline: true },
-        )
-        .setColor(0x588157);
+        .setColor(0x588157)
+        .setImage('attachment://termo-status.png');
       if (stats.wordDate) {
         embed.setFooter({
           text: stats.wordDate.split('-').reverse().join('/'),
         });
       }
-      await channel.send({ embeds: [embed] });
+      await channel.send({
+        embeds: [embed],
+        files: [attachment],
+        components: [buildTermoWinActionRow()],
+      });
       lastBroadcastWinners.set(guildId, stats.winnersCount);
     } catch (err) {
       logger.warn(`Terminhos stats: failed for guild ${guildId}:`, err);
