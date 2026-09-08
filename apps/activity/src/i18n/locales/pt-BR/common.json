@@ -1,5 +1,11 @@
 {
   "brand": "Joguinhos",
+  "hub": {
+    "title": "Destaque",
+    "featured": "É o único jogo",
+    "moreGames": "Mais jogos",
+    "playGame": "Jogar {{game}}"
+  },
   "ready": "PRONTO",
   "roomsHint": "Salas para 2–4 jogadores",
   "back": "VOLTAR",

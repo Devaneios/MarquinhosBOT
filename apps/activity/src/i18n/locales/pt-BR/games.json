@@ -9,7 +9,14 @@
   },
   "wordle": {
     "name": "Terminhos",
-    "blurb": "Desafio de palavras solo conectado ao backend em tempo real e à sessão da atividade do Discord."
+    "blurb": "Descubra a palavra usando as pistas de cada tentativa.",
+    "category": "Palavras · Solo",
+    "previewCaption": "Cada tentativa, uma pista.",
+    "hints": {
+      "correct": "Verde: posição certa.",
+      "present": "Amarelo: outra posição.",
+      "absent": "Cinza: letra ausente."
+    }
   },
   "tic-tac-toe": {
     "name": "Jogo da velha",

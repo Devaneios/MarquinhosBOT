@@ -1,55 +1,60 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { GameHeader } from '../components/game-shell';
 import { GAME_REGISTRY } from '../games/registry';
-import { cn } from '../lib/cn';
-
-const HUB_GAMES = GAME_REGISTRY.filter((game) => game.id === 'wordle');
+import { FeaturedGame } from './FeaturedGame';
+import { GameCard } from './GameCard';
+import { HUB_GAME_IDS } from './hubGames';
 
 export function Hub() {
-  const navigate = useNavigate();
-  const { t } = useTranslation(['common', 'games']);
+  const { t } = useTranslation('common');
+  const [featured, ...games] = HUB_GAME_IDS.flatMap((id) => {
+    const game = GAME_REGISTRY.find((entry) => entry.id === id);
+    return game?.status === 'PLAY' ? [game] : [];
+  });
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,176,0,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_20%),var(--color-marquinhos-bg)] text-marquinhos-text">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[radial-gradient(ellipse_at_top_right,rgba(255,176,0,0.06),transparent_55%),var(--color-marquinhos-bg)] text-marquinhos-text">
       <GameHeader titleKey="brand" titleNs="common" />
 
-      <main className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4 sm:p-6">
-        <section>
-          <div className="notch-8 border border-marquinhos-border bg-marquinhos-panel p-3 shadow-[0_20px_40px_rgba(0,0,0,0.28)] sm:p-7">
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(250px,1fr))] sm:gap-3">
-              {HUB_GAMES.map((game) => {
-                const locked = game.status !== 'PLAY';
-                const accent = 'var(--color-marquinhos-blue)';
-                return (
-                  <button
-                    key={game.id}
-                    type="button"
-                    disabled={locked}
-                    style={{ borderColor: locked ? undefined : accent }}
-                    className={cn(
-                      'notch-8 relative flex aspect-4/2 flex-col gap-2 border px-3 py-3 text-left shadow-[0_12px_24px_rgba(0,0,0,0.16)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent sm:px-4 sm:py-4',
-                      locked
-                        ? 'cursor-not-allowed border-marquinhos-border bg-black/15 opacity-70'
-                        : 'cursor-pointer bg-marquinhos-bg transition hover:-translate-y-0.5',
-                    )}
-                    onClick={() => {
-                      if (locked) return;
-                      navigate(`/games/${game.id}`);
-                    }}
-                  >
-                    <div
-                      className="font-pixel text-[10px] leading-snug tracking-[0.08em] break-words sm:text-xl sm:tracking-[0.16em] sm:break-normal"
-                      style={{ color: locked ? undefined : accent }}
-                    >
-                      {t(`games:${game.id}.name`)}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+      <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 md:py-10 [@media(max-height:600px)]:py-4">
+        <div className="mx-auto flex w-full max-w-280 flex-col gap-6 md:gap-8 [@media(max-height:600px)]:gap-5">
+          <div className="flex items-start gap-3 md:gap-4">
+            <span
+              aria-hidden="true"
+              className="mt-1.5 h-6 w-1 shrink-0 bg-marquinhos-accent md:mt-2 md:h-7"
+            />
+            <h1 className="max-w-160 text-xl font-semibold leading-snug tracking-tight text-balance sm:text-2xl md:text-3xl">
+              {t('hub.title')}
+            </h1>
           </div>
-        </section>
+
+          {featured && <FeaturedGame game={featured} />}
+
+          {games.length > 0 && (
+            <section
+              aria-labelledby="hub-catalog-title"
+              className="flex flex-col gap-4"
+            >
+              <div className="flex items-center gap-4">
+                <h2
+                  id="hub-catalog-title"
+                  className="shrink-0 font-pixel text-xs leading-relaxed sm:text-sm"
+                >
+                  {t('hub.moreGames')}
+                </h2>
+                <div
+                  aria-hidden="true"
+                  className="h-px flex-1 bg-marquinhos-border"
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {games.map((game) => (
+                  <GameCard key={game.id} game={game} />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
       </main>
     </div>
   );
