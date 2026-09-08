@@ -365,6 +365,19 @@ export class MarquinhosApiService {
     return data as ApiResponse<Playlist>;
   }
 
+  async recordActivityDeepLink(
+    userId: string,
+    guildId: string,
+    game: string,
+  ): Promise<ApiResponse> {
+    const data = await this.client.post('/api/activities/deep-link', {
+      userId,
+      guildId,
+      game,
+    });
+    return data as ApiResponse;
+  }
+
   async healthCheck(): Promise<boolean> {
     try {
       await this.client.get('/api/health');

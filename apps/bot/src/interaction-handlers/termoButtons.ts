@@ -7,6 +7,7 @@ import {
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { formatGuessesAsText } from '@marquinhos/ui/compounds/termo/text-fallback';
 import type { LetterFeedback } from '@marquinhos/ui/screens/termo';
+import { logger } from '@marquinhos/utils/logger';
 import {
   InteractionHandler,
   InteractionHandlerTypes,
@@ -20,6 +21,21 @@ type TermoSessionData = {
 } | null;
 
 const api = MarquinhosApiService.getInstance();
+
+export async function handleTermoPlayButton(
+  btn: Pick<ButtonInteraction, 'user' | 'guildId' | 'launchActivity'>,
+  apiService: Pick<MarquinhosApiService, 'recordActivityDeepLink'> = api,
+) {
+  if (!btn.guildId) return;
+  try {
+    await apiService.recordActivityDeepLink(btn.user.id, btn.guildId, 'wordle');
+  } catch (err) {
+    // Non-fatal: worst case the Activity opens on the Hub instead of
+    // jumping straight into Wordle.
+    logger.warn('Failed to record activity deep link:', err);
+  }
+  await btn.launchActivity();
+}
 
 export class TermoButtonsHandler extends InteractionHandler {
   public constructor(ctx: InteractionHandler.LoaderContext) {
@@ -44,7 +60,7 @@ export class TermoButtonsHandler extends InteractionHandler {
     }
 
     if (btn.customId === TERMO_BUTTON_IDS.play) {
-      await btn.launchActivity();
+      await handleTermoPlayButton(btn);
       return;
     }
 

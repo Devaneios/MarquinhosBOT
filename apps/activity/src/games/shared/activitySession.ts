@@ -75,6 +75,22 @@ export function createRoom({
   });
 }
 
+// Claims (and consumes) a pending deep-link intent recorded server-side by
+// the bot before it launched this Activity — e.g. the "Jogar na atividade"
+// button on a Wordle win. Returns `game: null` when there is none, which is
+// the common case (most launches aren't deep-linked).
+export function fetchDeepLinkIntent(
+  identity: DiscordIdentity,
+): Promise<{ game: GameId | null }> {
+  return postJson<{ game: GameId | null }>(
+    apiUrl('/activities/deep-link/claim'),
+    {
+      accessToken: identity.accessToken,
+      guildId: identity.guildId,
+    },
+  );
+}
+
 // Lists open multiplayer rooms for this Discord Activity instance, so
 // RoomLobbyScreen can show "join an existing room" alongside "create a new
 // one". Served over REST rather than the classic Colyseus

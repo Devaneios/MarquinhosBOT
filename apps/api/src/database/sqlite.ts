@@ -165,6 +165,16 @@ db.run(
 );
 
 db.run(`
+  CREATE TABLE IF NOT EXISTS activity_deep_links (
+    user_id    TEXT    NOT NULL,
+    guild_id   TEXT    NOT NULL,
+    game       TEXT    NOT NULL,
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (user_id, guild_id)
+  )
+`);
+
+db.run(`
   CREATE TABLE IF NOT EXISTS wordle_used_words (
     word    TEXT    NOT NULL PRIMARY KEY,
     used_at INTEGER NOT NULL

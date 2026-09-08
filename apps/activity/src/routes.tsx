@@ -2,6 +2,7 @@ import { Fragment } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import type { DiscordIdentity } from './discordAuth.ts';
 import { GAME_REGISTRY } from './games/registry';
+import { useDeepLinkIntent } from './hooks/useDeepLinkIntent';
 import { Hub } from './hub/Hub';
 import { RoomRoute } from './rooms/RoomRoute';
 
@@ -12,6 +13,8 @@ export function AppRoutes({
   identity: DiscordIdentity;
   onAuthInvalid: () => void;
 }) {
+  useDeepLinkIntent(identity);
+
   return (
     <Routes>
       <Route index element={<Hub />} />

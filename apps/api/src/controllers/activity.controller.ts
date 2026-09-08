@@ -17,6 +17,7 @@ import {
 } from 'services/activity/pong/PongTournamentService';
 import { roomKey } from 'services/activity/roomKey';
 import { mintWsSessionToken } from 'services/activity/wsSessionToken';
+import { claimDeepLink, recordDeepLink } from 'services/activityDeepLink';
 import { DiscordGuildMembershipError, DiscordService } from 'services/discord';
 import { logger } from 'utils/logger';
 
@@ -334,6 +335,45 @@ class ActivityController {
           .status(503)
           .json({ message: 'Discord membership service unavailable' });
       }
+      return res.status(500).json({ message: 'Unknown Error' });
+    }
+  };
+
+  // Called by the bot (checkToken bot-key auth) right before launchActivity(),
+  // since Discord's LaunchActivity interaction response has no data field of
+  // its own to tell the Activity which game to open.
+  recordDeepLinkIntent = (req: Request, res: Response) => {
+    const { userId, guildId, game } = req.body as {
+      userId: string;
+      guildId: string;
+      game: string;
+    };
+    try {
+      recordDeepLink(userId, guildId, game);
+      return res.status(200).json({ data: { ok: true } });
+    } catch (error) {
+      logger.error('activity.controller.record_deep_link_failed', { error });
+      return res.status(500).json({ message: 'Unknown Error' });
+    }
+  };
+
+  // Called by the Activity client once its Discord SDK auth handshake has
+  // resolved. Identity is derived from re-validating accessToken against
+  // Discord, not trusted from the request body, matching getWsSessionToken.
+  claimDeepLinkIntent = async (req: Request, res: Response) => {
+    try {
+      const { accessToken, guildId } = req.body as {
+        accessToken: string;
+        guildId: string;
+      };
+      const user = await this.discordService.getDiscordUser(accessToken);
+      if (!user?.id) {
+        return res.status(401).json({ message: 'Invalid access token' });
+      }
+      const game = claimDeepLink(user.id, guildId);
+      return res.status(200).json({ data: { game } });
+    } catch (error) {
+      logger.error('activity.controller.claim_deep_link_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
     }
   };

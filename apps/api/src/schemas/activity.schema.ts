@@ -91,6 +91,21 @@ export const activityCreateRoomSchema = z.object({
   }),
 });
 
+export const activityDeepLinkRecordSchema = z.object({
+  body: z.object({
+    userId: z.string().min(1),
+    guildId: z.string().min(1),
+    game: z.string().min(1),
+  }),
+});
+
+export const activityDeepLinkClaimSchema = z.object({
+  body: z.object({
+    accessToken: z.string().min(1),
+    guildId: z.string().min(1),
+  }),
+});
+
 export const pongLeaderboardSchema = z.object({
   body: z.object({
     accessToken: z.string().min(1),

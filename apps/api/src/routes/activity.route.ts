@@ -1,9 +1,12 @@
 import ActivityController from 'controllers/activity.controller';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
+import { checkToken } from 'middlewares/botAuth';
 import { validateRequest } from 'middlewares/validateRequest';
 import {
   activityCreateRoomSchema,
+  activityDeepLinkClaimSchema,
+  activityDeepLinkRecordSchema,
   activityListRoomsSchema,
   activityTokenExchangeSchema,
   activityWsSessionSchema,
@@ -61,6 +64,18 @@ router.post(
   activityLimiter,
   validateRequest(pongTournamentReportSchema),
   activity.reportPongTournamentMatch,
+);
+router.post(
+  '/deep-link',
+  checkToken,
+  validateRequest(activityDeepLinkRecordSchema),
+  activity.recordDeepLinkIntent,
+);
+router.post(
+  '/deep-link/claim',
+  activityLimiter,
+  validateRequest(activityDeepLinkClaimSchema),
+  activity.claimDeepLinkIntent,
 );
 router.post(
   '/rooms',
