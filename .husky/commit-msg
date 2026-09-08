@@ -1,1 +1,2 @@
 bunx --no -- commitlint --edit "$1"
+.husky/check-ai-coauthor.sh "$1"
