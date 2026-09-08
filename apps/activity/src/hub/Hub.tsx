@@ -12,20 +12,7 @@ export function Hub() {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,176,0,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_20%),var(--color-marquinhos-bg)] text-marquinhos-text">
-      <GameHeader
-        titleKey="brand"
-        titleNs="common"
-        right={
-          <div className="hidden items-center gap-2 sm:flex">
-            <div className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-3 py-2 text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
-              {t('common:ready')}
-            </div>
-            <div className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-3 py-2 text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
-              {t('common:roomsHint')}
-            </div>
-          </div>
-        }
-      />
+      <GameHeader titleKey="brand" titleNs="common" />
 
       <main className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4 sm:p-6">
         <section>
