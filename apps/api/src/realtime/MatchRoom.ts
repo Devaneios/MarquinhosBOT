@@ -24,11 +24,14 @@ interface Member {
   connections: number;
 }
 
-// 'cards' can't be switched into from a bare `{ game }` message — its room
-// requires a ruleset chosen at creation, which switch_game has no way to
-// supply (see this task's "known, accepted limitation").
+// 'cards' and 'pong' can't be switched into from a bare `{ game }` message —
+// both require config chosen at creation (cards' ruleset; pong's
+// ruleset/winningScore/bestOf/ranked) that switch_game has no way to supply
+// (see this task's "known, accepted limitation").
 const SWITCHABLE_GAMES: ReadonlySet<GameId> = new Set(
-  Object.keys(ADAPTER_REGISTRY).filter((g) => g !== 'cards') as GameId[],
+  Object.keys(ADAPTER_REGISTRY).filter(
+    (g) => g !== 'cards' && g !== 'pong',
+  ) as GameId[],
 );
 
 export class MatchRoom extends Room {

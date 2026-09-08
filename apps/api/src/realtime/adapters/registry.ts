@@ -9,6 +9,7 @@ import { connectFourAdapter } from './connectFourAdapter';
 import { dominoesAdapter } from './dominoesAdapter';
 import { hangmanAdapter } from './hangmanAdapter';
 import { minesweeperAdapter } from './minesweeperAdapter';
+import { pongAdapter } from './pongAdapter';
 import { rpsAdapter } from './rpsAdapter';
 import { snakeAdapter } from './snakeAdapter';
 import { ticTacToeAdapter } from './ticTacToeAdapter';
@@ -33,6 +34,7 @@ export const ADAPTER_REGISTRY: Partial<
   cards: cardTableAdapter,
   'dominoes-block': dominoesAdapter,
   'minesweeper-versus': minesweeperAdapter,
+  pong: pongAdapter,
   'snake-game': snakeAdapter,
   'tower-unstable': towerUnstableAdapter,
   'trivia-quiz': triviaQuizAdapter,
