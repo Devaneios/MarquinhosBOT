@@ -1,3 +1,4 @@
+import { sendTermoStatusBroadcast } from '@marquinhos/commands/games/termoLeaderboardImage';
 import { GuildConfig } from '@marquinhos/config/guild';
 import { GameManager } from '@marquinhos/game/core/GameManager';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
@@ -5,7 +6,6 @@ import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
   buildTermoLeaderboardImage,
   buildWordHiddenPreviewImage,
-  buildWordPreviewImage,
   denseRanks,
   type DailyEntry,
   type RankedEntry,
@@ -74,7 +74,7 @@ export class AdminCommand extends MarquinhosCommand {
               sub
                 .setName('status')
                 .setDescription(
-                  'Exibe as estatísticas de hoje (revela a palavra)',
+                  'Envia o status de hoje no canal do Termo (sem revelar a palavra)',
                 ),
             )
             .addSubcommand((sub) =>
@@ -240,55 +240,39 @@ export class AdminCommand extends MarquinhosCommand {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         try {
-          const response = await api.getWordleStats(interaction.guildId!);
-          const stats = response.data as {
-            wordDate: string;
-            wordLength: number;
-            playersCount: number;
-            winnersCount: number;
-            avgAttempts: number;
-            word?: string;
-          };
+          const configResponse = await api.getWordleConfig(
+            interaction.guildId!,
+          );
+          const channelId = (configResponse.data as { channelId?: string })
+            ?.channelId;
+          const channel = channelId
+            ? (interaction.client.channels.cache.get(channelId) as
+                TextChannel | undefined)
+            : undefined;
 
-          const embed = new EmbedBuilder()
-            .setTitle('Status do Termo')
-            .addFields(
-              {
-                name: 'Jogadores',
-                value: String(stats.playersCount),
-                inline: true,
-              },
-              {
-                name: 'Acertos',
-                value: String(stats.winnersCount),
-                inline: true,
-              },
-              {
-                name: 'Média',
-                value: stats.avgAttempts.toFixed(1),
-                inline: true,
-              },
-              { name: 'Letras', value: String(stats.wordLength), inline: true },
-            )
-            .setFooter({ text: stats.wordDate.split('-').reverse().join('/') })
-            .setColor(0x588157);
-
-          if (stats.word !== undefined) {
-            const previewBuffer = await buildWordPreviewImage(stats.word);
-            const previewAttachment = new AttachmentBuilder(previewBuffer, {
-              name: 'termo-status.png',
-            });
+          if (!channel) {
             await interaction.editReply({
-              embeds: [embed],
-              files: [previewAttachment],
+              content:
+                '❌ Nenhum canal do Termo configurado para este servidor.',
             });
-          } else {
-            await interaction.editReply({ embeds: [embed] });
+            return;
           }
-        } catch (err) {
-          logger.warn('admin termo status: Error fetching stats:', err);
+
+          const sent = await sendTermoStatusBroadcast(
+            interaction.client,
+            interaction.guildId!,
+            channel,
+          );
+
           await interaction.editReply({
-            content: '❌ Erro ao buscar status.',
+            content: sent
+              ? `✅ Status enviado em ${channel}.`
+              : 'ℹ️ Ainda não há tentativas hoje para mostrar.',
+          });
+        } catch (err) {
+          logger.warn('admin termo status: Error sending status:', err);
+          await interaction.editReply({
+            content: '❌ Erro ao enviar status.',
           });
         }
         return;

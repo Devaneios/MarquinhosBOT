@@ -1,6 +1,8 @@
 import { announceTermoWin } from '@marquinhos/commands/games/announceTermoWin';
-import { buildDailyLeaderboardAttachment } from '@marquinhos/commands/games/termoLeaderboardImage';
-import { buildTermoWinActionRow } from '@marquinhos/commands/games/termoResponse';
+import {
+  buildDailyLeaderboardAttachment,
+  sendTermoStatusBroadcast,
+} from '@marquinhos/commands/games/termoLeaderboardImage';
 import { GuildConfig } from '@marquinhos/config/guild';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
@@ -14,13 +16,7 @@ import { reportError } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { resourcePath } from '@marquinhos/utils/resources';
 import { Listener } from '@sapphire/framework';
-import {
-  AttachmentBuilder,
-  Client,
-  EmbedBuilder,
-  Events,
-  TextChannel,
-} from 'discord.js';
+import { AttachmentBuilder, Client, Events, TextChannel } from 'discord.js';
 
 const api = MarquinhosApiService.getInstance();
 
@@ -260,10 +256,7 @@ async function broadcastTermoStats(client: Client<true>): Promise<void> {
       if (!channelId) continue;
 
       const statsRes = await api.getWordleStats(guildId);
-      const stats = statsRes.data as {
-        wordDate?: string;
-        winnersCount: number;
-      };
+      const stats = statsRes.data as { winnersCount: number };
 
       if (
         !stats ||
@@ -275,30 +268,9 @@ async function broadcastTermoStats(client: Client<true>): Promise<void> {
         TextChannel | undefined;
       if (!channel) continue;
 
-      const leaderboard = await buildDailyLeaderboardAttachment(
-        client,
-        guildId,
-      );
-      if (!leaderboard) continue;
+      const sent = await sendTermoStatusBroadcast(client, guildId, channel);
+      if (!sent) continue;
 
-      const attachment = new AttachmentBuilder(leaderboard.buffer, {
-        name: 'termo-status.png',
-      });
-
-      const embed = new EmbedBuilder()
-        .setTitle('Status do Termo')
-        .setColor(0x588157)
-        .setImage('attachment://termo-status.png');
-      if (stats.wordDate) {
-        embed.setFooter({
-          text: stats.wordDate.split('-').reverse().join('/'),
-        });
-      }
-      await channel.send({
-        embeds: [embed],
-        files: [attachment],
-        components: [buildTermoWinActionRow()],
-      });
       lastBroadcastWinners.set(guildId, stats.winnersCount);
     } catch (err) {
       logger.warn(`Terminhos stats: failed for guild ${guildId}:`, err);

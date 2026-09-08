@@ -5,7 +5,13 @@ import {
   type DailyEntry,
 } from '@marquinhos/ui/screens/termo';
 import { fetchAvatarBuffer } from '@marquinhos/utils/discord';
-import type { Client } from 'discord.js';
+import {
+  AttachmentBuilder,
+  EmbedBuilder,
+  type Client,
+  type TextChannel,
+} from 'discord.js';
+import { buildTermoWinActionRow } from './termoResponse';
 
 const api = MarquinhosApiService.getInstance();
 
@@ -63,4 +69,41 @@ export async function buildDailyLeaderboardAttachment(
     groupStreak,
   );
   return { buffer, groupStreak };
+}
+
+// Shared by the automatic every-2-hours "Status do Termo" broadcast
+// (ready.ts) and the on-demand `/admin termo status` command — both post the
+// same message (leaderboard image + "Jogar na atividade" button) to the
+// guild's configured Termo channel. Never reveals the word itself, only
+// today's standings. Returns false (without sending) when there's nothing to
+// show yet for the day.
+export async function sendTermoStatusBroadcast(
+  client: Client<true>,
+  guildId: string,
+  channel: TextChannel,
+): Promise<boolean> {
+  const leaderboard = await buildDailyLeaderboardAttachment(client, guildId);
+  if (!leaderboard) return false;
+
+  const attachment = new AttachmentBuilder(leaderboard.buffer, {
+    name: 'termo-status.png',
+  });
+
+  const embed = new EmbedBuilder()
+    .setTitle('Status do Termo')
+    .setColor(0x588157)
+    .setImage('attachment://termo-status.png');
+
+  const statsRes = await api.getWordleStats(guildId);
+  const wordDate = (statsRes.data as { wordDate?: string })?.wordDate;
+  if (wordDate) {
+    embed.setFooter({ text: wordDate.split('-').reverse().join('/') });
+  }
+
+  await channel.send({
+    embeds: [embed],
+    files: [attachment],
+    components: [buildTermoWinActionRow()],
+  });
+  return true;
 }
