@@ -1,17 +1,18 @@
 .termo-keyboard {
   container-type: inline-size;
 
-  --key-u: min(2.75rem, calc(100cqw / 11.5));
-  --kb-gap: calc(var(--key-u) * 0.12);
-  --key-h: calc(var(--key-u) * 1.2);
+  --key-u: min(2.5rem, calc(100cqw / 11.15));
+  --kb-gap: calc(var(--key-u) * 0.1);
+  --key-h: calc(var(--key-u) * 1.05);
   --key-font: max(14px, calc(var(--key-u) * 0.306));
 
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: stretch;
   column-gap: var(--kb-gap);
-  row-gap: calc(var(--kb-gap) * 1.8);
+  row-gap: calc(var(--kb-gap) * 1.4);
   width: 100%;
+  padding-inline: 4px;
 
   & .simple-keyboard,
   & .hg-rows {
@@ -26,21 +27,22 @@
 
 .hg-row {
   display: flex;
+  width: 100%;
   gap: var(--kb-gap);
-  padding-right: 8px;
+  justify-content: flex-start;
 
   &:nth-last-child(2) {
-    padding-right: 36px;
+    justify-content: center;
   }
 
   &:last-child {
-    padding-right: 8px;
+    justify-content: center;
   }
 }
 
 .keycap {
-  --inset: calc(var(--key-u) * 0.102);
-  --rad: calc(var(--key-u) * 0.204);
+  --inset: calc(var(--key-u) * 0.09);
+  --rad: calc(var(--key-u) * 0.26);
   --base-from: #6e6e6e;
   --base-to: #5a5a5a;
   --cap-from: #6e6e6e;
