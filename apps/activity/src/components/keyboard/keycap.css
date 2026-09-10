@@ -10,7 +10,7 @@
   flex-direction: column;
   align-items: stretch;
   column-gap: var(--kb-gap);
-  row-gap: calc(var(--kb-gap) * 1.4);
+  row-gap: calc(var(--kb-gap) * 2.6);
   width: 100%;
   padding-inline: 4px;
 
