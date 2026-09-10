@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --noEmit",
-    "test": "VITE_DISCORD_CLIENT_ID=test bun test --isolate",
+    "test": "VITE_DISCORD_CLIENT_ID=test bun test --isolate src",
     "lint": "oxlint",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\"",
@@ -23,6 +23,7 @@
     "react-dom": "^19.2.8",
     "react-i18next": "^17.0.11",
     "react-router-dom": "^7.18.2",
+    "simple-keyboard": "^3.8.187",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
