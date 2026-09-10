@@ -1,13 +1,12 @@
-import { Outlet, useNavigate } from 'react-router-dom';
-import { ConnectingScreen, ErrorScreen } from '../../components/game-shell';
+import { useNavigate } from 'react-router-dom';
+import {
+  ConnectingScreen,
+  ErrorScreen,
+  GameMenu,
+} from '../../components/game-shell';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { BingoSpeedCanvas } from './components';
 import { useBingoSpeedSession } from './hooks/useBingoSpeedSession';
-
-export interface BingoSpeedMenuOutletContext {
-  onSelectMode: (mode: 'multi' | 'single') => void;
-  onExitToHub: () => void;
-}
 
 export function BingoSpeedGame({
   identity,
@@ -29,13 +28,25 @@ export function BingoSpeedGame({
 
   if (session.status === 'selecting-mode') {
     return (
-      <Outlet
-        context={
+      <GameMenu
+        gameId="bingo-speed"
+        onBack={() => navigate('/')}
+        actions={[
           {
-            onSelectMode: selectMode,
-            onExitToHub: () => navigate('/'),
-          } satisfies BingoSpeedMenuOutletContext
-        }
+            key: 'single',
+            labelKey: 'vsBot',
+            labelNs: 'common',
+            descriptionKey: 'vsBotDescription',
+            onSelect: () => selectMode('single'),
+          },
+          {
+            key: 'multi',
+            labelKey: 'vsPlayer',
+            labelNs: 'common',
+            descriptionKey: 'vsPlayerDescription',
+            onSelect: () => navigate('/rooms?create=bingo-speed'),
+          },
+        ]}
       />
     );
   }

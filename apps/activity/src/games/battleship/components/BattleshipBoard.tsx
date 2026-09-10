@@ -5,7 +5,7 @@ import {
   ConnectingScreen,
   ErrorScreen,
   GameHeader,
-  ModeSelectScreen,
+  GameMenu,
 } from '../../../components/game-shell';
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
@@ -208,19 +208,22 @@ export function BattleshipGame({
 
   if (session.status === 'selecting-mode') {
     return (
-      <ModeSelectScreen
+      <GameMenu
+        gameId="battleship"
         onBack={() => navigate('/')}
-        options={[
+        actions={[
           {
             key: 'single',
             labelKey: 'vsBot',
             labelNs: 'common',
+            descriptionKey: 'vsBotDescription',
             onSelect: () => setMode('single'),
           },
           {
             key: 'multi',
             labelKey: 'vsPlayer',
             labelNs: 'common',
+            descriptionKey: 'vsPlayerDescription',
             onSelect: () => navigate('/rooms?create=battleship'),
           },
         ]}
@@ -229,7 +232,12 @@ export function BattleshipGame({
   }
 
   if (session.status === 'connecting') {
-    return <ConnectingScreen />;
+    return (
+      <ConnectingScreen
+        subtitleKey="connectingSubtitle"
+        subtitleNs="battleship"
+      />
+    );
   }
 
   if (session.status === 'error') {

@@ -2,7 +2,12 @@ import type { Room } from '@colyseus/sdk';
 import { Application, Graphics } from 'pixi.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  backChipClass,
+  menuButtonSecondary,
+} from '../../../components/game-shell/menuButtons';
 import { colyseusUrl } from '../../../lib/apiBase';
+import { cn } from '../../../lib/cn';
 import { devinfo, devlog, devwarn } from '../../../lib/devlog';
 import type { WsSession } from '../../shared/activitySession';
 import {
@@ -383,7 +388,7 @@ export function SnakeCanvas({
       </div>
       <button
         type="button"
-        className="font-pixel absolute bottom-3 left-3 cursor-pointer border border-marquinhos-border bg-marquinhos-panel px-3.5 py-2 text-[11px] text-marquinhos-text hover:border-marquinhos-border-hover"
+        className={cn(backChipClass, 'absolute bottom-3 left-3')}
         onClick={onMainMenu}
       >
         {t('snake-game:leaveGame')}
@@ -405,7 +410,7 @@ export function SnakeCanvas({
           </div>
           <button
             type="button"
-            className="notch-6 cursor-pointer border border-marquinhos-border bg-marquinhos-panel px-6 py-4.5 font-mono text-xs tracking-wide text-marquinhos-text hover:border-marquinhos-border-hover"
+            className={menuButtonSecondary}
             onClick={onMainMenu}
           >
             {t('common:mainMenu')}

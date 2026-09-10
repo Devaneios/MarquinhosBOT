@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GameHeader } from '../../../components/game-shell';
+import {
+  GameHeader,
+  menuButtonPrimary,
+  menuButtonSecondary,
+} from '../../../components/game-shell';
 import { colyseusUrl } from '../../../lib/apiBase';
 import { devlog } from '../../../lib/devlog';
 import type { WsSession } from '../../shared/activitySession';
@@ -134,7 +138,7 @@ export function CheckersBoard({
           {mode === 'multi' && (
             <button
               type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
+              className={menuButtonPrimary}
               onClick={() => send({ type: 'restart' })}
             >
               {t('common:playAgain')}
@@ -142,7 +146,7 @@ export function CheckersBoard({
           )}
           <button
             type="button"
-            className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-5 py-3 text-sm text-marquinhos-text hover:border-marquinhos-border-hover"
+            className={menuButtonSecondary}
             onClick={onMainMenu}
           >
             {t('common:mainMenu')}

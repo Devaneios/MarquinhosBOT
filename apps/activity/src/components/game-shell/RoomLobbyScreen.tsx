@@ -11,6 +11,10 @@ import {
 } from '../../games/shared/activitySession';
 import { isQueueEligible } from '../../games/shared/queueEligibility';
 import { getParticipantDisplayNames } from '../../lib/discordParticipants';
+import { GameEmblem } from './GameEmblem';
+import { MenuAction } from './MenuAction';
+import { MenuPanel } from './MenuPanel';
+import { MenuScreen } from './MenuScreen';
 
 export interface RoomReadyInfo {
   roomId: string;
@@ -108,50 +112,87 @@ export function RoomLobbyScreen({
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center p-6">
-      <div className="notch-8 flex w-full max-w-2xl flex-col gap-5 border border-marquinhos-border bg-marquinhos-panel px-8 py-8 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-        <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-accent">
-          {t('rooms:title')}
-        </div>
-
-        <div className="flex max-h-80 flex-col gap-2 overflow-y-auto text-left">
-          {rooms && rooms.length === 0 && (
-            <div className="text-sm text-marquinhos-text-dim">
-              {t('rooms:noRoomsOpen')}
-            </div>
-          )}
-          {rooms?.map((room) => (
-            <button
-              key={room.roomId}
-              type="button"
-              disabled={busy}
-              className="notch-6 flex items-center justify-between border border-marquinhos-border bg-marquinhos-bg px-4 py-3 text-left text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover disabled:opacity-50"
-              onClick={() => handleJoin(room)}
+    <MenuScreen
+      titleKey="brand"
+      titleNs="common"
+      headingKey="title"
+      headingNs="rooms"
+      onBack={onBack}
+      backLabel={t('common:backToHub')}
+    >
+      <div className="grid gap-4 md:grid-cols-[1.1fr_1fr]">
+        <MenuPanel
+          labelledBy="rooms-open-title"
+          className="flex flex-col gap-4 p-5 sm:p-6"
+        >
+          <div className="flex items-center gap-4">
+            <h2
+              id="rooms-open-title"
+              className="shrink-0 font-pixel text-xs leading-relaxed sm:text-sm"
             >
-              <span>
-                <span className="font-semibold">
-                  {t(`games:${room.game}.name`)}
-                </span>
-                {' — '}
-                {room.roomId} ·{' '}
-                {names[room.hostUserId] ?? room.hostUserId.slice(0, 8)}
-              </span>
-              <span className="text-xs text-marquinhos-text-dim">
-                {t('rooms:playerCount', { count: room.playerCount })}
-                {room.spectatorCount > 0
-                  ? ` · ${t('rooms:spectatorCount', { count: room.spectatorCount })}`
-                  : ''}
-                {room.queueEnabled
-                  ? ` · ${t('rooms:queueDepth', { count: room.queueDepth })}`
-                  : ''}
-              </span>
-            </button>
-          ))}
-        </div>
+              {t('rooms:joinRoom')}
+            </h2>
+            <div
+              aria-hidden="true"
+              className="h-px flex-1 bg-marquinhos-border"
+            />
+          </div>
 
-        <div className="flex flex-col items-center gap-3">
+          <div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
+            {rooms && rooms.length === 0 && (
+              <p className="text-sm leading-6 text-marquinhos-text-dim">
+                {t('rooms:noRoomsOpen')}
+              </p>
+            )}
+            {rooms?.map((room) => (
+              <button
+                key={room.roomId}
+                type="button"
+                disabled={busy}
+                className="flex w-full cursor-pointer flex-col items-start gap-1 rounded-sm border border-marquinhos-border px-4 py-3 text-left text-sm text-marquinhos-text hover:border-marquinhos-accent hover:text-marquinhos-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marquinhos-accent motion-safe:transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => handleJoin(room)}
+              >
+                <span className="font-semibold">
+                  {t(`games:${room.game}.name`)} — {room.roomId} ·{' '}
+                  {names[room.hostUserId] ?? room.hostUserId.slice(0, 8)}
+                </span>
+                <span className="text-xs leading-5 text-marquinhos-text-dim">
+                  {t('rooms:playerCount', { count: room.playerCount })}
+                  {room.spectatorCount > 0
+                    ? ` · ${t('rooms:spectatorCount', { count: room.spectatorCount })}`
+                    : ''}
+                  {room.queueEnabled
+                    ? ` · ${t('rooms:queueDepth', { count: room.queueDepth })}`
+                    : ''}
+                </span>
+              </button>
+            ))}
+          </div>
+        </MenuPanel>
+
+        <MenuPanel
+          labelledBy="rooms-create-title"
+          className="flex flex-col gap-4 p-5 sm:p-6"
+        >
+          <div className="flex items-center gap-4">
+            <h2
+              id="rooms-create-title"
+              className="shrink-0 font-pixel text-xs leading-relaxed sm:text-sm"
+            >
+              {t('rooms:createRoom')}
+            </h2>
+            <div
+              aria-hidden="true"
+              className="h-px flex-1 bg-marquinhos-border"
+            />
+          </div>
+
           {selectedGame ? (
             <>
+              <GameEmblem gameId={selectedGame} compact />
+              <span className="min-w-0 font-pixel text-sm leading-relaxed break-words">
+                {t(`games:${selectedGame}.name`)}
+              </span>
               {isQueueEligible(selectedGame) && (
                 <label className="flex items-center gap-2 text-sm text-marquinhos-text">
                   <input
@@ -162,53 +203,39 @@ export function RoomLobbyScreen({
                   {t('rooms:enableQueue')}
                 </label>
               )}
-              <button
-                type="button"
+              <MenuAction
+                variant="primary"
                 disabled={busy}
-                className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover disabled:opacity-50"
-                onClick={handleCreate}
-              >
-                {t('rooms:createRoom')}
-              </button>
+                label={t('rooms:createRoom')}
+                onSelect={() => void handleCreate()}
+              />
             </>
           ) : pickerOpen ? (
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="flex flex-col gap-2">
               {GAME_REGISTRY.filter((g) => g.status === 'PLAY').map((g) => (
-                <button
+                <MenuAction
                   key={g.id}
-                  type="button"
-                  className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-4 py-2 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
-                  onClick={() => setSelectedGame(g.id)}
-                >
-                  {t(`games:${g.id}.name`)}
-                </button>
+                  label={t(`games:${g.id}.name`)}
+                  onSelect={() => setSelectedGame(g.id)}
+                />
               ))}
             </div>
           ) : (
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={() => setPickerOpen(true)}
-            >
-              {t('rooms:createRoom')}
-            </button>
+            <MenuAction
+              variant="primary"
+              label={t('rooms:selectGame')}
+              description={t('common:roomsHint')}
+              onSelect={() => setPickerOpen(true)}
+            />
           )}
 
           {actionRejected && (
-            <div className="text-xs text-marquinhos-danger">
+            <p className="text-xs leading-5 text-marquinhos-danger">
               {t('rooms:actionRejected')}
-            </div>
+            </p>
           )}
-
-          <button
-            type="button"
-            className="notch-6 border border-marquinhos-border bg-transparent px-5 py-3 text-sm font-semibold text-marquinhos-text transition hover:bg-marquinhos-panel"
-            onClick={onBack}
-          >
-            {t('common:back')}
-          </button>
-        </div>
+        </MenuPanel>
       </div>
-    </div>
+    </MenuScreen>
   );
 }

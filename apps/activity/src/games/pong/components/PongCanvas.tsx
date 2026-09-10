@@ -2,6 +2,10 @@ import type { Room } from '@colyseus/sdk';
 import { Application, BlurFilter, Graphics } from 'pixi.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  menuButtonPrimary,
+  menuButtonSecondary,
+} from '../../../components/game-shell/menuButtons';
 import { colyseusUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
 import { devinfo, devlog, devwarn } from '../../../lib/devlog';
@@ -1715,7 +1719,7 @@ export function PongCanvas({
               {!spectating && (
                 <button
                   type="button"
-                  className="notch-6 cursor-pointer border border-marquinhos-accent bg-marquinhos-accent px-6 py-4.5 font-mono text-xs tracking-wide text-marquinhos-bg hover:bg-marquinhos-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent disabled:cursor-not-allowed disabled:bg-marquinhos-panel disabled:text-marquinhos-text-disabled"
+                  className={menuButtonPrimary}
                   disabled={requested}
                   onClick={() => {
                     devlog('[pong-canvas] requesting rematch');
@@ -1734,7 +1738,7 @@ export function PongCanvas({
               )}
               <button
                 type="button"
-                className="notch-6 cursor-pointer border border-marquinhos-border bg-marquinhos-panel px-6 py-4.5 font-mono text-xs tracking-wide text-marquinhos-text hover:border-marquinhos-border-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
+                className={menuButtonSecondary}
                 onClick={() => {
                   devlog('[pong-canvas] leaving to main menu');
                   onMainMenu();

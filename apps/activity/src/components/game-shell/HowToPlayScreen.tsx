@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { GameId } from '../../games/gameId';
+import { MenuPanel } from './MenuPanel';
+import { MenuScreen } from './MenuScreen';
 
 export interface HowToPlaySection {
   headingKey: string;
@@ -8,6 +11,7 @@ export interface HowToPlaySection {
 }
 
 export interface HowToPlayScreenProps {
+  gameId: GameId;
   titleKey?: string;
   titleNs?: string;
   sections: HowToPlaySection[];
@@ -17,6 +21,7 @@ export interface HowToPlayScreenProps {
 }
 
 export function HowToPlayScreen({
+  gameId,
   titleKey = 'howToPlay',
   titleNs = 'common',
   sections,
@@ -27,43 +32,33 @@ export function HowToPlayScreen({
   const { t } = useTranslation(['common', titleNs, footnoteNs ?? 'common']);
 
   return (
-    <div className="flex flex-1 items-center justify-center p-4 sm:p-6">
-      <div className="notch-8 flex w-full max-w-[860px] flex-col gap-6 border border-marquinhos-border bg-marquinhos-panel px-6 py-8 shadow-[0_20px_40px_rgba(0,0,0,0.24)] sm:px-8">
-        <div className="flex items-start justify-between gap-4">
-          <div className="font-pixel text-2xl tracking-[0.24em] text-marquinhos-text">
-            {t(`${titleNs}:${titleKey}`)}
-          </div>
-          <button
-            type="button"
-            className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-4 py-2 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
-            onClick={onBack}
-          >
-            {t('common:back')}
-          </button>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          {sections.map((section, index) => (
-            <div
-              key={index}
-              className="notch-6 border border-marquinhos-border bg-black/20 p-5"
-            >
-              <div className="font-pixel text-sm text-marquinhos-accent">
-                {t(`${section.headingNs}:${section.headingKey}`)}
-              </div>
-              <div className="mt-4 text-marquinhos-text-dim">
-                {section.body}
-              </div>
+    <MenuScreen
+      titleKey={`${gameId}.name`}
+      titleNs="games"
+      headingKey={titleKey}
+      headingNs={titleNs}
+      onBack={onBack}
+    >
+      <div className="grid gap-4 md:grid-cols-2">
+        {sections.map((section, index) => (
+          <MenuPanel key={index} className="p-5 sm:p-6">
+            <h2 className="font-pixel text-sm leading-relaxed text-marquinhos-accent">
+              {t(`${section.headingNs}:${section.headingKey}`)}
+            </h2>
+            <div className="mt-4 text-sm leading-6 text-marquinhos-text-dim">
+              {section.body}
             </div>
-          ))}
-        </div>
-
-        {footnoteKey && (
-          <div className="notch-6 border border-marquinhos-border bg-black/20 p-5 text-center text-base leading-7 text-marquinhos-accent sm:text-lg">
-            {t(`${footnoteNs ?? titleNs}:${footnoteKey}`)}
-          </div>
-        )}
+          </MenuPanel>
+        ))}
       </div>
-    </div>
+
+      {footnoteKey && (
+        <MenuPanel className="p-5 sm:p-6">
+          <p className="text-sm leading-6 text-marquinhos-accent">
+            {t(`${footnoteNs ?? titleNs}:${footnoteKey}`)}
+          </p>
+        </MenuPanel>
+      )}
+    </MenuScreen>
   );
 }

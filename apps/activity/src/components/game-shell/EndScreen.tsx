@@ -1,4 +1,6 @@
 import { useTranslation } from 'react-i18next';
+import { MenuAction } from './MenuAction';
+import { MenuPanel } from './MenuPanel';
 
 export interface EndScreenProps {
   outcomeKey: string;
@@ -16,30 +18,22 @@ export function EndScreen({
   const { t } = useTranslation([outcomeNs, 'common']);
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-6">
-      <div className="notch-8 flex min-h-[220px] w-full max-w-[520px] flex-col items-center justify-center gap-6 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.28)]">
-        <div className="font-pixel text-xl tracking-[0.24em] text-marquinhos-text">
+    <div className="flex h-full w-full items-center justify-center p-4 sm:p-6">
+      <MenuPanel className="w-full max-w-130 px-6 py-10 text-center sm:px-8">
+        <div className="font-pixel text-lg tracking-[0.24em] text-marquinhos-accent">
           {t(`${outcomeNs}:${outcomeKey}`)}
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="mx-auto mt-6 flex max-w-80 flex-col gap-3">
           {onPlayAgain && (
-            <button
-              type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-              onClick={onPlayAgain}
-            >
-              {t('common:playAgain')}
-            </button>
+            <MenuAction
+              variant="primary"
+              label={t('common:playAgain')}
+              onSelect={onPlayAgain}
+            />
           )}
-          <button
-            type="button"
-            className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-3 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
-            onClick={onBackToHub}
-          >
-            {t('common:backToHub')}
-          </button>
+          <MenuAction label={t('common:backToHub')} onSelect={onBackToHub} />
         </div>
-      </div>
+      </MenuPanel>
     </div>
   );
 }

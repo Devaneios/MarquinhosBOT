@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ConnectingScreen,
   ErrorScreen,
-  ModeSelectScreen,
+  GameMenu,
 } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { SnakeCanvas } from './components';
@@ -23,19 +23,22 @@ export function SnakeGame({
 
   if (session.status === 'selecting-mode') {
     return (
-      <ModeSelectScreen
+      <GameMenu
+        gameId="snake-game"
         onBack={() => navigate('/')}
-        options={[
+        actions={[
           {
             key: 'single',
             labelKey: 'singlePlayer',
             labelNs: 'snake-game',
+            descriptionKey: 'singlePlayerDescription',
             onSelect: () => selectMode('single'),
           },
           {
             key: 'multi',
             labelKey: 'twoPlayer',
             labelNs: 'snake-game',
+            descriptionKey: 'twoPlayerDescription',
             onSelect: () => navigate('/rooms?create=snake-game'),
           },
         ]}
@@ -44,7 +47,12 @@ export function SnakeGame({
   }
 
   if (session.status === 'connecting') {
-    return <ConnectingScreen />;
+    return (
+      <ConnectingScreen
+        subtitleKey="connectingSubtitle"
+        subtitleNs="snake-game"
+      />
+    );
   }
 
   if (session.status === 'error') {

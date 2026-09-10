@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GameHeader } from '../../../components/game-shell';
+import {
+  GameHeader,
+  menuButtonPrimary,
+  menuButtonSecondary,
+} from '../../../components/game-shell';
 import { colyseusUrl } from '../../../lib/apiBase';
 import { devlog } from '../../../lib/devlog';
 import type { WsSession } from '../../shared/activitySession';
@@ -108,7 +112,7 @@ export function BingoSpeedCanvas({
               </div>
               <button
                 type="button"
-                className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
+                className={menuButtonPrimary}
                 onClick={onMainMenu}
               >
                 {t('common:mainMenu')}
@@ -129,7 +133,7 @@ export function BingoSpeedCanvas({
             </button>
             <button
               type="button"
-              className="notch-6 border border-marquinhos-border px-6 py-3 text-sm font-semibold text-marquinhos-text transition hover:bg-marquinhos-panel"
+              className={menuButtonSecondary}
               onClick={onMainMenu}
             >
               {t('common:back')}

@@ -6,6 +6,7 @@ export function HowToPlay({ onBack }: { onBack: () => void }) {
 
   return (
     <HowToPlayScreen
+      gameId="checkers"
       onBack={onBack}
       footnoteKey="footnote"
       footnoteNs="checkers"

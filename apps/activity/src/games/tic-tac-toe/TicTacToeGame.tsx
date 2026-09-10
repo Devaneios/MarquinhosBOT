@@ -5,7 +5,7 @@ import {
   ConnectingScreen,
   ErrorScreen,
   GameHeader,
-  ModeSelectScreen,
+  GameMenu,
 } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { colyseusUrl } from '../../lib/apiBase';
@@ -92,19 +92,22 @@ export function TicTacToeGame({
 
   if (sessionState.status === 'selecting-mode') {
     return (
-      <ModeSelectScreen
+      <GameMenu
+        gameId="tic-tac-toe"
         onBack={() => navigate('/')}
-        options={[
+        actions={[
           {
             key: 'single',
             labelKey: 'vsBot',
             labelNs: 'common',
+            descriptionKey: 'vsBotDescription',
             onSelect: () => selectMode('single'),
           },
           {
             key: 'multi',
             labelKey: 'vsPlayer',
             labelNs: 'common',
+            descriptionKey: 'vsPlayerDescription',
             onSelect: () => navigate('/rooms?create=tic-tac-toe'),
           },
         ]}

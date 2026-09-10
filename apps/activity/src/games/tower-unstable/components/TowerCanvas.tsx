@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GameHeader } from '../../../components/game-shell';
+import {
+  GameHeader,
+  menuButtonPrimary,
+  menuButtonSecondary,
+} from '../../../components/game-shell';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
 import {
@@ -166,7 +170,7 @@ export function TowerCanvas({ session, userId, onMainMenu }: Props) {
             <div className="flex gap-4">
               <button
                 type="button"
-                className="notch-6 cursor-pointer border border-marquinhos-accent bg-marquinhos-accent px-6 py-3 font-mono text-xs tracking-wide text-marquinhos-bg disabled:cursor-not-allowed disabled:opacity-50"
+                className={menuButtonPrimary}
                 disabled={requested}
                 onClick={() => {
                   roomSend({ type: 'restart' });
@@ -182,7 +186,7 @@ export function TowerCanvas({ session, userId, onMainMenu }: Props) {
               </button>
               <button
                 type="button"
-                className="notch-6 cursor-pointer border border-marquinhos-border bg-marquinhos-panel px-6 py-3 font-mono text-xs tracking-wide text-marquinhos-text"
+                className={menuButtonSecondary}
                 onClick={onMainMenu}
               >
                 {t('common:mainMenu')}

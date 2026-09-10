@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ConnectingScreen,
   ErrorScreen,
-  ModeSelectScreen,
+  GameMenu,
 } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { DominoesBlockBoard } from './components';
@@ -22,19 +22,22 @@ export function DominoesBlockGame({
 
   if (session.status === 'selecting-mode') {
     return (
-      <ModeSelectScreen
+      <GameMenu
+        gameId="dominoes-block"
         onBack={() => navigate('/')}
-        options={[
+        actions={[
           {
             key: 'single',
             labelKey: 'vsBot',
             labelNs: 'common',
+            descriptionKey: 'vsBotDescription',
             onSelect: () => setMode('single'),
           },
           {
             key: 'multi',
             labelKey: 'vsPlayer',
             labelNs: 'common',
+            descriptionKey: 'vsPlayerDescription',
             onSelect: () => navigate('/rooms?create=dominoes-block'),
           },
         ]}

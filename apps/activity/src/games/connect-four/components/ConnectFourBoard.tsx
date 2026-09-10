@@ -2,9 +2,12 @@ import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
+  backChipClass,
   ConnectingScreen,
   ErrorScreen,
   GameHeader,
+  menuButtonPrimary,
+  menuButtonSecondary,
 } from '../../../components/game-shell';
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
@@ -122,7 +125,7 @@ export function ConnectFourBoard({
             </div>
             <button
               type="button"
-              className="font-pixel cursor-pointer border border-marquinhos-border bg-marquinhos-panel px-3.5 py-2 text-[11px] text-marquinhos-text hover:border-marquinhos-border-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
+              className={backChipClass}
               onClick={onBackToMenu}
             >
               {t('connect-four:backToMode')}
@@ -160,7 +163,7 @@ export function ConnectFourBoard({
           <div className="mt-4 flex items-center justify-center gap-3">
             <button
               type="button"
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
+              className={menuButtonPrimary}
               onClick={() => send({ type: 'restart' })}
             >
               {restartStatus
@@ -172,7 +175,7 @@ export function ConnectFourBoard({
             </button>
             <button
               type="button"
-              className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-3 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
+              className={menuButtonSecondary}
               onClick={onBackToMenu}
             >
               {t('connect-four:backToMode')}

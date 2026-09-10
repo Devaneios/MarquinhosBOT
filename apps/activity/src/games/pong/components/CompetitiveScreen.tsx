@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  MenuAction,
+  MenuPanel,
+  MenuScreen,
+} from '../../../components/game-shell';
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { apiUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
@@ -39,6 +44,14 @@ interface Tournament {
     status: string;
   }[];
 }
+
+const tabBtnBase =
+  'notch-4 cursor-pointer border px-4 py-2 font-pixel text-[10px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent motion-safe:transition-colors';
+const selectClass =
+  'cursor-pointer rounded-sm border border-marquinhos-border bg-marquinhos-bg px-3 py-2 font-mono text-sm text-marquinhos-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent';
+const inputClass =
+  'w-full rounded-sm border border-marquinhos-border bg-marquinhos-bg px-3 py-2 font-mono text-sm text-marquinhos-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent';
+const sectionHeading = 'shrink-0 font-pixel text-xs leading-relaxed sm:text-sm';
 
 export function CompetitiveScreen({
   identity,
@@ -134,201 +147,201 @@ export function CompetitiveScreen({
   ];
 
   return (
-    <div className="flex flex-1 items-center justify-center p-4 sm:p-6">
-      <div className="notch-8 flex max-h-[calc(100vh-2rem)] w-full max-w-5xl flex-col border border-marquinhos-border bg-marquinhos-panel p-5 sm:p-7">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="font-pixel text-xl text-marquinhos-text">
-            {t('competitive')}
-          </h1>
+    <MenuScreen
+      titleKey="pong.name"
+      titleNs="games"
+      headingKey="competitive"
+      headingNs="pong"
+      onBack={onBack}
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        {(['ladder', 'tournaments'] as const).map((value) => (
           <button
+            key={value}
             type="button"
-            className="border border-marquinhos-border px-3 py-2 font-pixel text-[10px] text-marquinhos-text"
-            onClick={onBack}
+            aria-pressed={tab === value}
+            onClick={() => setTab(value)}
+            className={cn(
+              tabBtnBase,
+              tab === value
+                ? 'border-marquinhos-accent bg-marquinhos-accent text-marquinhos-bg'
+                : 'border-marquinhos-border text-marquinhos-text hover:border-marquinhos-accent hover:text-marquinhos-accent',
+            )}
           >
-            {t('common:back')}
+            {t(value)}
           </button>
-        </div>
+        ))}
+        <select
+          value={pool}
+          onChange={(event) => setPool(event.target.value as Pool)}
+          className={cn(selectClass, 'ml-auto')}
+        >
+          <option value="classic-1v1">1V1</option>
+          <option value="quad-elimination">QUADRAPONG</option>
+        </select>
+      </div>
 
-        <div className="mt-5 flex flex-wrap gap-2 border-b border-marquinhos-border pb-3">
-          {(['ladder', 'tournaments'] as const).map((value) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={tab === value}
-              onClick={() => setTab(value)}
-              className={cn(
-                'border px-4 py-2 font-pixel text-[10px]',
-                tab === value
-                  ? 'border-marquinhos-accent bg-marquinhos-accent text-marquinhos-bg'
-                  : 'border-marquinhos-border text-marquinhos-text',
-              )}
-            >
-              {t(value)}
-            </button>
-          ))}
-          <select
-            value={pool}
-            onChange={(event) => setPool(event.target.value as Pool)}
-            className="ml-auto border border-marquinhos-border bg-marquinhos-bg px-3 font-mono text-sm text-marquinhos-text"
-          >
-            <option value="classic-1v1">1V1</option>
-            <option value="quad-elimination">QUADRAPONG</option>
-          </select>
-        </div>
+      {error && (
+        <p className="break-all text-sm leading-6 text-marquinhos-danger">
+          {error}
+        </p>
+      )}
 
-        {error && (
-          <div className="mt-3 break-all border border-marquinhos-danger/60 px-3 py-2 text-sm text-marquinhos-danger">
-            {error}
+      {loading ? (
+        <MenuPanel className="px-6 py-10 text-center">
+          <span className="font-pixel animate-pong-blink text-sm tracking-[0.28em] text-marquinhos-accent">
+            {t('common:loading')}
+          </span>
+        </MenuPanel>
+      ) : tab === 'ladder' ? (
+        <MenuPanel className="flex flex-col gap-4 p-5 sm:p-6">
+          <div className="flex items-center gap-4">
+            <h2 className={sectionHeading}>{t('ladder')}</h2>
+            <div
+              aria-hidden="true"
+              className="h-px flex-1 bg-marquinhos-border"
+            />
           </div>
-        )}
-
-        <div className="mt-4 min-h-0 flex-1 overflow-auto">
-          {loading ? (
-            <div className="py-12 text-center font-pixel text-xs text-marquinhos-text-dim">
-              {t('common:loading')}
+          <div className="grid gap-2">
+            {leaderboard.map((entry, index) => (
+              <div
+                key={entry.userId}
+                className="notch-4 grid grid-cols-[48px_1fr_auto_auto] items-center gap-3 border border-marquinhos-border bg-marquinhos-bg px-3 py-2"
+              >
+                <span className="font-pixel text-xs text-marquinhos-accent">
+                  #{index + 1}
+                </span>
+                <span className="truncate font-mono text-sm text-marquinhos-text">
+                  {entry.userId === identity.userId
+                    ? t('common:you')
+                    : entry.userId}
+                </span>
+                <span className="font-pixel text-xs text-marquinhos-text">
+                  {Math.round(entry.rating)} ± {Math.round(entry.deviation)}
+                </span>
+                <span className="text-xs text-marquinhos-text-dim">
+                  {entry.wins}/{entry.matches}
+                </span>
+              </div>
+            ))}
+          </div>
+        </MenuPanel>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-[340px_1fr]">
+          <MenuPanel className="flex flex-col gap-3 p-5 sm:p-6">
+            <div className="flex items-center gap-4">
+              <h2 className={sectionHeading}>{t('createTournament')}</h2>
+              <div
+                aria-hidden="true"
+                className="h-px flex-1 bg-marquinhos-border"
+              />
             </div>
-          ) : tab === 'ladder' ? (
-            <div className="grid gap-2">
-              {leaderboard.map((entry, index) => (
-                <div
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              className={inputClass}
+              aria-label={t('tournamentName')}
+            />
+            <select
+              value={format}
+              onChange={(event) => setFormat(event.target.value as Format)}
+              className={cn(selectClass, 'w-full')}
+            >
+              <option value="round-robin">ROUND ROBIN</option>
+              <option value="double-elimination">DOUBLE ELIMINATION</option>
+              <option value="swiss-playoff">SWISS + TOP 4</option>
+            </select>
+            <div className="grid max-h-44 gap-1 overflow-auto">
+              {candidates.map((entry) => (
+                <label
                   key={entry.userId}
-                  className="grid grid-cols-[48px_1fr_auto_auto] items-center gap-3 border border-marquinhos-border bg-marquinhos-bg px-3 py-2"
+                  className="flex items-center gap-2 text-xs text-marquinhos-text"
                 >
-                  <span className="font-pixel text-xs text-marquinhos-accent">
-                    #{index + 1}
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(entry.userId)}
+                    onChange={() =>
+                      setSelected((current) =>
+                        current.includes(entry.userId)
+                          ? current.filter((id) => id !== entry.userId)
+                          : [...current, entry.userId],
+                      )
+                    }
+                  />
+                  <span className="truncate">{entry.userId}</span>
+                  <span className="ml-auto text-marquinhos-text-dim">
+                    {Math.round(entry.rating)}
                   </span>
-                  <span className="truncate font-mono text-sm text-marquinhos-text">
-                    {entry.userId === identity.userId
-                      ? t('common:you')
-                      : entry.userId}
-                  </span>
-                  <span className="font-pixel text-xs text-marquinhos-text">
-                    {Math.round(entry.rating)} ± {Math.round(entry.deviation)}
-                  </span>
-                  <span className="text-xs text-marquinhos-text-dim">
-                    {entry.wins}/{entry.matches}
-                  </span>
-                </div>
+                </label>
               ))}
             </div>
-          ) : (
-            <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
-              <div className="border border-marquinhos-border bg-marquinhos-bg p-4">
-                <div className="font-pixel text-xs text-marquinhos-text">
-                  {t('createTournament')}
-                </div>
-                <input
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  className="mt-3 w-full border border-marquinhos-border bg-marquinhos-panel px-3 py-2 text-sm text-marquinhos-text"
-                  aria-label={t('tournamentName')}
-                />
-                <select
-                  value={format}
-                  onChange={(event) => setFormat(event.target.value as Format)}
-                  className="mt-2 w-full border border-marquinhos-border bg-marquinhos-panel px-3 py-2 text-sm text-marquinhos-text"
-                >
-                  <option value="round-robin">ROUND ROBIN</option>
-                  <option value="double-elimination">DOUBLE ELIMINATION</option>
-                  <option value="swiss-playoff">SWISS + TOP 4</option>
-                </select>
-                <div className="mt-3 grid max-h-44 gap-1 overflow-auto">
-                  {candidates.map((entry) => (
-                    <label
-                      key={entry.userId}
-                      className="flex items-center gap-2 text-xs text-marquinhos-text"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selected.includes(entry.userId)}
-                        onChange={() =>
-                          setSelected((current) =>
-                            current.includes(entry.userId)
-                              ? current.filter((id) => id !== entry.userId)
-                              : [...current, entry.userId],
-                          )
-                        }
-                      />
-                      <span className="truncate">{entry.userId}</span>
-                      <span className="ml-auto text-marquinhos-text-dim">
-                        {Math.round(entry.rating)}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  disabled={selected.length < 2}
-                  onClick={() => void createTournament()}
-                  className="mt-4 w-full border border-marquinhos-accent bg-marquinhos-accent px-3 py-2 font-pixel text-[10px] text-marquinhos-bg disabled:opacity-40"
-                >
-                  {t('createTournament')}
-                </button>
-              </div>
+            <MenuAction
+              variant="primary"
+              disabled={selected.length < 2}
+              label={t('createTournament')}
+              onSelect={() => void createTournament()}
+            />
+          </MenuPanel>
 
-              <div className="grid gap-3">
-                {tournaments.map((tournament) => (
-                  <div
-                    key={tournament.id}
-                    className="border border-marquinhos-border bg-marquinhos-bg p-4"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-pixel text-xs text-marquinhos-text">
-                        {tournament.name}
-                      </span>
-                      <span className="text-xs uppercase text-marquinhos-text-dim">
-                        {tournament.status}
-                      </span>
-                    </div>
-                    <div className="mt-3 grid gap-2">
-                      {tournament.matches
-                        .filter((match) => match.status === 'ready')
-                        .map((match) => (
-                          <div
-                            key={match.id}
-                            className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border border-marquinhos-border px-2 py-2 text-xs text-marquinhos-text"
-                          >
-                            <button
-                              type="button"
-                              disabled={
-                                tournament.createdBy !== identity.userId &&
-                                match.playerA !== identity.userId &&
-                                match.playerB !== identity.userId
-                              }
-                              onClick={() =>
-                                match.playerA &&
-                                void report(match.id, match.playerA)
-                              }
-                              className="truncate text-left hover:text-marquinhos-accent disabled:cursor-default disabled:text-marquinhos-text-disabled"
-                            >
-                              {match.playerA}
-                            </button>
-                            <span>×</span>
-                            <button
-                              type="button"
-                              disabled={
-                                tournament.createdBy !== identity.userId &&
-                                match.playerA !== identity.userId &&
-                                match.playerB !== identity.userId
-                              }
-                              onClick={() =>
-                                match.playerB &&
-                                void report(match.id, match.playerB)
-                              }
-                              className="truncate text-right hover:text-marquinhos-accent disabled:cursor-default disabled:text-marquinhos-text-disabled"
-                            >
-                              {match.playerB}
-                            </button>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <div className="grid gap-4">
+            {tournaments.map((tournament) => (
+              <MenuPanel
+                key={tournament.id}
+                className="flex flex-col gap-3 p-5 sm:p-6"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className={sectionHeading}>{tournament.name}</h2>
+                  <span className="text-xs uppercase text-marquinhos-text-dim">
+                    {tournament.status}
+                  </span>
+                </div>
+                <div className="grid gap-2">
+                  {tournament.matches
+                    .filter((match) => match.status === 'ready')
+                    .map((match) => (
+                      <div
+                        key={match.id}
+                        className="notch-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 border border-marquinhos-border bg-marquinhos-bg px-2 py-2 text-xs text-marquinhos-text"
+                      >
+                        <button
+                          type="button"
+                          disabled={
+                            tournament.createdBy !== identity.userId &&
+                            match.playerA !== identity.userId &&
+                            match.playerB !== identity.userId
+                          }
+                          onClick={() =>
+                            match.playerA &&
+                            void report(match.id, match.playerA)
+                          }
+                          className="cursor-pointer truncate text-left hover:text-marquinhos-accent disabled:cursor-default disabled:text-marquinhos-text-disabled"
+                        >
+                          {match.playerA}
+                        </button>
+                        <span>×</span>
+                        <button
+                          type="button"
+                          disabled={
+                            tournament.createdBy !== identity.userId &&
+                            match.playerA !== identity.userId &&
+                            match.playerB !== identity.userId
+                          }
+                          onClick={() =>
+                            match.playerB &&
+                            void report(match.id, match.playerB)
+                          }
+                          className="cursor-pointer truncate text-right hover:text-marquinhos-accent disabled:cursor-default disabled:text-marquinhos-text-disabled"
+                        >
+                          {match.playerB}
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              </MenuPanel>
+            ))}
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </MenuScreen>
   );
 }

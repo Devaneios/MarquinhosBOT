@@ -333,7 +333,12 @@ export function WordleRaceBoard({
   ]);
 
   if (!gameState) {
-    return <ConnectingScreen />;
+    return (
+      <ConnectingScreen
+        subtitleKey="connectingSubtitle"
+        subtitleNs="wordle-race"
+      />
+    );
   }
 
   const attemptNumber =

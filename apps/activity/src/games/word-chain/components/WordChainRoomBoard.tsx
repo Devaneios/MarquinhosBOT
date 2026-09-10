@@ -84,7 +84,7 @@ export function WordChainRoomBoard() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 overflow-hidden p-4 sm:p-6">
-      <div className="relative flex-1 overflow-hidden rounded-lg border border-marquinhos-border bg-black/20">
+      <div className="notch-8 relative flex-1 overflow-hidden border border-marquinhos-border bg-black/20">
         <WordChainBoard
           currentTurn={gameState.currentTurn}
           players={gameState.players}
@@ -131,7 +131,7 @@ export function WordChainRoomBoard() {
               onKeyDown={handleKeyDown}
               disabled={!isCurrentPlayer || isGameOver}
               placeholder={t('word-chain:inputPlaceholder')}
-              className="flex-1 rounded-md border border-marquinhos-border bg-black/25 px-3 py-2 text-sm text-marquinhos-text placeholder-marquinhos-text-dim focus:ring-2 focus:ring-marquinhos-accent focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex-1 rounded-sm border border-marquinhos-border bg-marquinhos-bg px-3 py-2 text-sm text-marquinhos-text placeholder-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent disabled:cursor-not-allowed disabled:opacity-50"
             />
             <button
               type="button"

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { MenuAction, MenuPanel } from '../../../components/game-shell';
 import type { PlayerScore } from '../types';
 
 interface LeaderboardScreenProps {
@@ -15,8 +16,8 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 p-6">
-      <div className="notch-8 w-full max-w-[520px] border border-marquinhos-border bg-marquinhos-panel px-8 py-10 shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
-        <h1 className="mb-6 text-center font-pixel text-2xl tracking-[0.28em] text-marquinhos-accent">
+      <MenuPanel className="w-full max-w-130 px-6 py-10 sm:px-8">
+        <h1 className="mb-6 text-center font-pixel text-lg tracking-[0.24em] text-marquinhos-accent">
           {t('trivia-quiz:leaderboardTitle')}
         </h1>
 
@@ -41,13 +42,12 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
           ))}
         </div>
 
-        <button
-          onClick={() => navigate('/')}
-          className="notch-6 w-full border border-marquinhos-accent/60 bg-marquinhos-accent px-6 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
-        >
-          {t('common:backToHub')}
-        </button>
-      </div>
+        <MenuAction
+          variant="primary"
+          label={t('common:backToHub')}
+          onSelect={() => navigate('/')}
+        />
+      </MenuPanel>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { ModeSelectScreen } from '../../../components/game-shell';
+import { GameMenu } from '../../../components/game-shell';
 import type { GameMode } from '../types';
 
 export function ConnectFourModeMenu({
@@ -9,19 +9,22 @@ export function ConnectFourModeMenu({
   onExitToHub: () => void;
 }) {
   return (
-    <ModeSelectScreen
+    <GameMenu
+      gameId="connect-four"
       onBack={onExitToHub}
-      options={[
+      actions={[
         {
           key: 'single',
-          labelKey: 'vsCpu',
+          labelKey: 'vsBot',
           labelNs: 'common',
+          descriptionKey: 'vsBotDescription',
           onSelect: () => onSelect('single'),
         },
         {
           key: 'multi',
-          labelKey: 'vsFriend',
+          labelKey: 'vsPlayer',
           labelNs: 'common',
+          descriptionKey: 'vsPlayerDescription',
           onSelect: () => onSelect('multi'),
         },
       ]}

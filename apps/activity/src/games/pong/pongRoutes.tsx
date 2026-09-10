@@ -1,6 +1,7 @@
 import { Route, useNavigate } from 'react-router-dom';
+import { GameMenu } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../discordAuth.ts';
-import { HowToPlay, MainMenu, ModeMenu, SettingsScreen } from './components';
+import { HowToPlay, SettingsScreen } from './components';
 import { CompetitiveScreen } from './components/CompetitiveScreen';
 import { PongMenuFlow, usePongMenuContext } from './hooks/PongMenuFlow';
 import { PongGame } from './PongGame';
@@ -9,12 +10,40 @@ function MainMenuRoute() {
   const navigate = useNavigate();
   const { onExitToHub } = usePongMenuContext();
   return (
-    <MainMenu
-      onPlay={() => navigate('mode')}
-      onSettings={() => navigate('settings')}
-      onHowTo={() => navigate('how-to')}
-      onCompetitive={() => navigate('competitive')}
-      onExitToHub={onExitToHub}
+    <GameMenu
+      gameId="pong"
+      headingKey="mainMenu"
+      onBack={onExitToHub}
+      actions={[
+        {
+          key: 'play',
+          labelKey: 'play',
+          labelNs: 'common',
+          descriptionKey: 'playDescription',
+          onSelect: () => navigate('mode'),
+        },
+        {
+          key: 'settings',
+          labelKey: 'settings',
+          labelNs: 'common',
+          descriptionKey: 'settingsDescription',
+          onSelect: () => navigate('settings'),
+        },
+        {
+          key: 'competitive',
+          labelKey: 'competitive',
+          labelNs: 'pong',
+          descriptionKey: 'competitiveDescription',
+          onSelect: () => navigate('competitive'),
+        },
+        {
+          key: 'how-to',
+          labelKey: 'howToPlay',
+          labelNs: 'common',
+          descriptionKey: 'howToPlayDescription',
+          onSelect: () => navigate('how-to'),
+        },
+      ]}
     />
   );
 }
@@ -23,12 +52,37 @@ function ModeMenuRoute() {
   const navigate = useNavigate();
   const { difficulty, winScore, sound, ruleset, bestOf, ranked, onSelectMode } =
     usePongMenuContext();
+  const start = (mode: 'single' | 'multi' | 'local') =>
+    onSelectMode(mode, difficulty, winScore, sound, ruleset, bestOf, ranked);
+
   return (
-    <ModeMenu
-      onSelect={(mode) =>
-        onSelectMode(mode, difficulty, winScore, sound, ruleset, bestOf, ranked)
-      }
+    <GameMenu
+      gameId="pong"
       onBack={() => navigate('..')}
+      backLabelKey="back"
+      actions={[
+        {
+          key: 'single',
+          labelKey: 'vsBot',
+          labelNs: 'common',
+          descriptionKey: 'vsBotDescription',
+          onSelect: () => start('single'),
+        },
+        {
+          key: 'multi',
+          labelKey: 'vsPlayer',
+          labelNs: 'common',
+          descriptionKey: 'vsPlayerDescription',
+          onSelect: () => start('multi'),
+        },
+        {
+          key: 'local',
+          labelKey: 'vsLocal',
+          labelNs: 'pong',
+          descriptionKey: 'vsLocalDescription',
+          onSelect: () => start('local'),
+        },
+      ]}
     />
   );
 }

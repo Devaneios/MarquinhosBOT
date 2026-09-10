@@ -1,6 +1,9 @@
 {
+  "connectingSubtitle": "Conectando à sessão em tempo real e preparando a arena.",
   "singlePlayer": "1 JOGADOR",
+  "singlePlayerDescription": "Sobreviva sozinho e bata seu recorde.",
   "twoPlayer": "2 JOGADORES",
+  "twoPlayerDescription": "Abre o lobby de salas para jogar com outras pessoas.",
   "player1": "Jogador 1",
   "player2": "Jogador 2",
   "leaveGame": "SAIR DA PARTIDA",

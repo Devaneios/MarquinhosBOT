@@ -5,7 +5,8 @@ import {
   ConnectingScreen,
   ErrorScreen,
   GameHeader,
-  ModeSelectScreen,
+  GameMenu,
+  menuButtonPrimary,
 } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { colyseusUrl } from '../../lib/apiBase';
@@ -112,19 +113,22 @@ export function WordChainGame({
 
   if (session.status === 'selecting-mode') {
     return (
-      <ModeSelectScreen
+      <GameMenu
+        gameId="word-chain"
         onBack={() => navigate('/')}
-        options={[
+        actions={[
           {
             key: 'single',
             labelKey: 'vsBot',
             labelNs: 'common',
+            descriptionKey: 'vsBotDescription',
             onSelect: () => setMode('single'),
           },
           {
             key: 'multi',
             labelKey: 'vsPlayer',
             labelNs: 'common',
+            descriptionKey: 'vsPlayerDescription',
             onSelect: () => navigate('/rooms?create=word-chain'),
           },
         ]}
@@ -160,7 +164,7 @@ export function WordChainGame({
       />
 
       <main className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 sm:p-6">
-        <div className="relative flex-1 rounded-lg border border-marquinhos-border bg-black/20 overflow-hidden">
+        <div className="notch-8 relative flex-1 overflow-hidden border border-marquinhos-border bg-black/20">
           <WordChainBoard
             currentTurn={gameState.currentTurn}
             players={gameState.players}
@@ -208,7 +212,7 @@ export function WordChainGame({
                 disabled={!isCurrentPlayer || isGameOver}
                 placeholder={t('word-chain:inputPlaceholder')}
                 className={cn(
-                  'flex-1 rounded-md border border-marquinhos-border bg-black/25 px-3 py-2 text-sm text-marquinhos-text placeholder-marquinhos-text-dim focus:outline-none focus:ring-2 focus:ring-marquinhos-accent disabled:opacity-50 disabled:cursor-not-allowed',
+                  'flex-1 rounded-sm border border-marquinhos-border bg-marquinhos-bg px-3 py-2 text-sm text-marquinhos-text placeholder-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent disabled:cursor-not-allowed disabled:opacity-50',
                 )}
               />
               <button
@@ -239,7 +243,7 @@ export function WordChainGame({
             </div>
             <button
               type="button"
-              className="notch-6 border border-marquinhos-accent bg-marquinhos-accent px-5 py-2 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover"
+              className={menuButtonPrimary}
               onClick={() => navigate('/')}
             >
               {t('common:backToHub')}

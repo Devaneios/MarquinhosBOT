@@ -1,7 +1,8 @@
 import { Route, useNavigate } from 'react-router-dom';
+import { GameMenu } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { CheckersGame } from './CheckersGame';
-import { HowToPlay, MainMenu, ModeMenu } from './components';
+import { HowToPlay } from './components';
 import {
   CheckersMenuFlow,
   useCheckersMenuContext,
@@ -11,10 +12,26 @@ function MainMenuRoute() {
   const navigate = useNavigate();
   const { onExitToHub } = useCheckersMenuContext();
   return (
-    <MainMenu
-      onPlay={() => navigate('mode')}
-      onHowTo={() => navigate('how-to')}
-      onExitToHub={onExitToHub}
+    <GameMenu
+      gameId="checkers"
+      headingKey="mainMenu"
+      onBack={onExitToHub}
+      actions={[
+        {
+          key: 'play',
+          labelKey: 'play',
+          labelNs: 'common',
+          descriptionKey: 'playDescription',
+          onSelect: () => navigate('mode'),
+        },
+        {
+          key: 'how-to',
+          labelKey: 'howToPlay',
+          labelNs: 'common',
+          descriptionKey: 'howToPlayDescription',
+          onSelect: () => navigate('how-to'),
+        },
+      ]}
     />
   );
 }
@@ -23,15 +40,26 @@ function ModeMenuRoute() {
   const navigate = useNavigate();
   const { onSelectMode } = useCheckersMenuContext();
   return (
-    <ModeMenu
-      onSelect={(mode) => {
-        if (mode === 'multi') {
-          navigate('/rooms?create=checkers');
-          return;
-        }
-        onSelectMode(mode);
-      }}
+    <GameMenu
+      gameId="checkers"
       onBack={() => navigate('..')}
+      backLabelKey="back"
+      actions={[
+        {
+          key: 'single',
+          labelKey: 'vsBot',
+          labelNs: 'common',
+          descriptionKey: 'vsBotDescription',
+          onSelect: () => onSelectMode('single'),
+        },
+        {
+          key: 'multi',
+          labelKey: 'vsPlayer',
+          labelNs: 'common',
+          descriptionKey: 'vsPlayerDescription',
+          onSelect: () => navigate('/rooms?create=checkers'),
+        },
+      ]}
     />
   );
 }

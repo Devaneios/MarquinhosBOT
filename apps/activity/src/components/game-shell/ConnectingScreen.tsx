@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { MenuPanel } from './MenuPanel';
 
 export interface ConnectingScreenProps {
   subtitleKey?: string;
@@ -13,17 +14,17 @@ export function ConnectingScreen({
   const subtitle = subtitleKey ? t(`${subtitleNs}:${subtitleKey}`) : null;
 
   return (
-    <div className="flex flex-1 items-center justify-center p-6">
-      <div className="notch-8 flex min-h-60 w-full max-w-130 flex-col items-center justify-center gap-4 border border-marquinhos-border bg-marquinhos-panel px-8 py-10 text-center shadow-[0_20px_40px_rgba(0,0,0,0.24)]">
+    <div className="flex flex-1 items-center justify-center p-4 sm:p-6">
+      <MenuPanel className="w-full max-w-130 px-6 py-10 text-center sm:px-8">
         <div className="font-pixel animate-pong-blink text-sm tracking-[0.28em] text-marquinhos-accent">
           {t('common:connecting')}
         </div>
         {subtitle && (
-          <div className="max-w-[36ch] text-sm leading-6 text-marquinhos-text-dim">
+          <p className="mx-auto mt-4 max-w-[36ch] text-sm leading-6 text-marquinhos-text-dim">
             {subtitle}
-          </div>
+          </p>
         )}
-      </div>
+      </MenuPanel>
     </div>
   );
 }

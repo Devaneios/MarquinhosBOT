@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { ConnectingScreen, ErrorScreen } from '../../../components/game-shell';
+import {
+  backChipClass,
+  ConnectingScreen,
+  ErrorScreen,
+  menuButtonPrimary,
+  menuButtonSecondary,
+} from '../../../components/game-shell';
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
@@ -169,7 +175,7 @@ function CardTableBoard({
           </div>
           <button
             type="button"
-            className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-4 py-2 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent"
+            className={backChipClass}
             onClick={() => navigate('/')}
           >
             {t('common:back')}
@@ -447,7 +453,7 @@ function MatchOverOverlay({
               type="button"
               disabled={restartRequested && restartStatus === null}
               onClick={onRestart}
-              className="notch-6 border border-marquinhos-accent/60 bg-marquinhos-accent px-5 py-3 text-sm font-semibold text-black transition hover:bg-marquinhos-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+              className={menuButtonPrimary}
             >
               {restartRequested
                 ? t('cards:waitingRematch')
@@ -457,7 +463,7 @@ function MatchOverOverlay({
           <button
             type="button"
             onClick={onBack}
-            className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-3 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
+            className={menuButtonSecondary}
           >
             {t('common:backToHub')}
           </button>
