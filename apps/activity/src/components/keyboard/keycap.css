@@ -99,6 +99,45 @@
     0 -1px 0 rgba(0, 0, 0, 0.2);
 }
 
+.keycap[data-preview] {
+  position: relative;
+}
+
+.keycap[data-preview]::after {
+  content: attr(data-preview);
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--key-u) * 1.8);
+  height: calc(var(--key-u) * 1.8);
+  margin-bottom: 6px;
+  background: linear-gradient(to bottom, #f5f5f5, #dcdcdc);
+  color: #1c1c1e;
+  font-size: calc(var(--key-font) * 2.2);
+  font-weight: bold;
+  line-height: 1;
+  text-transform: uppercase;
+  border-radius: calc(var(--key-u) * 0.32) calc(var(--key-u) * 0.32)
+    calc(var(--key-u) * 0.08) calc(var(--key-u) * 0.32);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.35),
+    0 -1px 0 rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 10;
+  transform: translate(-50%, 0) scale(0.6);
+}
+
+.keycap[data-preview]:active::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0) scale(1);
+}
+
 .keycap-text {
   display: flex;
   flex: 1;

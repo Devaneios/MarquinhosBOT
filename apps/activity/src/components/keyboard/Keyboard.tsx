@@ -115,14 +115,24 @@ export function Keyboard({
   }, [rows, pressedKeys]);
 
   const buttonAttributes = useMemo(
-    () =>
-      rows.flatMap((row) =>
+    () => [
+      ...rows.flatMap((row) =>
         row.map((key) => ({
           attribute: 'style',
           value: styleToCssVars(key.style ?? DEFAULT_STYLE),
           buttons: tokenForKeyId(key.id),
         })),
       ),
+      ...rows.flatMap((row) =>
+        row
+          .filter((key) => !key.variant)
+          .map((key) => ({
+            attribute: 'data-preview',
+            value: key.label,
+            buttons: tokenForKeyId(key.id),
+          })),
+      ),
+    ],
     [rows],
   );
 

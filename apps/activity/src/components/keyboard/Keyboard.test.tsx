@@ -140,6 +140,43 @@ describe('Keyboard', () => {
     expect(wButton?.classList.contains('keycap-pressed')).toBe(false);
   });
 
+  it('sets a data-preview attribute with the key label on plain letter keys', () => {
+    const { container } = render(
+      <Keyboard
+        rows={buildRows()}
+        pressedKeys={new Set()}
+        disabled={false}
+        onKey={() => {}}
+      />,
+    );
+
+    const qButton = Array.from(container.querySelectorAll('.hg-button')).find(
+      (el) => el.querySelector('.keycap-text')?.textContent === 'Q',
+    ) as HTMLElement;
+    expect(qButton.getAttribute('data-preview')).toBe('Q');
+  });
+
+  it('does not set a data-preview attribute on Backspace/Enter', () => {
+    const { container } = render(
+      <Keyboard
+        rows={buildRows()}
+        pressedKeys={new Set()}
+        disabled={false}
+        onKey={() => {}}
+      />,
+    );
+
+    const enterButton = Array.from(
+      container.querySelectorAll('.hg-button'),
+    ).find((el) => el.querySelector('.keycap-text')?.textContent === 'Enter');
+    const backspaceButton = Array.from(
+      container.querySelectorAll('.hg-button'),
+    ).find((el) => el.querySelector('.keycap-text')?.textContent === '⌫');
+
+    expect(enterButton?.hasAttribute('data-preview')).toBe(false);
+    expect(backspaceButton?.hasAttribute('data-preview')).toBe(false);
+  });
+
   it('applies per-key style as inline CSS custom properties', () => {
     const rows = buildRows([{ style: CORRECT_STYLE }]);
     const { container } = render(
