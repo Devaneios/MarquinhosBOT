@@ -4,6 +4,7 @@ import {
   TERMO_BUTTON_ID_SET,
   TERMO_BUTTON_IDS,
 } from '@marquinhos/commands/games/termoResponse';
+import { isDevelopmentChannelAllowed } from '@marquinhos/config/developmentScope';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { formatGuessesAsText } from '@marquinhos/ui/compounds/termo/text-fallback';
 import type { LetterFeedback } from '@marquinhos/ui/screens/termo';
@@ -43,6 +44,7 @@ export class TermoButtonsHandler extends InteractionHandler {
   }
 
   override parse(interaction: ButtonInteraction) {
+    if (!isDevelopmentChannelAllowed(interaction)) return this.none();
     if (TERMO_BUTTON_ID_SET.has(interaction.customId)) return this.some();
     return this.none();
   }

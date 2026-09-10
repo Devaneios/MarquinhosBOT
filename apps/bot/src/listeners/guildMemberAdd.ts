@@ -12,6 +12,7 @@ export class GuildMemberAddListener extends Listener<
   }
 
   override async run(member: GuildMember) {
+    if (env.NODE_ENV === 'development') return;
     const guildMemberAddEmbed = baseEmbed(member.client);
     const mainChannelId = env.GUILD_MAIN_CHANNEL_ID;
     const externalRoleId = env.GUILD_EXTERNAL_ROLE_ID;

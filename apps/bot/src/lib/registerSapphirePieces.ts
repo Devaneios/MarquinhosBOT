@@ -44,6 +44,7 @@ import { VoiceStateUpdateListener } from '@marquinhos/listeners/voiceStateUpdate
 import { BotNotInOtherChannelPrecondition } from '@marquinhos/preconditions/BotNotInOtherChannel';
 import { CanJoinPrecondition } from '@marquinhos/preconditions/CanJoin';
 import { CanSpeakPrecondition } from '@marquinhos/preconditions/CanSpeak';
+import { DevelopmentChannelPrecondition } from '@marquinhos/preconditions/DevelopmentChannel';
 import { UserInVoiceChannelPrecondition } from '@marquinhos/preconditions/UserInVoiceChannel';
 import { container } from '@sapphire/framework';
 
@@ -98,6 +99,7 @@ const listeners = [
 ] as const;
 
 const preconditions = [
+  ['DevelopmentChannel', DevelopmentChannelPrecondition],
   ['BotNotInOtherChannel', BotNotInOtherChannelPrecondition],
   ['CanJoin', CanJoinPrecondition],
   ['CanSpeak', CanSpeakPrecondition],

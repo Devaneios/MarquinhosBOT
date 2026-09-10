@@ -1,3 +1,4 @@
+import { isDevelopmentChannelAllowed } from '@marquinhos/config/developmentScope';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { type LetterFeedback } from '@marquinhos/ui/screens/termo';
@@ -190,6 +191,8 @@ export class TermoCommand extends MarquinhosCommand {
   }
 
   override async autocompleteRun(interaction: AutocompleteInteraction) {
+    if (!isDevelopmentChannelAllowed(interaction))
+      return interaction.respond([]);
     const guess = interaction.options.getFocused().trim();
     if (!guess || !interaction.guildId) {
       await interaction.respond([]);

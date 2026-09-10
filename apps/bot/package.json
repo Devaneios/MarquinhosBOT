@@ -8,7 +8,7 @@
     "dev": "bun --watch src/index.ts",
     "build": "bun build src/index.ts --target=bun --external @meonode/canvas --external sharp --external @napi-rs/canvas --external mediaplex --external ffmpeg-static --external @snazzah/davey --outdir=./dist --sourcemap=external && cp -R src/resources dist/",
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
+    "test": "NODE_ENV=test bun test",
     "register-commands": "bun run src/register-slash-commands.ts",
     "lint": "eslint 'src/**/*.ts'",
     "lint:fix": "eslint 'src/**/*.ts' --fix",

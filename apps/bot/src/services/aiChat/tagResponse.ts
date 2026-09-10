@@ -1,4 +1,4 @@
-import { GuildConfig } from '@marquinhos/config/guild';
+import { isAiChannel } from '@marquinhos/config/developmentScope';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { baseEmbed } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
@@ -33,6 +33,8 @@ export interface TagResponseMessage {
     content: string;
   }>;
   channel: {
+    isThread?(): boolean;
+    parentId?: string | null;
     sendTyping(): Promise<unknown>;
     send(content: TagResponsePayload): Promise<unknown>;
     messages: {
@@ -76,7 +78,7 @@ export async function handleTagResponse(
   > = MarquinhosApiService.getInstance(),
   typingIntervalMs = 8000,
 ): Promise<void> {
-  if (message.channelId !== GuildConfig.DEVANEIOS_CHANNEL_ID) return;
+  if (!isAiChannel(message)) return;
   if (!message.guildId) return;
   if (!message.client.user) return;
   const botUserId = message.client.user.id;

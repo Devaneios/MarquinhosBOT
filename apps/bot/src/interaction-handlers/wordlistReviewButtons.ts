@@ -4,6 +4,7 @@ import {
   WORDLIST_REVIEW_BUTTON_ID_SET,
   WORDLIST_REVIEW_BUTTON_IDS,
 } from '@marquinhos/commands/admin/wordlistReviewResponse';
+import { isDevelopmentChannelAllowed } from '@marquinhos/config/developmentScope';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
   InteractionHandler,
@@ -19,6 +20,7 @@ export class WordlistReviewButtonsHandler extends InteractionHandler {
   }
 
   override parse(interaction: ButtonInteraction) {
+    if (!isDevelopmentChannelAllowed(interaction)) return this.none();
     if (WORDLIST_REVIEW_BUTTON_ID_SET.has(interaction.customId))
       return this.some();
     return this.none();

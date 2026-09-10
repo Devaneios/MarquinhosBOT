@@ -1,8 +1,10 @@
-import { GuildConfig } from '@marquinhos/config/guild';
+import { isAiChannel } from '@marquinhos/config/developmentScope';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { logger } from '@marquinhos/utils/logger';
 
 export interface ContentReactionMessage {
+  guildId?: string | null;
+  channel?: { isThread?(): boolean; parentId?: string | null };
   content: string;
   channelId: string;
   react(emoji: string): Promise<unknown>;
@@ -15,7 +17,7 @@ export async function handleContentReaction(
     'chooseEmojiReactions'
   > = MarquinhosApiService.getInstance(),
 ): Promise<void> {
-  if (message.channelId !== GuildConfig.DEVANEIOS_CHANNEL_ID) return;
+  if (!isAiChannel(message)) return;
 
   try {
     const response = await apiService.chooseEmojiReactions({

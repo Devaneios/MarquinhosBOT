@@ -1,3 +1,4 @@
+import { isDevelopmentChannelAllowed } from '@marquinhos/config/developmentScope';
 import { GameManager } from '@marquinhos/game/core/GameManager';
 import { ButtonResult, ModalConfig } from '@marquinhos/game/core/GameTypes';
 import { handleGameInteraction } from '@marquinhos/lib/gameInteraction';
@@ -221,6 +222,7 @@ export class GameButtonsHandler extends InteractionHandler {
   }
 
   override parse(interaction: ButtonInteraction) {
+    if (!isDevelopmentChannelAllowed(interaction)) return this.none();
     if (!isGameButtonCustomId(interaction.customId)) return this.none();
     return this.some();
   }

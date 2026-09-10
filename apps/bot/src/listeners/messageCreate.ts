@@ -1,3 +1,4 @@
+import { isDevelopmentChannelAllowed } from '@marquinhos/config/developmentScope';
 import { handleAiThreadMessage } from '@marquinhos/services/aiChat/aiThreadMessage';
 import { handleContentReaction } from '@marquinhos/services/aiChat/contentReactions';
 import { handleTagResponse } from '@marquinhos/services/aiChat/tagResponse';
@@ -14,6 +15,7 @@ export class MessageCreateListener extends Listener<
   }
 
   override async run(message: Message) {
+    if (!isDevelopmentChannelAllowed(message)) return;
     if (message.author.bot) return;
     if (!message.member) return;
     if (!message.inGuild()) return;

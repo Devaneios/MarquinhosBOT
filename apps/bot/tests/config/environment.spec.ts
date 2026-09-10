@@ -2,6 +2,26 @@ import { envSchema } from '@marquinhos/config/envSchema';
 import { describe, expect, test } from 'bun:test';
 
 describe('env schema', () => {
+  test('requires a test channel only in development', () => {
+    const input = {
+      MARQUINHOS_TOKEN: 'token',
+      MARQUINHOS_API_URL: 'http://api:3000',
+      MARQUINHOS_API_KEY: 'key',
+      MARQUINHOS_CLIENT_ID: 'client-id',
+      NODE_ENV: 'development',
+    };
+    expect(envSchema.safeParse(input).success).toBe(false);
+    expect(
+      envSchema.safeParse({
+        ...input,
+        DEV_TEST_CHANNEL_ID: '123456789012345678',
+      }).success,
+    ).toBe(true);
+    expect(
+      envSchema.safeParse({ ...input, NODE_ENV: 'production' }).success,
+    ).toBe(true);
+  });
+
   test('parses valid environment', () => {
     const result = envSchema.parse({
       MARQUINHOS_TOKEN: 'token',

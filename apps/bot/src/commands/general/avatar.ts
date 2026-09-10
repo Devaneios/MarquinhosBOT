@@ -1,3 +1,4 @@
+import { isDevelopmentChannelAllowed } from '@marquinhos/config/developmentScope';
 import { env } from '@marquinhos/config/environment';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { SpreadsheetService } from '@marquinhos/services/spreadsheet';
@@ -81,6 +82,8 @@ export class AvatarCommand extends MarquinhosCommand {
   }
 
   override async autocompleteRun(interaction: Command.AutocompleteInteraction) {
+    if (!isDevelopmentChannelAllowed(interaction))
+      return interaction.respond([]);
     const focusedValue = interaction.options.getFocused();
 
     const now = Date.now();

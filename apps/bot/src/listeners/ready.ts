@@ -3,6 +3,7 @@ import {
   buildDailyLeaderboardAttachment,
   sendTermoStatusBroadcast,
 } from '@marquinhos/commands/games/termoLeaderboardImage';
+import { env } from '@marquinhos/config/environment';
 import { GuildConfig } from '@marquinhos/config/guild';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
@@ -37,6 +38,7 @@ export class ReadyListener extends Listener<typeof Events.ClientReady> {
     logger.info('Marquinhos™ is online!');
     await api.preloadWordleConfigs([...client.guilds.cache.keys()]);
     startBichoGame(client);
+    if (env.NODE_ENV === 'development') return;
     startTermoScheduler(client);
     startTermoStatsBroadcast(client);
     startTermoWinAnnouncer(client);

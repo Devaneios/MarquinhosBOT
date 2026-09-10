@@ -1,3 +1,4 @@
+import { isDevelopmentChannelAllowed } from '@marquinhos/config/developmentScope';
 import { GameManager } from '@marquinhos/game/core/GameManager';
 import { handleGameInteraction } from '@marquinhos/lib/gameInteraction';
 import {
@@ -67,6 +68,7 @@ export class GameModalsHandler extends InteractionHandler {
   }
 
   override parse(interaction: ModalSubmitInteraction) {
+    if (!isDevelopmentChannelAllowed(interaction)) return this.none();
     if (!interaction.channelId) return this.none();
     if (!GAME_MODAL_IDS.has(interaction.customId)) return this.none();
     return this.some();
