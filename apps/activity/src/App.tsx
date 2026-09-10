@@ -3,13 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
 import { DevConsole } from './components/DevConsole';
 import { ConnectingScreen, ErrorScreen } from './components/game-shell';
+import { MinimizedOverlay } from './components/MinimizedOverlay';
 import { isMobilePlatform } from './discordSdk';
 import { useDiscordIdentity } from './hooks/useDiscordIdentity';
+import { useIsActivityMinimized } from './hooks/useIsActivityMinimized';
 import { devlog } from './lib/devlog';
 import { AppRoutes } from './routes';
 
 function App() {
   const identity = useDiscordIdentity();
+  const isMinimized = useIsActivityMinimized();
   const { t } = useTranslation('common');
 
   useEffect(() => {
@@ -43,6 +46,8 @@ function App() {
       )}
 
       {import.meta.env.DEV && !isMobilePlatform() && <DevConsole />}
+
+      {isMinimized && <MinimizedOverlay />}
     </div>
   );
 }
