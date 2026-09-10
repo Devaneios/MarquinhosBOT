@@ -1,0 +1,125 @@
+name: marquinhos-dev
+
+x-app: &app
+  build:
+    context: ..
+    dockerfile: dev/Dockerfile
+  image: marquinhos-dev:local
+  init: true
+  stop_grace_period: 30s
+
+services:
+  api:
+    <<: *app
+    working_dir: /app/apps/api
+    command: bun run dev
+    env_file:
+      - path: ../apps/api/.env
+        required: false
+    environment:
+      NODE_ENV: development
+      HTTP_PORT: 3000
+      SQLITE_PATH: /app/data/marquinhos.db
+      CORS_ORIGINS: http://localhost:${DEV_ACTIVITY_PORT:-5173},${DEV_PUBLIC_ORIGIN:-https://marquinhos-local.frois.net.br}
+      SANDBOX_IMAGE: marquinhos-sandbox:dev
+      SANDBOX_MIRROR_PATH: ${SANDBOX_MIRROR_PATH:-/tmp/marquinhos-dev-mirror-unconfigured}
+    volumes:
+      - ../apps/api/src:/app/apps/api/src:ro
+      - ../apps/api/tsconfig.json:/app/apps/api/tsconfig.json:ro
+      - api-data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "127.0.0.1:${DEV_API_PORT:-3000}:3000"
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, http://127.0.0.1:3000/api/health]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  bot:
+    <<: *app
+    working_dir: /app/apps/bot
+    command: bun run dev
+    env_file:
+      - path: ../apps/bot/.env
+        required: false
+    environment:
+      NODE_ENV: development
+      DEV_TEST_CHANNEL_ID: ${DEV_TEST_CHANNEL_ID:-}
+      MARQUINHOS_API_URL: http://api:3000
+      HEALTHCHECK_PORT: 3001
+    volumes:
+      - ../apps/bot/src:/app/apps/bot/src:ro
+      - ../apps/bot/tsconfig.json:/app/apps/bot/tsconfig.json:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, http://127.0.0.1:3001/healthz]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+
+  activity:
+    <<: *app
+    working_dir: /app/apps/activity
+    command: bun --bun run dev
+    env_file:
+      - path: ../apps/activity/.env
+        required: false
+    environment:
+      NODE_ENV: development
+      DEV_API_TARGET: http://api:3000
+      DEV_PUBLIC_ORIGIN: ${DEV_PUBLIC_ORIGIN:-https://marquinhos-local.frois.net.br}
+    volumes:
+      - ../apps/activity/src:/app/apps/activity/src:ro
+      - ../apps/activity/public:/app/apps/activity/public:ro
+      - ../apps/activity/index.html:/app/apps/activity/index.html:ro
+      - ../apps/activity/vite.config.ts:/app/apps/activity/vite.config.ts:ro
+      - ../apps/activity/tsconfig.json:/app/apps/activity/tsconfig.json:ro
+      - ../apps/activity/tsconfig.app.json:/app/apps/activity/tsconfig.app.json:ro
+      - ../apps/activity/tsconfig.node.json:/app/apps/activity/tsconfig.node.json:ro
+    ports:
+      - "127.0.0.1:${DEV_ACTIVITY_PORT:-5173}:5173"
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, http://127.0.0.1:5173/]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  cloudflared:
+    image: cloudflare/cloudflared:2026.9.0
+    user: "0:0"
+    command: tunnel --no-autoupdate run --token $CLOUDFLARE_TOKEN
+    depends_on:
+      activity:
+        condition: service_healthy
+    restart: unless-stopped
+
+  sandbox:
+    build:
+      context: ..
+      dockerfile: apps/api/docker/sandbox.Dockerfile
+    image: marquinhos-sandbox:dev
+    profiles: [build]
+
+  tests:
+    <<: *app
+    profiles: [test]
+    working_dir: /app
+    command: bun dev/test.ts
+    environment:
+      NODE_ENV: test
+      SQLITE_PATH: /tmp/marquinhos-tests.db
+      MARQUINHOS_TOKEN: test-token
+      MARQUINHOS_CLIENT_ID: test-client
+      MARQUINHOS_API_KEY: test-key
+      MARQUINHOS_API_URL: http://127.0.0.1:1
+      MARQUINHOS_SECRET_KEY: test-secret
+      OPENAI_API_KEY: test-key
+      VITE_DISCORD_CLIENT_ID: test-client
+    tmpfs:
+      - /tmp
+
+volumes:
+  api-data:

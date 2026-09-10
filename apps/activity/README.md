@@ -49,48 +49,16 @@ itself never branches on which game it is showing.
 
 ## Local development
 
-You need both this app and `marquinhos-api` running:
+Run the full development stack from the monorepo root with `bun run dev`.
+See [local development](../../docs/local-development.md) for environment files,
+Docker, tunnel routing, Discord URL mapping, and testing.
 
-```sh
-# terminal 1 — marquinhos-api
-cd ../marquinhos-api
-bun run dev   # listens on HTTP_PORT (default 3000)
-
-# terminal 2 — this repo
-cp .env.example .env   # fill in VITE_DISCORD_CLIENT_ID
-bun install
-bun dev       # vite dev server, default port 5173
-```
-
-### Wiring it up in Discord
-
-1. In the [Discord Developer Portal](https://discord.com/developers/applications),
-   open your application → **Activities** → enable Activities and set up
-   **URL Mapping**. You need at least:
-   - root prefix (`/`) → your Vite dev server (or the deployed static build)
-   - `/api` → `marquinhos-api`'s origin
-   - `/ws` → `marquinhos-api`'s origin (same target as `/api`; the
-     WebSocket server is mounted on the same HTTP server, just a different
-     path — see [`src/realtime/ActivityRealtimeServer.ts`](../marquinhos-api/src/realtime/ActivityRealtimeServer.ts))
-2. Set `DISCORD_CLIENT_SECRET` (and the existing `DISCORD_CLIENT_ID`) in
-   `marquinhos-api`'s `.env` — the token exchange endpoint needs both.
-3. Launch the Activity from a test server's App Launcher. See Discord's
-   [local development guide](https://docs.discord.com/developers/activities/development-guides/local-development)
-   for the exact portal flow, which changes independently of this repo.
-
-### Entry Point Command
-
-Launching the Activity from the App Launcher needs an Entry Point command
-(application command type `PRIMARY_ENTRY_POINT` = 4). Enabling Activities in
-the Developer Portal auto-creates one with handler `DISCORD_LAUNCH_ACTIVITY`
-(2) — Discord opens the Activity and posts the follow-up message itself, no
-code required. Renaming it or switching to `APP_HANDLER` (1, to send that
-message yourself) is done via the global application command HTTP endpoints,
-not through the bot's normal command registration. See the note in
-[`MarquinhosBOT/src/register-slash-commands.ts`](../MarquinhosBOT/src/register-slash-commands.ts).
+The frontend proxies API and Colyseus traffic through Vite during development.
+Use `bun run dev:test` at the root for isolated workspace and gateway tests.
+Browser mocks support UI iteration; use Discord for full authentication and gameplay.
 
 ## Production
 
-`bun run build` produces a static bundle in `dist/`. Where that gets hosted
-(and how its origin is wired into the same URL Mapping as above) is a
-deployment decision outside this repo's scope for now.
+The release gateway serves the Activity build and proxies API/multiplayer traffic.
+See [deployment](../../docs/deployment.md). `deploy/deploy.sh` is not used for
+daily development.

@@ -1,6 +1,8 @@
 # Deployment
 
-The deployment unit is `deploy/docker-compose.yml`. It runs the API, bot, Activity gateway, and Cloudflare Tunnel on one private Docker network. Only `cloudflared` reaches the gateway; the API and bot do not publish host ports.
+The deployment unit is `deploy/docker-compose.yml`. It runs the API, bot, and static Activity gateway on a Docker network. The API publishes host loopback port 3106 and the gateway publishes host loopback port 5173. Cloudflare Tunnel is managed separately from this Compose file.
+
+For daily work on your machine, use the separate [local development stack](local-development.md). Do not run `deploy/deploy.sh` for the edit/test loop.
 
 ## GitHub Environments
 
@@ -8,7 +10,6 @@ Create `development` and `production` environments. The deploy workflow maps `de
 
 Add these secrets to each environment:
 
-- `CLOUDFLARE_TUNNEL_TOKEN`
 - `DEEZER_ARL_COOKIE`
 - `DISCORD_BOT_TOKEN`
 - `DISCORD_CLIENT_SECRET`
@@ -36,7 +37,7 @@ Run the first release with the Deploy workflow’s `all` input. Later pushes sel
 
 ## Cloudflare and Discord
 
-Create one remotely managed Cloudflare Tunnel per environment. Configure its public hostname route to `http://gateway:80`; the `cloudflared` container resolves `gateway` on the Compose network. Do not run a host-level `cloudflared` service with the same tunnel token.
+Create one remotely managed Cloudflare Tunnel per deployed environment. A host-level connector reaches the gateway at `http://127.0.0.1:5173`. A separately managed connector container on the `marquinhos` Docker network can use `http://gateway:80`. Use the destination matching your connector placement; this Compose file does not start cloudflared.
 
 In the Discord Developer Portal, map the Activity root to the gateway hostname and map `/api` and `/colyseus` to the same gateway hostname. The gateway routes API and Colyseus requests internally while serving the Activity build for browser routes.
 

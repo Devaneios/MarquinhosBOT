@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "Preserve",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["bun"],
+    "typeRoots": ["../apps/api/node_modules/@types"]
+  },
+  "include": ["*.ts"]
+}

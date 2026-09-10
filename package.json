@@ -8,7 +8,11 @@
   ],
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "bun --no-env-file dev/cli.ts up",
+    "dev:down": "bun --no-env-file dev/cli.ts down",
+    "dev:doctor": "bun --no-env-file dev/cli.ts doctor",
+    "dev:register": "bun --no-env-file dev/cli.ts register",
+    "dev:test": "bun --no-env-file dev/cli.ts test",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
