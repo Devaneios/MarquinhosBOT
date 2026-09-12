@@ -733,8 +733,6 @@ export class PongArenaEngine {
     if (ball.y - ball.radius <= 0) {
       ball.y = ball.radius;
       ball.vy = Math.abs(ball.vy);
-      const paddle = this.state.paddles[0];
-      if (paddle) this.applyPowerUp('shrink', paddle);
     }
     if (ball.y > this.height + ball.radius) {
       this.endCooperativeRound(ball);

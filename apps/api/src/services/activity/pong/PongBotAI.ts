@@ -1,9 +1,29 @@
-import type {
-  PaddleInput,
-  PaddleSide,
-  PongEngineConfig,
-  PongState,
-} from 'services/activity/pong/PongEngine';
+// The bot predicts ball trajectory with plain reflection math (see
+// predictImpactY below) — it never runs a physics engine, so these types
+// exist only to describe the paddle/ball/config shape it reads, not to pull
+// in PongEngine.ts's (now-deleted) standalone simulation.
+export type PaddleSide = 'left' | 'right';
+export type PaddleInput = -1 | 0 | 1;
+
+export interface PongEngineConfig {
+  width?: number;
+  height?: number;
+  paddleHeight?: number;
+  paddleWidth?: number;
+  paddleSpeed?: number;
+  ballRadius?: number;
+  ballSpeed?: number;
+  winningScore?: number;
+  paddleHitAcceleration?: number;
+  paddleSpinFactor?: number;
+  maxBallSpeed?: number;
+  maxBounceAngleDeg?: number;
+  minHorizontalSpeedRatio?: number;
+  cornerGap?: number;
+  maxServeAngleDeg?: number;
+  pointPauseMs?: number;
+  serveDelayMs?: number;
+}
 
 export type BotDifficulty = 'easy' | 'normal' | 'hard';
 
@@ -24,6 +44,18 @@ interface Ball {
   y: number;
   vx: number;
   vy: number;
+}
+
+export interface PongState {
+  width: number;
+  height: number;
+  ball: Ball;
+  paddles: { left: number; right: number };
+  score: { left: number; right: number };
+  winner: PaddleSide | null;
+  phase: 'serving' | 'rally' | 'point-scored' | 'game-over';
+  phaseRemainingMs: number;
+  lastScorer: PaddleSide | null;
 }
 
 function reflectIntoRange(value: number, min: number, max: number): number {

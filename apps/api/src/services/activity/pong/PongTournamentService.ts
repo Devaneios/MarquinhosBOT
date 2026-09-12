@@ -236,7 +236,7 @@ export class PongTournamentService {
 
   private resolveSources(
     match: MatchRow,
-    winnerId: string,
+    winnerId: string | null,
     loserId: string | null,
   ): void {
     const winnerSource = `winner:${match.bracket}:${match.round}:${match.position}`;
@@ -287,19 +287,32 @@ export class PongTournamentService {
     }
   }
 
+  // A bracket sized for a non-power-of-2 field seeds "ghost" byes into
+  // upper-round-1 wherever a seed has no real player. A bye has no real
+  // loser, so a lower-bracket slot fed by two such byes (both sources
+  // resolving to a null loser) ends up with no real player on either
+  // side — there was never anyone who could have played there. Treating
+  // that as a dead, winner-less match and propagating the null onward
+  // (instead of leaving it permanently 'pending' with no source left to
+  // ever fill it) lets the cascade keep resolving until it reaches a
+  // round where a real survivor is waiting on the other side, exactly
+  // like a normal bye.
   private advanceByes(tournamentId: string): void {
     while (true) {
+      // status='pending' with both sources already cleared means this slot
+      // will never receive another player from elsewhere — it's either a
+      // one-sided bye (one real player waiting, normal case) or a dead
+      // match (both sides empty, see the comment above) — either way it's
+      // final as-is and should resolve now.
       const bye = this.database
         .query(
           `SELECT * FROM pong_tournament_matches
            WHERE tournament_id = ? AND status = 'pending'
-           AND source_a IS NULL AND source_b IS NULL
-           AND ((player_a IS NOT NULL AND player_b IS NULL)
-             OR (player_a IS NULL AND player_b IS NOT NULL)) LIMIT 1`,
+           AND source_a IS NULL AND source_b IS NULL LIMIT 1`,
         )
         .get(tournamentId) as MatchRow | null;
       if (!bye) return;
-      const winner = bye.player_a ?? bye.player_b!;
+      const winner = bye.player_a ?? bye.player_b ?? null;
       this.database
         .query(
           `UPDATE pong_tournament_matches

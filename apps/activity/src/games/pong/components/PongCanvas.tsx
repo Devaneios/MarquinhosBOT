@@ -490,7 +490,8 @@ export function PongCanvas({
       ) {
         sfx.score();
       }
-      if (state.winnerSlot !== prevWinnerRef.current) {
+      const previousWinner = prevWinnerRef.current;
+      if (state.winnerSlot !== previousWinner) {
         devlog('[pong-canvas] winner changed', state.winnerSlot);
         if (state.winnerSlot !== null) sfx.win();
         prevWinnerRef.current = state.winnerSlot;
@@ -498,6 +499,9 @@ export function PongCanvas({
       if (state.winnerSlot === null) {
         setRestartStatus(null);
         setRequested(false);
+        // A rematch reuses this same canvas/session, so the elapsed-time
+        // clock has to be re-armed here too, not just at mount.
+        if (previousWinner !== null) matchStartRef.current = null;
       }
 
       const config = configRef.current;
@@ -687,6 +691,37 @@ export function PongCanvas({
       sendTrackedInput('left', direction, seqBySide.left);
     }
 
+    // Pointer/touch controls release a caught 'sticky' ball on pointer-up
+    // (see onPointerEnd) — that gesture has no keyboard equivalent, so
+    // without this a keyboard player who catches a sticky ball could never
+    // let go of it again.
+    function sendRelease() {
+      if (spectatingRef.current) return;
+      if (mode === 'local') {
+        for (const side of ['left', 'right'] as const) {
+          seqBySide[side] += 1;
+          send('input', {
+            direction: 0,
+            seq: seqBySide[side],
+            side,
+            action: 'release',
+          });
+        }
+        return;
+      }
+      const assigned = assignmentRef.current;
+      if (!assigned) return;
+      const classicSide =
+        assigned.side === 'left' || assigned.side === 'right'
+          ? assigned.side
+          : null;
+      const seq = classicSide
+        ? (seqBySide[classicSide] += 1)
+        : (seqBySlot[assigned.slot] ?? 0) + 1;
+      if (!classicSide) seqBySlot[assigned.slot] = seq;
+      send('input', { direction: 0, seq, action: 'release' });
+    }
+
     function onKeyDown(event: KeyboardEvent) {
       const key = event.key;
       const lower = key.toLowerCase();
@@ -703,6 +738,9 @@ export function PongCanvas({
         event.preventDefault();
         wsKeysDown.add(lower);
         sendWsInput();
+      } else if (key === ' ') {
+        event.preventDefault();
+        sendRelease();
       } else if (key === 'Escape') {
         event.preventDefault();
         pauseExit();

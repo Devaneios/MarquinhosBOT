@@ -7,7 +7,7 @@ import {
 import type {
   PongEngineConfig,
   PongState,
-} from 'services/activity/pong/PongEngine';
+} from 'services/activity/pong/PongBotAI';
 
 const CONFIG: Required<PongEngineConfig> = {
   width: 800,

@@ -294,7 +294,14 @@ export class PongSession {
     }
     if (!player.connected) return;
     player.connected = false;
-    if (this.started) this.stopLoop();
+    // quad-elimination/air-hockey keep going with the remaining slots once
+    // the grace period expires (see forfeitDisconnected) — pausing the
+    // whole match for everyone else while that timer counts down would
+    // freeze 3 still-connected players over 1 dropped one for nothing.
+    const ruleset = this.engine.getConfig().ruleset;
+    const continuesWithoutDisconnected =
+      ruleset === 'quad-elimination' || ruleset === 'air-hockey';
+    if (this.started && !continuesWithoutDisconnected) this.stopLoop();
     this.broadcaster.broadcast(this.roomKey, {
       type: 'player_disconnected',
       payload: {
