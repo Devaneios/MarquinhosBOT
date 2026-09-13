@@ -1,9 +1,19 @@
 import WordleController from 'controllers/wordle.controller';
+import { db } from 'database/sqlite';
 import express from 'express';
 import { checkToken } from 'middlewares/botAuth';
+import { verifyDiscordToken } from 'middlewares/userAuth';
+import { WordleUserConfigService } from 'services/wordleUserConfig';
 
 const router = express.Router();
-const wordle = new WordleController();
+const wordle = new WordleController(new WordleUserConfigService(db));
+
+router.get('/user-config', verifyDiscordToken, (req, res) =>
+  wordle.getUserConfig(req, res),
+);
+router.put('/user-config', verifyDiscordToken, (req, res) =>
+  wordle.updateUserConfig(req, res),
+);
 
 router.post(
   '/guess',

@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
 import { WordleService } from 'services/wordle';
+import type { WordleUserConfig } from 'services/wordleUserConfig';
+import type { IUser } from 'types';
 
 const service = new WordleService();
 
@@ -12,7 +14,67 @@ interface UserGuildIdParams {
   guildId: string;
 }
 
+export interface WordleUserConfigStore {
+  get(userId: string): WordleUserConfig;
+  update(userId: string, config: WordleUserConfig): WordleUserConfig;
+}
+
+interface UserConfigRequest {
+  body: unknown;
+  user?: IUser;
+}
+
+interface UserConfigResponse {
+  status(code: number): { json(payload: unknown): unknown };
+}
+
+function parseWordleUserConfig(value: unknown): WordleUserConfig | null {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !('invertActionKeys' in value) ||
+    !('enableSounds' in value) ||
+    typeof value.invertActionKeys !== 'boolean' ||
+    typeof value.enableSounds !== 'boolean'
+  ) {
+    return null;
+  }
+
+  return {
+    invertActionKeys: value.invertActionKeys,
+    enableSounds: value.enableSounds,
+  };
+}
+
 export default class WordleController {
+  constructor(private readonly userConfig: WordleUserConfigStore) {}
+
+  getUserConfig(req: UserConfigRequest, res: UserConfigResponse): void {
+    if (!req.user) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    res.status(200).json({ data: this.userConfig.get(req.user.id) });
+  }
+
+  updateUserConfig(req: UserConfigRequest, res: UserConfigResponse): void {
+    if (!req.user) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const config = parseWordleUserConfig(req.body);
+    if (!config) {
+      res.status(400).json({
+        message: 'invertActionKeys and enableSounds must be booleans.',
+      });
+      return;
+    }
+
+    res.status(200).json({ data: this.userConfig.update(req.user.id, config) });
+  }
+
   submitGuess(req: Request, res: Response): void {
     const { userId, guildId, guess } = req.body as {
       userId?: string;
