@@ -80,6 +80,50 @@ describe('Keyboard', () => {
     expect(onKey).toHaveBeenCalledWith('q');
   });
 
+  it('plays a configured key sound when an enabled key is clicked', () => {
+    const play = mock(() => Promise.resolve());
+    const sources: string[] = [];
+    const originalAudio = Object.getOwnPropertyDescriptor(globalThis, 'Audio');
+
+    class TestAudio {
+      constructor(src: string) {
+        sources.push(src);
+      }
+
+      play = play;
+    }
+
+    Object.defineProperty(globalThis, 'Audio', {
+      configurable: true,
+      value: TestAudio,
+    });
+
+    try {
+      const { container } = render(
+        <Keyboard
+          rows={buildRows([{ sound: '/keypress.ogg' }])}
+          pressedKeys={new Set()}
+          disabled={false}
+          onKey={() => {}}
+        />,
+      );
+      const wButton = Array.from(container.querySelectorAll('.hg-button')).find(
+        (el) => el.querySelector('.keycap-text')?.textContent === 'W',
+      ) as HTMLElement;
+
+      fireEvent.pointerDown(wButton);
+
+      expect(sources).toEqual(['/keypress.ogg']);
+      expect(play).toHaveBeenCalledTimes(1);
+    } finally {
+      if (originalAudio) {
+        Object.defineProperty(globalThis, 'Audio', originalAudio);
+      } else {
+        Reflect.deleteProperty(globalThis, 'Audio');
+      }
+    }
+  });
+
   it('translates the {bksp}/{enter} tokens back to Backspace/Enter on click', () => {
     const onKey = mock(() => {});
     const { container } = render(
@@ -101,22 +145,43 @@ describe('Keyboard', () => {
 
   it('does not call onKey when disabled', () => {
     const onKey = mock(() => {});
-    const { container } = render(
-      <Keyboard
-        rows={buildRows()}
-        pressedKeys={new Set()}
-        disabled={true}
-        onKey={onKey}
-      />,
-    );
+    const originalAudio = Object.getOwnPropertyDescriptor(globalThis, 'Audio');
 
-    const qButton = Array.from(container.querySelectorAll('.hg-button')).find(
-      (el) => el.querySelector('.keycap-text')?.textContent === 'Q',
-    ) as HTMLElement;
-    fireEvent.pointerDown(qButton);
+    class ThrowingAudio {
+      constructor() {
+        throw new Error('disabled keys must not play audio');
+      }
+    }
 
-    expect(onKey).not.toHaveBeenCalled();
-    expect(container.querySelector('.keyboard-disabled')).toBeTruthy();
+    Object.defineProperty(globalThis, 'Audio', {
+      configurable: true,
+      value: ThrowingAudio,
+    });
+
+    try {
+      const { container } = render(
+        <Keyboard
+          rows={buildRows([{ sound: '/keypress.ogg' }])}
+          pressedKeys={new Set()}
+          disabled={true}
+          onKey={onKey}
+        />,
+      );
+
+      const wButton = Array.from(container.querySelectorAll('.hg-button')).find(
+        (el) => el.querySelector('.keycap-text')?.textContent === 'W',
+      ) as HTMLElement;
+      fireEvent.pointerDown(wButton);
+
+      expect(onKey).not.toHaveBeenCalled();
+      expect(container.querySelector('.keyboard-disabled')).toBeTruthy();
+    } finally {
+      if (originalAudio) {
+        Object.defineProperty(globalThis, 'Audio', originalAudio);
+      } else {
+        Reflect.deleteProperty(globalThis, 'Audio');
+      }
+    }
   });
 
   it('applies the keycap-pressed class only to keys in pressedKeys', () => {

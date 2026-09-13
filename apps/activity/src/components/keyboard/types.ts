@@ -13,6 +13,7 @@ export interface KeyboardKey {
   label: string;
   variant?: KeyboardKeyVariant;
   style?: KeyboardKeyStyle;
+  sound?: string;
 }
 
 export interface KeyboardProps {

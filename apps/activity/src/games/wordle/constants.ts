@@ -35,15 +35,29 @@ export const FEEDBACK_COLORS: Record<KeyState, KeyboardKeyStyle> = {
 export const KB_ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
 export const KB_LETTERS = new Set(KB_ROWS.join(''));
 export const MIN_KEY_PRESS_MS = 100;
+const KEY_PRESS_SOUND = '/keypress.ogg';
+const BACKSPACE_SOUND = '/backspace.ogg';
+const ENTER_SOUND = '/enter.ogg';
 
 export const KEYBOARD_ROWS: KeyboardKey[][] = KB_ROWS.map((row, index) => {
   const keys: KeyboardKey[] = row.split('').map((letter) => ({
     id: letter,
     label: letter,
+    sound: KEY_PRESS_SOUND,
   }));
   if (index === KB_ROWS.length - 1) {
-    keys.push({ id: 'Backspace', label: '⌫', variant: 'medium' });
-    keys.unshift({ id: 'Enter', label: '⏎', variant: 'wide' });
+    keys.push({
+      id: 'Backspace',
+      label: '⌫',
+      variant: 'medium',
+      sound: BACKSPACE_SOUND,
+    });
+    keys.unshift({
+      id: 'Enter',
+      label: '⏎',
+      variant: 'wide',
+      sound: ENTER_SOUND,
+    });
   }
   return keys;
 });

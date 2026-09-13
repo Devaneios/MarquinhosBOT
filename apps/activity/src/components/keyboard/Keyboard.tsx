@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { SimpleKeyboard } from 'simple-keyboard';
 import { cn } from '../../lib/cn';
 import './keycap.css';
-import type { KeyboardKeyStyle, KeyboardProps } from './types';
+import type { KeyboardKey, KeyboardKeyStyle, KeyboardProps } from './types';
 
 const DEFAULT_STYLE: KeyboardKeyStyle = {
   bg: '#818384',
@@ -54,11 +54,11 @@ export function Keyboard({
   const containerRef = useRef<HTMLDivElement>(null);
   const keyboardRef = useRef<SimpleKeyboard | null>(null);
 
-  const tokenToId = useMemo(() => {
-    const map = new Map<string, string>();
+  const keyByToken = useMemo(() => {
+    const map = new Map<string, KeyboardKey>();
     for (const row of rows) {
       for (const key of row) {
-        map.set(tokenForKeyId(key.id), key.id);
+        map.set(tokenForKeyId(key.id), key);
       }
     }
     return map;
@@ -139,9 +139,11 @@ export function Keyboard({
   const onKeyPress = useMemo(
     () => (button: string) => {
       if (disabled) return;
-      onKey(tokenToId.get(button) ?? button);
+      const key = keyByToken.get(button);
+      if (key?.sound) void new Audio(key.sound).play().catch(() => {});
+      onKey(key?.id ?? button);
     },
-    [disabled, onKey, tokenToId],
+    [disabled, keyByToken, onKey],
   );
 
   useEffect(() => {
