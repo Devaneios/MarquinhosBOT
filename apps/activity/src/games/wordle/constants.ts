@@ -42,8 +42,8 @@ export const KEYBOARD_ROWS: KeyboardKey[][] = KB_ROWS.map((row, index) => {
     label: letter,
   }));
   if (index === KB_ROWS.length - 1) {
-    keys.unshift({ id: 'Backspace', label: '⌫', variant: 'medium' });
-    keys.push({ id: 'Enter', label: '⏎', variant: 'wide' });
+    keys.push({ id: 'Backspace', label: '⌫', variant: 'medium' });
+    keys.unshift({ id: 'Enter', label: '⏎', variant: 'wide' });
   }
   return keys;
 });
