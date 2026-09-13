@@ -22,7 +22,7 @@ jobs:
       component: ${{ steps.component.outputs.component }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -70,7 +70,7 @@ jobs:
     runs-on: ${{ github.ref_name == 'main' && 'hostinger-runner' || 'devaneios-runner' }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -137,7 +137,7 @@ jobs:
       WORDLE_TIMEZONE: ${{ vars.WORDLE_TIMEZONE }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Write deployment environment
         run: bash .github/scripts/write-deploy-env.sh deploy/.env
