@@ -20,7 +20,7 @@ import type {
 } from '../types';
 import { buildLetterStates, normalizeKey } from '../wordle.utils';
 
-export function useWordleBoard(session: WsSession) {
+export function useWordleBoard(session: WsSession, enabled = true) {
   const [wordLength, setWordLength] = useState<number | null>(null);
   const [guesses, setGuesses] = useState<GuessRow[]>([]);
   const [solved, setSolved] = useState(false);
@@ -90,7 +90,7 @@ export function useWordleBoard(session: WsSession) {
   }, []);
 
   function typeLetter(letter: string) {
-    if (solved || wordLength === null) return;
+    if (!enabled || solved || wordLength === null) return;
     window.clearTimeout(errorTimeout.current);
     setError(null);
     setCurrentLetters((prev) => {
@@ -102,7 +102,7 @@ export function useWordleBoard(session: WsSession) {
   }
 
   function backspace() {
-    if (solved || wordLength === null) return;
+    if (!enabled || solved || wordLength === null) return;
     window.clearTimeout(errorTimeout.current);
     setError(null);
     const hasLetter = currentLetters[activeIndex] !== '';
@@ -123,7 +123,7 @@ export function useWordleBoard(session: WsSession) {
   }
 
   function submitGuess() {
-    if (solved || wordLength === null) return;
+    if (!enabled || solved || wordLength === null) return;
     if (currentLetters.some((letter) => letter === '')) {
       triggerShake();
       return;
@@ -160,6 +160,14 @@ export function useWordleBoard(session: WsSession) {
     );
   }, []);
 
+  const suspendInput = useCallback(() => {
+    for (const timer of pressTimers.current.values()) {
+      window.clearTimeout(timer);
+    }
+    pressTimers.current.clear();
+    setPressedKeys(new Set());
+  }, []);
+
   useEffect(() => {
     const timers = pressTimers.current;
     return () => {
@@ -170,6 +178,8 @@ export function useWordleBoard(session: WsSession) {
   }, []);
 
   useEffect(() => {
+    if (!enabled) return;
+
     function resolveVirtualKey(event: KeyboardEvent): string | null {
       if (event.key === 'Enter') return 'Enter';
       if (event.key === 'Backspace') return 'Backspace';
@@ -195,18 +205,18 @@ export function useWordleBoard(session: WsSession) {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [pressKey, releaseKey]);
+  }, [enabled, pressKey, releaseKey]);
 
   useEffect(() => {
-    if (solved || wordLength === null) return;
+    if (!enabled || solved || wordLength === null) return;
     inputRefs.current[activeIndex]?.focus();
-  }, [activeIndex, guesses.length, wordLength, solved]);
+  }, [activeIndex, enabled, guesses.length, wordLength, solved]);
 
   function onKeyDownCell(
     _index: number,
     event: React.KeyboardEvent<HTMLInputElement>,
   ) {
-    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    if (!enabled || event.metaKey || event.ctrlKey || event.altKey) return;
     if (event.key === 'Enter') {
       event.preventDefault();
       submitGuess();
@@ -251,6 +261,7 @@ export function useWordleBoard(session: WsSession) {
     typeLetter,
     backspace,
     submitGuess,
+    suspendInput,
     onKeyDownCell,
     setActiveIndex,
   };

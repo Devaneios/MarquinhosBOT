@@ -124,6 +124,47 @@ describe('Keyboard', () => {
     }
   });
 
+  it('does not create audio for a key without a configured sound', () => {
+    const onKey = mock(() => {});
+    const originalAudio = Object.getOwnPropertyDescriptor(globalThis, 'Audio');
+
+    class ThrowingAudio {
+      constructor() {
+        throw new Error('silent keys must not create audio');
+      }
+    }
+
+    Object.defineProperty(globalThis, 'Audio', {
+      configurable: true,
+      value: ThrowingAudio,
+    });
+
+    try {
+      const { container } = render(
+        <Keyboard
+          rows={buildRows()}
+          pressedKeys={new Set()}
+          disabled={false}
+          onKey={onKey}
+        />,
+      );
+      const qButton = Array.from(container.querySelectorAll('.hg-button')).find(
+        (element) => element.textContent?.includes('Q'),
+      );
+      if (!qButton) throw new Error('Expected the Q key to render');
+
+      fireEvent.pointerDown(qButton);
+
+      expect(onKey).toHaveBeenCalledWith('q');
+    } finally {
+      if (originalAudio) {
+        Object.defineProperty(globalThis, 'Audio', originalAudio);
+      } else {
+        Reflect.deleteProperty(globalThis, 'Audio');
+      }
+    }
+  });
+
   it('translates the {bksp}/{enter} tokens back to Backspace/Enter on click', () => {
     const onKey = mock(() => {});
     const { container } = render(

@@ -5,15 +5,20 @@ import type { LetterFeedback } from '../types';
 export function Tile({
   letter,
   feedback,
+  size = 'sm',
 }: {
   letter: string;
   feedback?: LetterFeedback;
+  size?: 'sm' | 'lg';
 }) {
   const colors = feedback ? FEEDBACK_COLORS[feedback] : null;
   return (
     <div
       className={cn(
-        'flex h-11 w-11 items-center justify-center rounded-md border font-pixel text-lg font-bold uppercase sm:h-12 sm:w-12',
+        'flex items-center justify-center rounded-md border font-pixel font-bold uppercase',
+        size === 'lg'
+          ? 'h-16 w-16 text-2xl sm:h-20 sm:w-20 sm:text-3xl'
+          : 'h-11 w-11 text-lg sm:h-12 sm:w-12',
         colors
           ? 'border-transparent'
           : letter

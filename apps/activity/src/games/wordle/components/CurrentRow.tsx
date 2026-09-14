@@ -40,7 +40,7 @@ export function CurrentRow({
               : 'border-marquinhos-border/60',
             index === activeIndex &&
               !disabled &&
-              'border-marquinhos-blue ring-2 ring-inset ring-marquinhos-blue',
+              'border-marquinhos-accent ring-2 ring-inset ring-marquinhos-accent',
           )}
         />
       ))}

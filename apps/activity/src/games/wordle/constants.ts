@@ -1,5 +1,5 @@
 import type { KeyboardKey, KeyboardKeyStyle } from '../../components/keyboard';
-import type { KeyState } from './types';
+import type { KeyState, WordleUserConfig } from './types';
 
 export const FEEDBACK_COLORS: Record<KeyState, KeyboardKeyStyle> = {
   correct: {
@@ -39,25 +39,33 @@ const KEY_PRESS_SOUND = '/keypress.ogg';
 const BACKSPACE_SOUND = '/backspace.ogg';
 const ENTER_SOUND = '/enter.ogg';
 
-export const KEYBOARD_ROWS: KeyboardKey[][] = KB_ROWS.map((row, index) => {
-  const keys: KeyboardKey[] = row.split('').map((letter) => ({
-    id: letter,
-    label: letter,
-    sound: KEY_PRESS_SOUND,
-  }));
-  if (index === KB_ROWS.length - 1) {
-    keys.push({
-      id: 'Backspace',
-      label: '⌫',
-      variant: 'medium',
-      sound: BACKSPACE_SOUND,
-    });
-    keys.unshift({
-      id: 'Enter',
-      label: '⏎',
-      variant: 'wide',
-      sound: ENTER_SOUND,
-    });
-  }
-  return keys;
-});
+export function buildKeyboardRows({
+  invertActionKeys,
+  enableSounds,
+}: WordleUserConfig): KeyboardKey[][] {
+  return KB_ROWS.map((row, index) => {
+    const keys: KeyboardKey[] = row.split('').map((letter) => ({
+      id: letter,
+      label: letter,
+      sound: enableSounds ? KEY_PRESS_SOUND : undefined,
+    }));
+    if (index === KB_ROWS.length - 1) {
+      const backspace: KeyboardKey = {
+        id: 'Backspace',
+        label: '⌫',
+        variant: 'medium',
+        sound: enableSounds ? BACKSPACE_SOUND : undefined,
+      };
+      const enter: KeyboardKey = {
+        id: 'Enter',
+        label: '⏎',
+        variant: 'wide',
+        sound: enableSounds ? ENTER_SOUND : undefined,
+      };
+
+      keys.unshift(invertActionKeys ? backspace : enter);
+      keys.push(invertActionKeys ? enter : backspace);
+    }
+    return keys;
+  });
+}

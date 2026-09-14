@@ -5,5 +5,14 @@
   "solvedBadge": "Resolvido",
   "progress": "{{letters}} letras · tentativa {{attempt}}",
   "enter": "ENTER",
-  "letterAriaLabel": "Letra {{position}}"
+  "letterAriaLabel": "Letra {{position}}",
+  "keyboardSoundsLabel": "Sons do teclado",
+  "keyboardSoundsDescription": "Reproduz um som ao pressionar as teclas na tela.",
+  "invertActionKeysLabel": "Inverter teclas de ação",
+  "invertActionKeysDescription": "Troca as posições das teclas Enter e Apagar.",
+  "saveSettings": "SALVAR",
+  "savingSettings": "SALVANDO…",
+  "settingsSaveError": "Não foi possível salvar as configurações. Tente novamente.",
+  "settingsSubtitle": "Ajuste como o teclado responde durante a partida.",
+  "settingsAriaLabel": "Abrir configurações do Terminhos"
 }

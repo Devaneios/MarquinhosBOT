@@ -29,3 +29,5 @@ export { RoomHeader } from './RoomHeader';
 export type { RoomHeaderProps } from './RoomHeader';
 export { RoomLobbyScreen } from './RoomLobbyScreen';
 export type { RoomLobbyScreenProps, RoomReadyInfo } from './RoomLobbyScreen';
+export { Toggle } from './Toggle';
+export type { ToggleProps } from './Toggle';

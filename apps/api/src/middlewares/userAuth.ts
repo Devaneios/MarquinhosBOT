@@ -10,6 +10,41 @@ const logger = {
 const discordService = new DiscordService();
 const userService = new UserService();
 
+export function createActivityDiscordTokenVerifier(
+  activityDiscordService: Pick<DiscordService, 'getDiscordUser'>,
+) {
+  return async function verifyActivityDiscordToken(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    const authorization = req.headers.authorization;
+    const [scheme, accessToken] =
+      typeof authorization === 'string' ? authorization.split(' ') : [];
+
+    if (scheme !== 'Bearer' || !accessToken) {
+      return res.status(401).json({ message: 'Token not provided' });
+    }
+
+    try {
+      const discordUser =
+        await activityDiscordService.getDiscordUser(accessToken);
+      if (!discordUser?.id) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      Object.defineProperty(req, 'user', { value: discordUser });
+      next();
+    } catch (error) {
+      logger.error('Activity Discord token verification failed:', error);
+      return res.status(500).json({ message: 'Internal Server Error' });
+    }
+  };
+}
+
+export const verifyActivityDiscordToken =
+  createActivityDiscordTokenVerifier(discordService);
+
 export async function verifyDiscordToken(
   req: Request,
   res: Response,

@@ -3,6 +3,7 @@ import { ConnectingScreen, ErrorScreen } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { WordleBoard } from './components';
 import { useWordleSession } from './hooks/useWordleSession';
+import { useWordleUserConfig } from './hooks/useWordleUserConfig';
 
 export function WordleGame({
   identity,
@@ -13,8 +14,9 @@ export function WordleGame({
 }) {
   const navigate = useNavigate();
   const session = useWordleSession(identity, onAuthInvalid);
+  const userConfig = useWordleUserConfig(identity.accessToken, onAuthInvalid);
 
-  if (session.status === 'connecting') {
+  if (session.status === 'connecting' || userConfig.status === 'loading') {
     return (
       <ConnectingScreen subtitleKey="connectingSubtitle" subtitleNs="wordle" />
     );
@@ -30,5 +32,21 @@ export function WordleGame({
     );
   }
 
-  return <WordleBoard session={session.session} />;
+  if (userConfig.status === 'error') {
+    return (
+      <ErrorScreen
+        message={userConfig.error}
+        onRetryAuth={userConfig.retry}
+        onBack={() => navigate('/')}
+      />
+    );
+  }
+
+  return (
+    <WordleBoard
+      session={session.session}
+      config={userConfig.config}
+      onSaveConfig={userConfig.save}
+    />
+  );
 }

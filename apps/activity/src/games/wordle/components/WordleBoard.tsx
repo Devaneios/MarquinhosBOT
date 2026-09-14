@@ -1,21 +1,32 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { GameHeader } from '../../../components/game-shell';
+import { backChipClass, GameHeader } from '../../../components/game-shell';
 import { Keyboard } from '../../../components/keyboard';
 import type { WsSession } from '../../shared/activitySession';
-import { FEEDBACK_COLORS, KEYBOARD_ROWS } from '../constants';
+import { buildKeyboardRows, FEEDBACK_COLORS } from '../constants';
 import { useWordleBoard } from '../hooks/useWordleBoard';
+import type { WordleUserConfig } from '../types';
 import { CurrentRow } from './CurrentRow';
 import { GuessRow } from './GuessRow';
+import { WordleSettingsScreen } from './WordleSettingsScreen';
 
-export function WordleBoard({ session }: { session: WsSession }) {
+export function WordleBoard({
+  session,
+  config,
+  onSaveConfig,
+}: {
+  session: WsSession;
+  config: WordleUserConfig;
+  onSaveConfig: (config: WordleUserConfig) => Promise<void>;
+}) {
   const navigate = useNavigate();
   const { t } = useTranslation(['wordle', 'common']);
-  const board = useWordleBoard(session);
+  const [showSettings, setShowSettings] = useState(false);
+  const board = useWordleBoard(session, !showSettings);
   const keyboardRows = useMemo(
     () =>
-      KEYBOARD_ROWS.map((row) =>
+      buildKeyboardRows(config).map((row) =>
         row.map((key) => ({
           ...key,
           style:
@@ -23,9 +34,19 @@ export function WordleBoard({ session }: { session: WsSession }) {
             FEEDBACK_COLORS[board.letterStates[key.id] ?? 'unused'],
         })),
       ),
-    [board.letterStates],
+    [board.letterStates, config],
   );
   const attemptNumber = board.guesses.length + (board.solved ? 0 : 1);
+
+  if (showSettings) {
+    return (
+      <WordleSettingsScreen
+        config={config}
+        onSave={onSaveConfig}
+        onBack={() => setShowSettings(false)}
+      />
+    );
+  }
 
   const keyboard = (
     <Keyboard
@@ -50,6 +71,26 @@ export function WordleBoard({ session }: { session: WsSession }) {
         titleKey="wordle.name"
         titleNs="games"
         onBack={() => navigate('/')}
+        right={
+          <button
+            type="button"
+            className={`${backChipClass} px-3`}
+            aria-label={t('wordle:settingsAriaLabel')}
+            title={t('wordle:settingsAriaLabel')}
+            onClick={() => {
+              board.suspendInput();
+              setShowSettings(true);
+            }}
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="h-4 w-4 fill-current"
+            >
+              <path d="M19.14 12.94a7.7 7.7 0 0 0 .05-.94 7.7 7.7 0 0 0-.05-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7.1 7.1 0 0 0-1.62-.94L14.39 2.8a.49.49 0 0 0-.49-.4h-3.84a.49.49 0 0 0-.49.4l-.36 2.52a7.4 7.4 0 0 0-1.62.94L5.2 5.3a.49.49 0 0 0-.61.22L2.67 8.84a.49.49 0 0 0 .12.64l2.03 1.58a7.7 7.7 0 0 0-.05.94c0 .32.02.63.05.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.12.22.38.31.61.22l2.39-.96c.5.39 1.04.7 1.62.94l.36 2.52c.04.24.24.4.49.4h3.84c.25 0 .46-.16.49-.4l.36-2.52a7.1 7.1 0 0 0 1.62-.94l2.39.96c.23.09.49 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64zM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5" />
+            </svg>
+          </button>
+        }
       />
 
       {board.error && (
@@ -103,7 +144,7 @@ export function WordleBoard({ session }: { session: WsSession }) {
             </div>
 
             {board.wordLength !== null && (
-              <div className="text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
+              <div className="notch-4 border border-marquinhos-border bg-black/20 px-3 py-1.5 text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
                 {t('wordle:progress', {
                   letters: board.wordLength,
                   attempt: attemptNumber,

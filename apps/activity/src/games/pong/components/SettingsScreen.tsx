@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { MenuPanel, MenuScreen } from '../../../components/game-shell';
+import { MenuPanel, MenuScreen, Toggle } from '../../../components/game-shell';
 import { cn } from '../../../lib/cn';
 import type { BestOf, BotDifficulty, PongRulesetId, WinScore } from '../types';
 
@@ -38,44 +38,6 @@ const optionBtnOff =
 const fieldLabel = 'font-pixel text-sm text-marquinhos-text';
 const selectClass =
   'mt-3 w-full cursor-pointer rounded-sm border border-marquinhos-border bg-marquinhos-bg px-3 py-3 font-mono text-sm text-marquinhos-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent';
-
-function Toggle({
-  id,
-  checked,
-  disabled = false,
-  onChange,
-}: {
-  id: string;
-  checked: boolean;
-  disabled?: boolean;
-  onChange: (next: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      id={id}
-      role="switch"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        'notch-4 relative h-9 w-[90px] cursor-pointer border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent disabled:cursor-not-allowed disabled:opacity-40',
-        checked
-          ? 'border-marquinhos-green bg-marquinhos-green/20'
-          : 'border-marquinhos-border bg-marquinhos-bg',
-      )}
-    >
-      <span
-        className={cn(
-          'absolute top-0.5 h-[26px] w-[26px] transition-[left] duration-150',
-          checked
-            ? 'left-[54px] bg-marquinhos-green'
-            : 'left-0.5 bg-marquinhos-text-disabled',
-        )}
-      />
-    </button>
-  );
-}
 
 export function SettingsScreen({
   difficulty,
