@@ -34,16 +34,28 @@ function parseWordleUserConfig(value: unknown): WordleUserConfig | null {
     value === null ||
     !('invertActionKeys' in value) ||
     !('enableSounds' in value) ||
+    !('enableSpaceKey' in value) ||
+    !('enableArrowKeys' in value) ||
     typeof value.invertActionKeys !== 'boolean' ||
-    typeof value.enableSounds !== 'boolean'
+    typeof value.enableSounds !== 'boolean' ||
+    typeof value.enableSpaceKey !== 'boolean' ||
+    typeof value.enableArrowKeys !== 'boolean' ||
+    (!value.enableSpaceKey && value.enableArrowKeys)
   ) {
     return null;
   }
 
-  return {
+  const baseConfig = {
     invertActionKeys: value.invertActionKeys,
     enableSounds: value.enableSounds,
   };
+  return value.enableSpaceKey
+    ? {
+        ...baseConfig,
+        enableSpaceKey: true,
+        enableArrowKeys: value.enableArrowKeys,
+      }
+    : { ...baseConfig, enableSpaceKey: false, enableArrowKeys: false };
 }
 
 export default class WordleController {
@@ -67,7 +79,8 @@ export default class WordleController {
     const config = parseWordleUserConfig(req.body);
     if (!config) {
       res.status(400).json({
-        message: 'invertActionKeys and enableSounds must be booleans.',
+        message:
+          'Wordle config fields must be booleans, and arrow keys require space.',
       });
       return;
     }

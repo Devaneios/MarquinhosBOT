@@ -35,6 +35,13 @@ export const FEEDBACK_COLORS: Record<KeyState, KeyboardKeyStyle> = {
 export const KB_ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
 export const KB_LETTERS = new Set(KB_ROWS.join(''));
 export const MIN_KEY_PRESS_MS = 100;
+export const WORDLE_FOCUS_KEYS = {
+  first: 'MoveFirst',
+  left: 'MoveLeft',
+  space: 'Space',
+  right: 'MoveRight',
+  last: 'MoveLast',
+} as const;
 const KEY_PRESS_SOUND = '/keypress.ogg';
 const BACKSPACE_SOUND = '/backspace.ogg';
 const ENTER_SOUND = '/enter.ogg';
@@ -42,8 +49,10 @@ const ENTER_SOUND = '/enter.ogg';
 export function buildKeyboardRows({
   invertActionKeys,
   enableSounds,
+  enableSpaceKey,
+  enableArrowKeys,
 }: WordleUserConfig): KeyboardKey[][] {
-  return KB_ROWS.map((row, index) => {
+  const rows = KB_ROWS.map((row, index) => {
     const keys: KeyboardKey[] = row.split('').map((letter) => ({
       id: letter,
       label: letter,
@@ -68,4 +77,24 @@ export function buildKeyboardRows({
     }
     return keys;
   });
+
+  if (!enableSpaceKey) return rows;
+
+  const space: KeyboardKey = {
+    id: WORDLE_FOCUS_KEYS.space,
+    label: 'ESPAÇO',
+    variant: 'space',
+  };
+  if (!enableArrowKeys) return [...rows, [space]];
+
+  return [
+    ...rows,
+    [
+      { id: WORDLE_FOCUS_KEYS.first, label: '<<' },
+      { id: WORDLE_FOCUS_KEYS.left, label: '<' },
+      space,
+      { id: WORDLE_FOCUS_KEYS.right, label: '>' },
+      { id: WORDLE_FOCUS_KEYS.last, label: '>>' },
+    ],
+  ];
 }

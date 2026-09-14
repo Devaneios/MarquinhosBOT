@@ -4,10 +4,16 @@ import type { WsSession } from '../shared/activitySession';
 export type LetterFeedback = 'correct' | 'present' | 'absent';
 export type KeyState = LetterFeedback | 'unused';
 
-export interface WordleUserConfig {
+interface WordleUserConfigBase {
   invertActionKeys: boolean;
   enableSounds: boolean;
 }
+
+export type WordleUserConfig = WordleUserConfigBase &
+  (
+    | { enableSpaceKey: false; enableArrowKeys: false }
+    | { enableSpaceKey: true; enableArrowKeys: boolean }
+  );
 
 export interface GuessRow {
   guess: string;

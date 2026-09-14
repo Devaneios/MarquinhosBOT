@@ -1,4 +1,4 @@
-export type KeyboardKeyVariant = 'medium' | 'wide';
+export type KeyboardKeyVariant = 'medium' | 'wide' | 'space';
 
 export interface KeyboardKeyStyle {
   bg: string;

@@ -31,10 +31,20 @@ describe('WordleController user config', () => {
     const store: WordleUserConfigStore = {
       get(userId) {
         calls.push(userId);
-        return { invertActionKeys: false, enableSounds: true };
+        return {
+          invertActionKeys: false,
+          enableSounds: true,
+          enableSpaceKey: true,
+          enableArrowKeys: false,
+        };
       },
       update() {
-        return { invertActionKeys: false, enableSounds: false };
+        return {
+          invertActionKeys: false,
+          enableSounds: false,
+          enableSpaceKey: false,
+          enableArrowKeys: false,
+        };
       },
     };
     const controller = new WordleController(store);
@@ -45,15 +55,25 @@ describe('WordleController user config', () => {
     expect(calls).toEqual(['user-1']);
     expect(response.getStatus()).toBe(200);
     expect(response.getPayload()).toEqual({
-      data: { invertActionKeys: false, enableSounds: true },
+      data: {
+        invertActionKeys: false,
+        enableSounds: true,
+        enableSpaceKey: true,
+        enableArrowKeys: false,
+      },
     });
   });
 
-  it('replaces the authenticated user config when both fields are booleans', () => {
+  it('replaces the authenticated user config when all fields are valid', () => {
     const updates: Array<{ userId: string; config: unknown }> = [];
     const store: WordleUserConfigStore = {
       get() {
-        return { invertActionKeys: false, enableSounds: false };
+        return {
+          invertActionKeys: false,
+          enableSounds: false,
+          enableSpaceKey: false,
+          enableArrowKeys: false,
+        };
       },
       update(userId, config) {
         updates.push({ userId, config });
@@ -64,26 +84,46 @@ describe('WordleController user config', () => {
     const response = makeResponse();
 
     controller.updateUserConfig(
-      makeRequest({ invertActionKeys: true, enableSounds: false }),
+      makeRequest({
+        invertActionKeys: true,
+        enableSounds: false,
+        enableSpaceKey: true,
+        enableArrowKeys: true,
+      }),
       response,
     );
 
     expect(updates).toEqual([
       {
         userId: 'user-1',
-        config: { invertActionKeys: true, enableSounds: false },
+        config: {
+          invertActionKeys: true,
+          enableSounds: false,
+          enableSpaceKey: true,
+          enableArrowKeys: true,
+        },
       },
     ]);
     expect(response.getStatus()).toBe(200);
     expect(response.getPayload()).toEqual({
-      data: { invertActionKeys: true, enableSounds: false },
+      data: {
+        invertActionKeys: true,
+        enableSounds: false,
+        enableSpaceKey: true,
+        enableArrowKeys: true,
+      },
     });
   });
 
   it('rejects partial and non-boolean configurations', () => {
     const store: WordleUserConfigStore = {
       get() {
-        return { invertActionKeys: false, enableSounds: false };
+        return {
+          invertActionKeys: false,
+          enableSounds: false,
+          enableSpaceKey: false,
+          enableArrowKeys: false,
+        };
       },
       update() {
         throw new Error('must not update');
@@ -94,6 +134,12 @@ describe('WordleController user config', () => {
     for (const body of [
       { invertActionKeys: true },
       { invertActionKeys: true, enableSounds: 'yes' },
+      {
+        invertActionKeys: false,
+        enableSounds: false,
+        enableSpaceKey: false,
+        enableArrowKeys: true,
+      },
       null,
     ]) {
       const response = makeResponse();

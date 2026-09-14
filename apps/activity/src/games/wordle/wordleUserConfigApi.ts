@@ -10,15 +10,25 @@ function parseWordleUserConfig(value: unknown): WordleUserConfig {
   if (
     !isRecord(value) ||
     typeof value.invertActionKeys !== 'boolean' ||
-    typeof value.enableSounds !== 'boolean'
+    typeof value.enableSounds !== 'boolean' ||
+    typeof value.enableSpaceKey !== 'boolean' ||
+    typeof value.enableArrowKeys !== 'boolean' ||
+    (!value.enableSpaceKey && value.enableArrowKeys)
   ) {
     throw new Error('Invalid Wordle user configuration response');
   }
 
-  return {
+  const baseConfig = {
     invertActionKeys: value.invertActionKeys,
     enableSounds: value.enableSounds,
   };
+  return value.enableSpaceKey
+    ? {
+        ...baseConfig,
+        enableSpaceKey: true,
+        enableArrowKeys: value.enableArrowKeys,
+      }
+    : { ...baseConfig, enableSpaceKey: false, enableArrowKeys: false };
 }
 
 async function parseResponse(response: Response, url: string) {

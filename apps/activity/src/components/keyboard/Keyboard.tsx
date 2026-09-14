@@ -15,6 +15,11 @@ const DEFAULT_STYLE: KeyboardKeyStyle = {
 const SPECIAL_TOKENS: Record<string, string> = {
   Backspace: '{bksp}',
   Enter: '{enter}',
+  MoveFirst: '{movefirst}',
+  MoveLeft: '{moveleft}',
+  Space: '{space}',
+  MoveRight: '{moveright}',
+  MoveLast: '{movelast}',
 };
 
 function tokenForKeyId(id: string): string {
@@ -88,6 +93,7 @@ export function Keyboard({
     const base: string[] = [];
     const medium: string[] = [];
     const wide: string[] = [];
+    const space: string[] = [];
     const pressed: string[] = [];
     for (const row of rows) {
       for (const key of row) {
@@ -95,6 +101,7 @@ export function Keyboard({
         base.push(token);
         if (key.variant === 'medium') medium.push(token);
         if (key.variant === 'wide') wide.push(token);
+        if (key.variant === 'space') space.push(token);
         if (pressedKeys.has(key.id)) pressed.push(token);
       }
     }
@@ -105,6 +112,7 @@ export function Keyboard({
         buttons: medium.join(' '),
       },
       wide.length > 0 && { class: 'keycap-wide', buttons: wide.join(' ') },
+      space.length > 0 && { class: 'keycap-space', buttons: space.join(' ') },
       pressed.length > 0 && {
         class: 'keycap-pressed',
         buttons: pressed.join(' '),
@@ -125,7 +133,7 @@ export function Keyboard({
       ),
       ...rows.flatMap((row) =>
         row
-          .filter((key) => !key.variant)
+          .filter((key) => key.id.length === 1 && !key.variant)
           .map((key) => ({
             attribute: 'data-preview',
             value: key.label,

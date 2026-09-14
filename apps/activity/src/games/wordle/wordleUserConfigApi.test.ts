@@ -22,7 +22,12 @@ describe('getWordleUserConfig', () => {
       requestInit = init;
       return new Response(
         JSON.stringify({
-          data: { invertActionKeys: true, enableSounds: false },
+          data: {
+            invertActionKeys: true,
+            enableSounds: false,
+            enableSpaceKey: true,
+            enableArrowKeys: true,
+          },
         }),
         { status: 200 },
       );
@@ -34,6 +39,8 @@ describe('getWordleUserConfig', () => {
     await expect(getWordleUserConfig('token-1')).resolves.toEqual({
       invertActionKeys: true,
       enableSounds: false,
+      enableSpaceKey: true,
+      enableArrowKeys: true,
     });
     expect(requestUrl.endsWith('/api/wordle/user-config')).toBe(true);
     expect(requestInit).toEqual({
@@ -46,6 +53,28 @@ describe('getWordleUserConfig', () => {
       new Response(
         JSON.stringify({
           data: { invertActionKeys: false, enableSounds: 'yes' },
+        }),
+        { status: 200 },
+      );
+    globalThis.fetch = Object.assign(fetchRequest, {
+      preconnect: originalFetch.preconnect,
+    });
+
+    await expect(getWordleUserConfig('token-1')).rejects.toThrow(
+      'Invalid Wordle user configuration response',
+    );
+  });
+
+  it('rejects arrow keys enabled without space', async () => {
+    const fetchRequest = async () =>
+      new Response(
+        JSON.stringify({
+          data: {
+            invertActionKeys: false,
+            enableSounds: false,
+            enableSpaceKey: false,
+            enableArrowKeys: true,
+          },
         }),
         { status: 200 },
       );
@@ -77,7 +106,12 @@ describe('updateWordleUserConfig', () => {
       requestInit = init;
       return new Response(
         JSON.stringify({
-          data: { invertActionKeys: false, enableSounds: true },
+          data: {
+            invertActionKeys: false,
+            enableSounds: true,
+            enableSpaceKey: true,
+            enableArrowKeys: false,
+          },
         }),
         { status: 200 },
       );
@@ -90,8 +124,15 @@ describe('updateWordleUserConfig', () => {
       updateWordleUserConfig('token-2', {
         invertActionKeys: false,
         enableSounds: true,
+        enableSpaceKey: true,
+        enableArrowKeys: false,
       }),
-    ).resolves.toEqual({ invertActionKeys: false, enableSounds: true });
+    ).resolves.toEqual({
+      invertActionKeys: false,
+      enableSounds: true,
+      enableSpaceKey: true,
+      enableArrowKeys: false,
+    });
     expect(requestUrl.endsWith('/api/wordle/user-config')).toBe(true);
     expect(requestInit).toEqual({
       method: 'PUT',
@@ -102,6 +143,8 @@ describe('updateWordleUserConfig', () => {
       body: JSON.stringify({
         invertActionKeys: false,
         enableSounds: true,
+        enableSpaceKey: true,
+        enableArrowKeys: false,
       }),
     });
   });
@@ -116,6 +159,8 @@ describe('updateWordleUserConfig', () => {
       updateWordleUserConfig('expired-token', {
         invertActionKeys: false,
         enableSounds: false,
+        enableSpaceKey: false,
+        enableArrowKeys: false,
       }),
     ).rejects.toMatchObject({ status: 401 });
   });

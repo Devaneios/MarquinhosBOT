@@ -18,8 +18,18 @@ describe('useWordleUserConfig', () => {
         JSON.stringify({
           data:
             init?.method === 'PUT'
-              ? { invertActionKeys: true, enableSounds: true }
-              : { invertActionKeys: false, enableSounds: false },
+              ? {
+                  invertActionKeys: true,
+                  enableSounds: true,
+                  enableSpaceKey: true,
+                  enableArrowKeys: true,
+                }
+              : {
+                  invertActionKeys: false,
+                  enableSounds: false,
+                  enableSpaceKey: false,
+                  enableArrowKeys: false,
+                },
         }),
         { status: 200 },
       );
@@ -39,6 +49,8 @@ describe('useWordleUserConfig', () => {
     expect(result.current.config).toEqual({
       invertActionKeys: false,
       enableSounds: false,
+      enableSpaceKey: false,
+      enableArrowKeys: false,
     });
 
     await act(async () => {
@@ -48,12 +60,19 @@ describe('useWordleUserConfig', () => {
       await result.current.save({
         invertActionKeys: true,
         enableSounds: true,
+        enableSpaceKey: true,
+        enableArrowKeys: true,
       });
     });
 
     expect(result.current).toMatchObject({
       status: 'ready',
-      config: { invertActionKeys: true, enableSounds: true },
+      config: {
+        invertActionKeys: true,
+        enableSounds: true,
+        enableSpaceKey: true,
+        enableArrowKeys: true,
+      },
     });
   });
 
@@ -76,7 +95,12 @@ describe('useWordleUserConfig', () => {
       if (requestCount === 1) return new Response('', { status: 500 });
       return new Response(
         JSON.stringify({
-          data: { invertActionKeys: true, enableSounds: false },
+          data: {
+            invertActionKeys: true,
+            enableSounds: false,
+            enableSpaceKey: true,
+            enableArrowKeys: false,
+          },
         }),
         { status: 200 },
       );
@@ -100,7 +124,12 @@ describe('useWordleUserConfig', () => {
     await waitFor(() =>
       expect(result.current).toMatchObject({
         status: 'ready',
-        config: { invertActionKeys: true, enableSounds: false },
+        config: {
+          invertActionKeys: true,
+          enableSounds: false,
+          enableSpaceKey: true,
+          enableArrowKeys: false,
+        },
       }),
     );
   });

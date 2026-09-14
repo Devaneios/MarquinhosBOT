@@ -184,6 +184,37 @@ describe('Keyboard', () => {
     expect(onKey).toHaveBeenCalledWith('Enter');
   });
 
+  it('renders custom focus controls and returns their original ids', () => {
+    const onKey = mock(() => {});
+    const rows: KeyboardKey[][] = [
+      ...buildRows(),
+      [
+        { id: 'MoveFirst', label: '<<' },
+        { id: 'MoveLeft', label: '<' },
+        { id: 'Space', label: 'ESPAÇO', variant: 'space' },
+        { id: 'MoveRight', label: '>' },
+        { id: 'MoveLast', label: '>>' },
+      ],
+    ];
+    const { container } = render(
+      <Keyboard
+        rows={rows}
+        pressedKeys={new Set()}
+        disabled={false}
+        onKey={onKey}
+      />,
+    );
+
+    const moveLastButton = Array.from(
+      container.querySelectorAll('.hg-button'),
+    ).find((element) => element.textContent?.includes('>>'));
+    if (!moveLastButton) throw new Error('Expected MoveLast to render');
+    fireEvent.pointerDown(moveLastButton);
+
+    expect(onKey).toHaveBeenCalledWith('MoveLast');
+    expect(container.querySelector('.keycap-space')).toBeTruthy();
+  });
+
   it('does not call onKey when disabled', () => {
     const onKey = mock(() => {});
     const originalAudio = Object.getOwnPropertyDescriptor(globalThis, 'Audio');

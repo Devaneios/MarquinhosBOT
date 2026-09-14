@@ -20,7 +20,22 @@ import type {
 } from '../types';
 import { buildLetterStates, normalizeKey } from '../wordle.utils';
 
-export function useWordleBoard(session: WsSession, enabled = true) {
+interface WordleBoardOptions {
+  enabled: boolean;
+  enableSpaceKey: boolean;
+  enableArrowKeys: boolean;
+}
+
+type WordleFocusCommand = 'first' | 'left' | 'space' | 'right' | 'last';
+
+export function useWordleBoard(
+  session: WsSession,
+  {
+    enabled = true,
+    enableSpaceKey = false,
+    enableArrowKeys = false,
+  }: WordleBoardOptions,
+) {
   const [wordLength, setWordLength] = useState<number | null>(null);
   const [guesses, setGuesses] = useState<GuessRow[]>([]);
   const [solved, setSolved] = useState(false);
@@ -115,11 +130,33 @@ export function useWordleBoard(session: WsSession, enabled = true) {
     if (!hasLetter) setActiveIndex((prev) => Math.max(prev - 1, 0));
   }
 
-  function moveActive(delta: number) {
-    if (wordLength === null) return;
-    setActiveIndex((prev) =>
-      Math.min(Math.max(prev + delta, 0), wordLength - 1),
-    );
+  function moveFocus(command: WordleFocusCommand) {
+    if (
+      !enabled ||
+      solved ||
+      wordLength === null ||
+      (command === 'space' ? !enableSpaceKey : !enableArrowKeys)
+    ) {
+      return;
+    }
+    const lastIndex = wordLength - 1;
+    setActiveIndex((prev) => {
+      switch (command) {
+        case 'first':
+          return 0;
+        case 'left':
+          return Math.max(prev - 1, 0);
+        case 'space':
+          return Math.min(prev + 1, lastIndex);
+        case 'right':
+          return Math.min(prev + 1, lastIndex);
+        case 'last':
+          return lastIndex;
+        default: {
+          return command;
+        }
+      }
+    });
   }
 
   function submitGuess() {
@@ -229,12 +266,17 @@ export function useWordleBoard(session: WsSession, enabled = true) {
     }
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
-      moveActive(-1);
+      moveFocus('left');
       return;
     }
     if (event.key === 'ArrowRight') {
       event.preventDefault();
-      moveActive(1);
+      moveFocus('right');
+      return;
+    }
+    if (event.key === ' ') {
+      event.preventDefault();
+      moveFocus('space');
       return;
     }
     if (event.key.length !== 1) return;
@@ -261,6 +303,7 @@ export function useWordleBoard(session: WsSession, enabled = true) {
     typeLetter,
     backspace,
     submitGuess,
+    moveFocus,
     suspendInput,
     onKeyDownCell,
     setActiveIndex,

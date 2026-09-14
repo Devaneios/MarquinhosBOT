@@ -4,7 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { backChipClass, GameHeader } from '../../../components/game-shell';
 import { Keyboard } from '../../../components/keyboard';
 import type { WsSession } from '../../shared/activitySession';
-import { buildKeyboardRows, FEEDBACK_COLORS } from '../constants';
+import {
+  buildKeyboardRows,
+  FEEDBACK_COLORS,
+  WORDLE_FOCUS_KEYS,
+} from '../constants';
 import { useWordleBoard } from '../hooks/useWordleBoard';
 import type { WordleUserConfig } from '../types';
 import { CurrentRow } from './CurrentRow';
@@ -23,7 +27,11 @@ export function WordleBoard({
   const navigate = useNavigate();
   const { t } = useTranslation(['wordle', 'common']);
   const [showSettings, setShowSettings] = useState(false);
-  const board = useWordleBoard(session, !showSettings);
+  const board = useWordleBoard(session, {
+    enabled: !showSettings,
+    enableSpaceKey: config.enableSpaceKey,
+    enableArrowKeys: config.enableArrowKeys,
+  });
   const keyboardRows = useMemo(
     () =>
       buildKeyboardRows(config).map((row) =>
@@ -58,6 +66,16 @@ export function WordleBoard({
           board.submitGuess();
         } else if (key === 'Backspace') {
           board.backspace();
+        } else if (key === WORDLE_FOCUS_KEYS.first) {
+          board.moveFocus('first');
+        } else if (key === WORDLE_FOCUS_KEYS.left) {
+          board.moveFocus('left');
+        } else if (key === WORDLE_FOCUS_KEYS.space) {
+          board.moveFocus('space');
+        } else if (key === WORDLE_FOCUS_KEYS.right) {
+          board.moveFocus('right');
+        } else if (key === WORDLE_FOCUS_KEYS.last) {
+          board.moveFocus('last');
         } else {
           board.typeLetter(key);
         }

@@ -96,6 +96,58 @@ export function WordleSettingsScreen({
             />
           </div>
 
+          <div className="notch-6 border border-marquinhos-border bg-white/5">
+            <div className="flex flex-col px-4 py-3">
+              <label htmlFor="wordle-space-toggle" className={fieldLabel}>
+                {t('wordle:enableSpaceKeyLabel')}
+              </label>
+              <div className="flex justify-between gap-4 py-3 min-w-0">
+                <p className="mt-1 text-sm leading-6 text-marquinhos-text-dim">
+                  {t('wordle:enableSpaceKeyDescription')}
+                </p>
+                <WordleToggleTile
+                  id="wordle-space-toggle"
+                  checked={draft.enableSpaceKey}
+                  disabled={saving}
+                  onChange={(enableSpaceKey) =>
+                    setDraft((current) =>
+                      enableSpaceKey
+                        ? { ...current, enableSpaceKey: true }
+                        : {
+                            ...current,
+                            enableSpaceKey: false,
+                            enableArrowKeys: false,
+                          },
+                    )
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="ml-6 flex flex-col px-4 py-3">
+              <label htmlFor="wordle-arrows-toggle" className={fieldLabel}>
+                {t('wordle:enableArrowKeysLabel')}
+              </label>
+              <div className="flex justify-between gap-4 py-3 min-w-0">
+                <p className="mt-1 text-sm leading-6 text-marquinhos-text-dim">
+                  {t('wordle:enableArrowKeysDescription')}
+                </p>
+                <WordleToggleTile
+                  id="wordle-arrows-toggle"
+                  checked={draft.enableArrowKeys}
+                  disabled={saving || !draft.enableSpaceKey}
+                  onChange={(enableArrowKeys) =>
+                    setDraft((current) =>
+                      current.enableSpaceKey
+                        ? { ...current, enableArrowKeys }
+                        : current,
+                    )
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="flex justify-end">
             <button
               type="button"
