@@ -3,6 +3,7 @@ import {
   buildDailyLeaderboardAttachment,
   sendTermoStatusBroadcast,
 } from '@marquinhos/commands/games/termoLeaderboardImage';
+import { buildTermoWinActionRow } from '@marquinhos/commands/games/termoResponse';
 import { env } from '@marquinhos/config/environment';
 import { GuildConfig } from '@marquinhos/config/guild';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
@@ -157,6 +158,7 @@ async function rotateTermoWord(client: Client<true>): Promise<void> {
           content: `<@&${GuildConfig.TERMINHOS_ANNOUNCE_ROLE_ID}>`,
           embeds: [embed],
           files: [previewAttachment],
+          components: [buildTermoWinActionRow()],
         });
       } catch (err) {
         logger.warn(
