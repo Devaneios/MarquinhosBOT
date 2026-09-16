@@ -20,6 +20,7 @@ import {
   MessageFlags,
   PermissionFlagsBits,
   TextChannel,
+  ThreadAutoArchiveDuration,
 } from 'discord.js';
 import {
   buildWordlistReviewActionRow,
@@ -144,7 +145,7 @@ export class AdminCommand extends MarquinhosCommand {
       }
 
       if (sub === 'novo') {
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+        await interaction.deferReply();
 
         try {
           const response = await api.forceNewWordleWord(interaction.guildId!);
@@ -194,10 +195,16 @@ export class AdminCommand extends MarquinhosCommand {
             .setColor(0x588157)
             .setImage('attachment://nova-palavra-admin.png');
 
-          await interaction.editReply({
+          const adminMessage = await interaction.editReply({
             embeds: [adminEmbed],
             files: [previewAttachment],
           });
+
+          const adminThread = await adminMessage.startThread({
+            name: `Nova palavra - ${result.wordLength} letras`,
+            autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
+          });
+          await adminThread.edit({ flags: adminThread.flags.add(2097152) });
 
           try {
             const configResponse = await api.getWordleConfig(
@@ -216,10 +223,17 @@ export class AdminCommand extends MarquinhosCommand {
               .setColor(0x588157)
               .setImage('attachment://nova-palavra-admin.png');
 
-            await wordleChannel.send({
+            const announcement = await wordleChannel.send({
               content: `<@&${GuildConfig.TERMINHOS_ANNOUNCE_ROLE_ID}>`,
               embeds: [embed],
               files: [previewAttachment],
+            });
+            const announcementThread = await announcement.startThread({
+              name: `Novo Terminho - ${result.wordLength} letras`,
+              autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
+            });
+            await announcementThread.edit({
+              flags: announcementThread.flags.add(2097152),
             });
           } catch (err) {
             logger.warn(

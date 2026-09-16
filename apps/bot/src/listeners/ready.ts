@@ -18,7 +18,13 @@ import { reportError } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { resourcePath } from '@marquinhos/utils/resources';
 import { Listener } from '@sapphire/framework';
-import { AttachmentBuilder, Client, Events, TextChannel } from 'discord.js';
+import {
+  AttachmentBuilder,
+  Client,
+  Events,
+  TextChannel,
+  ThreadAutoArchiveDuration,
+} from 'discord.js';
 
 const api = MarquinhosApiService.getInstance();
 
@@ -154,11 +160,18 @@ async function rotateTermoWord(client: Client<true>): Promise<void> {
           .setColor(0x588157)
           .setImage('attachment://nova-palavra.png');
 
-        await channel.send({
+        const announcement = await channel.send({
           content: `<@&${GuildConfig.TERMINHOS_ANNOUNCE_ROLE_ID}>`,
           embeds: [embed],
           files: [previewAttachment],
           components: [buildTermoWinActionRow()],
+        });
+        const announcementThread = await announcement.startThread({
+          name: `Novo Terminho - ${data.wordLength} letras`,
+          autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
+        });
+        await announcementThread.edit({
+          flags: announcementThread.flags.add(2097152),
         });
       } catch (err) {
         logger.warn(
