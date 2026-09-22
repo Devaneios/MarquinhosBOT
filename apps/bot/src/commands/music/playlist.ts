@@ -2,6 +2,7 @@ import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { Playlist, PlaylistTrack } from '@marquinhos/types';
 import { baseEmbed } from '@marquinhos/utils/discord';
+import { HttpError } from '@marquinhos/utils/httpClient';
 import { logger } from '@marquinhos/utils/logger';
 import { parseArtistTitle } from '@marquinhos/utils/parser';
 import { Command } from '@sapphire/framework';
@@ -272,9 +273,7 @@ async function handleAddToPlaylist(
       });
     await interaction.editReply({ embeds: [embed] });
   } catch (error: unknown) {
-    if (
-      (error as { response?: { status?: number } })?.response?.status === 403
-    ) {
+    if (error instanceof HttpError && error.response?.status === 403) {
       await interaction.editReply(
         'Você não tem permissão para adicionar músicas a esta playlist.',
       );
