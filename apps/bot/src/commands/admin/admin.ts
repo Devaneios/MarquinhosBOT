@@ -10,7 +10,11 @@ import {
   type DailyEntry,
   type RankedEntry,
 } from '@marquinhos/ui/screens/termo';
-import { baseEmbed, fetchAvatarBuffer } from '@marquinhos/utils/discord';
+import {
+  asTextChannel,
+  baseEmbed,
+  fetchAvatarBuffer,
+} from '@marquinhos/utils/discord';
 import { getRecentErrors } from '@marquinhos/utils/errorHistory';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
@@ -19,13 +23,20 @@ import {
   EmbedBuilder,
   MessageFlags,
   PermissionFlagsBits,
-  TextChannel,
   ThreadAutoArchiveDuration,
 } from 'discord.js';
+import { z } from 'zod';
 import {
   buildWordlistReviewActionRow,
   buildWordlistReviewContent,
 } from './wordlistReviewResponse';
+
+const LeaderboardPeriodSchema = z.enum([
+  'daily',
+  'weekly',
+  'monthly',
+  'all-time',
+]);
 
 const api = MarquinhosApiService.getInstance();
 
@@ -149,16 +160,7 @@ export class AdminCommand extends MarquinhosCommand {
 
         try {
           const response = await api.forceNewWordleWord(interaction.guildId!);
-          const result = response.data as {
-            word: string;
-            wordLength: number;
-            wordDate: string;
-            stats?: {
-              playersCount?: number;
-              winnersCount?: number;
-              avgAttempts?: number;
-            };
-          };
+          const result = response.data;
 
           const previewBuffer = await buildWordHiddenPreviewImage(
             result.wordLength,
@@ -210,12 +212,11 @@ export class AdminCommand extends MarquinhosCommand {
             const configResponse = await api.getWordleConfig(
               interaction.guildId!,
             );
-            const channelId = (configResponse.data as { channelId?: string })
-              ?.channelId;
+            const channelId = configResponse.data.channelId;
             if (!channelId) return;
-            const wordleChannel = interaction.client.channels.cache.get(
-              channelId,
-            ) as TextChannel | undefined;
+            const wordleChannel = asTextChannel(
+              interaction.client.channels.cache.get(channelId),
+            );
             if (!wordleChannel) return;
             const embed = baseEmbed(this.container.client)
               .setTitle(`Novo Terminho - ${result.wordLength} letras`)
@@ -257,11 +258,9 @@ export class AdminCommand extends MarquinhosCommand {
           const configResponse = await api.getWordleConfig(
             interaction.guildId!,
           );
-          const channelId = (configResponse.data as { channelId?: string })
-            ?.channelId;
+          const channelId = configResponse.data.channelId;
           const channel = channelId
-            ? (interaction.client.channels.cache.get(channelId) as
-                TextChannel | undefined)
+            ? asTextChannel(interaction.client.channels.cache.get(channelId))
             : undefined;
 
           if (!channel) {
@@ -294,34 +293,29 @@ export class AdminCommand extends MarquinhosCommand {
 
       if (sub === 'leaderboard') {
         const rawPeriod = interaction.options.getString('periodo', true);
-        const period = rawPeriod as 'daily' | 'weekly' | 'monthly' | 'all-time';
+        const period = LeaderboardPeriodSchema.parse(rawPeriod);
 
         await interaction.deferReply();
 
         try {
-          const response = await api.getWordleLeaderboard(
-            interaction.guildId!,
-            period,
-          );
-          const rawEntries = response.data as { userId: string }[];
-          const { groupStreak } = response;
-
           const guild = interaction.guild!;
-          const userIds = rawEntries.map((e) => e.userId);
-          const membersCollection =
-            userIds.length > 0
-              ? await guild.members.fetch({ user: userIds }).catch(() => null)
-              : null;
-
           let entries: (DailyEntry | RankedEntry)[];
+          let groupStreak: number;
+
           if (period === 'daily') {
-            const dailyEntries = rawEntries as unknown as {
-              userId: string;
-              attempts: number;
-              solved: boolean;
-            }[];
+            const response = await api.getWordleLeaderboard(
+              interaction.guildId!,
+              period,
+            );
+            groupStreak = response.groupStreak;
+            const rawEntries = response.data;
+            const userIds = rawEntries.map((e) => e.userId);
+            const membersCollection =
+              userIds.length > 0
+                ? await guild.members.fetch({ user: userIds }).catch(() => null)
+                : null;
             entries = await Promise.all(
-              dailyEntries.map(async (e, i) => {
+              rawEntries.map(async (e, i) => {
                 const member = membersCollection?.get(e.userId);
                 const avatar = member
                   ? await fetchAvatarBuffer(member)
@@ -336,16 +330,22 @@ export class AdminCommand extends MarquinhosCommand {
               }),
             );
           } else {
-            const rankedEntries = rawEntries as unknown as {
-              userId: string;
-              totalDays: number;
-              avgScore: number;
-            }[];
+            const response = await api.getWordleLeaderboard(
+              interaction.guildId!,
+              period,
+            );
+            groupStreak = response.groupStreak;
+            const rawEntries = response.data;
+            const userIds = rawEntries.map((e) => e.userId);
+            const membersCollection =
+              userIds.length > 0
+                ? await guild.members.fetch({ user: userIds }).catch(() => null)
+                : null;
             const ranks = denseRanks(
-              rankedEntries.map((e) => `${e.avgScore}:${e.totalDays}`),
+              rawEntries.map((e) => `${e.avgScore}:${e.totalDays}`),
             );
             entries = await Promise.all(
-              rankedEntries.map(async (e, i) => {
+              rawEntries.map(async (e, i) => {
                 const member = membersCollection?.get(e.userId);
                 const avatar = member
                   ? await fetchAvatarBuffer(member)
@@ -418,10 +418,7 @@ export class AdminCommand extends MarquinhosCommand {
     const apiOnline = await api.healthCheck();
     const latencyMs = Math.round(performance.now() - start);
 
-    const debugInfo = GameManager.getInstance().debugInfo() as {
-      activeSessions: number;
-      sessions: { type: string }[];
-    };
+    const debugInfo = GameManager.getInstance().debugInfo();
     const sessionsByType = debugInfo.sessions.reduce<Record<string, number>>(
       (acc, s) => {
         acc[s.type] = (acc[s.type] ?? 0) + 1;
