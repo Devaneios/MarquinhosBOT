@@ -4,16 +4,19 @@ import { baseEmbed } from '@marquinhos/utils/discord';
 import { HttpClient } from '@marquinhos/utils/httpClient';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
+import { z } from 'zod';
 
-interface RecommendationItem {
-  artist: string;
-  title: string;
-  reason?: string;
-}
+const recommendationItemSchema = z.object({
+  artist: z.string(),
+  title: z.string(),
+  reason: z.string().optional(),
+});
 
-interface RecommendationResponse {
-  data: RecommendationItem[];
-}
+const recommendationResponseSchema = z.object({
+  data: z.array(recommendationItemSchema),
+});
+
+type RecommendationItem = z.infer<typeof recommendationItemSchema>;
 
 const httpClient = new HttpClient({
   baseURL: env.MARQUINHOS_API_URL,
@@ -184,8 +187,8 @@ export class RecommendCommand extends MarquinhosCommand {
 
 async function getRecommendations(path: string): Promise<RecommendationItem[]> {
   try {
-    const data = (await httpClient.get(path)) as RecommendationResponse;
-    return data.data || [];
+    const raw = await httpClient.get(path);
+    return recommendationResponseSchema.parse(raw).data;
   } catch (error) {
     logger.warn('Failed to get recommendations:', error);
     return [];
