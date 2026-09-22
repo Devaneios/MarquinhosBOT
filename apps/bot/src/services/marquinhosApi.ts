@@ -1,8 +1,38 @@
 import { env } from '@marquinhos/config/environment';
 import {
+  addXpResultSchema,
+  aiChatResponseSchema,
+  apiResponseSchema,
+  dailyLeaderboardEntrySchema,
+  emojiReactionResponseSchema,
+  forceNewWordResultSchema,
+  gameLeaderboardEntrySchema,
+  markWordleAnnouncedResultSchema,
+  mazeViewportStateSchema,
+  playlistSchema,
+  rankedLeaderboardEntrySchema,
+  researchJobResponseSchema,
+  researchStartResponseSchema,
+  unannouncedWordleWinSchema,
+  unlockAchievementResultSchema,
+  userAchievementSchema,
+  userGameStatsSchema,
+  userLevelSchema,
+  userWordleSessionSchema,
+  validateWordleGuessResultSchema,
+  wordleConfigSchema,
+  wordleDailyStatsSchema,
+  wordleDayGuessesSchema,
+  wordleGuessResultSchema,
+  wordleLeaderboardResultSchema,
+  wordleReviewWordResultSchema,
+  wordlistPoolStatsSchema,
+  type DailyLeaderboardEntry,
+  type RankedLeaderboardEntry,
+} from '@marquinhos/services/marquinhosApi.schemas';
+import {
   AddXpResult,
   AiChatResponse,
-  ApiError,
   ApiResponse,
   EmojiReactionResponse,
   LastfmTopListenedPeriod,
@@ -15,18 +45,34 @@ import {
   UserLevel,
 } from '@marquinhos/types';
 import { reportError } from '@marquinhos/utils/errorHandling';
-import { HttpClient } from '@marquinhos/utils/httpClient';
+import { HttpClient, HttpError } from '@marquinhos/utils/httpClient';
 import { logger } from '@marquinhos/utils/logger';
+import { z } from 'zod';
+
+function extractErrorMessage(data: unknown, fallback: string): unknown {
+  if (
+    data &&
+    typeof data === 'object' &&
+    'message' in data &&
+    typeof data.message === 'string'
+  ) {
+    return data.message;
+  }
+  return data ?? fallback;
+}
 
 export function handleApiResponseError(error: unknown): never {
-  const apiError = error as ApiError;
-  const data = apiError.response?.data as ApiResponse | undefined;
-  const errorMsg = data?.message ?? data ?? apiError.message ?? 'Unknown error';
-  logger.error(`API Error on ${apiError.config?.url}: ${errorMsg}`);
-  reportError(error, {
-    origin: `API:${apiError.config?.url ?? 'unknown'}`,
-    logLevel: 'warn',
-  });
+  if (error instanceof HttpError) {
+    const errorMsg = extractErrorMessage(error.response?.data, error.message);
+    logger.error(`API Error on ${error.config?.url}: ${errorMsg}`);
+    reportError(error, {
+      origin: `API:${error.config?.url ?? 'unknown'}`,
+      logLevel: 'warn',
+    });
+    throw error;
+  }
+  logger.error(`API Error: ${String(error)}`);
+  reportError(error, { origin: 'API:unknown', logLevel: 'warn' });
   throw error;
 }
 
@@ -70,12 +116,12 @@ export class MarquinhosApiService {
     const data = await this.client.post('/api/scrobble/queue', {
       playbackData: scrobble,
     });
-    return data as ApiResponse;
+    return apiResponseSchema(z.unknown()).parse(data);
   }
 
   async dispatchScrobbleQueue(id: string): Promise<ApiResponse> {
     const data = await this.client.post(`/api/scrobble/${id}`);
-    return data as ApiResponse;
+    return apiResponseSchema(z.unknown()).parse(data);
   }
 
   async removeUserFromScrobbleQueue(
@@ -83,7 +129,7 @@ export class MarquinhosApiService {
     userId: string,
   ): Promise<ApiResponse> {
     const data = await this.client.delete(`/api/scrobble/${id}/${userId}`);
-    return data as ApiResponse;
+    return apiResponseSchema(z.unknown()).parse(data);
   }
 
   async addUserToScrobbleQueue(
@@ -91,7 +137,7 @@ export class MarquinhosApiService {
     userId: string,
   ): Promise<ApiResponse> {
     const data = await this.client.post(`/api/scrobble/${id}/${userId}`);
-    return data as ApiResponse;
+    return apiResponseSchema(z.unknown()).parse(data);
   }
 
   async getTopArtists(
@@ -99,7 +145,7 @@ export class MarquinhosApiService {
     period: LastfmTopListenedPeriod,
   ): Promise<ApiResponse> {
     const data = await this.client.get(`/api/user/top-artists/${period}/${id}`);
-    return data as ApiResponse;
+    return apiResponseSchema(z.unknown()).parse(data);
   }
 
   async getTopAlbums(
@@ -107,7 +153,7 @@ export class MarquinhosApiService {
     period: LastfmTopListenedPeriod,
   ): Promise<ApiResponse> {
     const data = await this.client.get(`/api/user/top-albums/${period}/${id}`);
-    return data as ApiResponse;
+    return apiResponseSchema(z.unknown()).parse(data);
   }
 
   async getTopTracks(
@@ -115,7 +161,7 @@ export class MarquinhosApiService {
     period: LastfmTopListenedPeriod,
   ): Promise<ApiResponse> {
     const data = await this.client.get(`/api/user/top-tracks/${period}/${id}`);
-    return data as ApiResponse;
+    return apiResponseSchema(z.unknown()).parse(data);
   }
 
   // Gamification API calls
@@ -129,7 +175,7 @@ export class MarquinhosApiService {
       guildId,
       eventType,
     });
-    return data as ApiResponse<AddXpResult>;
+    return apiResponseSchema(addXpResultSchema).parse(data);
   }
 
   async postGameResult(payload: {
@@ -143,7 +189,7 @@ export class MarquinhosApiService {
       '/api/gamification/game-result',
       payload,
     );
-    return data as ApiResponse;
+    return apiResponseSchema(z.unknown()).parse(data);
   }
 
   async respondToTag(payload: {
@@ -155,9 +201,10 @@ export class MarquinhosApiService {
     repliedMessage?: { author: string; content: string };
   }): Promise<ApiResponse<AiChatResponse>> {
     const startedAt = Date.now();
-    const data = (await this.client.post('/api/ai-chat/respond', payload, {
+    const raw = await this.client.post('/api/ai-chat/respond', payload, {
       timeout: 120000,
-    })) as ApiResponse<AiChatResponse>;
+    });
+    const data = apiResponseSchema(aiChatResponseSchema).parse(raw);
     logger.info(
       `[ai-chat] respondToTag user=${payload.userId} status=${data.data?.status} category=${data.data?.category ?? '-'} trace=${data.data?.traceId ?? '-'} ${Date.now() - startedAt}ms`,
     );
@@ -173,9 +220,10 @@ export class MarquinhosApiService {
     mode?: 'ask' | 'research';
   }): Promise<ApiResponse<AiChatResponse>> {
     const startedAt = Date.now();
-    const data = (await this.client.post('/api/ai-chat/thread/ask', payload, {
+    const raw = await this.client.post('/api/ai-chat/thread/ask', payload, {
       timeout: 120000,
-    })) as ApiResponse<AiChatResponse>;
+    });
+    const data = apiResponseSchema(aiChatResponseSchema).parse(raw);
     logger.info(
       `[ai-chat] askInThread thread=${payload.threadId} status=${data.data?.status} trace=${data.data?.traceId ?? '-'} ${Date.now() - startedAt}ms`,
     );
@@ -190,10 +238,8 @@ export class MarquinhosApiService {
     query: string;
     idempotencyKey: string;
   }): Promise<ApiResponse<ResearchStartResponse>> {
-    const data = (await this.client.post(
-      '/api/ai-chat/research',
-      payload,
-    )) as ApiResponse<ResearchStartResponse>;
+    const raw = await this.client.post('/api/ai-chat/research', payload);
+    const data = apiResponseSchema(researchStartResponseSchema).parse(raw);
     logger.info(
       `[ai-chat] startResearch thread=${payload.threadId} status=${data.data?.status} job=${data.data?.jobId ?? '-'}`,
     );
@@ -204,7 +250,7 @@ export class MarquinhosApiService {
     jobId: string,
   ): Promise<ApiResponse<ResearchJobResponse>> {
     const data = await this.client.get(`/api/ai-chat/research/${jobId}`);
-    return data as ApiResponse<ResearchJobResponse>;
+    return apiResponseSchema(researchJobResponseSchema).parse(data);
   }
 
   async chooseEmojiReactions(payload: {
@@ -212,27 +258,49 @@ export class MarquinhosApiService {
     recentMessages?: { author: string; content: string }[];
   }): Promise<ApiResponse<EmojiReactionResponse>> {
     const data = await this.client.post('/api/emoji-reaction/choose', payload);
-    return data as ApiResponse<EmojiReactionResponse>;
+    return apiResponseSchema(emojiReactionResponseSchema).parse(data);
   }
 
   async getUserGameStats(
     userId: string,
     guildId: string,
-  ): Promise<ApiResponse> {
+  ): Promise<
+    ApiResponse<{
+      stats: {
+        user_id: string;
+        guild_id: string;
+        total_commands: number;
+        total_scrobbles: number;
+        total_voice_joins: number;
+        total_games: number;
+        games_won: number;
+      };
+      byGame: { game_type: string; games_played: number; wins: number }[];
+    }>
+  > {
     const data = await this.client.get(
       `/api/gamification/game-stats/${userId}/${guildId}`,
     );
-    return data as ApiResponse;
+    return apiResponseSchema(userGameStatsSchema).parse(data);
   }
 
   async getGameLeaderboard(
     guildId: string,
     gameType: string,
-  ): Promise<ApiResponse> {
+  ): Promise<
+    ApiResponse<
+      {
+        user_id: string;
+        wins: number;
+        games_played: number;
+        total_xp_earned: number;
+      }[]
+    >
+  > {
     const data = await this.client.get(
       `/api/gamification/game-leaderboard/${guildId}/${gameType}`,
     );
-    return data as ApiResponse;
+    return apiResponseSchema(z.array(gameLeaderboardEntrySchema)).parse(data);
   }
 
   async getUserLevel(
@@ -242,7 +310,7 @@ export class MarquinhosApiService {
     const data = await this.client.get(
       `/api/gamification/level/${userId}/${guildId}`,
     );
-    return data as ApiResponse<UserLevel>;
+    return apiResponseSchema(userLevelSchema).parse(data);
   }
 
   async getLeaderboard(
@@ -252,7 +320,7 @@ export class MarquinhosApiService {
     const data = await this.client.get(
       `/api/gamification/leaderboard/${guildId}?limit=${limit}`,
     );
-    return data as ApiResponse<UserLevel[]>;
+    return apiResponseSchema(z.array(userLevelSchema)).parse(data);
   }
 
   async getUserAchievements(
@@ -262,19 +330,19 @@ export class MarquinhosApiService {
     const data = await this.client.get(
       `/api/gamification/achievements/${userId}/${guildId}`,
     );
-    return data as ApiResponse<UserAchievement[]>;
+    return apiResponseSchema(z.array(userAchievementSchema)).parse(data);
   }
 
   async unlockAchievement(
     userId: string,
     guildId: string,
     achievementId: string,
-  ): Promise<ApiResponse<UserAchievement>> {
+  ): Promise<ApiResponse<{ unlocked: boolean }>> {
     const data = await this.client.post(
       '/api/gamification/achievement/unlock',
       { userId, guildId, achievementId },
     );
-    return data as ApiResponse<UserAchievement>;
+    return apiResponseSchema(unlockAchievementResultSchema).parse(data);
   }
 
   // Maze Game API calls
@@ -290,7 +358,7 @@ export class MarquinhosApiService {
       mode,
       size,
     });
-    return (data as ApiResponse<MazeViewportState>).data;
+    return apiResponseSchema(mazeViewportStateSchema).parse(data).data;
   }
 
   async moveMaze(
@@ -302,13 +370,13 @@ export class MarquinhosApiService {
       userId,
       direction,
     });
-    return (data as ApiResponse<MazeViewportState>).data;
+    return apiResponseSchema(mazeViewportStateSchema).parse(data).data;
   }
 
   async getMazeState(sessionId: string): Promise<MazeViewportState | null> {
     try {
       const data = await this.client.get(`/api/games/maze/${sessionId}`);
-      return (data as ApiResponse<MazeViewportState>).data;
+      return apiResponseSchema(mazeViewportStateSchema).parse(data).data;
     } catch {
       return null;
     }
@@ -335,12 +403,12 @@ export class MarquinhosApiService {
       guildId,
       isCollaborative,
     });
-    return data as ApiResponse<Playlist>;
+    return apiResponseSchema(playlistSchema).parse(data);
   }
 
   async getPlaylist(playlistId: string): Promise<ApiResponse<Playlist>> {
     const data = await this.client.get(`/api/playlist/${playlistId}`);
-    return data as ApiResponse<Playlist>;
+    return apiResponseSchema(playlistSchema).parse(data);
   }
 
   async getUserPlaylists(
@@ -350,7 +418,7 @@ export class MarquinhosApiService {
     const data = await this.client.get(
       `/api/playlist/user/${userId}/${guildId}`,
     );
-    return data as ApiResponse<Playlist[]>;
+    return apiResponseSchema(z.array(playlistSchema)).parse(data);
   }
 
   async addTrackToPlaylist(
@@ -362,7 +430,7 @@ export class MarquinhosApiService {
       userId,
       track,
     });
-    return data as ApiResponse<Playlist>;
+    return apiResponseSchema(playlistSchema).parse(data);
   }
 
   async recordActivityDeepLink(
@@ -375,7 +443,7 @@ export class MarquinhosApiService {
       guildId,
       game,
     });
-    return data as ApiResponse;
+    return apiResponseSchema(z.unknown()).parse(data);
   }
 
   async healthCheck(): Promise<boolean> {
@@ -392,66 +460,75 @@ export class MarquinhosApiService {
     userId: string,
     guildId: string,
     guess: string,
-  ): Promise<ApiResponse> {
+  ): Promise<ApiResponse<z.infer<typeof wordleGuessResultSchema>>> {
     const data = await this.client.post('/api/wordle/guess', {
       userId,
       guildId,
       guess,
     });
-    return data as ApiResponse;
+    return apiResponseSchema(wordleGuessResultSchema).parse(data);
   }
 
-  async getWordleStats(guildId: string): Promise<ApiResponse> {
+  async getWordleStats(
+    guildId: string,
+  ): Promise<ApiResponse<z.infer<typeof wordleDailyStatsSchema>>> {
     const data = await this.client.get(`/api/wordle/stats/${guildId}`);
-    return data as ApiResponse;
+    return apiResponseSchema(wordleDailyStatsSchema).parse(data);
   }
 
-  async getWordleDayGuesses(guildId: string): Promise<ApiResponse> {
+  async getWordleDayGuesses(
+    guildId: string,
+  ): Promise<ApiResponse<z.infer<typeof wordleDayGuessesSchema> | null>> {
     const data = await this.client.get(`/api/wordle/day-guesses/${guildId}`);
-    return data as ApiResponse;
+    return apiResponseSchema(wordleDayGuessesSchema.nullable()).parse(data);
   }
 
   async getUserWordleSession(
     userId: string,
     guildId: string,
-  ): Promise<ApiResponse> {
+  ): Promise<ApiResponse<z.infer<typeof userWordleSessionSchema> | null>> {
     const data = await this.client.get(
       `/api/wordle/session/${userId}/${guildId}`,
     );
-    return data as ApiResponse;
+    return apiResponseSchema(userWordleSessionSchema.nullable()).parse(data);
   }
 
-  async forceNewWordleWord(guildId: string): Promise<ApiResponse> {
+  async forceNewWordleWord(
+    guildId: string,
+  ): Promise<ApiResponse<z.infer<typeof forceNewWordResultSchema>>> {
     const data = await this.client.post('/api/wordle/admin/force-new-word', {
       guildId,
     });
-    return data as ApiResponse;
+    return apiResponseSchema(forceNewWordResultSchema).parse(data);
   }
 
   async setWordleConfig(
     guildId: string,
     channelId: string,
   ): Promise<ApiResponse> {
-    const data = (await this.client.post('/api/wordle/config', {
-      guildId,
-      channelId,
-    })) as ApiResponse;
+    const data = apiResponseSchema(z.unknown()).parse(
+      await this.client.post('/api/wordle/config', {
+        guildId,
+        channelId,
+      }),
+    );
     this.wordleConfigCache.set(guildId, channelId);
     return data;
   }
 
-  async getWordleConfig(guildId: string): Promise<ApiResponse> {
+  async getWordleConfig(
+    guildId: string,
+  ): Promise<ApiResponse<z.infer<typeof wordleConfigSchema>>> {
     if (this.wordleConfigCache.has(guildId)) {
-      return { data: { channelId: this.wordleConfigCache.get(guildId) } };
+      return {
+        data: { channelId: this.wordleConfigCache.get(guildId) ?? null },
+      };
     }
-    const data = (await this.client.get(
-      `/api/wordle/config/${guildId}`,
-    )) as ApiResponse;
-    this.wordleConfigCache.set(
-      guildId,
-      (data.data as { channelId?: string })?.channelId ?? null,
-    );
-    return data;
+    const raw = await this.client.get(`/api/wordle/config/${guildId}`);
+    const parsed = apiResponseSchema(wordleConfigSchema.nullable()).parse(raw);
+    const channelId = parsed.data?.channelId ?? null;
+    this.wordleConfigCache.set(guildId, channelId);
+    return { ...parsed, data: { channelId } };
   }
 
   async preloadWordleConfigs(guildIds: string[]): Promise<void> {
@@ -472,58 +549,69 @@ export class MarquinhosApiService {
   async markWordleAnnounced(
     userId: string,
     guildId: string,
-  ): Promise<ApiResponse> {
+  ): Promise<ApiResponse<{ claimed: boolean }>> {
     const data = await this.client.post('/api/wordle/mark-announced', {
       userId,
       guildId,
     });
-    return data as ApiResponse;
+    return apiResponseSchema(markWordleAnnouncedResultSchema).parse(data);
   }
 
-  async getUnannouncedWordleWins(guildId: string): Promise<ApiResponse> {
+  async getUnannouncedWordleWins(
+    guildId: string,
+  ): Promise<ApiResponse<z.infer<typeof unannouncedWordleWinSchema>[]>> {
     const data = await this.client.get(`/api/wordle/unannounced/${guildId}`);
-    return data as ApiResponse;
+    return apiResponseSchema(z.array(unannouncedWordleWinSchema)).parse(data);
   }
 
   async validateWordleGuess(
     guildId: string,
     guess: string,
-  ): Promise<ApiResponse> {
+  ): Promise<
+    ApiResponse<{ valid: boolean; wordLength: number; message: string }>
+  > {
     const params = new URLSearchParams({ guess });
     const data = await this.client.get(
       `/api/wordle/validate/${guildId}?${params}`,
     );
-    return data as ApiResponse;
+    return apiResponseSchema(validateWordleGuessResultSchema).parse(data);
   }
 
   async getWordlistPoolStats(): Promise<
     ApiResponse<{ total: number; used: number; remaining: number }>
   > {
     const data = await this.client.get('/api/wordle/wordlist-pool-stats');
-    return data as ApiResponse<{
-      total: number;
-      used: number;
-      remaining: number;
-    }>;
+    return apiResponseSchema(wordlistPoolStatsSchema).parse(data);
   }
 
   async getWordleLeaderboard(
     guildId: string,
+    period: 'daily',
+  ): Promise<ApiResponse<DailyLeaderboardEntry[]> & { groupStreak: number }>;
+  async getWordleLeaderboard(
+    guildId: string,
+    period: 'weekly' | 'monthly' | 'all-time',
+  ): Promise<ApiResponse<RankedLeaderboardEntry[]> & { groupStreak: number }>;
+  async getWordleLeaderboard(
+    guildId: string,
     period: 'daily' | 'weekly' | 'monthly' | 'all-time',
   ): Promise<
-    ApiResponse<
-      | { userId: string; totalDays: number; avgScore: number }[]
-      | { userId: string; attempts: number; solved: boolean }[]
-    > & { groupStreak: number }
+    ApiResponse<DailyLeaderboardEntry[] | RankedLeaderboardEntry[]> & {
+      groupStreak: number;
+    }
   > {
     const params = new URLSearchParams({ period });
-    const result = await this.client.get(
+    const raw = await this.client.get(
       `/api/wordle/leaderboard/${guildId}?${params}`,
     );
-    return result as ApiResponse<
-      | { userId: string; totalDays: number; avgScore: number }[]
-      | { userId: string; attempts: number; solved: boolean }[]
-    > & { groupStreak: number };
+    if (period === 'daily') {
+      return wordleLeaderboardResultSchema(dailyLeaderboardEntrySchema).parse(
+        raw,
+      );
+    }
+    return wordleLeaderboardResultSchema(rankedLeaderboardEntrySchema).parse(
+      raw,
+    );
   }
 
   async getNextWordlistReviewWord(): Promise<
@@ -535,12 +623,7 @@ export class MarquinhosApiService {
     }>
   > {
     const data = await this.client.get('/api/wordle/review/next');
-    return data as ApiResponse<{
-      word: string | null;
-      index: number;
-      total: number;
-      done: boolean;
-    }>;
+    return apiResponseSchema(wordleReviewWordResultSchema).parse(data);
   }
 
   async submitWordlistReviewDecision(
@@ -558,12 +641,7 @@ export class MarquinhosApiService {
       word,
       decision,
     });
-    return data as ApiResponse<{
-      word: string | null;
-      index: number;
-      total: number;
-      done: boolean;
-    }>;
+    return apiResponseSchema(wordleReviewWordResultSchema).parse(data);
   }
 
   // Voice AI API calls
@@ -572,11 +650,11 @@ export class MarquinhosApiService {
     payload: Record<string, unknown>,
   ): Promise<ApiResponse> {
     const data = await this.client.post(endpoint, payload);
-    return data as ApiResponse;
+    return apiResponseSchema(z.unknown()).parse(data);
   }
 
   async get(endpoint: string): Promise<ApiResponse> {
     const data = await this.client.get(endpoint);
-    return data as ApiResponse;
+    return apiResponseSchema(z.unknown()).parse(data);
   }
 }
