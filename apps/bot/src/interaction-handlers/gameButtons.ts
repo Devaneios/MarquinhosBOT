@@ -10,7 +10,6 @@ import {
 import {
   ActionRowBuilder,
   ButtonInteraction,
-  InteractionEditReplyOptions,
   MessageFlags,
   ModalBuilder,
   TextInputBuilder,
@@ -263,7 +262,7 @@ export class GameButtonsHandler extends InteractionHandler {
       btn.user.id,
       btn.channelId,
       result.action,
-      (payload) => btn.editReply(payload as InteractionEditReplyOptions),
+      (payload) => btn.editReply(payload),
       (msg) =>
         btn
           .followUp({ content: msg, flags: MessageFlags.Ephemeral })
