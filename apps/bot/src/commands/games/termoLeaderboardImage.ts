@@ -28,11 +28,7 @@ export async function buildDailyLeaderboardAttachment(
   guildId: string,
 ): Promise<DailyLeaderboardImage | null> {
   const response = await api.getWordleLeaderboard(guildId, 'daily');
-  const rawEntries = response.data as {
-    userId: string;
-    attempts: number;
-    solved: boolean;
-  }[];
+  const rawEntries = response.data;
   const { groupStreak } = response;
 
   if (!rawEntries || rawEntries.length === 0) return null;
@@ -91,7 +87,7 @@ export async function sendTermoStatusBroadcast(
     .setImage('attachment://termo-status.png');
 
   const statsRes = await api.getWordleStats(guildId);
-  const wordDate = (statsRes.data as { wordDate?: string })?.wordDate;
+  const wordDate = statsRes.data.wordDate;
   if (wordDate) {
     embed.setFooter({ text: wordDate.split('-').reverse().join('/') });
   }
