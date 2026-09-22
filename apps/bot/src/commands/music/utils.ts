@@ -4,13 +4,19 @@ import {
   GuildVoiceChannelResolvable,
   InteractionEditReplyOptions,
   MessagePayload,
-  TextBasedChannel,
+  SendableChannels,
 } from 'discord.js';
+
+export interface PlayQueueMetadata {
+  interactionChannel: SendableChannels;
+  voiceChannel: GuildVoiceChannelResolvable;
+  addedBy: string;
+}
 
 export const handlePlay = async (
   query: string,
   guildId: string,
-  interactionChannel: TextBasedChannel,
+  interactionChannel: SendableChannels,
   voiceChannel: GuildVoiceChannelResolvable,
   addedBy: string,
   playOnTop = false,
@@ -32,7 +38,7 @@ export const handlePlay = async (
 
       return 'Música adicionada ao topo da fila';
     } else {
-      await player.play(voiceChannel, searchResult, {
+      await player.play<PlayQueueMetadata>(voiceChannel, searchResult, {
         nodeOptions: {
           metadata: {
             interactionChannel,
