@@ -1,25 +1,18 @@
 import { isDevelopmentChannelAllowed } from '@marquinhos/config/developmentScope';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
-import { type LetterFeedback } from '@marquinhos/ui/screens/termo';
+import { type WordleGuessResult } from '@marquinhos/services/marquinhosApi.schemas';
+import { requireGuildMember } from '@marquinhos/utils/discord';
+import { HttpError } from '@marquinhos/utils/httpClient';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import {
-  GuildMember,
   MessageFlags,
   type AutocompleteInteraction,
   type ChatInputCommandInteraction,
 } from 'discord.js';
 import { announceTermoWin } from './announceTermoWin';
 import { buildKeyboardAttachment, buildTermoActionRow } from './termoResponse';
-
-interface WordleGuessResult {
-  guesses: { guess: string; feedback: LetterFeedback[] }[];
-  solved: boolean;
-  attempts: number;
-  wordLength: number;
-  streak?: number;
-}
 
 const api = MarquinhosApiService.getInstance();
 const previousErrorInteractions = new Map<
@@ -64,8 +57,7 @@ export class TermoCommand extends MarquinhosCommand {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const configResponse = await api.getWordleConfig(interaction.guildId);
-    const channelId = (configResponse.data as { channelId?: string })
-      ?.channelId;
+    const channelId = configResponse.data.channelId;
     if (!channelId) {
       await interaction.editReply({
         content: '❌ O Terminhos não está configurado.',
@@ -108,20 +100,17 @@ export class TermoCommand extends MarquinhosCommand {
         userId,
         interaction.guildId,
       );
-      const result = userAttemptsResponse.data as {
-        guesses: { guess: string; feedback: LetterFeedback[] }[];
-        wordLength: number;
-        attempts: number;
-      } | null;
-      if (!result) {
+      const result = userAttemptsResponse.data;
+      if (!result || result.guesses.length === 0) {
         await interaction.editReply({
           content: '❌ Você ainda não tentou nenhuma vez.',
         });
         return;
       }
+      const wordLength = result.guesses[0].guess.length;
       const attachment = await buildKeyboardAttachment(
         result.guesses,
-        result.wordLength,
+        wordLength,
         { maxAttempts: result.attempts },
       );
       await interaction.editReply({
@@ -138,11 +127,18 @@ export class TermoCommand extends MarquinhosCommand {
         interaction.guildId,
         guess,
       );
-      result = response.data as WordleGuessResult;
+      result = response.data;
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? 'Erro ao processar tentativa.';
+      let message = 'Erro ao processar tentativa.';
+      const errData = err instanceof HttpError ? err.response?.data : undefined;
+      if (
+        errData &&
+        typeof errData === 'object' &&
+        'message' in errData &&
+        typeof errData.message === 'string'
+      ) {
+        message = errData.message;
+      }
       await interaction.editReply({ content: `❌ ${message}` });
       previousErrorInteractions.set(userId, interaction);
       return;
@@ -173,11 +169,11 @@ export class TermoCommand extends MarquinhosCommand {
           userId,
           interaction.guildId!,
         );
-        const claimed = (claimRes.data as { claimed?: boolean })?.claimed;
+        const claimed = claimRes.data.claimed;
         if (!claimed) return;
 
         const name =
-          (interaction.member as GuildMember).nickname ||
+          requireGuildMember(interaction.member, interaction).nickname ||
           interaction.user.displayName ||
           interaction.user.username ||
           interaction.user.globalName ||
@@ -207,11 +203,7 @@ export class TermoCommand extends MarquinhosCommand {
         interaction.guildId,
         guess,
       );
-      const result = response.data as {
-        valid: boolean;
-        wordLength: number;
-        message: string;
-      };
+      const result = response.data;
       if (!result.valid) {
         await interaction.respond([]);
         return;
