@@ -4,10 +4,10 @@ import { ChatInputCommandInteraction, GuildMember } from 'discord.js';
 export class BotNotInOtherChannelPrecondition extends Precondition {
   override async chatInputRun(interaction: ChatInputCommandInteraction) {
     const member = interaction.member;
-    if (!member || !('voice' in member)) {
+    if (!(member instanceof GuildMember)) {
       return this.error({ message: 'Você precisa estar em um canal de voz!' });
     }
-    const userChannel = (member as GuildMember).voice.channel;
+    const userChannel = member.voice.channel;
     if (!userChannel) {
       return this.error({ message: 'Você precisa estar em um canal de voz!' });
     }
