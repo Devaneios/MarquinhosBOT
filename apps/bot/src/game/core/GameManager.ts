@@ -16,12 +16,27 @@ import {
 
 const apiService = MarquinhosApiService.getInstance();
 
+export interface GameDebugInfo {
+  activeSessions: number;
+  gameInstances: number;
+  playersWithCooldowns: number;
+  sessions: {
+    id: string;
+    type: GameType;
+    state: GameState;
+    players: number;
+    guild: string;
+    channel: string;
+  }[];
+}
+
 export class GameManager {
   private static instance: GameManager;
   private activeSessions: Collection<string, GameSession> = new Collection();
   private playerCooldowns: Collection<string, Map<GameType, number>> =
     new Collection();
-  private gameInstances: Collection<string, BaseGame> = new Collection();
+  private gameInstances: Collection<string, BaseGame<unknown>> =
+    new Collection();
   private cleanupInterval: ReturnType<typeof setInterval>;
   /** Sessions currently being processed — prevents concurrent actions (P0 fix) */
   private processingSessionIds: Set<string> = new Set();
@@ -159,7 +174,10 @@ export class GameManager {
     }
   }
 
-  public registerGameInstance(sessionId: string, gameInstance: BaseGame): void {
+  public registerGameInstance(
+    sessionId: string,
+    gameInstance: BaseGame<unknown>,
+  ): void {
     this.gameInstances.set(sessionId, gameInstance);
   }
 
@@ -168,7 +186,7 @@ export class GameManager {
     if (session) session.message = message;
   }
 
-  public getGameInstance(sessionId: string): BaseGame | undefined {
+  public getGameInstance(sessionId: string): BaseGame<unknown> | undefined {
     return this.gameInstances.get(sessionId);
   }
 
@@ -276,7 +294,7 @@ export class GameManager {
   }
 
   // Debug methods
-  public debugInfo(): Record<string, unknown> {
+  public debugInfo(): GameDebugInfo {
     return {
       activeSessions: this.activeSessions.size,
       gameInstances: this.gameInstances.size,
