@@ -1,7 +1,7 @@
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
+import { resolveGuildMember } from '@marquinhos/utils/discord';
 import { Command } from '@sapphire/framework';
 import { joinVoiceChannel } from 'discord-player';
-import { GuildMember } from 'discord.js';
 
 export class ImportunateCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
@@ -27,9 +27,9 @@ export class ImportunateCommand extends MarquinhosCommand {
   override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction,
   ) {
-    const member = interaction.options.getMember(
-      'importunado',
-    ) as GuildMember | null;
+    const member = resolveGuildMember(
+      interaction.options.getMember('importunado'),
+    );
 
     await interaction.deferReply({ ephemeral: true });
 
