@@ -122,20 +122,40 @@ export type ButtonResult =
   | { kind: 'modal'; config: ModalConfig }
   | { kind: 'ignore' };
 
-export abstract class BaseGame {
+export abstract class BaseGame<
+  TData,
+  TAction extends Record<string, unknown> = Record<string, unknown>,
+> {
   protected session: GameSession;
 
   constructor(session: GameSession) {
     this.session = session;
   }
 
+  // The heterogeneous Collection<string, GameSession> holds every game type under one
+  // key with no runtime tag to discriminate on, so recovering the per-instance shape at
+  // this boundary requires exactly one cast — this is the sanctioned exception.
+  protected get data(): TData {
+    return this.session.data as TData;
+  }
+
+  protected set data(value: TData) {
+    this.session.data = value;
+  }
+
   abstract start(): Promise<void>;
-  abstract handlePlayerAction(
-    userId: string,
-    action: Record<string, unknown>,
-  ): Promise<void>;
+  abstract handlePlayerAction(userId: string, action: TAction): Promise<void>;
   abstract getGameEmbed(): EmbedBuilder;
   abstract finish(): Promise<GameResult>;
+
+  protected getActionButtons?(): ActionRowBuilder<MessageActionRowComponentBuilder>[];
+  protected getAnswerButtons?(): ActionRowBuilder<MessageActionRowComponentBuilder>[];
+  protected getChoiceButtons?(): ActionRowBuilder<MessageActionRowComponentBuilder>[];
+  protected getBoardButtons?(): ActionRowBuilder<MessageActionRowComponentBuilder>[];
+  protected getMovementButtons?(): ActionRowBuilder<MessageActionRowComponentBuilder>[];
+  protected getBetButtons?(): ActionRowBuilder<MessageActionRowComponentBuilder>[];
+  protected getLetterButtons?(): ActionRowBuilder<MessageActionRowComponentBuilder>[];
+  protected getNumberButtons?(): ActionRowBuilder<MessageActionRowComponentBuilder>[];
 
   protected addPlayer(userId: string, username: string): boolean {
     if (this.session.players.length >= this.session.config.maxPlayers) {
@@ -199,14 +219,7 @@ export abstract class BaseGame {
       return this._isFinished();
     }
     // Fallback: duck-type session.data flags for legacy games
-    const data = this.session.data as Record<string, unknown>;
-    return !!(
-      data.gameOver ||
-      data.finished ||
-      data.solved ||
-      data.drawn ||
-      data.gamePhase === 'finished'
-    );
+    return BaseGame.duckTypeFinished(this.session.data);
   }
 
   /**
@@ -215,43 +228,40 @@ export abstract class BaseGame {
    * duck-typing as fallback for legacy games that don't override this.
    */
   protected _isFinished(): boolean {
-    const data = this.session.data as Record<string, unknown>;
+    return BaseGame.duckTypeFinished(this.session.data);
+  }
+
+  private static duckTypeFinished(data: unknown): boolean {
+    if (!data || typeof data !== 'object') return false;
     return !!(
-      data.gameOver ||
-      data.finished ||
-      data.solved ||
-      data.drawn ||
-      data.gamePhase === 'finished'
+      ('gameOver' in data && data.gameOver) ||
+      ('finished' in data && data.finished) ||
+      ('solved' in data && data.solved) ||
+      ('drawn' in data && data.drawn) ||
+      ('gamePhase' in data && data.gamePhase === 'finished')
     );
   }
 
   /**
    * Returns all Discord component rows for the current game state.
-   * Default: duck-types the 8 legacy method names — existing games work unchanged.
+   * Default: calls the optional legacy method hooks — existing games work unchanged.
    * New games override this and return rows directly.
    */
   public getComponents(): ActionRowBuilder<MessageActionRowComponentBuilder>[] {
     const LEGACY_METHODS = [
-      'getActionButtons',
-      'getAnswerButtons',
-      'getChoiceButtons',
-      'getBoardButtons',
-      'getMovementButtons',
-      'getBetButtons',
-      'getLetterButtons',
-      'getNumberButtons',
+      this.getActionButtons,
+      this.getAnswerButtons,
+      this.getChoiceButtons,
+      this.getBoardButtons,
+      this.getMovementButtons,
+      this.getBetButtons,
+      this.getLetterButtons,
+      this.getNumberButtons,
     ] as const;
     const rows: ActionRowBuilder<MessageActionRowComponentBuilder>[] = [];
-    const self = this as unknown as Record<string, unknown>;
     for (const method of LEGACY_METHODS) {
-      if (typeof self[method] === 'function') {
-        const result = (
-          self[
-            method
-          ] as () => ActionRowBuilder<MessageActionRowComponentBuilder>[]
-        )();
-        if (result?.length) rows.push(...result);
-      }
+      const result = method?.call(this);
+      if (result?.length) rows.push(...result);
     }
     return rows.slice(0, 5);
   }
