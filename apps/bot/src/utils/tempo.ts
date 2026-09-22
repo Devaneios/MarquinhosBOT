@@ -23,7 +23,8 @@ SOFTWARE.
  */
 
 import { PlaybackData } from '@marquinhos/types';
-import { GuildMember, Message, VoiceChannel } from 'discord.js';
+import { asVoiceChannel } from '@marquinhos/utils/discord';
+import { GuildMember, Message } from 'discord.js';
 import dotenv from 'dotenv';
 
 dotenv.config({ quiet: true });
@@ -51,11 +52,14 @@ export class TempoDataProvider {
 
     if (!voiceChannelId) return null;
 
-    const voiceChannel = await (
-      message.guild?.channels.cache.get(voiceChannelId) as VoiceChannel
-    ).fetch(true);
+    const voiceChannel = asVoiceChannel(
+      message.guild?.channels.cache.get(voiceChannelId),
+    );
+    if (!voiceChannel) return null;
+
+    const fetchedVoiceChannel = await voiceChannel.fetch(true);
     const listeningUsersId: string[] = [];
-    voiceChannel.members?.forEach((member: GuildMember) => {
+    fetchedVoiceChannel.members?.forEach((member: GuildMember) => {
       listeningUsersId.push(member.id);
     });
 
