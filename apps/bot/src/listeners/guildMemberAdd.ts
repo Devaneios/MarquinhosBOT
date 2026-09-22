@@ -1,8 +1,8 @@
 import { env } from '@marquinhos/config/environment';
-import { baseEmbed } from '@marquinhos/utils/discord';
+import { asTextChannel, baseEmbed } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
 import { Listener } from '@sapphire/framework';
-import { Events, GuildMember, TextChannel } from 'discord.js';
+import { Events, GuildMember } from 'discord.js';
 
 export class GuildMemberAddListener extends Listener<
   typeof Events.GuildMemberAdd
@@ -25,9 +25,9 @@ export class GuildMemberAddListener extends Listener<
       return;
     }
 
-    const defaultChannel = member.guild.channels.cache.get(
-      mainChannelId,
-    ) as TextChannel;
+    const defaultChannel = asTextChannel(
+      member.guild.channels.cache.get(mainChannelId),
+    );
 
     if (!defaultChannel) {
       logger.warn(`guildMemberAdd: Main channel ${mainChannelId} not found`);
@@ -75,9 +75,9 @@ export class GuildMemberAddListener extends Listener<
       }
     }
 
-    const channel = member.guild.channels.cache.get(
-      newcomersChannelId,
-    ) as TextChannel;
+    const channel = asTextChannel(
+      member.guild.channels.cache.get(newcomersChannelId),
+    );
 
     if (!channel) {
       logger.warn(
