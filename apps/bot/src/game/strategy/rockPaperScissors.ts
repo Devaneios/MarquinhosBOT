@@ -1,4 +1,5 @@
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
+import { z } from 'zod';
 import {
   BaseGame,
   GameResult,
@@ -8,10 +9,16 @@ import {
 } from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
 
+const RPSChoiceSchema = z.enum(['rock', 'paper', 'scissors']);
+
+type RPSChoice = z.infer<typeof RPSChoiceSchema>;
+
+const RPS_CHOICES = RPSChoiceSchema.options;
+
 interface RPSData {
   rounds: number;
   currentRound: number;
-  playerChoices: Record<string, string>;
+  playerChoices: Record<string, RPSChoice>;
   scores: Record<string, number>;
   roundResults: RoundResult[];
   finished: boolean;
@@ -20,13 +27,23 @@ interface RPSData {
 
 interface RoundResult {
   round: number;
-  choices: Record<string, string>;
+  choices: Record<string, RPSChoice>;
   winners: string[];
   eliminated: string[];
 }
 
-export class RockPaperScissorsGame extends BaseGame {
-  private readonly choices = {
+const RPSActionSchema = z.object({
+  type: z.literal('choose'),
+  choice: RPSChoiceSchema,
+});
+
+type RPSAction = z.infer<typeof RPSActionSchema>;
+
+export class RockPaperScissorsGame extends BaseGame<RPSData, RPSAction> {
+  private readonly choices: Record<
+    RPSChoice,
+    { emoji: string; beats: RPSChoice }
+  > = {
     rock: { emoji: '🪨', beats: 'scissors' },
     paper: { emoji: '📄', beats: 'rock' },
     scissors: { emoji: '✂️', beats: 'paper' },
@@ -38,7 +55,7 @@ export class RockPaperScissorsGame extends BaseGame {
   }
 
   private initializeGame(): void {
-    this.session.data = {
+    this.data = {
       rounds: 5,
       currentRound: 1,
       playerChoices: {},
@@ -46,8 +63,8 @@ export class RockPaperScissorsGame extends BaseGame {
       roundResults: [],
       finished: false,
       waitingForChoices: true,
-    } as RPSData;
-    const data = this.session.data as RPSData;
+    };
+    const data = this.data;
 
     this.session.players.forEach((player) => {
       data.scores[player.userId] = 0;
@@ -58,23 +75,19 @@ export class RockPaperScissorsGame extends BaseGame {
     this.session.players.forEach((p) => (p.status = PlayerStatus.ACTIVE));
   }
 
-  async handlePlayerAction(
-    userId: string,
-    action: Record<string, unknown>,
-  ): Promise<void> {
-    const data = this.session.data as RPSData;
+  async handlePlayerAction(userId: string, action: RPSAction): Promise<void> {
+    const parsed = RPSActionSchema.parse(action);
+    const data = this.data;
 
     if (data.finished || !data.waitingForChoices) return;
 
-    if (action.type === 'choose') {
-      await this.submitChoice(userId, action.choice as string);
+    if (parsed.type === 'choose') {
+      await this.submitChoice(userId, parsed.choice);
     }
   }
 
-  private async submitChoice(userId: string, choice: string): Promise<void> {
-    const data = this.session.data as RPSData;
-
-    if (!['rock', 'paper', 'scissors'].includes(choice)) return;
+  private async submitChoice(userId: string, choice: RPSChoice): Promise<void> {
+    const data = this.data;
 
     data.playerChoices[userId] = choice;
 
@@ -89,7 +102,7 @@ export class RockPaperScissorsGame extends BaseGame {
   }
 
   private async resolveRound(): Promise<void> {
-    const data = this.session.data as RPSData;
+    const data = this.data;
 
     const winners = this.determineRoundWinners();
     const eliminated: string[] = [];
@@ -120,8 +133,8 @@ export class RockPaperScissorsGame extends BaseGame {
   }
 
   private determineRoundWinners(): string[] {
-    const data = this.session.data as RPSData;
-    const choiceGroups: Record<string, string[]> = {
+    const data = this.data;
+    const choiceGroups: Record<RPSChoice, string[]> = {
       rock: [],
       paper: [],
       scissors: [],
@@ -133,9 +146,9 @@ export class RockPaperScissorsGame extends BaseGame {
     });
 
     // Determine winners based on RPS rules
-    const nonEmptyChoices = Object.entries(choiceGroups).filter(
-      ([_, players]) => players.length > 0,
-    );
+    const nonEmptyChoices = RPS_CHOICES.map(
+      (choice) => [choice, choiceGroups[choice]] as const,
+    ).filter(([, players]) => players.length > 0);
 
     if (nonEmptyChoices.length === 1 || nonEmptyChoices.length === 3) {
       // All players chose the same or all three choices were made - tie
@@ -146,9 +159,7 @@ export class RockPaperScissorsGame extends BaseGame {
       const [choice1, players1] = nonEmptyChoices[0];
       const [choice2, players2] = nonEmptyChoices[1];
 
-      if (
-        this.choices[choice1 as keyof typeof this.choices].beats === choice2
-      ) {
+      if (this.choices[choice1].beats === choice2) {
         return players1;
       } else {
         return players2;
@@ -159,7 +170,7 @@ export class RockPaperScissorsGame extends BaseGame {
   }
 
   getGameEmbed(): EmbedBuilder {
-    const data = this.session.data as RPSData;
+    const data = this.data;
 
     let description = '';
 
@@ -207,7 +218,7 @@ export class RockPaperScissorsGame extends BaseGame {
 
       Object.entries(lastResult.choices).forEach(([userId, choice]) => {
         const player = this.session.players.find((p) => p.userId === userId);
-        const emoji = this.choices[choice as keyof typeof this.choices].emoji;
+        const emoji = this.choices[choice].emoji;
         description += `${emoji} ${player?.username}\n`;
       });
 
@@ -234,7 +245,7 @@ export class RockPaperScissorsGame extends BaseGame {
   }
 
   getChoiceButtons() {
-    const data = this.session.data as RPSData;
+    const data = this.data;
 
     if (data.finished || !data.waitingForChoices) return [];
 
@@ -252,7 +263,7 @@ export class RockPaperScissorsGame extends BaseGame {
   }
 
   async finish(): Promise<GameResult> {
-    const data = this.session.data as RPSData;
+    const data = this.data;
     const sortedPlayers = this.session.players.sort(
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
