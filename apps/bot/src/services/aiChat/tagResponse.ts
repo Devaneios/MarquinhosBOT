@@ -1,6 +1,7 @@
 import { isAiChannel } from '@marquinhos/config/developmentScope';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { baseEmbed } from '@marquinhos/utils/discord';
+import { getErrorMessage } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import type { EmbedBuilder } from 'discord.js';
 import {
@@ -118,7 +119,7 @@ export async function handleTagResponse(
     }
   } catch (error) {
     logger.error(
-      `[ai-chat] tag falhou user=${message.author.id} ${Date.now() - startedAt}ms: ${(error as Error).message}\n${(error as Error).stack ?? ''}`,
+      `[ai-chat] tag falhou user=${message.author.id} ${Date.now() - startedAt}ms: ${getErrorMessage(error)}\n${error instanceof Error ? (error.stack ?? '') : ''}`,
     );
     await message.reply(pick(ERROR_FALLBACK_POOL));
   }
@@ -156,7 +157,7 @@ async function respondToTagAndReply(
       };
     } catch (error) {
       logger.warn(
-        `[ai-chat] não consegui buscar a mensagem referenciada: ${(error as Error).message}`,
+        `[ai-chat] não consegui buscar a mensagem referenciada: ${getErrorMessage(error)}`,
       );
       repliedMessage = undefined;
     }
