@@ -2,7 +2,7 @@ import { GameManager } from '@marquinhos/game/core/GameManager';
 import { UserFacingError } from '@marquinhos/game/core/UserFacingError';
 import { reportError } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
-import { ActionRowBuilder, EmbedBuilder } from 'discord.js';
+import type { InteractionEditReplyOptions } from 'discord.js';
 
 const gameManager = GameManager.getInstance();
 
@@ -10,10 +10,7 @@ export async function handleGameInteraction(
   userId: string,
   channelId: string,
   action: Record<string, unknown>,
-  updateFn: (payload: {
-    embeds: EmbedBuilder[];
-    components: ActionRowBuilder[];
-  }) => Promise<unknown>,
+  updateFn: (payload: InteractionEditReplyOptions) => Promise<unknown>,
   errorFn: (msg: string) => Promise<void>,
 ): Promise<void> {
   const session = gameManager.getSessionByChannel(channelId);
