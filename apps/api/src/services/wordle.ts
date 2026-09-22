@@ -772,10 +772,10 @@ export class WordleService {
           { $guild_id: string; $today: string; $limit: number }
         >(
           `SELECT user_id, attempts, solved
-           FROM wordle_sessions
-           WHERE guild_id = $guild_id AND word_date = $today
-           ORDER BY solved DESC, attempts ASC
-           LIMIT $limit`,
+ FROM wordle_sessions
+ WHERE guild_id = $guild_id AND word_date = $today
+ ORDER BY solved DESC, attempts ASC, created_at ASC
+ LIMIT $limit`,
         )
         .all({ $guild_id: guildId, $today: today, $limit: limit })
         .map((row: { user_id: string; attempts: number; solved: number }) => ({

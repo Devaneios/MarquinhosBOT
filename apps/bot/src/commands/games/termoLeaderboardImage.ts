@@ -1,7 +1,6 @@
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
   buildTermoLeaderboardImage,
-  denseRanks,
   type DailyEntry,
 } from '@marquinhos/ui/screens/termo';
 import { fetchAvatarBuffer } from '@marquinhos/utils/discord';
@@ -46,15 +45,12 @@ export async function buildDailyLeaderboardAttachment(
     .fetch({ user: userIds })
     .catch(() => null);
 
-  const ranks = denseRanks(
-    rawEntries.map((e) => (e.solved ? `s:${e.attempts}` : 'u')),
-  );
   const entries: DailyEntry[] = await Promise.all(
     rawEntries.map(async (e, i) => {
       const member = membersCollection?.get(e.userId);
       const avatar = member ? await fetchAvatarBuffer(member) : undefined;
       return {
-        rank: ranks[i],
+        rank: i + 1,
         displayName: member?.displayName ?? `<@${e.userId}>`,
         attempts: e.attempts,
         solved: e.solved,
