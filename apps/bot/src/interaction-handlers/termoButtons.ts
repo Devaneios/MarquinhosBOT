@@ -7,19 +7,12 @@ import {
 import { isDevelopmentChannelAllowed } from '@marquinhos/config/developmentScope';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { formatGuessesAsText } from '@marquinhos/ui/compounds/termo/text-fallback';
-import type { LetterFeedback } from '@marquinhos/ui/screens/termo';
 import { logger } from '@marquinhos/utils/logger';
 import {
   InteractionHandler,
   InteractionHandlerTypes,
 } from '@sapphire/framework';
 import { ButtonInteraction, MessageFlags } from 'discord.js';
-
-type TermoSessionData = {
-  guesses: { guess: string; feedback: LetterFeedback[] }[];
-  wordLength: number;
-  attempts: number;
-} | null;
 
 const api = MarquinhosApiService.getInstance();
 
@@ -69,7 +62,7 @@ export class TermoButtonsHandler extends InteractionHandler {
     await btn.deferUpdate();
 
     const response = await api.getUserWordleSession(btn.user.id, btn.guildId);
-    const result = response.data as TermoSessionData;
+    const result = response.data;
 
     if (!result || result.guesses.length === 0) {
       await btn.editReply({ content: '❌ Você ainda não tentou nenhuma vez.' });
@@ -83,9 +76,10 @@ export class TermoButtonsHandler extends InteractionHandler {
     }
 
     if (btn.customId === TERMO_BUTTON_IDS.retry) {
+      const wordLength = result.guesses[0].guess.length;
       const attachment = await buildKeyboardAttachment(
         result.guesses,
-        result.wordLength,
+        wordLength,
         { maxAttempts: result.attempts },
       );
       await btn.editReply({
