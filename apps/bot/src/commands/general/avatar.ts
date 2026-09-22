@@ -6,6 +6,14 @@ import { AvatarConfig } from '@marquinhos/types';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import { MessageFlags } from 'discord.js';
+import { z } from 'zod';
+
+const AvatarConfigSchema: z.ZodType<AvatarConfig> = z.object({
+  name: z.string(),
+  url: z.string(),
+  startDate: z.string().nullable(),
+  endDate: z.string().nullable(),
+});
 
 let avatarCache: AvatarConfig[] | null = null;
 let avatarCacheExpiry = 0;
@@ -57,9 +65,10 @@ export class AvatarCommand extends MarquinhosCommand {
 
     try {
       const spreadsheet = SpreadsheetService.getInstance();
-      const avatars = await spreadsheet.getRowsAsObjects<AvatarConfig>(
+      const avatars = await spreadsheet.getRowsAsObjects(
         'avatars',
         'A1:D',
+        AvatarConfigSchema,
       );
 
       switch (subcommand) {
@@ -90,9 +99,10 @@ export class AvatarCommand extends MarquinhosCommand {
     if (!avatarCache || now > avatarCacheExpiry) {
       try {
         const spreadsheet = SpreadsheetService.getInstance();
-        avatarCache = await spreadsheet.getRowsAsObjects<AvatarConfig>(
+        avatarCache = await spreadsheet.getRowsAsObjects(
           'avatars',
           'A1:D',
+          AvatarConfigSchema,
         );
         avatarCacheExpiry = now + 5 * 60 * 1000;
       } catch {
