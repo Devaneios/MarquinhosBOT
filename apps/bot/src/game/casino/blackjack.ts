@@ -1,4 +1,5 @@
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
+import { z } from 'zod';
 import {
   BaseGame,
   GameResult,
@@ -24,7 +25,15 @@ interface BlackjackData {
   bet: number;
 }
 
-export class BlackjackGame extends BaseGame {
+const BlackjackActionSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('hit') }),
+  z.object({ type: z.literal('stand') }),
+  z.object({ type: z.literal('double') }),
+]);
+
+type BlackjackAction = z.infer<typeof BlackjackActionSchema>;
+
+export class BlackjackGame extends BaseGame<BlackjackData, BlackjackAction> {
   private readonly suits = ['♠️', '♥️', '♦️', '♣️'];
   private readonly values = [
     { value: 'A', numeric: 11 },
@@ -62,7 +71,7 @@ export class BlackjackGame extends BaseGame {
       result: null,
       bet: 20,
     };
-    this.session.data = initData;
+    this.data = initData;
 
     // Check for blackjack
     if (initData.playerTotal === 21) {
@@ -137,13 +146,14 @@ export class BlackjackGame extends BaseGame {
 
   async handlePlayerAction(
     userId: string,
-    action: Record<string, unknown>,
+    action: BlackjackAction,
   ): Promise<void> {
-    const data = this.session.data as BlackjackData;
+    const parsed = BlackjackActionSchema.parse(action);
+    const data = this.data;
 
     if (data.gamePhase !== 'player_turn') return;
 
-    switch (action.type) {
+    switch (parsed.type) {
       case 'hit':
         await this.hit();
         break;
@@ -157,7 +167,7 @@ export class BlackjackGame extends BaseGame {
   }
 
   private async hit(): Promise<void> {
-    const data = this.session.data as BlackjackData;
+    const data = this.data;
     const newCard = this.drawCard(data.deck);
     data.playerCards.push(newCard);
     data.playerTotal = this.calculateTotal(data.playerCards);
@@ -171,7 +181,7 @@ export class BlackjackGame extends BaseGame {
   }
 
   private async stand(): Promise<void> {
-    const data = this.session.data as BlackjackData;
+    const data = this.data;
     data.gamePhase = 'dealer_turn';
 
     // Reveal dealer's second card and calculate total
@@ -189,7 +199,7 @@ export class BlackjackGame extends BaseGame {
   }
 
   private async double(): Promise<void> {
-    const data = this.session.data as BlackjackData;
+    const data = this.data;
     data.bet *= 2;
     await this.hit();
 
@@ -199,7 +209,7 @@ export class BlackjackGame extends BaseGame {
   }
 
   private determineWinner(): 'win' | 'lose' | 'push' {
-    const data = this.session.data as BlackjackData;
+    const data = this.data;
 
     if (data.dealerTotal > 21) {
       return 'win'; // Dealer bust
@@ -215,7 +225,7 @@ export class BlackjackGame extends BaseGame {
   }
 
   getGameEmbed(): EmbedBuilder {
-    const data = this.session.data as BlackjackData;
+    const data = this.data;
     const player = this.session.players[0];
 
     let description = `👤 **Jogador:** ${player.username}\n`;
@@ -282,7 +292,7 @@ export class BlackjackGame extends BaseGame {
   }
 
   getActionButtons() {
-    const data = this.session.data as BlackjackData;
+    const data = this.data;
 
     if (data.gamePhase === 'player_turn') {
       const canDouble = data.playerCards.length === 2;
@@ -309,7 +319,7 @@ export class BlackjackGame extends BaseGame {
 
   async finish(): Promise<GameResult> {
     const player = this.session.players[0];
-    const data = this.session.data as BlackjackData;
+    const data = this.data;
     const isWin = data.result === 'win' || data.result === 'blackjack';
     const rewards = this.calculateRewards(player, isWin ? 1 : 4);
 
