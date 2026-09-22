@@ -1,5 +1,11 @@
 import BotError from '@marquinhos/utils/botError';
+import { getErrorMessage } from '@marquinhos/utils/errorHandling';
 import {
+  APIInteractionDataResolvedGuildMember,
+  APIInteractionGuildMember,
+  Channel,
+  ChannelType,
+  CommandInteraction,
   EmbedBuilder,
   GuildMember,
   Message,
@@ -7,6 +13,7 @@ import {
   MessagePayload,
   PermissionFlagsBits,
   PermissionResolvable,
+  SendableChannels,
   TextChannel,
   VoiceChannel,
 } from 'discord.js';
@@ -75,7 +82,7 @@ export const checkPermissions = (
 
 export const sendTimedMessage = async (
   message: string | MessagePayload | MessageCreateOptions,
-  channel: TextChannel,
+  channel: SendableChannels,
   duration: number,
 ): Promise<void> => {
   const sentMessage = await channel.send(message);
@@ -83,18 +90,61 @@ export const sendTimedMessage = async (
   try {
     await (await channel.messages.fetch(sentMessage)).delete();
   } catch (error: unknown) {
-    throw new BotError((error as Error).message, sentMessage, 'warn');
+    throw new BotError(getErrorMessage(error), sentMessage, 'warn');
   }
 };
 
 export const voiceChannelPresence = (message: Message): VoiceChannel | null => {
-  const channel = message.member?.voice.channel as VoiceChannel;
+  const channel = asVoiceChannel(message.member?.voice.channel);
   if (!channel) {
     message.reply('Você precisa estar em um canal de voz!');
     throw new BotError('User not in voice channel', message, 'warn');
   }
   return channel;
 };
+
+/**
+ * Narrows `interaction.member`'s cached-or-not union down to a real
+ * `GuildMember`, throwing a `BotError` for the null/API-shape branches
+ * that mean the interaction wasn't resolved with a cached member.
+ */
+export function requireGuildMember(
+  member: GuildMember | APIInteractionGuildMember | null,
+  context: Message | CommandInteraction,
+): GuildMember {
+  const guildMember = resolveGuildMember(member);
+  if (!guildMember) {
+    throw new BotError('Membro não encontrado no servidor.', context, 'warn');
+  }
+  return guildMember;
+}
+
+/**
+ * Non-throwing counterpart of `requireGuildMember`, for call sites (like
+ * `interaction.options.getMember(...)`) where an unresolved member is an
+ * expected, gracefully-handled outcome rather than an error.
+ */
+export function resolveGuildMember(
+  member:
+    | GuildMember
+    | APIInteractionGuildMember
+    | APIInteractionDataResolvedGuildMember
+    | null,
+): GuildMember | null {
+  return member instanceof GuildMember ? member : null;
+}
+
+export function asTextChannel(
+  channel: Channel | null | undefined,
+): TextChannel | undefined {
+  return channel?.type === ChannelType.GuildText ? channel : undefined;
+}
+
+export function asVoiceChannel(
+  channel: Channel | null | undefined,
+): VoiceChannel | undefined {
+  return channel?.type === ChannelType.GuildVoice ? channel : undefined;
+}
 
 export enum AudioPlayerDisconnectEvent {
   Disconnect = 'disconnect',
