@@ -1,7 +1,7 @@
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
-import { baseEmbed } from '@marquinhos/utils/discord';
+import { baseEmbed, requireGuildMember } from '@marquinhos/utils/discord';
 import { Command } from '@sapphire/framework';
-import { GuildMember, MessageFlags } from 'discord.js';
+import { MessageFlags } from 'discord.js';
 
 const DATE_LOCALE_CONFIG: Intl.DateTimeFormatOptions = {
   weekday: 'long',
@@ -34,18 +34,19 @@ export class CheckInCommand extends MarquinhosCommand {
   override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction,
   ) {
-    const member = interaction.member as GuildMember;
-    const guildName = interaction.guild?.name as string;
+    const member = requireGuildMember(interaction.member, interaction);
+    const guildName = interaction.guild?.name ?? 'servidor desconhecido';
 
-    if (!member) {
+    if (member.joinedTimestamp === null) {
       await interaction.reply({
-        content: 'Você não está em um servidor!',
+        content:
+          'Não consegui encontrar a data em que você entrou no servidor.',
         flags: MessageFlags.Ephemeral,
       });
       return;
     }
 
-    const memberJoinedDate = new Date(member.joinedTimestamp as number);
+    const memberJoinedDate = new Date(member.joinedTimestamp);
     const formatedMemberJoinedTimestamp = memberJoinedDate.toLocaleString(
       'pt-BR',
       DATE_LOCALE_CONFIG,
