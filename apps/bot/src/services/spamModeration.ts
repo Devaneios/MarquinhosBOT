@@ -37,6 +37,12 @@ interface SpamModerationChannel {
   };
 }
 
+function isSpamModerationChannel(
+  channel: unknown,
+): channel is SpamModerationChannel {
+  return typeof channel === 'object' && channel !== null;
+}
+
 export interface SpamModerationMessage {
   id: string;
   content: string;
@@ -161,9 +167,12 @@ export class SpamModerationService {
       duplicateMessage.timestamp = now;
 
       if (!duplicateMessage.deleted) {
-        const originalChannel = message.client.channels.cache.get(
+        const rawChannel = message.client.channels.cache.get(
           duplicateMessage.channelId,
-        ) as SpamModerationChannel | undefined;
+        );
+        const originalChannel = isSpamModerationChannel(rawChannel)
+          ? rawChannel
+          : undefined;
         const originalMessage = await originalChannel?.messages?.fetch(
           duplicateMessage.messageId,
         );
