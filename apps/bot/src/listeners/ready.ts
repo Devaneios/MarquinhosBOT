@@ -10,10 +10,9 @@ import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
   buildCrosswordImage,
   buildWordHiddenPreviewImage,
-  type LetterFeedback,
 } from '@marquinhos/ui/screens/termo';
 import { getBicho } from '@marquinhos/utils/bichoGame';
-import { baseEmbed } from '@marquinhos/utils/discord';
+import { asTextChannel, baseEmbed } from '@marquinhos/utils/discord';
 import { reportError } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { resourcePath } from '@marquinhos/utils/resources';
@@ -27,13 +26,6 @@ import {
 } from 'discord.js';
 
 const api = MarquinhosApiService.getInstance();
-
-type WordleDayGuesses = {
-  word: string;
-  wordDate: string;
-  wordLength: number;
-  guesses: { guess: string; feedback: LetterFeedback[] }[];
-} | null;
 
 export class ReadyListener extends Listener<typeof Events.ClientReady> {
   public constructor(context: Listener.LoaderContext) {
@@ -93,18 +85,17 @@ async function rotateTermoWord(client: Client<true>): Promise<void> {
     for (const [guildId] of guilds) {
       try {
         const cfgRes = await api.getWordleConfig(guildId);
-        const channelId = (cfgRes.data as { channelId?: string })?.channelId;
+        const channelId = cfgRes.data.channelId;
         if (!channelId) continue;
 
-        const channel = client.channels.cache.get(channelId) as
-          TextChannel | undefined;
+        const channel = asTextChannel(client.channels.cache.get(channelId));
         if (!channel) continue;
 
         await sendTermoCrossword(client, guildId, channel);
         await sendTermoLeaderboard(client, guildId, channel);
 
         const result = await api.forceNewWordleWord(guildId);
-        const data = result.data as { wordLength: number; wordDate?: string };
+        const data = result.data;
 
         const shortTrashTalks = [
           'boa sorte (vão precisar)',
@@ -197,7 +188,7 @@ async function sendTermoCrossword(
 ): Promise<void> {
   try {
     const response = await api.getWordleDayGuesses(guildId);
-    const data = response.data as WordleDayGuesses;
+    const data = response.data;
     if (!data) return;
 
     const crosswordBuffer = await buildCrosswordImage(data.guesses, data.word);
@@ -269,11 +260,11 @@ async function broadcastTermoStats(client: Client<true>): Promise<void> {
   for (const [guildId] of guilds) {
     try {
       const cfgRes = await api.getWordleConfig(guildId);
-      const channelId = (cfgRes.data as { channelId?: string })?.channelId;
+      const channelId = cfgRes.data.channelId;
       if (!channelId) continue;
 
       const statsRes = await api.getWordleStats(guildId);
-      const stats = statsRes.data as { winnersCount: number };
+      const stats = statsRes.data;
 
       if (
         !stats ||
@@ -281,8 +272,7 @@ async function broadcastTermoStats(client: Client<true>): Promise<void> {
       )
         continue;
 
-      const channel = client.channels.cache.get(channelId) as
-        TextChannel | undefined;
+      const channel = asTextChannel(client.channels.cache.get(channelId));
       if (!channel) continue;
 
       const sent = await sendTermoStatusBroadcast(client, guildId, channel);
@@ -305,21 +295,14 @@ async function broadcastTermoWins(client: Client<true>): Promise<void> {
   for (const [guildId] of guilds) {
     try {
       const cfgRes = await api.getWordleConfig(guildId);
-      const channelId = (cfgRes.data as { channelId?: string })?.channelId;
+      const channelId = cfgRes.data.channelId;
       if (!channelId) continue;
 
       const winsRes = await api.getUnannouncedWordleWins(guildId);
-      const wins = winsRes.data as
-        | {
-            userId: string;
-            guesses: { guess: string; feedback: LetterFeedback[] }[];
-            attempts: number;
-          }[]
-        | undefined;
+      const wins = winsRes.data;
       if (!wins || wins.length === 0) continue;
 
-      const channel = client.channels.cache.get(channelId) as
-        TextChannel | undefined;
+      const channel = asTextChannel(client.channels.cache.get(channelId));
       if (!channel) continue;
 
       const guild = client.guilds.cache.get(guildId);
@@ -331,7 +314,7 @@ async function broadcastTermoWins(client: Client<true>): Promise<void> {
           // would leave a window where both see the win as unannounced and
           // both post it.
           const claimRes = await api.markWordleAnnounced(win.userId, guildId);
-          const claimed = (claimRes.data as { claimed?: boolean })?.claimed;
+          const claimed = claimRes.data.claimed;
           if (!claimed) continue;
 
           const member = await guild?.members
@@ -418,9 +401,9 @@ function msUntilNextWednesdayAt5PM(): number {
 
 async function postWednesdayImage(client: Client<true>): Promise<void> {
   try {
-    const channel = client.channels.cache.get(
-      GuildConfig.WEDNESDAY_IMAGE_CHANNEL_ID,
-    ) as TextChannel | undefined;
+    const channel = asTextChannel(
+      client.channels.cache.get(GuildConfig.WEDNESDAY_IMAGE_CHANNEL_ID),
+    );
     if (!channel) return;
 
     const attachment = new AttachmentBuilder(
