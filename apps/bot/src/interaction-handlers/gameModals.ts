@@ -5,11 +5,7 @@ import {
   InteractionHandler,
   InteractionHandlerTypes,
 } from '@sapphire/framework';
-import {
-  InteractionEditReplyOptions,
-  MessageFlags,
-  ModalSubmitInteraction,
-} from 'discord.js';
+import { MessageFlags, ModalSubmitInteraction } from 'discord.js';
 
 const gameManager = GameManager.getInstance();
 
@@ -110,7 +106,7 @@ export class GameModalsHandler extends InteractionHandler {
       modal.user.id,
       modal.channelId,
       action,
-      (payload) => modal.editReply(payload as InteractionEditReplyOptions),
+      (payload) => modal.editReply(payload),
       (msg) =>
         modal
           .followUp({ content: msg, flags: MessageFlags.Ephemeral })
