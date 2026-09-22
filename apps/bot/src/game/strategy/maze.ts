@@ -4,6 +4,7 @@ import {
   ButtonStyle,
   EmbedBuilder,
 } from 'discord.js';
+import { z } from 'zod';
 import {
   BaseGame,
   GameResult,
@@ -41,29 +42,30 @@ interface MazeData {
   isExhausted?: boolean;
 }
 
-interface MazeAction {
-  type: 'setup_size' | 'setup_mode' | 'move';
-  size?: number;
-  mode?: 'open' | 'foggy';
-  direction?: string;
-}
+const MazeActionSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('setup_size'), size: z.number() }),
+  z.object({ type: z.literal('setup_mode'), mode: z.enum(['open', 'foggy']) }),
+  z.object({
+    type: z.literal('move'),
+    direction: z.enum(['up', 'down', 'left', 'right']),
+  }),
+]);
 
-export class MazeGame extends BaseGame {
+type MazeAction = z.infer<typeof MazeActionSchema>;
+
+export class MazeGame extends BaseGame<MazeData, MazeAction> {
   constructor(session: GameSession) {
     super(session);
-    this.session.data = { phase: 'setup_size' } as MazeData;
+    this.data = { phase: 'setup_size' };
   }
 
   async start(): Promise<void> {
     this.session.players[0].status = PlayerStatus.ACTIVE;
   }
 
-  async handlePlayerAction(
-    _userId: string,
-    action: Record<string, unknown>,
-  ): Promise<void> {
-    const mazeAction = action as unknown as MazeAction;
-    const data = this.session.data as MazeData;
+  async handlePlayerAction(_userId: string, action: MazeAction): Promise<void> {
+    const mazeAction = MazeActionSchema.parse(action);
+    const data = this.data;
 
     if (mazeAction.type === 'setup_size') {
       data.selectedSize = mazeAction.size;
@@ -104,7 +106,7 @@ export class MazeGame extends BaseGame {
         left: [0, -1],
         right: [0, 1],
       };
-      const delta = dirMap[mazeAction.direction ?? ''];
+      const delta = dirMap[mazeAction.direction];
       if (!delta) return;
 
       const newRow = data.playerRow! + delta[0];
@@ -133,7 +135,7 @@ export class MazeGame extends BaseGame {
   }
 
   getGameEmbed(): EmbedBuilder {
-    const data = this.session.data as MazeData;
+    const data = this.data;
     const player = this.session.players[0];
 
     if (data.phase === 'setup_size') {
@@ -187,7 +189,7 @@ export class MazeGame extends BaseGame {
   }
 
   getMovementButtons(): ActionRowBuilder<ButtonBuilder>[] {
-    const data = this.session.data as MazeData;
+    const data = this.data;
 
     if (data.phase === 'setup_size') {
       return [
@@ -258,12 +260,12 @@ export class MazeGame extends BaseGame {
   }
 
   public isFinished(): boolean {
-    const data = this.session.data as MazeData;
+    const data = this.data;
     return (data.isCompleted ?? false) || (data.isExhausted ?? false);
   }
 
   async finish(): Promise<GameResult> {
-    const data = this.session.data as MazeData;
+    const data = this.data;
     const player = this.session.players[0];
     const won = data.isCompleted ?? false;
     const rewards = this.calculateRewards(player, 1);
