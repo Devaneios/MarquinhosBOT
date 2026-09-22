@@ -6,6 +6,7 @@ import {
 } from '@marquinhos/services/aiChat/aiThread';
 import { followResearchJob } from '@marquinhos/services/aiChat/researchProgress';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
+import { getErrorMessage } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import {
@@ -137,7 +138,7 @@ export class IaCommand extends MarquinhosCommand {
       ).data;
     } catch (error) {
       logger.error(
-        `[ai-chat] não consegui iniciar a pesquisa thread=${thread.id}: ${(error as Error).message}`,
+        `[ai-chat] não consegui iniciar a pesquisa thread=${thread.id}: ${getErrorMessage(error)}`,
       );
       await thread.send('Não consegui iniciar a pesquisa. Tenta de novo.');
       return;
@@ -176,10 +177,10 @@ export class IaCommand extends MarquinhosCommand {
         name,
         autoArchiveDuration: AUTO_ARCHIVE,
       });
-      return thread as unknown as AiThreadChannel;
+      return thread;
     } catch (error) {
       logger.error(
-        `[ai-chat] não consegui abrir a thread: ${(error as Error).message}`,
+        `[ai-chat] não consegui abrir a thread: ${getErrorMessage(error)}`,
       );
       await interaction
         .editReply(
