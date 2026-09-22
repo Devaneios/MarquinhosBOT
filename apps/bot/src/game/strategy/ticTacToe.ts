@@ -1,6 +1,7 @@
 import { updateSessionMessage } from '@marquinhos/lib/gameLifecycle';
 import { logger } from '@marquinhos/utils/logger';
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
+import { z } from 'zod';
 import { GameManager } from '../core/GameManager';
 import {
   BaseGame,
@@ -24,7 +25,15 @@ interface TicTacToeData {
   timedOut?: boolean;
 }
 
-export class TicTacToeGame extends BaseGame {
+const TicTacToeActionSchema = z.object({
+  type: z.literal('move'),
+  row: z.number(),
+  col: z.number(),
+});
+
+type TicTacToeAction = z.infer<typeof TicTacToeActionSchema>;
+
+export class TicTacToeGame extends BaseGame<TicTacToeData, TicTacToeAction> {
   private turnTimer: ReturnType<typeof setTimeout> | null = null;
   private static readonly TURN_TIMEOUT_MS = 60_000; // 60 seconds
 
@@ -34,7 +43,7 @@ export class TicTacToeGame extends BaseGame {
   }
 
   private initializeGame(): void {
-    this.session.data = {
+    this.data = {
       board: [
         ['⬜', '⬜', '⬜'],
         ['⬜', '⬜', '⬜'],
@@ -45,7 +54,7 @@ export class TicTacToeGame extends BaseGame {
       winner: null,
       isDraw: false,
       moves: 0,
-    } as TicTacToeData;
+    };
   }
 
   async start(): Promise<void> {
@@ -57,7 +66,7 @@ export class TicTacToeGame extends BaseGame {
   private resetTurnTimer(): void {
     this.clearTurnTimer();
     this.turnTimer = setTimeout(() => {
-      const data = this.session.data as TicTacToeData;
+      const data = this.data;
       if (data.gameOver) return;
 
       // The current player timed out — other player wins
@@ -88,9 +97,10 @@ export class TicTacToeGame extends BaseGame {
 
   async handlePlayerAction(
     userId: string,
-    action: Record<string, unknown>,
+    action: TicTacToeAction,
   ): Promise<void> {
-    const data = this.session.data as TicTacToeData;
+    const parsed = TicTacToeActionSchema.parse(action);
+    const data = this.data;
 
     if (data.gameOver) return;
 
@@ -99,13 +109,13 @@ export class TicTacToeGame extends BaseGame {
       throw new UserFacingError('Não é sua vez!');
     }
 
-    if (action.type === 'move') {
-      await this.makeMove(action.row as number, action.col as number);
+    if (parsed.type === 'move') {
+      await this.makeMove(parsed.row, parsed.col);
     }
   }
 
   private async makeMove(row: number, col: number): Promise<void> {
-    const data = this.session.data as TicTacToeData;
+    const data = this.data;
 
     // Check if move is valid
     if (
@@ -141,7 +151,7 @@ export class TicTacToeGame extends BaseGame {
   }
 
   private checkWinner(): boolean {
-    const data = this.session.data as TicTacToeData;
+    const data = this.data;
     const board = data.board;
     const symbol = data.currentPlayer === 0 ? '❌' : '⭕';
 
@@ -187,7 +197,7 @@ export class TicTacToeGame extends BaseGame {
   }
 
   private async updateScores(): Promise<void> {
-    const data = this.session.data as TicTacToeData;
+    const data = this.data;
 
     if (data.winner) {
       const winnerScore = 100;
@@ -206,7 +216,7 @@ export class TicTacToeGame extends BaseGame {
   }
 
   getGameEmbed(): EmbedBuilder {
-    const data = this.session.data as TicTacToeData;
+    const data = this.data;
 
     let description = '';
 
@@ -260,7 +270,7 @@ export class TicTacToeGame extends BaseGame {
   }
 
   getBoardButtons() {
-    const data = this.session.data as TicTacToeData;
+    const data = this.data;
 
     if (data.gameOver) return [];
 
@@ -293,7 +303,7 @@ export class TicTacToeGame extends BaseGame {
 
   async finish(): Promise<GameResult> {
     this.clearTurnTimer();
-    const data = this.session.data as TicTacToeData;
+    const data = this.data;
     const rewards: Record<string, GameReward> = {};
 
     this.session.players.forEach((player, _index) => {
