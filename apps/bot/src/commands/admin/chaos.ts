@@ -1,11 +1,11 @@
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { coerceNumberProperty } from '@marquinhos/utils/coercion';
+import { requireGuildMember } from '@marquinhos/utils/discord';
 import { Command } from '@sapphire/framework';
 import {
   ChannelType,
   Collection,
   CommandInteraction,
-  GuildBasedChannel,
   GuildMember,
   VoiceBasedChannel,
   VoiceChannel,
@@ -46,8 +46,10 @@ export class ChaosCommand extends MarquinhosCommand {
       );
       return;
     }
-    const currentVoiceChannel = (interaction.member as GuildMember).voice
-      .channel;
+    const currentVoiceChannel = requireGuildMember(
+      interaction.member,
+      interaction,
+    ).voice.channel;
     if (!currentVoiceChannel) {
       await interaction.reply('Você precisa estar em um canal de voz!');
       return;
@@ -65,9 +67,11 @@ export class ChaosCommand extends MarquinhosCommand {
 }
 
 async function chaos2(interaction: CommandInteraction, limit: number) {
-  const voiceChannel = (interaction.member as GuildMember).voice.channel;
+  const voiceChannel = requireGuildMember(interaction.member, interaction).voice
+    .channel;
   const voiceChannels = interaction.guild?.channels.cache.filter(
-    (channel) => channel.type === ChannelType.GuildVoice,
+    (channel): channel is VoiceChannel =>
+      channel.type === ChannelType.GuildVoice,
   );
   const activeUsers = voiceChannel?.members.filter((user) => !user.user.bot);
   if (!!voiceChannel && !!voiceChannels && !!activeUsers) {
@@ -84,7 +88,7 @@ async function chaos2(interaction: CommandInteraction, limit: number) {
 async function chaos3(
   counter: number,
   voiceChannel: VoiceBasedChannel,
-  voiceChannels: Collection<string, GuildBasedChannel>,
+  voiceChannels: Collection<string, VoiceChannel>,
   activeUsers: Collection<string, GuildMember>,
   limit: number,
 ) {
@@ -92,15 +96,14 @@ async function chaos3(
     const timerId = setTimeout(() => {
       activeChaosTimers.delete(timerId);
       counter++;
-      let usuario: GuildMember | undefined;
       const userRandomKey = activeUsers.randomKey();
       const randomVoiceChannel = voiceChannels.random();
 
       if (userRandomKey !== undefined && randomVoiceChannel !== undefined) {
-        usuario = activeUsers.get(userRandomKey);
-      }
-      if (usuario !== undefined) {
-        usuario.voice.setChannel(randomVoiceChannel as VoiceChannel);
+        const usuario = activeUsers.get(userRandomKey);
+        if (usuario !== undefined) {
+          usuario.voice.setChannel(randomVoiceChannel);
+        }
       }
       chaos3(counter, voiceChannel, voiceChannels, activeUsers, limit);
     }, 1000);
