@@ -1,7 +1,7 @@
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
-import { baseEmbed } from '@marquinhos/utils/discord';
+import { baseEmbed, requireGuildMember } from '@marquinhos/utils/discord';
 import { Command } from '@sapphire/framework';
-import { GuildMember, PermissionsBitField } from 'discord.js';
+import { PermissionsBitField } from 'discord.js';
 
 export class DisconnectAllCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
@@ -20,8 +20,8 @@ export class DisconnectAllCommand extends MarquinhosCommand {
   override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction,
   ) {
-    const member = interaction.member as GuildMember;
-    const voiceChannel = member?.voice.channel;
+    const member = requireGuildMember(interaction.member, interaction);
+    const voiceChannel = member.voice.channel;
     const embed = baseEmbed(this.container.client);
     if (!voiceChannel) {
       await interaction.reply({
