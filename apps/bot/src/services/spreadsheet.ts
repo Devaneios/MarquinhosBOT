@@ -1,6 +1,8 @@
 import { env } from '@marquinhos/config/environment';
+import { getErrorMessage } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { google, sheets_v4 } from 'googleapis';
+import { z } from 'zod';
 
 export class SpreadsheetService {
   private sheets: sheets_v4.Sheets;
@@ -38,12 +40,16 @@ export class SpreadsheetService {
         error,
       );
       throw new Error(
-        `Failed to read spreadsheet data: ${(error as Error).message}`,
+        `Failed to read spreadsheet data: ${getErrorMessage(error)}`,
       );
     }
   }
 
-  async getRowsAsObjects<T>(sheetName: string, range: string): Promise<T[]> {
+  async getRowsAsObjects<T>(
+    sheetName: string,
+    range: string,
+    schema: z.ZodType<T>,
+  ): Promise<T[]> {
     const values = await this.getValues<string>(sheetName, range);
 
     if (values.length === 0) {
@@ -56,7 +62,7 @@ export class SpreadsheetService {
       headers.forEach((header, index) => {
         obj[header] = row[index] !== undefined ? row[index] : null;
       });
-      return obj as T;
+      return schema.parse(obj);
     });
   }
 
@@ -74,7 +80,7 @@ export class SpreadsheetService {
       );
     } catch (error: unknown) {
       logger.error('Failed to get sheet names:', error);
-      throw new Error(`Failed to get sheet names: ${(error as Error).message}`);
+      throw new Error(`Failed to get sheet names: ${getErrorMessage(error)}`);
     }
   }
 
