@@ -4,6 +4,7 @@ import {
   MAX_EMBED_DESCRIPTION_LENGTH,
   splitMessage,
 } from '@marquinhos/utils/discord';
+import { getErrorMessage } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import type { EmbedBuilder } from 'discord.js';
 import { ERROR_FALLBACK_POOL, RATE_LIMITED_MESSAGE } from './cannedPools';
@@ -119,7 +120,7 @@ export async function runThreadTurn(
     );
   } catch (error) {
     logger.error(
-      `[ai-chat] thread turn falhou thread=${thread.id} user=${userId}: ${(error as Error).message}`,
+      `[ai-chat] thread turn falhou thread=${thread.id} user=${userId}: ${getErrorMessage(error)}`,
     );
     await thread.send(pick(ERROR_FALLBACK_POOL)).catch(() => null);
   } finally {
