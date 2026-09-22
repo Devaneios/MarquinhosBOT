@@ -320,9 +320,6 @@ export class AdminCommand extends MarquinhosCommand {
               attempts: number;
               solved: boolean;
             }[];
-            const ranks = denseRanks(
-              dailyEntries.map((e) => (e.solved ? `s:${e.attempts}` : 'u')),
-            );
             entries = await Promise.all(
               dailyEntries.map(async (e, i) => {
                 const member = membersCollection?.get(e.userId);
@@ -330,7 +327,7 @@ export class AdminCommand extends MarquinhosCommand {
                   ? await fetchAvatarBuffer(member)
                   : undefined;
                 return {
-                  rank: ranks[i],
+                  rank: i + 1,
                   displayName: member?.displayName ?? `<@${e.userId}>`,
                   attempts: e.attempts,
                   solved: e.solved,
