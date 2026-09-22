@@ -1,4 +1,5 @@
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
+import { z } from 'zod';
 import {
   BaseGame,
   GameResult,
@@ -29,7 +30,14 @@ interface RoulettePlayer {
   survived: number;
 }
 
-export class RouletteGame extends BaseGame {
+const RouletteActionSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('pull_trigger') }),
+  z.object({ type: z.literal('spin_chamber') }),
+]);
+
+type RouletteAction = z.infer<typeof RouletteActionSchema>;
+
+export class RouletteGame extends BaseGame<RouletteData, RouletteAction> {
   constructor(session: GameSession) {
     super(session);
     this.initializeGame();
@@ -39,7 +47,7 @@ export class RouletteGame extends BaseGame {
     const bullets = Math.floor(Math.random() * 2) + 1; // 1-2 bullets
     const chambers = this.setupChambers(6, bullets);
 
-    this.session.data = {
+    this.data = {
       chambers,
       currentChamber: 0,
       totalChambers: 6,
@@ -55,7 +63,7 @@ export class RouletteGame extends BaseGame {
       })),
       currentPlayerIndex: 0,
       mode: this.session.players.length > 1 ? 'multiplayer' : 'solo',
-    } as RouletteData;
+    };
   }
 
   private setupChambers(total: number, bullets: number): boolean[] {
@@ -78,9 +86,10 @@ export class RouletteGame extends BaseGame {
 
   async handlePlayerAction(
     userId: string,
-    action: Record<string, unknown>,
+    action: RouletteAction,
   ): Promise<void> {
-    const data = this.session.data as RouletteData;
+    const parsed = RouletteActionSchema.parse(action);
+    const data = this.data;
 
     if (data.gameOver) return;
 
@@ -92,15 +101,15 @@ export class RouletteGame extends BaseGame {
       }
     }
 
-    if (action.type === 'pull_trigger') {
+    if (parsed.type === 'pull_trigger') {
       await this.pullTrigger();
-    } else if (action.type === 'spin_chamber') {
+    } else if (parsed.type === 'spin_chamber') {
       await this.spinChamber();
     }
   }
 
   private async pullTrigger(): Promise<void> {
-    const data = this.session.data as RouletteData;
+    const data = this.data;
     const currentPlayer =
       data.mode === 'multiplayer'
         ? data.players[data.currentPlayerIndex]
@@ -149,7 +158,7 @@ export class RouletteGame extends BaseGame {
   }
 
   private async spinChamber(): Promise<void> {
-    const data = this.session.data as RouletteData;
+    const data = this.data;
 
     // Re-randomize the chambers (costs survival points in solo mode)
     if (data.mode === 'solo' && data.survived > 0) {
@@ -161,7 +170,7 @@ export class RouletteGame extends BaseGame {
   }
 
   private updateScores(): void {
-    const data = this.session.data as RouletteData;
+    const data = this.data;
 
     if (data.mode === 'solo') {
       const survivalBonus = data.survived * 10;
@@ -186,7 +195,7 @@ export class RouletteGame extends BaseGame {
   }
 
   getGameEmbed(): EmbedBuilder {
-    const data = this.session.data as RouletteData;
+    const data = this.data;
 
     let description = '';
 
@@ -253,7 +262,7 @@ export class RouletteGame extends BaseGame {
   }
 
   getActionButtons() {
-    const data = this.session.data as RouletteData;
+    const data = this.data;
 
     if (data.gameOver) {
       return [];
@@ -282,7 +291,7 @@ export class RouletteGame extends BaseGame {
   }
 
   async finish(): Promise<GameResult> {
-    const data = this.session.data as RouletteData;
+    const data = this.data;
     const winners: string[] = [];
     const losers: string[] = [];
     const rewards: Record<string, GameReward> = {};
