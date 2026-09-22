@@ -13,6 +13,24 @@ export interface RequestConfig extends RequestInit {
   url?: string;
 }
 
+export class HttpError extends Error {
+  public response?: { status?: number; data?: unknown };
+  public config?: { url?: string };
+
+  constructor(
+    message: string,
+    options?: {
+      response?: { status?: number; data?: unknown };
+      config?: { url?: string };
+    },
+  ) {
+    super(message);
+    this.name = 'HttpError';
+    this.response = options?.response;
+    this.config = options?.config;
+  }
+}
+
 export class HttpClient {
   private baseURL: string;
   private defaultHeaders: Record<string, string>;
@@ -146,15 +164,13 @@ export class HttpClient {
         } catch {
           // keep as string
         }
-        const error = new Error(
+        throw new HttpError(
           `HTTP error! status: ${response.status}, message: ${errorText}`,
+          {
+            response: { status: response.status, data: errorData },
+            config: { url },
+          },
         );
-        (error as unknown as Record<string, unknown>).response = {
-          status: response.status,
-          data: errorData,
-        };
-        (error as unknown as Record<string, unknown>).config = { url };
-        throw error;
       }
 
       return response;
@@ -174,21 +190,23 @@ export class HttpClient {
         return this.fetchWithRetry(url, config, attempt + 1);
       }
 
+      if (error instanceof HttpError) {
+        error.config ??= { url };
+        throw error;
+      }
+
       if (error instanceof Error) {
-        const err = error as unknown as Record<string, unknown>;
-        if (!err.config) {
-          err.config = { url };
-        }
+        throw new HttpError(error.message, { config: { url } });
       }
 
       throw error;
     }
   }
 
-  public async request<T = unknown>(
+  public async request(
     endpoint: string,
     options: RequestConfig = {},
-  ): Promise<T> {
+  ): Promise<unknown> {
     const url = endpoint.startsWith('http')
       ? endpoint
       : `${this.baseURL}${endpoint}`;
@@ -211,31 +229,27 @@ export class HttpClient {
       const bodyTimeout = config.timeout ?? this.defaultTimeout;
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
-        const data = await this.withTimeout(response.json(), bodyTimeout);
-        return data as T;
+        return await this.withTimeout(response.json(), bodyTimeout);
       }
-      return (await this.withTimeout(
-        response.text(),
-        bodyTimeout,
-      )) as unknown as T;
+      return await this.withTimeout(response.text(), bodyTimeout);
     } catch (error) {
       return this.applyResponseErrorInterceptors(error);
     }
   }
 
-  public async get<T = unknown>(
+  public async get(
     endpoint: string,
     options?: Omit<RequestConfig, 'method'>,
-  ): Promise<T> {
-    return this.request<T>(endpoint, { ...options, method: 'GET' });
+  ): Promise<unknown> {
+    return this.request(endpoint, { ...options, method: 'GET' });
   }
 
-  public async post<T = unknown>(
+  public async post(
     endpoint: string,
     data?: unknown,
     options?: Omit<RequestConfig, 'method' | 'body'>,
-  ): Promise<T> {
-    return this.request<T>(endpoint, {
+  ): Promise<unknown> {
+    return this.request(endpoint, {
       ...options,
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
@@ -246,12 +260,12 @@ export class HttpClient {
     });
   }
 
-  public async put<T = unknown>(
+  public async put(
     endpoint: string,
     data?: unknown,
     options?: Omit<RequestConfig, 'method' | 'body'>,
-  ): Promise<T> {
-    return this.request<T>(endpoint, {
+  ): Promise<unknown> {
+    return this.request(endpoint, {
       ...options,
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
@@ -262,10 +276,10 @@ export class HttpClient {
     });
   }
 
-  public async delete<T = unknown>(
+  public async delete(
     endpoint: string,
     options?: Omit<RequestConfig, 'method'>,
-  ): Promise<T> {
-    return this.request<T>(endpoint, { ...options, method: 'DELETE' });
+  ): Promise<unknown> {
+    return this.request(endpoint, { ...options, method: 'DELETE' });
   }
 }
