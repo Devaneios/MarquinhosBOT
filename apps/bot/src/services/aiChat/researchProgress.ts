@@ -4,6 +4,7 @@ import type {
   ResearchSource,
   ResearchStats,
 } from '@marquinhos/types';
+import { getErrorMessage } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { sleep } from '@marquinhos/utils/sleep';
 import { sendThreadReply, type AiThreadChannel } from './aiThread';
@@ -103,7 +104,7 @@ export async function followResearchJob(
     } catch (error) {
       // A single failed poll is not fatal — the job keeps running server-side.
       logger.warn(
-        `[ai-chat] poll da pesquisa falhou job=${jobId}: ${(error as Error).message}`,
+        `[ai-chat] poll da pesquisa falhou job=${jobId}: ${getErrorMessage(error)}`,
       );
     }
 
