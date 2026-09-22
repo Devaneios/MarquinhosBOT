@@ -3,9 +3,8 @@ import {
   handleApiResponseError,
   MarquinhosApiService,
 } from '../src/services/marquinhosApi';
-import type { ApiError } from '../src/types';
 import * as errorHandling from '../src/utils/errorHandling';
-import { HttpClient } from '../src/utils/httpClient';
+import { HttpClient, HttpError } from '../src/utils/httpClient';
 
 describe('handleApiResponseError', () => {
   const reportErrorSpy = spyOn(errorHandling, 'reportError').mockImplementation(
@@ -17,7 +16,7 @@ describe('handleApiResponseError', () => {
   });
 
   it('rethrows the original error', () => {
-    const error: ApiError = Object.assign(new Error('network down'), {
+    const error = new HttpError('network down', {
       config: { url: '/api/gamification/xp' },
     });
 
@@ -25,7 +24,7 @@ describe('handleApiResponseError', () => {
   });
 
   it('reports the error with an origin tagged by the request URL', () => {
-    const error: ApiError = Object.assign(new Error('network down'), {
+    const error = new HttpError('network down', {
       config: { url: '/api/gamification/xp' },
     });
 
@@ -42,7 +41,22 @@ describe('handleApiResponseError', () => {
   });
 
   it('falls back to "unknown" origin when the request URL is missing', () => {
-    const error: ApiError = new Error('mystery failure');
+    const error = new HttpError('mystery failure');
+
+    try {
+      handleApiResponseError(error);
+    } catch {
+      // expected
+    }
+
+    expect(reportErrorSpy).toHaveBeenCalledWith(error, {
+      origin: 'API:unknown',
+      logLevel: 'warn',
+    });
+  });
+
+  it('reports and rethrows non-HttpError values without a config-derived origin', () => {
+    const error = new Error('mystery failure');
 
     try {
       handleApiResponseError(error);
