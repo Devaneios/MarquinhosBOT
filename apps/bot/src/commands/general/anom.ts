@@ -1,7 +1,7 @@
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { baseEmbed } from '@marquinhos/utils/discord';
 import { Command } from '@sapphire/framework';
-import { ChannelType, PermissionsBitField, TextChannel } from 'discord.js';
+import { ChannelType, PermissionsBitField } from 'discord.js';
 
 export class AnomCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
@@ -34,7 +34,9 @@ export class AnomCommand extends MarquinhosCommand {
   override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction,
   ) {
-    const channel = interaction.options.getChannel('canal') as TextChannel;
+    const channel = interaction.options.getChannel('canal', true, [
+      ChannelType.GuildText,
+    ]);
     const message = interaction.options.getString('mensagem', true);
 
     const botMember = interaction.guild?.members.me;
