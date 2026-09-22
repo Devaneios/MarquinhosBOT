@@ -1,13 +1,8 @@
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
-import { baseEmbed } from '@marquinhos/utils/discord';
+import { baseEmbed, requireGuildMember } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
-import {
-  ChannelType,
-  GuildMember,
-  PermissionsBitField,
-  VoiceChannel,
-} from 'discord.js';
+import { ChannelType, PermissionsBitField } from 'discord.js';
 
 export class MoveAllCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
@@ -33,11 +28,11 @@ export class MoveAllCommand extends MarquinhosCommand {
   override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction,
   ) {
-    const member = interaction.member as GuildMember;
+    const member = requireGuildMember(interaction.member, interaction);
     const voiceChannel = member.voice.channel;
-    const newVoiceChannel = interaction.options.getChannel(
-      'canal',
-    ) as VoiceChannel;
+    const newVoiceChannel = interaction.options.getChannel('canal', true, [
+      ChannelType.GuildVoice,
+    ]);
     const embed = baseEmbed(this.container.client);
 
     if (!voiceChannel) {
