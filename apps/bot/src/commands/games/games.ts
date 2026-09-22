@@ -41,16 +41,18 @@ const GAME_TYPE_MAP: Record<string, GameType> = {
   maze: GameType.MAZE,
 };
 
-const GAME_REGISTRY: Record<GameType, new (session: GameSession) => BaseGame> =
-  {
-    [GameType.SLOTS]: SlotsGame,
-    [GameType.BLACKJACK]: BlackjackGame,
-    [GameType.DICE]: DiceGame,
-    [GameType.ROULETTE]: RouletteGame,
-    [GameType.TIC_TAC_TOE]: TicTacToeGame,
-    [GameType.ROCK_PAPER_SCISSORS]: RockPaperScissorsGame,
-    [GameType.MAZE]: MazeGame,
-  };
+const GAME_REGISTRY: Record<
+  GameType,
+  new (session: GameSession) => BaseGame<unknown>
+> = {
+  [GameType.SLOTS]: SlotsGame,
+  [GameType.BLACKJACK]: BlackjackGame,
+  [GameType.DICE]: DiceGame,
+  [GameType.ROULETTE]: RouletteGame,
+  [GameType.TIC_TAC_TOE]: TicTacToeGame,
+  [GameType.ROCK_PAPER_SCISSORS]: RockPaperScissorsGame,
+  [GameType.MAZE]: MazeGame,
+};
 
 export class GamesCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
@@ -327,10 +329,7 @@ async function showStats(interaction: ChatInputCommandInteraction) {
 
   try {
     const response = await apiService.getUserGameStats(userId, guildId);
-    const data = response?.data as {
-      stats: { total_games: number; games_won: number };
-      byGame: { game_type: string; games_played: number; wins: number }[];
-    } | null;
+    const data = response?.data;
     if (!data) {
       await interaction.editReply('Não foi possível buscar suas estatísticas.');
       return;
