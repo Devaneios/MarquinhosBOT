@@ -1,4 +1,5 @@
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
+import { z } from 'zod';
 import {
   BaseGame,
   BET_RANGE,
@@ -19,7 +20,17 @@ interface SlotsData {
   finished?: boolean;
 }
 
-export class SlotsGame extends BaseGame {
+const SlotsActionSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('spin') }),
+  z.object({ type: z.literal('stop') }),
+  z.object({ type: z.literal('bet_down') }),
+  z.object({ type: z.literal('bet_up') }),
+  z.object({ type: z.literal('change_bet'), amount: z.number() }),
+]);
+
+type SlotsAction = z.infer<typeof SlotsActionSchema>;
+
+export class SlotsGame extends BaseGame<SlotsData, SlotsAction> {
   private readonly symbols = ['🍒', '🍋', '🍊', '🍇', '🔔', '💎', '7️⃣', '⭐'];
   private readonly payouts = {
     '💎💎💎': 100,
@@ -35,11 +46,11 @@ export class SlotsGame extends BaseGame {
 
   constructor(session: GameSession) {
     super(session);
-    this.session.data = {
+    this.data = {
       spins: 0,
       totalWinnings: 0,
       currentBet: 10,
-    } as SlotsData;
+    };
   }
 
   async start(): Promise<void> {
@@ -47,32 +58,27 @@ export class SlotsGame extends BaseGame {
     await this.spin();
   }
 
-  async handlePlayerAction(
-    userId: string,
-    action: Record<string, unknown>,
-  ): Promise<void> {
-    if ((this.session.data as SlotsData).finished) return;
+  async handlePlayerAction(userId: string, action: SlotsAction): Promise<void> {
+    const parsed = SlotsActionSchema.parse(action);
 
-    if (action.type === 'spin') {
-      await this.spin();
-    } else if (action.type === 'stop') {
-      (this.session.data as SlotsData).finished = true;
-    } else if (action.type === 'bet_down') {
-      this.changeBet(
-        Math.max(
-          BET_RANGE.min,
-          (this.session.data as SlotsData).currentBet - 5,
-        ),
-      );
-    } else if (action.type === 'bet_up') {
-      this.changeBet(
-        Math.min(
-          BET_RANGE.max,
-          (this.session.data as SlotsData).currentBet + 5,
-        ),
-      );
-    } else if (action.type === 'change_bet') {
-      this.changeBet(action.amount as number);
+    if (this.data.finished) return;
+
+    switch (parsed.type) {
+      case 'spin':
+        await this.spin();
+        break;
+      case 'stop':
+        this.data.finished = true;
+        break;
+      case 'bet_down':
+        this.changeBet(Math.max(BET_RANGE.min, this.data.currentBet - 5));
+        break;
+      case 'bet_up':
+        this.changeBet(Math.min(BET_RANGE.max, this.data.currentBet + 5));
+        break;
+      case 'change_bet':
+        this.changeBet(parsed.amount);
+        break;
     }
   }
 
@@ -94,14 +100,14 @@ export class SlotsGame extends BaseGame {
     ];
 
     const { multiplier, winType } = this.calculatePayout(result);
-    const prev = this.session.data as SlotsData;
+    const prev = this.data;
     const winnings = prev.currentBet * multiplier;
     const newTotalWinnings = prev.totalWinnings + winnings;
 
     // Update score BEFORE replacing state to maintain consistency (P1 fix)
     this.updatePlayerScore(this.session.players[0].userId, newTotalWinnings);
 
-    this.session.data = {
+    this.data = {
       reels,
       result,
       multiplier,
@@ -109,7 +115,7 @@ export class SlotsGame extends BaseGame {
       spins: prev.spins + 1,
       totalWinnings: newTotalWinnings,
       currentBet: prev.currentBet,
-    } as SlotsData;
+    };
   }
 
   private calculatePayout(result: string[]): {
@@ -139,12 +145,12 @@ export class SlotsGame extends BaseGame {
 
   private changeBet(amount: number): void {
     if (amount >= BET_RANGE.min && amount <= BET_RANGE.max) {
-      (this.session.data as SlotsData).currentBet = amount;
+      this.data.currentBet = amount;
     }
   }
 
   getGameEmbed(): EmbedBuilder {
-    const data = this.session.data as SlotsData;
+    const data = this.data;
     const player = this.session.players[0];
 
     let resultDisplay = '';
@@ -186,7 +192,7 @@ export class SlotsGame extends BaseGame {
   }
 
   getActionButtons() {
-    const data = this.session.data as SlotsData;
+    const data = this.data;
     if (data.finished) return [];
 
     return [
@@ -216,7 +222,7 @@ export class SlotsGame extends BaseGame {
   async finish(): Promise<GameResult> {
     const player = this.session.players[0];
     const rewards = this.calculateRewards(player, 1);
-    const data = this.session.data as SlotsData;
+    const data = this.data;
 
     // Bonus XP for big wins
     if (data.totalWinnings > 100) {
