@@ -17,22 +17,30 @@ export function safeExecute(fn: Function) {
     try {
       const result = fn();
       if (result instanceof Promise) {
-        result.catch((error: BotError) => {
+        result.catch((error: unknown) => {
           commandErrorHandler(error);
         });
       }
     } catch (error) {
-      commandErrorHandler(error as BotError);
+      commandErrorHandler(error);
     }
   };
 }
 
-const commandErrorHandler = (error: BotError) => {
+const commandErrorHandler = (error: unknown) => {
   reportError(error, {
-    origin: error.origin ?? 'Unknown',
-    logLevel: error.logLevel,
+    origin: error instanceof BotError ? error.origin : 'Unknown',
+    logLevel: error instanceof BotError ? error.logLevel : undefined,
   });
 };
+
+/**
+ * Extracts a readable message from a value caught by a `catch` block,
+ * which TypeScript types as `unknown` and may not even be an `Error`.
+ */
+export function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
 
 export interface ReportErrorOptions {
   origin: string;
@@ -45,10 +53,9 @@ export interface ReportErrorOptions {
  * batched admin DM queue.
  */
 export function reportError(error: unknown, options: ReportErrorOptions): void {
-  const err = error as { stack?: string; message?: string };
   const logLevel = options.logLevel ?? 'error';
-  const message = err?.message ?? String(error);
-  const text = err?.stack ?? message;
+  const message = getErrorMessage(error);
+  const text = error instanceof Error ? (error.stack ?? message) : message;
 
   switch (logLevel) {
     case 'warn':
@@ -71,7 +78,7 @@ export function reportError(error: unknown, options: ReportErrorOptions): void {
 
   queueErrorForDM({
     message,
-    stack: err?.stack,
+    stack: error instanceof Error ? error.stack : undefined,
     logLevel,
     origin: options.origin,
   });
