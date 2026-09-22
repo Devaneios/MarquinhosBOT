@@ -4,6 +4,7 @@ import type {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
 } from 'discord.js';
+import { DiscordAPIError } from 'discord.js';
 
 interface CommandErrorPayload {
   command: { name: string };
@@ -15,20 +16,14 @@ interface AutocompleteErrorPayload {
   interaction: AutocompleteInteraction;
 }
 
-type DiscordAPIErr = Error & {
-  code?: number;
-  requestBody?: unknown;
-  rawError?: unknown;
-};
-
 function formatError(error: unknown, prefix: string): string {
-  const err = error as DiscordAPIErr;
-  const parts = [prefix, err.stack ?? String(error)];
-  if (err.requestBody !== undefined) {
-    parts.push(`RequestBody: ${JSON.stringify(err.requestBody)}`);
-  }
-  if (err.rawError !== undefined) {
-    parts.push(`RawError: ${JSON.stringify(err.rawError)}`);
+  const parts = [
+    prefix,
+    error instanceof Error ? (error.stack ?? error.message) : String(error),
+  ];
+  if (error instanceof DiscordAPIError) {
+    parts.push(`RequestBody: ${JSON.stringify(error.requestBody)}`);
+    parts.push(`RawError: ${JSON.stringify(error.rawError)}`);
   }
   return parts.join('\n');
 }
