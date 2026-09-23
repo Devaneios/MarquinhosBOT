@@ -77,8 +77,10 @@ export class UserService {
 
   async toggleScrobbles(id: string) {
     const row = db
-      .prepare('SELECT scrobbles_on FROM users WHERE id = ?')
-      .get(id) as Pick<UserRow, 'scrobbles_on'> | null;
+      .prepare<Pick<UserRow, 'scrobbles_on'>, [string]>(
+        'SELECT scrobbles_on FROM users WHERE id = ?',
+      )
+      .get(id);
 
     if (!row) {
       throw new Error('User not found');
@@ -106,10 +108,11 @@ export class UserService {
 
   async hasValidLastfmSessionToken(id: string) {
     const row = db
-      .prepare(
-        'SELECT lastfm_session_token, scrobbles_on FROM users WHERE id = ?',
-      )
-      .get(id) as Pick<UserRow, 'lastfm_session_token' | 'scrobbles_on'> | null;
+      .prepare<
+        Pick<UserRow, 'lastfm_session_token' | 'scrobbles_on'>,
+        [string]
+      >('SELECT lastfm_session_token, scrobbles_on FROM users WHERE id = ?')
+      .get(id);
 
     if (!row) {
       throw new Error('User not found');
@@ -135,8 +138,10 @@ export class UserService {
 
   async getLastfmUsername(id: string) {
     const row = db
-      .prepare('SELECT lastfm_username FROM users WHERE id = ?')
-      .get(id) as Pick<UserRow, 'lastfm_username'> | null;
+      .prepare<Pick<UserRow, 'lastfm_username'>, [string]>(
+        'SELECT lastfm_username FROM users WHERE id = ?',
+      )
+      .get(id);
 
     if (!row) {
       throw new Error('User not found');
@@ -147,13 +152,11 @@ export class UserService {
 
   async getTopArtists(id: string, period: LastfmTopListenedPeriod) {
     const row = db
-      .prepare(
-        'SELECT lastfm_username, lastfm_session_token FROM users WHERE id = ?',
-      )
-      .get(id) as Pick<
-      UserRow,
-      'lastfm_username' | 'lastfm_session_token'
-    > | null;
+      .prepare<
+        Pick<UserRow, 'lastfm_username' | 'lastfm_session_token'>,
+        [string]
+      >('SELECT lastfm_username, lastfm_session_token FROM users WHERE id = ?')
+      .get(id);
 
     if (!row) {
       throw new Error('User not found');
@@ -206,13 +209,11 @@ export class UserService {
 
   async getTopAlbums(id: string, period: LastfmTopListenedPeriod) {
     const row = db
-      .prepare(
-        'SELECT lastfm_username, lastfm_session_token FROM users WHERE id = ?',
-      )
-      .get(id) as Pick<
-      UserRow,
-      'lastfm_username' | 'lastfm_session_token'
-    > | null;
+      .prepare<
+        Pick<UserRow, 'lastfm_username' | 'lastfm_session_token'>,
+        [string]
+      >('SELECT lastfm_username, lastfm_session_token FROM users WHERE id = ?')
+      .get(id);
 
     if (!row) {
       throw new Error('User not found');
@@ -265,13 +266,11 @@ export class UserService {
 
   async getTopTracks(id: string, period: LastfmTopListenedPeriod) {
     const row = db
-      .prepare(
-        'SELECT lastfm_username, lastfm_session_token FROM users WHERE id = ?',
-      )
-      .get(id) as Pick<
-      UserRow,
-      'lastfm_username' | 'lastfm_session_token'
-    > | null;
+      .prepare<
+        Pick<UserRow, 'lastfm_username' | 'lastfm_session_token'>,
+        [string]
+      >('SELECT lastfm_username, lastfm_session_token FROM users WHERE id = ?')
+      .get(id);
 
     if (!row) {
       throw new Error('User not found');

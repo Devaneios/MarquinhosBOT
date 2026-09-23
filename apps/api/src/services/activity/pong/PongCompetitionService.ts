@@ -125,20 +125,23 @@ export class PongCompetitionService {
 
   getRating(userId: string, guildId: string, pool: PongRatingPool): PongRating {
     const row = this.database
-      .query(
+      .query<
+        {
+          user_id: string;
+          guild_id: string;
+          pool: PongRatingPool;
+          rating: number;
+          deviation: number;
+          volatility: number;
+          matches: number;
+          wins: number;
+        },
+        [string, string, string]
+      >(
         `SELECT user_id, guild_id, pool, rating, deviation, volatility, matches, wins
          FROM pong_ratings WHERE user_id = ? AND guild_id = ? AND pool = ?`,
       )
-      .get(userId, guildId, pool) as {
-      user_id: string;
-      guild_id: string;
-      pool: PongRatingPool;
-      rating: number;
-      deviation: number;
-      volatility: number;
-      matches: number;
-      wins: number;
-    } | null;
+      .get(userId, guildId, pool);
     return row
       ? {
           userId: row.user_id,
@@ -237,14 +240,17 @@ export class PongCompetitionService {
 
   leaderboard(guildId: string, pool: PongRatingPool, limit = 50): PongRating[] {
     const rows = this.database
-      .query(
+      .query<
+        {
+          user_id: string;
+        },
+        [string, string, number]
+      >(
         `SELECT user_id FROM pong_ratings
          WHERE guild_id = ? AND pool = ?
          ORDER BY rating DESC, deviation ASC LIMIT ?`,
       )
-      .all(guildId, pool, Math.min(Math.max(limit, 1), 100)) as {
-      user_id: string;
-    }[];
+      .all(guildId, pool, Math.min(Math.max(limit, 1), 100));
     return rows.map((row) => this.getRating(row.user_id, guildId, pool));
   }
 }

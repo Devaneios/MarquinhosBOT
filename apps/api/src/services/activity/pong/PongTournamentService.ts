@@ -13,6 +13,7 @@ import {
   type PongTournamentPairing,
   type PongTournamentPlayer,
 } from 'services/activity/pong/PongTournamentFormats';
+import { z } from 'zod';
 
 export type PongTournamentFormat =
   'round-robin' | 'double-elimination' | 'swiss-playoff';
@@ -52,6 +53,8 @@ interface MatchRow {
   source_b: string | null;
   status: 'pending' | 'ready' | 'complete';
 }
+
+const tournamentConfigSchema = z.object({ swissRounds: z.number() });
 
 export class PongTournamentService {
   private competition: PongCompetitionService;
@@ -124,8 +127,10 @@ export class PongTournamentService {
 
   get(id: string) {
     const tournament = this.database
-      .query('SELECT * FROM pong_tournaments WHERE id = ?')
-      .get(id) as TournamentRow | null;
+      .query<TournamentRow, [string]>(
+        'SELECT * FROM pong_tournaments WHERE id = ?',
+      )
+      .get(id);
     if (!tournament) return null;
     const entries = this.database
       .query(
@@ -151,7 +156,7 @@ export class PongTournamentService {
       format: tournament.format,
       pool: tournament.pool,
       status: tournament.status,
-      config: JSON.parse(tournament.config_json),
+      config: tournamentConfigSchema.parse(JSON.parse(tournament.config_json)),
       createdBy: tournament.created_by,
       createdAt: tournament.created_at,
       entries,
@@ -161,23 +166,28 @@ export class PongTournamentService {
 
   list(guildId: string) {
     const ids = this.database
-      .query(
+      .query<{ id: string }, [string]>(
         `SELECT id FROM pong_tournaments WHERE guild_id = ?
          ORDER BY created_at DESC LIMIT 50`,
       )
-      .all(guildId) as { id: string }[];
+      .all(guildId);
     return ids.map((row) => this.get(row.id));
   }
 
   report(matchId: string, winnerId: string, actorId: string) {
     const match = this.database
-      .query('SELECT * FROM pong_tournament_matches WHERE id = ?')
-      .get(matchId) as MatchRow | null;
+      .query<MatchRow, [string]>(
+        'SELECT * FROM pong_tournament_matches WHERE id = ?',
+      )
+      .get(matchId);
     if (!match || match.status !== 'ready')
       throw new Error('Match is not ready');
     const tournament = this.database
-      .query('SELECT * FROM pong_tournaments WHERE id = ?')
-      .get(match.tournament_id) as TournamentRow;
+      .query<TournamentRow, [string]>(
+        'SELECT * FROM pong_tournaments WHERE id = ?',
+      )
+      .get(match.tournament_id);
+    if (!tournament) throw new Error('Tournament not found');
     const participants = [match.player_a, match.player_b].filter(Boolean);
     if (!participants.includes(winnerId))
       throw new Error('Winner is not in the match');
@@ -242,7 +252,7 @@ export class PongTournamentService {
     const winnerSource = `winner:${match.bracket}:${match.round}:${match.position}`;
     const loserSource = `loser:${match.bracket}:${match.round}:${match.position}`;
     const pending = this.database
-      .query(
+      .query<MatchRow, [string, string, string, string, string]>(
         `SELECT * FROM pong_tournament_matches
          WHERE tournament_id = ? AND status = 'pending'
          AND (source_a IN (?, ?) OR source_b IN (?, ?))`,
@@ -253,7 +263,7 @@ export class PongTournamentService {
         loserSource,
         winnerSource,
         loserSource,
-      ) as MatchRow[];
+      );
     for (const target of pending) {
       const value = (source: string | null) =>
         source === winnerSource
@@ -305,12 +315,12 @@ export class PongTournamentService {
       // match (both sides empty, see the comment above) — either way it's
       // final as-is and should resolve now.
       const bye = this.database
-        .query(
+        .query<MatchRow, [string]>(
           `SELECT * FROM pong_tournament_matches
            WHERE tournament_id = ? AND status = 'pending'
            AND source_a IS NULL AND source_b IS NULL LIMIT 1`,
         )
-        .get(tournamentId) as MatchRow | null;
+        .get(tournamentId);
       if (!bye) return;
       const winner = bye.player_a ?? bye.player_b ?? null;
       this.database
@@ -336,9 +346,9 @@ export class PongTournamentService {
       )
       .get(tournament.id, completedRound);
     if (incomplete) return;
-    const config = JSON.parse(tournament.config_json) as {
-      swissRounds: number;
-    };
+    const config = tournamentConfigSchema.parse(
+      JSON.parse(tournament.config_json),
+    );
     const players = this.swissPlayers(tournament.id);
     if (completedRound < config.swissRounds) {
       this.insertPairings(
@@ -352,21 +362,24 @@ export class PongTournamentService {
 
   private swissPlayers(tournamentId: string): PongTournamentPlayer[] {
     const entries = this.database
-      .query(
+      .query<
+        {
+          user_id: string;
+          rating: number;
+          score: number;
+        },
+        [string]
+      >(
         `SELECT user_id, rating, score FROM pong_tournament_entries
          WHERE tournament_id = ?`,
       )
-      .all(tournamentId) as {
-      user_id: string;
-      rating: number;
-      score: number;
-    }[];
+      .all(tournamentId);
     const matches = this.database
-      .query(
+      .query<{ player_a: string; player_b: string }, [string]>(
         `SELECT player_a, player_b FROM pong_tournament_matches
          WHERE tournament_id = ? AND bracket = 'swiss' AND status = 'complete'`,
       )
-      .all(tournamentId) as { player_a: string; player_b: string }[];
+      .all(tournamentId);
     return entries.map((entry) => ({
       userId: entry.user_id,
       rating: entry.rating,
