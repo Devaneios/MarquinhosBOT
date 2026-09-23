@@ -1,4 +1,9 @@
-import { useCallback, useRef, useState } from 'react';
+import {
+  serverMessageSchema,
+  type ConnectFourClientMessage,
+} from '@marquinhos/contracts/activity/games/connectFour';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -12,20 +17,14 @@ import {
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import {
-  parsePayload,
-  restartStatusPayloadSchema,
-} from '../../shared/colyseusConnection';
-import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import { useConnectFourSession } from '../hooks/useConnectFourSession';
 import {
-  connectFourStateSchema,
-  initPayloadSchema,
-  type ConnectFourState,
-  type Disc,
-} from '../types';
+  applyConnectFourMessage,
+  initialConnectFourView,
+} from '../connectFourMessages';
+import { useConnectFourSession } from '../hooks/useConnectFourSession';
 import { ConnectFourCanvas } from './ConnectFourCanvas';
 import { ConnectFourModeMenu } from './ConnectFourModeMenu';
 
@@ -42,42 +41,20 @@ export function ConnectFourBoard({
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation(['connect-four', 'common']);
-  const [mySide, setMySide] = useState<Disc | null>(null);
-  const [state, setState] = useState<ConnectFourState | null>(null);
-  const [opponentStatus, setOpponentStatus] = useState<string | null>(null);
-  const restartVotesRef = useRef<{ votes: number; required: number } | null>(
-    null,
-  );
-  const [restartStatus, setRestartStatus] = useState<{
-    votes: number;
-    required: number;
-  } | null>(null);
+  const [view, setView] = useState(initialConnectFourView);
+  const { mySide, state, restartStatus } = view;
+  const opponentStatus = view.opponentDisconnected
+    ? t('connect-four:opponentDisconnected')
+    : null;
 
   const { send, connectionState } = useColyseusRoom(
     GAME_ID,
     session,
     colyseusUrl(),
-    (message: ActivityMessage) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(initPayloadSchema, message);
-        if (!payload) return;
-        setMySide(payload.disc);
-        setState(payload.state);
-      } else if (message.type === 'state') {
-        const payload = parsePayload(connectFourStateSchema, message);
-        if (!payload) return;
-        setState(payload);
-        setOpponentStatus(null);
-        restartVotesRef.current = null;
-        setRestartStatus(null);
-      } else if (message.type === 'opponent_disconnected') {
-        setOpponentStatus(t('connect-four:opponentDisconnected'));
-      } else if (message.type === 'opponent_reconnected') {
-        setOpponentStatus(null);
-      } else if (message.type === 'restart_status') {
-        const payload = parsePayload(restartStatusPayloadSchema, message);
-        if (payload) setRestartStatus(payload);
-      }
+    (raw: ActivityMessage) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (message)
+        setView((current) => applyConnectFourMessage(current, message));
     },
     (room) => {
       room.send('leave');
@@ -88,7 +65,10 @@ export function ConnectFourBoard({
     (col: number) => {
       if (!state || state.winner || state.isDraw) return;
       if (mySide !== state.currentTurn) return;
-      send({ type: 'drop', payload: { col } });
+      send({
+        type: 'drop',
+        payload: { col },
+      } satisfies ConnectFourClientMessage);
     },
     [send, state, mySide],
   );

@@ -1,10 +1,11 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import type {
+  ConnectFourServerMessage,
+  ConnectFourState,
+  Disc,
+} from '@marquinhos/contracts/activity/games/connectFour';
 import { ConnectFourBot } from '@marquinhos/domain/activity/connectFour/ConnectFourBot';
-import {
-  ConnectFourEngine,
-  type ConnectFourState,
-  type Disc,
-} from '@marquinhos/domain/activity/connectFour/ConnectFourEngine';
+import { ConnectFourEngine } from '@marquinhos/domain/activity/connectFour/ConnectFourEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';
@@ -47,7 +48,7 @@ export class ConnectFourSession {
 
   constructor(
     private identity: ConnectFourSessionIdentity,
-    private broadcaster: ActivityBroadcaster,
+    private broadcaster: ActivityBroadcaster<ConnectFourServerMessage>,
     private gamification: GamificationService = new GamificationService(),
     options: ConnectFourSessionOptions = {},
   ) {

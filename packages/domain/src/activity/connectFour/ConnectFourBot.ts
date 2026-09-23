@@ -1,7 +1,5 @@
-import type {
-  ConnectFourEngine,
-  Disc,
-} from '@marquinhos/domain/activity/connectFour/ConnectFourEngine';
+import type { Disc } from '@marquinhos/contracts/activity/games/connectFour';
+import type { ConnectFourEngine } from '@marquinhos/domain/activity/connectFour/ConnectFourEngine';
 
 // Center-out preference: a center disc participates in more potential
 // 4-in-a-row lines than an edge one, so absent a forcing move this is the

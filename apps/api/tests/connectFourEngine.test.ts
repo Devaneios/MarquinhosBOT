@@ -1,8 +1,8 @@
+import type { Disc } from '@marquinhos/contracts/activity/games/connectFour';
 import {
   COLS,
   ConnectFourEngine,
   ROWS,
-  type Disc,
 } from '@marquinhos/domain/activity/connectFour/ConnectFourEngine';
 import { describe, expect, it } from 'bun:test';
 

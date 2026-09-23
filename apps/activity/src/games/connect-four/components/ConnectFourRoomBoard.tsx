@@ -1,12 +1,14 @@
+import {
+  serverMessageSchema,
+  type ConnectFourClientMessage,
+} from '@marquinhos/contracts/activity/games/connectFour';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useState } from 'react';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
-import { parsePayload } from '../../shared/colyseusConnection';
 import {
-  connectFourStateSchema,
-  initPayloadSchema,
-  type ConnectFourState,
-  type Disc,
-} from '../types';
+  applyConnectFourMessage,
+  initialConnectFourView,
+} from '../connectFourMessages';
 import { ConnectFourCanvas } from './ConnectFourCanvas';
 
 // Renders the Connect Four board inside a multiplayer Room view — driven by
@@ -22,21 +24,15 @@ import { ConnectFourCanvas } from './ConnectFourCanvas';
 // message-derived local state for the interactive gate.
 export function ConnectFourRoomBoard() {
   const ctx = useRoomConnectionContext();
-  const [mySide, setMySide] = useState<Disc | null>(null);
-  const [state, setState] = useState<ConnectFourState | null>(null);
+  const [view, setView] = useState(initialConnectFourView);
+  const { mySide, state } = view;
 
   useEffect(() => {
     if (!ctx) return;
-    return ctx.subscribe((message) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(initPayloadSchema, message);
-        if (!payload) return;
-        setMySide(payload.disc);
-        setState(payload.state);
-      } else if (message.type === 'state') {
-        const payload = parsePayload(connectFourStateSchema, message);
-        if (payload) setState(payload);
-      }
+    return ctx.subscribe((raw) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (message)
+        setView((current) => applyConnectFourMessage(current, message));
     });
   }, [ctx]);
 
@@ -50,7 +46,12 @@ export function ConnectFourRoomBoard() {
       <ConnectFourCanvas
         state={state}
         interactive={interactive}
-        onDrop={(col) => ctx?.send({ type: 'drop', payload: { col } })}
+        onDrop={(col) =>
+          ctx?.send({
+            type: 'drop',
+            payload: { col },
+          } satisfies ConnectFourClientMessage)
+        }
       />
     </div>
   );

@@ -1,6 +1,9 @@
+import type {
+  ConnectFourState,
+  Disc,
+} from '@marquinhos/contracts/activity/games/connectFour';
 import { Application, Graphics } from 'pixi.js';
 import { useEffect, useRef } from 'react';
-import type { ConnectFourState, Disc } from '../types';
 
 const COLS = 7;
 const ROWS = 6;

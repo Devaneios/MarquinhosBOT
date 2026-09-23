@@ -1,11 +1,13 @@
+import {
+  dropPayloadSchema,
+  type ConnectFourServerMessage,
+} from '@marquinhos/contracts/activity/games/connectFour';
 import { ConnectFourSession } from 'services/activity/connectFour/ConnectFourSession';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { sendMessage } from '../sendMessage';
 
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
 const MOVE_RATE_LIMIT_MAX = 10;
-
-const dropPayloadSchema = z.object({ col: z.number() });
 
 export const connectFourAdapter: GameRoomAdapter<ConnectFourSession> = {
   maxPlayers: 2,
@@ -41,7 +43,11 @@ export const connectFourAdapter: GameRoomAdapter<ConnectFourSession> = {
             const col = parsed.data?.col;
             const accepted =
               col !== undefined && session.dropDisc(auth.userId, col);
-            if (!accepted) client.send('move_rejected', { col });
+            if (!accepted)
+              sendMessage<ConnectFourServerMessage>(client, {
+                type: 'move_rejected',
+                payload: { col },
+              });
           },
         },
         restart: { handle: (auth) => session.requestRestart(auth.userId) },
@@ -59,11 +65,17 @@ export const connectFourAdapter: GameRoomAdapter<ConnectFourSession> = {
 
   onJoin(session, auth, client, seat) {
     if (seat !== 'player') {
-      client.send('init', { disc: null, state: session.getPublicState() });
+      sendMessage<ConnectFourServerMessage>(client, {
+        type: 'init',
+        payload: { disc: null, state: session.getPublicState() },
+      });
       return;
     }
     const disc = session.addPlayer(auth.userId, client);
-    client.send('init', { disc, state: session.getPublicState() });
+    sendMessage<ConnectFourServerMessage>(client, {
+      type: 'init',
+      payload: { disc, state: session.getPublicState() },
+    });
     if (disc && auth.mode === 'single') session.enableBot(disc);
   },
   onLeave(session, auth, client) {

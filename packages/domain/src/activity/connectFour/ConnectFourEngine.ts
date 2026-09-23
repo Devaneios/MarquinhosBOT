@@ -1,15 +1,10 @@
-export type Disc = 'p1' | 'p2';
+import type {
+  ConnectFourState,
+  Disc,
+} from '@marquinhos/contracts/activity/games/connectFour';
 
 export const ROWS = 6;
 export const COLS = 7;
-
-export interface ConnectFourState {
-  grid: (Disc | null)[][];
-  currentTurn: Disc;
-  winner: Disc | null;
-  winningLine: Array<{ row: number; col: number }> | null;
-  isDraw: boolean;
-}
 
 export interface DropResult {
   row: number;
