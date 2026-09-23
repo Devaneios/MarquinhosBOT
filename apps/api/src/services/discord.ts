@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { URLSearchParams } from 'url';
+import { z } from 'zod';
 // URLSearchParams is available globally in Node.js >= 15 but we import for clarity
 
 export interface DiscordUser {
@@ -8,10 +9,15 @@ export interface DiscordUser {
   [key: string]: unknown;
 }
 
-interface DiscordGuildMember {
-  roles: string[];
-  [key: string]: unknown;
-}
+const discordUserSchema: z.ZodType<DiscordUser> = z.looseObject({
+  id: z.string(),
+});
+
+const discordGuildMemberSchema = z.object({ roles: z.array(z.string()) });
+
+const discordRolesSchema = z.array(
+  z.object({ id: z.string(), position: z.number(), name: z.string() }),
+);
 
 export class DiscordGuildMembershipError extends Error {
   readonly status: number;
@@ -23,12 +29,20 @@ export class DiscordGuildMembershipError extends Error {
   }
 }
 
-export interface ActivityTokenExchangeResult {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  scope: string;
-}
+const activityTokenExchangeResultSchema = z.object({
+  access_token: z.string(),
+  token_type: z.string(),
+  expires_in: z.number(),
+  scope: z.string(),
+});
+
+export type ActivityTokenExchangeResult = z.infer<
+  typeof activityTokenExchangeResultSchema
+>;
+
+const oauthTokenResponseSchema = activityTokenExchangeResultSchema.extend({
+  refresh_token: z.string(),
+});
 
 export function buildActivityTokenExchangeBody(code: string): URLSearchParams {
   return new URLSearchParams({
@@ -40,7 +54,7 @@ export function buildActivityTokenExchangeBody(code: string): URLSearchParams {
 }
 
 export class DiscordService {
-  getDiscordUser = async (token: string): Promise<DiscordUser> => {
+  getDiscordUser = async (token: string): Promise<DiscordUser | null> => {
     if (
       process.env.NODE_ENV !== 'production' &&
       token === 'mock-access-token'
@@ -56,7 +70,7 @@ export class DiscordService {
         username: 'mock_user_username',
         discriminator: '1234',
         avatar: 'mock_user_avatar_hash',
-      } as DiscordUser;
+      };
     }
 
     const response = await fetch('https://discord.com/api/users/@me', {
@@ -65,9 +79,8 @@ export class DiscordService {
       },
     });
 
-    const data = (await response.json()) as DiscordUser;
-
-    return data;
+    const user = discordUserSchema.safeParse(await response.json());
+    return user.success ? user.data : null;
   };
 
   isGuildMember = async (token: string, guildId: string): Promise<boolean> => {
@@ -99,7 +112,10 @@ export class DiscordService {
       },
     );
 
-    const guildUser = (await guildUserResponse.json()) as DiscordGuildMember;
+    const guildUser = discordGuildMemberSchema.safeParse(
+      await guildUserResponse.json(),
+    );
+    const memberRoles = guildUser.success ? guildUser.data.roles : [];
 
     const guildRolesResponse = await axios.get(
       `https://discord.com/api/guilds/305861924648779779/roles`,
@@ -111,14 +127,10 @@ export class DiscordService {
       },
     );
 
-    const guildRoles = guildRolesResponse?.data as Array<{
-      id: string;
-      position: number;
-      name: string;
-    }>;
+    const guildRoles = discordRolesSchema.parse(guildRolesResponse.data);
 
     const highestRole = guildRoles
-      .filter((role) => guildUser?.roles.includes(role.id))
+      .filter((role) => memberRoles.includes(role.id))
       .reduce<(typeof guildRoles)[number] | null>(
         (highest, role) =>
           !highest || role.position > highest.position ? role : highest,
@@ -149,7 +161,7 @@ export class DiscordService {
       },
     );
 
-    return response.data;
+    return oauthTokenResponseSchema.parse(response.data);
   };
 
   exchangeActivityCode = async (
@@ -168,7 +180,7 @@ export class DiscordService {
         },
       );
 
-      return response.data;
+      return activityTokenExchangeResultSchema.parse(response.data);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(
@@ -205,7 +217,7 @@ export class DiscordService {
       throw new Error('Invalid refresh token');
     }
 
-    return response.data;
+    return oauthTokenResponseSchema.parse(response.data);
   };
 
   getAuthorizationUrl = (state?: string) => {
