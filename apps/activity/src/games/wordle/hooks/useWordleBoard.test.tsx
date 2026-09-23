@@ -39,7 +39,7 @@ async function renderBoardHook(enableArrowKeys = false) {
   act(() => {
     deliverMessage({
       type: 'init',
-      payload: { wordLength: 5, guesses: [], solved: false },
+      payload: { wordLength: 5, guesses: [], solved: false, attempts: 0 },
     });
   });
   return rendered;

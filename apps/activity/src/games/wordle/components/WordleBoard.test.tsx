@@ -57,7 +57,7 @@ describe('WordleBoard focus keyboard', () => {
     act(() => {
       deliverMessage({
         type: 'init',
-        payload: { wordLength: 5, guesses: [], solved: false },
+        payload: { wordLength: 5, guesses: [], solved: false, attempts: 0 },
       });
     });
 

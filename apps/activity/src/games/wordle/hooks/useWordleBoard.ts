@@ -1,3 +1,8 @@
+import {
+  serverMessageSchema,
+  type WordleClientMessage,
+} from '@marquinhos/contracts/activity/games/wordle';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { type GuessRow } from '@marquinhos/contracts/wordle';
 import {
   buildLetterStates,
@@ -12,17 +17,11 @@ import React, {
 } from 'react';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
-import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
 import { KB_LETTERS, MIN_KEY_PRESS_MS } from '../constants';
-import {
-  wordleGuessErrorPayloadSchema,
-  wordleGuessResultPayloadSchema,
-  wordleInitPayloadSchema,
-} from '../types';
 
 interface WordleBoardOptions {
   enabled: boolean;
@@ -66,33 +65,33 @@ export function useWordleBoard(
     'wordle',
     session,
     colyseusUrl(),
-    (message: ActivityMessage) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(wordleInitPayloadSchema, message);
-        if (!payload) return;
-        setWordLength(payload.wordLength);
-        setGuesses(payload.guesses);
-        setSolved(payload.solved);
-        window.clearTimeout(errorTimeout.current);
-        setError(null);
-        setCurrentLetters(Array(payload.wordLength).fill(''));
-        setActiveIndex(0);
-      } else if (message.type === 'guess_result') {
-        const payload = parsePayload(wordleGuessResultPayloadSchema, message);
-        if (!payload) return;
-        setGuesses(payload.guesses);
-        setSolved(payload.solved);
-        window.clearTimeout(errorTimeout.current);
-        setError(null);
-        setCurrentLetters((prev) => prev.map(() => ''));
-        setActiveIndex(0);
-      } else if (message.type === 'guess_error') {
-        const payload = parsePayload(wordleGuessErrorPayloadSchema, message);
-        if (!payload) return;
-        setError(payload.message);
-        window.clearTimeout(errorTimeout.current);
-        errorTimeout.current = window.setTimeout(() => setError(null), 2500);
-        triggerShake();
+    (raw: ActivityMessage) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (!message) return;
+      switch (message.type) {
+        case 'init':
+          setWordLength(message.payload.wordLength);
+          setGuesses(message.payload.guesses);
+          setSolved(message.payload.solved);
+          window.clearTimeout(errorTimeout.current);
+          setError(null);
+          setCurrentLetters(Array(message.payload.wordLength).fill(''));
+          setActiveIndex(0);
+          return;
+        case 'guess_result':
+          setGuesses(message.payload.guesses);
+          setSolved(message.payload.solved);
+          window.clearTimeout(errorTimeout.current);
+          setError(null);
+          setCurrentLetters((prev) => prev.map(() => ''));
+          setActiveIndex(0);
+          return;
+        case 'guess_error':
+          setError(message.payload.message);
+          window.clearTimeout(errorTimeout.current);
+          errorTimeout.current = window.setTimeout(() => setError(null), 2500);
+          triggerShake();
+          return;
       }
     },
   );
@@ -175,7 +174,10 @@ export function useWordleBoard(
       triggerShake();
       return;
     }
-    send({ type: 'guess', payload: { guess: currentLetters.join('') } });
+    send({
+      type: 'guess',
+      payload: { guess: currentLetters.join('') },
+    } satisfies WordleClientMessage);
   }
 
   const pressKey = useCallback((key: string) => {

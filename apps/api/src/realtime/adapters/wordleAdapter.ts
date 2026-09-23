@@ -1,17 +1,19 @@
+import {
+  guessPayloadSchema,
+  type WordleServerMessage,
+} from '@marquinhos/contracts/activity/games/wordle';
 import type { Client } from 'colyseus';
 import type { WsSessionPayload } from 'services/activity/wsSessionToken';
 import { WordleService } from 'services/wordle';
-import { z } from 'zod';
 import type {
   AdapterContext,
   GameRoomAdapter,
   SeatRole,
 } from '../GameRoomAdapter';
+import { sendMessage } from '../sendMessage';
 
 const GUESS_RATE_LIMIT_WINDOW_MS = 1000;
 const GUESS_RATE_LIMIT_MAX = 3;
-
-const guessPayloadSchema = z.object({ guess: z.string().default('') });
 
 export const wordleAdapter: GameRoomAdapter<WordleService> = {
   // Every player solves their own private daily puzzle — there is no shared
@@ -38,7 +40,10 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
           ) => {
             const parsed = guessPayloadSchema.safeParse(payload);
             if (!parsed.success) {
-              client.send('guess_error', { message: 'Invalid guess' });
+              sendMessage<WordleServerMessage>(client, {
+                type: 'guess_error',
+                payload: { message: 'Invalid guess' },
+              });
               return;
             }
             const result = service.submitGuess(
@@ -47,10 +52,16 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
               parsed.data.guess,
             );
             if ('error' in result) {
-              client.send('guess_error', { message: result.error });
+              sendMessage<WordleServerMessage>(client, {
+                type: 'guess_error',
+                payload: { message: result.error },
+              });
               return;
             }
-            client.send('guess_result', result);
+            sendMessage<WordleServerMessage>(client, {
+              type: 'guess_result',
+              payload: result,
+            });
           },
         },
       },
@@ -70,21 +81,27 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
     // player branch below) instead of leaving them without any ack at all.
     if (seat !== 'player') {
       const daily = service.getDailyWord(auth.guildId);
-      client.send('init', {
-        wordLength: daily.word.length,
-        guesses: [],
-        solved: false,
-        attempts: 0,
+      sendMessage<WordleServerMessage>(client, {
+        type: 'init',
+        payload: {
+          wordLength: daily.word.length,
+          guesses: [],
+          solved: false,
+          attempts: 0,
+        },
       });
       return;
     }
     const daily = service.getDailyWord(auth.guildId);
     const userSession = service.getUserSession(auth.userId, auth.guildId);
-    client.send('init', {
-      wordLength: daily.word.length,
-      guesses: userSession?.guesses ?? [],
-      solved: userSession?.solved ?? false,
-      attempts: userSession?.attempts ?? 0,
+    sendMessage<WordleServerMessage>(client, {
+      type: 'init',
+      payload: {
+        wordLength: daily.word.length,
+        guesses: userSession?.guesses ?? [],
+        solved: userSession?.solved ?? false,
+        attempts: userSession?.attempts ?? 0,
+      },
     });
   },
   onLeave() {},
