@@ -1,13 +1,14 @@
 import type { Room } from '@colyseus/sdk';
 import {
   decodeStateSnapshot,
+  withClassicView,
   type DecodedSnapshot,
-} from '@marquinhos/contracts/activity/pongProtocol';
+} from '@marquinhos/contracts/activity/pong/codec';
 import {
   pongSideSchema,
   type GameMode,
   type PongSide,
-} from '@marquinhos/contracts/activity/pongTypes';
+} from '@marquinhos/contracts/activity/pong/types';
 import {
   LocalPaddlePredictor,
   PongSnapshotBuffer,
@@ -488,7 +489,7 @@ export function PongCanvas({
     }
 
     function handleBinary(bytes: Uint8Array) {
-      const state = decodeStateSnapshot(bytes.slice().buffer);
+      const state = withClassicView(decodeStateSnapshot(bytes.slice().buffer));
       const receivedAt = performance.now();
       snapshotBuffer.push(state, receivedAt);
       if (matchStartRef.current === null) matchStartRef.current = receivedAt;

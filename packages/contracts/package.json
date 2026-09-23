@@ -3,17 +3,18 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./activity/dominoesProtocol": "./src/activity/dominoesProtocol.ts",
     "./activity/gameId": "./src/activity/gameId.ts",
-    "./activity/payloadSchemas": "./src/activity/payloadSchemas.ts",
     "./activity/httpResponses": "./src/activity/httpResponses.ts",
     "./activity/minesweeperProtocol": "./src/activity/minesweeperProtocol.ts",
-    "./activity/pongTypes": "./src/activity/pongTypes.ts",
-    "./activity/pongProtocol": "./src/activity/pongProtocol.ts",
-    "./activity/dominoesProtocol": "./src/activity/dominoesProtocol.ts",
+    "./activity/payloadSchemas": "./src/activity/payloadSchemas.ts",
+    "./activity/pong/codec": "./src/activity/pong/codec.ts",
+    "./activity/pong/types": "./src/activity/pong/types.ts",
     "./http/botResponses": "./src/http/botResponses.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "bun test src"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",

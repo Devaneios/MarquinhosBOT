@@ -8,7 +8,7 @@ import {
   type GameMode,
   type PongRulesetId,
   type WinScore,
-} from '@marquinhos/contracts/activity/pongTypes';
+} from '@marquinhos/contracts/activity/pong/types';
 import { useState } from 'react';
 import { Outlet, useOutletContext } from 'react-router-dom';
 import { z } from 'zod';

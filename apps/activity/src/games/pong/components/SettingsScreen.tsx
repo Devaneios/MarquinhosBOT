@@ -4,7 +4,7 @@ import {
   type BotDifficulty,
   type PongRulesetId,
   type WinScore,
-} from '@marquinhos/contracts/activity/pongTypes';
+} from '@marquinhos/contracts/activity/pong/types';
 import { useTranslation } from 'react-i18next';
 import { MenuPanel, MenuScreen, Toggle } from '../../../components/game-shell';
 import { cn } from '../../../lib/cn';

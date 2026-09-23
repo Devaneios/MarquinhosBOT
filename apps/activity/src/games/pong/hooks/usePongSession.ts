@@ -4,7 +4,7 @@ import type {
   GameMode,
   PongRulesetId,
   WinScore,
-} from '@marquinhos/contracts/activity/pongTypes';
+} from '@marquinhos/contracts/activity/pong/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { devinfo, devlog, devwarn } from '../../../lib/devlog';

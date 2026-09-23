@@ -1,22 +1,24 @@
 import {
   getPongRuleset,
   normalizePongMatchConfig,
-} from '@marquinhos/domain/activity/pong/PongRulesetRegistry';
+} from "@marquinhos/domain/activity/pong/PongRulesetRegistry";
 import type {
   PongBallState,
   PongBrickState,
-  PongEngineEvent,
-  PongEngineState,
-  PongInputState,
-  PongMatchConfig,
   PongPaddleState,
   PongPowerUpKind,
   PongRulesetId,
   PongSide,
-} from '@marquinhos/domain/activity/pong/PongTypes';
+} from "@marquinhos/contracts/activity/pong/types";
+import type {
+  PongEngineEvent,
+  PongEngineState,
+  PongInputState,
+  PongMatchConfig,
+} from "@marquinhos/domain/activity/pong/PongTypes";
 
 export interface PongArenaEngineConfig extends Partial<
-  Omit<PongMatchConfig, 'ruleset'>
+  Omit<PongMatchConfig, "ruleset">
 > {
   ruleset: PongRulesetId;
   width?: number;
@@ -159,9 +161,9 @@ export class PongArenaEngine {
     this.state.winnerSlot = slot;
     this.state.winnerTeam =
       this.state.paddles.find((paddle) => paddle.slot === slot)?.team ?? null;
-    this.state.phase = 'series-over';
+    this.state.phase = "series-over";
     this.state.phaseRemainingMs = 0;
-    this.emit('series-won', slot, null, null);
+    this.emit("series-won", slot, null, null);
   }
 
   setSlotActive(slot: number, active: boolean): void {
@@ -171,7 +173,7 @@ export class PongArenaEngine {
   }
 
   setNoContest(): void {
-    this.state.phase = 'no-contest';
+    this.state.phase = "no-contest";
     this.state.phaseRemainingMs = 0;
     for (const ball of this.state.balls) ball.active = false;
   }
@@ -186,8 +188,8 @@ export class PongArenaEngine {
   }
 
   begin(): void {
-    if (this.state.elapsedMs !== 0 || this.state.phase !== 'rally') return;
-    this.state.phase = 'countdown';
+    if (this.state.elapsedMs !== 0 || this.state.phase !== "rally") return;
+    this.state.phase = "countdown";
     this.state.phaseRemainingMs = 1200;
     this.centerBalls();
   }
@@ -197,7 +199,7 @@ export class PongArenaEngine {
     this.state.elapsedMs += dtMs;
     this.updateEffects();
     this.movePaddles(dtMs);
-    if (this.state.phase !== 'rally') {
+    if (this.state.phase !== "rally") {
       this.advancePhase(dtMs);
       this.maybeSpawnPowerUp();
       return;
@@ -211,8 +213,8 @@ export class PongArenaEngine {
       this.handleArena(ball);
     }
     if (
-      this.matchConfig.ruleset === 'coop-keep-alive' ||
-      this.matchConfig.ruleset === 'radial-solo'
+      this.matchConfig.ruleset === "coop-keep-alive" ||
+      this.matchConfig.ruleset === "radial-solo"
     ) {
       this.state.score[0] = Math.floor(this.state.elapsedMs / 1000);
     }
@@ -232,7 +234,7 @@ export class PongArenaEngine {
       height: this.height,
       ruleset: this.matchConfig.ruleset,
       arena: definition.arena,
-      phase: 'rally',
+      phase: "rally",
       phaseRemainingMs: 0,
       elapsedMs: 0,
       balls: this.createBalls(),
@@ -241,7 +243,7 @@ export class PongArenaEngine {
       powerUps: [],
       score: Array.from({ length: Math.max(2, slotCount) }, () => 0),
       lives: Array.from({ length: slotCount }, () =>
-        this.matchConfig.ruleset === 'quad-elimination'
+        this.matchConfig.ruleset === "quad-elimination"
           ? this.matchConfig.lives
           : 0,
       ),
@@ -262,13 +264,13 @@ export class PongArenaEngine {
       id: number,
       slot: number,
       team: number,
-      side: 'left' | 'right',
+      side: "left" | "right",
       depth = 0,
     ) => {
       const width = 12;
       const height = 80;
       const x =
-        side === 'left'
+        side === "left"
           ? 12 + depth * 24
           : this.width - width - 12 - depth * 24;
       paddles.push(
@@ -288,61 +290,61 @@ export class PongArenaEngine {
       id: number,
       slot: number,
       team: number,
-      side: 'top' | 'bottom',
+      side: "top" | "bottom",
       x = (this.width - 80) / 2,
     ) => {
       const width = 80;
       const height = 12;
-      const y = side === 'top' ? 12 : this.height - height - 12;
+      const y = side === "top" ? 12 : this.height - height - 12;
       paddles.push(this.paddle(id, slot, team, side, x, y, width, height));
     };
 
-    if (ruleset === 'breakout') {
-      horizontal(0, 0, 0, 'bottom');
-    } else if (ruleset === 'rebound') {
-      horizontal(0, 0, 0, 'bottom', this.width * 0.2 - 40);
-      horizontal(1, 1, 1, 'bottom', this.width * 0.8 - 40);
-    } else if (ruleset === 'radial-solo' || ruleset === 'radial-duel') {
-      const count = ruleset === 'radial-solo' ? 1 : 2;
+    if (ruleset === "breakout") {
+      horizontal(0, 0, 0, "bottom");
+    } else if (ruleset === "rebound") {
+      horizontal(0, 0, 0, "bottom", this.width * 0.2 - 40);
+      horizontal(1, 1, 1, "bottom", this.width * 0.8 - 40);
+    } else if (ruleset === "radial-solo" || ruleset === "radial-duel") {
+      const count = ruleset === "radial-solo" ? 1 : 2;
       for (let slot = 0; slot < count; slot += 1) {
         const paddle = this.paddle(
           slot,
           slot,
           slot,
-          slot === 0 ? 'bottom' : 'top',
+          slot === 0 ? "bottom" : "top",
           this.width / 2,
           this.height / 2,
           12,
           80,
         );
-        paddle.orientation = 'radial';
+        paddle.orientation = "radial";
         paddle.angle = slot === 0 ? Math.PI / 2 : -Math.PI / 2;
         paddle.arc = Math.PI / 3;
         paddle.axisPosition = paddle.angle;
         paddles.push(paddle);
       }
     } else if (
-      ruleset === 'quad-elimination' ||
-      ruleset === 'air-hockey' ||
-      ruleset === 'coop-keep-alive'
+      ruleset === "quad-elimination" ||
+      ruleset === "air-hockey" ||
+      ruleset === "coop-keep-alive"
     ) {
-      vertical(0, 0, 0, 'left');
-      vertical(1, 1, 1, 'right');
-      horizontal(2, 2, 2, 'top');
-      horizontal(3, 3, 3, 'bottom');
-    } else if (ruleset === 'doubles-2v2') {
-      vertical(0, 0, 0, 'left', 0);
-      vertical(1, 1, 0, 'left', 1);
-      vertical(2, 2, 1, 'right', 0);
-      vertical(3, 3, 1, 'right', 1);
-    } else if (ruleset === 'superpong') {
-      vertical(0, 0, 0, 'left', 0);
-      vertical(1, 0, 0, 'left', 1);
-      vertical(2, 1, 1, 'right', 0);
-      vertical(3, 1, 1, 'right', 1);
+      vertical(0, 0, 0, "left");
+      vertical(1, 1, 1, "right");
+      horizontal(2, 2, 2, "top");
+      horizontal(3, 3, 3, "bottom");
+    } else if (ruleset === "doubles-2v2") {
+      vertical(0, 0, 0, "left", 0);
+      vertical(1, 1, 0, "left", 1);
+      vertical(2, 2, 1, "right", 0);
+      vertical(3, 3, 1, "right", 1);
+    } else if (ruleset === "superpong") {
+      vertical(0, 0, 0, "left", 0);
+      vertical(1, 0, 0, "left", 1);
+      vertical(2, 1, 1, "right", 0);
+      vertical(3, 1, 1, "right", 1);
     } else {
-      vertical(0, 0, 0, 'left');
-      vertical(1, 1, 1, 'right');
+      vertical(0, 0, 0, "left");
+      vertical(1, 1, 1, "right");
     }
     return paddles;
   }
@@ -363,14 +365,14 @@ export class PongArenaEngine {
       team,
       side,
       orientation:
-        side === 'left' || side === 'right' ? 'vertical' : 'horizontal',
+        side === "left" || side === "right" ? "vertical" : "horizontal",
       x,
       y,
       width,
       height,
       angle: 0,
       arc: 0,
-      axisPosition: side === 'left' || side === 'right' ? y : x,
+      axisPosition: side === "left" || side === "right" ? y : x,
       velocity: 0,
       sizeMultiplier: 1,
       speedMultiplier: 1,
@@ -382,7 +384,7 @@ export class PongArenaEngine {
   }
 
   private createBalls(): PongBallState[] {
-    const count = this.matchConfig.ruleset === 'multiball' ? 3 : 1;
+    const count = this.matchConfig.ruleset === "multiball" ? 3 : 1;
     return Array.from({ length: count }, (_, id) => this.servingBall(id, id));
   }
 
@@ -405,15 +407,15 @@ export class PongArenaEngine {
 
   private createBricks(): PongBrickState[] {
     const ruleset = this.matchConfig.ruleset;
-    if (ruleset !== 'breakout' && ruleset !== 'brick-battle') return [];
-    const rows = ruleset === 'breakout' ? 6 : 2;
-    const columns = ruleset === 'breakout' ? 10 : 8;
-    const width = ruleset === 'breakout' ? 56 : 52;
+    if (ruleset !== "breakout" && ruleset !== "brick-battle") return [];
+    const rows = ruleset === "breakout" ? 6 : 2;
+    const columns = ruleset === "breakout" ? 10 : 8;
+    const width = ruleset === "breakout" ? 56 : 52;
     const height = 18;
     const gap = 6;
     const total = columns * width + (columns - 1) * gap;
     const startX = (this.width - total) / 2;
-    const startY = ruleset === 'breakout' ? 50 : this.height / 2 - 24;
+    const startY = ruleset === "breakout" ? 50 : this.height / 2 - 24;
     const bricks: PongBrickState[] = [];
     for (let row = 0; row < rows; row += 1) {
       for (let column = 0; column < columns; column += 1) {
@@ -450,7 +452,7 @@ export class PongArenaEngine {
             : input.target;
       const speed = this.paddleSpeed * paddle.speedMultiplier;
       const previous = paddle.axisPosition;
-      if (paddle.orientation === 'radial') {
+      if (paddle.orientation === "radial") {
         const desired = target === null ? null : target * Math.PI * 2 - Math.PI;
         const delta =
           desired === null ? axis * speed * 0.003 : desired - paddle.angle;
@@ -461,7 +463,7 @@ export class PongArenaEngine {
         );
         paddle.axisPosition = paddle.angle;
       } else {
-        const vertical = paddle.orientation === 'vertical';
+        const vertical = paddle.orientation === "vertical";
         const length = vertical
           ? paddle.height * paddle.sizeMultiplier
           : paddle.width * paddle.sizeMultiplier;
@@ -488,12 +490,12 @@ export class PongArenaEngine {
   private integrateBall(ball: PongBallState, dtMs: number): void {
     const dt = dtMs / 1000;
     if (
-      this.matchConfig.ruleset === 'rebound' ||
-      this.matchConfig.ruleset === 'pong-tennis'
+      this.matchConfig.ruleset === "rebound" ||
+      this.matchConfig.ruleset === "pong-tennis"
     ) {
       ball.vy += 420 * dt;
     }
-    if (this.matchConfig.ruleset === 'pong-tennis') {
+    if (this.matchConfig.ruleset === "pong-tennis") {
       ball.vx += ball.spin * 12 * dt;
       ball.vy -= ball.spin * ball.vx * 0.002 * dt;
     }
@@ -502,18 +504,18 @@ export class PongArenaEngine {
   }
 
   private handlePaddles(ball: PongBallState): void {
-    if (this.state.arena === 'circular') {
+    if (this.state.arena === "circular") {
       this.handleRadialPaddles(ball);
       return;
     }
     for (const paddle of this.state.paddles) {
       if (!paddle.active || !circleRect(ball, paddleRect(paddle))) continue;
       const movingToward =
-        paddle.side === 'left'
+        paddle.side === "left"
           ? ball.vx < 0
-          : paddle.side === 'right'
+          : paddle.side === "right"
             ? ball.vx > 0
-            : paddle.side === 'top'
+            : paddle.side === "top"
               ? ball.vy < 0
               : ball.vy > 0;
       if (!movingToward) continue;
@@ -525,13 +527,13 @@ export class PongArenaEngine {
       }
       this.state.rallyHits += 1;
       ball.lastTouchSlot = paddle.slot;
-      this.emit('paddle-hit', paddle.slot, paddle.id, ball.id);
+      this.emit("paddle-hit", paddle.slot, paddle.id, ball.id);
       break;
     }
   }
 
   private bounceFromPaddle(ball: PongBallState, paddle: PongPaddleState): void {
-    const vertical = paddle.orientation === 'vertical';
+    const vertical = paddle.orientation === "vertical";
     const rect = paddleRect(paddle);
     const center = vertical
       ? rect.y + rect.height / 2
@@ -544,20 +546,20 @@ export class PongArenaEngine {
       this.maxBallSpeed,
     );
     const angle = offset * (Math.PI / 3);
-    if (paddle.side === 'left' || paddle.side === 'right') {
-      const direction = paddle.side === 'left' ? 1 : -1;
+    if (paddle.side === "left" || paddle.side === "right") {
+      const direction = paddle.side === "left" ? 1 : -1;
       ball.vx = direction * Math.max(speed * 0.25, speed * Math.cos(angle));
       ball.vy = speed * Math.sin(angle) + paddle.velocity * 0.12;
       ball.x =
-        paddle.side === 'left'
+        paddle.side === "left"
           ? rect.x + rect.width + ball.radius
           : rect.x - ball.radius;
     } else {
-      const direction = paddle.side === 'top' ? 1 : -1;
+      const direction = paddle.side === "top" ? 1 : -1;
       ball.vy = direction * Math.max(speed * 0.25, speed * Math.cos(angle));
       ball.vx = speed * Math.sin(angle) + paddle.velocity * 0.12;
       ball.y =
-        paddle.side === 'top'
+        paddle.side === "top"
           ? rect.y + rect.height + ball.radius
           : rect.y - ball.radius;
     }
@@ -589,7 +591,7 @@ export class PongArenaEngine {
     ball.y = cy + ny * (radius - ball.radius);
     ball.lastTouchSlot = paddle.slot;
     this.state.rallyHits += 1;
-    this.emit('paddle-hit', paddle.slot, paddle.id, ball.id);
+    this.emit("paddle-hit", paddle.slot, paddle.id, ball.id);
   }
 
   private handleBricks(ball: PongBallState): void {
@@ -598,7 +600,7 @@ export class PongArenaEngine {
       brick.hp -= 1;
       if (brick.hp <= 0) {
         brick.active = false;
-        this.emit('brick-destroyed', ball.lastTouchSlot, brick.id, null);
+        this.emit("brick-destroyed", ball.lastTouchSlot, brick.id, null);
       }
       const centerX = brick.x + brick.width / 2;
       const centerY = brick.y + brick.height / 2;
@@ -610,7 +612,7 @@ export class PongArenaEngine {
       } else {
         ball.vy *= -1;
       }
-      if (this.matchConfig.ruleset === 'breakout') {
+      if (this.matchConfig.ruleset === "breakout") {
         const cleared = this.state.bricks.filter((item) => !item.active).length;
         const scale = 1 + (cleared / this.state.bricks.length) * 0.8;
         this.setBallSpeed(
@@ -633,38 +635,38 @@ export class PongArenaEngine {
         this.state.paddles.find((item) => item.slot === ball.lastTouchSlot) ??
         this.state.paddles[0];
       if (paddle) this.applyPowerUp(powerUp.kind, paddle);
-      this.emit('powerup-collected', paddle?.slot ?? null, powerUp.id, null);
+      this.emit("powerup-collected", paddle?.slot ?? null, powerUp.id, null);
     }
   }
 
   private handleArena(ball: PongBallState): void {
-    if (this.state.arena === 'circular') {
+    if (this.state.arena === "circular") {
       this.handleCircularExit(ball);
       return;
     }
-    if (this.state.arena === 'volleyball') {
+    if (this.state.arena === "volleyball") {
       this.handleVolleyball(ball);
       return;
     }
-    if (this.state.arena === 'breakout') {
+    if (this.state.arena === "breakout") {
       this.handleBreakoutBounds(ball);
       return;
     }
-    if (this.state.arena === 'square' || this.state.arena === 'air-hockey') {
+    if (this.state.arena === "square" || this.state.arena === "air-hockey") {
       this.handleFourSideBounds(ball);
       return;
     }
     if (ball.y - ball.radius <= 0) {
       ball.y = ball.radius;
       ball.vy = Math.abs(ball.vy);
-      this.emit('wall-hit', null, ball.id, null);
+      this.emit("wall-hit", null, ball.id, null);
     } else if (ball.y + ball.radius >= this.height) {
       ball.y = this.height - ball.radius;
       ball.vy = -Math.abs(ball.vy);
-      this.emit('wall-hit', null, ball.id, null);
+      this.emit("wall-hit", null, ball.id, null);
     }
-    if (ball.x < -ball.radius) this.concedeSide('left', ball);
-    else if (ball.x > this.width + ball.radius) this.concedeSide('right', ball);
+    if (ball.x < -ball.radius) this.concedeSide("left", ball);
+    else if (ball.x > this.width + ball.radius) this.concedeSide("right", ball);
   }
 
   private handleFourSideBounds(ball: PongBallState): void {
@@ -682,11 +684,11 @@ export class PongArenaEngine {
       ball.y = clamp(ball.y, ball.radius, this.height - ball.radius);
       return;
     }
-    if (ball.x < -ball.radius) this.concedeSide('left', ball);
-    else if (ball.x > this.width + ball.radius) this.concedeSide('right', ball);
-    else if (ball.y < -ball.radius) this.concedeSide('top', ball);
+    if (ball.x < -ball.radius) this.concedeSide("left", ball);
+    else if (ball.x > this.width + ball.radius) this.concedeSide("right", ball);
+    else if (ball.y < -ball.radius) this.concedeSide("top", ball);
     else if (ball.y > this.height + ball.radius)
-      this.concedeSide('bottom', ball);
+      this.concedeSide("bottom", ball);
   }
 
   private handleVolleyball(ball: PongBallState): void {
@@ -744,7 +746,7 @@ export class PongArenaEngine {
     const dy = ball.y - this.height / 2;
     const radius = Math.min(this.width, this.height) * 0.46;
     if (Math.hypot(dx, dy) <= radius + ball.radius) return;
-    if (this.matchConfig.ruleset === 'radial-solo') {
+    if (this.matchConfig.ruleset === "radial-solo") {
       this.endCooperativeRound(ball);
       return;
     }
@@ -758,32 +760,32 @@ export class PongArenaEngine {
     if (
       paddle &&
       !paddle.active &&
-      this.matchConfig.ruleset === 'quad-elimination'
+      this.matchConfig.ruleset === "quad-elimination"
     ) {
-      if (side === 'left' || side === 'right') ball.vx *= -1;
+      if (side === "left" || side === "right") ball.vx *= -1;
       else ball.vy *= -1;
       ball.x = clamp(ball.x, ball.radius, this.width - ball.radius);
       ball.y = clamp(ball.y, ball.radius, this.height - ball.radius);
       return;
     }
-    if (this.matchConfig.ruleset === 'coop-keep-alive') {
+    if (this.matchConfig.ruleset === "coop-keep-alive") {
       this.endCooperativeRound(ball);
       return;
     }
-    if (this.matchConfig.ruleset === 'quad-elimination') {
+    if (this.matchConfig.ruleset === "quad-elimination") {
       if (paddle) this.loseLife(paddle.slot, ball);
       return;
     }
-    if (this.matchConfig.ruleset === 'air-hockey') {
+    if (this.matchConfig.ruleset === "air-hockey") {
       const team = paddle ? (paddle.team + 1) % 4 : 0;
       this.scoreTeam(team, ball);
       return;
     }
-    const team = side === 'left' ? 1 : 0;
+    const team = side === "left" ? 1 : 0;
     const defending = this.state.paddles.find((item) => item.side === side);
     if (defending?.shield) {
       defending.shield -= 1;
-      if (side === 'left') ball.vx = Math.abs(ball.vx);
+      if (side === "left") ball.vx = Math.abs(ball.vx);
       else ball.vx = -Math.abs(ball.vx);
       ball.x = clamp(ball.x, ball.radius, this.width - ball.radius);
       return;
@@ -793,7 +795,7 @@ export class PongArenaEngine {
 
   private scoreTeam(team: number, ball: PongBallState): void {
     this.state.score[team] = (this.state.score[team] ?? 0) + 1;
-    this.emit('point-scored', null, ball.id, team);
+    this.emit("point-scored", null, ball.id, team);
     if ((this.state.score[team] ?? 0) >= this.matchConfig.targetScore) {
       this.state.gamesWon[team] = (this.state.gamesWon[team] ?? 0) + 1;
       const needed = Math.ceil(this.matchConfig.bestOf / 2);
@@ -802,15 +804,15 @@ export class PongArenaEngine {
         this.state.winnerSlot =
           this.state.paddles.find((paddle) => paddle.team === team)?.slot ??
           team;
-        this.state.phase = 'series-over';
-        this.emit('series-won', this.state.winnerSlot, null, team);
+        this.state.phase = "series-over";
+        this.emit("series-won", this.state.winnerSlot, null, team);
       } else {
-        this.state.phase = 'game-over';
+        this.state.phase = "game-over";
         this.state.phaseRemainingMs = 1200;
-        this.emit('game-won', null, null, team);
+        this.emit("game-won", null, null, team);
       }
     } else {
-      this.state.phase = 'point-scored';
+      this.state.phase = "point-scored";
       this.state.phaseRemainingMs = 700;
     }
     this.centerBalls();
@@ -834,7 +836,7 @@ export class PongArenaEngine {
           .map((item) => item.slot),
       );
       this.state.placements[slot] = remaining.size + 1;
-      this.emit('player-eliminated', slot, null, null);
+      this.emit("player-eliminated", slot, null, null);
       if (remaining.size === 1) {
         const winner = [...remaining][0]!;
         this.state.placements[winner] = 1;
@@ -842,23 +844,23 @@ export class PongArenaEngine {
         return;
       }
     }
-    this.state.phase = 'point-scored';
+    this.state.phase = "point-scored";
     this.state.phaseRemainingMs = 700;
     this.centerBalls();
-    this.emit('point-scored', slot, ball.id, this.state.lives[slot] ?? 0);
+    this.emit("point-scored", slot, ball.id, this.state.lives[slot] ?? 0);
   }
 
   private endCooperativeRound(ball: PongBallState): void {
     ball.active = false;
-    this.state.phase = 'series-over';
-    this.emit('rally-ended', ball.lastTouchSlot, ball.id, this.state.rallyHits);
+    this.state.phase = "series-over";
+    this.emit("rally-ended", ball.lastTouchSlot, ball.id, this.state.rallyHits);
   }
 
   private centerBalls(): void {
     this.state.balls = Array.from(
       {
         length:
-          this.matchConfig.ruleset === 'multiball'
+          this.matchConfig.ruleset === "multiball"
             ? this.matchConfig.maxBalls
             : 1,
       },
@@ -872,35 +874,35 @@ export class PongArenaEngine {
   }
 
   private advancePhase(dtMs: number): void {
-    if (this.state.phase === 'series-over' || this.state.phase === 'no-contest')
+    if (this.state.phase === "series-over" || this.state.phase === "no-contest")
       return;
     this.state.phaseRemainingMs = Math.max(
       0,
       this.state.phaseRemainingMs - dtMs,
     );
     if (this.state.phaseRemainingMs > 0) return;
-    if (this.state.phase === 'game-over') {
+    if (this.state.phase === "game-over") {
       this.state.score.fill(0);
       this.state.gameIndex += 1;
     }
     if (
-      this.state.phase === 'countdown' ||
-      this.state.phase === 'point-scored' ||
-      this.state.phase === 'game-over'
+      this.state.phase === "countdown" ||
+      this.state.phase === "point-scored" ||
+      this.state.phase === "game-over"
     ) {
-      this.state.phase = 'serving';
+      this.state.phase = "serving";
       this.state.phaseRemainingMs = 500;
       return;
     }
-    if (this.state.phase === 'serving') {
+    if (this.state.phase === "serving") {
       this.state.balls = this.createBalls();
-      this.state.phase = 'rally';
-      this.emit('serve', null, this.state.balls[0]?.id ?? null, null);
+      this.state.phase = "rally";
+      this.emit("serve", null, this.state.balls[0]?.id ?? null, null);
     }
   }
 
   private maybeSpawnPowerUp(): void {
-    if (this.matchConfig.ruleset !== 'powerup-battle') return;
+    if (this.matchConfig.ruleset !== "powerup-battle") return;
     if (this.state.elapsedMs < this.nextPowerUpAtMs) return;
     const kinds = this.matchConfig.powerUps;
     if (kinds.length === 0) return;
@@ -919,30 +921,30 @@ export class PongArenaEngine {
 
   private applyPowerUp(kind: PongPowerUpKind, paddle: PongPaddleState): void {
     const untilMs = this.state.elapsedMs + 6000;
-    if (kind === 'shield') {
+    if (kind === "shield") {
       paddle.shield += 1;
       return;
     }
-    if (kind === 'extra-life') {
+    if (kind === "extra-life") {
       this.state.lives[paddle.slot] = (this.state.lives[paddle.slot] ?? 0) + 1;
       return;
     }
-    if (kind === 'sticky') paddle.stickyUntilMs = untilMs;
-    if (kind === 'reverse-controls') {
+    if (kind === "sticky") paddle.stickyUntilMs = untilMs;
+    if (kind === "reverse-controls") {
       for (const item of this.state.paddles) {
         if (item.team !== paddle.team) item.reversedUntilMs = untilMs;
       }
     }
-    if (kind === 'extra-paddle') {
+    if (kind === "extra-paddle") {
       const clone = {
         ...paddle,
         id: this.nextEntityId++,
         x: paddle.x,
         y: paddle.y,
       };
-      if (clone.orientation === 'vertical')
-        clone.x += clone.side === 'left' ? 24 : -24;
-      else clone.y += clone.side === 'top' ? 24 : -24;
+      if (clone.orientation === "vertical")
+        clone.x += clone.side === "left" ? 24 : -24;
+      else clone.y += clone.side === "top" ? 24 : -24;
       this.state.paddles.push(clone);
       this.effects.push({ kind, paddleId: clone.id, untilMs });
       return;
@@ -954,7 +956,7 @@ export class PongArenaEngine {
   private updateEffects(): void {
     this.effects = this.effects.filter((effect) => {
       if (effect.untilMs > this.state.elapsedMs) return true;
-      if (effect.kind === 'extra-paddle') {
+      if (effect.kind === "extra-paddle") {
         this.state.paddles = this.state.paddles.filter(
           (paddle) => paddle.id !== effect.paddleId,
         );
@@ -966,10 +968,10 @@ export class PongArenaEngine {
       paddle.speedMultiplier = 1;
       for (const effect of this.effects) {
         if (effect.paddleId !== paddle.id) continue;
-        if (effect.kind === 'grow') paddle.sizeMultiplier = 1.5;
-        if (effect.kind === 'shrink') paddle.sizeMultiplier = 0.65;
-        if (effect.kind === 'speed-boost') paddle.speedMultiplier = 1.5;
-        if (effect.kind === 'slow') paddle.speedMultiplier = 0.65;
+        if (effect.kind === "grow") paddle.sizeMultiplier = 1.5;
+        if (effect.kind === "shrink") paddle.sizeMultiplier = 0.65;
+        if (effect.kind === "speed-boost") paddle.speedMultiplier = 1.5;
+        if (effect.kind === "slow") paddle.speedMultiplier = 0.65;
       }
     }
     this.state.powerUps = this.state.powerUps.filter(
@@ -981,16 +983,16 @@ export class PongArenaEngine {
     for (const ball of this.state.balls) {
       if (ball.stickyPaddleId !== paddle.id) continue;
       ball.stickyPaddleId = null;
-      if (paddle.side === 'left') ball.vx = this.ballSpeed;
-      else if (paddle.side === 'right') ball.vx = -this.ballSpeed;
-      else if (paddle.side === 'top') ball.vy = this.ballSpeed;
+      if (paddle.side === "left") ball.vx = this.ballSpeed;
+      else if (paddle.side === "right") ball.vx = -this.ballSpeed;
+      else if (paddle.side === "top") ball.vy = this.ballSpeed;
       else ball.vy = -this.ballSpeed;
     }
   }
 
   private checkCompletion(): void {
     if (
-      this.matchConfig.ruleset === 'breakout' &&
+      this.matchConfig.ruleset === "breakout" &&
       this.state.bricks.every((brick) => !brick.active)
     ) {
       this.forceWinner(0);
@@ -1015,7 +1017,7 @@ export class PongArenaEngine {
   }
 
   private emit(
-    type: PongEngineEvent['type'],
+    type: PongEngineEvent["type"],
     slot: number | null,
     entityId: number | null,
     value: number | null,

@@ -1,5 +1,5 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
-import type { BotDifficulty } from '@marquinhos/domain/activity/pong/PongBotAI';
+import type { BotDifficulty } from '@marquinhos/contracts/activity/pong/types';
 import type { Client } from 'colyseus';
 import type { WsSessionPayload } from 'services/activity/wsSessionToken';
 

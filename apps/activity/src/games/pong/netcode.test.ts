@@ -1,4 +1,4 @@
-import type { DecodedSnapshot } from '@marquinhos/contracts/activity/pongProtocol';
+import type { DecodedSnapshot } from '@marquinhos/contracts/activity/pong/codec';
 import {
   LocalPaddlePredictor,
   PongSnapshotBuffer,
