@@ -1,21 +1,9 @@
-import {
-  wordleUserConfigSchema,
-  type WordleUserConfig,
-} from '@marquinhos/contracts/wordle';
+import * as contract from '@marquinhos/contracts/http/routes/wordle';
+import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import type { Request, Response } from 'express';
-import {
-  guildIdBodySchema,
-  guildIdParamsSchema,
-  leaderboardQuerySchema,
-  reviewDecisionBodySchema,
-  setConfigBodySchema,
-  submitGuessBodySchema,
-  userGuildBodySchema,
-  userGuildParamsSchema,
-  validateGuessQuerySchema,
-} from 'schemas/wordle.schema';
 import { WordleService } from 'services/wordle';
 import type { IUser } from 'types';
+import { parseRequest, sendContract } from 'utils/contract';
 
 const service = new WordleService();
 
@@ -42,7 +30,9 @@ export default class WordleController {
       return;
     }
 
-    res.status(200).json({ data: this.userConfig.get(req.user.id) });
+    sendContract(res, contract.getUserConfig, {
+      data: this.userConfig.get(req.user.id),
+    });
   }
 
   updateUserConfig(req: UserConfigRequest, res: UserConfigResponse): void {
@@ -51,7 +41,7 @@ export default class WordleController {
       return;
     }
 
-    const config = wordleUserConfigSchema.safeParse(req.body);
+    const config = contract.updateUserConfig.body.safeParse(req.body);
     if (!config.success) {
       res.status(400).json({
         message:
@@ -60,20 +50,20 @@ export default class WordleController {
       return;
     }
 
-    res
-      .status(200)
-      .json({ data: this.userConfig.update(req.user.id, config.data) });
+    sendContract(res, contract.updateUserConfig, {
+      data: this.userConfig.update(req.user.id, config.data),
+    });
   }
 
   submitGuess(req: Request, res: Response): void {
-    const body = submitGuessBodySchema.safeParse(req.body);
-    if (!body.success) {
+    const input = parseRequest(contract.submitGuess, req);
+    if (!input) {
       res
         .status(400)
         .json({ message: 'userId, guildId e guess são obrigatórios.' });
       return;
     }
-    const { userId, guildId, guess } = body.data;
+    const { userId, guildId, guess } = input.body;
 
     try {
       const result = service.submitGuess(userId, guildId, guess);
@@ -81,7 +71,7 @@ export default class WordleController {
         res.status(400).json({ message: result.error });
         return;
       }
-      res.json({ data: result });
+      sendContract(res, contract.submitGuess, { data: result });
     } catch (err) {
       console.error('WordleController.submitGuess error:', err);
       res.status(500).json({ message: 'Erro interno.' });
@@ -89,16 +79,16 @@ export default class WordleController {
   }
 
   getStats(req: Request, res: Response): void {
-    const params = guildIdParamsSchema.safeParse(req.params);
-    if (!params.success) {
+    const input = parseRequest(contract.getStats, req);
+    if (!input) {
       res.status(400).json({ message: 'guildId é obrigatório.' });
       return;
     }
-    const { guildId } = params.data;
+    const { guildId } = input.params;
 
     try {
       const stats = service.getDailyStats(guildId);
-      res.json({ data: stats });
+      sendContract(res, contract.getStats, { data: stats });
     } catch (err) {
       console.error('WordleController.getStats error:', err);
       res.status(500).json({ message: 'Erro interno.' });
@@ -106,16 +96,16 @@ export default class WordleController {
   }
 
   getUserSession(req: Request, res: Response): void {
-    const params = userGuildParamsSchema.safeParse(req.params);
-    if (!params.success) {
+    const input = parseRequest(contract.getUserSession, req);
+    if (!input) {
       res.status(400).json({ message: 'userId e guildId são obrigatórios.' });
       return;
     }
-    const { userId, guildId } = params.data;
+    const { userId, guildId } = input.params;
 
     try {
       const session = service.getUserSession(userId, guildId);
-      res.json({ data: session });
+      sendContract(res, contract.getUserSession, { data: session });
     } catch (err) {
       console.error('WordleController.getUserSession error:', err);
       res.status(500).json({ message: 'Erro interno.' });
@@ -123,16 +113,16 @@ export default class WordleController {
   }
 
   getDayGuesses(req: Request, res: Response): void {
-    const params = guildIdParamsSchema.safeParse(req.params);
-    if (!params.success) {
+    const input = parseRequest(contract.getDayGuesses, req);
+    if (!input) {
       res.status(400).json({ message: 'guildId é obrigatório.' });
       return;
     }
-    const { guildId } = params.data;
+    const { guildId } = input.params;
 
     try {
       const data = service.getDayGuesses(guildId);
-      res.json({ data });
+      sendContract(res, contract.getDayGuesses, { data });
     } catch (err) {
       console.error('WordleController.getDayGuesses error:', err);
       res.status(500).json({ message: 'Erro interno.' });
@@ -140,17 +130,17 @@ export default class WordleController {
   }
 
   forceNewWord(req: Request, res: Response): void {
-    const body = guildIdBodySchema.safeParse(req.body);
-    if (!body.success) {
+    const input = parseRequest(contract.forceNewWord, req);
+    if (!input) {
       res.status(400).json({ message: 'guildId é obrigatório.' });
       return;
     }
-    const { guildId } = body.data;
+    const { guildId } = input.body;
 
     try {
       const result = service.forceNewWord(guildId);
       const stats = service.getDailyStats(guildId);
-      res.json({ data: { ...result, stats } });
+      sendContract(res, contract.forceNewWord, { data: { ...result, stats } });
     } catch (err) {
       console.error('WordleController.forceNewWord error:', err);
       res.status(500).json({ message: 'Erro interno.' });
@@ -158,19 +148,18 @@ export default class WordleController {
   }
 
   getLeaderboard(req: Request, res: Response): void {
-    const params = guildIdParamsSchema.safeParse(req.params);
-    if (!params.success) {
+    const input = parseRequest(contract.getLeaderboard, req);
+    if (!input) {
       res.status(400).json({ message: 'guildId é obrigatório.' });
       return;
     }
-    const { guildId } = params.data;
-
-    const { period } = leaderboardQuerySchema.parse(req.query);
+    const { guildId } = input.params;
+    const { period } = input.query;
 
     try {
       const data = service.getLeaderboard(guildId, 10, period);
       const groupStreak = service.getGroupStreak(guildId);
-      res.json({ data, groupStreak });
+      sendContract(res, contract.getLeaderboard, { data, groupStreak });
     } catch (err) {
       console.error('WordleController.getLeaderboard error:', err);
       res.status(500).json({ message: 'Erro interno.' });
@@ -178,18 +167,18 @@ export default class WordleController {
   }
 
   setConfig(req: Request, res: Response): void {
-    const body = setConfigBodySchema.safeParse(req.body);
-    if (!body.success) {
+    const input = parseRequest(contract.setConfig, req);
+    if (!input) {
       res
         .status(400)
         .json({ message: 'guildId e channelId são obrigatórios.' });
       return;
     }
-    const { guildId, channelId } = body.data;
+    const { guildId, channelId } = input.body;
 
     try {
       service.setConfig(guildId, channelId);
-      res.json({ message: 'Configuração salva.' });
+      sendContract(res, contract.setConfig, { message: 'Configuração salva.' });
     } catch (err) {
       console.error('WordleController.setConfig error:', err);
       res.status(500).json({ message: 'Erro interno.' });
@@ -197,18 +186,17 @@ export default class WordleController {
   }
 
   validateGuess(req: Request, res: Response): void {
-    const params = guildIdParamsSchema.safeParse(req.params);
-    const query = validateGuessQuerySchema.safeParse(req.query);
-    if (!params.success || !query.success) {
+    const input = parseRequest(contract.validateGuess, req);
+    if (!input) {
       res.status(400).json({ message: 'guildId e guess são obrigatórios.' });
       return;
     }
-    const { guildId } = params.data;
-    const { guess } = query.data;
+    const { guildId } = input.params;
+    const { guess } = input.query;
 
     try {
       const result = service.validateGuess(guildId, guess);
-      res.json({ data: result });
+      sendContract(res, contract.validateGuess, { data: result });
     } catch (err) {
       console.error('WordleController.validateGuess error:', err);
       res.status(500).json({ message: 'Erro interno.' });
@@ -216,16 +204,16 @@ export default class WordleController {
   }
 
   getConfig(req: Request, res: Response): void {
-    const params = guildIdParamsSchema.safeParse(req.params);
-    if (!params.success) {
+    const input = parseRequest(contract.getConfig, req);
+    if (!input) {
       res.status(400).json({ message: 'guildId é obrigatório.' });
       return;
     }
-    const { guildId } = params.data;
+    const { guildId } = input.params;
 
     try {
       const config = service.getConfig(guildId);
-      res.json({ data: config });
+      sendContract(res, contract.getConfig, { data: config });
     } catch (err) {
       console.error('WordleController.getConfig error:', err);
       res.status(500).json({ message: 'Erro interno.' });
@@ -233,16 +221,16 @@ export default class WordleController {
   }
 
   markAnnounced(req: Request, res: Response): void {
-    const body = userGuildBodySchema.safeParse(req.body);
-    if (!body.success) {
+    const input = parseRequest(contract.markAnnounced, req);
+    if (!input) {
       res.status(400).json({ message: 'userId e guildId são obrigatórios.' });
       return;
     }
-    const { userId, guildId } = body.data;
+    const { userId, guildId } = input.body;
 
     try {
       const claimed = service.markAnnounced(userId, guildId);
-      res.json({ data: { claimed } });
+      sendContract(res, contract.markAnnounced, { data: { claimed } });
     } catch (err) {
       console.error('WordleController.markAnnounced error:', err);
       res.status(500).json({ message: 'Erro interno.' });
@@ -250,16 +238,16 @@ export default class WordleController {
   }
 
   getUnannouncedWins(req: Request, res: Response): void {
-    const params = guildIdParamsSchema.safeParse(req.params);
-    if (!params.success) {
+    const input = parseRequest(contract.getUnannouncedWins, req);
+    if (!input) {
       res.status(400).json({ message: 'guildId é obrigatório.' });
       return;
     }
-    const { guildId } = params.data;
+    const { guildId } = input.params;
 
     try {
       const data = service.getUnannouncedWins(guildId);
-      res.json({ data });
+      sendContract(res, contract.getUnannouncedWins, { data });
     } catch (err) {
       console.error('WordleController.getUnannouncedWins error:', err);
       res.status(500).json({ message: 'Erro interno.' });
@@ -267,16 +255,16 @@ export default class WordleController {
   }
 
   getStreak(req: Request, res: Response): void {
-    const params = userGuildParamsSchema.safeParse(req.params);
-    if (!params.success) {
+    const input = parseRequest(contract.getStreak, req);
+    if (!input) {
       res.status(400).json({ message: 'userId e guildId são obrigatórios.' });
       return;
     }
-    const { userId, guildId } = params.data;
+    const { userId, guildId } = input.params;
 
     try {
       const streak = service.getStreak(userId, guildId);
-      res.json({ data: streak });
+      sendContract(res, contract.getStreak, { data: streak });
     } catch (err) {
       console.error('WordleController.getStreak error:', err);
       res.status(500).json({ message: 'Erro interno.' });
@@ -286,7 +274,7 @@ export default class WordleController {
   getWordlistPoolStats(_req: Request, res: Response): void {
     try {
       const stats = service.getWordlistPoolStats();
-      res.json({ data: stats });
+      sendContract(res, contract.getWordlistPoolStats, { data: stats });
     } catch (err) {
       console.error('WordleController.getWordlistPoolStats error:', err);
       res.status(500).json({ message: 'Erro interno.' });
@@ -296,7 +284,7 @@ export default class WordleController {
   getNextReviewWord(_req: Request, res: Response): void {
     try {
       const data = service.getNextReviewWord();
-      res.json({ data });
+      sendContract(res, contract.getNextReviewWord, { data });
     } catch (err) {
       console.error('WordleController.getNextReviewWord error:', err);
       res.status(500).json({ message: 'Erro interno.' });
@@ -304,18 +292,18 @@ export default class WordleController {
   }
 
   submitReviewDecision(req: Request, res: Response): void {
-    const body = reviewDecisionBodySchema.safeParse(req.body);
-    if (!body.success) {
+    const input = parseRequest(contract.submitReviewDecision, req);
+    if (!input) {
       res.status(400).json({
         message: 'word e decision ("keep" ou "remove") são obrigatórios.',
       });
       return;
     }
-    const { word, decision } = body.data;
+    const { word, decision } = input.body;
 
     try {
       const data = service.submitReviewDecision(word, decision);
-      res.json({ data });
+      sendContract(res, contract.submitReviewDecision, { data });
     } catch (err) {
       console.error('WordleController.submitReviewDecision error:', err);
       res.status(500).json({ message: 'Erro interno.' });

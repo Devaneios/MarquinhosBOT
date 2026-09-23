@@ -1,45 +1,29 @@
-import { requestJson } from '@marquinhos/api-client/browser';
-import {
-  wordleUserConfigSchema,
-  type WordleUserConfig,
-} from '@marquinhos/contracts/wordle';
-import { z } from 'zod';
-import { apiUrl } from '../../lib/apiBase';
-
-const wordleUserConfigResponseSchema = z.object({
-  data: wordleUserConfigSchema,
-});
-
-function parseResponse(payload: unknown): WordleUserConfig {
-  const parsed = wordleUserConfigResponseSchema.safeParse(payload);
-  if (!parsed.success) {
-    throw new Error('Invalid Wordle user configuration response');
-  }
-  return parsed.data.data;
-}
+import { fetchContract } from '@marquinhos/api-client/browser';
+import * as wordle from '@marquinhos/contracts/http/routes/wordle';
+import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
+import { apiBase } from '../../lib/apiBase';
 
 export async function getWordleUserConfig(
   accessToken: string,
 ): Promise<WordleUserConfig> {
-  const url = apiUrl('/wordle/user-config');
-  const payload = await requestJson(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  return parseResponse(payload);
+  const response = await fetchContract(
+    apiBase(),
+    wordle.getUserConfig,
+    {},
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+  return response.data;
 }
 
 export async function updateWordleUserConfig(
   accessToken: string,
   config: WordleUserConfig,
 ): Promise<WordleUserConfig> {
-  const url = apiUrl('/wordle/user-config');
-  const payload = await requestJson(url, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(config),
-  });
-  return parseResponse(payload);
+  const response = await fetchContract(
+    apiBase(),
+    wordle.updateUserConfig,
+    { body: config },
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+  return response.data;
 }

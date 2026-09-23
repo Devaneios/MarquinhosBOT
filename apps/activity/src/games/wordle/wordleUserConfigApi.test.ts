@@ -44,6 +44,7 @@ describe('getWordleUserConfig', () => {
     });
     expect(requestUrl.endsWith('/api/wordle/user-config')).toBe(true);
     expect(requestInit).toEqual({
+      method: 'GET',
       headers: { Authorization: 'Bearer token-1' },
     });
   });
@@ -61,7 +62,7 @@ describe('getWordleUserConfig', () => {
     });
 
     await expect(getWordleUserConfig('token-1')).rejects.toThrow(
-      'Invalid Wordle user configuration response',
+      'Invalid response from',
     );
   });
 
@@ -83,7 +84,7 @@ describe('getWordleUserConfig', () => {
     });
 
     await expect(getWordleUserConfig('token-1')).rejects.toThrow(
-      'Invalid Wordle user configuration response',
+      'Invalid response from',
     );
   });
 });

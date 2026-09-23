@@ -1,4 +1,12 @@
-import type { GuessRow, LetterFeedback } from '@marquinhos/contracts/wordle';
+import type {
+  forceNewWordResultSchema,
+  wordleDailyStatsSchema,
+  wordleDayGuessesSchema,
+  wordleGuessResultSchema,
+  wordleReviewWordResultSchema,
+  wordleSessionSchema,
+} from '@marquinhos/contracts/http/routes/wordle';
+import type { GuessRow } from '@marquinhos/contracts/wordle';
 import { db } from '@marquinhos/database/sqlite';
 import {
   buildUniqueDayGuesses,
@@ -11,6 +19,7 @@ import {
 import { randomUUID } from 'crypto';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import type { z } from 'zod';
 
 const logger = {
   warn: (...args: unknown[]) => console.warn('[wordle]', ...args),
@@ -26,54 +35,17 @@ interface WordleDaily {
   created_at: number;
 }
 
-interface WordleSession {
-  id: string;
-  user_id: string;
-  guild_id: string;
-  word_date: string;
-  guesses: GuessRow[];
-  solved: boolean;
-  attempts: number;
-  created_at: number;
-}
+type WordleSession = z.input<typeof wordleSessionSchema>;
 
-export interface GuessResult {
-  guess: string;
-  feedback: LetterFeedback[];
-  guesses: GuessRow[];
-  solved: boolean;
-  attempts: number;
-  wordLength: number;
-  streak?: number;
-}
+export type GuessResult = z.input<typeof wordleGuessResultSchema>;
 
-export interface DailyStats {
-  wordDate: string;
-  wordLength: number;
-  playersCount: number;
-  winnersCount: number;
-  avgAttempts: number;
-}
+export type DailyStats = z.input<typeof wordleDailyStatsSchema>;
 
-export interface ForceNewWordResult {
-  word: string;
-  wordDate: string;
-  wordLength: number;
-}
+export type ForceNewWordResult = z.input<typeof forceNewWordResultSchema>;
 
-export interface DayGuesses {
-  word: string;
-  wordDate: string;
-  wordLength: number;
-  guesses: GuessRow[];
-}
+export type DayGuesses = z.input<typeof wordleDayGuessesSchema>;
 
-export interface ReviewWordResult {
-  word: string | null;
-  index: number;
-  total: number;
-  done: boolean;
-}
+export type ReviewWordResult = z.input<typeof wordleReviewWordResultSchema>;
 
 // Answer bank: wordlist.txt (used for picking daily words)
 const WORDLIST_PATH = join(__dirname, '../../wordlist.txt');

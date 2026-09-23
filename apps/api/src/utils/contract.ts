@@ -64,7 +64,7 @@ export function validateContract(contract: EndpointContract) {
 }
 
 export function sendContract<C extends EndpointContract>(
-  res: Response,
+  res: { status(code: number): { json(body: unknown): unknown } },
   _contract: C,
   body: ContractResponseInput<C>,
   status = 200,

@@ -8,6 +8,10 @@ function endpoints() {
   );
 }
 
+export function apiBase(): string {
+  return endpoints().api;
+}
+
 export function apiUrl(path: string): string {
   return `${endpoints().api}${path.startsWith('/') ? path : `/${path}`}`;
 }

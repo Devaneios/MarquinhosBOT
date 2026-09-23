@@ -6,28 +6,18 @@ import {
 import { env } from '@marquinhos/config/environment';
 import {
   apiResponseSchema,
-  dailyLeaderboardEntrySchema,
   emojiReactionResponseSchema,
-  forceNewWordResultSchema,
-  markWordleAnnouncedResultSchema,
   mazeViewportStateSchema,
-  rankedLeaderboardEntrySchema,
-  unannouncedWordleWinSchema,
-  userWordleSessionSchema,
-  validateWordleGuessResultSchema,
-  wordleConfigSchema,
-  wordleDailyStatsSchema,
-  wordleDayGuessesSchema,
-  wordleGuessResultSchema,
-  wordleLeaderboardResultSchema,
-  wordleReviewWordResultSchema,
-  wordlistPoolStatsSchema,
-  type DailyLeaderboardEntry,
-  type RankedLeaderboardEntry,
 } from '@marquinhos/contracts/http/botResponses';
 import type { ContractRequest } from '@marquinhos/contracts/http/contract';
 import * as aiChat from '@marquinhos/contracts/http/routes/aiChat';
 import * as gamification from '@marquinhos/contracts/http/routes/gamification';
+import type {
+  DailyLeaderboardEntry,
+  RankedLeaderboardEntry,
+  WordleLeaderboardPeriod,
+} from '@marquinhos/contracts/http/routes/wordle';
+import * as wordle from '@marquinhos/contracts/http/routes/wordle';
 import {
   ApiResponse,
   EmojiReactionResponse,
@@ -304,79 +294,56 @@ export class MarquinhosApiService {
   }
 
   // Wordle/Termo API calls
-  async submitWordleGuess(
-    userId: string,
-    guildId: string,
-    guess: string,
-  ): Promise<ApiResponse<z.infer<typeof wordleGuessResultSchema>>> {
-    const data = await this.client.post('/api/wordle/guess', {
-      userId,
-      guildId,
-      guess,
+  async submitWordleGuess(userId: string, guildId: string, guess: string) {
+    return callContract(this.client, wordle.submitGuess, {
+      body: { userId, guildId, guess },
     });
-    return apiResponseSchema(wordleGuessResultSchema).parse(data);
   }
 
-  async getWordleStats(
-    guildId: string,
-  ): Promise<ApiResponse<z.infer<typeof wordleDailyStatsSchema>>> {
-    const data = await this.client.get(`/api/wordle/stats/${guildId}`);
-    return apiResponseSchema(wordleDailyStatsSchema).parse(data);
+  async getWordleStats(guildId: string) {
+    return callContract(this.client, wordle.getStats, { params: { guildId } });
   }
 
-  async getWordleDayGuesses(
-    guildId: string,
-  ): Promise<ApiResponse<z.infer<typeof wordleDayGuessesSchema> | null>> {
-    const data = await this.client.get(`/api/wordle/day-guesses/${guildId}`);
-    return apiResponseSchema(wordleDayGuessesSchema.nullable()).parse(data);
-  }
-
-  async getUserWordleSession(
-    userId: string,
-    guildId: string,
-  ): Promise<ApiResponse<z.infer<typeof userWordleSessionSchema> | null>> {
-    const data = await this.client.get(
-      `/api/wordle/session/${userId}/${guildId}`,
-    );
-    return apiResponseSchema(userWordleSessionSchema.nullable()).parse(data);
-  }
-
-  async forceNewWordleWord(
-    guildId: string,
-  ): Promise<ApiResponse<z.infer<typeof forceNewWordResultSchema>>> {
-    const data = await this.client.post('/api/wordle/admin/force-new-word', {
-      guildId,
+  async getWordleDayGuesses(guildId: string) {
+    return callContract(this.client, wordle.getDayGuesses, {
+      params: { guildId },
     });
-    return apiResponseSchema(forceNewWordResultSchema).parse(data);
   }
 
-  async setWordleConfig(
-    guildId: string,
-    channelId: string,
-  ): Promise<ApiResponse> {
-    const data = apiResponseSchema(z.unknown()).parse(
-      await this.client.post('/api/wordle/config', {
-        guildId,
-        channelId,
-      }),
-    );
+  async getUserWordleSession(userId: string, guildId: string) {
+    return callContract(this.client, wordle.getUserSession, {
+      params: { userId, guildId },
+    });
+  }
+
+  async forceNewWordleWord(guildId: string) {
+    return callContract(this.client, wordle.forceNewWord, {
+      body: { guildId },
+    });
+  }
+
+  async setWordleConfig(guildId: string, channelId: string) {
+    const data = await callContract(this.client, wordle.setConfig, {
+      body: { guildId, channelId },
+    });
     this.wordleConfigCache.set(guildId, channelId);
     return data;
   }
 
   async getWordleConfig(
     guildId: string,
-  ): Promise<ApiResponse<z.infer<typeof wordleConfigSchema>>> {
+  ): Promise<{ data: { channelId: string | null } }> {
     if (this.wordleConfigCache.has(guildId)) {
       return {
         data: { channelId: this.wordleConfigCache.get(guildId) ?? null },
       };
     }
-    const raw = await this.client.get(`/api/wordle/config/${guildId}`);
-    const parsed = apiResponseSchema(wordleConfigSchema.nullable()).parse(raw);
+    const parsed = await callContract(this.client, wordle.getConfig, {
+      params: { guildId },
+    });
     const channelId = parsed.data?.channelId ?? null;
     this.wordleConfigCache.set(guildId, channelId);
-    return { ...parsed, data: { channelId } };
+    return { data: { channelId } };
   }
 
   async preloadWordleConfigs(guildIds: string[]): Promise<void> {
@@ -394,101 +361,68 @@ export class MarquinhosApiService {
     );
   }
 
-  async markWordleAnnounced(
-    userId: string,
-    guildId: string,
-  ): Promise<ApiResponse<{ claimed: boolean }>> {
-    const data = await this.client.post('/api/wordle/mark-announced', {
-      userId,
-      guildId,
+  async markWordleAnnounced(userId: string, guildId: string) {
+    return callContract(this.client, wordle.markAnnounced, {
+      body: { userId, guildId },
     });
-    return apiResponseSchema(markWordleAnnouncedResultSchema).parse(data);
   }
 
-  async getUnannouncedWordleWins(
-    guildId: string,
-  ): Promise<ApiResponse<z.infer<typeof unannouncedWordleWinSchema>[]>> {
-    const data = await this.client.get(`/api/wordle/unannounced/${guildId}`);
-    return apiResponseSchema(z.array(unannouncedWordleWinSchema)).parse(data);
+  async getUnannouncedWordleWins(guildId: string) {
+    return callContract(this.client, wordle.getUnannouncedWins, {
+      params: { guildId },
+    });
   }
 
-  async validateWordleGuess(
-    guildId: string,
-    guess: string,
-  ): Promise<
-    ApiResponse<{ valid: boolean; wordLength: number; message: string }>
-  > {
-    const params = new URLSearchParams({ guess });
-    const data = await this.client.get(
-      `/api/wordle/validate/${guildId}?${params}`,
-    );
-    return apiResponseSchema(validateWordleGuessResultSchema).parse(data);
+  async validateWordleGuess(guildId: string, guess: string) {
+    return callContract(this.client, wordle.validateGuess, {
+      params: { guildId },
+      query: { guess },
+    });
   }
 
-  async getWordlistPoolStats(): Promise<
-    ApiResponse<{ total: number; used: number; remaining: number }>
-  > {
-    const data = await this.client.get('/api/wordle/wordlist-pool-stats');
-    return apiResponseSchema(wordlistPoolStatsSchema).parse(data);
+  async getWordlistPoolStats() {
+    return callContract(this.client, wordle.getWordlistPoolStats, {});
   }
 
   async getWordleLeaderboard(
     guildId: string,
     period: 'daily',
-  ): Promise<ApiResponse<DailyLeaderboardEntry[]> & { groupStreak: number }>;
+  ): Promise<{ data: DailyLeaderboardEntry[]; groupStreak: number }>;
   async getWordleLeaderboard(
     guildId: string,
     period: 'weekly' | 'monthly' | 'all-time',
-  ): Promise<ApiResponse<RankedLeaderboardEntry[]> & { groupStreak: number }>;
+  ): Promise<{ data: RankedLeaderboardEntry[]; groupStreak: number }>;
   async getWordleLeaderboard(
     guildId: string,
-    period: 'daily' | 'weekly' | 'monthly' | 'all-time',
-  ): Promise<
-    ApiResponse<DailyLeaderboardEntry[] | RankedLeaderboardEntry[]> & {
-      groupStreak: number;
-    }
-  > {
-    const params = new URLSearchParams({ period });
-    const raw = await this.client.get(
-      `/api/wordle/leaderboard/${guildId}?${params}`,
-    );
-    if (period === 'daily') {
-      return wordleLeaderboardResultSchema(dailyLeaderboardEntrySchema).parse(
-        raw,
-      );
-    }
-    return wordleLeaderboardResultSchema(rankedLeaderboardEntrySchema).parse(
-      raw,
-    );
+    period: WordleLeaderboardPeriod,
+  ): Promise<{
+    data: DailyLeaderboardEntry[] | RankedLeaderboardEntry[];
+    groupStreak: number;
+  }> {
+    const result = await callContract(this.client, wordle.getLeaderboard, {
+      params: { guildId },
+      query: { period },
+    });
+    const entries =
+      period === 'daily'
+        ? z.array(wordle.dailyLeaderboardEntrySchema)
+        : z.array(wordle.rankedLeaderboardEntrySchema);
+    return {
+      data: entries.parse(result.data),
+      groupStreak: result.groupStreak,
+    };
   }
 
-  async getNextWordlistReviewWord(): Promise<
-    ApiResponse<{
-      word: string | null;
-      index: number;
-      total: number;
-      done: boolean;
-    }>
-  > {
-    const data = await this.client.get('/api/wordle/review/next');
-    return apiResponseSchema(wordleReviewWordResultSchema).parse(data);
+  async getNextWordlistReviewWord() {
+    return callContract(this.client, wordle.getNextReviewWord, {});
   }
 
   async submitWordlistReviewDecision(
     word: string,
     decision: 'keep' | 'remove',
-  ): Promise<
-    ApiResponse<{
-      word: string | null;
-      index: number;
-      total: number;
-      done: boolean;
-    }>
-  > {
-    const data = await this.client.post('/api/wordle/review/decision', {
-      word,
-      decision,
+  ) {
+    return callContract(this.client, wordle.submitReviewDecision, {
+      body: { word, decision },
     });
-    return apiResponseSchema(wordleReviewWordResultSchema).parse(data);
   }
 }
