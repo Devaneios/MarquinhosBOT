@@ -62,13 +62,17 @@ describe('WordleBoard focus keyboard', () => {
     });
 
     fireEvent.pointerDown(findKey(container, 'ESPAÇO'));
-    expect(document.activeElement).toBe(
-      screen.getByRole('textbox', { name: /letra 3/i }),
+    expect(document.activeElement?.getAttribute('aria-label')).toBe(
+      screen
+        .getByRole('textbox', { name: /letra 2/i })
+        .getAttribute('aria-label'),
     );
 
     fireEvent.pointerDown(findKey(container, '>>'));
-    expect(document.activeElement).toBe(
-      screen.getByRole('textbox', { name: /letra 5/i }),
+    expect(document.activeElement?.getAttribute('aria-label')).toBe(
+      screen
+        .getByRole('textbox', { name: /letra 5/i })
+        .getAttribute('aria-label'),
     );
   });
 });

@@ -1,7 +1,7 @@
+import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { useEffect, useState } from 'react';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { errorMessage, isAuthError } from '../../lib/http';
-import type { GameId } from '../gameId';
 import { fetchWsSessionToken, type WsSession } from './activitySession';
 
 export type GameSessionState =

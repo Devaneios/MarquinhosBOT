@@ -1,6 +1,3 @@
-import { useState } from 'react';
-import { Outlet, useOutletContext } from 'react-router-dom';
-import { z } from 'zod';
 import {
   bestOfSchema,
   botDifficultySchema,
@@ -11,7 +8,10 @@ import {
   type GameMode,
   type PongRulesetId,
   type WinScore,
-} from '../types';
+} from '@marquinhos/contracts/activity/pongTypes';
+import { useState } from 'react';
+import { Outlet, useOutletContext } from 'react-router-dom';
+import { z } from 'zod';
 
 const STORAGE_KEY = 'pong-menu-settings';
 

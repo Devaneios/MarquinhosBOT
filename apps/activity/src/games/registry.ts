@@ -1,3 +1,4 @@
+import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import type { JSX } from 'react';
 import type { DiscordIdentity } from '../discordAuth.ts';
 import { gameDescriptor as battleship } from './battleship';
@@ -7,7 +8,6 @@ import { gameDescriptor as cards } from './cards';
 import { gameDescriptor as checkers } from './checkers';
 import { gameDescriptor as connectFour } from './connect-four';
 import { gameDescriptor as dominoesBlock } from './dominoes-block';
-import type { GameId } from './gameId';
 import { gameDescriptor as hangman } from './hangman';
 import { gameDescriptor as minesweeperVersus } from './minesweeper-versus';
 import { gameDescriptor as pong } from './pong';

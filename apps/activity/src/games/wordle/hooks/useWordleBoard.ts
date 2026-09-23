@@ -1,3 +1,7 @@
+import {
+  buildLetterStates,
+  normalizeKey,
+} from '@marquinhos/domain/wordle/keyboardState';
 import React, {
   useCallback,
   useEffect,
@@ -19,7 +23,6 @@ import {
   wordleInitPayloadSchema,
   type GuessRow,
 } from '../types';
-import { buildLetterStates, normalizeKey } from '../wordle.utils';
 
 interface WordleBoardOptions {
   enabled: boolean;
@@ -94,7 +97,10 @@ export function useWordleBoard(
     },
   );
 
-  const letterStates = useMemo(() => buildLetterStates(guesses), [guesses]);
+  const letterStates = useMemo(
+    () => buildLetterStates(guesses, KB_LETTERS),
+    [guesses],
+  );
 
   useEffect(() => {
     const element = gridRef.current;
@@ -225,7 +231,7 @@ export function useWordleBoard(
       if (event.key === 'Enter') return 'Enter';
       if (event.key === 'Backspace') return 'Backspace';
       if (event.key.length !== 1) return null;
-      const key = normalizeKey(event.key);
+      const key = normalizeKey(event.key, KB_LETTERS);
       return KB_LETTERS.has(key) ? key : null;
     }
 
@@ -284,7 +290,7 @@ export function useWordleBoard(
       return;
     }
     if (event.key.length !== 1) return;
-    const key = normalizeKey(event.key);
+    const key = normalizeKey(event.key, KB_LETTERS);
     if (KB_LETTERS.has(key)) {
       event.preventDefault();
       typeLetter(key);

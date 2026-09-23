@@ -1,6 +1,6 @@
+import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { GameId } from '../../games/gameId';
 import { MenuPanel } from './MenuPanel';
 import { MenuScreen } from './MenuScreen';
 

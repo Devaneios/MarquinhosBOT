@@ -1,6 +1,9 @@
+import type { DecodedSnapshot } from '@marquinhos/contracts/activity/pongProtocol';
+import {
+  LocalPaddlePredictor,
+  PongSnapshotBuffer,
+} from '@marquinhos/domain/activity/pong/netcode';
 import { describe, expect, it } from 'bun:test';
-import { LocalPaddlePredictor, PongSnapshotBuffer } from './netcode';
-import type { DecodedSnapshot } from './protocol';
 
 function snapshot(
   seq: number,

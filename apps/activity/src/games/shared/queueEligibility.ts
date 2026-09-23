@@ -1,4 +1,4 @@
-import type { GameId } from '../gameId';
+import type { GameId } from '@marquinhos/contracts/activity/gameId';
 
 // Mirrors the server's GameRoomAdapter.supportsQueue registry (marquinhos-api
 // src/realtime/adapters/registry.ts) — only these games' rooms show

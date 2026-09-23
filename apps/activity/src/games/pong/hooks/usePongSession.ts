@@ -1,3 +1,10 @@
+import type {
+  BestOf,
+  BotDifficulty,
+  GameMode,
+  PongRulesetId,
+  WinScore,
+} from '@marquinhos/contracts/activity/pongTypes';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { devinfo, devlog, devwarn } from '../../../lib/devlog';
@@ -6,13 +13,6 @@ import {
   fetchWsSessionToken,
   type WsSession,
 } from '../../shared/activitySession';
-import type {
-  BestOf,
-  BotDifficulty,
-  GameMode,
-  PongRulesetId,
-  WinScore,
-} from '../types';
 
 export type PongSessionState =
   | { status: 'selecting-mode' }

@@ -1,5 +1,9 @@
 import type { Room } from '@colyseus/sdk';
 import {
+  gameIdSchema,
+  type GameId,
+} from '@marquinhos/contracts/activity/gameId';
+import {
   createContext,
   useContext,
   useEffect,
@@ -11,7 +15,6 @@ import { z } from 'zod';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { colyseusUrl } from '../../lib/apiBase';
 import { devwarn } from '../../lib/devlog';
-import { gameIdSchema, type GameId } from '../gameId';
 import type { WsSession } from './activitySession';
 import {
   connectToRoom,

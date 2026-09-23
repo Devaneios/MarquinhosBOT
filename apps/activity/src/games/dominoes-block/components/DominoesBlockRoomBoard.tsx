@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { parsePayload } from '../../shared/colyseusConnection';
-import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
 import {
   dominoesClientStateSchema,
-  legalEndsFor,
   moveRejectedPayloadSchema,
   type ChainEnd,
   type DominoesClientState,
   type Tile,
-} from '../protocol';
+} from '@marquinhos/contracts/activity/dominoesProtocol';
+import { legalEndsFor } from '@marquinhos/domain/activity/dominoesBlock/legality';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { parsePayload } from '../../shared/colyseusConnection';
+import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
 import { DominoesBlockCanvas } from './DominoesBlockCanvas';
 
 // Renders Dominoes inside a multiplayer Room view — driven by

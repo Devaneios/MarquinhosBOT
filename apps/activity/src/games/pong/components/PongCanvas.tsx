@@ -1,4 +1,17 @@
 import type { Room } from '@colyseus/sdk';
+import {
+  decodeStateSnapshot,
+  type DecodedSnapshot,
+} from '@marquinhos/contracts/activity/pongProtocol';
+import {
+  pongSideSchema,
+  type GameMode,
+  type PongSide,
+} from '@marquinhos/contracts/activity/pongTypes';
+import {
+  LocalPaddlePredictor,
+  PongSnapshotBuffer,
+} from '@marquinhos/domain/activity/pong/netcode';
 import { Application, BlurFilter, Graphics } from 'pixi.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,9 +32,6 @@ import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import { LocalPaddlePredictor, PongSnapshotBuffer } from '../netcode';
-import { decodeStateSnapshot, type DecodedSnapshot } from '../protocol';
-import { pongSideSchema, type GameMode, type PongSide } from '../types';
 import { PongSfx } from './sfx';
 
 type Side = 'left' | 'right';

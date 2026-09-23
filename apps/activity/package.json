@@ -16,6 +16,9 @@
   "dependencies": {
     "@colyseus/sdk": "^0.17.43",
     "@discord/embedded-app-sdk": "^2.5.0",
+    "@marquinhos/api-client": "workspace:*",
+    "@marquinhos/contracts": "workspace:*",
+    "@marquinhos/domain": "workspace:*",
     "clsx": "^2.1.1",
     "i18next": "^26.3.6",
     "pixi.js": "^8.19.0",
@@ -42,6 +45,7 @@
     "prettier-plugin-organize-imports": "^4.3.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
-    "vite": "^8.2.0"
+    "vite": "^8.2.0",
+    "@marquinhos/tsconfig": "workspace:*"
   }
 }

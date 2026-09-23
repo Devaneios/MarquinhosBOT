@@ -1,7 +1,7 @@
 import type { Room } from '@colyseus/sdk';
+import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { devwarn } from '../../lib/devlog';
-import type { GameId } from '../gameId';
 import type { WsSession } from './activitySession';
 import {
   connectToRoom,

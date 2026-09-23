@@ -1,7 +1,8 @@
 import { ServerError } from '@colyseus/sdk';
+import { HttpError, postJson } from '@marquinhos/api-client/browser';
 import { afterEach, describe, expect, it } from 'bun:test';
 import { z } from 'zod';
-import { errorMessage, HttpError, isAuthError, postJson } from './http';
+import { errorMessage, isAuthError } from './http';
 
 describe('postJson', () => {
   const originalFetch = globalThis.fetch;

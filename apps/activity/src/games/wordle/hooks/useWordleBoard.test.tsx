@@ -46,12 +46,12 @@ async function renderBoardHook(enableArrowKeys = false) {
 }
 
 describe('useWordleBoard focus controls', () => {
-  it('moves focus two letters to the right for space', async () => {
+  it('moves focus one letter to the right for space', async () => {
     const { result } = await renderBoardHook();
 
     act(() => result.current.moveFocus('space'));
 
-    expect(result.current.activeIndex).toBe(2);
+    expect(result.current.activeIndex).toBe(1);
   });
 
   it('moves left, right, first, and last with enabled arrow controls', async () => {

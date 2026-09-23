@@ -1,3 +1,7 @@
+import {
+  buildLetterStates,
+  normalizeKey,
+} from '@marquinhos/domain/wordle/keyboardState';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -21,7 +25,6 @@ import {
   type GuessRow,
   type LetterFeedback,
 } from '../types';
-import { buildLetterStates, normalizeKey } from '../utils';
 
 function Tile({
   letter,
@@ -256,7 +259,7 @@ export function WordleRaceBoard({
   );
 
   const letterStates = useMemo(
-    () => buildLetterStates(gameState?.currentPlayerGuesses ?? []),
+    () => buildLetterStates(gameState?.currentPlayerGuesses ?? [], KB_LETTERS),
     [gameState?.currentPlayerGuesses],
   );
 
@@ -323,7 +326,7 @@ export function WordleRaceBoard({
         return;
       }
       if (event.key.length !== 1) return;
-      const key = normalizeKey(event.key);
+      const key = normalizeKey(event.key, KB_LETTERS);
       if (KB_LETTERS.has(key)) typeLetter(key);
     }
     window.addEventListener('keydown', onKeyDown);

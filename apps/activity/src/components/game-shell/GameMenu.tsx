@@ -1,5 +1,5 @@
+import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { useTranslation } from 'react-i18next';
-import type { GameId } from '../../games/gameId';
 import { GameEmblem } from './GameEmblem';
 import { MenuAction } from './MenuAction';
 import { MenuPanel } from './MenuPanel';

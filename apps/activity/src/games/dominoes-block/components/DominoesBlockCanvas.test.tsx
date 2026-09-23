@@ -1,6 +1,9 @@
+import type {
+  DominoesClientState,
+  Tile,
+} from '@marquinhos/contracts/activity/dominoesProtocol';
 import { act, render } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
-import type { DominoesClientState, Tile } from '../protocol';
 
 interface FakeContainer {
   handlers: Record<string, () => void>;

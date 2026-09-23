@@ -30,15 +30,9 @@ describe('WordleSettingsScreen', () => {
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole('switch', { name: /inverter teclas de ação/i }),
-    );
-    fireEvent.click(
-      screen.getByRole('switch', { name: /habilitar tecla de espaço/i }),
-    );
-    fireEvent.click(
-      screen.getByRole('switch', { name: /habilitar teclas de seta/i }),
-    );
+    fireEvent.click(screen.getByRole('switch', { name: /inverter ações/i }));
+    fireEvent.click(screen.getByRole('switch', { name: /habilitar espaço/i }));
+    fireEvent.click(screen.getByRole('switch', { name: /habilitar setas/i }));
     fireEvent.click(screen.getByRole('button', { name: /^salvar$/i }));
 
     await waitFor(() =>
@@ -62,10 +56,10 @@ describe('WordleSettingsScreen', () => {
     );
 
     const spaceToggle = screen.getByRole('switch', {
-      name: /habilitar tecla de espaço/i,
+      name: /habilitar espaço/i,
     });
     const arrowsToggle = screen.getByRole('switch', {
-      name: /habilitar teclas de seta/i,
+      name: /habilitar setas/i,
     });
 
     expect(arrowsToggle.hasAttribute('disabled')).toBe(true);
@@ -88,9 +82,7 @@ describe('WordleSettingsScreen', () => {
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole('switch', { name: /habilitar tecla de espaço/i }),
-    );
+    fireEvent.click(screen.getByRole('switch', { name: /habilitar espaço/i }));
     fireEvent.click(screen.getByRole('button', { name: /^salvar$/i }));
 
     await waitFor(() =>
@@ -114,9 +106,7 @@ describe('WordleSettingsScreen', () => {
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole('switch', { name: /inverter teclas de ação/i }),
-    );
+    fireEvent.click(screen.getByRole('switch', { name: /inverter ações/i }));
     fireEvent.click(screen.getByRole('button', { name: /voltar/i }));
 
     expect(onSave).not.toHaveBeenCalled();
@@ -138,7 +128,7 @@ describe('WordleSettingsScreen', () => {
     );
 
     const spaceToggle = screen.getByRole('switch', {
-      name: /habilitar tecla de espaço/i,
+      name: /habilitar espaço/i,
     });
     fireEvent.click(spaceToggle);
     fireEvent.click(screen.getByRole('button', { name: /^salvar$/i }));

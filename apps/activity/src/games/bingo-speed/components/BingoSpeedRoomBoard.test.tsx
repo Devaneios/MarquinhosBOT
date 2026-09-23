@@ -59,7 +59,7 @@ async function renderRoomBoard(
       type: 'init',
       payload: {
         card: { board: [[1]], marked: [[false]] },
-        state: { drawnNumbers: [] },
+        state: { drawnNumbers: [], playerCount: 1, gameStarted: true },
       },
     });
   });

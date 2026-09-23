@@ -1,8 +1,19 @@
+import { postJson } from '@marquinhos/api-client/browser';
+import type { GameId } from '@marquinhos/contracts/activity/gameId';
+import {
+  createdRoomSchema,
+  deepLinkIntentSchema,
+  roomListingSchema,
+  wsSessionSchema,
+  type CreatedRoom,
+  type RoomListing,
+  type WsSession,
+} from '@marquinhos/contracts/activity/httpResponses';
 import { z } from 'zod';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { apiUrl } from '../../lib/apiBase';
-import { postJson } from '../../lib/http';
-import { gameIdSchema, type GameId } from '../gameId';
+
+export type { CreatedRoom, RoomListing, WsSession };
 
 export interface WsSessionParams {
   game: GameId;
@@ -11,45 +22,12 @@ export interface WsSessionParams {
   extra?: Record<string, unknown>;
 }
 
-const wsSessionSchema = z.object({
-  token: z.string(),
-  roomKey: z.string(),
-});
-
-export type WsSession = z.infer<typeof wsSessionSchema>;
-
-const createdRoomSchema = z.object({
-  roomId: z.string(),
-  token: z.string(),
-  roomKey: z.string(),
-});
-
-export type CreatedRoom = z.infer<typeof createdRoomSchema>;
-
-const roomListingSchema = z.object({
-  instanceId: z.string(),
-  roomId: z.string(),
-  game: gameIdSchema,
-  hostUserId: z.string(),
-  playerCount: z.number(),
-  spectatorCount: z.number(),
-  queueDepth: z.number(),
-  queueEnabled: z.boolean(),
-  mode: z.enum(['single', 'multi']),
-});
-
-export type RoomListing = z.infer<typeof roomListingSchema>;
-
 const roomListingsSchema = z.array(z.unknown()).transform((rooms) =>
   rooms.flatMap((room) => {
     const listing = roomListingSchema.safeParse(room);
     return listing.success ? [listing.data] : [];
   }),
 );
-
-const deepLinkIntentSchema = z.object({
-  game: gameIdSchema.nullable().catch(null),
-});
 
 // Shared by every game's session hook: mints a game-scoped WS token (and its
 // matching Colyseus roomKey) from the player's Discord identity. Pong layers

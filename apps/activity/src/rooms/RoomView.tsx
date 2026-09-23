@@ -1,3 +1,4 @@
+import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { useTranslation } from 'react-i18next';
 import {
   ConnectingScreen,
@@ -5,7 +6,6 @@ import {
   RoomHeader,
 } from '../components/game-shell';
 import type { DiscordIdentity } from '../discordAuth.ts';
-import type { GameId } from '../games/gameId';
 import { GAME_REGISTRY } from '../games/registry';
 import {
   RoomConnectionProvider,

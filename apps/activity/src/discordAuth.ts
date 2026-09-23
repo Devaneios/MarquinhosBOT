@@ -3,12 +3,13 @@
 // keeps running, independently of whether React's module graph ever finishes
 // evaluating or main.tsx ever manages to mount. React (useDiscordIdentity)
 // only ever reads a snapshot of this; it never triggers or drives it.
-import { z } from 'zod';
+import { postJson } from '@marquinhos/api-client/browser';
+import { tokenExchangeSchema } from '@marquinhos/contracts/activity/httpResponses';
 import { discordSdk, isMock, resetDiscordSdk } from './discordSdk';
 import { tImperative } from './i18n/i18nImperative';
 import { apiUrl } from './lib/apiBase';
 import { devinfo, devlog } from './lib/devlog';
-import { errorMessage, postJson } from './lib/http';
+import { errorMessage } from './lib/http';
 
 export interface DiscordIdentity {
   userId: string;
@@ -45,7 +46,7 @@ async function doHandshake(): Promise<DiscordIdentity> {
         await postJson(
           apiUrl('/activities/token'),
           { code },
-          z.object({ access_token: z.string() }),
+          tokenExchangeSchema,
         )
       ).access_token;
   devlog('[auth] exchanged code for access token');

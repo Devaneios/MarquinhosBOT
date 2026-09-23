@@ -1,7 +1,7 @@
 import { Client, type Room } from '@colyseus/sdk';
+import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { z } from 'zod';
 import { devinfo, devwarn } from '../../lib/devlog';
-import type { GameId } from '../gameId';
 import type { WsSession } from './activitySession';
 
 export interface ActivityMessage {

@@ -1,7 +1,7 @@
+import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DiscordIdentity } from '../../discordAuth.ts';
-import type { GameId } from '../../games/gameId';
 import { GAME_REGISTRY } from '../../games/registry';
 import {
   createRoom,

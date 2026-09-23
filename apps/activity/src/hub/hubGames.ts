@@ -1,3 +1,3 @@
-import type { GameId } from '../games/gameId';
+import type { GameId } from '@marquinhos/contracts/activity/gameId';
 
 export const HUB_GAME_IDS: GameId[] = ['wordle'];

@@ -101,20 +101,16 @@ describe('Hub', () => {
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: 'Sua próxima partida começa aqui.',
+        name: 'Destaque',
       }),
     ).toBeTruthy();
     expect(
       screen.getByRole('heading', { level: 2, name: 'Terminhos' }),
     ).toBeTruthy();
-    expect(
-      screen.getByText(
-        'Descubra a palavra usando as pistas de cada tentativa.',
-      ),
-    ).toBeTruthy();
-    expect(screen.getByText('Verde: posição certa.')).toBeTruthy();
-    expect(screen.getByText('Amarelo: outra posição.')).toBeTruthy();
-    expect(screen.getByText('Cinza: letra ausente.')).toBeTruthy();
+    expect(screen.getByText('Descubra.')).toBeTruthy();
+    expect(screen.getByText('Verde:')).toBeTruthy();
+    expect(screen.getByText('Amarelo: err')).toBeTruthy();
+    expect(screen.getByText('Cinza: errado')).toBeTruthy();
     expect(screen.queryByRole('button')).toBeNull();
     expect(container.querySelector('a a, a button')).toBeNull();
     const preview = screen

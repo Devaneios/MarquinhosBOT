@@ -1,11 +1,13 @@
-import { Application, Container, Graphics } from 'pixi.js';
-import { useEffect, useRef } from 'react';
+import {
+  type DominoesClientState,
+  type Tile,
+} from '@marquinhos/contracts/activity/dominoesProtocol';
 import {
   legalEndsFor,
   tileMatches,
-  type DominoesClientState,
-  type Tile,
-} from '../protocol';
+} from '@marquinhos/domain/activity/dominoesBlock/legality';
+import { Application, Container, Graphics } from 'pixi.js';
+import { useEffect, useRef } from 'react';
 
 const TILE_W = 44;
 const TILE_H = 72;

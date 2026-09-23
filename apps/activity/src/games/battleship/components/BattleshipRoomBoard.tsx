@@ -1,3 +1,7 @@
+import {
+  cellsFor,
+  isValidPlacement,
+} from '@marquinhos/domain/activity/battleship/placement';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parsePayload } from '../../shared/colyseusConnection';
@@ -15,7 +19,6 @@ import {
   type PendingShip,
   type ShipType,
 } from '../types';
-import { cellsFor, isValidPlacement } from '../utils';
 import { BattleshipCanvas } from './BattleshipCanvas';
 import { PlacementPanel } from './PlacementPanel';
 

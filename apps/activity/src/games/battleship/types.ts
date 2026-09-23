@@ -24,13 +24,10 @@ export interface PendingShip {
   orientation: Orientation;
 }
 
-export const SHIP_SIZES: Record<ShipType, number> = {
-  carrier: 5,
-  battleship: 4,
-  cruiser: 3,
-  submarine: 3,
-  destroyer: 2,
-};
+export {
+  BOARD_SIZE,
+  SHIP_SIZES,
+} from '@marquinhos/domain/activity/battleship/BattleshipEngine';
 
 export const SHIP_ORDER: ShipType[] = [
   'carrier',
@@ -39,8 +36,6 @@ export const SHIP_ORDER: ShipType[] = [
   'submarine',
   'destroyer',
 ];
-
-export const BOARD_SIZE = 10;
 
 const coordinateSchema = z.object({ x: z.number(), y: z.number() });
 export type Coordinate = z.infer<typeof coordinateSchema>;

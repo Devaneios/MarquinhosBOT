@@ -1,3 +1,4 @@
+import { postJson } from '@marquinhos/api-client/browser';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
@@ -9,7 +10,7 @@ import {
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { apiUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
-import { errorMessage, postJson } from '../../../lib/http';
+import { errorMessage } from '../../../lib/http';
 
 const poolSchema = z.enum(['classic-1v1', 'quad-elimination']);
 type Pool = z.infer<typeof poolSchema>;

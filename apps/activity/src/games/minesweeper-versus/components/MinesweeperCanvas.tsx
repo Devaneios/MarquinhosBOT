@@ -1,6 +1,9 @@
+import type {
+  BoardSnapshot,
+  PublicCell,
+} from '@marquinhos/contracts/activity/minesweeperProtocol';
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { useEffect, useRef } from 'react';
-import type { BoardSnapshot, PublicCell } from '../protocol';
 
 const CELL_SIZE = 26;
 const CELL_GAP = 2;

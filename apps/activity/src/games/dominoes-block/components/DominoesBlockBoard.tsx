@@ -1,3 +1,12 @@
+import {
+  dominoesClientStateSchema,
+  moveRejectedPayloadSchema,
+  opponentDisconnectedPayloadSchema,
+  type ChainEnd,
+  type DominoesClientState,
+  type Tile,
+} from '@marquinhos/contracts/activity/dominoesProtocol';
+import { legalEndsFor } from '@marquinhos/domain/activity/dominoesBlock/legality';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -13,15 +22,6 @@ import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import {
-  dominoesClientStateSchema,
-  legalEndsFor,
-  moveRejectedPayloadSchema,
-  opponentDisconnectedPayloadSchema,
-  type ChainEnd,
-  type DominoesClientState,
-  type Tile,
-} from '../protocol';
 import { DominoesBlockCanvas } from './DominoesBlockCanvas';
 
 export function DominoesBlockBoard({

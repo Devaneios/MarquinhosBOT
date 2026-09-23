@@ -1,6 +1,6 @@
+import type { GridCell as Cell } from '@marquinhos/contracts/activity/payloadSchemas';
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { useEffect, useRef } from 'react';
-import type { Cell } from '../protocol';
 
 const BOARD_SIZE = 4;
 const TILE_SIZE = 90;

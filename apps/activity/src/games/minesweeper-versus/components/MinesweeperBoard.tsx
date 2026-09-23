@@ -1,3 +1,11 @@
+import {
+  boardSnapshotSchema,
+  gameOverPayloadSchema,
+  revealErrorPayloadSchema,
+  revealPayloadSchema,
+  type BoardSnapshot,
+} from '@marquinhos/contracts/activity/minesweeperProtocol';
+import { applyRevealToBoard } from '@marquinhos/domain/activity/minesweeper/reveal';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate } from 'react-router-dom';
@@ -10,14 +18,6 @@ import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import {
-  boardSnapshotSchema,
-  gameOverPayloadSchema,
-  revealErrorPayloadSchema,
-  revealPayloadSchema,
-  type BoardSnapshot,
-} from '../protocol';
-import { applyRevealToBoard } from '../utils';
 import { MinesweeperCanvas } from './MinesweeperCanvas';
 
 export function MinesweeperBoard({ session }: { session: WsSession }) {

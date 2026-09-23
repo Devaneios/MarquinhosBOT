@@ -1,7 +1,7 @@
+import { snapToLine } from '@marquinhos/domain/activity/word-search-race/selection';
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { useEffect, useRef } from 'react';
 import type { Cell, FoundWord } from '../types';
-import { snapToLine } from '../utils';
 
 const CELL_SIZE = 32;
 const GRID_BG = '#17181a';

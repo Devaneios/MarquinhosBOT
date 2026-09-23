@@ -1,5 +1,5 @@
+import { requestJson } from '@marquinhos/api-client/browser';
 import { apiUrl } from '../../lib/apiBase';
-import { HttpError } from '../../lib/http';
 import type { WordleUserConfig } from './types';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -31,9 +31,7 @@ function parseWordleUserConfig(value: unknown): WordleUserConfig {
     : { ...baseConfig, enableSpaceKey: false, enableArrowKeys: false };
 }
 
-async function parseResponse(response: Response, url: string) {
-  if (!response.ok) throw new HttpError(response.status, url);
-  const payload: unknown = await response.json();
+function parseResponse(payload: unknown) {
   if (!isRecord(payload)) {
     throw new Error('Invalid Wordle user configuration response');
   }
@@ -44,10 +42,10 @@ export async function getWordleUserConfig(
   accessToken: string,
 ): Promise<WordleUserConfig> {
   const url = apiUrl('/wordle/user-config');
-  const response = await fetch(url, {
+  const payload = await requestJson(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  return parseResponse(response, url);
+  return parseResponse(payload);
 }
 
 export async function updateWordleUserConfig(
@@ -55,7 +53,7 @@ export async function updateWordleUserConfig(
   config: WordleUserConfig,
 ): Promise<WordleUserConfig> {
   const url = apiUrl('/wordle/user-config');
-  const response = await fetch(url, {
+  const payload = await requestJson(url, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -63,5 +61,5 @@ export async function updateWordleUserConfig(
     },
     body: JSON.stringify(config),
   });
-  return parseResponse(response, url);
+  return parseResponse(payload);
 }
