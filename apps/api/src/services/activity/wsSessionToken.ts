@@ -1,34 +1,46 @@
 import { cardGameRegistry } from 'services/activity/cards/registry';
-import {
-  isGameId,
-  type ActivityMode,
-  type GameId,
-} from 'services/activity/gameId';
-import type { BotDifficulty } from 'services/activity/pong/PongBotAI';
+import { activityModeSchema, gameIdSchema } from 'services/activity/gameId';
 import { isPongRulesetId } from 'services/activity/pong/PongRulesetRegistry';
 import { decryptTokenFull, encryptToken } from 'utils/crypto';
+import { z } from 'zod';
 
 const BOT_DIFFICULTIES = ['easy', 'normal', 'hard'] as const;
 
-export interface WsSessionPayload {
-  userId: string;
-  displayName?: string;
-  instanceId: string;
-  guildId: string;
-  mode: ActivityMode;
-  game: GameId;
-  difficulty?: BotDifficulty;
-  winningScore?: number;
-  // Required for mode 'multi' (a room subdivides a Discord instance);
-  // absent for 'single'/'local', which stay scoped per-user as before.
-  roomId?: string;
-  // Only meaningful (and required) for game:'cards' — selects which
-  // pluggable GameDefinition the room loads. The shape of `options` is
-  // validated by that GameDefinition's own setup(), not here, so this
-  // layer only needs to know "is this a known ruleset id."
-  ruleset?: string;
-  options?: Record<string, unknown>;
-}
+const wsSessionPayloadSchema = z
+  .object({
+    userId: z.string(),
+    displayName: z.string().min(1).max(80).optional(),
+    instanceId: z.string(),
+    guildId: z.string(),
+    mode: activityModeSchema,
+    game: gameIdSchema,
+    difficulty: z.enum(BOT_DIFFICULTIES).optional(),
+    winningScore: z.number().int().min(1).max(99).optional(),
+    // Required for mode 'multi' (a room subdivides a Discord instance);
+    // absent for 'single'/'local', which stay scoped per-user as before.
+    roomId: z.string().min(1).optional(),
+    // Only meaningful (and required) for game:'cards' — selects which
+    // pluggable GameDefinition the room loads. The shape of `options` is
+    // validated by that GameDefinition's own setup(), not here, so this
+    // layer only needs to know "is this a known ruleset id."
+    ruleset: z.string().optional(),
+    options: z.record(z.string(), z.unknown()).optional(),
+  })
+  .refine((payload) => payload.mode !== 'multi' || payload.roomId)
+  .refine((payload) => {
+    if (payload.game === 'cards') {
+      return (
+        payload.ruleset !== undefined &&
+        cardGameRegistry.isKnownRuleset(payload.ruleset)
+      );
+    }
+    if (payload.game === 'pong') {
+      return payload.ruleset === undefined || isPongRulesetId(payload.ruleset);
+    }
+    return payload.ruleset === undefined;
+  });
+
+export type WsSessionPayload = z.infer<typeof wsSessionPayloadSchema>;
 
 const WS_SESSION_TTL_MS = 5 * 60_000;
 
@@ -50,78 +62,12 @@ export function verifyWsSessionToken(token: string): WsSessionPayload | null {
   if (decrypted.expiresAt !== undefined && decrypted.expiresAt < Date.now()) {
     return null;
   }
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(decrypted.token);
-    const hasValidDifficulty =
-      parsed?.difficulty === undefined ||
-      BOT_DIFFICULTIES.includes(parsed?.difficulty);
-    const hasValidWinningScore =
-      parsed?.winningScore === undefined ||
-      (typeof parsed?.winningScore === 'number' &&
-        Number.isInteger(parsed.winningScore) &&
-        parsed.winningScore >= 1 &&
-        parsed.winningScore <= 99);
-    const hasValidRuleset =
-      parsed?.game === 'cards'
-        ? typeof parsed?.ruleset === 'string' &&
-          cardGameRegistry.isKnownRuleset(parsed.ruleset)
-        : parsed?.game === 'pong'
-          ? parsed?.ruleset === undefined || isPongRulesetId(parsed.ruleset)
-          : parsed?.ruleset === undefined;
-    const hasValidRoomId =
-      parsed?.roomId === undefined ||
-      (typeof parsed?.roomId === 'string' && parsed.roomId.length > 0);
-    const hasRequiredRoomId =
-      parsed?.mode !== 'multi' ||
-      (typeof parsed?.roomId === 'string' && parsed.roomId.length > 0);
-    const hasValidOptions =
-      parsed?.options === undefined ||
-      (typeof parsed.options === 'object' &&
-        parsed.options !== null &&
-        !Array.isArray(parsed.options));
-    const hasValidDisplayName =
-      parsed?.displayName === undefined ||
-      (typeof parsed.displayName === 'string' &&
-        parsed.displayName.length > 0 &&
-        parsed.displayName.length <= 80);
-    if (
-      typeof parsed?.userId === 'string' &&
-      typeof parsed?.instanceId === 'string' &&
-      typeof parsed?.guildId === 'string' &&
-      (parsed?.mode === 'single' ||
-        parsed?.mode === 'multi' ||
-        parsed?.mode === 'local') &&
-      isGameId(parsed?.game) &&
-      hasValidDisplayName &&
-      hasValidDifficulty &&
-      hasValidWinningScore &&
-      hasValidRuleset &&
-      hasValidRoomId &&
-      hasRequiredRoomId &&
-      hasValidOptions
-    ) {
-      return {
-        userId: parsed.userId,
-        ...(parsed.displayName !== undefined
-          ? { displayName: parsed.displayName }
-          : {}),
-        instanceId: parsed.instanceId,
-        guildId: parsed.guildId,
-        mode: parsed.mode,
-        game: parsed.game,
-        ...(parsed.difficulty !== undefined
-          ? { difficulty: parsed.difficulty }
-          : {}),
-        ...(parsed.winningScore !== undefined
-          ? { winningScore: parsed.winningScore }
-          : {}),
-        ...(parsed.roomId !== undefined ? { roomId: parsed.roomId } : {}),
-        ...(parsed.ruleset !== undefined ? { ruleset: parsed.ruleset } : {}),
-        ...(parsed.options !== undefined ? { options: parsed.options } : {}),
-      };
-    }
+    parsed = JSON.parse(decrypted.token);
   } catch {
-    // malformed payload
+    return null;
   }
-  return null;
+  const payload = wsSessionPayloadSchema.safeParse(parsed);
+  return payload.success ? payload.data : null;
 }

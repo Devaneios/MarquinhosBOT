@@ -316,4 +316,62 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
       game: 'pong',
     });
   });
+
+  function sealed(payload: Record<string, unknown>) {
+    return encryptToken(JSON.stringify(payload))!;
+  }
+
+  const basePayload = {
+    userId: 'user-1',
+    instanceId: 'inst-1',
+    guildId: 'guild-1',
+    mode: 'single',
+    game: 'pong',
+  } as const;
+
+  it('rejects a multi-mode payload without a roomId', () => {
+    expect(
+      verifyWsSessionToken(sealed({ ...basePayload, mode: 'multi' })),
+    ).toBeNull();
+  });
+
+  it('rejects an empty or overlong display name', () => {
+    expect(
+      verifyWsSessionToken(sealed({ ...basePayload, displayName: '' })),
+    ).toBeNull();
+    expect(
+      verifyWsSessionToken(
+        sealed({ ...basePayload, displayName: 'x'.repeat(81) }),
+      ),
+    ).toBeNull();
+  });
+
+  it('rejects an options bag that is not a plain object', () => {
+    expect(
+      verifyWsSessionToken(sealed({ ...basePayload, options: [1, 2] })),
+    ).toBeNull();
+    expect(
+      verifyWsSessionToken(sealed({ ...basePayload, options: null })),
+    ).toBeNull();
+  });
+
+  it('rejects a ruleset on a game that takes none', () => {
+    expect(
+      verifyWsSessionToken(
+        sealed({ ...basePayload, game: 'hangman', ruleset: 'truco' }),
+      ),
+    ).toBeNull();
+  });
+
+  it('rejects an unknown pong ruleset', () => {
+    expect(
+      verifyWsSessionToken(sealed({ ...basePayload, ruleset: 'nope' })),
+    ).toBeNull();
+  });
+
+  it('drops keys that are not part of the session payload', () => {
+    expect(
+      verifyWsSessionToken(sealed({ ...basePayload, isAdmin: true })),
+    ).toEqual(basePayload);
+  });
 });
