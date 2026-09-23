@@ -1,12 +1,12 @@
-import { describe, expect, it } from 'bun:test';
 import {
-  aiResearchStartSchema,
-  aiThreadAskSchema,
-} from 'schemas/aiChat.schema';
+  askInThread,
+  startResearch,
+} from '@marquinhos/contracts/http/routes/aiChat';
+import { describe, expect, it } from 'bun:test';
 
-function wrap(body: Record<string, unknown>) {
-  return { body, query: {}, params: {} };
-}
+const acceptsAsk = (body: unknown) => askInThread.body.safeParse(body).success;
+const acceptsResearch = (body: unknown) =>
+  startResearch.body.safeParse(body).success;
 
 const validAsk = {
   threadId: 't1',
@@ -16,44 +16,34 @@ const validAsk = {
   content: 'quanto é 2+2?',
 };
 
-describe('aiThreadAskSchema', () => {
-  it('accepts a valid payload', async () => {
-    expect(aiThreadAskSchema.parseAsync(wrap(validAsk))).resolves.toBeDefined();
+describe('askInThread body', () => {
+  it('accepts a valid payload', () => {
+    expect(acceptsAsk(validAsk)).toBe(true);
   });
 
-  it('accepts an explicit mode', async () => {
-    expect(
-      aiThreadAskSchema.parseAsync(wrap({ ...validAsk, mode: 'research' })),
-    ).resolves.toBeDefined();
+  it('accepts an explicit mode', () => {
+    expect(acceptsAsk({ ...validAsk, mode: 'research' })).toBe(true);
   });
 
-  it('rejects an unknown mode', async () => {
-    expect(
-      aiThreadAskSchema.parseAsync(wrap({ ...validAsk, mode: 'freestyle' })),
-    ).rejects.toThrow();
+  it('rejects an unknown mode', () => {
+    expect(acceptsAsk({ ...validAsk, mode: 'freestyle' })).toBe(false);
   });
 
   it.each(['threadId', 'guildId', 'channelId', 'userId', 'content'])(
     'rejects a payload missing %s',
-    async (field) => {
+    (field) => {
       const body: Record<string, unknown> = { ...validAsk };
       delete body[field];
-      expect(aiThreadAskSchema.parseAsync(wrap(body))).rejects.toThrow();
+      expect(acceptsAsk(body)).toBe(false);
     },
   );
 
-  it('rejects empty content', async () => {
-    expect(
-      aiThreadAskSchema.parseAsync(wrap({ ...validAsk, content: '' })),
-    ).rejects.toThrow();
+  it('rejects empty content', () => {
+    expect(acceptsAsk({ ...validAsk, content: '' })).toBe(false);
   });
 
-  it('rejects content past the cap so one message cannot blow the context', async () => {
-    expect(
-      aiThreadAskSchema.parseAsync(
-        wrap({ ...validAsk, content: 'a'.repeat(4001) }),
-      ),
-    ).rejects.toThrow();
+  it('rejects content past the cap so one message cannot blow the context', () => {
+    expect(acceptsAsk({ ...validAsk, content: 'a'.repeat(4001) })).toBe(false);
   });
 });
 
@@ -66,39 +56,33 @@ const validResearch = {
   idempotencyKey: 'interaction-1',
 };
 
-describe('aiResearchStartSchema', () => {
-  it('accepts a valid payload', async () => {
-    expect(
-      aiResearchStartSchema.parseAsync(wrap(validResearch)),
-    ).resolves.toBeDefined();
+describe('startResearch body', () => {
+  it('accepts a valid payload', () => {
+    expect(acceptsResearch(validResearch)).toBe(true);
   });
 
-  it('requires the idempotency key, since the bot retries on 5xx', async () => {
+  it('requires the idempotency key, since the bot retries on 5xx', () => {
     const body: Record<string, unknown> = { ...validResearch };
     delete body.idempotencyKey;
-    expect(aiResearchStartSchema.parseAsync(wrap(body))).rejects.toThrow();
+    expect(acceptsResearch(body)).toBe(false);
   });
 
-  it('rejects a query too short to research', async () => {
-    expect(
-      aiResearchStartSchema.parseAsync(wrap({ ...validResearch, query: 'x' })),
-    ).rejects.toThrow();
+  it('rejects a query too short to research', () => {
+    expect(acceptsResearch({ ...validResearch, query: 'x' })).toBe(false);
   });
 
-  it('rejects a query past the cap', async () => {
-    expect(
-      aiResearchStartSchema.parseAsync(
-        wrap({ ...validResearch, query: 'a'.repeat(1001) }),
-      ),
-    ).rejects.toThrow();
+  it('rejects a query past the cap', () => {
+    expect(acceptsResearch({ ...validResearch, query: 'a'.repeat(1001) })).toBe(
+      false,
+    );
   });
 
   it.each(['threadId', 'guildId', 'channelId', 'userId'])(
     'rejects a payload missing %s',
-    async (field) => {
+    (field) => {
       const body: Record<string, unknown> = { ...validResearch };
       delete body[field];
-      expect(aiResearchStartSchema.parseAsync(wrap(body))).rejects.toThrow();
+      expect(acceptsResearch(body)).toBe(false);
     },
   );
 });

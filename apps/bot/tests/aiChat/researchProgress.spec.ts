@@ -1,3 +1,4 @@
+import type { ResearchJobView } from '@marquinhos/contracts/http/routes/aiChat';
 import type { AiThreadChannel } from '@marquinhos/services/aiChat/aiThread';
 import {
   followResearchJob,
@@ -6,7 +7,6 @@ import {
   formatStats,
 } from '@marquinhos/services/aiChat/researchProgress';
 import type { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
-import type { ResearchJobResponse } from '@marquinhos/types';
 import { describe, expect, it } from 'bun:test';
 
 function makeThread() {
@@ -27,19 +27,22 @@ function makeThread() {
   } as unknown as AiThreadChannel & { sent: string[] };
 }
 
-function job(
-  overrides: Partial<ResearchJobResponse> = {},
-): ResearchJobResponse {
+function job(overrides: Partial<ResearchJobView> = {}): ResearchJobView {
   return {
     jobId: 'job-1',
+    threadId: 'thread-1',
+    userId: 'u1',
+    guildId: 'g1',
+    channelId: 'c1',
     status: 'running',
     query: 'estado da arte de X',
+    createdAt: 0,
     progress: [],
     ...overrides,
   };
 }
 
-function makeApi(responses: ResearchJobResponse[]) {
+function makeApi(responses: ResearchJobView[]) {
   let call = 0;
   const api = {
     getResearchJob: async () => ({

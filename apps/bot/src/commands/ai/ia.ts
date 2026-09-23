@@ -151,11 +151,7 @@ export class IaCommand extends MarquinhosCommand {
       return;
     }
     if (start.status === 'rejected') {
-      await thread.send(start.reply ?? 'Manda um tema de pesquisa de verdade.');
-      return;
-    }
-    if (!start.jobId) {
-      await thread.send('Não consegui iniciar a pesquisa. Tenta de novo.');
+      await thread.send(start.reply);
       return;
     }
 

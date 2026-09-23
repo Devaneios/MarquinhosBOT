@@ -5,7 +5,6 @@ import {
 } from '@marquinhos/api-client/bot';
 import { env } from '@marquinhos/config/environment';
 import {
-  aiChatResponseSchema,
   apiResponseSchema,
   dailyLeaderboardEntrySchema,
   emojiReactionResponseSchema,
@@ -13,8 +12,6 @@ import {
   markWordleAnnouncedResultSchema,
   mazeViewportStateSchema,
   rankedLeaderboardEntrySchema,
-  researchJobResponseSchema,
-  researchStartResponseSchema,
   unannouncedWordleWinSchema,
   userWordleSessionSchema,
   validateWordleGuessResultSchema,
@@ -29,15 +26,13 @@ import {
   type RankedLeaderboardEntry,
 } from '@marquinhos/contracts/http/botResponses';
 import type { ContractRequest } from '@marquinhos/contracts/http/contract';
+import * as aiChat from '@marquinhos/contracts/http/routes/aiChat';
 import * as gamification from '@marquinhos/contracts/http/routes/gamification';
 import {
-  AiChatResponse,
   ApiResponse,
   EmojiReactionResponse,
   MazeViewportState,
   PlaybackData,
-  ResearchJobResponse,
-  ResearchStartResponse,
 } from '@marquinhos/types';
 import { reportError } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
@@ -148,65 +143,50 @@ export class MarquinhosApiService {
     return callContract(this.client, gamification.recordGameResult, { body });
   }
 
-  async respondToTag(payload: {
-    userId: string;
-    guildId: string;
-    channelId: string;
-    content: string;
-    recentMessages: { author: string; content: string }[];
-    repliedMessage?: { author: string; content: string };
-  }): Promise<ApiResponse<AiChatResponse>> {
+  async respondToTag(body: ContractRequest<typeof aiChat.respond>['body']) {
     const startedAt = Date.now();
-    const raw = await this.client.post('/api/ai-chat/respond', payload, {
-      timeout: 120000,
-    });
-    const data = apiResponseSchema(aiChatResponseSchema).parse(raw);
+    const data = await callContract(
+      this.client,
+      aiChat.respond,
+      { body },
+      { timeout: 120000 },
+    );
     logger.info(
-      `[ai-chat] respondToTag user=${payload.userId} status=${data.data?.status} category=${data.data?.category ?? '-'} trace=${data.data?.traceId ?? '-'} ${Date.now() - startedAt}ms`,
+      `[ai-chat] respondToTag user=${body.userId} status=${data.data.status} category=${data.data.category ?? '-'} trace=${data.data.traceId ?? '-'} ${Date.now() - startedAt}ms`,
     );
     return data;
   }
 
-  async askInThread(payload: {
-    threadId: string;
-    guildId: string;
-    channelId: string;
-    userId: string;
-    content: string;
-    mode?: 'ask' | 'research';
-  }): Promise<ApiResponse<AiChatResponse>> {
+  async askInThread(body: ContractRequest<typeof aiChat.askInThread>['body']) {
     const startedAt = Date.now();
-    const raw = await this.client.post('/api/ai-chat/thread/ask', payload, {
-      timeout: 120000,
+    const data = await callContract(
+      this.client,
+      aiChat.askInThread,
+      { body },
+      { timeout: 120000 },
+    );
+    logger.info(
+      `[ai-chat] askInThread thread=${body.threadId} status=${data.data.status} trace=${data.data.traceId ?? '-'} ${Date.now() - startedAt}ms`,
+    );
+    return data;
+  }
+
+  async startResearch(
+    body: ContractRequest<typeof aiChat.startResearch>['body'],
+  ) {
+    const data = await callContract(this.client, aiChat.startResearch, {
+      body,
     });
-    const data = apiResponseSchema(aiChatResponseSchema).parse(raw);
     logger.info(
-      `[ai-chat] askInThread thread=${payload.threadId} status=${data.data?.status} trace=${data.data?.traceId ?? '-'} ${Date.now() - startedAt}ms`,
+      `[ai-chat] startResearch thread=${body.threadId} status=${data.data.status} job=${data.data.status === 'accepted' ? data.data.jobId : '-'}`,
     );
     return data;
   }
 
-  async startResearch(payload: {
-    threadId: string;
-    guildId: string;
-    channelId: string;
-    userId: string;
-    query: string;
-    idempotencyKey: string;
-  }): Promise<ApiResponse<ResearchStartResponse>> {
-    const raw = await this.client.post('/api/ai-chat/research', payload);
-    const data = apiResponseSchema(researchStartResponseSchema).parse(raw);
-    logger.info(
-      `[ai-chat] startResearch thread=${payload.threadId} status=${data.data?.status} job=${data.data?.jobId ?? '-'}`,
-    );
-    return data;
-  }
-
-  async getResearchJob(
-    jobId: string,
-  ): Promise<ApiResponse<ResearchJobResponse>> {
-    const data = await this.client.get(`/api/ai-chat/research/${jobId}`);
-    return apiResponseSchema(researchJobResponseSchema).parse(data);
+  async getResearchJob(jobId: string) {
+    return callContract(this.client, aiChat.getResearchJob, {
+      params: { jobId },
+    });
   }
 
   async chooseEmojiReactions(payload: {

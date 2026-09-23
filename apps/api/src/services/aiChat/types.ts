@@ -1,20 +1,16 @@
+import type {
+  aiChatCategorySchema,
+  aiChatResultSchema,
+  aiResponseCategorySchema,
+} from '@marquinhos/contracts/http/routes/aiChat';
+import type { z } from 'zod';
+
 export type MainCategory =
   'question' | 'social' | 'context_reaction' | 'agent_task' | 'unclear';
 
-export type ResponseCategory =
-  | 'general_question'
-  | 'code_technical_question'
-  | 'trick_riddle'
-  | 'bot_help_info'
-  | 'casual_chat'
-  | 'user_roast_provocation'
-  | 'praise_thanks'
-  | 'opinion_reference'
-  | 'follow_up_on_bot'
-  | 'off_topic_unclear';
+export type ResponseCategory = z.output<typeof aiResponseCategorySchema>;
 
-export type AiChatCategory =
-  ResponseCategory | 'guardrail_roast' | 'agent_task';
+export type AiChatCategory = z.output<typeof aiChatCategorySchema>;
 
 export type ResponseFormat = 'embed' | 'text';
 
@@ -27,11 +23,4 @@ export interface AiChatRequest {
   repliedMessage?: { author: string; content: string };
 }
 
-export interface AiChatResult {
-  status: 'ok' | 'rate_limited' | 'error';
-  category?: AiChatCategory;
-  reply?: string;
-  format?: ResponseFormat;
-  embedTitle?: string;
-  traceId?: string;
-}
+export type AiChatResult = z.input<typeof aiChatResultSchema>;

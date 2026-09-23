@@ -73,7 +73,7 @@ describe('handleApiResponseError', () => {
 
 describe('MarquinhosApiService.respondToTag', () => {
   it('uses a 120 second timeout, since an agent_task reply can involve a multi-iteration tool-calling loop that outlasts the default timeout', async () => {
-    const postSpy = spyOn(HttpClient.prototype, 'post').mockResolvedValue({
+    const postSpy = spyOn(HttpClient.prototype, 'request').mockResolvedValue({
       data: { status: 'ok' },
     });
 
@@ -87,8 +87,7 @@ describe('MarquinhosApiService.respondToTag', () => {
 
     expect(postSpy).toHaveBeenCalledWith(
       '/api/ai-chat/respond',
-      expect.objectContaining({ userId: 'u1' }),
-      { timeout: 120000 },
+      expect.objectContaining({ method: 'POST', timeout: 120000 }),
     );
 
     postSpy.mockRestore();
@@ -97,7 +96,7 @@ describe('MarquinhosApiService.respondToTag', () => {
   it.each(['trick_riddle', 'praise_thanks', 'follow_up_on_bot'])(
     'accepts the %s category the API classifies into',
     async (category) => {
-      const postSpy = spyOn(HttpClient.prototype, 'post').mockResolvedValue({
+      const postSpy = spyOn(HttpClient.prototype, 'request').mockResolvedValue({
         data: { status: 'ok', category, reply: 'oi' },
       });
 

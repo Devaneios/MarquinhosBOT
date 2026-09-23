@@ -1,38 +1,17 @@
+import {
+  researchJobStatusSchema,
+  researchSourceSchema,
+  researchStatsSchema,
+  type ResearchProgressEvent,
+  type ResearchSource,
+  type ResearchStats,
+} from '@marquinhos/contracts/http/routes/aiChat';
 import { db as defaultDb } from '@marquinhos/database/sqlite';
 import { Database } from 'bun:sqlite';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 
-export type ResearchJobStatus = 'queued' | 'running' | 'done' | 'error';
-
-const researchSourceSchema = z.object({
-  index: z.number(),
-  url: z.string(),
-  title: z.string(),
-  publishedDate: z.string().optional(),
-});
-
-export type ResearchSource = z.infer<typeof researchSourceSchema>;
-
-const researchStatsSchema = z.object({
-  rounds: z.number(),
-  searches: z.number(),
-  fetched: z.number(),
-  relevantSources: z.number(),
-  /** How far the follow-up recursion went: 0 when only the plan was searched. */
-  maxDepth: z.number(),
-  durationMs: z.number(),
-  truncatedByBudget: z.boolean().optional(),
-});
-
-export type ResearchStats = z.infer<typeof researchStatsSchema>;
-
-export interface ResearchProgressEvent {
-  seq: number;
-  stage: string;
-  message: string;
-  createdAt: number;
-}
+export type ResearchJobStatus = z.output<typeof researchJobStatusSchema>;
 
 export interface ResearchJob {
   jobId: string;

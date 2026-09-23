@@ -1,16 +1,10 @@
+import * as contract from '@marquinhos/contracts/http/routes/aiChat';
 import type { Request, Response } from 'express';
-import {
-  aiChatRespondSchema,
-  aiResearchJobParamsSchema,
-  aiResearchStartSchema,
-  aiThreadAskSchema,
-  aiTraceListQuerySchema,
-  aiTraceParamsSchema,
-} from 'schemas/aiChat.schema';
 import { AiChatService } from 'services/aiChat/AiChatService';
 import { AiTraceQuery } from 'services/aiChat/AiTraceQuery';
 import { ResearchOrchestrator } from 'services/aiChat/research/ResearchOrchestrator';
 import { AiThreadService } from 'services/aiChat/thread/AiThreadService';
+import { parseRequest, sendContract } from 'utils/contract';
 import { logger } from 'utils/logger';
 
 class AiChatController {
@@ -33,11 +27,12 @@ class AiChatController {
 
   async askInThread(req: Request, res: Response) {
     try {
-      const body = aiThreadAskSchema.shape.body.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.askInThread, req);
+      if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
-      const { threadId, guildId, channelId, userId, content, mode } = body.data;
+      const { threadId, guildId, channelId, userId, content, mode } =
+        input.body;
 
       const result = await this.threadService.ask({
         threadId,
@@ -48,7 +43,7 @@ class AiChatController {
         mode,
       });
 
-      return res.status(200).json({ data: result });
+      return sendContract(res, contract.askInThread, { data: result });
     } catch (error) {
       logger.error('ai.controller.thread_ask_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
@@ -57,12 +52,12 @@ class AiChatController {
 
   async startResearch(req: Request, res: Response) {
     try {
-      const body = aiResearchStartSchema.shape.body.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.startResearch, req);
+      if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
       const { threadId, guildId, channelId, userId, query, idempotencyKey } =
-        body.data;
+        input.body;
 
       const outcome = this.research.start({
         threadId,
@@ -74,21 +69,28 @@ class AiChatController {
       });
 
       if (outcome.status === 'rate_limited') {
-        return res.status(200).json({ data: { status: 'rate_limited' } });
+        return sendContract(res, contract.startResearch, {
+          data: { status: 'rate_limited' },
+        });
       }
       if (outcome.status === 'rejected') {
-        return res
-          .status(200)
-          .json({ data: { status: 'rejected', reply: outcome.reply } });
+        return sendContract(res, contract.startResearch, {
+          data: { status: 'rejected', reply: outcome.reply },
+        });
       }
 
-      return res.status(202).json({
-        data: {
-          status: 'accepted',
-          jobId: outcome.jobId,
-          created: outcome.created,
+      return sendContract(
+        res,
+        contract.startResearch,
+        {
+          data: {
+            status: 'accepted',
+            jobId: outcome.jobId,
+            created: outcome.created,
+          },
         },
-      });
+        202,
+      );
     } catch (error) {
       logger.error('ai.controller.research_start_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
@@ -97,13 +99,13 @@ class AiChatController {
 
   async getResearchJob(req: Request, res: Response) {
     try {
-      const params = aiResearchJobParamsSchema.safeParse(req.params);
-      if (!params.success) {
+      const input = parseRequest(contract.getResearchJob, req);
+      if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
-      const job = this.research.get(params.data.jobId);
+      const job = this.research.get(input.params.jobId);
       if (!job) return res.status(404).json({ message: 'Job not found' });
-      return res.status(200).json({ data: job });
+      return sendContract(res, contract.getResearchJob, { data: job });
     } catch (error) {
       logger.error('ai.controller.research_get_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
@@ -112,8 +114,8 @@ class AiChatController {
 
   async respond(req: Request, res: Response) {
     try {
-      const body = aiChatRespondSchema.shape.body.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.respond, req);
+      if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
       const {
@@ -123,7 +125,7 @@ class AiChatController {
         content,
         recentMessages,
         repliedMessage,
-      } = body.data;
+      } = input.body;
 
       const result = await this.service.respond({
         userId,
@@ -134,7 +136,7 @@ class AiChatController {
         repliedMessage,
       });
 
-      return res.status(200).json({ data: result });
+      return sendContract(res, contract.respond, { data: result });
     } catch (error) {
       logger.error('ai.controller.respond_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
@@ -143,14 +145,14 @@ class AiChatController {
 
   async listTraces(req: Request, res: Response) {
     try {
-      const query = aiTraceListQuerySchema.safeParse(req.query);
-      if (!query.success) {
+      const input = parseRequest(contract.listTraces, req);
+      if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
 
-      const traces = this.traceQuery.list(query.data);
+      const traces = this.traceQuery.list(input.query);
 
-      return res.status(200).json({ data: traces });
+      return sendContract(res, contract.listTraces, { data: traces });
     } catch (error) {
       logger.error('ai.controller.list_traces_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
@@ -159,13 +161,13 @@ class AiChatController {
 
   async getTrace(req: Request, res: Response) {
     try {
-      const params = aiTraceParamsSchema.safeParse(req.params);
-      if (!params.success) {
+      const input = parseRequest(contract.getTrace, req);
+      if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
-      const trace = this.traceQuery.get(params.data.traceId);
+      const trace = this.traceQuery.get(input.params.traceId);
       if (!trace) return res.status(404).json({ message: 'Trace not found' });
-      return res.status(200).json({ data: trace });
+      return sendContract(res, contract.getTrace, { data: trace });
     } catch (error) {
       logger.error('ai.controller.get_trace_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });

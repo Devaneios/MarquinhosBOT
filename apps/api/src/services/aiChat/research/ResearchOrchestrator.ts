@@ -1,3 +1,7 @@
+import type {
+  researchJobViewSchema,
+  researchStartResultSchema,
+} from '@marquinhos/contracts/http/routes/aiChat';
 import { AiTraceRecorder } from 'services/aiChat/AiTraceRecorder';
 import {
   DailyQuotaService,
@@ -8,11 +12,11 @@ import { DeepResearchService } from 'services/aiChat/research/DeepResearchServic
 import {
   ResearchJobStore,
   type ResearchJob,
-  type ResearchProgressEvent,
 } from 'services/aiChat/research/ResearchJobStore';
 import { ThreadSessionStore } from 'services/aiChat/thread/ThreadSessionStore';
 import { getErrorMessage } from 'utils/errorHandling';
 import { logger } from 'utils/logger';
+import type { z } from 'zod';
 
 export interface StartResearchInput {
   threadId: string;
@@ -23,14 +27,9 @@ export interface StartResearchInput {
   idempotencyKey: string;
 }
 
-export type StartResearchOutcome =
-  | { status: 'accepted'; jobId: string; created: boolean }
-  | { status: 'rate_limited' }
-  | { status: 'rejected'; reply: string };
+export type StartResearchOutcome = z.input<typeof researchStartResultSchema>;
 
-export interface ResearchJobView extends ResearchJob {
-  progress: ResearchProgressEvent[];
-}
+export type ResearchJobView = z.input<typeof researchJobViewSchema>;
 
 /**
  * Owns the lifecycle of a deep research job: admission control, kicking the

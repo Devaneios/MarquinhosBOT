@@ -1,9 +1,9 @@
-import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import type {
-  ResearchJobResponse,
+  ResearchJobView,
   ResearchSource,
   ResearchStats,
-} from '@marquinhos/types';
+} from '@marquinhos/contracts/http/routes/aiChat';
+import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { getErrorMessage } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { sleep } from '@marquinhos/utils/sleep';
@@ -78,7 +78,7 @@ export async function followResearchJob(
   thread: AiThreadChannel,
   jobId: string,
   deps: PollDeps = {},
-): Promise<ResearchJobResponse | null> {
+): Promise<ResearchJobView | null> {
   const apiService = deps.apiService ?? MarquinhosApiService.getInstance();
   const pollIntervalMs = deps.pollIntervalMs ?? POLL_INTERVAL_MS;
   const timeoutMs = deps.timeoutMs ?? POLL_TIMEOUT_MS;
@@ -98,7 +98,7 @@ export async function followResearchJob(
       return null;
     }
 
-    let job: ResearchJobResponse | undefined;
+    let job: ResearchJobView | undefined;
     try {
       job = (await apiService.getResearchJob(jobId)).data;
     } catch (error) {
@@ -138,7 +138,7 @@ export async function followResearchJob(
 
 async function deliverReport(
   thread: AiThreadChannel,
-  job: ResearchJobResponse,
+  job: ResearchJobView,
 ): Promise<void> {
   if (job.report) {
     await sendThreadReply(thread, job.report, { format: 'text' });

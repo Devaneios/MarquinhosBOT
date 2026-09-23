@@ -1,9 +1,9 @@
-import { NOOP_TRACE, type TraceContext } from 'services/aiChat/AiTraceRecorder';
-import { ResponsesClient } from 'services/aiChat/llm/ResponsesClient';
 import type {
   ResearchSource,
   ResearchStats,
-} from 'services/aiChat/research/ResearchJobStore';
+} from '@marquinhos/contracts/http/routes/aiChat';
+import { NOOP_TRACE, type TraceContext } from 'services/aiChat/AiTraceRecorder';
+import { ResponsesClient } from 'services/aiChat/llm/ResponsesClient';
 import {
   buildAnalysisInput,
   buildExtractionInput,
