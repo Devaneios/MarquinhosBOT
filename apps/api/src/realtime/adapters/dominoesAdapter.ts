@@ -1,31 +1,14 @@
-import type {
-  ChainEnd,
-  Tile,
-} from 'services/activity/dominoesBlock/DominoesEngine';
+import { chainEndSchema, dominoTileSchema } from 'realtime/payloadSchemas';
 import { DominoesSession } from 'services/activity/dominoesBlock/DominoesSession';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
 const MOVE_RATE_LIMIT_MAX = 10;
 
-function isTile(value: unknown): value is Tile {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as Tile).a === 'number' &&
-    typeof (value as Tile).b === 'number' &&
-    Number.isInteger((value as Tile).a) &&
-    Number.isInteger((value as Tile).b) &&
-    (value as Tile).a >= 0 &&
-    (value as Tile).a <= 6 &&
-    (value as Tile).b >= 0 &&
-    (value as Tile).b <= 6
-  );
-}
+export const tilePayloadSchema = z.object({ tile: dominoTileSchema });
 
-function isChainEnd(value: unknown): value is ChainEnd {
-  return value === 'left' || value === 'right';
-}
+export const endPayloadSchema = z.object({ end: chainEndSchema.optional() });
 
 export const dominoesAdapter: GameRoomAdapter<DominoesSession> = {
   maxPlayers: 2,
@@ -63,17 +46,17 @@ export const dominoesAdapter: GameRoomAdapter<DominoesSession> = {
             max: MOVE_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const { tile, end } =
-              (payload as { tile?: Tile; end?: ChainEnd }) ?? {};
-            if (!isTile(tile)) {
+            const tile = tilePayloadSchema.safeParse(payload);
+            if (!tile.success) {
               client.send('move_rejected', { reason: 'Malformed tile' });
               return;
             }
-            if (end !== undefined && !isChainEnd(end)) {
+            const end = endPayloadSchema.safeParse(payload);
+            if (!end.success) {
               client.send('move_rejected', { reason: 'Malformed end' });
               return;
             }
-            session.playTile(auth.userId, tile, end);
+            session.playTile(auth.userId, tile.data.tile, end.data.end);
           },
         },
         pass: {

@@ -31,6 +31,7 @@ import {
   cardStrength,
   manilhaRank,
 } from 'services/activity/cards/rulesets/truco/ranking';
+import { z } from 'zod';
 
 const SEAT_COUNT = 4;
 const DEFAULT_WINNING_SCORE = 12;
@@ -78,9 +79,13 @@ export interface TrucoState {
   dealSeed: number;
 }
 
-interface PlayCardArgs {
-  cardId: string;
-}
+const playCardArgsSchema = z.object({ cardId: z.string().min(1) });
+
+type PlayCardArgs = z.infer<typeof playCardArgsSchema>;
+
+const trucoOptionsSchema = z.object({
+  winningScore: z.number().int().min(1).max(24),
+});
 
 function teamOfSeat(seats: readonly Seat[], seatIndex: number): Team {
   return seats.find((s) => s.seatIndex === seatIndex)?.teamId === 'B'
@@ -368,15 +373,10 @@ function buildTrucoDefinition(
       }));
       // The ruleset reads what it understands out of the forwarded match options
       // and ignores the rest.
-      const requested = (options as { winningScore?: unknown } | undefined)
-        ?.winningScore;
-      const winningScore =
-        typeof requested === 'number' &&
-        Number.isInteger(requested) &&
-        requested >= 1 &&
-        requested <= 24
-          ? requested
-          : DEFAULT_WINNING_SCORE;
+      const requested = trucoOptionsSchema.safeParse(options);
+      const winningScore = requested.success
+        ? requested.data.winningScore
+        : DEFAULT_WINNING_SCORE;
 
       const base: TrucoState = {
         seats,
@@ -400,10 +400,8 @@ function buildTrucoDefinition(
     moves: {
       play_card: {
         parseArgs(raw): PlayCardArgs | null {
-          const cardId = (raw as { cardId?: unknown } | undefined)?.cardId;
-          return typeof cardId === 'string' && cardId.length > 0
-            ? { cardId }
-            : null;
+          const parsed = playCardArgsSchema.safeParse(raw);
+          return parsed.success ? parsed.data : null;
         },
         validate(state, playerId, args) {
           if (state.pending)

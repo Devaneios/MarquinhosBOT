@@ -1,9 +1,12 @@
 import { HangmanSession } from 'services/activity/hangman/HangmanSession';
 import { getHangmanWord } from 'services/activity/hangman/wordList';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const GUESS_RATE_LIMIT_WINDOW_MS = 1000;
 const GUESS_RATE_LIMIT_MAX = 3;
+
+const guessPayloadSchema = z.object({ letter: z.string().default('') });
 
 export const hangmanAdapter: GameRoomAdapter<HangmanSession> = {
   maxPlayers: 2,
@@ -36,8 +39,12 @@ export const hangmanAdapter: GameRoomAdapter<HangmanSession> = {
             max: GUESS_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const letter = (payload as { letter?: string })?.letter ?? '';
-            const result = session.guessLetter(auth.userId, letter);
+            const parsed = guessPayloadSchema.safeParse(payload);
+            if (!parsed.success) {
+              client.send('guess_error', { message: 'Invalid letter' });
+              return;
+            }
+            const result = session.guessLetter(auth.userId, parsed.data.letter);
             if (!result.success) {
               client.send('guess_error', { message: result.message });
               return;

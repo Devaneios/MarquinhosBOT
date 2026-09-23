@@ -1,6 +1,7 @@
 import type { Client } from 'colyseus';
 import type { WsSessionPayload } from 'services/activity/wsSessionToken';
 import { WordleService } from 'services/wordle';
+import { z } from 'zod';
 import type {
   AdapterContext,
   GameRoomAdapter,
@@ -9,6 +10,8 @@ import type {
 
 const GUESS_RATE_LIMIT_WINDOW_MS = 1000;
 const GUESS_RATE_LIMIT_MAX = 3;
+
+const guessPayloadSchema = z.object({ guess: z.string().default('') });
 
 export const wordleAdapter: GameRoomAdapter<WordleService> = {
   // Every player solves their own private daily puzzle — there is no shared
@@ -33,23 +36,15 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
             client: Client,
             payload: unknown,
           ) => {
-            const guess = (payload as { guess?: string })?.guess ?? '';
-            // WordleService.submitGuess() -> resolveCanonical() calls
-            // `guess.trim().toLowerCase()` unconditionally, so a non-string
-            // `guess` (e.g. a number or object surviving the `?? ''` above,
-            // which only replaces null/undefined) would throw a TypeError
-            // from inside the service instead of returning a clean
-            // rejection. Guard here, matching wordChainAdapter's/
-            // wordleRaceAdapter's fix and this adapter's own `guess_error`
-            // rejection shape (the original WordleRoom's shape too).
-            if (typeof guess !== 'string') {
+            const parsed = guessPayloadSchema.safeParse(payload);
+            if (!parsed.success) {
               client.send('guess_error', { message: 'Invalid guess' });
               return;
             }
             const result = service.submitGuess(
               auth.userId,
               auth.guildId,
-              guess,
+              parsed.data.guess,
             );
             if ('error' in result) {
               client.send('guess_error', { message: result.error });

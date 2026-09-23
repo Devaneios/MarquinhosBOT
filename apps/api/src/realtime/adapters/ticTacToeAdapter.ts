@@ -1,9 +1,12 @@
 import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
 import { TicTacToeSession } from 'services/activity/ticTacToe/TicTacToeSession';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
 const MOVE_RATE_LIMIT_MAX = 10;
+
+const movePayloadSchema = z.object({ row: z.number(), col: z.number() });
 
 export const ticTacToeAdapter: GameRoomAdapter<TicTacToeSession> = {
   maxPlayers: 2,
@@ -35,12 +38,15 @@ export const ticTacToeAdapter: GameRoomAdapter<TicTacToeSession> = {
             max: MOVE_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const { row, col } =
-              (payload as { row?: number; col?: number }) ?? {};
+            const parsed = movePayloadSchema.safeParse(payload);
+            if (!parsed.success) {
+              client.send(ACTION_REJECTED, { error: 'Invalid move' });
+              return;
+            }
             const result = session.handleMove(
               auth.userId,
-              row ?? -1,
-              col ?? -1,
+              parsed.data.row,
+              parsed.data.col,
             );
             if (!result.ok)
               client.send(ACTION_REJECTED, { error: result.error });

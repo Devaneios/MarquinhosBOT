@@ -1,9 +1,12 @@
 import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
 import { WordleRaceSession } from 'services/activity/wordle-race/WordleRaceSession';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const GUESS_RATE_LIMIT_WINDOW_MS = 1000;
 const GUESS_RATE_LIMIT_MAX = 3;
+
+const guessPayloadSchema = z.object({ guess: z.string().default('') });
 
 export const wordleRaceAdapter: GameRoomAdapter<WordleRaceSession> = {
   // WordleRaceSession.addPlayer()/WordleRaceEngine.addPlayer() have no
@@ -40,19 +43,12 @@ export const wordleRaceAdapter: GameRoomAdapter<WordleRaceSession> = {
             max: GUESS_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const guess = (payload as { guess?: string })?.guess ?? '';
-            // WordleRaceEngine.submitGuess() calls `guess.trim().toLowerCase()`
-            // unconditionally — a non-string `guess` (e.g. a number or object
-            // surviving the `?? ''` above, which only replaces null/undefined)
-            // would throw a TypeError from inside the engine instead of
-            // returning a clean rejection. Guard here, matching
-            // wordChainAdapter's fix and this adapter's own `!result.ok`
-            // rejection shape.
-            if (typeof guess !== 'string') {
+            const parsed = guessPayloadSchema.safeParse(payload);
+            if (!parsed.success) {
               client.send(ACTION_REJECTED, { error: 'Invalid guess' });
               return;
             }
-            const result = session.submitGuess(auth.userId, guess);
+            const result = session.submitGuess(auth.userId, parsed.data.guess);
             if (!result.ok)
               client.send(ACTION_REJECTED, { error: result.error });
           },

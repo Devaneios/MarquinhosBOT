@@ -1,8 +1,11 @@
 import { ConnectFourSession } from 'services/activity/connectFour/ConnectFourSession';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
 const MOVE_RATE_LIMIT_MAX = 10;
+
+const dropPayloadSchema = z.object({ col: z.number() });
 
 export const connectFourAdapter: GameRoomAdapter<ConnectFourSession> = {
   maxPlayers: 2,
@@ -34,8 +37,10 @@ export const connectFourAdapter: GameRoomAdapter<ConnectFourSession> = {
             max: MOVE_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const col = (payload as { col?: number })?.col;
-            const accepted = session.dropDisc(auth.userId, col ?? -1);
+            const parsed = dropPayloadSchema.safeParse(payload);
+            const col = parsed.data?.col;
+            const accepted =
+              col !== undefined && session.dropDisc(auth.userId, col);
             if (!accepted) client.send('move_rejected', { col });
           },
         },

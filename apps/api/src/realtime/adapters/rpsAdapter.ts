@@ -1,8 +1,11 @@
 import { RpsSession } from 'services/activity/rps/RpsSession';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const PICK_RATE_LIMIT_WINDOW_MS = 1000;
 const PICK_RATE_LIMIT_MAX = 10;
+
+const pickPayloadSchema = z.object({ pick: z.string() });
 
 export const rpsAdapter: GameRoomAdapter<RpsSession> = {
   maxPlayers: 2,
@@ -35,8 +38,10 @@ export const rpsAdapter: GameRoomAdapter<RpsSession> = {
             max: PICK_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const pick = (payload as { pick?: string })?.pick;
-            const success = session.submitPick(auth.userId, pick);
+            const parsed = pickPayloadSchema.safeParse(payload);
+            const success =
+              parsed.success &&
+              session.submitPick(auth.userId, parsed.data.pick);
             if (!success) client.send('error', { message: 'Invalid move' });
           },
         },

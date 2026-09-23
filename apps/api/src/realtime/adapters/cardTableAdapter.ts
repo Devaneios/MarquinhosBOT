@@ -2,6 +2,7 @@ import { CardTableSession } from 'services/activity/cards/CardTableSession';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
 import { cardGameRegistry } from 'services/activity/cards/registry';
 import { GamificationService } from 'services/gamification/GamificationService';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
@@ -12,6 +13,11 @@ const MOVE_RATE_LIMIT_MAX = 20;
 // room inside setup() from the resolved GameDefinition and returned
 // alongside session/messageHandlers — see GameRoomAdapter's `maxPlayers?`
 // setup() return field, which MatchRoom prefers over this static value.
+const movePayloadSchema = z.object({
+  move: z.string().min(1),
+  args: z.unknown().optional(),
+});
+
 export const cardTableAdapter: GameRoomAdapter<CardTableSession<unknown>> = {
   maxPlayers: 4,
   supportsBot: false,
@@ -51,10 +57,9 @@ export const cardTableAdapter: GameRoomAdapter<CardTableSession<unknown>> = {
             max: MOVE_RATE_LIMIT_MAX,
           },
           handle: (auth, _client, payload: unknown) => {
-            const { move, args } =
-              (payload as { move?: string; args?: unknown }) ?? {};
-            if (!move) return;
-            session.handleMove(auth.userId, move, args);
+            const parsed = movePayloadSchema.safeParse(payload);
+            if (!parsed.success) return;
+            session.handleMove(auth.userId, parsed.data.move, parsed.data.args);
           },
         },
         restart: { handle: (auth) => session.requestRestart(auth.userId) },

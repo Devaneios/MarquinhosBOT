@@ -1,8 +1,14 @@
 import { MinesweeperSession } from 'services/activity/minesweeper/MinesweeperSession';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const REVEAL_RATE_LIMIT_WINDOW_MS = 1000;
 const REVEAL_RATE_LIMIT_MAX = 20;
+
+const revealPayloadSchema = z.object({
+  x: z.number().int(),
+  y: z.number().int(),
+});
 
 export const minesweeperAdapter: GameRoomAdapter<MinesweeperSession> = {
   maxPlayers: 2,
@@ -34,19 +40,18 @@ export const minesweeperAdapter: GameRoomAdapter<MinesweeperSession> = {
             max: REVEAL_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const { x, y } = (payload as { x?: number; y?: number }) ?? {};
-            if (
-              typeof x !== 'number' ||
-              typeof y !== 'number' ||
-              !Number.isInteger(x) ||
-              !Number.isInteger(y)
-            ) {
+            const parsed = revealPayloadSchema.safeParse(payload);
+            if (!parsed.success) {
               client.send('reveal_error', {
                 message: 'Invalid tile coordinates',
               });
               return;
             }
-            const result = session.reveal(auth.userId, x, y);
+            const result = session.reveal(
+              auth.userId,
+              parsed.data.x,
+              parsed.data.y,
+            );
             if ('error' in result)
               client.send('reveal_error', { message: result.error });
           },

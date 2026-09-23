@@ -1,20 +1,15 @@
-import type { Cell } from 'services/activity/word-search-race/WordSearchRaceEngine';
+import { gridCellSchema } from 'realtime/payloadSchemas';
 import { WordSearchRaceSession } from 'services/activity/word-search-race/WordSearchRaceSession';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const SELECT_RATE_LIMIT_WINDOW_MS = 1000;
 const SELECT_RATE_LIMIT_MAX = 10;
 
-function isValidCell(value: unknown): value is Cell {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as Cell).row === 'number' &&
-    typeof (value as Cell).col === 'number' &&
-    Number.isInteger((value as Cell).row) &&
-    Number.isInteger((value as Cell).col)
-  );
-}
+export const selectPayloadSchema = z.object({
+  start: gridCellSchema,
+  end: gridCellSchema,
+});
 
 export const wordSearchRaceAdapter: GameRoomAdapter<WordSearchRaceSession> = {
   // WordSearchRaceSession.addPlayer() has no internal player-count cap —
@@ -51,13 +46,16 @@ export const wordSearchRaceAdapter: GameRoomAdapter<WordSearchRaceSession> = {
             max: SELECT_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const { start, end } =
-              (payload as { start?: unknown; end?: unknown }) ?? {};
-            if (!isValidCell(start) || !isValidCell(end)) {
+            const parsed = selectPayloadSchema.safeParse(payload);
+            if (!parsed.success) {
               client.send('select_error', { message: 'Invalid selection' });
               return;
             }
-            const result = session.submitSelection(auth.userId, start, end);
+            const result = session.submitSelection(
+              auth.userId,
+              parsed.data.start,
+              parsed.data.end,
+            );
             if ('error' in result)
               client.send('select_error', { message: result.error });
           },

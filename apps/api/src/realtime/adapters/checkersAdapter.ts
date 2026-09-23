@@ -1,21 +1,16 @@
-import type { Position } from 'services/activity/checkers/CheckersEngine';
+import { gridCellSchema } from 'realtime/payloadSchemas';
 import { CheckersSession } from 'services/activity/checkers/CheckersSession';
 import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
 const MOVE_RATE_LIMIT_MAX = 10;
 
-function isPosition(value: unknown): value is Position {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as Position).row === 'number' &&
-    typeof (value as Position).col === 'number' &&
-    Number.isInteger((value as Position).row) &&
-    Number.isInteger((value as Position).col)
-  );
-}
+export const checkersMovePayloadSchema = z.object({
+  from: gridCellSchema,
+  to: gridCellSchema,
+});
 
 export const checkersAdapter: GameRoomAdapter<CheckersSession> = {
   maxPlayers: 2,
@@ -47,10 +42,13 @@ export const checkersAdapter: GameRoomAdapter<CheckersSession> = {
             max: MOVE_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const { from, to } =
-              (payload as { from?: unknown; to?: unknown }) ?? {};
-            if (!isPosition(from) || !isPosition(to)) return;
-            const result = session.requestMove(auth.userId, from, to);
+            const parsed = checkersMovePayloadSchema.safeParse(payload);
+            if (!parsed.success) return;
+            const result = session.requestMove(
+              auth.userId,
+              parsed.data.from,
+              parsed.data.to,
+            );
             if (!result.ok)
               client.send(ACTION_REJECTED, { error: result.error });
           },

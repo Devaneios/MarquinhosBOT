@@ -1,5 +1,6 @@
 import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
 import { TowerSession } from 'services/activity/towerUnstable/TowerSession';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const PULL_RATE_LIMIT_WINDOW_MS = 1000;
@@ -18,9 +19,10 @@ const PULL_RATE_LIMIT_MAX = 5;
 // 0)` throws "undefined is not an object (evaluating
 // 'this.levels[level].blocks')"). Reject anything that isn't a genuine
 // integer before it ever reaches `session.handlePull`.
-function isValidCoordinate(value: unknown): value is number {
-  return typeof value === 'number' && Number.isInteger(value);
-}
+const pullPayloadSchema = z.object({
+  level: z.number().int(),
+  position: z.number().int(),
+});
 
 export const towerUnstableAdapter: GameRoomAdapter<TowerSession> = {
   maxPlayers: 2,
@@ -52,15 +54,18 @@ export const towerUnstableAdapter: GameRoomAdapter<TowerSession> = {
             max: PULL_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const { level, position } =
-              (payload as { level?: unknown; position?: unknown }) ?? {};
-            if (!isValidCoordinate(level) || !isValidCoordinate(position)) {
+            const parsed = pullPayloadSchema.safeParse(payload);
+            if (!parsed.success) {
               client.send(ACTION_REJECTED, {
                 error: 'Invalid pull coordinates',
               });
               return;
             }
-            const result = session.handlePull(auth.userId, level, position);
+            const result = session.handlePull(
+              auth.userId,
+              parsed.data.level,
+              parsed.data.position,
+            );
             if (!result.ok)
               client.send(ACTION_REJECTED, { error: result.error });
           },

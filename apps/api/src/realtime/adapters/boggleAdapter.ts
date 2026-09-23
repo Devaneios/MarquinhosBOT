@@ -1,27 +1,15 @@
-import type { Cell } from 'services/activity/boggle/BoggleEngine';
+import { gridCellSchema } from 'realtime/payloadSchemas';
 import { BoggleSession } from 'services/activity/boggle/BoggleSession';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const SUBMIT_RATE_LIMIT_WINDOW_MS = 1000;
 const SUBMIT_RATE_LIMIT_MAX = 10;
 const MAX_PATH_LENGTH = 16;
 
-function isValidPathPayload(value: unknown): value is Cell[] {
-  return (
-    Array.isArray(value) &&
-    value.length > 0 &&
-    value.length <= MAX_PATH_LENGTH &&
-    value.every(
-      (cell) =>
-        typeof cell === 'object' &&
-        cell !== null &&
-        typeof (cell as Cell).row === 'number' &&
-        typeof (cell as Cell).col === 'number' &&
-        Number.isInteger((cell as Cell).row) &&
-        Number.isInteger((cell as Cell).col),
-    )
-  );
-}
+export const submitWordPayloadSchema = z.object({
+  path: z.array(gridCellSchema).min(1).max(MAX_PATH_LENGTH),
+});
 
 export const boggleAdapter: GameRoomAdapter<BoggleSession> = {
   maxPlayers: 8,
@@ -53,12 +41,12 @@ export const boggleAdapter: GameRoomAdapter<BoggleSession> = {
             max: SUBMIT_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const path = (payload as { path?: unknown })?.path;
-            if (!isValidPathPayload(path)) {
+            const parsed = submitWordPayloadSchema.safeParse(payload);
+            if (!parsed.success) {
               client.send('submit_error', { message: 'Invalid path' });
               return;
             }
-            const result = session.submitWord(auth.userId, path);
+            const result = session.submitWord(auth.userId, parsed.data.path);
             if (!result.accepted)
               client.send('submit_error', { reason: result.reason });
           },

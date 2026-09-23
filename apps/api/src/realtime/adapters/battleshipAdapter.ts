@@ -1,12 +1,31 @@
-import type { ShipPlacement } from 'services/activity/battleship/BattleshipEngine';
 import { BattleshipSession } from 'services/activity/battleship/BattleshipSession';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const FIRE_RATE_LIMIT_WINDOW_MS = 1000;
 const FIRE_RATE_LIMIT_MAX = 5;
 const PLACE_RATE_LIMIT_WINDOW_MS = 1000;
 const PLACE_RATE_LIMIT_MAX = 3;
+
+const placeShipsPayloadSchema = z.object({
+  placements: z.array(
+    z.object({
+      type: z.enum([
+        'carrier',
+        'battleship',
+        'cruiser',
+        'submarine',
+        'destroyer',
+      ]),
+      x: z.number().int(),
+      y: z.number().int(),
+      orientation: z.enum(['horizontal', 'vertical']),
+    }),
+  ),
+});
+
+const firePayloadSchema = z.object({ x: z.number(), y: z.number() });
 
 export const battleshipAdapter: GameRoomAdapter<BattleshipSession> = {
   maxPlayers: 2,
@@ -41,11 +60,15 @@ export const battleshipAdapter: GameRoomAdapter<BattleshipSession> = {
             windowMs: PLACE_RATE_LIMIT_WINDOW_MS,
             max: PLACE_RATE_LIMIT_MAX,
           },
-          handle: (auth, _client, payload: unknown) => {
-            const placements = (payload as { placements?: ShipPlacement[] })
-              ?.placements;
-            if (!Array.isArray(placements)) return;
-            session.placeShips(auth.userId, placements);
+          handle: (auth, client, payload: unknown) => {
+            const parsed = placeShipsPayloadSchema.safeParse(payload);
+            if (!parsed.success) {
+              client.send('placement_error', {
+                message: 'Invalid ship placements',
+              });
+              return;
+            }
+            session.placeShips(auth.userId, parsed.data.placements);
           },
         },
         fire: {
@@ -54,9 +77,9 @@ export const battleshipAdapter: GameRoomAdapter<BattleshipSession> = {
             max: FIRE_RATE_LIMIT_MAX,
           },
           handle: (auth, _client, payload: unknown) => {
-            const { x, y } = (payload as { x?: number; y?: number }) ?? {};
-            if (typeof x !== 'number' || typeof y !== 'number') return;
-            session.fire(auth.userId, x, y);
+            const parsed = firePayloadSchema.safeParse(payload);
+            if (!parsed.success) return;
+            session.fire(auth.userId, parsed.data.x, parsed.data.y);
           },
         },
         leave: {

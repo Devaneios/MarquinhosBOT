@@ -4,7 +4,8 @@ import {
   isPongRulesetId,
 } from 'services/activity/pong/PongRulesetRegistry';
 import { PongSession } from 'services/activity/pong/PongSession';
-import type { PongSide } from 'services/activity/pong/PongTypes';
+import type { PongRulesetId } from 'services/activity/pong/PongTypes';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const INPUT_RATE_LIMIT_WINDOW_MS = 1000;
@@ -23,6 +24,26 @@ function pongConfig(ctx: AdapterContext): Partial<PongArenaEngineConfig> {
     ...(typeof options.ranked === 'boolean' ? { ranked: options.ranked } : {}),
   };
 }
+
+const inputPayloadSchema = z.object({
+  seq: z.number().int().min(0),
+  direction: z.union([z.literal(-1), z.literal(0), z.literal(1)]).optional(),
+  side: z.enum(['left', 'right', 'top', 'bottom']).optional(),
+  target: z.number().optional(),
+  action: z.unknown().optional(),
+});
+
+const readyPayloadSchema = z.object({ ready: z.literal(true) });
+
+const lobbyConfigPayloadSchema = z.object({
+  ruleset: z.custom<PongRulesetId>(isPongRulesetId).optional().catch(undefined),
+  targetScore: z.number().int().min(1).max(99).optional().catch(undefined),
+  bestOf: z
+    .union([z.literal(1), z.literal(3), z.literal(5)])
+    .optional()
+    .catch(undefined),
+  ranked: z.boolean().optional().catch(undefined),
+});
 
 export const pongAdapter: GameRoomAdapter<PongSession> = {
   maxPlayers: 4,
@@ -62,52 +83,25 @@ export const pongAdapter: GameRoomAdapter<PongSession> = {
             max: INPUT_RATE_LIMIT_MAX,
           },
           handle: (auth, _client, rawPayload) => {
-            const payload = rawPayload as {
-              direction?: -1 | 0 | 1;
-              seq?: number;
-              side?: PongSide;
-              target?: number;
-              action?: 'move' | 'release';
-            };
-            if (!Number.isInteger(payload?.seq) || payload.seq! < 0) return;
-            if (
-              payload.direction !== undefined &&
-              payload.direction !== -1 &&
-              payload.direction !== 0 &&
-              payload.direction !== 1
-            ) {
-              return;
-            }
-            if (
-              payload.target !== undefined &&
-              (typeof payload.target !== 'number' ||
-                !Number.isFinite(payload.target))
-            ) {
-              return;
-            }
-            if (
-              payload.side !== undefined &&
-              payload.side !== 'left' &&
-              payload.side !== 'right' &&
-              payload.side !== 'top' &&
-              payload.side !== 'bottom'
-            ) {
-              return;
-            }
+            const parsed = inputPayloadSchema.safeParse(rawPayload);
+            if (!parsed.success) return;
+            const payload = parsed.data;
             session.handleInput(
               auth.userId,
-              payload?.direction ?? 0,
-              payload?.seq ?? 0,
-              payload?.side,
-              payload?.target,
-              payload?.action === 'release',
+              payload.direction ?? 0,
+              payload.seq,
+              payload.side,
+              payload.target,
+              payload.action === 'release',
             );
           },
         },
         ready: {
           handle: (auth, _client, rawPayload) => {
-            const payload = rawPayload as { ready?: boolean };
-            session.setReady(auth.userId, payload?.ready === true);
+            session.setReady(
+              auth.userId,
+              readyPayloadSchema.safeParse(rawPayload).success,
+            );
           },
         },
         sync: {
@@ -124,26 +118,14 @@ export const pongAdapter: GameRoomAdapter<PongSession> = {
         },
         lobby_config: {
           handle: (auth, _client, rawPayload) => {
-            const payload = rawPayload as Partial<PongArenaEngineConfig>;
+            const parsed = lobbyConfigPayloadSchema.safeParse(rawPayload);
+            const fields = parsed.success ? parsed.data : {};
             const config: Partial<PongArenaEngineConfig> = {};
-            if (isPongRulesetId(payload?.ruleset))
-              config.ruleset = payload.ruleset;
-            if (
-              Number.isInteger(payload?.targetScore) &&
-              payload.targetScore! >= 1 &&
-              payload.targetScore! <= 99
-            ) {
-              config.targetScore = payload.targetScore;
-            }
-            if (
-              payload?.bestOf === 1 ||
-              payload?.bestOf === 3 ||
-              payload?.bestOf === 5
-            ) {
-              config.bestOf = payload.bestOf;
-            }
-            if (typeof payload?.ranked === 'boolean')
-              config.ranked = payload.ranked;
+            if (fields.ruleset !== undefined) config.ruleset = fields.ruleset;
+            if (fields.targetScore !== undefined)
+              config.targetScore = fields.targetScore;
+            if (fields.bestOf !== undefined) config.bestOf = fields.bestOf;
+            if (fields.ranked !== undefined) config.ranked = fields.ranked;
             session.configure(auth.userId, config);
           },
         },

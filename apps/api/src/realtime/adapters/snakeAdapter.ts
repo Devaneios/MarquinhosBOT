@@ -1,16 +1,9 @@
-import type { SnakeDirection } from 'services/activity/snake-game/SnakeEngine';
 import { SnakeSession } from 'services/activity/snake-game/SnakeSession';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const INPUT_RATE_LIMIT_WINDOW_MS = 1000;
 const INPUT_RATE_LIMIT_MAX = 60;
-
-const VALID_DIRECTIONS: ReadonlySet<SnakeDirection> = new Set([
-  'up',
-  'down',
-  'left',
-  'right',
-]);
 
 // A `direction` isn't just cosmetically wrong if malformed: SnakeSession
 // forwards whatever string it's given straight into
@@ -22,11 +15,9 @@ const VALID_DIRECTIONS: ReadonlySet<SnakeDirection> = new Set([
 // nothing upstream to catch it, crashing the whole process (every
 // concurrent room, not just this one). So malformed input must never reach
 // `session.handleInput` at all — reject it here instead.
-function isValidDirection(value: unknown): value is SnakeDirection {
-  return (
-    typeof value === 'string' && VALID_DIRECTIONS.has(value as SnakeDirection)
-  );
-}
+export const snakeInputPayloadSchema = z.object({
+  direction: z.enum(['up', 'down', 'left', 'right']),
+});
 
 export const snakeAdapter: GameRoomAdapter<SnakeSession> = {
   maxPlayers: 2,
@@ -61,12 +52,12 @@ export const snakeAdapter: GameRoomAdapter<SnakeSession> = {
             max: INPUT_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const direction = (payload as { direction?: unknown })?.direction;
-            if (!isValidDirection(direction)) {
+            const parsed = snakeInputPayloadSchema.safeParse(payload);
+            if (!parsed.success) {
               client.send('input_error', { message: 'Invalid direction' });
               return;
             }
-            session.handleInput(auth.userId, direction);
+            session.handleInput(auth.userId, parsed.data.direction);
           },
         },
         leave: { handle: (auth, client) => session.leave(auth.userId, client) },

@@ -1,9 +1,12 @@
 import { TriviaQuizSession } from 'services/activity/trivia-quiz/TriviaQuizSession';
 import { GamificationService } from 'services/gamification/GamificationService';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const ANSWER_RATE_LIMIT_WINDOW_MS = 1000;
 const ANSWER_RATE_LIMIT_MAX = 1;
+
+const answerPayloadSchema = z.object({ answerIndex: z.number().min(0) });
 
 export const triviaQuizAdapter: GameRoomAdapter<TriviaQuizSession> = {
   maxPlayers: 2,
@@ -34,10 +37,13 @@ export const triviaQuizAdapter: GameRoomAdapter<TriviaQuizSession> = {
             max: ANSWER_RATE_LIMIT_MAX,
           },
           handle: (auth, _client, payload: unknown) => {
-            const answerIndex =
-              (payload as { answerIndex?: number })?.answerIndex ?? -1;
-            if (typeof answerIndex !== 'number' || answerIndex < 0) return;
-            session.handleAnswer(auth.userId, answerIndex, Date.now());
+            const parsed = answerPayloadSchema.safeParse(payload);
+            if (!parsed.success) return;
+            session.handleAnswer(
+              auth.userId,
+              parsed.data.answerIndex,
+              Date.now(),
+            );
           },
         },
         leave: { handle: (auth, client) => session.leave(auth.userId, client) },

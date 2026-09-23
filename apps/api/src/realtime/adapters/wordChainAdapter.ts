@@ -1,9 +1,12 @@
 import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
 import { WordChainSession } from 'services/activity/word-chain/WordChainSession';
+import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 
 const WORD_RATE_LIMIT_WINDOW_MS = 1000;
 const WORD_RATE_LIMIT_MAX = 3;
+
+const wordPayloadSchema = z.object({ word: z.string().default('') });
 
 export const wordChainAdapter: GameRoomAdapter<WordChainSession> = {
   maxPlayers: 2,
@@ -34,18 +37,15 @@ export const wordChainAdapter: GameRoomAdapter<WordChainSession> = {
             max: WORD_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const word = (payload as { word?: string })?.word ?? '';
-            // WordChainEngine.submitWord() calls `word.trim().toLowerCase()`
-            // unconditionally — a non-string `word` (e.g. a number or
-            // object surviving the `?? ''` above, which only replaces
-            // null/undefined) would throw a TypeError from inside the
-            // engine instead of returning a clean rejection. Guard here,
-            // matching this adapter's own `!result.ok` rejection shape.
-            if (typeof word !== 'string') {
+            const parsed = wordPayloadSchema.safeParse(payload);
+            if (!parsed.success) {
               client.send(ACTION_REJECTED, { error: 'Invalid word' });
               return;
             }
-            const result = session.handleWordSubmission(auth.userId, word);
+            const result = session.handleWordSubmission(
+              auth.userId,
+              parsed.data.word,
+            );
             if (!result.ok)
               client.send(ACTION_REJECTED, { error: result.error });
           },
