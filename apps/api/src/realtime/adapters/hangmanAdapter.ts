@@ -1,12 +1,14 @@
+import {
+  guessPayloadSchema,
+  type HangmanServerMessage,
+} from '@marquinhos/contracts/activity/games/hangman';
 import { HangmanSession } from 'services/activity/hangman/HangmanSession';
 import { getHangmanWord } from 'services/activity/hangman/wordList';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { sendMessage } from '../sendMessage';
 
 const GUESS_RATE_LIMIT_WINDOW_MS = 1000;
 const GUESS_RATE_LIMIT_MAX = 3;
-
-const guessPayloadSchema = z.object({ letter: z.string().default('') });
 
 export const hangmanAdapter: GameRoomAdapter<HangmanSession> = {
   maxPlayers: 2,
@@ -41,15 +43,24 @@ export const hangmanAdapter: GameRoomAdapter<HangmanSession> = {
           handle: (auth, client, payload: unknown) => {
             const parsed = guessPayloadSchema.safeParse(payload);
             if (!parsed.success) {
-              client.send('guess_error', { message: 'Invalid letter' });
+              sendMessage<HangmanServerMessage>(client, {
+                type: 'guess_error',
+                payload: { message: 'Invalid letter' },
+              });
               return;
             }
             const result = session.guessLetter(auth.userId, parsed.data.letter);
             if (!result.success) {
-              client.send('guess_error', { message: result.message });
+              sendMessage<HangmanServerMessage>(client, {
+                type: 'guess_error',
+                payload: { message: result.message },
+              });
               return;
             }
-            client.send('guess_success', {});
+            sendMessage<HangmanServerMessage>(client, {
+              type: 'guess_success',
+              payload: {},
+            });
           },
         },
       },
@@ -68,7 +79,10 @@ export const hangmanAdapter: GameRoomAdapter<HangmanSession> = {
       client.leave(1008, 'Room is full');
       return;
     }
-    client.send('init', session.getState());
+    sendMessage<HangmanServerMessage>(client, {
+      type: 'init',
+      payload: session.getState(),
+    });
   },
 
   onLeave(session, auth, client) {

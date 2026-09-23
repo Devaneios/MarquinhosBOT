@@ -1,52 +1,60 @@
+import {
+  serverMessageSchema,
+  type HangmanClientMessage,
+  type HangmanState,
+} from '@marquinhos/contracts/activity/games/hangman';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { GameHeader } from '../../../components/game-shell';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
-import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import { guessErrorPayloadSchema, hangmanStateSchema } from '../types';
 import { HangmanCanvas } from './HangmanCanvas';
 
 export function HangmanBoard({ session }: { session: WsSession }) {
   const navigate = useNavigate();
   const { t } = useTranslation('common');
-  const [revealedWord, setRevealedWord] = useState('');
-  const [guessedLetters, setGuessedLetters] = useState<string[]>([]);
-  const [strikes, setStrikes] = useState(0);
-  const [maxStrikes, setMaxStrikes] = useState(6);
-  const [gameOver, setGameOver] = useState(false);
-  const [won, setWon] = useState(false);
+  const [state, setState] = useState<HangmanState>({
+    revealedWord: '',
+    guessedLetters: [],
+    strikes: 0,
+    maxStrikes: 6,
+    gameOver: false,
+    won: false,
+  });
   const [error, setError] = useState<string | null>(null);
+  const { revealedWord, guessedLetters, strikes, maxStrikes, gameOver, won } =
+    state;
 
   const { send, connectionState } = useColyseusRoom(
     'hangman',
     session,
     colyseusUrl(),
-    (message: ActivityMessage) => {
-      if (message.type === 'init' || message.type === 'game_state') {
-        const payload = parsePayload(hangmanStateSchema, message);
-        if (!payload) return;
-        setRevealedWord(payload.revealedWord);
-        setGuessedLetters(payload.guessedLetters);
-        setStrikes(payload.strikes);
-        setMaxStrikes(payload.maxStrikes);
-        setGameOver(payload.gameOver);
-        setWon(payload.won);
-        setError(null);
-      } else if (message.type === 'guess_error') {
-        const payload = parsePayload(guessErrorPayloadSchema, message);
-        if (payload) setError(payload.message);
+    (raw: ActivityMessage) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (!message) return;
+      switch (message.type) {
+        case 'init':
+        case 'game_state':
+          setState(message.payload);
+          setError(null);
+          return;
+        case 'guess_error':
+          setError(message.payload.message);
+          return;
+        case 'guess_success':
+          return;
       }
     },
   );
 
   function guessLetter(letter: string) {
-    send({ type: 'guess', payload: { letter } });
+    send({ type: 'guess', payload: { letter } } satisfies HangmanClientMessage);
   }
 
   function handleRestart() {

@@ -1,4 +1,8 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import type {
+  HangmanServerMessage,
+  HangmanState,
+} from '@marquinhos/contracts/activity/games/hangman';
 import { HangmanEngine } from '@marquinhos/domain/activity/hangman/HangmanEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
@@ -34,7 +38,7 @@ export class HangmanSession {
 
   constructor(
     private identity: HangmanSessionIdentity,
-    private broadcaster: ActivityBroadcaster,
+    private broadcaster: ActivityBroadcaster<HangmanServerMessage>,
     private gamification: GamificationService = new GamificationService(),
     word: string,
     options: HangmanSessionOptions = {},
@@ -79,7 +83,7 @@ export class HangmanSession {
   guessLetter(
     userId: string,
     letter: string,
-  ): { success: boolean; message?: string } {
+  ): { success: true } | { success: false; message: string } {
     const player = this.players.find((p) => p.userId === userId);
     if (!player) {
       return { success: false, message: 'Player not in session' };
@@ -138,14 +142,7 @@ export class HangmanSession {
     });
   }
 
-  getState(): {
-    revealedWord: string;
-    guessedLetters: string[];
-    strikes: number;
-    maxStrikes: number;
-    gameOver: boolean;
-    won: boolean;
-  } {
+  getState(): HangmanState {
     const state = this.engine.getState();
     return {
       revealedWord: this.engine.getRevealedWord(),
