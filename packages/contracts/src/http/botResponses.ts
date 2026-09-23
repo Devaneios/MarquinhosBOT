@@ -48,6 +48,9 @@ export const userAchievementSchema = z.object({
 const aiChatCategorySchema = z.enum([
   'general_question',
   'code_technical_question',
+  'trick_riddle',
+  'praise_thanks',
+  'follow_up_on_bot',
   'opinion_reference',
   'bot_help_info',
   'user_roast_provocation',

@@ -68,6 +68,9 @@ export interface AddXpResult {
 export type AiChatCategory =
   | 'general_question'
   | 'code_technical_question'
+  | 'trick_riddle'
+  | 'praise_thanks'
+  | 'follow_up_on_bot'
   | 'opinion_reference'
   | 'bot_help_info'
   | 'user_roast_provocation'

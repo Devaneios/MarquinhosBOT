@@ -93,4 +93,25 @@ describe('MarquinhosApiService.respondToTag', () => {
 
     postSpy.mockRestore();
   });
+
+  it.each(['trick_riddle', 'praise_thanks', 'follow_up_on_bot'])(
+    'accepts the %s category the API classifies into',
+    async (category) => {
+      const postSpy = spyOn(HttpClient.prototype, 'post').mockResolvedValue({
+        data: { status: 'ok', category, reply: 'oi' },
+      });
+
+      const response = await MarquinhosApiService.getInstance().respondToTag({
+        userId: 'u1',
+        guildId: 'g1',
+        channelId: 'c1',
+        content: 'valeu marquinhos',
+        recentMessages: [],
+      });
+
+      expect(response.data.category).toBe(category);
+
+      postSpy.mockRestore();
+    },
+  );
 });
