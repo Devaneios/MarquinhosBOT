@@ -1,17 +1,13 @@
-import { postJson } from '@marquinhos/api-client/browser';
+import { fetchContract } from '@marquinhos/api-client/browser';
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
-import {
-  createdRoomSchema,
-  deepLinkIntentSchema,
-  roomListingSchema,
-  wsSessionSchema,
-  type CreatedRoom,
-  type RoomListing,
-  type WsSession,
-} from '@marquinhos/contracts/activity/httpResponses';
-import { z } from 'zod';
+import type {
+  CreatedRoom,
+  RoomListing,
+  WsSession,
+} from '@marquinhos/contracts/http/routes/activity';
+import * as activityApi from '@marquinhos/contracts/http/routes/activity';
 import type { DiscordIdentity } from '../../discordAuth.ts';
-import { apiUrl } from '../../lib/apiBase';
+import { apiBase } from '../../lib/apiBase';
 
 export type { CreatedRoom, RoomListing, WsSession };
 
@@ -21,13 +17,6 @@ export interface WsSessionParams {
   identity: DiscordIdentity;
   extra?: Record<string, unknown>;
 }
-
-const roomListingsSchema = z.array(z.unknown()).transform((rooms) =>
-  rooms.flatMap((room) => {
-    const listing = roomListingSchema.safeParse(room);
-    return listing.success ? [listing.data] : [];
-  }),
-);
 
 // Shared by every game's session hook: mints a game-scoped WS token (and its
 // matching Colyseus roomKey) from the player's Discord identity. Pong layers
@@ -39,9 +28,8 @@ export function fetchWsSessionToken({
   identity,
   extra,
 }: WsSessionParams): Promise<WsSession> {
-  return postJson(
-    apiUrl('/activities/ws-session'),
-    {
+  return fetchContract(apiBase(), activityApi.wsSession, {
+    body: {
       accessToken: identity.accessToken,
       instanceId: identity.instanceId,
       guildId: identity.guildId,
@@ -49,8 +37,7 @@ export function fetchWsSessionToken({
       game,
       ...extra,
     },
-    wsSessionSchema,
-  );
+  }).then((response) => response.data);
 }
 
 // Mints a new multiplayer room (a fresh roomId) and its creating host's
@@ -66,17 +53,15 @@ export function createRoom({
   identity: DiscordIdentity;
   queueEnabled: boolean;
 }): Promise<CreatedRoom> {
-  return postJson(
-    apiUrl('/activities/rooms'),
-    {
+  return fetchContract(apiBase(), activityApi.createRoom, {
+    body: {
       accessToken: identity.accessToken,
       instanceId: identity.instanceId,
       guildId: identity.guildId,
       game,
       queueEnabled,
     },
-    createdRoomSchema,
-  );
+  }).then((response) => response.data);
 }
 
 // Claims (and consumes) a pending deep-link intent recorded server-side by
@@ -86,14 +71,9 @@ export function createRoom({
 export function fetchDeepLinkIntent(
   identity: DiscordIdentity,
 ): Promise<{ game: GameId | null }> {
-  return postJson(
-    apiUrl('/activities/deep-link/claim'),
-    {
-      accessToken: identity.accessToken,
-      guildId: identity.guildId,
-    },
-    deepLinkIntentSchema,
-  );
+  return fetchContract(apiBase(), activityApi.claimDeepLink, {
+    body: { accessToken: identity.accessToken, guildId: identity.guildId },
+  }).then((response) => response.data);
 }
 
 // Lists open multiplayer rooms for this Discord Activity instance, so
@@ -105,13 +85,11 @@ export function fetchDeepLinkIntent(
 export function getAvailableRooms(
   identity: DiscordIdentity,
 ): Promise<RoomListing[]> {
-  return postJson(
-    apiUrl('/activities/rooms/list'),
-    {
+  return fetchContract(apiBase(), activityApi.listRooms, {
+    body: {
       accessToken: identity.accessToken,
       instanceId: identity.instanceId,
       guildId: identity.guildId,
     },
-    roomListingsSchema,
-  );
+  }).then((response) => response.data);
 }

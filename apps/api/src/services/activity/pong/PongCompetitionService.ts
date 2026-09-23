@@ -1,9 +1,11 @@
+import type {
+  PongRating,
+  PongRatingPool,
+} from '@marquinhos/contracts/http/routes/activity';
 import { db as defaultDb } from '@marquinhos/database/sqlite';
 import {
   calculateGlicko2,
   type PongRankedResult,
-  type PongRating,
-  type PongRatingPool,
 } from '@marquinhos/domain/activity/pong/rating';
 import type { Database } from 'bun:sqlite';
 import { nanoid } from 'nanoid';

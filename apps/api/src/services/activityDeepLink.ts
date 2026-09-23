@@ -1,3 +1,7 @@
+import {
+  gameIdSchema,
+  type GameId,
+} from '@marquinhos/contracts/activity/gameId';
 import { db } from '@marquinhos/database/sqlite';
 
 const DEEP_LINK_TTL_MS = 60_000;
@@ -5,7 +9,7 @@ const DEEP_LINK_TTL_MS = 60_000;
 export function recordDeepLink(
   userId: string,
   guildId: string,
-  game: string,
+  game: GameId,
   createdAt: number = Date.now(),
 ): void {
   db.query(
@@ -23,7 +27,7 @@ export function recordDeepLink(
 // a repeat call — e.g. a re-render or reconnect — never re-navigates the
 // player. Intents older than the TTL are treated as if they don't exist,
 // so a session nobody ever consumed doesn't keep matching forever.
-export function claimDeepLink(userId: string, guildId: string): string | null {
+export function claimDeepLink(userId: string, guildId: string): GameId | null {
   const cutoff = Date.now() - DEEP_LINK_TTL_MS;
   const row = db
     .query<
@@ -35,5 +39,5 @@ export function claimDeepLink(userId: string, guildId: string): string | null {
        RETURNING game`,
     )
     .get({ $user_id: userId, $guild_id: guildId, $cutoff: cutoff });
-  return row?.game ?? null;
+  return gameIdSchema.safeParse(row?.game).data ?? null;
 }

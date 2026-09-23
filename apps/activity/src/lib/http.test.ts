@@ -1,49 +1,59 @@
 import { ServerError } from '@colyseus/sdk';
-import { HttpError, postJson } from '@marquinhos/api-client/browser';
+import { fetchContract, HttpError } from '@marquinhos/api-client/browser';
+import { defineContract } from '@marquinhos/contracts/http/contract';
 import { afterEach, describe, expect, it } from 'bun:test';
 import { z } from 'zod';
 import { errorMessage, isAuthError } from './http';
 
-describe('postJson', () => {
+const probe = defineContract({
+  method: 'POST',
+  path: '/api/probe',
+  body: z.object({ foo: z.string() }),
+  response: z.object({ data: z.object({ token: z.string() }) }),
+});
+
+describe('fetchContract', () => {
   const originalFetch = globalThis.fetch;
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
   });
 
-  it('returns the data field on a successful response', async () => {
-    globalThis.fetch = (async () =>
-      new Response(JSON.stringify({ data: { token: 'abc' } }), {
+  it('parses a successful response with the contract', async () => {
+    let requestUrl = '';
+    globalThis.fetch = (async (input: unknown) => {
+      requestUrl = String(input);
+      return new Response(JSON.stringify({ data: { token: 'abc' } }), {
         status: 200,
-      })) as unknown as typeof fetch;
+      });
+    }) as unknown as typeof fetch;
 
-    const result = await postJson(
-      'https://api.test/x',
-      { foo: 'bar' },
-      z.object({ token: z.string() }),
-    );
+    const result = await fetchContract('https://api.test/api', probe, {
+      body: { foo: 'bar' },
+    });
 
-    expect(result).toEqual({ token: 'abc' });
+    expect(result).toEqual({ data: { token: 'abc' } });
+    expect(requestUrl).toBe('https://api.test/api/probe');
   });
 
-  it('rejects a response whose data does not match the schema', async () => {
+  it('rejects a response that does not match the contract', async () => {
     globalThis.fetch = (async () =>
       new Response(JSON.stringify({ data: { token: 42 } }), {
         status: 200,
       })) as unknown as typeof fetch;
 
     await expect(
-      postJson('https://api.test/x', {}, z.object({ token: z.string() })),
-    ).rejects.toThrow('Invalid response from https://api.test/x');
+      fetchContract('https://api.test/api', probe, { body: { foo: 'bar' } }),
+    ).rejects.toThrow('Invalid response from https://api.test/api/probe');
   });
 
   it('throws an HttpError carrying the response status on a non-ok response', async () => {
     globalThis.fetch = (async () =>
       new Response('', { status: 401 })) as unknown as typeof fetch;
 
-    await expect(postJson('https://api.test/x', {})).rejects.toMatchObject({
-      status: 401,
-    });
+    await expect(
+      fetchContract('https://api.test/api', probe, { body: { foo: 'bar' } }),
+    ).rejects.toMatchObject({ status: 401 });
   });
 });
 

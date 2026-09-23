@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { matchMaker } from 'colyseus';
-import { wsSessionSchema, createdRoomSchema, roomListingSchema } from '@marquinhos/contracts/activity/httpResponses';
+import { wsSessionSchema, createdRoomSchema, roomListingSchema } from '@marquinhos/contracts/http/routes/activity';
 import ActivityController from 'controllers/activity.controller';
 import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { verifyWsSessionToken } from 'services/activity/wsSessionToken';

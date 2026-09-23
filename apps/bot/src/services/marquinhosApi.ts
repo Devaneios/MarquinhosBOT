@@ -4,8 +4,9 @@ import {
   HttpError,
 } from '@marquinhos/api-client/bot';
 import { env } from '@marquinhos/config/environment';
-import { apiResponseSchema } from '@marquinhos/contracts/http/botResponses';
+import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import type { ContractRequest } from '@marquinhos/contracts/http/contract';
+import * as activity from '@marquinhos/contracts/http/routes/activity';
 import * as aiChat from '@marquinhos/contracts/http/routes/aiChat';
 import * as emojiReaction from '@marquinhos/contracts/http/routes/emojiReaction';
 import * as gamification from '@marquinhos/contracts/http/routes/gamification';
@@ -15,7 +16,6 @@ import type {
   WordleLeaderboardPeriod,
 } from '@marquinhos/contracts/http/routes/wordle';
 import * as wordle from '@marquinhos/contracts/http/routes/wordle';
-import { ApiResponse } from '@marquinhos/types';
 import { reportError } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { z } from 'zod';
@@ -190,17 +190,10 @@ export class MarquinhosApiService {
     });
   }
 
-  async recordActivityDeepLink(
-    userId: string,
-    guildId: string,
-    game: string,
-  ): Promise<ApiResponse> {
-    const data = await this.client.post('/api/activities/deep-link', {
-      userId,
-      guildId,
-      game,
+  async recordActivityDeepLink(userId: string, guildId: string, game: GameId) {
+    return callContract(this.client, activity.recordDeepLink, {
+      body: { userId, guildId, game },
     });
-    return apiResponseSchema(z.unknown()).parse(data);
   }
 
   async healthCheck(): Promise<boolean> {

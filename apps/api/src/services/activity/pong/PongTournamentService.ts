@@ -1,3 +1,8 @@
+import type {
+  PongRatingPool,
+  PongTournament,
+  PongTournamentFormat,
+} from '@marquinhos/contracts/http/routes/activity';
 import { db as defaultDb } from '@marquinhos/database/sqlite';
 import {
   doubleElimination,
@@ -7,14 +12,10 @@ import {
   type PongTournamentPairing,
   type PongTournamentPlayer,
 } from '@marquinhos/domain/activity/pong/PongTournamentFormats';
-import type { PongRatingPool } from '@marquinhos/domain/activity/pong/rating';
 import type { Database } from 'bun:sqlite';
 import { nanoid } from 'nanoid';
 import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
 import { z } from 'zod';
-
-export type PongTournamentFormat =
-  'round-robin' | 'double-elimination' | 'swiss-playoff';
 
 export interface CreatePongTournamentInput {
   guildId: string;
@@ -120,24 +121,24 @@ export class PongTournamentService {
       this.insertPairings(id, pairings);
       this.advanceByes(id);
     })();
-    return this.get(id);
+    return this.snapshot(id);
   }
 
-  get(id: string) {
+  private snapshot(id: string): PongTournament {
     const tournament = this.database
       .query<TournamentRow, [string]>(
         'SELECT * FROM pong_tournaments WHERE id = ?',
       )
       .get(id);
-    if (!tournament) return null;
+    if (!tournament) throw new Error('Tournament not found');
     const entries = this.database
-      .query(
+      .query<PongTournament['entries'][number], [string]>(
         `SELECT user_id AS userId, seed, rating, score, eliminated
          FROM pong_tournament_entries WHERE tournament_id = ? ORDER BY seed`,
       )
       .all(id);
     const matches = this.database
-      .query(
+      .query<PongTournament['matches'][number], [string]>(
         `SELECT id, bracket, round, position, player_a AS playerA,
          player_b AS playerB, winner_id AS winnerId, status
          FROM pong_tournament_matches WHERE tournament_id = ?
@@ -169,7 +170,7 @@ export class PongTournamentService {
          ORDER BY created_at DESC LIMIT 50`,
       )
       .all(guildId);
-    return ids.map((row) => this.get(row.id));
+    return ids.map((row) => this.snapshot(row.id));
   }
 
   report(matchId: string, winnerId: string, actorId: string) {
@@ -212,7 +213,7 @@ export class PongTournamentService {
       this.advanceSwiss(tournament, match.round);
       this.finishIfComplete(tournament, match, winnerId);
     })();
-    return this.get(match.tournament_id);
+    return this.snapshot(match.tournament_id);
   }
 
   private insertPairings(

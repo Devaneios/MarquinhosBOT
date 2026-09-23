@@ -1,15 +1,4 @@
-export type PongRatingPool = 'classic-1v1' | 'quad-elimination';
-
-export interface PongRating {
-  userId: string;
-  guildId: string;
-  pool: PongRatingPool;
-  rating: number;
-  deviation: number;
-  volatility: number;
-  matches: number;
-  wins: number;
-}
+import type { PongRating } from '@marquinhos/contracts/http/routes/activity';
 
 export interface PongRankedResult {
   userId: string;
@@ -115,4 +104,3 @@ export function calculateGlicko2(
     volatility,
   };
 }
-

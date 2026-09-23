@@ -1,4 +1,4 @@
-import { type RoomListing } from '@marquinhos/contracts/activity/httpResponses';
+import type { RoomListing } from '@marquinhos/contracts/http/routes/activity';
 
 export type MatchRoomMetadata = Omit<RoomListing, 'hostUserId'> & {
   roomKey: string;

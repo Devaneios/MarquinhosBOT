@@ -3,11 +3,11 @@
 // keeps running, independently of whether React's module graph ever finishes
 // evaluating or main.tsx ever manages to mount. React (useDiscordIdentity)
 // only ever reads a snapshot of this; it never triggers or drives it.
-import { postJson } from '@marquinhos/api-client/browser';
-import { tokenExchangeSchema } from '@marquinhos/contracts/activity/httpResponses';
+import { fetchContract } from '@marquinhos/api-client/browser';
+import * as activityApi from '@marquinhos/contracts/http/routes/activity';
 import { discordSdk, isMock, resetDiscordSdk } from './discordSdk';
 import { tImperative } from './i18n/i18nImperative';
-import { apiUrl } from './lib/apiBase';
+import { apiBase } from './lib/apiBase';
 import { devinfo, devlog } from './lib/devlog';
 import { errorMessage } from './lib/http';
 
@@ -43,12 +43,10 @@ async function doHandshake(): Promise<DiscordIdentity> {
   const access_token = isMock
     ? 'mock-access-token'
     : (
-        await postJson(
-          apiUrl('/activities/token'),
-          { code },
-          tokenExchangeSchema,
-        )
-      ).access_token;
+        await fetchContract(apiBase(), activityApi.exchangeToken, {
+          body: { code },
+        })
+      ).data.access_token;
   devlog('[auth] exchanged code for access token');
 
   const auth = await discordSdk.commands.authenticate({ access_token });

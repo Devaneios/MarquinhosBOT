@@ -1,4 +1,5 @@
-import { roomListingSchema } from '@marquinhos/contracts/activity/httpResponses';
+import * as contract from '@marquinhos/contracts/http/routes/activity';
+import { roomListingSchema } from '@marquinhos/contracts/http/routes/activity';
 import {
   isPongRulesetId,
   normalizePongMatchConfig,
@@ -7,23 +8,12 @@ import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { matchMaker } from 'colyseus';
 import type { Request, Response } from 'express';
 import { customAlphabet } from 'nanoid';
-import {
-  activityCreateRoomSchema,
-  activityDeepLinkClaimSchema,
-  activityDeepLinkRecordSchema,
-  activityListRoomsSchema,
-  activityTokenExchangeSchema,
-  activityWsSessionSchema,
-  pongLeaderboardSchema,
-  pongTournamentCreateSchema,
-  pongTournamentListSchema,
-  pongTournamentReportSchema,
-} from 'schemas/activity.schema';
 import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
 import { PongTournamentService } from 'services/activity/pong/PongTournamentService';
 import { mintWsSessionToken } from 'services/activity/wsSessionToken';
 import { claimDeepLink, recordDeepLink } from 'services/activityDeepLink';
 import { DiscordGuildMembershipError, DiscordService } from 'services/discord';
+import { parseRequest, sendContract } from 'utils/contract';
 import { logger } from 'utils/logger';
 
 const generateRoomId = customAlphabet('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 6);
@@ -42,11 +32,11 @@ class ActivityController {
 
   getPongLeaderboard = async (req: Request, res: Response) => {
     try {
-      const body = pongLeaderboardSchema.shape.body.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.pongLeaderboard, req);
+      if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
-      const { accessToken, guildId, pool, limit } = body.data;
+      const { accessToken, guildId, pool, limit } = input.body;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
@@ -65,7 +55,7 @@ class ActivityController {
         pool,
         limit,
       );
-      return res.status(200).json({ data });
+      return sendContract(res, contract.pongLeaderboard, { data });
     } catch (error) {
       logger.error('activity.controller.pong_leaderboard_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
@@ -74,11 +64,11 @@ class ActivityController {
 
   createPongTournament = async (req: Request, res: Response) => {
     try {
-      const body = pongTournamentCreateSchema.shape.body.safeParse(req.body);
-      if (!body.success) {
+      const parsed = parseRequest(contract.createPongTournament, req);
+      if (!parsed) {
         return res.status(400).json({ message: 'Validation failed' });
       }
-      const input = body.data;
+      const input = parsed.body;
       const user = await this.discordService.getDiscordUser(input.accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
@@ -104,7 +94,7 @@ class ActivityController {
           : {}),
         createdBy: user.id,
       });
-      return res.status(201).json({ data });
+      return sendContract(res, contract.createPongTournament, { data }, 201);
     } catch (error) {
       logger.error('activity.controller.pong_tournament_create_failed', {
         error,
@@ -117,11 +107,11 @@ class ActivityController {
 
   listPongTournaments = async (req: Request, res: Response) => {
     try {
-      const body = pongTournamentListSchema.shape.body.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.listPongTournaments, req);
+      if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
-      const { accessToken, guildId } = body.data;
+      const { accessToken, guildId } = input.body;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
@@ -131,9 +121,9 @@ class ActivityController {
           .status(403)
           .json({ message: 'Not a member of the specified guild' });
       }
-      return res
-        .status(200)
-        .json({ data: new PongTournamentService().list(guildId) });
+      return sendContract(res, contract.listPongTournaments, {
+        data: new PongTournamentService().list(guildId),
+      });
     } catch (error) {
       logger.error('activity.controller.pong_tournament_list_failed', {
         error,
@@ -144,11 +134,11 @@ class ActivityController {
 
   reportPongTournamentMatch = async (req: Request, res: Response) => {
     try {
-      const body = pongTournamentReportSchema.shape.body.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.reportPongTournamentMatch, req);
+      if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
-      const { accessToken, matchId, winnerId } = body.data;
+      const { accessToken, matchId, winnerId } = input.body;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
@@ -158,7 +148,7 @@ class ActivityController {
         winnerId,
         user.id,
       );
-      return res.status(200).json({ data });
+      return sendContract(res, contract.reportPongTournamentMatch, { data });
     } catch (error) {
       logger.error('activity.controller.pong_tournament_report_failed', {
         error,
@@ -171,15 +161,15 @@ class ActivityController {
 
   exchangeToken = async (req: Request, res: Response) => {
     try {
-      const body = activityTokenExchangeSchema.shape.body.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.exchangeToken, req);
+      if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
-      const { code } = body.data;
+      const { code } = input.body;
       const data = await this.discordService.exchangeActivityCode(code);
-      return res
-        .status(200)
-        .json({ data: { access_token: data.access_token } });
+      return sendContract(res, contract.exchangeToken, {
+        data: { access_token: data.access_token },
+      });
     } catch (error) {
       logger.error('activity.controller.exchange_token_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
@@ -188,8 +178,8 @@ class ActivityController {
 
   getWsSessionToken = async (req: Request, res: Response) => {
     try {
-      const body = activityWsSessionSchema.shape.body.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.wsSession, req);
+      if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
       const {
@@ -203,7 +193,7 @@ class ActivityController {
         ruleset,
         options,
         roomId,
-      } = body.data;
+      } = input.body;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
@@ -280,7 +270,9 @@ class ActivityController {
         ...(ruleset !== undefined ? { ruleset } : {}),
         ...(resolvedRoomId !== undefined ? { roomId: resolvedRoomId } : {}),
       });
-      return res.status(200).json({ data: { token, roomKey: key } });
+      return sendContract(res, contract.wsSession, {
+        data: { token, roomKey: key },
+      });
     } catch (error) {
       logger.error('activity.controller.ws_session_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
@@ -294,11 +286,11 @@ class ActivityController {
   // classic getAvailableRooms used server-side.
   listRooms = async (req: Request, res: Response) => {
     try {
-      const body = activityListRoomsSchema.shape.body.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.listRooms, req);
+      if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
-      const { accessToken, instanceId, guildId } = body.data;
+      const { accessToken, instanceId, guildId } = input.body;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
@@ -322,7 +314,7 @@ class ActivityController {
         const listing = roomListingSchema.safeParse(room.metadata);
         return listing.success ? [listing.data] : [];
       });
-      return res.status(200).json({ data });
+      return sendContract(res, contract.listRooms, { data });
     } catch (error) {
       logger.error('activity.controller.list_rooms_failed', { error });
       if (error instanceof DiscordGuildMembershipError) {
@@ -338,14 +330,14 @@ class ActivityController {
   // since Discord's LaunchActivity interaction response has no data field of
   // its own to tell the Activity which game to open.
   recordDeepLinkIntent = (req: Request, res: Response) => {
-    const body = activityDeepLinkRecordSchema.shape.body.safeParse(req.body);
-    if (!body.success) {
+    const input = parseRequest(contract.recordDeepLink, req);
+    if (!input) {
       return res.status(400).json({ message: 'Validation failed' });
     }
-    const { userId, guildId, game } = body.data;
+    const { userId, guildId, game } = input.body;
     try {
       recordDeepLink(userId, guildId, game);
-      return res.status(200).json({ data: { ok: true } });
+      return sendContract(res, contract.recordDeepLink, { data: { ok: true } });
     } catch (error) {
       logger.error('activity.controller.record_deep_link_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
@@ -357,17 +349,17 @@ class ActivityController {
   // Discord, not trusted from the request body, matching getWsSessionToken.
   claimDeepLinkIntent = async (req: Request, res: Response) => {
     try {
-      const body = activityDeepLinkClaimSchema.shape.body.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.claimDeepLink, req);
+      if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
-      const { accessToken, guildId } = body.data;
+      const { accessToken, guildId } = input.body;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
       }
       const game = claimDeepLink(user.id, guildId);
-      return res.status(200).json({ data: { game } });
+      return sendContract(res, contract.claimDeepLink, { data: { game } });
     } catch (error) {
       logger.error('activity.controller.claim_deep_link_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
@@ -376,11 +368,11 @@ class ActivityController {
 
   createRoom = async (req: Request, res: Response) => {
     try {
-      const body = activityCreateRoomSchema.shape.body.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.createRoom, req);
+      if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
-      const { accessToken, instanceId, guildId, game } = body.data;
+      const { accessToken, instanceId, guildId, game } = input.body;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
@@ -407,7 +399,9 @@ class ActivityController {
         userId: user.id,
         roomId,
       });
-      return res.status(200).json({ data: { roomId, token, roomKey: key } });
+      return sendContract(res, contract.createRoom, {
+        data: { roomId, token, roomKey: key },
+      });
     } catch (error) {
       logger.error('activity.controller.create_room_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });

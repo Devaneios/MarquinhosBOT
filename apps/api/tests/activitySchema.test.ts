@@ -1,276 +1,202 @@
-import { describe, expect, it } from 'bun:test';
 import {
-  activityTokenExchangeSchema,
-  activityWsSessionSchema,
-} from 'schemas/activity.schema';
+  exchangeToken,
+  wsSession,
+} from '@marquinhos/contracts/http/routes/activity';
+import { describe, expect, it } from 'bun:test';
 
-describe('activityTokenExchangeSchema', () => {
-  it('accepts a payload with a code', async () => {
+describe('exchangeToken body', () => {
+  it('accepts a payload with a code', () => {
     expect(
-      activityTokenExchangeSchema.parseAsync({
-        body: { code: 'auth-code-abc' },
-        query: {},
-        params: {},
-      }),
-    ).resolves.toBeDefined();
+      exchangeToken.body.safeParse({ code: 'auth-code-abc' }).success,
+    ).toBe(true);
   });
 
-  it('rejects a payload missing code', async () => {
-    expect(
-      activityTokenExchangeSchema.parseAsync({
-        body: {},
-        query: {},
-        params: {},
-      }),
-    ).rejects.toThrow();
+  it('rejects a payload missing code', () => {
+    expect(exchangeToken.body.safeParse({}).success).toBe(false);
   });
 
-  it('rejects an empty code string', async () => {
-    expect(
-      activityTokenExchangeSchema.parseAsync({
-        body: { code: '' },
-        query: {},
-        params: {},
-      }),
-    ).rejects.toThrow();
+  it('rejects an empty code string', () => {
+    expect(exchangeToken.body.safeParse({ code: '' }).success).toBe(false);
   });
 });
 
-describe('activityWsSessionSchema', () => {
-  it('rejects a multi-mode payload without a roomId', async () => {
+describe('wsSession body', () => {
+  it('rejects a multi-mode payload without a roomId', () => {
     expect(
-      activityWsSessionSchema.parseAsync({
-        body: {
-          accessToken: 'tok_abc',
-          instanceId: 'inst-1',
-          guildId: 'guild-1',
-          mode: 'multi',
-          game: 'pong',
-        },
-        query: {},
-        params: {},
-      }),
-    ).rejects.toThrow();
-  });
-
-  it('accepts a payload with accessToken, instanceId, guildId, mode and game', async () => {
-    expect(
-      activityWsSessionSchema.parseAsync({
-        body: {
-          accessToken: 'tok_abc',
-          instanceId: 'inst-1',
-          guildId: 'guild-1',
-          mode: 'multi',
-          game: 'pong',
-          roomId: 'ROOM01',
-        },
-        query: {},
-        params: {},
-      }),
-    ).resolves.toBeDefined();
-  });
-
-  it('accepts mode "single"', async () => {
-    expect(
-      activityWsSessionSchema.parseAsync({
-        body: {
-          accessToken: 'tok_abc',
-          instanceId: 'inst-1',
-          guildId: 'guild-1',
-          mode: 'single',
-          game: 'pong',
-        },
-        query: {},
-        params: {},
-      }),
-    ).resolves.toBeDefined();
-  });
-
-  it('rejects a payload missing instanceId', async () => {
-    expect(
-      activityWsSessionSchema.parseAsync({
-        body: {
-          accessToken: 'tok_abc',
-          guildId: 'guild-1',
-          mode: 'multi',
-          game: 'pong',
-        },
-        query: {},
-        params: {},
-      }),
-    ).rejects.toThrow();
-  });
-
-  it('rejects a payload missing accessToken', async () => {
-    expect(
-      activityWsSessionSchema.parseAsync({
-        body: {
-          instanceId: 'inst-1',
-          guildId: 'guild-1',
-          mode: 'multi',
-          game: 'pong',
-        },
-        query: {},
-        params: {},
-      }),
-    ).rejects.toThrow();
-  });
-
-  it('rejects a payload missing guildId', async () => {
-    expect(
-      activityWsSessionSchema.parseAsync({
-        body: {
-          accessToken: 'tok_abc',
-          instanceId: 'inst-1',
-          mode: 'multi',
-          game: 'pong',
-        },
-        query: {},
-        params: {},
-      }),
-    ).rejects.toThrow();
-  });
-
-  it('rejects a payload missing mode', async () => {
-    expect(
-      activityWsSessionSchema.parseAsync({
-        body: {
-          accessToken: 'tok_abc',
-          instanceId: 'inst-1',
-          guildId: 'guild-1',
-          game: 'pong',
-        },
-        query: {},
-        params: {},
-      }),
-    ).rejects.toThrow();
-  });
-
-  it('rejects an invalid mode value', async () => {
-    expect(
-      activityWsSessionSchema.parseAsync({
-        body: {
-          accessToken: 'tok_abc',
-          instanceId: 'inst-1',
-          guildId: 'guild-1',
-          mode: 'coop',
-          game: 'pong',
-        },
-        query: {},
-        params: {},
-      }),
-    ).rejects.toThrow();
-  });
-
-  it('rejects a payload missing game', async () => {
-    expect(
-      activityWsSessionSchema.parseAsync({
-        body: {
-          accessToken: 'tok_abc',
-          instanceId: 'inst-1',
-          guildId: 'guild-1',
-          mode: 'multi',
-        },
-        query: {},
-        params: {},
-      }),
-    ).rejects.toThrow();
-  });
-
-  it('accepts an optional difficulty value', async () => {
-    expect(
-      activityWsSessionSchema.parseAsync({
-        body: {
-          accessToken: 'tok_abc',
-          instanceId: 'inst-1',
-          guildId: 'guild-1',
-          mode: 'single',
-          game: 'pong',
-          difficulty: 'hard',
-        },
-        query: {},
-        params: {},
-      }),
-    ).resolves.toBeDefined();
-  });
-
-  it('accepts a payload without a difficulty', async () => {
-    expect(
-      activityWsSessionSchema.parseAsync({
-        body: {
-          accessToken: 'tok_abc',
-          instanceId: 'inst-1',
-          guildId: 'guild-1',
-          mode: 'single',
-          game: 'pong',
-        },
-        query: {},
-        params: {},
-      }),
-    ).resolves.toBeDefined();
-  });
-
-  it('rejects an invalid difficulty value', async () => {
-    expect(
-      activityWsSessionSchema.parseAsync({
-        body: {
-          accessToken: 'tok_abc',
-          instanceId: 'inst-1',
-          guildId: 'guild-1',
-          mode: 'single',
-          game: 'pong',
-          difficulty: 'nightmare',
-        },
-        query: {},
-        params: {},
-      }),
-    ).rejects.toThrow();
-  });
-
-  it('accepts game "cards"', async () => {
-    expect(
-      activityWsSessionSchema.parseAsync({
-        body: {
-          accessToken: 'tok_abc',
-          instanceId: 'inst-1',
-          guildId: 'guild-1',
-          mode: 'multi',
-          game: 'cards',
-          roomId: 'ROOM01',
-        },
-        query: {},
-        params: {},
-      }),
-    ).resolves.toBeDefined();
-  });
-
-  it('rejects an invalid game value', async () => {
-    expect(
-      activityWsSessionSchema.parseAsync({
-        body: {
-          accessToken: 'tok_abc',
-          instanceId: 'inst-1',
-          guildId: 'guild-1',
-          mode: 'multi',
-          game: 'chess',
-        },
-        query: {},
-        params: {},
-      }),
-    ).rejects.toThrow();
-  });
-
-  it('parses roomId through when present', () => {
-    const result = activityWsSessionSchema.parse({
-      body: {
-        accessToken: 'token',
+      wsSession.body.safeParse({
+        accessToken: 'tok_abc',
         instanceId: 'inst-1',
         guildId: 'guild-1',
         mode: 'multi',
-        game: 'tic-tac-toe',
-        roomId: 'ABC123',
-      },
+        game: 'pong',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('accepts a payload with accessToken, instanceId, guildId, mode and game', () => {
+    expect(
+      wsSession.body.safeParse({
+        accessToken: 'tok_abc',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        mode: 'multi',
+        game: 'pong',
+        roomId: 'ROOM01',
+      }).success,
+    ).toBe(true);
+  });
+
+  it('accepts mode "single"', () => {
+    expect(
+      wsSession.body.safeParse({
+        accessToken: 'tok_abc',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        mode: 'single',
+        game: 'pong',
+      }).success,
+    ).toBe(true);
+  });
+
+  it('rejects a payload missing instanceId', () => {
+    expect(
+      wsSession.body.safeParse({
+        accessToken: 'tok_abc',
+        guildId: 'guild-1',
+        mode: 'multi',
+        game: 'pong',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects a payload missing accessToken', () => {
+    expect(
+      wsSession.body.safeParse({
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        mode: 'multi',
+        game: 'pong',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects a payload missing guildId', () => {
+    expect(
+      wsSession.body.safeParse({
+        accessToken: 'tok_abc',
+        instanceId: 'inst-1',
+        mode: 'multi',
+        game: 'pong',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects a payload missing mode', () => {
+    expect(
+      wsSession.body.safeParse({
+        accessToken: 'tok_abc',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        game: 'pong',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects an invalid mode value', () => {
+    expect(
+      wsSession.body.safeParse({
+        accessToken: 'tok_abc',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        mode: 'coop',
+        game: 'pong',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects a payload missing game', () => {
+    expect(
+      wsSession.body.safeParse({
+        accessToken: 'tok_abc',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        mode: 'multi',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('accepts an optional difficulty value', () => {
+    expect(
+      wsSession.body.safeParse({
+        accessToken: 'tok_abc',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        mode: 'single',
+        game: 'pong',
+        difficulty: 'hard',
+      }).success,
+    ).toBe(true);
+  });
+
+  it('accepts a payload without a difficulty', () => {
+    expect(
+      wsSession.body.safeParse({
+        accessToken: 'tok_abc',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        mode: 'single',
+        game: 'pong',
+      }).success,
+    ).toBe(true);
+  });
+
+  it('rejects an invalid difficulty value', () => {
+    expect(
+      wsSession.body.safeParse({
+        accessToken: 'tok_abc',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        mode: 'single',
+        game: 'pong',
+        difficulty: 'nightmare',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('accepts game "cards"', () => {
+    expect(
+      wsSession.body.safeParse({
+        accessToken: 'tok_abc',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        mode: 'multi',
+        game: 'cards',
+        roomId: 'ROOM01',
+      }).success,
+    ).toBe(true);
+  });
+
+  it('rejects an invalid game value', () => {
+    expect(
+      wsSession.body.safeParse({
+        accessToken: 'tok_abc',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        mode: 'multi',
+        game: 'chess',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('parses roomId through when present', () => {
+    const result = wsSession.body.parse({
+      accessToken: 'token',
+      instanceId: 'inst-1',
+      guildId: 'guild-1',
+      mode: 'multi',
+      game: 'tic-tac-toe',
+      roomId: 'ABC123',
     });
-    expect(result.body.roomId).toBe('ABC123');
+    expect(result.roomId).toBe('ABC123');
   });
 });

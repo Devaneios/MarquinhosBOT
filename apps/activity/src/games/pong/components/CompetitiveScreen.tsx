@@ -1,65 +1,24 @@
-import { postJson } from '@marquinhos/api-client/browser';
+import { fetchContract } from '@marquinhos/api-client/browser';
+import * as activityApi from '@marquinhos/contracts/http/routes/activity';
+import {
+  pongRatingPoolSchema,
+  pongTournamentFormatSchema,
+  type PongRating,
+  type PongRatingPool,
+  type PongTournament,
+  type PongTournamentFormat,
+} from '@marquinhos/contracts/http/routes/activity';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { z } from 'zod';
 import {
   MenuAction,
   MenuPanel,
   MenuScreen,
 } from '../../../components/game-shell';
 import type { DiscordIdentity } from '../../../discordAuth.ts';
-import { apiUrl } from '../../../lib/apiBase';
+import { apiBase } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
 import { errorMessage } from '../../../lib/http';
-
-const poolSchema = z.enum(['classic-1v1', 'quad-elimination']);
-type Pool = z.infer<typeof poolSchema>;
-
-const formatSchema = z.enum([
-  'round-robin',
-  'double-elimination',
-  'swiss-playoff',
-]);
-type Format = z.infer<typeof formatSchema>;
-
-const ratingEntrySchema = z.object({
-  userId: z.string(),
-  rating: z.number(),
-  deviation: z.number(),
-  matches: z.number(),
-  wins: z.number(),
-});
-
-const tournamentSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  format: formatSchema,
-  pool: poolSchema,
-  status: z.string(),
-  createdBy: z.string(),
-  entries: z.array(
-    z.object({
-      userId: z.string(),
-      seed: z.number(),
-      rating: z.number(),
-      score: z.number(),
-    }),
-  ),
-  matches: z.array(
-    z.object({
-      id: z.string(),
-      bracket: z.string(),
-      round: z.number(),
-      playerA: z.string().nullable(),
-      playerB: z.string().nullable(),
-      winnerId: z.string().nullable(),
-      status: z.string(),
-    }),
-  ),
-});
-
-type RatingEntry = z.infer<typeof ratingEntrySchema>;
-type Tournament = z.infer<typeof tournamentSchema>;
 
 const tabBtnBase =
   'notch-4 cursor-pointer border px-4 py-2 font-pixel text-[10px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent motion-safe:transition-colors';
@@ -78,12 +37,12 @@ export function CompetitiveScreen({
 }) {
   const { t } = useTranslation(['pong', 'common']);
   const [tab, setTab] = useState<'ladder' | 'tournaments'>('ladder');
-  const [pool, setPool] = useState<Pool>('classic-1v1');
-  const [leaderboard, setLeaderboard] = useState<RatingEntry[]>([]);
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [pool, setPool] = useState<PongRatingPool>('classic-1v1');
+  const [leaderboard, setLeaderboard] = useState<PongRating[]>([]);
+  const [tournaments, setTournaments] = useState<PongTournament[]>([]);
   const [selected, setSelected] = useState<string[]>([identity.userId]);
   const [name, setName] = useState('Pong Night');
-  const [format, setFormat] = useState<Format>('round-robin');
+  const [format, setFormat] = useState<PongTournamentFormat>('round-robin');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -92,27 +51,23 @@ export function CompetitiveScreen({
     setError(null);
     try {
       const [ratings, events] = await Promise.all([
-        postJson(
-          apiUrl('/activities/pong/leaderboard'),
-          {
+        fetchContract(apiBase(), activityApi.pongLeaderboard, {
+          body: {
             accessToken: identity.accessToken,
             guildId: identity.guildId,
             pool,
             limit: 50,
           },
-          z.array(ratingEntrySchema),
-        ),
-        postJson(
-          apiUrl('/activities/pong/tournaments/list'),
-          {
+        }),
+        fetchContract(apiBase(), activityApi.listPongTournaments, {
+          body: {
             accessToken: identity.accessToken,
             guildId: identity.guildId,
           },
-          z.array(tournamentSchema),
-        ),
+        }),
       ]);
-      setLeaderboard(ratings);
-      setTournaments(events);
+      setLeaderboard(ratings.data);
+      setTournaments(events.data);
     } catch (reason) {
       setError(errorMessage(reason));
     } finally {
@@ -127,13 +82,15 @@ export function CompetitiveScreen({
   async function createTournament() {
     setError(null);
     try {
-      await postJson(apiUrl('/activities/pong/tournaments/create'), {
-        accessToken: identity.accessToken,
-        guildId: identity.guildId,
-        name,
-        format,
-        pool,
-        playerIds: selected,
+      await fetchContract(apiBase(), activityApi.createPongTournament, {
+        body: {
+          accessToken: identity.accessToken,
+          guildId: identity.guildId,
+          name,
+          format,
+          pool,
+          playerIds: selected,
+        },
       });
       await load();
     } catch (reason) {
@@ -144,10 +101,8 @@ export function CompetitiveScreen({
   async function report(matchId: string, winnerId: string) {
     setError(null);
     try {
-      await postJson(apiUrl('/activities/pong/tournaments/report'), {
-        accessToken: identity.accessToken,
-        matchId,
-        winnerId,
+      await fetchContract(apiBase(), activityApi.reportPongTournamentMatch, {
+        body: { accessToken: identity.accessToken, matchId, winnerId },
       });
       await load();
     } catch (reason) {
@@ -155,7 +110,10 @@ export function CompetitiveScreen({
     }
   }
 
-  const candidates = [
+  const candidates: Pick<
+    PongRating,
+    'userId' | 'rating' | 'deviation' | 'matches' | 'wins'
+  >[] = [
     ...leaderboard,
     ...(leaderboard.some((entry) => entry.userId === identity.userId)
       ? []
@@ -198,7 +156,7 @@ export function CompetitiveScreen({
         <select
           value={pool}
           onChange={(event) => {
-            const next = poolSchema.safeParse(event.target.value);
+            const next = pongRatingPoolSchema.safeParse(event.target.value);
             if (next.success) setPool(next.data);
           }}
           className={cn(selectClass, 'ml-auto')}
@@ -272,7 +230,9 @@ export function CompetitiveScreen({
             <select
               value={format}
               onChange={(event) => {
-                const next = formatSchema.safeParse(event.target.value);
+                const next = pongTournamentFormatSchema.safeParse(
+                  event.target.value,
+                );
                 if (next.success) setFormat(next.data);
               }}
               className={cn(selectClass, 'w-full')}
