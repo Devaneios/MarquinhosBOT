@@ -1,14 +1,7 @@
-export interface Cell {
-  row: number;
-  col: number;
-}
-
-export interface FoundWord {
-  word: string;
-  userId: string;
-  start: Cell;
-  end: Cell;
-}
+import type {
+  Cell,
+  FoundWord,
+} from '@marquinhos/contracts/activity/games/wordSearchRace';
 
 export interface WordSearchRaceEngineConfig {
   size?: number;

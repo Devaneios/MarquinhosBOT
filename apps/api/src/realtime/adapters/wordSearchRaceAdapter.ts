@@ -1,15 +1,13 @@
-import { gridCellSchema } from '@marquinhos/contracts/activity/payloadSchemas';
+import {
+  selectPayloadSchema,
+  type WordSearchRaceServerMessage,
+} from '@marquinhos/contracts/activity/games/wordSearchRace';
 import { WordSearchRaceSession } from 'services/activity/word-search-race/WordSearchRaceSession';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { sendMessage } from '../sendMessage';
 
 const SELECT_RATE_LIMIT_WINDOW_MS = 1000;
 const SELECT_RATE_LIMIT_MAX = 10;
-
-export const selectPayloadSchema = z.object({
-  start: gridCellSchema,
-  end: gridCellSchema,
-});
 
 export const wordSearchRaceAdapter: GameRoomAdapter<WordSearchRaceSession> = {
   // WordSearchRaceSession.addPlayer() has no internal player-count cap —
@@ -48,7 +46,10 @@ export const wordSearchRaceAdapter: GameRoomAdapter<WordSearchRaceSession> = {
           handle: (auth, client, payload: unknown) => {
             const parsed = selectPayloadSchema.safeParse(payload);
             if (!parsed.success) {
-              client.send('select_error', { message: 'Invalid selection' });
+              sendMessage<WordSearchRaceServerMessage>(client, {
+                type: 'select_error',
+                payload: { message: 'Invalid selection' },
+              });
               return;
             }
             const result = session.submitSelection(
@@ -57,7 +58,10 @@ export const wordSearchRaceAdapter: GameRoomAdapter<WordSearchRaceSession> = {
               parsed.data.end,
             );
             if ('error' in result)
-              client.send('select_error', { message: result.error });
+              sendMessage<WordSearchRaceServerMessage>(client, {
+                type: 'select_error',
+                payload: { message: result.error },
+              });
           },
         },
         leave: {
@@ -80,11 +84,17 @@ export const wordSearchRaceAdapter: GameRoomAdapter<WordSearchRaceSession> = {
     // per-user data (grid/words/found/scores/deadline/ended are shared
     // state), so it's a safe, correct ack for both cases.
     if (seat !== 'player') {
-      client.send('init', session.getPublicState());
+      sendMessage<WordSearchRaceServerMessage>(client, {
+        type: 'init',
+        payload: session.getPublicState(),
+      });
       return;
     }
     session.addPlayer(auth.userId, client);
-    client.send('init', session.getPublicState());
+    sendMessage<WordSearchRaceServerMessage>(client, {
+      type: 'init',
+      payload: session.getPublicState(),
+    });
   },
   onLeave(session, auth, client) {
     session.removePlayer(auth.userId, client);

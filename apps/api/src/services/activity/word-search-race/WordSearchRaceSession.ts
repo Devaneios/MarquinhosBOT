@@ -2,7 +2,9 @@ import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import type {
   Cell,
   FoundWord,
-} from '@marquinhos/domain/activity/word-search-race/WordSearchRaceEngine';
+  WordSearchRaceServerMessage,
+  WordSearchRaceState,
+} from '@marquinhos/contracts/activity/games/wordSearchRace';
 import { WordSearchRaceEngine } from '@marquinhos/domain/activity/word-search-race/WordSearchRaceEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { GamificationService } from 'services/gamification';
@@ -54,7 +56,7 @@ export class WordSearchRaceSession {
 
   constructor(
     private identity: WordSearchRaceSessionIdentity,
-    private broadcaster: ActivityBroadcaster,
+    private broadcaster: ActivityBroadcaster<WordSearchRaceServerMessage>,
     private gamification: GamificationService = new GamificationService(),
     options: WordSearchRaceSessionOptions = {},
   ) {
@@ -79,7 +81,7 @@ export class WordSearchRaceSession {
     return this.startedAt + this.timeLimitMs;
   }
 
-  getPublicState() {
+  getPublicState(): WordSearchRaceState {
     return {
       size: this.engine.getSize(),
       grid: this.engine.getGrid(),
