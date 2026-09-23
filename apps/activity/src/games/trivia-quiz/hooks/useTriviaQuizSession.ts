@@ -6,11 +6,17 @@ import {
   fetchWsSessionToken,
   type WsSession,
 } from '../../shared/activitySession';
+import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import type { TriviaQuizMessage, TriviaQuizSessionState } from '../types';
+import {
+  gameEndPayloadSchema,
+  initPayloadSchema,
+  stateUpdatePayloadSchema,
+  type TriviaQuizSessionState,
+} from '../types';
 
 type TriviaQuizSessionStatus =
   | { status: 'connecting' }
@@ -58,29 +64,34 @@ export function useTriviaQuizSession(
   }, [identity, onAuthInvalid]);
 
   const handleMessage = useCallback((message: ActivityMessage) => {
-    const msg = message as TriviaQuizMessage;
-    if (msg.type === 'init') {
+    if (message.type === 'init') {
+      const payload = parsePayload(initPayloadSchema, message);
+      if (!payload) return;
       setState((prev) => ({
         ...prev,
-        playerScores: msg.payload.playerScores,
+        playerScores: payload.playerScores,
       }));
-    } else if (msg.type === 'state_update') {
+    } else if (message.type === 'state_update') {
+      const payload = parsePayload(stateUpdatePayloadSchema, message);
+      if (!payload) return;
       setState({
         currentQuestion: {
-          text: msg.payload.questionText,
-          options: msg.payload.options,
-          startedAtMs: msg.payload.questionStartedAtMs,
-          timerMs: msg.payload.questionTimerMs,
+          text: payload.questionText,
+          options: payload.options,
+          startedAtMs: payload.questionStartedAtMs,
+          timerMs: payload.questionTimerMs,
         },
-        playerScores: msg.payload.playerScores,
-        finished: msg.payload.finished,
+        playerScores: payload.playerScores,
+        finished: payload.finished,
         leaderboard: [],
       });
-    } else if (msg.type === 'game_end') {
+    } else if (message.type === 'game_end') {
+      const payload = parsePayload(gameEndPayloadSchema, message);
+      if (!payload) return;
       setState((prev) => ({
         ...prev,
         finished: true,
-        leaderboard: msg.payload.leaderboard,
+        leaderboard: payload.leaderboard,
       }));
     }
   }, []);

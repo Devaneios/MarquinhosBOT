@@ -5,12 +5,22 @@ import { ConnectingScreen, GameHeader } from '../../../components/game-shell';
 import { colyseusUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
 import type { WsSession } from '../../shared/activitySession';
+import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
 import { FEEDBACK_COLORS, KB_LETTERS, KB_ROWS } from '../constants';
-import type { GameState, GuessRow, LetterFeedback } from '../types';
+import {
+  actionRejectedPayloadSchema,
+  gameStateSchema,
+  guessSubmittedPayloadSchema,
+  playerExhaustedPayloadSchema,
+  playerSolvedPayloadSchema,
+  type GameState,
+  type GuessRow,
+  type LetterFeedback,
+} from '../types';
 import { buildLetterStates, normalizeKey } from '../utils';
 
 function Tile({
@@ -178,17 +188,13 @@ export function WordleRaceBoard({
     colyseusUrl(),
     (message: ActivityMessage) => {
       if (message.type === 'init') {
-        const payload = message.payload as GameState;
+        const payload = parsePayload(gameStateSchema, message);
+        if (!payload) return;
         setGameState(payload);
         setError(null);
       } else if (message.type === 'guess_submitted') {
-        const payload = message.payload as {
-          userId: string;
-          guess: string;
-          feedback: LetterFeedback[];
-          attempts: number;
-          solved: boolean;
-        };
+        const payload = parsePayload(guessSubmittedPayloadSchema, message);
+        if (!payload) return;
         setGameState((prev) => {
           if (!prev) return prev;
           const newState = { ...prev };
@@ -215,21 +221,20 @@ export function WordleRaceBoard({
         setCurrentGuess('');
         setError(null);
       } else if (message.type === 'action_rejected') {
-        const payload = message.payload as { error: string };
+        const payload = parsePayload(actionRejectedPayloadSchema, message);
+        if (!payload) return;
         setError(payload.error);
         triggerShake();
       } else if (message.type === 'player_solved') {
-        const payload = message.payload as {
-          userId: string;
-          firstSolver: boolean;
-        };
-        if (payload.firstSolver) {
+        const payload = parsePayload(playerSolvedPayloadSchema, message);
+        if (payload?.firstSolver) {
           setGameState((prev) =>
             prev ? { ...prev, firstSolver: payload.userId } : prev,
           );
         }
       } else if (message.type === 'player_exhausted') {
-        const payload = message.payload as { userId: string };
+        const payload = parsePayload(playerExhaustedPayloadSchema, message);
+        if (!payload) return;
         setGameState((prev) => {
           if (!prev) return prev;
           const newState = { ...prev };

@@ -8,10 +8,19 @@ import {
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
 import {
+  parsePayload,
+  restartStatusPayloadSchema,
+} from '../../shared/colyseusConnection';
+import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import type { TowerState } from '../types';
+import {
+  actionRejectedPayloadSchema,
+  initPayloadSchema,
+  statePayloadSchema,
+  type TowerState,
+} from '../types';
 import { TowerBoardCanvas } from './TowerBoardCanvas';
 
 interface Props {
@@ -61,28 +70,25 @@ export function TowerCanvas({ session, userId, onMainMenu }: Props) {
 
     messageHandlerRef.current = (message) => {
       if (message.type === 'init') {
-        const payload = message.payload as {
-          joined: boolean;
-          state: TowerState | null;
-        };
+        const payload = parsePayload(initPayloadSchema, message);
+        if (!payload) return;
         setJoined(payload.joined);
         if (payload.state) applyState(payload.state);
       } else if (
         message.type === 'game_ready' ||
         message.type === 'state_update'
       ) {
-        const payload = message.payload as { state: TowerState };
-        applyState(payload.state);
+        const payload = parsePayload(statePayloadSchema, message);
+        if (payload) applyState(payload.state);
       } else if (message.type === 'action_rejected') {
         // towerUnstableAdapter.ts (server) sends ACTION_REJECTED
         // ('action_rejected') for a rejected pull, not 'pull_error' — same
         // bug class found in Checkers/Tic-Tac-Toe, fixed here too.
-        const payload = message.payload as { error: string };
-        setError(payload.error);
+        const payload = parsePayload(actionRejectedPayloadSchema, message);
+        if (payload) setError(payload.error);
       } else if (message.type === 'restart_status') {
-        setRestartStatus(
-          message.payload as { votes: number; required: number },
-        );
+        const payload = parsePayload(restartStatusPayloadSchema, message);
+        if (payload) setRestartStatus(payload);
       } else if (message.type === 'opponent_disconnected') {
         setOpponentDisconnected(true);
       } else if (message.type === 'opponent_reconnected') {

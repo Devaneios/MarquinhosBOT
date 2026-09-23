@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
-import type { TowerState } from '../types';
+import { parsePayload } from '../../shared/colyseusConnection';
+import {
+  actionRejectedPayloadSchema,
+  statePayloadSchema,
+  type TowerState,
+} from '../types';
 import { TowerBoardCanvas } from './TowerBoardCanvas';
 
 // Renders Tower Unstable inside a multiplayer Room view — driven by
@@ -17,9 +22,11 @@ export function TowerRoomBoard() {
     if (!ctx) return;
     return ctx.subscribe((message) => {
       if (message.type === 'game_ready' || message.type === 'state_update') {
-        setState((message.payload as { state: TowerState }).state);
+        const payload = parsePayload(statePayloadSchema, message);
+        if (payload) setState(payload.state);
       } else if (message.type === 'action_rejected') {
-        setError((message.payload as { error: string }).error);
+        const payload = parsePayload(actionRejectedPayloadSchema, message);
+        if (payload) setError(payload.error);
       }
     });
   }, [ctx]);

@@ -4,18 +4,22 @@ import { useNavigate } from 'react-router-dom';
 import { EndScreen, GameHeader } from '../../../components/game-shell';
 import { colyseusUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
+import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
 import { PICK_ICONS, PICK_LABEL_KEYS } from '../constants';
-import type {
-  GamePhase,
-  RoundResult,
-  RpsErrorPayload,
-  RpsPick,
-  RpsPlayerId,
-  RpsState,
+import {
+  initPayloadSchema,
+  roundResultSchema,
+  rpsErrorPayloadSchema,
+  rpsStateSchema,
+  type GamePhase,
+  type RoundResult,
+  type RpsPick,
+  type RpsPlayerId,
+  type RpsState,
 } from '../types';
 
 export function PickButton({
@@ -81,15 +85,16 @@ export function RpsBoard({
     colyseusUrl(),
     (message: ActivityMessage) => {
       if (message.type === 'init') {
-        const payload = message.payload as { playerId: RpsPlayerId };
-        setPlayerId(payload.playerId);
+        const payload = parsePayload(initPayloadSchema, message);
+        if (payload) setPlayerId(payload.playerId);
       } else if (message.type === 'game_start') {
         setPhase('playing');
       } else if (message.type === 'round_state') {
-        const payload = message.payload as RpsState;
-        setRoundState(payload);
+        const payload = parsePayload(rpsStateSchema, message);
+        if (payload) setRoundState(payload);
       } else if (message.type === 'round_result') {
-        const payload = message.payload as RoundResult;
+        const payload = parsePayload(roundResultSchema, message);
+        if (!payload) return;
         setRoundResult(payload);
         setPhase('round_result');
         setMyPick(null);
@@ -104,8 +109,8 @@ export function RpsBoard({
       } else if (message.type === 'match_end') {
         setPhase('match_end');
       } else if (message.type === 'error') {
-        const payload = message.payload as RpsErrorPayload;
-        setError(payload.message);
+        const payload = parsePayload(rpsErrorPayloadSchema, message);
+        if (payload) setError(payload.message);
       }
     },
   );

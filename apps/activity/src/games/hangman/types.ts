@@ -1,12 +1,12 @@
-export interface HangmanState {
-  revealedWord: string;
-  guessedLetters: string[];
-  strikes: number;
-  maxStrikes: number;
-  gameOver: boolean;
-  won: boolean;
-}
+import { z } from 'zod';
 
-export interface GuessErrorPayload {
-  message: string;
-}
+export const hangmanStateSchema = z.object({
+  revealedWord: z.string(),
+  guessedLetters: z.array(z.string()),
+  strikes: z.number(),
+  maxStrikes: z.number(),
+  gameOver: z.boolean(),
+  won: z.boolean(),
+});
+
+export const guessErrorPayloadSchema = z.object({ message: z.string() });

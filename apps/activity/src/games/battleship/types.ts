@@ -1,8 +1,21 @@
-export type BattleshipSide = 'p1' | 'p2';
-export type ShipType =
-  'carrier' | 'battleship' | 'cruiser' | 'submarine' | 'destroyer';
+import { z } from 'zod';
+
+const battleshipSideSchema = z.enum(['p1', 'p2']);
+export type BattleshipSide = z.infer<typeof battleshipSideSchema>;
+
+const shipTypeSchema = z.enum([
+  'carrier',
+  'battleship',
+  'cruiser',
+  'submarine',
+  'destroyer',
+]);
+export type ShipType = z.infer<typeof shipTypeSchema>;
+
 export type Orientation = 'horizontal' | 'vertical';
-export type Phase = 'placement' | 'battle' | 'ended';
+
+const phaseSchema = z.enum(['placement', 'battle', 'ended']);
+export type Phase = z.infer<typeof phaseSchema>;
 
 export interface PendingShip {
   type: ShipType;
@@ -29,10 +42,8 @@ export const SHIP_ORDER: ShipType[] = [
 
 export const BOARD_SIZE = 10;
 
-export interface Coordinate {
-  x: number;
-  y: number;
-}
+const coordinateSchema = z.object({ x: z.number(), y: z.number() });
+export type Coordinate = z.infer<typeof coordinateSchema>;
 
 export interface ShipPlacement {
   type: ShipType;
@@ -41,42 +52,57 @@ export interface ShipPlacement {
   orientation: Orientation;
 }
 
-export interface ShipView {
-  type: ShipType;
-  cells: Coordinate[];
-  sunk: boolean;
-}
+const shipViewSchema = z.object({
+  type: shipTypeSchema,
+  cells: z.array(coordinateSchema),
+  sunk: z.boolean(),
+});
+export type ShipView = z.infer<typeof shipViewSchema>;
 
-export interface ShotView {
-  x: number;
-  y: number;
-  hit: boolean;
-  shipType?: ShipType;
-  sunk?: boolean;
-}
+const shotViewSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  hit: z.boolean(),
+  shipType: shipTypeSchema.optional(),
+  sunk: z.boolean().optional(),
+});
+export type ShotView = z.infer<typeof shotViewSchema>;
 
-export interface BoardView {
-  ships: ShipView[];
-  shots: ShotView[];
-}
+const boardViewSchema = z.object({
+  ships: z.array(shipViewSchema),
+  shots: z.array(shotViewSchema),
+});
+export type BoardView = z.infer<typeof boardViewSchema>;
 
-export interface BattleshipStateView {
-  phase: Phase;
-  turn: BattleshipSide | null;
-  winner: BattleshipSide | null;
-  own: BoardView;
-  opponent: BoardView;
-  placementReady: Record<BattleshipSide, boolean>;
-}
+const placementReadySchema = z.object({ p1: z.boolean(), p2: z.boolean() });
+
+export const battleshipStateViewSchema = z.object({
+  phase: phaseSchema,
+  turn: battleshipSideSchema.nullable(),
+  winner: battleshipSideSchema.nullable(),
+  own: boardViewSchema,
+  opponent: boardViewSchema,
+  placementReady: placementReadySchema,
+});
+export type BattleshipStateView = z.infer<typeof battleshipStateViewSchema>;
 
 // What a non-participant (spectator/queued) receives instead — see
 // marquinhos-api's spectatorViewFor(): both fleets masked symmetrically,
 // since a non-participant has no "own" side.
-export interface BattleshipSpectatorStateView {
-  phase: Phase;
-  turn: BattleshipSide | null;
-  winner: BattleshipSide | null;
-  p1: BoardView;
-  p2: BoardView;
-  placementReady: Record<BattleshipSide, boolean>;
-}
+export const battleshipSpectatorStateViewSchema = z.object({
+  phase: phaseSchema,
+  turn: battleshipSideSchema.nullable(),
+  winner: battleshipSideSchema.nullable(),
+  p1: boardViewSchema,
+  p2: boardViewSchema,
+  placementReady: placementReadySchema,
+});
+export type BattleshipSpectatorStateView = z.infer<
+  typeof battleshipSpectatorStateViewSchema
+>;
+
+export const initPayloadSchema = z.object({
+  side: battleshipSideSchema.nullable(),
+});
+
+export const errorPayloadSchema = z.object({ message: z.string() });

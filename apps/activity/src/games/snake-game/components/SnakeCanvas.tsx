@@ -10,6 +10,7 @@ import { colyseusUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
 import { devinfo, devlog, devwarn } from '../../../lib/devlog';
 import type { WsSession } from '../../shared/activitySession';
+import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
@@ -20,6 +21,11 @@ import type {
   SnakeGameState,
   SnakePublicConfig,
   SnakeSegment,
+} from '../types';
+import {
+  initPayloadSchema,
+  opponentDisconnectedPayloadSchema,
+  statePayloadSchema,
 } from '../types';
 
 export const CELL_SIZE = 20;
@@ -206,17 +212,16 @@ export function SnakeCanvas({
 
     messageHandlerRef.current = (message) => {
       if (message.type === 'init') {
-        const payload = message.payload as {
-          playerId: string | null;
-          config?: SnakePublicConfig;
-        };
+        const payload = parsePayload(initPayloadSchema, message);
+        if (!payload) return;
         devlog('[snake-canvas] assigned player id', payload.playerId);
         setPlayerId(payload.playerId);
         if (payload.config) {
           configRef.current = payload.config;
         }
       } else if (message.type === 'state') {
-        const payload = message.payload as { state: SnakeGameState };
+        const payload = parsePayload(statePayloadSchema, message);
+        if (!payload) return;
         const state = payload.state;
         prevStateRef.current = latestStateRef.current;
         latestStateRef.current = { state, receivedAt: performance.now() };
@@ -224,9 +229,11 @@ export function SnakeCanvas({
         setWinner(state.winner);
       } else if (message.type === 'opponent_disconnected') {
         devwarn('[snake-canvas] opponent disconnected', message.payload);
-        setPausedOpponent(
-          message.payload as { playerId: string; timeoutMs: number },
+        const payload = parsePayload(
+          opponentDisconnectedPayloadSchema,
+          message,
         );
+        if (payload) setPausedOpponent(payload);
       } else if (message.type === 'opponent_reconnected') {
         devinfo('[snake-canvas] opponent reconnected');
         setPausedOpponent(null);

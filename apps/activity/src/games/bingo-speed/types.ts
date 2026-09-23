@@ -1,23 +1,27 @@
+import { z } from 'zod';
+
 export type GameMode = 'multi' | 'single';
 
-export interface BingoCard {
-  board: number[][];
-  marked: boolean[][];
-}
+const bingoCardSchema = z.object({
+  board: z.array(z.array(z.number())),
+  marked: z.array(z.array(z.boolean())),
+});
 
-export interface BingoInitPayload {
-  card: BingoCard;
-  state?: {
-    drawnNumbers: number[];
-    playerCount: number;
-    gameStarted: boolean;
-  };
-}
+export type BingoCard = z.infer<typeof bingoCardSchema>;
 
-export interface BingoNumberDrawnPayload {
-  number: number;
-}
+export const bingoInitPayloadSchema = z.object({
+  card: bingoCardSchema.nullable(),
+  state: z
+    .object({
+      drawnNumbers: z.array(z.number()),
+      playerCount: z.number(),
+      gameStarted: z.boolean(),
+    })
+    .optional(),
+});
 
-export interface BingoGameEndPayload {
-  winner?: string;
-}
+export const bingoNumberDrawnPayloadSchema = z.object({ number: z.number() });
+
+export const bingoGameEndPayloadSchema = z.object({
+  winner: z.string().optional(),
+});

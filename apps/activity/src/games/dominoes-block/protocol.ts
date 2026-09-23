@@ -1,7 +1,8 @@
-export interface Tile {
-  a: number;
-  b: number;
-}
+import { z } from 'zod';
+
+const tileSchema = z.object({ a: z.number(), b: z.number() });
+
+export type Tile = z.infer<typeof tileSchema>;
 
 export type ChainEnd = 'left' | 'right';
 
@@ -9,20 +10,29 @@ export type ChainEnd = 'left' | 'right';
 // masked, per-recipient view a 'state' message carries. `hand` is only
 // populated for the player it was addressed to; spectators and other
 // players' hands are represented purely by `handCounts`.
-export interface DominoesClientState {
-  players: string[];
-  handCounts: Record<string, number>;
-  hand: Tile[] | null;
-  boneyard: number;
-  chain: Tile[];
-  leftEnd: number | null;
-  rightEnd: number | null;
-  currentPlayer: string | null;
-  winner: string | null;
-  winners: string[] | null;
-  blocked: boolean;
-  pipTotals: Record<string, number> | null;
-}
+export const dominoesClientStateSchema = z.object({
+  players: z.array(z.string()),
+  handCounts: z.record(z.string(), z.number()),
+  hand: z.array(tileSchema).nullable(),
+  boneyard: z.number(),
+  chain: z.array(tileSchema),
+  leftEnd: z.number().nullable(),
+  rightEnd: z.number().nullable(),
+  currentPlayer: z.string().nullable(),
+  winner: z.string().nullable(),
+  winners: z.array(z.string()).nullable(),
+  blocked: z.boolean(),
+  pipTotals: z.record(z.string(), z.number()).nullable(),
+});
+
+export type DominoesClientState = z.infer<typeof dominoesClientStateSchema>;
+
+export const moveRejectedPayloadSchema = z.object({ reason: z.string() });
+
+export const opponentDisconnectedPayloadSchema = z.object({
+  userId: z.string(),
+  timeoutMs: z.number(),
+});
 
 export function tileKey(tile: Tile): string {
   return `${tile.a}-${tile.b}`;

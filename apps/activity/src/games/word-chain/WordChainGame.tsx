@@ -11,16 +11,18 @@ import {
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { colyseusUrl } from '../../lib/apiBase';
 import { cn } from '../../lib/cn';
+import { parsePayload } from '../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
 import { WordChainBoard } from './components';
 import { useWordChainSession } from './hooks/useWordChainSession';
-import type {
-  GameState,
-  OpponentDisconnectedPayload,
-  WordRejectedPayload,
+import {
+  opponentDisconnectedPayloadSchema,
+  wordChainStatePayloadSchema,
+  wordRejectedPayloadSchema,
+  type GameState,
 } from './types';
 
 export function WordChainGame({
@@ -57,24 +59,26 @@ export function WordChainGame({
     session.status === 'ready' ? session.session : null,
     colyseusUrl(),
     (message: ActivityMessage) => {
-      if (message.type === 'init') {
-        const payload = message.payload as Partial<GameState>;
+      if (message.type === 'init' || message.type === 'state') {
+        const payload = parsePayload(wordChainStatePayloadSchema, message);
+        if (!payload) return;
         setGameState((prev) => ({ ...prev, ...payload }));
-        setError(null);
-      } else if (message.type === 'state') {
-        const payload = message.payload as Partial<GameState>;
-        setGameState((prev) => ({ ...prev, ...payload }));
+        if (message.type === 'init') setError(null);
       } else if (message.type === 'action_rejected') {
         // wordChainAdapter.ts (server) sends ACTION_REJECTED
         // ('action_rejected') for a rejected word, not 'word_rejected' —
         // same bug class found in Checkers/Tic-Tac-Toe/TowerUnstable, fixed
         // here too.
-        const payload = message.payload as WordRejectedPayload;
+        const payload = parsePayload(wordRejectedPayloadSchema, message);
+        if (!payload) return;
         setError(payload.error);
         setInputValue('');
       } else if (message.type === 'opponent_disconnected') {
-        const payload = message.payload as OpponentDisconnectedPayload;
-        setPausedOpponent(payload);
+        const payload = parsePayload(
+          opponentDisconnectedPayloadSchema,
+          message,
+        );
+        if (payload) setPausedOpponent(payload);
       } else if (message.type === 'opponent_reconnected') {
         setPausedOpponent(null);
       }

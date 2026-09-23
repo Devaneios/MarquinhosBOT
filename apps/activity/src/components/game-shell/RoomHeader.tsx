@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { z } from 'zod';
 import { GAME_REGISTRY } from '../../games/registry';
+import { parsePayload } from '../../games/shared/colyseusConnection';
 import { isQueueEligible } from '../../games/shared/queueEligibility';
 import { useRoomConnectionContext } from '../../games/shared/RoomConnectionProvider';
 import { getParticipantDisplayNames } from '../../lib/discordParticipants';
@@ -8,6 +10,10 @@ import { getParticipantDisplayNames } from '../../lib/discordParticipants';
 export interface RoomHeaderProps {
   onLeave: () => void;
 }
+
+const actionRejectedPayloadSchema = z
+  .object({ error: z.string().optional() })
+  .optional();
 
 export function RoomHeader({ onLeave }: RoomHeaderProps) {
   const { t } = useTranslation(['common', 'games', 'rooms']);
@@ -24,7 +30,7 @@ export function RoomHeader({ onLeave }: RoomHeaderProps) {
     if (!ctx) return;
     return ctx.subscribe((message) => {
       if (message.type !== 'action_rejected') return;
-      const payload = message.payload as { error?: string } | undefined;
+      const payload = parsePayload(actionRejectedPayloadSchema, message);
       setRejection(payload?.error ?? t('rooms:actionRejected'));
       const timer = setTimeout(() => setRejection(null), 3000);
       return () => clearTimeout(timer);

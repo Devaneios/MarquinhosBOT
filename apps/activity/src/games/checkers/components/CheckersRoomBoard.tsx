@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
-import type { CheckersState, Color } from '../types';
+import { parsePayload } from '../../shared/colyseusConnection';
+import {
+  checkersStateSchema,
+  initPayloadSchema,
+  type CheckersState,
+  type Color,
+} from '../types';
 import { CheckersCanvas } from './CheckersCanvas';
 
 // Renders the Checkers board inside a multiplayer Room view — driven by
@@ -15,14 +21,13 @@ export function CheckersRoomBoard() {
     if (!ctx) return;
     return ctx.subscribe((message) => {
       if (message.type === 'init') {
-        const payload = message.payload as {
-          color: Color | null;
-          state: CheckersState;
-        };
+        const payload = parsePayload(initPayloadSchema, message);
+        if (!payload) return;
         setMyColor(payload.color);
         setState(payload.state);
       } else if (message.type === 'state') {
-        setState(message.payload as CheckersState);
+        const payload = parsePayload(checkersStateSchema, message);
+        if (payload) setState(payload);
       } else if (message.type === 'action_rejected') {
         // checkersAdapter.ts sends ACTION_REJECTED for a rejected move — see
         // the matching note in CheckersBoard.tsx.

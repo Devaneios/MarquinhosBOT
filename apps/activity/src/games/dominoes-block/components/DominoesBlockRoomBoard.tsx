@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { parsePayload } from '../../shared/colyseusConnection';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
 import {
+  dominoesClientStateSchema,
   legalEndsFor,
+  moveRejectedPayloadSchema,
   type ChainEnd,
   type DominoesClientState,
   type Tile,
@@ -24,10 +27,13 @@ export function DominoesBlockRoomBoard() {
     if (!ctx) return;
     return ctx.subscribe((message) => {
       if (message.type === 'state') {
-        setState(message.payload as DominoesClientState);
+        const payload = parsePayload(dominoesClientStateSchema, message);
+        if (!payload) return;
+        setState(payload);
         setRejection(null);
       } else if (message.type === 'move_rejected') {
-        setRejection((message.payload as { reason: string }).reason);
+        const payload = parsePayload(moveRejectedPayloadSchema, message);
+        if (payload) setRejection(payload.reason);
       }
     });
   }, [ctx]);

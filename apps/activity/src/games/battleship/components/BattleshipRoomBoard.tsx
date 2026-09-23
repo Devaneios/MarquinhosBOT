@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { parsePayload } from '../../shared/colyseusConnection';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
 import {
   SHIP_ORDER,
+  battleshipSpectatorStateViewSchema,
+  battleshipStateViewSchema,
+  errorPayloadSchema,
+  initPayloadSchema,
   type BattleshipSide,
   type BattleshipSpectatorStateView,
   type BattleshipStateView,
@@ -49,16 +54,20 @@ function BattleshipPlayerView() {
     if (!ctx) return;
     return ctx.subscribe((message) => {
       if (message.type === 'init') {
-        const payload = message.payload as { side: BattleshipSide | null };
-        setSide(payload.side);
+        const payload = parsePayload(initPayloadSchema, message);
+        if (payload) setSide(payload.side);
       } else if (message.type === 'state') {
-        setState(message.payload as BattleshipStateView);
+        const payload = parsePayload(battleshipStateViewSchema, message);
+        if (!payload) return;
+        setState(payload);
         setPlacementError(null);
         setFireError(null);
       } else if (message.type === 'placement_error') {
-        setPlacementError((message.payload as { message: string }).message);
+        const payload = parsePayload(errorPayloadSchema, message);
+        if (payload) setPlacementError(payload.message);
       } else if (message.type === 'fire_error') {
-        setFireError((message.payload as { message: string }).message);
+        const payload = parsePayload(errorPayloadSchema, message);
+        if (payload) setFireError(payload.message);
       }
     });
   }, [ctx]);
@@ -189,7 +198,11 @@ function BattleshipSpectatorView() {
     if (!ctx) return;
     return ctx.subscribe((message) => {
       if (message.type === 'state') {
-        setState(message.payload as BattleshipSpectatorStateView);
+        const payload = parsePayload(
+          battleshipSpectatorStateViewSchema,
+          message,
+        );
+        if (payload) setState(payload);
       }
     });
   }, [ctx]);

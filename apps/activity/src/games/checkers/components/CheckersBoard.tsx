@@ -8,11 +8,18 @@ import {
 import { colyseusUrl } from '../../../lib/apiBase';
 import { devlog } from '../../../lib/devlog';
 import type { WsSession } from '../../shared/activitySession';
+import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import type { CheckersState, Color, GameMode } from '../types';
+import {
+  checkersStateSchema,
+  initPayloadSchema,
+  type CheckersState,
+  type Color,
+  type GameMode,
+} from '../types';
 import { CheckersCanvas } from './CheckersCanvas';
 
 const CHECKERS_GAME_ID = 'checkers';
@@ -40,15 +47,14 @@ export function CheckersBoard({
   const onMessage = useCallback(
     (message: ActivityMessage) => {
       if (message.type === 'init') {
-        const payload = message.payload as {
-          color: Color | null;
-          state: CheckersState;
-        };
+        const payload = parsePayload(initPayloadSchema, message);
+        if (!payload) return;
         devlog('[checkers] init', payload);
         setMyColor(payload.color);
         setState(payload.state);
       } else if (message.type === 'state') {
-        setState(message.payload as CheckersState);
+        const payload = parsePayload(checkersStateSchema, message);
+        if (payload) setState(payload);
       } else if (message.type === 'action_rejected') {
         // checkersAdapter.ts (server) sends ACTION_REJECTED ('action_rejected')
         // for a rejected move, not 'move_rejected' — a pre-existing mismatch

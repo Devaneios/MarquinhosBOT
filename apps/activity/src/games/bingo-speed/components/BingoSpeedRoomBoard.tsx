@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
-import type {
-  BingoCard,
-  BingoGameEndPayload,
-  BingoInitPayload,
-  BingoNumberDrawnPayload,
+import { parsePayload } from '../../shared/colyseusConnection';
+import {
+  bingoGameEndPayloadSchema,
+  bingoInitPayloadSchema,
+  bingoNumberDrawnPayloadSchema,
+  type BingoCard,
 } from '../types';
 import { BingoSpeedBoardCanvas } from './BingoSpeedBoardCanvas';
 
@@ -32,15 +33,18 @@ export function BingoSpeedRoomBoard() {
     if (!ctx) return;
     return ctx.subscribe((message) => {
       if (message.type === 'init') {
-        const payload = message.payload as BingoInitPayload;
+        const payload = parsePayload(bingoInitPayloadSchema, message);
+        if (!payload) return;
         setCard(payload.card);
         setDrawnNumbers(new Set(payload.state?.drawnNumbers ?? []));
         setCardLoaded(true);
       } else if (message.type === 'number_drawn') {
-        const payload = message.payload as BingoNumberDrawnPayload;
+        const payload = parsePayload(bingoNumberDrawnPayloadSchema, message);
+        if (!payload) return;
         setDrawnNumbers((prev) => new Set(prev).add(payload.number));
       } else if (message.type === 'game_end') {
-        setWinner((message.payload as BingoGameEndPayload).winner ?? null);
+        const payload = parsePayload(bingoGameEndPayloadSchema, message);
+        if (payload) setWinner(payload.winner ?? null);
       }
     });
   }, [ctx]);

@@ -10,6 +10,7 @@ import {
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
+import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
@@ -17,6 +18,9 @@ import {
 import { useBattleshipSession } from '../hooks/useBattleshipSession';
 import {
   SHIP_ORDER,
+  battleshipStateViewSchema,
+  errorPayloadSchema,
+  initPayloadSchema,
   type BattleshipSide,
   type BattleshipStateView,
   type Orientation,
@@ -51,16 +55,20 @@ export function BattleshipBoard({ session }: { session: WsSession }) {
     colyseusUrl(),
     (message: ActivityMessage) => {
       if (message.type === 'init') {
-        const payload = message.payload as { side: BattleshipSide | null };
-        setSide(payload.side);
+        const payload = parsePayload(initPayloadSchema, message);
+        if (payload) setSide(payload.side);
       } else if (message.type === 'state') {
-        setState(message.payload as BattleshipStateView);
+        const payload = parsePayload(battleshipStateViewSchema, message);
+        if (!payload) return;
+        setState(payload);
         setPlacementError(null);
         setFireError(null);
       } else if (message.type === 'placement_error') {
-        setPlacementError((message.payload as { message: string }).message);
+        const payload = parsePayload(errorPayloadSchema, message);
+        if (payload) setPlacementError(payload.message);
       } else if (message.type === 'fire_error') {
-        setFireError((message.payload as { message: string }).message);
+        const payload = parsePayload(errorPayloadSchema, message);
+        if (payload) setFireError(payload.message);
       }
     },
   );

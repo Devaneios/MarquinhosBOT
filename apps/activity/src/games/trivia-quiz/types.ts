@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export interface Question {
   id: string;
   text: string;
@@ -6,39 +8,27 @@ export interface Question {
   category: string;
 }
 
-export interface PlayerScore {
-  userId: string;
-  score: number;
-}
+const playerScoreSchema = z.object({ userId: z.string(), score: z.number() });
 
-export interface StateUpdate {
-  type: 'state_update';
-  payload: {
-    currentQuestionIndex: number;
-    questionText: string;
-    options: string[];
-    questionStartedAtMs: number;
-    questionTimerMs: number;
-    playerScores: PlayerScore[];
-    finished: boolean;
-  };
-}
+export type PlayerScore = z.infer<typeof playerScoreSchema>;
 
-export interface GameEnd {
-  type: 'game_end';
-  payload: {
-    leaderboard: PlayerScore[];
-  };
-}
+export const initPayloadSchema = z.object({
+  playerScores: z.array(playerScoreSchema),
+});
 
-export interface Init {
-  type: 'init';
-  payload: {
-    playerScores: PlayerScore[];
-  };
-}
+export const stateUpdatePayloadSchema = z.object({
+  currentQuestionIndex: z.number(),
+  questionText: z.string(),
+  options: z.array(z.string()),
+  questionStartedAtMs: z.number(),
+  questionTimerMs: z.number(),
+  playerScores: z.array(playerScoreSchema),
+  finished: z.boolean(),
+});
 
-export type TriviaQuizMessage = StateUpdate | GameEnd | Init;
+export const gameEndPayloadSchema = z.object({
+  leaderboard: z.array(playerScoreSchema),
+});
 
 export interface TriviaQuizSessionState {
   currentQuestion: {

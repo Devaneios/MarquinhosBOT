@@ -2,11 +2,17 @@ import { Application, Graphics } from 'pixi.js';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { devinfo, devlog, devwarn } from '../../../lib/devlog';
+import { parsePayload } from '../../shared/colyseusConnection';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
 import type {
   SnakeDirection,
   SnakeGameState,
   SnakePublicConfig,
+} from '../types';
+import {
+  initPayloadSchema,
+  opponentDisconnectedPayloadSchema,
+  statePayloadSchema,
 } from '../types';
 import {
   BG_COLOR,
@@ -58,15 +64,14 @@ export function SnakeRoomBoard() {
     if (!ctx) return;
     return ctx.subscribe((message) => {
       if (message.type === 'init') {
-        const payload = message.payload as {
-          playerId: string | null;
-          config?: SnakePublicConfig;
-        };
+        const payload = parsePayload(initPayloadSchema, message);
+        if (!payload) return;
         devlog('[snake-room] assigned player id', payload.playerId);
         setPlayerId(payload.playerId);
         if (payload.config) configRef.current = payload.config;
       } else if (message.type === 'state') {
-        const payload = message.payload as { state: SnakeGameState };
+        const payload = parsePayload(statePayloadSchema, message);
+        if (!payload) return;
         prevStateRef.current = latestStateRef.current;
         latestStateRef.current = {
           state: payload.state,
@@ -76,9 +81,11 @@ export function SnakeRoomBoard() {
         setWinner(payload.state.winner);
       } else if (message.type === 'opponent_disconnected') {
         devwarn('[snake-room] opponent disconnected', message.payload);
-        setPausedOpponent(
-          message.payload as { playerId: string; timeoutMs: number },
+        const payload = parsePayload(
+          opponentDisconnectedPayloadSchema,
+          message,
         );
+        if (payload) setPausedOpponent(payload);
       } else if (message.type === 'opponent_reconnected') {
         devinfo('[snake-room] opponent reconnected');
         setPausedOpponent(null);

@@ -1,10 +1,10 @@
 import { Application, Graphics, Text } from 'pixi.js';
 import { useEffect, useRef } from 'react';
-import type { TicTacToeState } from '../hooks/useTicTacToeSession';
+import type { TicTacToeState } from '../types';
 
 interface TicTacToeCanvasProps {
   state: TicTacToeState;
-  player: string;
+  player: string | null;
   onMove: (row: number, col: number) => void;
   gameOver: boolean;
   // 'player' | null both permit moves — null is the existing non-room

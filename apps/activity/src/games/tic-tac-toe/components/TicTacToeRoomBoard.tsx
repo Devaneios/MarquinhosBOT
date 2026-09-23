@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
+import { parsePayload } from '../../shared/colyseusConnection';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
-import type { TicTacToeState } from '../hooks/useTicTacToeSession';
+import {
+  actionRejectedPayloadSchema,
+  initPayloadSchema,
+  ticTacToeStateSchema,
+  type TicTacToeState,
+} from '../types';
 import { TicTacToeCanvas } from './TicTacToeCanvas';
 
 const EMPTY_BOARD: TicTacToeState = {
@@ -23,23 +29,23 @@ const EMPTY_BOARD: TicTacToeState = {
 export function TicTacToeRoomBoard() {
   const ctx = useRoomConnectionContext();
   const [gameState, setGameState] = useState<TicTacToeState>(EMPTY_BOARD);
-  const [player, setPlayer] = useState<string>('X');
+  const [player, setPlayer] = useState<string | null>('X');
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!ctx) return;
     return ctx.subscribe((message) => {
       if (message.type === 'init') {
-        const payload = message.payload as {
-          player: string;
-          state: TicTacToeState;
-        };
+        const payload = parsePayload(initPayloadSchema, message);
+        if (!payload) return;
         setPlayer(payload.player);
         setGameState(payload.state);
       } else if (message.type === 'state_update') {
-        setGameState(message.payload as TicTacToeState);
+        const payload = parsePayload(ticTacToeStateSchema, message);
+        if (payload) setGameState(payload);
       } else if (message.type === 'action_rejected') {
-        const payload = message.payload as { error: string };
+        const payload = parsePayload(actionRejectedPayloadSchema, message);
+        if (!payload) return;
         setError(payload.error);
         setTimeout(() => setError(''), 3000);
       }

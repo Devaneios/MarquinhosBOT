@@ -9,13 +9,19 @@ import {
 } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { colyseusUrl } from '../../lib/apiBase';
+import { parsePayload } from '../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../shared/useColyseusRoom';
 import { TicTacToeCanvas } from './components';
-import type { TicTacToeState } from './hooks/useTicTacToeSession';
 import { useTicTacToeSession } from './hooks/useTicTacToeSession';
+import {
+  actionRejectedPayloadSchema,
+  initPayloadSchema,
+  ticTacToeStateSchema,
+  type TicTacToeState,
+} from './types';
 
 export function TicTacToeGame({
   identity,
@@ -44,32 +50,25 @@ export function TicTacToeGame({
     moveCount: 0,
   });
 
-  const [player, setPlayer] = useState<string>('X');
+  const [player, setPlayer] = useState<string | null>('X');
   const [error, setError] = useState<string>('');
 
   const onMessage = useCallback((message: ActivityMessage) => {
     if (message.type === 'init') {
-      const payload = message.payload as {
-        player: string;
-        state: TicTacToeState;
-      };
+      const payload = parsePayload(initPayloadSchema, message);
+      if (!payload) return;
       setPlayer(payload.player);
       setGameState(payload.state);
     } else if (message.type === 'state_update') {
-      const payload = message.payload as {
-        board: (string | null)[][];
-        currentPlayer: string;
-        winner: string | null;
-        isDraw: boolean;
-        moveCount: number;
-      };
-      setGameState(payload);
+      const payload = parsePayload(ticTacToeStateSchema, message);
+      if (payload) setGameState(payload);
     } else if (message.type === 'action_rejected') {
       // ticTacToeAdapter.ts (server) sends ACTION_REJECTED ('action_rejected')
       // for a rejected move, not 'move_error' — a pre-existing mismatch with
       // this client code, found and fixed while adding room support (see the
       // matching note in checkers).
-      const payload = message.payload as { error: string };
+      const payload = parsePayload(actionRejectedPayloadSchema, message);
+      if (!payload) return;
       setError(payload.error);
       setTimeout(() => setError(''), 3000);
     }

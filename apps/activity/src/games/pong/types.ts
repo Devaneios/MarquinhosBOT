@@ -54,7 +54,8 @@ export type PongMatchPhase =
   | 'paused-disconnect'
   | 'no-contest';
 
-export type PongSide = 'left' | 'right' | 'top' | 'bottom';
+export const pongSideSchema = z.enum(['left', 'right', 'top', 'bottom']);
+export type PongSide = z.infer<typeof pongSideSchema>;
 export type PongPowerUpKind =
   | 'grow'
   | 'shrink'

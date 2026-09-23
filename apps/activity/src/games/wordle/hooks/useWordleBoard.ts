@@ -7,16 +7,17 @@ import React, {
 } from 'react';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
+import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
 import { KB_LETTERS, MIN_KEY_PRESS_MS } from '../constants';
-import type {
-  GuessRow,
-  WordleGuessErrorPayload,
-  WordleGuessResultPayload,
-  WordleInitPayload,
+import {
+  wordleGuessErrorPayloadSchema,
+  wordleGuessResultPayloadSchema,
+  wordleInitPayloadSchema,
+  type GuessRow,
 } from '../types';
 import { buildLetterStates, normalizeKey } from '../wordle.utils';
 
@@ -64,7 +65,8 @@ export function useWordleBoard(
     colyseusUrl(),
     (message: ActivityMessage) => {
       if (message.type === 'init') {
-        const payload = message.payload as WordleInitPayload;
+        const payload = parsePayload(wordleInitPayloadSchema, message);
+        if (!payload) return;
         setWordLength(payload.wordLength);
         setGuesses(payload.guesses);
         setSolved(payload.solved);
@@ -73,7 +75,8 @@ export function useWordleBoard(
         setCurrentLetters(Array(payload.wordLength).fill(''));
         setActiveIndex(0);
       } else if (message.type === 'guess_result') {
-        const payload = message.payload as WordleGuessResultPayload;
+        const payload = parsePayload(wordleGuessResultPayloadSchema, message);
+        if (!payload) return;
         setGuesses(payload.guesses);
         setSolved(payload.solved);
         window.clearTimeout(errorTimeout.current);
@@ -81,7 +84,8 @@ export function useWordleBoard(
         setCurrentLetters((prev) => prev.map(() => ''));
         setActiveIndex(0);
       } else if (message.type === 'guess_error') {
-        const payload = message.payload as WordleGuessErrorPayload;
+        const payload = parsePayload(wordleGuessErrorPayloadSchema, message);
+        if (!payload) return;
         setError(payload.message);
         window.clearTimeout(errorTimeout.current);
         errorTimeout.current = window.setTimeout(() => setError(null), 2500);

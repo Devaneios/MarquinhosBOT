@@ -2,6 +2,7 @@ import type { Room } from '@colyseus/sdk';
 import { Application, BlurFilter, Graphics } from 'pixi.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { z } from 'zod';
 import {
   menuButtonPrimary,
   menuButtonSecondary,
@@ -11,36 +12,44 @@ import { cn } from '../../../lib/cn';
 import { devinfo, devlog, devwarn } from '../../../lib/devlog';
 import type { WsSession } from '../../shared/activitySession';
 import {
+  parsePayload,
+  restartStatusPayloadSchema,
+} from '../../shared/colyseusConnection';
+import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
 import { LocalPaddlePredictor, PongSnapshotBuffer } from '../netcode';
 import { decodeStateSnapshot, type DecodedSnapshot } from '../protocol';
-import type { GameMode, PongSide } from '../types';
+import { pongSideSchema, type GameMode, type PongSide } from '../types';
 import { PongSfx } from './sfx';
 
 type Side = 'left' | 'right';
 
-interface PongLobbyState {
-  hostUserId: string | null;
-  started: boolean;
-  config: {
-    ruleset: string;
-    targetScore: number;
-    bestOf: number;
-    ranked: boolean;
-  };
-  players: {
-    userId: string;
-    displayName: string;
-    slot: number;
-    side: PongSide;
-    team: number;
-    connected: boolean;
-    ready: boolean;
-  }[];
-  spectators: string[];
-}
+const pongLobbyStateSchema = z.object({
+  hostUserId: z.string().nullable(),
+  started: z.boolean(),
+  config: z.object({
+    ruleset: z.string(),
+    targetScore: z.number(),
+    bestOf: z.number(),
+    ranked: z.boolean(),
+  }),
+  players: z.array(
+    z.object({
+      userId: z.string(),
+      displayName: z.string(),
+      slot: z.number(),
+      side: pongSideSchema,
+      team: z.number(),
+      connected: z.boolean(),
+      ready: z.boolean(),
+    }),
+  ),
+  spectators: z.array(z.string()),
+});
+
+type PongLobbyState = z.infer<typeof pongLobbyStateSchema>;
 
 const LOBBY_RULESETS = [
   'classic-1v1',
@@ -64,15 +73,32 @@ const COURT_LINE = '#34363a';
 const LEFT_COLOR = '#ffb000';
 const RIGHT_COLOR = '#5fbf77';
 
-interface PongConfig {
-  width: number;
-  height: number;
-  paddleWidth: number;
-  paddleHeight: number;
-  paddleSpeed: number;
-  ballRadius: number;
-  cornerGap?: number;
-}
+const pongConfigSchema = z.object({
+  width: z.number(),
+  height: z.number(),
+  paddleWidth: z.number(),
+  paddleHeight: z.number(),
+  paddleSpeed: z.number(),
+  ballRadius: z.number(),
+  cornerGap: z.number().optional(),
+});
+
+type PongConfig = z.infer<typeof pongConfigSchema>;
+
+const initPayloadSchema = z.object({
+  side: pongSideSchema.nullable(),
+  selfUserId: z.string(),
+  assignment: z
+    .object({ slot: z.number(), side: pongSideSchema, team: z.number() })
+    .nullable(),
+  config: pongConfigSchema,
+  lobby: pongLobbyStateSchema,
+});
+
+const playerDisconnectedPayloadSchema = z.object({
+  side: pongSideSchema,
+  timeoutMs: z.number(),
+});
 
 const PADDLE_WIDTH = 12;
 const PADDLE_HEIGHT = 80;
@@ -327,10 +353,9 @@ export function PongCanvas({
     required: number;
   } | null>(null);
   const [requested, setRequested] = useState(false);
-  const [pausedOpponent, setPausedOpponent] = useState<{
-    side: Side;
-    timeoutMs: number;
-  } | null>(null);
+  const [pausedOpponent, setPausedOpponent] = useState<z.infer<
+    typeof playerDisconnectedPayloadSchema
+  > | null>(null);
   const [spectating, setSpectating] = useState(false);
   const [lobby, setLobby] = useState<PongLobbyState | null>(null);
   const [selfUserId, setSelfUserId] = useState<string | null>(null);
@@ -405,17 +430,8 @@ export function PongCanvas({
 
     function handleJsonMessage(message: ActivityMessage) {
       if (message.type === 'init') {
-        const payload = message.payload as {
-          side: PongSide | null;
-          selfUserId: string;
-          assignment: {
-            slot: number;
-            side: PongSide;
-            team: number;
-          } | null;
-          config: PongConfig;
-          lobby: PongLobbyState;
-        };
+        const payload = parsePayload(initPayloadSchema, message);
+        if (!payload) return;
         // A null side means the match already has both players: we watch it
         // rather than drive a paddle in it.
         devinfo('[pong-canvas] assigned side', payload.side);
@@ -434,7 +450,8 @@ export function PongCanvas({
         );
         setReady(own?.ready ?? false);
       } else if (message.type === 'lobby_state') {
-        const payload = message.payload as PongLobbyState;
+        const payload = parsePayload(pongLobbyStateSchema, message);
+        if (!payload) return;
         setLobby(payload);
         const own = payload.players.find(
           (player) => player.slot === assignmentRef.current?.slot,
@@ -442,15 +459,15 @@ export function PongCanvas({
         setReady(own?.ready ?? false);
       } else if (message.type === 'restart_status') {
         devlog('[pong-canvas] restart status', message.payload);
-        setRestartStatus(
-          message.payload as { votes: number; required: number },
-        );
+        const payload = parsePayload(restartStatusPayloadSchema, message);
+        if (payload) setRestartStatus(payload);
       } else if (
         message.type === 'opponent_disconnected' ||
         message.type === 'player_disconnected'
       ) {
         devwarn('[pong-canvas] opponent disconnected', message.payload);
-        setPausedOpponent(message.payload as { side: Side; timeoutMs: number });
+        const payload = parsePayload(playerDisconnectedPayloadSchema, message);
+        if (payload) setPausedOpponent(payload);
       } else if (
         message.type === 'opponent_reconnected' ||
         message.type === 'player_reconnected'

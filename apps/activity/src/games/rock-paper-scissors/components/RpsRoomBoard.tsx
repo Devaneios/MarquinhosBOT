@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { parsePayload } from '../../shared/colyseusConnection';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
-import type {
-  GamePhase,
-  RoundResult,
-  RpsErrorPayload,
-  RpsPick,
-  RpsState,
+import {
+  roundResultSchema,
+  rpsErrorPayloadSchema,
+  rpsStateSchema,
+  type GamePhase,
+  type RpsPick,
+  type RpsState,
 } from '../types';
 import { PickButton } from './RpsBoard';
 
@@ -35,9 +37,11 @@ export function RpsRoomBoard() {
       if (message.type === 'game_start') {
         setPhase('playing');
       } else if (message.type === 'round_state') {
-        setRoundState(message.payload as RpsState);
+        const payload = parsePayload(rpsStateSchema, message);
+        if (payload) setRoundState(payload);
       } else if (message.type === 'round_result') {
-        const payload = message.payload as RoundResult;
+        const payload = parsePayload(roundResultSchema, message);
+        if (!payload) return;
         setPhase('round_result');
         setMyPick(null);
         setTimeout(() => {
@@ -51,8 +55,8 @@ export function RpsRoomBoard() {
       } else if (message.type === 'match_end') {
         setPhase('match_end');
       } else if (message.type === 'error') {
-        const payload = message.payload as RpsErrorPayload;
-        setError(payload.message);
+        const payload = parsePayload(rpsErrorPayloadSchema, message);
+        if (payload) setError(payload.message);
       }
     });
   }, [ctx]);

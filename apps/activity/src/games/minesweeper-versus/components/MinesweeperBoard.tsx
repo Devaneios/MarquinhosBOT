@@ -5,14 +5,17 @@ import { EndScreen, GameHeader } from '../../../components/game-shell';
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
+import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import type {
-  BoardSnapshot,
-  GameOverPayload,
-  RevealPayload,
+import {
+  boardSnapshotSchema,
+  gameOverPayloadSchema,
+  revealErrorPayloadSchema,
+  revealPayloadSchema,
+  type BoardSnapshot,
 } from '../protocol';
 import { applyRevealToBoard } from '../utils';
 import { MinesweeperCanvas } from './MinesweeperCanvas';
@@ -29,19 +32,23 @@ export function MinesweeperBoard({ session }: { session: WsSession }) {
     colyseusUrl(),
     (message: ActivityMessage) => {
       if (message.type === 'init') {
-        setBoard(message.payload as BoardSnapshot);
+        const payload = parsePayload(boardSnapshotSchema, message);
+        if (!payload) return;
+        setBoard(payload);
         setErrorMsg(null);
       } else if (message.type === 'reveal') {
-        const payload = message.payload as RevealPayload;
+        const payload = parsePayload(revealPayloadSchema, message);
+        if (!payload) return;
         setBoard((prev) => (prev ? applyRevealToBoard(prev, payload) : prev));
       } else if (message.type === 'game_over') {
-        const payload = message.payload as GameOverPayload;
+        const payload = parsePayload(gameOverPayloadSchema, message);
+        if (!payload) return;
         setBoard((prev) =>
           prev ? { ...prev, scores: payload.scores, gameOver: true } : prev,
         );
       } else if (message.type === 'reveal_error') {
-        const payload = message.payload as { message: string };
-        setErrorMsg(payload.message);
+        const payload = parsePayload(revealErrorPayloadSchema, message);
+        if (payload) setErrorMsg(payload.message);
       }
     },
   );

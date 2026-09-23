@@ -1,18 +1,21 @@
-export interface GameState {
-  currentWord: string;
-  currentTurn: string;
-  usedWords: string[];
-  players: { userId: string; alive: boolean }[];
-  gameOver: boolean;
-  winner: string | null;
-  userId: string;
-}
+import { z } from 'zod';
 
-export interface WordRejectedPayload {
-  error: string;
-}
+export const wordChainStatePayloadSchema = z.object({
+  currentWord: z.string(),
+  currentTurn: z.string(),
+  usedWords: z.array(z.string()),
+  players: z.array(z.object({ userId: z.string(), alive: z.boolean() })),
+  gameOver: z.boolean(),
+  winner: z.string().nullable(),
+});
 
-export interface OpponentDisconnectedPayload {
+export type GameState = z.infer<typeof wordChainStatePayloadSchema> & {
   userId: string;
-  timeoutMs: number;
-}
+};
+
+export const wordRejectedPayloadSchema = z.object({ error: z.string() });
+
+export const opponentDisconnectedPayloadSchema = z.object({
+  userId: z.string(),
+  timeoutMs: z.number(),
+});

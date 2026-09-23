@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
-import type { ConnectFourState, Disc } from '../types';
+import { parsePayload } from '../../shared/colyseusConnection';
+import {
+  connectFourStateSchema,
+  initPayloadSchema,
+  type ConnectFourState,
+  type Disc,
+} from '../types';
 import { ConnectFourCanvas } from './ConnectFourCanvas';
 
 // Renders the Connect Four board inside a multiplayer Room view — driven by
@@ -23,14 +29,13 @@ export function ConnectFourRoomBoard() {
     if (!ctx) return;
     return ctx.subscribe((message) => {
       if (message.type === 'init') {
-        const payload = message.payload as {
-          disc: Disc | null;
-          state: ConnectFourState;
-        };
+        const payload = parsePayload(initPayloadSchema, message);
+        if (!payload) return;
         setMySide(payload.disc);
         setState(payload.state);
       } else if (message.type === 'state') {
-        setState(message.payload as ConnectFourState);
+        const payload = parsePayload(connectFourStateSchema, message);
+        if (payload) setState(payload);
       }
     });
   }, [ctx]);

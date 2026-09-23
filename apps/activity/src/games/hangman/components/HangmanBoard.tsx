@@ -4,11 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { GameHeader } from '../../../components/game-shell';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
+import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import type { GuessErrorPayload, HangmanState } from '../types';
+import { guessErrorPayloadSchema, hangmanStateSchema } from '../types';
 import { HangmanCanvas } from './HangmanCanvas';
 
 export function HangmanBoard({ session }: { session: WsSession }) {
@@ -27,17 +28,9 @@ export function HangmanBoard({ session }: { session: WsSession }) {
     session,
     colyseusUrl(),
     (message: ActivityMessage) => {
-      if (message.type === 'init') {
-        const payload = message.payload as HangmanState;
-        setRevealedWord(payload.revealedWord);
-        setGuessedLetters(payload.guessedLetters);
-        setStrikes(payload.strikes);
-        setMaxStrikes(payload.maxStrikes);
-        setGameOver(payload.gameOver);
-        setWon(payload.won);
-        setError(null);
-      } else if (message.type === 'game_state') {
-        const payload = message.payload as HangmanState;
+      if (message.type === 'init' || message.type === 'game_state') {
+        const payload = parsePayload(hangmanStateSchema, message);
+        if (!payload) return;
         setRevealedWord(payload.revealedWord);
         setGuessedLetters(payload.guessedLetters);
         setStrikes(payload.strikes);
@@ -46,8 +39,8 @@ export function HangmanBoard({ session }: { session: WsSession }) {
         setWon(payload.won);
         setError(null);
       } else if (message.type === 'guess_error') {
-        const payload = message.payload as GuessErrorPayload;
-        setError(payload.message);
+        const payload = parsePayload(guessErrorPayloadSchema, message);
+        if (payload) setError(payload.message);
       }
     },
   );

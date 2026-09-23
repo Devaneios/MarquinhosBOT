@@ -1,7 +1,9 @@
 import type { KeyboardEvent, RefObject } from 'react';
+import { z } from 'zod';
 import type { WsSession } from '../shared/activitySession';
 
-export type LetterFeedback = 'correct' | 'present' | 'absent';
+const letterFeedbackSchema = z.enum(['correct', 'present', 'absent']);
+export type LetterFeedback = z.infer<typeof letterFeedbackSchema>;
 export type KeyState = LetterFeedback | 'unused';
 
 interface WordleUserConfigBase {
@@ -15,30 +17,30 @@ export type WordleUserConfig = WordleUserConfigBase &
     | { enableSpaceKey: true; enableArrowKeys: boolean }
   );
 
-export interface GuessRow {
-  guess: string;
-  feedback: LetterFeedback[];
-}
+const guessRowSchema = z.object({
+  guess: z.string(),
+  feedback: z.array(letterFeedbackSchema),
+});
+
+export type GuessRow = z.infer<typeof guessRowSchema>;
 
 export type WordleSessionState =
   | { status: 'connecting' }
   | { status: 'ready'; session: WsSession }
   | { status: 'error'; error: string };
 
-export interface WordleInitPayload {
-  wordLength: number;
-  guesses: GuessRow[];
-  solved: boolean;
-}
+export const wordleInitPayloadSchema = z.object({
+  wordLength: z.number(),
+  guesses: z.array(guessRowSchema),
+  solved: z.boolean(),
+});
 
-export interface WordleGuessResultPayload {
-  guesses: GuessRow[];
-  solved: boolean;
-}
+export const wordleGuessResultPayloadSchema = z.object({
+  guesses: z.array(guessRowSchema),
+  solved: z.boolean(),
+});
 
-export interface WordleGuessErrorPayload {
-  message: string;
-}
+export const wordleGuessErrorPayloadSchema = z.object({ message: z.string() });
 
 export interface CurrentRowProps {
   letters: string[];

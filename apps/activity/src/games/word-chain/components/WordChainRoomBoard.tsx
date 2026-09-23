@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { parsePayload } from '../../shared/colyseusConnection';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
-import type {
-  GameState,
-  OpponentDisconnectedPayload,
-  WordRejectedPayload,
+import {
+  opponentDisconnectedPayloadSchema,
+  wordChainStatePayloadSchema,
+  wordRejectedPayloadSchema,
+  type GameState,
 } from '../types';
 import { WordChainBoard } from './WordChainBoard';
 
@@ -40,15 +42,21 @@ export function WordChainRoomBoard() {
     if (!ctx) return;
     return ctx.subscribe((message) => {
       if (message.type === 'init' || message.type === 'state') {
-        const payload = message.payload as Partial<GameState>;
+        const payload = parsePayload(wordChainStatePayloadSchema, message);
+        if (!payload) return;
         setGameState((prev) => ({ ...prev, ...payload }));
         if (message.type === 'init') setError(null);
       } else if (message.type === 'action_rejected') {
-        const payload = message.payload as WordRejectedPayload;
+        const payload = parsePayload(wordRejectedPayloadSchema, message);
+        if (!payload) return;
         setError(payload.error);
         setInputValue('');
       } else if (message.type === 'opponent_disconnected') {
-        setPausedOpponent(message.payload as OpponentDisconnectedPayload);
+        const payload = parsePayload(
+          opponentDisconnectedPayloadSchema,
+          message,
+        );
+        if (payload) setPausedOpponent(payload);
       } else if (message.type === 'opponent_reconnected') {
         setPausedOpponent(null);
       }

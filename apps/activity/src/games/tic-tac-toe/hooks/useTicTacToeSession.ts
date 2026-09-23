@@ -5,15 +5,7 @@ import {
   fetchWsSessionToken,
   type WsSession,
 } from '../../shared/activitySession';
-import type { GameMode } from '../types';
-
-export interface TicTacToeState {
-  board: (string | null)[][];
-  currentPlayer: string;
-  winner: string | null;
-  isDraw: boolean;
-  moveCount: number;
-}
+import type { GameMode, TicTacToeState } from '../types';
 
 export interface TicTacToeSession {
   session: WsSession;

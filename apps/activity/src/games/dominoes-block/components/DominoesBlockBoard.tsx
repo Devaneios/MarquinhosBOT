@@ -6,11 +6,18 @@ import { colyseusUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
 import type { WsSession } from '../../shared/activitySession';
 import {
+  parsePayload,
+  restartStatusPayloadSchema,
+} from '../../shared/colyseusConnection';
+import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
 import {
+  dominoesClientStateSchema,
   legalEndsFor,
+  moveRejectedPayloadSchema,
+  opponentDisconnectedPayloadSchema,
   type ChainEnd,
   type DominoesClientState,
   type Tile,
@@ -46,7 +53,8 @@ export function DominoesBlockBoard({
     colyseusUrl(),
     (message: ActivityMessage) => {
       if (message.type === 'state') {
-        const payload = message.payload as DominoesClientState;
+        const payload = parsePayload(dominoesClientStateSchema, message);
+        if (!payload) return;
         setState(payload);
         setRejection(null);
         if (payload.winner || payload.blocked) {
@@ -54,16 +62,17 @@ export function DominoesBlockBoard({
           setRestartRequested(false);
         }
       } else if (message.type === 'move_rejected') {
-        const payload = message.payload as { reason: string };
-        setRejection(payload.reason);
+        const payload = parsePayload(moveRejectedPayloadSchema, message);
+        if (payload) setRejection(payload.reason);
       } else if (message.type === 'restart_status') {
-        setRestartStatus(
-          message.payload as { votes: number; required: number },
-        );
+        const payload = parsePayload(restartStatusPayloadSchema, message);
+        if (payload) setRestartStatus(payload);
       } else if (message.type === 'opponent_disconnected') {
-        setDisconnectedOpponent(
-          message.payload as { userId: string; timeoutMs: number },
+        const payload = parsePayload(
+          opponentDisconnectedPayloadSchema,
+          message,
         );
+        if (payload) setDisconnectedOpponent(payload);
       } else if (message.type === 'opponent_reconnected') {
         setDisconnectedOpponent(null);
       }

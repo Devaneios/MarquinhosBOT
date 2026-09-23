@@ -12,15 +12,25 @@ import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
 import {
+  parsePayload,
+  restartStatusPayloadSchema,
+  type RestartStatus,
+} from '../../shared/colyseusConnection';
+import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
 import {
+  disconnectNoticeSchema,
+  initPayloadSchema,
   isHiddenCard,
+  matchOverPayloadSchema,
+  moveRejectedPayloadSchema,
+  tableViewSchema,
+  turnTimeoutPayloadSchema,
   type DisconnectNotice,
   type LegalMove,
   type MaskedCard,
-  type RestartStatus,
   type ScoreboardEntry,
   type TableView,
 } from '../core/types';
@@ -70,19 +80,20 @@ function CardTableBoard({
     colyseusUrl(),
     (message: ActivityMessage) => {
       switch (message.type) {
-        case 'init':
-          setMySeatIndex(
-            (message.payload as { seatIndex: number | null }).seatIndex,
-          );
+        case 'init': {
+          const payload = parsePayload(initPayloadSchema, message);
+          if (payload) setMySeatIndex(payload.seatIndex);
           break;
+        }
         case 'state': {
-          setView(message.payload as TableView);
+          const next = parsePayload(tableViewSchema.loose(), message);
+          if (!next) break;
+          setView(next);
           setRejection(null);
           setTimedOut(null);
           // Only drop the selection when the card is no longer playable —
           // clearing it on every broadcast means an opponent's move wipes the
           // card you were about to play.
-          const next = message.payload as TableView;
           setSelectedCardId((current) =>
             current && isPlayable(next.legalMoves, current) ? current : null,
           );
@@ -90,27 +101,33 @@ function CardTableBoard({
         }
         case 'move_rejected':
           setRejection(
-            (message.payload as { reason?: string })?.reason ??
+            parsePayload(moveRejectedPayloadSchema, message)?.reason ??
               t('cards:invalidMove'),
           );
           break;
-        case 'match_over':
-          setScoreboard(
-            (message.payload as { scoreboard: ScoreboardEntry[] }).scoreboard,
-          );
+        case 'match_over': {
+          const payload = parsePayload(matchOverPayloadSchema, message);
+          if (payload) setScoreboard(payload.scoreboard);
           break;
-        case 'restart_status':
-          setRestartStatus(message.payload as RestartStatus);
+        }
+        case 'restart_status': {
+          const payload = parsePayload(restartStatusPayloadSchema, message);
+          if (payload) setRestartStatus(payload);
           break;
-        case 'opponent_disconnected':
-          setDisconnected(message.payload as DisconnectNotice);
+        }
+        case 'opponent_disconnected': {
+          const payload = parsePayload(disconnectNoticeSchema, message);
+          if (payload) setDisconnected(payload);
           break;
+        }
         case 'opponent_reconnected':
           setDisconnected(null);
           break;
-        case 'turn_timeout':
-          setTimedOut((message.payload as { userId: string }).userId);
+        case 'turn_timeout': {
+          const payload = parsePayload(turnTimeoutPayloadSchema, message);
+          if (payload) setTimedOut(payload.userId);
           break;
+        }
         default:
           break;
       }

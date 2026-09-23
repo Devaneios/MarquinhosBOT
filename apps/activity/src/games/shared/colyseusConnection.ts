@@ -1,4 +1,5 @@
 import { Client, type Room } from '@colyseus/sdk';
+import { z } from 'zod';
 import { devinfo, devwarn } from '../../lib/devlog';
 import type { GameId } from '../gameId';
 import type { WsSession } from './activitySession';
@@ -6,6 +7,23 @@ import type { WsSession } from './activitySession';
 export interface ActivityMessage {
   type: string;
   payload?: unknown;
+}
+
+export const restartStatusPayloadSchema = z.object({
+  votes: z.number(),
+  required: z.number(),
+});
+
+export type RestartStatus = z.infer<typeof restartStatusPayloadSchema>;
+
+export function parsePayload<T>(
+  schema: z.ZodType<T>,
+  message: ActivityMessage,
+): T | null {
+  const parsed = schema.safeParse(message.payload);
+  if (parsed.success) return parsed.data;
+  devwarn('[colyseus] ignoring malformed payload', message.type, parsed.error);
+  return null;
 }
 
 // 'connecting'/'connected' track the join itself; 'disconnected' means the

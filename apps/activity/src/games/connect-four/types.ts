@@ -1,10 +1,23 @@
-export type GameMode = 'single' | 'multi';
-export type Disc = 'p1' | 'p2';
+import { z } from 'zod';
 
-export interface ConnectFourState {
-  grid: (Disc | null)[][];
-  currentTurn: Disc;
-  winner: Disc | null;
-  winningLine: Array<{ row: number; col: number }> | null;
-  isDraw: boolean;
-}
+export type GameMode = 'single' | 'multi';
+
+export const discSchema = z.enum(['p1', 'p2']);
+export type Disc = z.infer<typeof discSchema>;
+
+export const connectFourStateSchema = z.object({
+  grid: z.array(z.array(discSchema.nullable())),
+  currentTurn: discSchema,
+  winner: discSchema.nullable(),
+  winningLine: z
+    .array(z.object({ row: z.number(), col: z.number() }))
+    .nullable(),
+  isDraw: z.boolean(),
+});
+
+export type ConnectFourState = z.infer<typeof connectFourStateSchema>;
+
+export const initPayloadSchema = z.object({
+  disc: discSchema.nullable(),
+  state: connectFourStateSchema,
+});

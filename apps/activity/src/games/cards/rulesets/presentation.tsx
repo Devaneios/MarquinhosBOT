@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { HUDStat } from '../components';
-import type { TableView, TrucoView } from '../core/types';
+import { trucoViewSchema, type TableView } from '../core/types';
 
 // A minimal stand-in for react-i18next's TFunction: presentation.tsx is not a
 // component (its hud/statusLine closures get called from inside CardTable's
@@ -27,8 +27,9 @@ export interface RulesetPresentation {
   moveLabels?: Record<string, string>;
   // Seat position labels, indexed by seatIndex.
   seatLabels?: string[];
-  // Ruleset-specific HUD. The cast to the ruleset's own view type happens here
-  // and nowhere else, which is the point of keeping it in one module per game.
+  // Ruleset-specific HUD. The parse into the ruleset's own view type happens
+  // here and nowhere else, which is the point of keeping it in one module per
+  // game.
   hud?: (view: TableView) => ReactNode;
   // Ruleset-specific status line while a decision is pending.
   statusLine?: (view: TableView) => string | null;
@@ -64,20 +65,22 @@ function trucoPresentation(
     },
     seatLabels,
     hud: (view) => {
-      const truco = view as TrucoView;
+      const parsed = trucoViewSchema.safeParse(view);
+      if (!parsed.success) return null;
+      const truco = parsed.data;
       return (
         <>
           <HUDStat
             label={t('cards:teamA')}
-            value={String(truco.matchScore?.A ?? 0)}
+            value={String(truco.matchScore.A)}
           />
           <HUDStat
             label={t('cards:teamB')}
-            value={String(truco.matchScore?.B ?? 0)}
+            value={String(truco.matchScore.B)}
           />
           <HUDStat
             label={t('cards:handValue')}
-            value={String(truco.currentStake ?? 1)}
+            value={String(truco.currentStake)}
           />
           {truco.vira?.rank && (
             <HUDStat
@@ -92,13 +95,9 @@ function trucoPresentation(
       );
     },
     statusLine: (view) => {
-      const truco = view as TrucoView;
-      if (
-        truco.pendingCallLevel === null ||
-        truco.pendingCallLevel === undefined
-      ) {
-        return null;
-      }
+      const parsed = trucoViewSchema.safeParse(view);
+      if (!parsed.success || parsed.data.pendingCallLevel === null) return null;
+      const truco = parsed.data;
       const caller = truco.callingTeam
         ? t(`cards:team${truco.callingTeam}`)
         : t('cards:theOtherTeam');

@@ -12,11 +12,20 @@ import {
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import {
+  parsePayload,
+  restartStatusPayloadSchema,
+} from '../../shared/colyseusConnection';
+import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
 import { useConnectFourSession } from '../hooks/useConnectFourSession';
-import type { ConnectFourState, Disc } from '../types';
+import {
+  connectFourStateSchema,
+  initPayloadSchema,
+  type ConnectFourState,
+  type Disc,
+} from '../types';
 import { ConnectFourCanvas } from './ConnectFourCanvas';
 import { ConnectFourModeMenu } from './ConnectFourModeMenu';
 
@@ -50,14 +59,14 @@ export function ConnectFourBoard({
     colyseusUrl(),
     (message: ActivityMessage) => {
       if (message.type === 'init') {
-        const payload = message.payload as {
-          disc: Disc | null;
-          state: ConnectFourState;
-        };
+        const payload = parsePayload(initPayloadSchema, message);
+        if (!payload) return;
         setMySide(payload.disc);
         setState(payload.state);
       } else if (message.type === 'state') {
-        setState(message.payload as ConnectFourState);
+        const payload = parsePayload(connectFourStateSchema, message);
+        if (!payload) return;
+        setState(payload);
         setOpponentStatus(null);
         restartVotesRef.current = null;
         setRestartStatus(null);
@@ -66,9 +75,8 @@ export function ConnectFourBoard({
       } else if (message.type === 'opponent_reconnected') {
         setOpponentStatus(null);
       } else if (message.type === 'restart_status') {
-        setRestartStatus(
-          message.payload as { votes: number; required: number },
-        );
+        const payload = parsePayload(restartStatusPayloadSchema, message);
+        if (payload) setRestartStatus(payload);
       }
     },
     (room) => {

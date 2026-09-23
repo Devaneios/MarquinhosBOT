@@ -8,15 +8,16 @@ import {
 import { colyseusUrl } from '../../../lib/apiBase';
 import { devlog } from '../../../lib/devlog';
 import type { WsSession } from '../../shared/activitySession';
+import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import type {
-  BingoCard,
-  BingoGameEndPayload,
-  BingoInitPayload,
-  BingoNumberDrawnPayload,
+import {
+  bingoGameEndPayloadSchema,
+  bingoInitPayloadSchema,
+  bingoNumberDrawnPayloadSchema,
+  type BingoCard,
 } from '../types';
 import { BingoSpeedBoardCanvas } from './BingoSpeedBoardCanvas';
 
@@ -58,16 +59,19 @@ export function BingoSpeedCanvas({
 
     messageHandlerRef.current = (message) => {
       if (message.type === 'init') {
-        const payload = message.payload as BingoInitPayload;
+        const payload = parsePayload(bingoInitPayloadSchema, message);
+        if (!payload) return;
         devlog('[bingo-speed-canvas] init', payload);
         setCard(payload.card);
         setDrawnNumbers(new Set(payload.state?.drawnNumbers ?? []));
         setCardLoaded(true);
       } else if (message.type === 'number_drawn') {
-        const payload = message.payload as BingoNumberDrawnPayload;
+        const payload = parsePayload(bingoNumberDrawnPayloadSchema, message);
+        if (!payload) return;
         setDrawnNumbers((prev) => new Set(prev).add(payload.number));
       } else if (message.type === 'game_end') {
-        const payload = message.payload as BingoGameEndPayload;
+        const payload = parsePayload(bingoGameEndPayloadSchema, message);
+        if (!payload) return;
         devlog('[bingo-speed-canvas] game end', payload);
         setWinner(payload.winner ?? null);
       }
