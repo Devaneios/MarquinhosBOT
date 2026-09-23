@@ -1,6 +1,6 @@
+import type { Track } from '@marquinhos/contracts/http/routes/scrobble';
 import dotenv from 'dotenv';
 import SpotifyWebApi from 'spotify-web-api-node';
-import type { Track } from 'types';
 
 dotenv.config();
 

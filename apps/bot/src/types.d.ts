@@ -14,16 +14,6 @@ export interface AvatarConfig {
 
 export type BotErrorLogLevel = 'error' | 'warn' | 'info';
 
-export type PlaybackData = {
-  title: string;
-  url?: string;
-  listeningUsersId: string[];
-  timestamp: Date;
-  guildId: string;
-  channelId: string;
-  providerName: string;
-};
-
 export type FlipCoinResult = {
   result: string;
   heads: number;
@@ -31,7 +21,3 @@ export type FlipCoinResult = {
   count: number;
   elapsedTime: number;
 };
-
-export interface EmojiReactionResponse {
-  emojis: string[];
-}

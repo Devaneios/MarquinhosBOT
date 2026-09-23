@@ -22,17 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
+import {
+  playbackDataSchema,
+  trackSchema,
+  type PlaybackData,
+  type Track,
+} from '@marquinhos/contracts/http/routes/scrobble';
 import { db } from '@marquinhos/database/sqlite';
 import axios from 'axios';
 import crypto from 'crypto';
 import { getUnixTime, parseISO } from 'date-fns';
-import { playbackDataSchema, trackSchema } from 'schemas/scrobble.schema';
-import type {
-  LastfmSessionResponse,
-  LastfmTopListenedPeriod,
-  PlaybackData,
-  Track,
-} from 'types';
+import type { LastfmSessionResponse, LastfmTopListenedPeriod } from 'types';
 import { URLSearchParams } from 'url';
 import { z } from 'zod';
 // URLSearchParams is available globally in Node.js >= 15 but we import for clarity

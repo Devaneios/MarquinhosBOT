@@ -22,8 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
+import type {
+  PlaybackData,
+  Track,
+} from '@marquinhos/contracts/http/routes/scrobble';
 import { SpotifyService } from 'services/spotify';
-import type { PlaybackData, Track } from 'types';
 
 export class ParserService {
   spotifyService: SpotifyService;

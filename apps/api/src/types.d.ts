@@ -10,24 +10,6 @@ export type LastfmSessionResponse = {
   userName: string;
 };
 
-export type PlaybackData = {
-  title: string;
-  url?: string;
-  listeningUsersId: string[];
-  timestamp: string;
-  guildId: string;
-  channelId: string;
-  providerName: string;
-};
-
-export type Track = {
-  artist: string;
-  name: string;
-  durationInMillis: number;
-  album?: string;
-  coverArtUrl?: string;
-};
-
 export interface ApiResponse<T> {
   message?: string;
   data?: T;

@@ -1,8 +1,8 @@
+import * as contract from '@marquinhos/contracts/http/routes/scrobble';
 import ScrobbleController from 'controllers/scrobble.controller';
 import express from 'express';
 import { checkToken } from 'middlewares/botAuth';
-import { validateRequest } from 'middlewares/validateRequest';
-import { addScrobbleToQueueSchema } from 'schemas/scrobble.schema';
+import { validateContract } from 'utils/contract';
 
 const router = express.Router();
 const scrobbleController = new ScrobbleController();
@@ -10,7 +10,7 @@ const scrobbleController = new ScrobbleController();
 router.post(
   '/queue',
   checkToken,
-  validateRequest(addScrobbleToQueueSchema),
+  validateContract(contract.addToQueue),
   scrobbleController.addScrobbleToQueue.bind(scrobbleController),
 );
 

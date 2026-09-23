@@ -1,9 +1,10 @@
+import type { Track } from '@marquinhos/contracts/http/routes/scrobble';
 import { db } from '@marquinhos/database/sqlite';
 import dotenv from 'dotenv';
 import { DiscordService } from 'services/discord';
 import { LastfmService } from 'services/lastfm';
 import { SpotifyService } from 'services/spotify';
-import type { LastfmTopListenedPeriod, Track } from 'types';
+import type { LastfmTopListenedPeriod } from 'types';
 import { decryptToken, encryptToken } from 'utils/crypto';
 
 dotenv.config();

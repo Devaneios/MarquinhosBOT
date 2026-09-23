@@ -1,61 +1,35 @@
+import { choose } from '@marquinhos/contracts/http/routes/emojiReaction';
 import { describe, expect, it } from 'bun:test';
-import { emojiReactionChooseSchema } from 'schemas/emojiReaction.schema';
 
-describe('emojiReactionChooseSchema', () => {
-  it('accepts a payload with just content', async () => {
-    expect(
-      emojiReactionChooseSchema.parseAsync({
-        body: { content: 'kkkkk mano que hilário' },
-        query: {},
-        params: {},
-      }),
-    ).resolves.toBeDefined();
+const accepts = (body: unknown) => choose.body.safeParse(body).success;
+
+describe('emoji reaction choose body', () => {
+  it('accepts a payload with just content', () => {
+    expect(accepts({ content: 'kkkkk mano que hilário' })).toBe(true);
   });
 
-  it('accepts a payload with recentMessages', async () => {
+  it('accepts a payload with recentMessages', () => {
     expect(
-      emojiReactionChooseSchema.parseAsync({
-        body: {
-          content: 'kkkkk',
-          recentMessages: [{ author: 'ana', content: 'oi' }],
-        },
-        query: {},
-        params: {},
+      accepts({
+        content: 'kkkkk',
+        recentMessages: [{ author: 'ana', content: 'oi' }],
       }),
-    ).resolves.toBeDefined();
+    ).toBe(true);
   });
 
-  it('rejects a payload missing content', async () => {
-    expect(
-      emojiReactionChooseSchema.parseAsync({
-        body: {},
-        query: {},
-        params: {},
-      }),
-    ).rejects.toThrow();
+  it('rejects a payload missing content', () => {
+    expect(accepts({})).toBe(false);
   });
 
-  it('rejects an empty content string', async () => {
-    expect(
-      emojiReactionChooseSchema.parseAsync({
-        body: { content: '' },
-        query: {},
-        params: {},
-      }),
-    ).rejects.toThrow();
+  it('rejects an empty content string', () => {
+    expect(accepts({ content: '' })).toBe(false);
   });
 
-  it('rejects recentMessages longer than 10 entries', async () => {
+  it('rejects recentMessages longer than 10 entries', () => {
     const recentMessages = Array.from({ length: 11 }, (_, i) => ({
       author: `user${i}`,
       content: 'msg',
     }));
-    expect(
-      emojiReactionChooseSchema.parseAsync({
-        body: { content: 'oi', recentMessages },
-        query: {},
-        params: {},
-      }),
-    ).rejects.toThrow();
+    expect(accepts({ content: 'oi', recentMessages })).toBe(false);
   });
 });

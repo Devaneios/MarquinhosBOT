@@ -1,10 +1,7 @@
+import * as contract from '@marquinhos/contracts/http/routes/scrobble';
 import type { Request, Response } from 'express';
-import {
-  addScrobbleToQueueSchema,
-  scrobbleIdParamsSchema,
-  scrobbleUserParamsSchema,
-} from 'schemas/scrobble.schema';
 import { ScrobblerService } from 'services/scrobbler';
+import { parseRequest, sendContract } from 'utils/contract';
 
 class ScrobbleController {
   scrobblerService: ScrobblerService;
@@ -15,14 +12,17 @@ class ScrobbleController {
 
   async addScrobbleToQueue(req: Request, res: Response) {
     try {
-      const body = addScrobbleToQueueSchema.shape.body.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.addToQueue, req);
+      if (!input) {
         return res.status(400).json({ message: 'Invalid playback data' });
       }
       const data = await this.scrobblerService.addScrobbleToQueue(
-        body.data.playbackData,
+        input.body.playbackData,
       );
-      return res.status(200).json({ data, message: 'Scrobble added to queue' });
+      return sendContract(res, contract.addToQueue, {
+        data,
+        message: 'Scrobble added to queue',
+      });
     } catch (error: unknown) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
@@ -31,12 +31,15 @@ class ScrobbleController {
 
   async dispatchScrobble(req: Request, res: Response) {
     try {
-      const params = scrobbleIdParamsSchema.safeParse(req.params);
-      if (!params.success) {
+      const input = parseRequest(contract.dispatch, req);
+      if (!input) {
         return res.status(400).json({ message: 'id is required' });
       }
-      const id = await this.scrobblerService.dispatchScrobble(params.data.id);
-      return res.status(200).json({ data: id, message: 'Scrobbled' });
+      const id = await this.scrobblerService.dispatchScrobble(input.params.id);
+      return sendContract(res, contract.dispatch, {
+        data: id,
+        message: 'Scrobbled',
+      });
     } catch (error: unknown) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
@@ -45,17 +48,20 @@ class ScrobbleController {
 
   async removeUserFromScrobble(req: Request, res: Response) {
     try {
-      const params = scrobbleUserParamsSchema.safeParse(req.params);
-      if (!params.success) {
+      const input = parseRequest(contract.removeUser, req);
+      if (!input) {
         return res
           .status(400)
           .json({ message: 'scrobbleId and userId are required' });
       }
       const id = await this.scrobblerService.removeUserFromScrobble(
-        params.data.scrobbleId,
-        params.data.userId,
+        input.params.scrobbleId,
+        input.params.userId,
       );
-      return res.status(200).json({ data: id, message: 'User removed' });
+      return sendContract(res, contract.removeUser, {
+        data: id,
+        message: 'User removed',
+      });
     } catch (error: unknown) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
@@ -64,17 +70,20 @@ class ScrobbleController {
 
   async addUserToScrobble(req: Request, res: Response) {
     try {
-      const params = scrobbleUserParamsSchema.safeParse(req.params);
-      if (!params.success) {
+      const input = parseRequest(contract.addUser, req);
+      if (!input) {
         return res
           .status(400)
           .json({ message: 'scrobbleId and userId are required' });
       }
       const id = await this.scrobblerService.addUserToScrobble(
-        params.data.scrobbleId,
-        params.data.userId,
+        input.params.scrobbleId,
+        input.params.userId,
       );
-      return res.status(200).json({ data: id, message: 'User removed' });
+      return sendContract(res, contract.addUser, {
+        data: id,
+        message: 'User added',
+      });
     } catch (error: unknown) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });

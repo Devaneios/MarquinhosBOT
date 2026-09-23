@@ -1,17 +1,22 @@
+import * as contract from '@marquinhos/contracts/http/routes/emojiReaction';
 import EmojiReactionController from 'controllers/emojiReaction.controller';
 import express from 'express';
 import { checkToken } from 'middlewares/botAuth';
-import { validateRequest } from 'middlewares/validateRequest';
-import { emojiReactionChooseSchema } from 'schemas/emojiReaction.schema';
+import { validateContract } from 'utils/contract';
 
-const router = express.Router();
-const emojiReaction = new EmojiReactionController();
+export function createEmojiReactionRouter(
+  emojiReaction = new EmojiReactionController(),
+) {
+  const router = express.Router();
 
-router.post(
-  '/choose',
-  checkToken,
-  validateRequest(emojiReactionChooseSchema),
-  emojiReaction.choose.bind(emojiReaction),
-);
+  router.post(
+    '/choose',
+    checkToken,
+    validateContract(contract.choose),
+    emojiReaction.choose.bind(emojiReaction),
+  );
 
-export default router;
+  return router;
+}
+
+export default createEmojiReactionRouter();

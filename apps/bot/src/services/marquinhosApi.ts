@@ -4,12 +4,10 @@ import {
   HttpError,
 } from '@marquinhos/api-client/bot';
 import { env } from '@marquinhos/config/environment';
-import {
-  apiResponseSchema,
-  emojiReactionResponseSchema,
-} from '@marquinhos/contracts/http/botResponses';
+import { apiResponseSchema } from '@marquinhos/contracts/http/botResponses';
 import type { ContractRequest } from '@marquinhos/contracts/http/contract';
 import * as aiChat from '@marquinhos/contracts/http/routes/aiChat';
+import * as emojiReaction from '@marquinhos/contracts/http/routes/emojiReaction';
 import * as gamification from '@marquinhos/contracts/http/routes/gamification';
 import type {
   DailyLeaderboardEntry,
@@ -17,11 +15,7 @@ import type {
   WordleLeaderboardPeriod,
 } from '@marquinhos/contracts/http/routes/wordle';
 import * as wordle from '@marquinhos/contracts/http/routes/wordle';
-import {
-  ApiResponse,
-  EmojiReactionResponse,
-  PlaybackData,
-} from '@marquinhos/types';
+import { ApiResponse } from '@marquinhos/types';
 import { reportError } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { z } from 'zod';
@@ -90,34 +84,6 @@ export class MarquinhosApiService {
     return MarquinhosApiService.instance;
   }
 
-  async addToScrobbleQueue(scrobble: PlaybackData): Promise<ApiResponse> {
-    const data = await this.client.post('/api/scrobble/queue', {
-      playbackData: scrobble,
-    });
-    return apiResponseSchema(z.unknown()).parse(data);
-  }
-
-  async dispatchScrobbleQueue(id: string): Promise<ApiResponse> {
-    const data = await this.client.post(`/api/scrobble/${id}`);
-    return apiResponseSchema(z.unknown()).parse(data);
-  }
-
-  async removeUserFromScrobbleQueue(
-    id: string,
-    userId: string,
-  ): Promise<ApiResponse> {
-    const data = await this.client.delete(`/api/scrobble/${id}/${userId}`);
-    return apiResponseSchema(z.unknown()).parse(data);
-  }
-
-  async addUserToScrobbleQueue(
-    id: string,
-    userId: string,
-  ): Promise<ApiResponse> {
-    const data = await this.client.post(`/api/scrobble/${id}/${userId}`);
-    return apiResponseSchema(z.unknown()).parse(data);
-  }
-
   // Gamification API calls
   async addXP(userId: string, guildId: string, eventType: string) {
     return callContract(this.client, gamification.addXp, {
@@ -177,12 +143,10 @@ export class MarquinhosApiService {
     });
   }
 
-  async chooseEmojiReactions(payload: {
-    content: string;
-    recentMessages?: { author: string; content: string }[];
-  }): Promise<ApiResponse<EmojiReactionResponse>> {
-    const data = await this.client.post('/api/emoji-reaction/choose', payload);
-    return apiResponseSchema(emojiReactionResponseSchema).parse(data);
+  async chooseEmojiReactions(
+    body: ContractRequest<typeof emojiReaction.choose>['body'],
+  ) {
+    return callContract(this.client, emojiReaction.choose, { body });
   }
 
   async getUserGameStats(userId: string, guildId: string) {

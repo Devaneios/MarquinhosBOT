@@ -7,7 +7,3 @@ export function apiResponseSchema<T extends z.ZodTypeAny>(dataSchema: T) {
     error: z.string().optional(),
   });
 }
-
-export const emojiReactionResponseSchema = z.object({
-  emojis: z.array(z.string()),
-});
