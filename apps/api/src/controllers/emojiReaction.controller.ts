@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { emojiReactionChooseSchema } from 'schemas/emojiReaction.schema';
 import { EmojiReactionService } from 'services/aiChat/EmojiReactionService';
 import { logger } from 'utils/logger';
 
@@ -11,10 +12,11 @@ class EmojiReactionController {
 
   async choose(req: Request, res: Response) {
     try {
-      const { content, recentMessages } = req.body as {
-        content: string;
-        recentMessages?: { author: string; content: string }[];
-      };
+      const body = emojiReactionChooseSchema.shape.body.safeParse(req.body);
+      if (!body.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
+      const { content, recentMessages } = body.data;
 
       const emojis = await this.service.chooseReactions({
         content,

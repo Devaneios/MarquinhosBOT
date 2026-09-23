@@ -11,7 +11,7 @@ router.post(
   '/choose',
   checkToken,
   validateRequest(emojiReactionChooseSchema),
-  emojiReaction.choose.bind(emojiReaction) as unknown as express.RequestHandler,
+  emojiReaction.choose.bind(emojiReaction),
 );
 
 export default router;

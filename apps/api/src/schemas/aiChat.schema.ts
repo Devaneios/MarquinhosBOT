@@ -36,3 +36,18 @@ export const aiResearchStartSchema = z.object({
     idempotencyKey: z.string().min(1),
   }),
 });
+
+export const aiResearchJobParamsSchema = z.object({
+  jobId: z.string().min(1),
+});
+
+export const aiTraceParamsSchema = z.object({
+  traceId: z.string().min(1),
+});
+
+export const aiTraceListQuerySchema = z.object({
+  limit: z.coerce.number().optional(),
+  userId: z.string().optional(),
+  status: z.string().optional(),
+  category: z.string().optional(),
+});

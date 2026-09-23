@@ -15,39 +15,27 @@ router.post(
   '/respond',
   checkToken,
   validateRequest(aiChatRespondSchema),
-  aiChat.respond.bind(aiChat) as unknown as express.RequestHandler,
+  aiChat.respond.bind(aiChat),
 );
 
 router.post(
   '/thread/ask',
   checkToken,
   validateRequest(aiThreadAskSchema),
-  aiChat.askInThread.bind(aiChat) as unknown as express.RequestHandler,
+  aiChat.askInThread.bind(aiChat),
 );
 
 router.post(
   '/research',
   checkToken,
   validateRequest(aiResearchStartSchema),
-  aiChat.startResearch.bind(aiChat) as unknown as express.RequestHandler,
+  aiChat.startResearch.bind(aiChat),
 );
 
-router.get(
-  '/research/:jobId',
-  checkToken,
-  aiChat.getResearchJob.bind(aiChat) as unknown as express.RequestHandler,
-);
+router.get('/research/:jobId', checkToken, aiChat.getResearchJob.bind(aiChat));
 
-router.get(
-  '/traces',
-  checkToken,
-  aiChat.listTraces.bind(aiChat) as unknown as express.RequestHandler,
-);
+router.get('/traces', checkToken, aiChat.listTraces.bind(aiChat));
 
-router.get(
-  '/traces/:traceId',
-  checkToken,
-  aiChat.getTrace.bind(aiChat) as unknown as express.RequestHandler,
-);
+router.get('/traces/:traceId', checkToken, aiChat.getTrace.bind(aiChat));
 
 export default router;

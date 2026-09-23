@@ -1,9 +1,16 @@
 import type { Request, Response } from 'express';
+import {
+  aiChatRespondSchema,
+  aiResearchJobParamsSchema,
+  aiResearchStartSchema,
+  aiThreadAskSchema,
+  aiTraceListQuerySchema,
+  aiTraceParamsSchema,
+} from 'schemas/aiChat.schema';
 import { AiChatService } from 'services/aiChat/AiChatService';
 import { AiTraceQuery } from 'services/aiChat/AiTraceQuery';
 import { ResearchOrchestrator } from 'services/aiChat/research/ResearchOrchestrator';
 import { AiThreadService } from 'services/aiChat/thread/AiThreadService';
-import type { ThreadMode } from 'services/aiChat/thread/ThreadSessionStore';
 import { logger } from 'utils/logger';
 
 class AiChatController {
@@ -26,15 +33,11 @@ class AiChatController {
 
   async askInThread(req: Request, res: Response) {
     try {
-      const { threadId, guildId, channelId, userId, content, mode } =
-        req.body as {
-          threadId: string;
-          guildId: string;
-          channelId: string;
-          userId: string;
-          content: string;
-          mode?: ThreadMode;
-        };
+      const body = aiThreadAskSchema.shape.body.safeParse(req.body);
+      if (!body.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
+      const { threadId, guildId, channelId, userId, content, mode } = body.data;
 
       const result = await this.threadService.ask({
         threadId,
@@ -54,15 +57,12 @@ class AiChatController {
 
   async startResearch(req: Request, res: Response) {
     try {
+      const body = aiResearchStartSchema.shape.body.safeParse(req.body);
+      if (!body.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
       const { threadId, guildId, channelId, userId, query, idempotencyKey } =
-        req.body as {
-          threadId: string;
-          guildId: string;
-          channelId: string;
-          userId: string;
-          query: string;
-          idempotencyKey: string;
-        };
+        body.data;
 
       const outcome = this.research.start({
         threadId,
@@ -97,7 +97,11 @@ class AiChatController {
 
   async getResearchJob(req: Request, res: Response) {
     try {
-      const job = this.research.get(req.params.jobId as string);
+      const params = aiResearchJobParamsSchema.safeParse(req.params);
+      if (!params.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
+      const job = this.research.get(params.data.jobId);
       if (!job) return res.status(404).json({ message: 'Job not found' });
       return res.status(200).json({ data: job });
     } catch (error) {
@@ -108,6 +112,10 @@ class AiChatController {
 
   async respond(req: Request, res: Response) {
     try {
+      const body = aiChatRespondSchema.shape.body.safeParse(req.body);
+      if (!body.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
       const {
         userId,
         guildId,
@@ -115,14 +123,7 @@ class AiChatController {
         content,
         recentMessages,
         repliedMessage,
-      } = req.body as {
-        userId: string;
-        guildId: string;
-        channelId: string;
-        content: string;
-        recentMessages: { author: string; content: string }[];
-        repliedMessage?: { author: string; content: string };
-      };
+      } = body.data;
 
       const result = await this.service.respond({
         userId,
@@ -142,19 +143,12 @@ class AiChatController {
 
   async listTraces(req: Request, res: Response) {
     try {
-      const { limit, userId, status, category } = req.query as {
-        limit?: string;
-        userId?: string;
-        status?: string;
-        category?: string;
-      };
+      const query = aiTraceListQuerySchema.safeParse(req.query);
+      if (!query.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
 
-      const traces = this.traceQuery.list({
-        limit: limit ? Number(limit) : undefined,
-        userId,
-        status,
-        category,
-      });
+      const traces = this.traceQuery.list(query.data);
 
       return res.status(200).json({ data: traces });
     } catch (error) {
@@ -165,7 +159,11 @@ class AiChatController {
 
   async getTrace(req: Request, res: Response) {
     try {
-      const trace = this.traceQuery.get(req.params.traceId as string);
+      const params = aiTraceParamsSchema.safeParse(req.params);
+      if (!params.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
+      const trace = this.traceQuery.get(params.data.traceId);
       if (!trace) return res.status(404).json({ message: 'Trace not found' });
       return res.status(200).json({ data: trace });
     } catch (error) {
