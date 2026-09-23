@@ -179,11 +179,11 @@ export class SnakeSession {
     this.detach(userId);
   }
 
-  handleInput(userId: string, direction: string) {
+  handleInput(userId: string, direction: SnakeDirection) {
     const player = this.players.find((p) => p.userId === userId);
     if (!player) return;
 
-    this.engine.setDirection(player.playerId, direction as SnakeDirection);
+    this.engine.setDirection(player.playerId, direction);
   }
 
   // `single` mode is a practice match against nobody without this — the

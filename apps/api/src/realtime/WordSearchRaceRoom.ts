@@ -1,8 +1,9 @@
-import { Room, type Client } from 'colyseus';
+import { Room } from 'colyseus';
+import { selectPayloadSchema } from 'realtime/adapters/wordSearchRaceAdapter';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { roomKey } from 'services/activity/roomKey';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
-import type { Cell } from 'services/activity/word-search-race/WordSearchRaceEngine';
 import { WordSearchRaceSession } from 'services/activity/word-search-race/WordSearchRaceSession';
 import {
   verifyWsSessionToken,
@@ -12,18 +13,7 @@ import {
 const SELECT_RATE_LIMIT_WINDOW_MS = 1000;
 const SELECT_RATE_LIMIT_MAX = 10;
 
-function isValidCell(value: unknown): value is Cell {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as Cell).row === 'number' &&
-    typeof (value as Cell).col === 'number' &&
-    Number.isInteger((value as Cell).row) &&
-    Number.isInteger((value as Cell).col)
-  );
-}
-
-export class WordSearchRaceRoom extends Room {
+export class WordSearchRaceRoom extends Room<{ client: AuthedClient }> {
   private session!: WordSearchRaceSession;
   private selectRateLimiter = new RateLimiter({
     windowMs: SELECT_RATE_LIMIT_WINDOW_MS,
@@ -31,7 +21,7 @@ export class WordSearchRaceRoom extends Room {
   });
 
   override async onAuth(
-    _client: Client,
+    _client: AuthedClient,
     options: { token?: string; roomKey?: string },
   ): Promise<WsSessionPayload> {
     const session = options.token ? verifyWsSessionToken(options.token) : null;
@@ -67,42 +57,44 @@ export class WordSearchRaceRoom extends Room {
       { onSessionEnded: () => this.disconnect() },
     );
 
-    this.onMessage(
-      'select',
-      (client, payload: { start?: unknown; end?: unknown }) => {
-        if (this.selectRateLimiter.isOverLimit(client)) return;
-        if (!isValidCell(payload?.start) || !isValidCell(payload?.end)) {
-          client.send('select_error', { message: 'Invalid selection' });
-          return;
-        }
+    this.onMessage('select', (client: AuthedClient, payload: unknown) => {
+      if (this.selectRateLimiter.isOverLimit(client)) return;
+      const parsed = selectPayloadSchema.safeParse(payload);
+      if (!parsed.success) {
+        client.send('select_error', { message: 'Invalid selection' });
+        return;
+      }
 
-        const auth = client.auth as WsSessionPayload;
-        const result = this.session.submitSelection(
-          auth.userId,
-          payload.start,
-          payload.end,
-        );
+      const auth = requireAuth(client);
+      const result = this.session.submitSelection(
+        auth.userId,
+        parsed.data.start,
+        parsed.data.end,
+      );
 
-        if ('error' in result) {
-          client.send('select_error', { message: result.error });
-        }
-      },
-    );
+      if ('error' in result) {
+        client.send('select_error', { message: result.error });
+      }
+    });
 
-    this.onMessage('leave', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('leave', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.removePlayer(auth.userId, client);
     });
   }
 
-  override onJoin(client: Client, _options: unknown, auth: WsSessionPayload) {
+  override onJoin(
+    client: AuthedClient,
+    _options: unknown,
+    auth: WsSessionPayload,
+  ) {
     this.session.addPlayer(auth.userId, client);
     client.send('init', this.session.getPublicState());
   }
 
-  override onLeave(client: Client) {
+  override onLeave(client: AuthedClient) {
     this.selectRateLimiter.clear(client);
-    const auth = client.auth as WsSessionPayload;
+    const auth = requireAuth(client);
     this.session.removePlayer(auth.userId, client);
   }
 

@@ -1,8 +1,7 @@
-import { Room, type Client } from 'colyseus';
-import type {
-  Color,
-  Position,
-} from 'services/activity/checkers/CheckersEngine';
+import { Room } from 'colyseus';
+import { checkersMovePayloadSchema } from 'realtime/adapters/checkersAdapter';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
+import type { Color } from 'services/activity/checkers/CheckersEngine';
 import { CheckersSession } from 'services/activity/checkers/CheckersSession';
 import { roomKey } from 'services/activity/roomKey';
 import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
@@ -16,18 +15,7 @@ import {
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
 const MOVE_RATE_LIMIT_MAX = 10;
 
-function isPosition(value: unknown): value is Position {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as Position).row === 'number' &&
-    typeof (value as Position).col === 'number' &&
-    Number.isInteger((value as Position).row) &&
-    Number.isInteger((value as Position).col)
-  );
-}
-
-export class CheckersRoom extends Room {
+export class CheckersRoom extends Room<{ client: AuthedClient }> {
   private session!: CheckersSession;
   private moveRateLimiter = new RateLimiter({
     windowMs: MOVE_RATE_LIMIT_WINDOW_MS,
@@ -35,7 +23,7 @@ export class CheckersRoom extends Room {
   });
 
   override async onAuth(
-    _client: Client,
+    _client: AuthedClient,
     options: { token?: string; roomKey?: string },
   ): Promise<WsSessionPayload> {
     const session = options.token ? verifyWsSessionToken(options.token) : null;
@@ -71,36 +59,38 @@ export class CheckersRoom extends Room {
       { onSessionEnded: () => this.disconnect() },
     );
 
-    this.onMessage(
-      'move',
-      (client, payload: { from?: unknown; to?: unknown }) => {
-        if (this.moveRateLimiter.isOverLimit(client)) return;
-        if (!isPosition(payload?.from) || !isPosition(payload?.to)) return;
+    this.onMessage('move', (client: AuthedClient, payload: unknown) => {
+      if (this.moveRateLimiter.isOverLimit(client)) return;
+      const parsed = checkersMovePayloadSchema.safeParse(payload);
+      if (!parsed.success) return;
 
-        const auth = client.auth as WsSessionPayload;
-        const result = this.session.requestMove(
-          auth.userId,
-          payload.from,
-          payload.to,
-        );
-        if (!result.ok) {
-          client.send(ACTION_REJECTED, { error: result.error });
-        }
-      },
-    );
+      const auth = requireAuth(client);
+      const result = this.session.requestMove(
+        auth.userId,
+        parsed.data.from,
+        parsed.data.to,
+      );
+      if (!result.ok) {
+        client.send(ACTION_REJECTED, { error: result.error });
+      }
+    });
 
-    this.onMessage('restart', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('restart', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.requestRestart(auth.userId);
     });
 
-    this.onMessage('leave', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('leave', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.leave(auth.userId, client);
     });
   }
 
-  override onJoin(client: Client, _options: unknown, auth: WsSessionPayload) {
+  override onJoin(
+    client: AuthedClient,
+    _options: unknown,
+    auth: WsSessionPayload,
+  ) {
     const color: Color | null = this.session.addPlayer(auth.userId, client);
     client.send('init', { color, state: this.session.getPublicState() });
     if (!color) return;
@@ -111,9 +101,9 @@ export class CheckersRoom extends Room {
     client.send('state', this.session.getPublicState());
   }
 
-  override onLeave(client: Client) {
+  override onLeave(client: AuthedClient) {
     this.moveRateLimiter.clear(client);
-    const auth = client.auth as WsSessionPayload;
+    const auth = requireAuth(client);
     this.session.pauseForDisconnect(auth.userId, client);
   }
 

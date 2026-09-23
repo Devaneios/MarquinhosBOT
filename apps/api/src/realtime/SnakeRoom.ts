@@ -1,4 +1,6 @@
-import { Room, type Client } from 'colyseus';
+import { Room } from 'colyseus';
+import { snakeInputPayloadSchema } from 'realtime/adapters/snakeAdapter';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { roomKey } from 'services/activity/roomKey';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
@@ -11,7 +13,7 @@ import {
 const INPUT_RATE_LIMIT_WINDOW_MS = 1000;
 const INPUT_RATE_LIMIT_MAX = 60;
 
-export class SnakeRoom extends Room {
+export class SnakeRoom extends Room<{ client: AuthedClient }> {
   private session!: SnakeSession;
   private inputRateLimiter = new RateLimiter({
     windowMs: INPUT_RATE_LIMIT_WINDOW_MS,
@@ -19,7 +21,7 @@ export class SnakeRoom extends Room {
   });
 
   override async onAuth(
-    _client: Client,
+    _client: AuthedClient,
     options: { token?: string; roomKey?: string },
   ): Promise<WsSessionPayload> {
     const session = options.token ? verifyWsSessionToken(options.token) : null;
@@ -60,22 +62,28 @@ export class SnakeRoom extends Room {
       { onSessionEnded: () => this.disconnect() },
     );
 
-    this.onMessage(
-      'input',
-      (client, payload: { direction?: string; seq?: number }) => {
-        if (this.inputRateLimiter.isOverLimit(client)) return;
-        const auth = client.auth as WsSessionPayload;
-        this.session.handleInput(auth.userId, payload?.direction ?? 'right');
-      },
-    );
+    this.onMessage('input', (client: AuthedClient, payload: unknown) => {
+      if (this.inputRateLimiter.isOverLimit(client)) return;
+      const auth = requireAuth(client);
+      const parsed = snakeInputPayloadSchema.safeParse(payload);
+      if (!parsed.success) {
+        client.send('input_error', { message: 'Invalid direction' });
+        return;
+      }
+      this.session.handleInput(auth.userId, parsed.data.direction);
+    });
 
-    this.onMessage('leave', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('leave', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.leave(auth.userId, client);
     });
   }
 
-  override onJoin(client: Client, _options: unknown, auth: WsSessionPayload) {
+  override onJoin(
+    client: AuthedClient,
+    _options: unknown,
+    auth: WsSessionPayload,
+  ) {
     const playerId = this.session.addPlayer(auth.userId, client);
     if (auth.mode === 'single') {
       this.session.enableBot();
@@ -86,9 +94,9 @@ export class SnakeRoom extends Room {
     });
   }
 
-  override onLeave(client: Client) {
+  override onLeave(client: AuthedClient) {
     this.inputRateLimiter.clear(client);
-    const auth = client.auth as WsSessionPayload;
+    const auth = requireAuth(client);
     this.session.pauseForDisconnect(auth.userId, client);
   }
 
