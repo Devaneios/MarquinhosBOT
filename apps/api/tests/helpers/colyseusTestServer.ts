@@ -75,6 +75,28 @@ export function nextMessage<T = unknown>(
   });
 }
 
+export function drainMessages(client: object, type: string): void {
+  const inbox = inboxOf(client);
+  inbox.received = inbox.received.filter((m) => m.type !== type);
+}
+
+export function pendingMessages(client: object, type: string): unknown[] {
+  return inboxOf(client)
+    .received.filter((m) => m.type === type)
+    .map((m) => m.message);
+}
+
+export async function waitUntil(
+  condition: () => boolean,
+  timeoutMs = 3_000,
+): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (!condition()) {
+    if (Date.now() > deadline) throw new Error('Condition never became true');
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+}
+
 export async function bootColyseusTestServer(
   configure: (server: Server) => void,
 ): Promise<ColyseusTestServer> {

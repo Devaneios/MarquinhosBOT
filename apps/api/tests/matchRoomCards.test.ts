@@ -152,22 +152,14 @@ describe('MatchRoom · cards', () => {
 
     const tabA = await colyseus.connectTo(room, session);
     const tabB = await colyseus.connectTo(room, session);
-    const seen: Record<string, unknown>[] = [];
-    tabA.onMessage('state', (p: Record<string, unknown>) => {
-      seen[0] = p;
-    });
-    tabB.onMessage('state', (p: Record<string, unknown>) => {
-      seen[1] = p;
-    });
 
     // Fill the remaining seats so a state broadcast happens.
     for (const userId of ['user-b', 'user-c', 'user-d']) {
       await colyseus.connectTo(room, sessionFor(userId));
     }
-    await wait(30);
 
-    expect(seen[0]).toBeDefined();
-    expect(seen[1]).toBeDefined();
+    expect(await nextMessage(tabA, 'state')).toBeDefined();
+    expect(await nextMessage(tabB, 'state')).toBeDefined();
   });
 
   it('admits a fifth viewer as a spectator with no cards revealed', async () => {

@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 process.env.SQLITE_PATH = ':memory:';
 
 const { MatchRoom } = await import('../src/realtime/MatchRoom');
-const { bootColyseusTestServer, nextMessage } =
+const { bootColyseusTestServer, nextMessage, pendingMessages } =
   await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
@@ -164,17 +164,13 @@ describe('MatchRoom · wordle', () => {
     }>(client, 'init');
     const badGuess = 'a'.repeat(init.wordLength + 2);
 
-    let replies = 0;
-    client.onMessage('guess_error', () => {
-      replies += 1;
-    });
-
     for (let i = 0; i < 50; i++) {
       client.send('guess', { guess: badGuess });
     }
-    await client.waitForNextMessage(200);
+    await nextMessage(client, 'guess_error');
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    const replies = 1 + pendingMessages(client, 'guess_error').length;
 
-    expect(replies).toBeGreaterThan(0);
     expect(replies).toBeLessThan(50);
   });
 });

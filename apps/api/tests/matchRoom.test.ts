@@ -1,8 +1,13 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
 
 const { MatchRoom } = await import('../src/realtime/MatchRoom');
-const { bootColyseusTestServer, nextMessage } =
-  await import('./helpers/colyseusTestServer');
+const {
+  bootColyseusTestServer,
+  drainMessages,
+  nextMessage,
+  pendingMessages,
+  waitUntil,
+} = await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
 const { roomKey } = await import('@marquinhos/domain/activity/roomKey');
@@ -192,14 +197,6 @@ describe('MatchRoom', () => {
     const client = await colyseus.connectTo(room, { token, roomKey: key });
     await nextMessage(client, 'init');
 
-    let replies = 0;
-    client.onMessage('guess_success', () => {
-      replies += 1;
-    });
-    client.onMessage('guess_error', () => {
-      replies += 1;
-    });
-
     // The Hangman adapter's guess rate limit is 3 per 1000ms; each letter is
     // distinct and unguessed so every processed guess would otherwise
     // succeed, isolating the rate limiter as the only thing that can drop
@@ -207,9 +204,11 @@ describe('MatchRoom', () => {
     for (const letter of ['a', 'e', 'i', 'o']) {
       client.send('guess', { letter });
     }
-    await client.waitForNextMessage(200);
+    for (let i = 0; i < 3; i++) await nextMessage(client, 'guess_success');
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
-    expect(replies).toBe(3);
+    expect(pendingMessages(client, 'guess_success')).toEqual([]);
+    expect(pendingMessages(client, 'guess_error')).toEqual([]);
   });
 
   it('throws when creating a room for a game with no registered adapter', async () => {
@@ -279,15 +278,7 @@ describe('MatchRoom', () => {
       roomKey: b2.key,
     });
     await nextMessage(clientB2, 'init');
-
-    let aGotGameReady = false;
-    let bGotGameReady = false;
-    clientA1.onMessage('game_ready', () => {
-      aGotGameReady = true;
-    });
-    clientB1.onMessage('game_ready', () => {
-      bGotGameReady = true;
-    });
+    await nextMessage(clientB1, 'game_ready');
 
     const a2 = ticTacToeSession('a-user-2', 'ROOMA');
     const clientA2 = await colyseus.connectTo(roomA, {
@@ -296,10 +287,9 @@ describe('MatchRoom', () => {
     });
     await nextMessage(clientA2, 'init');
 
-    await new Promise((resolve) => setTimeout(resolve, 150));
-
-    expect(aGotGameReady).toBe(true);
-    expect(bGotGameReady).toBe(false);
+    expect(await nextMessage(clientA1, 'game_ready')).toBeDefined();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(pendingMessages(clientB1, 'game_ready')).toEqual([]);
   });
 
   it('rotates the loser to the back of the queue and promotes the queue head', async () => {
@@ -464,7 +454,7 @@ describe('MatchRoom', () => {
       roomId: 'ROOM03',
     });
     const client = await colyseus.connectTo(room, { token, roomKey: key });
-    const messages = [await nextMessage(client, 'init')];
+    await nextMessage(client, 'init');
   });
 
   it('seats a player into a boggle-word-race room and returns the grid on init', async () => {
@@ -1221,11 +1211,12 @@ describe('MatchRoom', () => {
       const messages = [await nextMessage(clientC, 'init')];
       expect((messages[0] as { grid: unknown }).grid).toBeTruthy();
 
-      const errors: unknown[] = [];
-      clientC.onMessage('reveal_error', (msg) => errors.push(msg));
       clientC.send('reveal', { x: 0, y: 0 });
-      await room.waitForNextPatch();
-      expect(errors).toEqual([{ message: 'not_in_session' }]);
+      expect(
+        await nextMessage<{ message: string }>(clientC, 'reveal_error'),
+      ).toEqual({
+        message: 'not_in_session',
+      });
 
       clientA.leave();
       clientB.leave();
@@ -1260,16 +1251,10 @@ describe('MatchRoom', () => {
       });
       await room.waitForNextPatch();
 
-      const spectatorReveals: { userId: string }[] = [];
-      clientC.onMessage('reveal', (msg: { userId: string }) =>
-        spectatorReveals.push(msg),
-      );
-
       clientA.send('reveal', { x: 0, y: 0 });
-      await room.waitForNextPatch();
+      const reveal = await nextMessage<{ userId: string }>(clientC, 'reveal');
 
-      expect(spectatorReveals.length).toBeGreaterThan(0);
-      expect(spectatorReveals[0]!.userId).toBe('user-a');
+      expect(reveal.userId).toBe('user-a');
 
       clientA.leave();
       clientB.leave();
@@ -1348,18 +1333,16 @@ describe('MatchRoom', () => {
       const initMessages = [await nextMessage(clientC, 'init')];
       expect((initMessages[0] as { playerId: unknown }).playerId).toBeNull();
 
-      let lastState: { snakes: Record<string, unknown> } | undefined;
-      clientC.onMessage(
-        'state',
-        (msg: { state: { snakes: Record<string, unknown> } }) => {
-          lastState = msg.state;
-        },
-      );
+      type SnakeStateMessage = {
+        state: { snakes: Record<string, unknown> };
+      };
+      drainMessages(clientC, 'state');
       clientC.send('input', { direction: 'up' });
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await nextMessage<SnakeStateMessage>(clientC, 'state');
+      const lastState = (await nextMessage<SnakeStateMessage>(clientC, 'state'))
+        .state;
 
-      expect(lastState).toBeDefined();
-      expect(Object.keys(lastState!.snakes).sort()).toEqual([
+      expect(Object.keys(lastState.snakes).sort()).toEqual([
         'player1',
         'player2',
       ]);
@@ -1396,27 +1379,29 @@ describe('MatchRoom', () => {
       });
       await room.waitForNextPatch();
 
-      const errors: unknown[] = [];
-      clientA.onMessage('input_error', (msg) => errors.push(msg));
       clientA.send('input', { direction: 'garbage' });
       clientA.send('input', {});
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      const errors = [
+        await nextMessage(clientA, 'input_error'),
+        await nextMessage(clientA, 'input_error'),
+      ];
 
-      expect(errors.length).toBe(2);
+      expect(errors).toEqual([
+        { message: 'Invalid direction' },
+        { message: 'Invalid direction' },
+      ]);
 
       // Proves the room/session survived: a state broadcast still arrives
       // after the malformed messages, and both snakes are still present.
-      let lastState: { snakes: Record<string, unknown> } | undefined;
-      clientA.onMessage(
-        'state',
-        (msg: { state: { snakes: Record<string, unknown> } }) => {
-          lastState = msg.state;
-        },
-      );
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      drainMessages(clientA, 'state');
+      const lastState = (
+        await nextMessage<{ state: { snakes: Record<string, unknown> } }>(
+          clientA,
+          'state',
+        )
+      ).state;
 
-      expect(lastState).toBeDefined();
-      expect(Object.keys(lastState!.snakes).sort()).toEqual([
+      expect(Object.keys(lastState.snakes).sort()).toEqual([
         'player1',
         'player2',
       ]);
@@ -1530,19 +1515,16 @@ describe('MatchRoom', () => {
       });
       await room.waitForNextPatch();
 
-      const errors: unknown[] = [];
-      clientA.onMessage(ACTION_REJECTED, (msg) => errors.push(msg));
       clientA.send('pull', { level: 3.5, position: 0 });
       clientA.send('pull', { level: 'not-a-number', position: 0 });
       clientA.send('pull', {});
-      await clientA.waitForMessage(ACTION_REJECTED);
-      await clientA.waitForMessage(ACTION_REJECTED);
-      await clientA.waitForMessage(ACTION_REJECTED);
+      const errors = [
+        await nextMessage<{ error: string }>(clientA, ACTION_REJECTED),
+        await nextMessage<{ error: string }>(clientA, ACTION_REJECTED),
+        await nextMessage<{ error: string }>(clientA, ACTION_REJECTED),
+      ];
 
-      expect(errors.length).toBe(3);
-      expect((errors[0] as { error: string }).error).toBe(
-        'Invalid pull coordinates',
-      );
+      expect(errors[0]!.error).toBe('Invalid pull coordinates');
 
       // Proves the room/session survived: a fresh client can still connect
       // and get seated as a spectator.
@@ -1673,13 +1655,9 @@ describe('MatchRoom', () => {
       });
       await room.waitForNextPatch();
 
-      const spectatorStates: unknown[] = [];
-      clientC.onMessage('state_update', (msg) => spectatorStates.push(msg));
-
       clientA.send('answer', { answerIndex: 0 });
-      await room.waitForNextPatch();
 
-      expect(spectatorStates.length).toBeGreaterThan(0);
+      expect(await nextMessage(clientC, 'state_update')).toBeDefined();
 
       clientA.leave();
       clientB.leave();
@@ -1688,8 +1666,9 @@ describe('MatchRoom', () => {
 
     it('advances the question when a leave message drops a player who never answered', async () => {
       // The `leave` message must reach TriviaQuizSession.leave (which
-      // delegates to pauseForDisconnect). Without it, a player who explicitly leaves mid-question still counts as
-      // "connected" for checkAllAnswered()'s purposes, so the other player
+      // delegates to pauseForDisconnect). Without it, a player who
+      // explicitly leaves mid-question still counts as "connected" for
+      // checkAllAnswered()'s purposes, so the other player
       // answering alone can never advance the question — the room stalls
       // forever waiting on a player who said they were leaving.
       const { key, token: tokenA } = triviaCreds('user-a', 'ROOM09c');
@@ -1707,21 +1686,28 @@ describe('MatchRoom', () => {
       });
       await room.waitForNextPatch();
 
-      const stateUpdates: { currentQuestionIndex: number }[] = [];
-      clientB.onMessage(
-        'state_update',
-        (msg: { currentQuestionIndex: number }) => stateUpdates.push(msg),
-      );
-
+      const session = (
+        room as unknown as {
+          session: { players: { userId: string; connected: boolean }[] };
+        }
+      ).session;
       clientA.send('leave');
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await waitUntil(
+        () =>
+          session.players.find((p) => p.userId === 'user-a')?.connected ===
+          false,
+      );
 
       // q1's correctIndex is 1 ("Paris") per
       // src/services/activity/trivia-quiz/questions.ts.
       clientB.send('answer', { answerIndex: 1 });
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      const advanced = await nextMessage<{ currentQuestionIndex: number }>(
+        clientB,
+        'state_update',
+        (update) => update.currentQuestionIndex === 1,
+      );
 
-      expect(stateUpdates.some((s) => s.currentQuestionIndex === 1)).toBe(true);
+      expect(advanced.currentQuestionIndex).toBe(1);
 
       clientA.leave();
       clientB.leave();
@@ -1858,13 +1844,12 @@ describe('MatchRoom', () => {
         'user-b',
       ]);
 
-      const rejections: { error: string }[] = [];
-      clientC.onMessage(ACTION_REJECTED, (msg: { error: string }) =>
-        rejections.push(msg),
-      );
       clientC.send('word', { word: 'abelha' });
-      await room.waitForNextPatch();
-      expect(rejections).toEqual([{ error: 'Not your turn' }]);
+      expect(
+        await nextMessage<{ error: string }>(clientC, ACTION_REJECTED),
+      ).toEqual({
+        error: 'Not your turn',
+      });
 
       clientA.leave();
       clientB.leave();
@@ -1943,19 +1928,22 @@ describe('MatchRoom', () => {
       });
       await room.waitForNextPatch();
 
-      const rejections: { error: string }[] = [];
-      clientA.onMessage(ACTION_REJECTED, (msg: { error: string }) =>
-        rejections.push(msg),
-      );
       clientA.send('word', { word: 12345 });
-      await room.waitForNextPatch();
-      expect(rejections).toEqual([{ error: 'Invalid word' }]);
+      expect(
+        await nextMessage<{ error: string }>(clientA, ACTION_REJECTED),
+      ).toEqual({
+        error: 'Invalid word',
+      });
 
       // Proves the room/process survived: a well-typed word from the same
       // player is still accepted afterward.
       clientA.send('word', { word: 'abelha' });
-      await room.waitForNextPatch();
-      expect(rejections).toEqual([{ error: 'Invalid word' }]);
+      await nextMessage<{ currentWord: string }>(
+        clientA,
+        'state',
+        (state) => state.currentWord === 'abelha',
+      );
+      expect(pendingMessages(clientA, ACTION_REJECTED)).toEqual([]);
 
       clientA.leave();
       clientB.leave();
@@ -2039,13 +2027,12 @@ describe('MatchRoom', () => {
       expect(spectatorState.currentPlayerSolved).toBe(false);
       expect(spectatorState.currentPlayerExhausted).toBe(false);
 
-      const rejections: { error: string }[] = [];
-      spectator.onMessage(ACTION_REJECTED, (msg: { error: string }) =>
-        rejections.push(msg),
-      );
       spectator.send('guess', { guess: 'abrir' });
-      await room.waitForNextPatch();
-      expect(rejections).toEqual([{ error: 'Player not in room' }]);
+      expect(
+        await nextMessage<{ error: string }>(spectator, ACTION_REJECTED),
+      ).toEqual({
+        error: 'Player not in room',
+      });
 
       for (const c of clients) c.leave();
       spectator.leave();
@@ -2066,21 +2053,20 @@ describe('MatchRoom', () => {
       const client = await colyseus.connectTo(room, { token, roomKey: key });
       await room.waitForNextPatch();
 
-      const rejections: { error: string }[] = [];
-      client.onMessage(ACTION_REJECTED, (msg: { error: string }) =>
-        rejections.push(msg),
-      );
       client.send('guess', { guess: 12345 });
-      await room.waitForNextPatch();
-      expect(rejections).toEqual([{ error: 'Invalid guess' }]);
+      expect(
+        await nextMessage<{ error: string }>(client, ACTION_REJECTED),
+      ).toEqual({
+        error: 'Invalid guess',
+      });
 
       // Proves the room/process survived: a well-typed guess from the same
       // player is still accepted afterward (no further rejection queued
       // for the malformed-length case, since 12345 has fewer digits than
       // most target words but that's incidental — the point is no crash).
       client.send('guess', { guess: 'abrir' });
-      await room.waitForNextPatch();
-      expect(rejections).toEqual([{ error: 'Invalid guess' }]);
+      await nextMessage(client, 'guess_submitted');
+      expect(pendingMessages(client, ACTION_REJECTED)).toEqual([]);
 
       client.leave();
     });
@@ -2124,9 +2110,6 @@ describe('MatchRoom', () => {
       });
       await room.waitForNextPatch();
 
-      const gameEndedMessages: unknown[] = [];
-      spectator.onMessage('game_ended', (msg) => gameEndedMessages.push(msg));
-
       // Five-letter words confirmed to resolve via resolveCanonical() in
       // the validation bank (valid-guesses.txt) — distinct per player, so
       // none trips the "Already guessed this word" rejection that would
@@ -2150,10 +2133,9 @@ describe('MatchRoom', () => {
         }
       }
 
-      expect(gameEndedMessages.length).toBeGreaterThan(0);
-      const ended = gameEndedMessages[0] as {
+      const ended = await nextMessage<{
         results: { userId: string; position: number; solved: boolean }[];
-      };
+      }>(spectator, 'game_ended');
       expect(ended.results.map((r) => r.userId).sort()).toEqual(
         players.map((_, i) => (i === 0 ? 'user-a' : `user-${i}`)).sort(),
       );
@@ -2232,13 +2214,12 @@ describe('MatchRoom', () => {
       const client = await colyseus.connectTo(room, { token, roomKey: key });
       await room.waitForNextPatch();
 
-      const errors: { message: string }[] = [];
-      client.onMessage('guess_error', (msg: { message: string }) =>
-        errors.push(msg),
-      );
       client.send('guess', { guess: 12345 });
-      await room.waitForNextPatch();
-      expect(errors).toEqual([{ message: 'Invalid guess' }]);
+      expect(
+        await nextMessage<{ message: string }>(client, 'guess_error'),
+      ).toEqual({
+        message: 'Invalid guess',
+      });
 
       client.leave();
     });
@@ -2371,16 +2352,15 @@ describe('MatchRoom', () => {
       const initMessages = [await nextMessage(spectator, 'init')];
       expect(initMessages[0]).toHaveProperty('grid');
 
-      const errors: { message: string }[] = [];
-      spectator.onMessage('select_error', (msg: { message: string }) =>
-        errors.push(msg),
-      );
       spectator.send('select', {
         start: { row: 0, col: 0 },
         end: { row: 0, col: 1 },
       });
-      await room.waitForNextPatch();
-      expect(errors).toEqual([{ message: 'Player not in room' }]);
+      expect(
+        await nextMessage<{ message: string }>(spectator, 'select_error'),
+      ).toEqual({
+        message: 'Player not in room',
+      });
 
       for (const c of clients) c.leave();
       spectator.leave();
@@ -2395,16 +2375,15 @@ describe('MatchRoom', () => {
       const client = await colyseus.connectTo(room, { token, roomKey: key });
       await room.waitForNextPatch();
 
-      const errors: { message: string }[] = [];
-      client.onMessage('select_error', (msg: { message: string }) =>
-        errors.push(msg),
-      );
       client.send('select', {
         start: { row: 'a', col: 0 },
         end: { row: 0, col: 1 },
       });
-      await room.waitForNextPatch();
-      expect(errors).toEqual([{ message: 'Invalid selection' }]);
+      expect(
+        await nextMessage<{ message: string }>(client, 'select_error'),
+      ).toEqual({
+        message: 'Invalid selection',
+      });
 
       client.leave();
     });

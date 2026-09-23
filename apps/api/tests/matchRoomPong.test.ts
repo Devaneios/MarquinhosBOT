@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
 
 const { MatchRoom } = await import('../src/realtime/MatchRoom');
-const { bootColyseusTestServer, nextMessage } =
+const { bootColyseusTestServer, nextMessage, pendingMessages } =
   await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
@@ -120,13 +120,7 @@ describe('MatchRoom · pong', () => {
     const client = await colyseus.connectTo(room, session);
     await nextMessage(client, 'init');
 
-    let stateMessages = 0;
-    client.onMessage('state', () => {
-      stateMessages += 1;
-    });
-    await wait(70);
-
-    expect(stateMessages).toBeGreaterThan(0);
+    expect(await nextMessage(client, 'state')).toBeDefined();
   });
 
   it('does not start a plain multi-mode session on a single join', async () => {
@@ -138,14 +132,9 @@ describe('MatchRoom · pong', () => {
     });
     const client = await colyseus.connectTo(room, session);
     await nextMessage(client, 'init');
-
-    let stateMessages = 0;
-    client.onMessage('state', () => {
-      stateMessages += 1;
-    });
     await wait(70);
 
-    expect(stateMessages).toBe(0);
+    expect(pendingMessages(client, 'state')).toEqual([]);
   });
 
   it('forfeits the match to the opponent when a player explicitly leaves', async () => {
@@ -166,14 +155,9 @@ describe('MatchRoom · pong', () => {
 
     clientA.send('ready', { ready: true });
     clientB.send('ready', { ready: true });
-    let playerDisconnected = false;
-    clientB.onMessage('player_disconnected', () => {
-      playerDisconnected = true;
-    });
-
     clientA.send('leave');
     await wait(30);
 
-    expect(playerDisconnected).toBe(false);
+    expect(pendingMessages(clientB, 'player_disconnected')).toEqual([]);
   });
 });
