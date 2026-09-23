@@ -2,7 +2,7 @@
 
 The development stack runs on your machine. Docker provides Bun 1.4.2 and the
 native dependencies used by the bot; you do not need to install those libraries
-on the host. A host Bun installation is needed for the root commands. Docker
+on the host. Install Node 22, pnpm 11.10.0, and Bun 1.4.2 on the host, then run `pnpm install --frozen-lockfile` for local workspace commands. Docker
 Compose must support `env_file.required` (Compose 2.24 or newer).
 
 ## Configure once
@@ -33,7 +33,7 @@ container via its `tunnel run --token` argument — no other service receives it
 API and bot configuration is read from their respective `.env` files. The old
 root `.env` is not used by the development commands. Compose explicitly sets
 `NODE_ENV=development`, the container URLs, and the SQLite path. After changing
-an app environment file, restart `bun run dev` so Compose recreates the affected
+an app environment file, restart `pnpm run dev` so Compose recreates the affected
 container. In Docker, `localhost` refers to that container; the bot reaches the
 API at `http://api:3000`.
 
@@ -67,8 +67,8 @@ These portal settings are separate from repository configuration; see
 ## Daily loop
 
 ```sh
-bun run dev:doctor
-bun run dev
+pnpm run dev:doctor
+pnpm run dev
 ```
 
 The doctor reports unavailable services before the first startup; configuration
@@ -83,7 +83,7 @@ URLs. `VITE_API_ORIGIN` is only used by production builds outside Discord.
 
 Edit source normally. API and bot use Bun watch; Activity uses Vite hot updates.
 Dependency/package changes and API word-list changes require an image rebuild;
-restarting `bun run dev` rebuilds changed layers. Source directories are mounted
+restarting `pnpm run dev` rebuilds changed layers. Source directories are mounted
 read-only inside containers, with dependencies retained in the image.
 
 API restarts interrupt in-memory multiplayer rooms. Frontend changes affecting
@@ -98,14 +98,14 @@ channel retain their normal effects, including music/voice and admin actions.
 Register slash commands explicitly when their definitions change:
 
 ```sh
-bun run dev:register
+pnpm run dev:register
 ```
 
 This uses the existing registration implementation for the development app;
 registration replaces that application's command list. The Activity entry-point
 configuration is managed separately in Discord.
 
-Ctrl+C stops the foreground stack. `bun run dev:down` removes its containers and
+Ctrl+C stops the foreground stack. `pnpm run dev:down` removes its containers and
 network while retaining the development SQLite volume. It does not remove
 production data. This workflow starts with a fresh database and never imports
 production state automatically.
@@ -113,8 +113,8 @@ production state automatically.
 ## Test the full system
 
 ```sh
-bun run dev:test
-bun run dev:doctor
+pnpm run dev:test
+pnpm run dev:doctor
 ```
 
 The test command builds the current checkout and runs configuration tests,
@@ -131,7 +131,7 @@ edit API/bot code and verify watcher restarts. Stop/start the stack and verify
 stored game data remains.
 
 AI code execution requires the Docker socket, `marquinhos-sandbox:dev`, and the
-configured mirror directory. `bun run dev` builds that sandbox image. Spotify,
+configured mirror directory. `pnpm run dev` builds that sandbox image. Spotify,
 Last.fm, Deezer, Google Sheets, and the knowledge-base service need their own
 credentials and reachable URLs before those integrations can be tested. Configure
 their callback URLs in the provider dashboards where applicable; the Activity's

@@ -46,7 +46,7 @@ jobs:
               apps/api/*) api=true ;;
               apps/bot/*) bot=true ;;
               apps/activity/*) activity=true ;;
-              package.json|bun.lock|turbo.json|deploy/*|.github/scripts/*|.github/workflows/*) api=true; bot=true; activity=true ;;
+              package.json|pnpm-lock.yaml|pnpm-workspace.yaml|turbo.json|packages/*|deploy/*|.github/scripts/*|.github/workflows/*) api=true; bot=true; activity=true ;;
             esac
           done <<< "$files"
           count=0
@@ -76,11 +76,17 @@ jobs:
         with:
           bun-version: 1.4.2
 
-      - run: bun install --frozen-lockfile
-      - run: bun run test:deploy-env
-      - run: bun run --filter marquinhos-web-api build
-      - run: bun run --filter marquinhosbot build
-      - run: bun run --filter marquinhos-activity-client build
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - run: npm install -g pnpm@11.10.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:deploy-env
+      - run: pnpm run typecheck
+      - run: pnpm run lint
+      - run: pnpm run test
+      - run: pnpm run build
 
   deploy:
     needs: [changes, verify]

@@ -26,6 +26,10 @@ services:
     volumes:
       - ../apps/api/src:/app/apps/api/src:ro
       - ../apps/api/tsconfig.json:/app/apps/api/tsconfig.json:ro
+      - ../packages/contracts/src:/app/packages/contracts/src:ro
+      - ../packages/domain/src:/app/packages/domain/src:ro
+      - ../packages/api-client/src:/app/packages/api-client/src:ro
+      - ../packages/database/src:/app/packages/database/src:ro
       - api-data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
@@ -51,6 +55,10 @@ services:
     volumes:
       - ../apps/bot/src:/app/apps/bot/src:ro
       - ../apps/bot/tsconfig.json:/app/apps/bot/tsconfig.json:ro
+      - ../packages/contracts/src:/app/packages/contracts/src:ro
+      - ../packages/domain/src:/app/packages/domain/src:ro
+      - ../packages/api-client/src:/app/packages/api-client/src:ro
+      - ../packages/database/src:/app/packages/database/src:ro
     depends_on:
       api:
         condition: service_healthy
@@ -79,6 +87,10 @@ services:
       - ../apps/activity/tsconfig.json:/app/apps/activity/tsconfig.json:ro
       - ../apps/activity/tsconfig.app.json:/app/apps/activity/tsconfig.app.json:ro
       - ../apps/activity/tsconfig.node.json:/app/apps/activity/tsconfig.node.json:ro
+      - ../packages/contracts/src:/app/packages/contracts/src:ro
+      - ../packages/domain/src:/app/packages/domain/src:ro
+      - ../packages/api-client/src:/app/packages/api-client/src:ro
+      - ../packages/database/src:/app/packages/database/src:ro
     ports:
       - "127.0.0.1:${DEV_ACTIVITY_PORT:-5173}:5173"
     healthcheck:

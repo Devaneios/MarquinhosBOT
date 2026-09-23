@@ -41,3 +41,13 @@ nodemon.json
 # Misc
 .DS_Store
 *.md
+**/node_modules
+**/.turbo
+**/dist
+**/.env
+**/.env.*
+**/*.db
+**/*.db-*
+**/*.sqlite*
+**/coverage
+**/*.tsbuildinfo

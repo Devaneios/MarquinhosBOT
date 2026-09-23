@@ -1,0 +1,24 @@
+packages:
+  - apps/*
+  - packages/*
+
+overrides:
+  file-type: 21.3.4
+  flatted: 3.4.2
+  lodash: 4.18.1
+  picomatch: 4.0.4
+  tar: 7.5.13
+  undici: 6.24.1
+
+autoInstallPeers: false
+
+allowBuilds:
+  cpu-features: true
+  esbuild: true
+  ffmpeg-static: true
+  msgpackr-extract: false
+  protobufjs: false
+  sharp: true
+  skia-canvas: true
+  ssh2: false
+  unrs-resolver: false

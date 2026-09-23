@@ -19,14 +19,14 @@ jobs:
         with:
           bun-version: 1.4.2
 
-      - uses: actions/cache@v4
+      - uses: actions/setup-node@v4
         with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
+          node-version: '22'
 
-      - run: bun install --frozen-lockfile
-      - run: bun run test:deploy-env
-      - run: bun run --filter marquinhos-web-api build
-      - run: bun run --filter marquinhosbot build
-      - run: bun run --filter marquinhos-activity-client build
+      - run: npm install -g pnpm@11.10.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:deploy-env
+      - run: pnpm run typecheck
+      - run: pnpm run lint
+      - run: pnpm run test
+      - run: pnpm run build

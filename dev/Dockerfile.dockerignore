@@ -19,3 +19,4 @@
 **/*.tsbuildinfo
 dev/secrets
 dev/.env
+**/coverage

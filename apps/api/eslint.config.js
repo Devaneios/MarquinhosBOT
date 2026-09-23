@@ -1,3 +1,4 @@
+import { rules } from '@marquinhos/eslint-config/rules';
 import js from '@eslint/js';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
@@ -70,43 +71,8 @@ export default [
       // prettier: prettier,
     },
     rules: {
-      // Base JavaScript rules
       ...js.configs.recommended.rules,
-
-      // TypeScript specific rules
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_',
-        },
-      ],
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-var-requires': 'error',
-      '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-empty-function': 'warn',
-      '@typescript-eslint/no-inferrable-types': 'off',
-      '@typescript-eslint/ban-ts-comment': 'warn',
-
-      // Import rules
-      // Note: import ordering is handled by prettier-plugin-organize-imports
-      'import/order': 'off', // Handled by prettier-plugin-organize-imports
-      'import/no-unresolved': 'off', // TypeScript handles this
-      'import/no-duplicates': 'off', // Handled by prettier-plugin-organize-imports
-
-      // General JavaScript/TypeScript rules
-      'no-console': 'off', // Allow console for bot logging
-      'no-debugger': 'error',
-      'no-duplicate-imports': 'off', // Handled by prettier-plugin-organize-imports
-      'no-unused-vars': 'off', // Use TypeScript version instead
-      'prefer-const': 'error',
-      'no-var': 'error',
-      'object-shorthand': 'error',
-      'prefer-arrow-callback': 'error',
-      'prefer-template': 'error',
-      eqeqeq: ['error', 'always'],
+      ...rules,
     },
     settings: {
       'import/resolver': {
