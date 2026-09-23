@@ -12,6 +12,8 @@ import * as cheerio from 'cheerio';
 import { lookup as dnsLookup } from 'node:dns/promises';
 import TurndownService from 'turndown';
 import { gfm } from 'turndown-plugin-gfm';
+import { getErrorMessage } from 'utils/errorHandling';
+import { z } from 'zod';
 
 export const MAX_REDIRECTS = 3;
 // 512 KB used to be the cap, and it silently destroyed exactly the pages worth
@@ -69,6 +71,8 @@ export interface FetchPageDeps {
   extractPdfText?: PdfTextExtractor;
 }
 
+const pdfInfoSchema = z.object({ Title: z.string() });
+
 /**
  * Pulls text out of a pdf, first `MAX_PDF_PAGES` pages only.
  *
@@ -83,8 +87,8 @@ async function extractPdfTextWithUnpdf(bytes: Uint8Array): Promise<PdfText> {
   let title = '';
   try {
     const metadata = await pdf.getMetadata();
-    const raw = (metadata.info as { Title?: unknown } | undefined)?.Title;
-    if (typeof raw === 'string') title = raw.trim();
+    const info = pdfInfoSchema.safeParse(metadata.info);
+    if (info.success) title = info.data.Title.trim();
   } catch {
     // Metadata is a nicety; the search hit's title already covers us.
   }
@@ -202,7 +206,7 @@ export async function assertUrlIsSafe(
     addresses = await lookupFn(url.hostname, { all: true });
   } catch (error) {
     fail(
-      `Não consegui resolver o host "${url.hostname}": ${(error as Error).message}.`,
+      `Não consegui resolver o host "${url.hostname}": ${getErrorMessage(error)}.`,
     );
   }
 
@@ -271,11 +275,19 @@ const turndownService = new TurndownService({
   emDelimiter: '_',
 }).use(gfm);
 
-interface TurndownNode {
-  nodeName: string;
-  firstChild: TurndownNode | null;
+interface CodeElement {
   textContent: string | null;
   getAttribute(name: string): string | null;
+}
+
+function isCodeElement(value: unknown): value is CodeElement {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'getAttribute' in value &&
+    typeof value.getAttribute === 'function' &&
+    'textContent' in value
+  );
 }
 
 // Turndown's built-in <pre><code> rule fences the block but drops any
@@ -285,7 +297,8 @@ turndownService.addRule('fencedCodeLanguage', {
   filter: (node) =>
     node.nodeName === 'PRE' && node.firstChild?.nodeName === 'CODE',
   replacement: (_content, node) => {
-    const codeEl = (node as unknown as TurndownNode).firstChild;
+    const firstChild: unknown = node.firstChild;
+    const codeEl = isCodeElement(firstChild) ? firstChild : null;
     const className = codeEl?.getAttribute('class') ?? '';
     const lang = /(?:language|lang)-(\S+)/.exec(className)?.[1] ?? '';
     return `\n\n\`\`\`${lang}\n${codeEl?.textContent}\n\`\`\`\n\n`;
@@ -373,7 +386,7 @@ export function createPageFetcher(
   deps: Partial<FetchPageDeps> = {},
 ): PageFetcher {
   const fetchFn = deps.fetchFn ?? fetch;
-  const lookupFn = deps.lookupFn ?? (dnsLookup as unknown as LookupFn);
+  const lookupFn: LookupFn = deps.lookupFn ?? dnsLookup;
   const extractPdfText = deps.extractPdfText ?? extractPdfTextWithUnpdf;
 
   return async function fetchPage(
@@ -403,12 +416,12 @@ export function createPageFetcher(
           signal: AbortSignal.timeout(timeoutMs),
         });
       } catch (error) {
-        if ((error as Error).name === 'TimeoutError') {
+        if (error instanceof Error && error.name === 'TimeoutError') {
           fail(
             `"${rawUrl}" demorou mais de ${timeoutMs / 1000}s e eu desisti.`,
           );
         }
-        fail(`Não consegui buscar "${rawUrl}": ${(error as Error).message}`);
+        fail(`Não consegui buscar "${rawUrl}": ${getErrorMessage(error)}`);
       }
 
       if (response.status >= 300 && response.status < 400) {
@@ -472,7 +485,7 @@ export function createPageFetcher(
           pdf = await extractPdfText(bytes);
         } catch (error) {
           fail(
-            `Não consegui ler o PDF "${current.toString()}": ${(error as Error).message}`,
+            `Não consegui ler o PDF "${current.toString()}": ${getErrorMessage(error)}`,
           );
         }
         if (!pdf.text.trim()) {

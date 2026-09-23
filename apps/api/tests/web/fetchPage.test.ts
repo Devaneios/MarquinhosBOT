@@ -41,6 +41,14 @@ describe('fetchPage result shape', () => {
     expect(page.content).toContain('fim');
   });
 
+  it('keeps the language hint of a code block in the markdown fence', async () => {
+    const page = await fetcherFor(
+      '<html><body><main><p>intro</p><pre><code class="language-ts">const x = 1;</code></pre></main></body></html>',
+    )('https://example.com/');
+
+    expect(page.content).toContain('```ts\nconst x = 1;\n```');
+  });
+
   it('extracts the document title so a citation can name the source', async () => {
     const page = await fetcherFor(
       '<html><head><title>  Recife —  Wikipédia </title></head><body><p>x</p></body></html>',
