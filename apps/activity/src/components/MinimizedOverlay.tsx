@@ -58,7 +58,7 @@ export function MinimizedOverlay() {
               animationTimingFunction: 'linear',
               animationIterationCount: 'infinite',
               animationDirection: clone.reverse ? 'reverse' : 'normal',
-              ['--orbit-radius' as string]: `${clone.radius}px`,
+              '--orbit-radius': `${clone.radius}px`,
             }}
           >
             <img

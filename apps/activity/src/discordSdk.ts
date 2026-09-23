@@ -51,7 +51,7 @@ export const discordSdk: DiscordSDK | DiscordSDKMock = new Proxy(
   {} as DiscordSDK,
   {
     get(_target, prop, receiver) {
-      return Reflect.get(getDiscordSdk() as object, prop, receiver);
+      return Reflect.get(getDiscordSdk(), prop, receiver);
     },
   },
 );

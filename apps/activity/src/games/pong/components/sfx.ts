@@ -35,10 +35,7 @@ export class PongSfx {
   private getContext(): AudioContext | null {
     if (!this.enabled) return null;
     if (typeof window === 'undefined') return null;
-    const Ctor =
-      window.AudioContext ??
-      (window as unknown as { webkitAudioContext?: typeof AudioContext })
-        .webkitAudioContext;
+    const Ctor = window.AudioContext ?? window.webkitAudioContext;
     if (!Ctor) return null;
     if (!this.ctx) this.ctx = new Ctor();
     if (this.ctx.state === 'suspended') void this.ctx.resume();

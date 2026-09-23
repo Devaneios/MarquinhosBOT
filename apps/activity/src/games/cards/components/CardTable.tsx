@@ -354,7 +354,10 @@ function isPlayable(legalMoves: LegalMove[], cardId: string): boolean {
   return legalMoves.some(
     (m) =>
       m.move === 'play_card' &&
-      (m.args as { cardId?: string } | undefined)?.cardId === cardId,
+      typeof m.args === 'object' &&
+      m.args !== null &&
+      'cardId' in m.args &&
+      m.args.cardId === cardId,
   );
 }
 

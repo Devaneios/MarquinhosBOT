@@ -31,7 +31,7 @@ async function doHandshake(): Promise<DiscordIdentity> {
   devlog('[auth] sdk ready');
 
   const { code } = await discordSdk.commands.authorize({
-    client_id: import.meta.env.VITE_DISCORD_CLIENT_ID,
+    client_id: discordSdk.clientId,
     response_type: 'code',
     state: '',
     prompt: 'none',
@@ -110,24 +110,23 @@ export function runAuthFlow(force = false): Promise<DiscordIdentity> {
   }
 
   const entry: { promise: Promise<DiscordIdentity>; settled: boolean } = {
-    promise: null as unknown as Promise<DiscordIdentity>,
+    promise: withTimeout(doHandshake())
+      .then((identity) => {
+        entry.settled = true;
+        return identity;
+      })
+      .catch((err) => {
+        // Only reset the SDK singleton for the entry that is still current —
+        // a stale/superseded entry's own failure must not tear down a fresher
+        // attempt's connection out from under it.
+        if (cache === entry) {
+          cache = null;
+          resetDiscordSdk();
+        }
+        throw err;
+      }),
     settled: false,
   };
-  entry.promise = withTimeout(doHandshake())
-    .then((identity) => {
-      entry.settled = true;
-      return identity;
-    })
-    .catch((err) => {
-      // Only reset the SDK singleton for the entry that is still current —
-      // a stale/superseded entry's own failure must not tear down a fresher
-      // attempt's connection out from under it.
-      if (cache === entry) {
-        cache = null;
-        resetDiscordSdk();
-      }
-      throw err;
-    });
   cache = entry;
   return entry.promise;
 }
