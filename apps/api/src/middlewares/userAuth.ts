@@ -50,7 +50,7 @@ export async function verifyDiscordToken(
   res: Response,
   next: NextFunction,
 ) {
-  const authorization = req.headers['authorization'] as string;
+  const authorization = req.headers.authorization;
   const access_token = authorization && authorization.split(' ')[1];
 
   if (!access_token) {

@@ -20,7 +20,8 @@ class AuthController {
     req: Request,
     res: Response,
   ): Promise<Response<ApiResponse<void>>> {
-    const code = req?.query?.code as string | null;
+    const code =
+      typeof req.query.code === 'string' ? req.query.code : undefined;
 
     if (!code) {
       return res.status(400).json({
@@ -56,6 +57,9 @@ class AuthController {
       const discordUser = await this.discordService.getDiscordUser(
         response.access_token,
       );
+      if (!discordUser) {
+        return res.status(502).json({ message: 'Discord user lookup failed' });
+      }
 
       if (!(await this.userService.exists(discordUser.id)))
         await this.userService.create(discordUser.id);
@@ -71,7 +75,7 @@ class AuthController {
     req: Request,
     res: Response,
   ): Promise<Response<ApiResponse<void>>> {
-    const refresh_token = req.headers['Refresh-Token'] as string;
+    const refresh_token = req.get('Refresh-Token');
 
     if (!refresh_token) {
       return res.status(400).json({ message: 'Refresh token not found' });
@@ -108,7 +112,8 @@ class AuthController {
     req: Request,
     res: Response,
   ): Response<ApiResponse<string>> {
-    const state = req.query.state as string | undefined;
+    const state =
+      typeof req.query.state === 'string' ? req.query.state : undefined;
     return res.status(200).json({
       data: this.discordService.getAuthorizationUrl(state),
     });
