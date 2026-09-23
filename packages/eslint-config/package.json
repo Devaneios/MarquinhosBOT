@@ -1,0 +1,8 @@
+{
+  "name": "@marquinhos/eslint-config",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./rules": "./rules.js"
+  }
+}
