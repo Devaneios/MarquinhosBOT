@@ -1,7 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { MenuPanel, MenuScreen, Toggle } from '../../../components/game-shell';
 import { cn } from '../../../lib/cn';
-import type { BestOf, BotDifficulty, PongRulesetId, WinScore } from '../types';
+import {
+  pongRulesetIdSchema,
+  type BestOf,
+  type BotDifficulty,
+  type PongRulesetId,
+  type WinScore,
+} from '../types';
 
 const DIFFICULTIES: BotDifficulty[] = ['easy', 'normal', 'hard'];
 const WIN_SCORES: WinScore[] = [7, 10, 11, 15, 21];
@@ -144,7 +150,9 @@ export function SettingsScreen({
             id="pong-ruleset"
             value={ruleset}
             onChange={(event) => {
-              const value = event.target.value as PongRulesetId;
+              const parsed = pongRulesetIdSchema.safeParse(event.target.value);
+              if (!parsed.success) return;
+              const value = parsed.data;
               onRulesetChange(value);
               if (
                 ranked &&

@@ -196,7 +196,10 @@ export function CompetitiveScreen({
         ))}
         <select
           value={pool}
-          onChange={(event) => setPool(event.target.value as Pool)}
+          onChange={(event) => {
+            const next = poolSchema.safeParse(event.target.value);
+            if (next.success) setPool(next.data);
+          }}
           className={cn(selectClass, 'ml-auto')}
         >
           <option value="classic-1v1">1V1</option>
@@ -267,7 +270,10 @@ export function CompetitiveScreen({
             />
             <select
               value={format}
-              onChange={(event) => setFormat(event.target.value as Format)}
+              onChange={(event) => {
+                const next = formatSchema.safeParse(event.target.value);
+                if (next.success) setFormat(next.data);
+              }}
               className={cn(selectClass, 'w-full')}
             >
               <option value="round-robin">ROUND ROBIN</option>

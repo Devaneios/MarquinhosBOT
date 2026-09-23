@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { RoomLobbyScreen, type RoomReadyInfo } from '../components/game-shell';
 import type { DiscordIdentity } from '../discordAuth.ts';
-import type { GameId } from '../games/gameId';
+import { isGameId } from '../games/gameId';
 import { RoomView } from './RoomView';
 
 export function RoomRoute({ identity }: { identity: DiscordIdentity }) {
@@ -11,12 +11,11 @@ export function RoomRoute({ identity }: { identity: DiscordIdentity }) {
   const [joined, setJoined] = useState<RoomReadyInfo | null>(null);
 
   if (!joined) {
+    const createGame = searchParams.get('create');
     return (
       <RoomLobbyScreen
         identity={identity}
-        preselectedGame={
-          (searchParams.get('create') as GameId | null) ?? undefined
-        }
+        preselectedGame={isGameId(createGame) ? createGame : undefined}
         onRoomReady={setJoined}
         onBack={() => navigate('/')}
       />
