@@ -7,10 +7,11 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { z } from 'zod';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { colyseusUrl } from '../../lib/apiBase';
 import { devwarn } from '../../lib/devlog';
-import type { GameId } from '../gameId';
+import { gameIdSchema, type GameId } from '../gameId';
 import type { WsSession } from './activitySession';
 import {
   connectToRoom,
@@ -19,18 +20,22 @@ import {
   type ColyseusConnectionState,
 } from './colyseusConnection';
 
-export interface RoomMember {
-  userId: string;
-  role: 'player' | 'spectator' | 'queued';
-}
+const roomMemberSchema = z.object({
+  userId: z.string(),
+  role: z.enum(['player', 'spectator', 'queued']),
+});
 
-export interface RoomState {
-  game: GameId;
-  hostUserId: string;
-  queueEnabled: boolean;
-  matchInProgress: boolean;
-  members: RoomMember[];
-}
+export type RoomMember = z.infer<typeof roomMemberSchema>;
+
+const roomStateSchema = z.object({
+  game: gameIdSchema,
+  hostUserId: z.string(),
+  queueEnabled: z.boolean(),
+  matchInProgress: z.boolean(),
+  members: z.array(roomMemberSchema),
+});
+
+export type RoomState = z.infer<typeof roomStateSchema>;
 
 interface RoomConnectionContextValue {
   send: (message: ActivityMessage) => void;
@@ -82,9 +87,11 @@ export function RoomConnectionProvider({
         if (cancelled) return;
         roomRef.current = room;
         setConnectionState('connected');
-        room.onStateChange((state: unknown) =>
-          setRoomState(state as RoomState),
-        );
+        room.onStateChange((state: unknown) => {
+          const parsed = roomStateSchema.safeParse(state);
+          if (parsed.success) setRoomState(parsed.data);
+          else devwarn('[room] ignoring malformed room state', parsed.error);
+        });
         wireRoomLifecycle(room, game, (state) => {
           if (!cancelled) setConnectionState(state);
         });
