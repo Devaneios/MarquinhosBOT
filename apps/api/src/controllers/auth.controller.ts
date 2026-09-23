@@ -1,36 +1,29 @@
+import * as contract from '@marquinhos/contracts/http/routes/auth';
 import type { Request, Response } from 'express';
 import { DiscordService } from 'services/discord';
 import { LastfmService } from 'services/lastfm';
 import { UserService } from 'services/user';
-import type { ApiResponse } from 'types';
+import { parseRequest, sendContract } from 'utils/contract';
 import { decryptToken, encryptToken } from 'utils/crypto';
 
 class AuthController {
-  private discordService: DiscordService;
-  private lastfmService: LastfmService;
-  private userService: UserService;
+  constructor(
+    private discordService: DiscordService = new DiscordService(),
+    private lastfmService: LastfmService = new LastfmService(),
+    private userService: UserService = new UserService(),
+  ) {}
 
-  constructor() {
-    this.userService = new UserService();
-    this.discordService = new DiscordService();
-    this.lastfmService = new LastfmService();
-  }
+  public async login(req: Request, res: Response): Promise<Response> {
+    const input = parseRequest(contract.login, req);
 
-  public async login(
-    req: Request,
-    res: Response,
-  ): Promise<Response<ApiResponse<void>>> {
-    const code =
-      typeof req.query.code === 'string' ? req.query.code : undefined;
-
-    if (!code) {
+    if (!input) {
       return res.status(400).json({
         message: 'Code not provided',
       });
     }
 
     try {
-      const response = await this.discordService.requestToken(code);
+      const response = await this.discordService.requestToken(input.query.code);
 
       const expiresAt = Date.now() + response.expires_in * 1000;
       const encryptedToken = encryptToken(response.access_token, expiresAt);
@@ -64,17 +57,16 @@ class AuthController {
       if (!(await this.userService.exists(discordUser.id)))
         await this.userService.create(discordUser.id);
 
-      return res.status(200).json({ message: 'Authenticated successfully' });
+      return sendContract(res, contract.login, {
+        message: 'Authenticated successfully',
+      });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Internal Server Error' });
     }
   }
 
-  public async refreshToken(
-    req: Request,
-    res: Response,
-  ): Promise<Response<ApiResponse<void>>> {
+  public async refreshToken(req: Request, res: Response): Promise<Response> {
     const refresh_token = req.get('Refresh-Token');
 
     if (!refresh_token) {
@@ -101,29 +93,24 @@ class AuthController {
       res.set('Access-Control-Expose-Headers', 'Authorization');
       res.set('Access-Control-Allow-Headers', 'Authorization');
 
-      return res.status(200).json({ message: 'Token refreshed' });
+      return sendContract(res, contract.refreshToken, {
+        message: 'Token refreshed',
+      });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Internal Server Error' });
     }
   }
 
-  public discordLoginUrl(
-    req: Request,
-    res: Response,
-  ): Response<ApiResponse<string>> {
-    const state =
-      typeof req.query.state === 'string' ? req.query.state : undefined;
-    return res.status(200).json({
+  public discordLoginUrl(req: Request, res: Response): Response {
+    const state = parseRequest(contract.discordLoginUrl, req)?.query.state;
+    return sendContract(res, contract.discordLoginUrl, {
       data: this.discordService.getAuthorizationUrl(state),
     });
   }
 
-  public lastfmLoginUrl(
-    req: Request,
-    res: Response,
-  ): Response<ApiResponse<string>> {
-    return res.status(200).json({
+  public lastfmLoginUrl(req: Request, res: Response): Response {
+    return sendContract(res, contract.lastfmLoginUrl, {
       data: this.lastfmService.getAuthorizationUrl(),
     });
   }

@@ -63,11 +63,11 @@ export function validateContract(contract: EndpointContract) {
   };
 }
 
-export function sendContract<C extends EndpointContract>(
-  res: { status(code: number): { json(body: unknown): unknown } },
+export function sendContract<C extends EndpointContract, R>(
+  res: { status(code: number): { json(body: unknown): R } },
   _contract: C,
   body: ContractResponseInput<C>,
   status = 200,
-) {
+): R {
   return res.status(status).json(body);
 }
