@@ -1,18 +1,14 @@
 import type { Request, Response } from 'express';
+import {
+  enableLastfmBodySchema,
+  userIdParamsSchema,
+  userTopListenedParamsSchema,
+} from 'schemas/user.schema';
 import { DiscordService } from 'services/discord';
 import { LastfmService } from 'services/lastfm';
 import { UserService } from 'services/user';
-import type { ApiResponse, LastfmTopListenedPeriod } from 'types';
+import type { ApiResponse } from 'types';
 import { decryptToken } from 'utils/crypto';
-
-interface UserIdParams {
-  id: string;
-}
-
-interface UserIdPeriodParams {
-  id: string;
-  period: string;
-}
 
 class UserController {
   userService: UserService;
@@ -30,7 +26,7 @@ class UserController {
     res: Response,
   ): Promise<Response<ApiResponse<void>>> {
     try {
-      const authorization = req.headers['authorization'] as string;
+      const authorization = req.headers.authorization;
       const access_token = authorization && authorization.split(' ')[1];
 
       if (!access_token) {
@@ -45,6 +41,9 @@ class UserController {
 
       const discordUser =
         await this.discordService.getDiscordUser(decryptedToken);
+      if (!discordUser) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       await this.userService.create(discordUser.id);
     } catch (error: unknown) {
       console.error(error);
@@ -66,11 +65,12 @@ class UserController {
       return res.status(500).json({ message: 'Internal Server error' });
     }
 
-    const { token } = req.body;
+    const body = enableLastfmBodySchema.safeParse(req.body);
 
-    if (!token) {
+    if (!body.success) {
       return res.status(400).json({ message: 'Missing credentials' });
     }
+    const { token } = body.data;
 
     try {
       await this.userService.enableLastfm(req.user.id, token);
@@ -153,11 +153,7 @@ class UserController {
   }
 
   public async exists(
-    req: Request<
-      UserIdParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
+    req: Request,
     res: Response,
   ): Promise<Response<ApiResponse<boolean>>> {
     if (!req.user) {
@@ -165,7 +161,13 @@ class UserController {
     }
 
     try {
-      return res.status(200).json(await this.userService.exists(req.params.id));
+      const params = userIdParamsSchema.safeParse(req.params);
+      if (!params.success) {
+        return res.status(400).json({ message: 'id is required' });
+      }
+      return res
+        .status(200)
+        .json(await this.userService.exists(params.data.id));
     } catch (error: unknown) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
@@ -196,16 +198,12 @@ class UserController {
     }
   }
 
-  public async getTopArtists(
-    req: Request<
-      UserIdPeriodParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
-    res: Response,
-  ): Promise<Response> {
-    const id = req.params.id;
-    const period = req.params.period as LastfmTopListenedPeriod;
+  public async getTopArtists(req: Request, res: Response): Promise<Response> {
+    const params = userTopListenedParamsSchema.safeParse(req.params);
+    if (!params.success) {
+      return res.status(400).json({ message: 'Invalid user id or period' });
+    }
+    const { id, period } = params.data;
 
     try {
       const topArtists = await this.userService.getTopArtists(id, period);
@@ -217,16 +215,12 @@ class UserController {
     }
   }
 
-  public async getTopAlbums(
-    req: Request<
-      UserIdPeriodParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
-    res: Response,
-  ): Promise<Response> {
-    const id = req.params.id;
-    const period = req.params.period as LastfmTopListenedPeriod;
+  public async getTopAlbums(req: Request, res: Response): Promise<Response> {
+    const params = userTopListenedParamsSchema.safeParse(req.params);
+    if (!params.success) {
+      return res.status(400).json({ message: 'Invalid user id or period' });
+    }
+    const { id, period } = params.data;
 
     try {
       const topAlbums = await this.userService.getTopAlbums(id, period);
@@ -238,16 +232,12 @@ class UserController {
     }
   }
 
-  public async getTopTracks(
-    req: Request<
-      UserIdPeriodParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
-    res: Response,
-  ): Promise<Response> {
-    const id = req.params.id;
-    const period = req.params.period as LastfmTopListenedPeriod;
+  public async getTopTracks(req: Request, res: Response): Promise<Response> {
+    const params = userTopListenedParamsSchema.safeParse(req.params);
+    if (!params.success) {
+      return res.status(400).json({ message: 'Invalid user id or period' });
+    }
+    const { id, period } = params.data;
 
     try {
       const topTracks = await this.userService.getTopTracks(id, period);
