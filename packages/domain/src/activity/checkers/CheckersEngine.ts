@@ -1,16 +1,10 @@
-export type Color = 'black' | 'red';
-
-export interface Position {
-  row: number;
-  col: number;
-}
-
-export interface Piece {
-  color: Color;
-  king: boolean;
-}
-
-export type Board = (Piece | null)[][];
+import type {
+  Board,
+  CheckersState,
+  Color,
+  Piece,
+  Position,
+} from '@marquinhos/contracts/activity/games/checkers';
 
 export interface CheckersMove {
   from: Position;
@@ -21,16 +15,6 @@ export interface CheckersMove {
   captures: Position[];
 }
 
-export interface CheckersState {
-  board: Board;
-  turn: Color;
-  winner: Color | null;
-  // Set right after a jump that leaves the same piece with another capture
-  // available — the rules require it keep jumping before the turn can pass,
-  // so every subsequent move() call must originate here until the chain
-  // runs out.
-  mustContinueFrom: Position | null;
-}
 
 export interface MoveResult {
   ok: boolean;

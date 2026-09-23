@@ -1,3 +1,9 @@
+import {
+  serverMessageSchema,
+  type CheckersClientMessage,
+  type Color,
+} from '@marquinhos/contracts/activity/games/checkers';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -8,18 +14,12 @@ import {
 import { colyseusUrl } from '../../../lib/apiBase';
 import { devlog } from '../../../lib/devlog';
 import type { WsSession } from '../../shared/activitySession';
-import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import {
-  checkersStateSchema,
-  initPayloadSchema,
-  type CheckersState,
-  type Color,
-  type GameMode,
-} from '../types';
+import { applyCheckersMessage, initialCheckersView } from '../checkersMessages';
+import type { GameMode } from '../types';
 import { CheckersCanvas } from './CheckersCanvas';
 
 const CHECKERS_GAME_ID = 'checkers';
@@ -39,38 +39,15 @@ export function CheckersBoard({
 }) {
   const { t } = useTranslation(['checkers', 'common', 'games']);
 
-  const [myColor, setMyColor] = useState<Color | null>(null);
-  const [state, setState] = useState<CheckersState | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [clearSelectionSignal, setClearSelectionSignal] = useState(0);
+  const [view, setView] = useState(initialCheckersView);
+  const { myColor, state, notice, clearSelectionSignal } = view;
 
-  const onMessage = useCallback(
-    (message: ActivityMessage) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(initPayloadSchema, message);
-        if (!payload) return;
-        devlog('[checkers] init', payload);
-        setMyColor(payload.color);
-        setState(payload.state);
-      } else if (message.type === 'state') {
-        const payload = parsePayload(checkersStateSchema, message);
-        if (payload) setState(payload);
-      } else if (message.type === 'action_rejected') {
-        // checkersAdapter.ts (server) sends ACTION_REJECTED ('action_rejected')
-        // for a rejected move, not 'move_rejected' — a pre-existing mismatch
-        // with this client code found while adding room support, fixed here
-        // rather than left broken. Sibling games (Connect Four, Dominoes)
-        // still send 'move_rejected' — this is checkers-specific.
-        setNotice(t('checkers:moveRejected'));
-        setClearSelectionSignal((n) => n + 1);
-      } else if (message.type === 'opponent_disconnected') {
-        setNotice(t('checkers:opponentDisconnected'));
-      } else if (message.type === 'opponent_reconnected') {
-        setNotice(null);
-      }
-    },
-    [t],
-  );
+  const onMessage = useCallback((raw: ActivityMessage) => {
+    const message = parseMessage(serverMessageSchema, raw);
+    if (!message) return;
+    devlog('[checkers]', message.type, message);
+    setView((current) => applyCheckersMessage(current, message));
+  }, []);
 
   const { send, connectionState } = useColyseusRoom(
     CHECKERS_GAME_ID,
@@ -82,7 +59,10 @@ export function CheckersBoard({
 
   useEffect(() => {
     if (!notice) return;
-    const timer = setTimeout(() => setNotice(null), 3000);
+    const timer = setTimeout(
+      () => setView((current) => ({ ...current, notice: null })),
+      3000,
+    );
     return () => clearTimeout(timer);
   }, [notice]);
 
@@ -111,7 +91,12 @@ export function CheckersBoard({
       <CheckersCanvas
         state={state}
         myColor={myColor}
-        onMove={(from, to) => send({ type: 'move', payload: { from, to } })}
+        onMove={(from, to) =>
+          send({
+            type: 'move',
+            payload: { from, to },
+          } satisfies CheckersClientMessage)
+        }
         clearSelectionSignal={clearSelectionSignal}
       />
 
@@ -130,7 +115,9 @@ export function CheckersBoard({
       </div>
 
       {notice && (
-        <div className="text-sm text-marquinhos-text-dim">{notice}</div>
+        <div className="text-sm text-marquinhos-text-dim">
+          {t(`checkers:${notice}`)}
+        </div>
       )}
 
       {(connectionState === 'disconnected' || connectionState === 'error') && (
@@ -145,7 +132,9 @@ export function CheckersBoard({
             <button
               type="button"
               className={menuButtonPrimary}
-              onClick={() => send({ type: 'restart' })}
+              onClick={() =>
+                send({ type: 'restart' } satisfies CheckersClientMessage)
+              }
             >
               {t('common:playAgain')}
             </button>

@@ -1,6 +1,6 @@
+import type { CheckersState } from '@marquinhos/contracts/activity/games/checkers';
 import { act, render } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
-import type { CheckersState } from '../types';
 
 function installPixiMock() {
   mock.module('pixi.js', () => {

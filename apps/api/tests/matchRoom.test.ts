@@ -12,7 +12,7 @@ const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
 const { roomKey } = await import('@marquinhos/domain/activity/roomKey');
 const { ACTION_REJECTED } =
-  await import('../src/services/activity/shared/ActionResult');
+  await import('@marquinhos/contracts/activity/protocol');
 
 type ColyseusTestServer = import('@colyseus/testing').ColyseusTestServer;
 

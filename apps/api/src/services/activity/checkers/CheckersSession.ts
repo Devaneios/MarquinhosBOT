@@ -1,11 +1,12 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import type {
+  CheckersServerMessage,
+  CheckersState,
+  Color,
+  Position,
+} from '@marquinhos/contracts/activity/games/checkers';
 import { chooseCheckersMove } from '@marquinhos/domain/activity/checkers/CheckersBotAI';
-import {
-  CheckersEngine,
-  type CheckersState,
-  type Color,
-  type Position,
-} from '@marquinhos/domain/activity/checkers/CheckersEngine';
+import { CheckersEngine } from '@marquinhos/domain/activity/checkers/CheckersEngine';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
@@ -49,7 +50,7 @@ export class CheckersSession {
 
   constructor(
     private identity: CheckersSessionIdentity,
-    private broadcaster: ActivityBroadcaster,
+    private broadcaster: ActivityBroadcaster<CheckersServerMessage>,
     private gamification: GamificationService = new GamificationService(),
     options: CheckersSessionOptions = {},
   ) {

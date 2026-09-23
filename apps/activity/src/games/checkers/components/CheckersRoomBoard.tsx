@@ -1,51 +1,40 @@
+import {
+  serverMessageSchema,
+  type CheckersClientMessage,
+} from '@marquinhos/contracts/activity/games/checkers';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useState } from 'react';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
-import { parsePayload } from '../../shared/colyseusConnection';
-import {
-  checkersStateSchema,
-  initPayloadSchema,
-  type CheckersState,
-  type Color,
-} from '../types';
+import { applyCheckersMessage, initialCheckersView } from '../checkersMessages';
 import { CheckersCanvas } from './CheckersCanvas';
 
 // Renders the Checkers board inside a multiplayer Room view — driven by
 // RoomConnectionContext instead of CheckersBoard's own useColyseusRoom call.
 export function CheckersRoomBoard() {
   const ctx = useRoomConnectionContext();
-  const [myColor, setMyColor] = useState<Color | null>(null);
-  const [state, setState] = useState<CheckersState | null>(null);
-  const [clearSelectionSignal, setClearSelectionSignal] = useState(0);
+  const [view, setView] = useState(initialCheckersView);
 
   useEffect(() => {
     if (!ctx) return;
-    return ctx.subscribe((message) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(initPayloadSchema, message);
-        if (!payload) return;
-        setMyColor(payload.color);
-        setState(payload.state);
-      } else if (message.type === 'state') {
-        const payload = parsePayload(checkersStateSchema, message);
-        if (payload) setState(payload);
-      } else if (message.type === 'action_rejected') {
-        // checkersAdapter.ts sends ACTION_REJECTED for a rejected move — see
-        // the matching note in CheckersBoard.tsx.
-        setClearSelectionSignal((n) => n + 1);
-      }
+    return ctx.subscribe((raw) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (message) setView((current) => applyCheckersMessage(current, message));
     });
   }, [ctx]);
 
   return (
     <div className="flex flex-1 items-center justify-center p-4">
       <CheckersCanvas
-        state={state}
-        myColor={myColor}
+        state={view.state}
+        myColor={view.myColor}
         role={ctx?.role ?? null}
         onMove={(from, to) =>
-          ctx?.send({ type: 'move', payload: { from, to } })
+          ctx?.send({
+            type: 'move',
+            payload: { from, to },
+          } satisfies CheckersClientMessage)
         }
-        clearSelectionSignal={clearSelectionSignal}
+        clearSelectionSignal={view.clearSelectionSignal}
       />
     </div>
   );

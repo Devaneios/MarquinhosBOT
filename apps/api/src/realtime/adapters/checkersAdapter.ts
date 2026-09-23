@@ -1,16 +1,14 @@
-import { gridCellSchema } from '@marquinhos/contracts/activity/payloadSchemas';
+import {
+  movePayloadSchema,
+  type CheckersServerMessage,
+} from '@marquinhos/contracts/activity/games/checkers';
+import { ACTION_REJECTED } from '@marquinhos/contracts/activity/protocol';
 import { CheckersSession } from 'services/activity/checkers/CheckersSession';
-import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { sendMessage } from '../sendMessage';
 
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
 const MOVE_RATE_LIMIT_MAX = 10;
-
-export const checkersMovePayloadSchema = z.object({
-  from: gridCellSchema,
-  to: gridCellSchema,
-});
 
 export const checkersAdapter: GameRoomAdapter<CheckersSession> = {
   maxPlayers: 2,
@@ -42,7 +40,7 @@ export const checkersAdapter: GameRoomAdapter<CheckersSession> = {
             max: MOVE_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const parsed = checkersMovePayloadSchema.safeParse(payload);
+            const parsed = movePayloadSchema.safeParse(payload);
             if (!parsed.success) return;
             const result = session.requestMove(
               auth.userId,
@@ -50,7 +48,10 @@ export const checkersAdapter: GameRoomAdapter<CheckersSession> = {
               parsed.data.to,
             );
             if (!result.ok)
-              client.send(ACTION_REJECTED, { error: result.error });
+              sendMessage<CheckersServerMessage>(client, {
+                type: ACTION_REJECTED,
+                payload: { error: result.error },
+              });
           },
         },
         restart: { handle: (auth) => session.requestRestart(auth.userId) },
@@ -63,14 +64,23 @@ export const checkersAdapter: GameRoomAdapter<CheckersSession> = {
 
   onJoin(session, auth, client, seat) {
     if (seat !== 'player') {
-      client.send('init', { color: null, state: session.getPublicState() });
+      sendMessage<CheckersServerMessage>(client, {
+        type: 'init',
+        payload: { color: null, state: session.getPublicState() },
+      });
       return;
     }
     const color = session.addPlayer(auth.userId, client);
-    client.send('init', { color, state: session.getPublicState() });
+    sendMessage<CheckersServerMessage>(client, {
+      type: 'init',
+      payload: { color, state: session.getPublicState() },
+    });
     if (!color) return;
     if (auth.mode === 'single') session.enableBot(color);
-    client.send('state', session.getPublicState());
+    sendMessage<CheckersServerMessage>(client, {
+      type: 'state',
+      payload: session.getPublicState(),
+    });
   },
   onLeave(session, auth, client) {
     session.pauseForDisconnect(auth.userId, client);

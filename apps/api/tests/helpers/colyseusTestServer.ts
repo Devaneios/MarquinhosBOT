@@ -4,6 +4,7 @@ import { matchMaker, Server } from 'colyseus';
 import { randomInt } from 'node:crypto';
 
 interface Inbox {
+  log: { type: string; message: unknown }[];
   received: { type: string; message: unknown }[];
   waiters: {
     type: string;
@@ -17,7 +18,7 @@ const inboxes = new WeakMap<object, Inbox>();
 function inboxOf(room: object): Inbox {
   let inbox = inboxes.get(room);
   if (!inbox) {
-    inbox = { received: [], waiters: [] };
+    inbox = { log: [], received: [], waiters: [] };
     inboxes.set(room, inbox);
   }
   return inbox;
@@ -33,6 +34,7 @@ clientRoomPrototype.dispatchMessage = function (
   message: unknown,
 ) {
   const inbox = inboxOf(this);
+  inbox.log.push({ type: String(type), message });
   const waiter = inbox.waiters.findIndex(
     (w) => w.type === String(type) && w.matches(message),
   );
@@ -78,6 +80,12 @@ export function nextMessage<T = unknown>(
 export function drainMessages(client: object, type: string): void {
   const inbox = inboxOf(client);
   inbox.received = inbox.received.filter((m) => m.type !== type);
+}
+
+export function receivedLog(
+  client: object,
+): { type: string; message: unknown }[] {
+  return [...inboxOf(client).log];
 }
 
 export function pendingMessages(client: object, type: string): unknown[] {

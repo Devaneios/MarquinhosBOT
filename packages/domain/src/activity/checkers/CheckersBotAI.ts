@@ -1,9 +1,5 @@
-import type {
-  CheckersEngine,
-  CheckersMove,
-  Color,
-  Position,
-} from '@marquinhos/domain/activity/checkers/CheckersEngine';
+import type { Color, Position } from '@marquinhos/contracts/activity/games/checkers';
+import type { CheckersEngine, CheckersMove } from '@marquinhos/domain/activity/checkers/CheckersEngine';
 
 // A jump chain is mandatory move-by-move, so "prefer the biggest capture"
 // means simulating each candidate jump forward on a scratch engine and

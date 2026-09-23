@@ -1,4 +1,4 @@
-import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
+import { ACTION_REJECTED } from '@marquinhos/contracts/activity/protocol';
 import { WordleRaceSession } from 'services/activity/wordle-race/WordleRaceSession';
 import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';

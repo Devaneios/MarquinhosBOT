@@ -6,5 +6,3 @@
 // client-facing message name (`action_rejected`) so no client needs a
 // per-game vocabulary just to render "that move didn't work."
 export type ActionResult = { ok: true } | { ok: false; error: string };
-
-export const ACTION_REJECTED = 'action_rejected';

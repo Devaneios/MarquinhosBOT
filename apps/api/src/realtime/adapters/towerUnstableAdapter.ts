@@ -1,4 +1,4 @@
-import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
+import { ACTION_REJECTED } from '@marquinhos/contracts/activity/protocol';
 import { TowerSession } from 'services/activity/towerUnstable/TowerSession';
 import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';

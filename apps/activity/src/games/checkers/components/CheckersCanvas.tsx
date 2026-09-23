@@ -1,6 +1,10 @@
+import type {
+  CheckersState,
+  Color,
+  Position,
+} from '@marquinhos/contracts/activity/games/checkers';
 import { Application, Container, Graphics } from 'pixi.js';
 import { useEffect, useRef, useState } from 'react';
-import type { CheckersState, Color, Position } from '../types';
 
 const BOARD_SIZE = 480;
 const SQUARE_SIZE = BOARD_SIZE / 8;

@@ -1,5 +1,5 @@
+import type { Piece } from '@marquinhos/contracts/activity/games/checkers';
 import { describe, expect, it } from 'bun:test';
-import type { Piece } from '@marquinhos/domain/activity/checkers/CheckersEngine';
 import {
   CheckersSession,
   type CheckersSessionIdentity,

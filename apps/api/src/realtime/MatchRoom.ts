@@ -3,11 +3,11 @@ import {
   type ActivityMode,
   type GameId,
 } from '@marquinhos/contracts/activity/gameId';
+import { ACTION_REJECTED } from '@marquinhos/contracts/activity/protocol';
 import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { Room } from 'colyseus';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import type { MatchRoomMetadata } from 'services/activity/roomListing';
-import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
 import {
   verifyWsSessionToken,
