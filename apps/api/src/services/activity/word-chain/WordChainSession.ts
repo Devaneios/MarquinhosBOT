@@ -1,4 +1,8 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import type {
+  WordChainState as PublicWordChainState,
+  WordChainServerMessage,
+} from '@marquinhos/contracts/activity/games/wordChain';
 import {
   WORD_CHAIN_BOT_USER_ID,
   WordChainBot,
@@ -48,7 +52,7 @@ const MIN_PLAYERS_TO_START = 2;
 export class WordChainSession {
   private engine: WordChainEngine;
   private players: WordChainPlayer[] = [];
-  private broadcaster: ActivityBroadcaster;
+  private broadcaster: ActivityBroadcaster<WordChainServerMessage>;
   private disconnectGrace = new DisconnectGraceTimer<string>();
   private turnTimer: ReturnType<typeof setTimeout> | null = null;
   private gamification = new GamificationService();
@@ -71,7 +75,7 @@ export class WordChainSession {
 
   constructor(
     private identity: WordChainSessionIdentity,
-    broadcaster: ActivityBroadcaster,
+    broadcaster: ActivityBroadcaster<WordChainServerMessage>,
     options: WordChainSessionOptions = {},
   ) {
     this.broadcaster = broadcaster;
@@ -309,18 +313,22 @@ export class WordChainSession {
     }, this.turnTimeoutMs);
   }
 
-  private broadcastState(): void {
+  getPublicState(): PublicWordChainState {
     const state = this.engine.getState();
+    return {
+      gameOver: state.gameOver,
+      winner: state.winner,
+      currentTurn: state.currentTurn,
+      currentWord: state.currentWord,
+      usedWords: Array.from(state.usedWords),
+      players: state.players,
+    };
+  }
+
+  private broadcastState(): void {
     this.broadcaster.broadcast(this.roomKey, {
       type: 'state',
-      payload: {
-        gameOver: state.gameOver,
-        winner: state.winner,
-        currentTurn: state.currentTurn,
-        currentWord: state.currentWord,
-        usedWords: Array.from(state.usedWords),
-        players: state.players,
-      },
+      payload: this.getPublicState(),
     });
   }
 

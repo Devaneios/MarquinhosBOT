@@ -1,3 +1,11 @@
+import {
+  serverMessageSchema,
+  type WordChainClientMessage,
+} from '@marquinhos/contracts/activity/games/wordChain';
+import {
+  ACTION_REJECTED,
+  parseMessage,
+} from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +19,6 @@ import {
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { colyseusUrl } from '../../lib/apiBase';
 import { cn } from '../../lib/cn';
-import { parsePayload } from '../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
@@ -19,11 +26,10 @@ import {
 import { WordChainBoard } from './components';
 import { useWordChainSession } from './hooks/useWordChainSession';
 import {
-  opponentDisconnectedPayloadSchema,
-  wordChainStatePayloadSchema,
-  wordRejectedPayloadSchema,
-  type GameState,
-} from './types';
+  applyWordChainMessage,
+  initialWordChainView,
+  isServerReply,
+} from './wordChainMessages';
 
 export function WordChainGame({
   identity,
@@ -36,21 +42,9 @@ export function WordChainGame({
   const { t } = useTranslation(['word-chain', 'common']);
   const [mode, setMode] = useState<'single' | 'multi' | null>(null);
   const session = useWordChainSession(identity, mode, onAuthInvalid);
-  const [gameState, setGameState] = useState<GameState>({
-    currentWord: '',
-    currentTurn: '',
-    usedWords: [],
-    players: [],
-    gameOver: false,
-    winner: null,
-    userId: identity.userId,
-  });
   const [inputValue, setInputValue] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [pausedOpponent, setPausedOpponent] = useState<{
-    userId: string;
-    timeoutMs: number;
-  } | null>(null);
+  const [view, setView] = useState(initialWordChainView);
+  const { state: gameState, error, pausedOpponent } = view;
   const inputRef = useRef<HTMLInputElement>(null);
   const submitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -58,30 +52,15 @@ export function WordChainGame({
     'word-chain',
     session.status === 'ready' ? session.session : null,
     colyseusUrl(),
-    (message: ActivityMessage) => {
-      if (message.type === 'init' || message.type === 'state') {
-        const payload = parsePayload(wordChainStatePayloadSchema, message);
-        if (!payload) return;
-        setGameState((prev) => ({ ...prev, ...payload }));
-        if (message.type === 'init') setError(null);
-      } else if (message.type === 'action_rejected') {
-        // wordChainAdapter.ts (server) sends ACTION_REJECTED
-        // ('action_rejected') for a rejected word, not 'word_rejected' —
-        // same bug class found in Checkers/Tic-Tac-Toe/TowerUnstable, fixed
-        // here too.
-        const payload = parsePayload(wordRejectedPayloadSchema, message);
-        if (!payload) return;
-        setError(payload.error);
-        setInputValue('');
-      } else if (message.type === 'opponent_disconnected') {
-        const payload = parsePayload(
-          opponentDisconnectedPayloadSchema,
-          message,
-        );
-        if (payload) setPausedOpponent(payload);
-      } else if (message.type === 'opponent_reconnected') {
-        setPausedOpponent(null);
+    (raw: ActivityMessage) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (!message) return;
+      if (isServerReply(message) && submitTimeoutRef.current) {
+        clearTimeout(submitTimeoutRef.current);
+        submitTimeoutRef.current = null;
       }
+      if (message.type === ACTION_REJECTED) setInputValue('');
+      setView((current) => applyWordChainMessage(current, message));
     },
   );
 
@@ -97,12 +76,15 @@ export function WordChainGame({
     const word = inputValue.trim();
     if (!word) return;
 
-    setError(null);
-    send({ type: 'word', payload: { word } });
+    setView((current) => ({ ...current, error: null }));
+    send({ type: 'word', payload: { word } } satisfies WordChainClientMessage);
     setInputValue('');
 
     submitTimeoutRef.current = setTimeout(() => {
-      setError(t('word-chain:noResponse'));
+      setView((current) => ({
+        ...current,
+        error: t('word-chain:noResponse'),
+      }));
     }, 5000);
   }
 
@@ -210,7 +192,7 @@ export function WordChainGame({
                 value={inputValue}
                 onChange={(e) => {
                   setInputValue(e.target.value);
-                  setError(null);
+                  setView((current) => ({ ...current, error: null }));
                 }}
                 onKeyDown={handleKeyDown}
                 disabled={!isCurrentPlayer || isGameOver}

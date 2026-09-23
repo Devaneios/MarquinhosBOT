@@ -1,12 +1,14 @@
+import {
+  wordPayloadSchema,
+  type WordChainServerMessage,
+} from '@marquinhos/contracts/activity/games/wordChain';
 import { ACTION_REJECTED } from '@marquinhos/contracts/activity/protocol';
 import { WordChainSession } from 'services/activity/word-chain/WordChainSession';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { sendMessage } from '../sendMessage';
 
 const WORD_RATE_LIMIT_WINDOW_MS = 1000;
 const WORD_RATE_LIMIT_MAX = 3;
-
-const wordPayloadSchema = z.object({ word: z.string().default('') });
 
 export const wordChainAdapter: GameRoomAdapter<WordChainSession> = {
   maxPlayers: 2,
@@ -39,7 +41,10 @@ export const wordChainAdapter: GameRoomAdapter<WordChainSession> = {
           handle: (auth, client, payload: unknown) => {
             const parsed = wordPayloadSchema.safeParse(payload);
             if (!parsed.success) {
-              client.send(ACTION_REJECTED, { error: 'Invalid word' });
+              sendMessage<WordChainServerMessage>(client, {
+                type: ACTION_REJECTED,
+                payload: { error: 'Invalid word' },
+              });
               return;
             }
             const result = session.handleWordSubmission(
@@ -47,7 +52,10 @@ export const wordChainAdapter: GameRoomAdapter<WordChainSession> = {
               parsed.data.word,
             );
             if (!result.ok)
-              client.send(ACTION_REJECTED, { error: result.error });
+              sendMessage<WordChainServerMessage>(client, {
+                type: ACTION_REJECTED,
+                payload: { error: result.error },
+              });
           },
         },
         leave: { handle: (auth, client) => session.leave(auth.userId, client) },
@@ -69,14 +77,9 @@ export const wordChainAdapter: GameRoomAdapter<WordChainSession> = {
       session.addPlayer(auth.userId, client);
       if (auth.mode === 'single') session.enableBot();
     }
-    const state = session.state;
-    client.send('init', {
-      currentWord: state.currentWord,
-      currentTurn: state.currentTurn,
-      usedWords: Array.from(state.usedWords),
-      players: state.players,
-      gameOver: state.gameOver,
-      winner: state.winner,
+    sendMessage<WordChainServerMessage>(client, {
+      type: 'init',
+      payload: session.getPublicState(),
     });
   },
   onLeave(session, auth, client) {

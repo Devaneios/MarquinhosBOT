@@ -1,13 +1,19 @@
+import {
+  serverMessageSchema,
+  type WordChainClientMessage,
+} from '@marquinhos/contracts/activity/games/wordChain';
+import {
+  ACTION_REJECTED,
+  parseMessage,
+} from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { parsePayload } from '../../shared/colyseusConnection';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
 import {
-  opponentDisconnectedPayloadSchema,
-  wordChainStatePayloadSchema,
-  wordRejectedPayloadSchema,
-  type GameState,
-} from '../types';
+  applyWordChainMessage,
+  initialWordChainView,
+  isServerReply,
+} from '../wordChainMessages';
 import { WordChainBoard } from './WordChainBoard';
 
 // Renders Word Chain inside a multiplayer Room view — driven by
@@ -20,46 +26,23 @@ import { WordChainBoard } from './WordChainBoard';
 export function WordChainRoomBoard() {
   const ctx = useRoomConnectionContext();
   const { t } = useTranslation(['word-chain', 'common']);
-  const [gameState, setGameState] = useState<GameState>({
-    currentWord: '',
-    currentTurn: '',
-    usedWords: [],
-    players: [],
-    gameOver: false,
-    winner: null,
-    userId: ctx?.currentUserId ?? '',
-  });
   const [inputValue, setInputValue] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [pausedOpponent, setPausedOpponent] = useState<{
-    userId: string;
-    timeoutMs: number;
-  } | null>(null);
+  const [view, setView] = useState(initialWordChainView);
+  const { state: gameState, error, pausedOpponent } = view;
   const inputRef = useRef<HTMLInputElement>(null);
   const submitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!ctx) return;
-    return ctx.subscribe((message) => {
-      if (message.type === 'init' || message.type === 'state') {
-        const payload = parsePayload(wordChainStatePayloadSchema, message);
-        if (!payload) return;
-        setGameState((prev) => ({ ...prev, ...payload }));
-        if (message.type === 'init') setError(null);
-      } else if (message.type === 'action_rejected') {
-        const payload = parsePayload(wordRejectedPayloadSchema, message);
-        if (!payload) return;
-        setError(payload.error);
-        setInputValue('');
-      } else if (message.type === 'opponent_disconnected') {
-        const payload = parsePayload(
-          opponentDisconnectedPayloadSchema,
-          message,
-        );
-        if (payload) setPausedOpponent(payload);
-      } else if (message.type === 'opponent_reconnected') {
-        setPausedOpponent(null);
+    return ctx.subscribe((raw) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (!message) return;
+      if (isServerReply(message) && submitTimeoutRef.current) {
+        clearTimeout(submitTimeoutRef.current);
+        submitTimeoutRef.current = null;
       }
+      if (message.type === ACTION_REJECTED) setInputValue('');
+      setView((current) => applyWordChainMessage(current, message));
     });
   }, [ctx]);
 
@@ -73,12 +56,18 @@ export function WordChainRoomBoard() {
     const word = inputValue.trim();
     if (!word) return;
 
-    setError(null);
-    ctx?.send({ type: 'word', payload: { word } });
+    setView((current) => ({ ...current, error: null }));
+    ctx?.send({
+      type: 'word',
+      payload: { word },
+    } satisfies WordChainClientMessage);
     setInputValue('');
 
     submitTimeoutRef.current = setTimeout(() => {
-      setError(t('word-chain:noResponse'));
+      setView((current) => ({
+        ...current,
+        error: t('word-chain:noResponse'),
+      }));
     }, 5000);
   }
 
@@ -134,7 +123,7 @@ export function WordChainRoomBoard() {
               value={inputValue}
               onChange={(e) => {
                 setInputValue(e.target.value);
-                setError(null);
+                setView((current) => ({ ...current, error: null }));
               }}
               onKeyDown={handleKeyDown}
               disabled={!isCurrentPlayer || isGameOver}
