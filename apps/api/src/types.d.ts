@@ -20,7 +20,7 @@ export type PlaybackData = {
   title: string;
   url?: string;
   listeningUsersId: string[];
-  timestamp: Date;
+  timestamp: string;
   guildId: string;
   channelId: string;
   providerName: string;

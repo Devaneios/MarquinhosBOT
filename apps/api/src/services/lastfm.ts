@@ -26,6 +26,7 @@ import axios from 'axios';
 import crypto from 'crypto';
 import { db } from 'database/sqlite';
 import { getUnixTime, parseISO } from 'date-fns';
+import { playbackDataSchema, trackSchema } from 'schemas/scrobble.schema';
 import type {
   LastfmSessionResponse,
   LastfmTopListenedPeriod,
@@ -33,6 +34,7 @@ import type {
   Track,
 } from 'types';
 import { URLSearchParams } from 'url';
+import { z } from 'zod';
 // URLSearchParams is available globally in Node.js >= 15 but we import for clarity
 
 const logger = {
@@ -40,12 +42,12 @@ const logger = {
   warn: (...args: unknown[]) => console.warn('[lastfm]', ...args),
 };
 
-interface LastfmErrorResponse {
-  response?: {
-    data?: {
-      error?: number;
-    };
-  };
+const lastfmErrorBodySchema = z.object({ error: z.number() });
+
+export function getLastfmErrorCode(error: unknown): number | undefined {
+  if (!axios.isAxiosError(error)) return undefined;
+  const body = lastfmErrorBodySchema.safeParse(error.response?.data);
+  return body.success ? body.data.error : undefined;
 }
 
 type ScrobbleRow = {
@@ -76,14 +78,11 @@ export class LastfmService {
     try {
       request = await this._performRequest(params, 'get', true);
     } catch (error: unknown) {
-      const err = error as LastfmErrorResponse;
-      if (err?.response?.data?.error === 14) {
+      const errorCode = getLastfmErrorCode(error);
+      if (errorCode === 14) {
         throw new Error('LastfmTokenNotAuthorized', { cause: error });
       }
-      if (
-        err?.response?.data?.error === 11 ||
-        err?.response?.data?.error === 16
-      ) {
+      if (errorCode === 11 || errorCode === 16) {
         throw new Error('LastfmServiceUnavailable', { cause: error });
       } else {
         logger.error('LastfmRequestUnknownError:', error);
@@ -118,7 +117,7 @@ export class LastfmService {
       params.set(`track[${i}]`, track.name);
       params.set(
         `timestamp[${i}]`,
-        getUnixTime(parseISO(playbackData.timestamp.toString())).toString(),
+        getUnixTime(parseISO(playbackData.timestamp)).toString(),
       );
       if (track.album) {
         params.set(`album[${i}]`, track.album);
@@ -128,8 +127,8 @@ export class LastfmService {
     try {
       await this._performRequest(params, 'post', true);
     } catch (error: unknown) {
-      const err = error as LastfmErrorResponse;
-      if (err?.response?.data?.error === 9) {
+      const errorCode = getLastfmErrorCode(error);
+      if (errorCode === 9) {
         throw new Error('LastfmInvalidSessionKey', { cause: error });
       } else {
         logger.error('Scrobble error:', error);
@@ -150,8 +149,8 @@ export class LastfmService {
 
       return response?.data.user;
     } catch (error: unknown) {
-      const err = error as LastfmErrorResponse;
-      if (err?.response?.data?.error === 9) {
+      const errorCode = getLastfmErrorCode(error);
+      if (errorCode === 9) {
         throw new Error('LastfmInvalidSessionKey', { cause: error });
       } else {
         logger.error('getUserInfo error:', error);
@@ -162,15 +161,19 @@ export class LastfmService {
 
   async dispatchScrobbleFromQueue(scrobbleId: string) {
     const row = db
-      .prepare('SELECT track, playback_data FROM scrobbles_queue WHERE id = ?')
-      .get(scrobbleId) as Pick<ScrobbleRow, 'track' | 'playback_data'> | null;
+      .prepare<Pick<ScrobbleRow, 'track' | 'playback_data'>, [string]>(
+        'SELECT track, playback_data FROM scrobbles_queue WHERE id = ?',
+      )
+      .get(scrobbleId);
 
     if (!row) {
       throw new Error('ScrobbleNotFound');
     }
 
-    const track = JSON.parse(row.track) as Track;
-    const playbackData = JSON.parse(row.playback_data) as PlaybackData;
+    const track = trackSchema.parse(JSON.parse(row.track));
+    const playbackData = playbackDataSchema.parse(
+      JSON.parse(row.playback_data),
+    );
 
     const failedUserIds = await this.dispatchScrobble(track, playbackData);
 
@@ -205,13 +208,11 @@ export class LastfmService {
 
     for (const userId of playbackData.listeningUsersId) {
       const registeredUser = db
-        .prepare(
-          'SELECT lastfm_session_token, scrobbles_on FROM users WHERE id = ?',
-        )
-        .get(userId) as Pick<
-        UserRow,
-        'lastfm_session_token' | 'scrobbles_on'
-      > | null;
+        .prepare<
+          Pick<UserRow, 'lastfm_session_token' | 'scrobbles_on'>,
+          [string]
+        >('SELECT lastfm_session_token, scrobbles_on FROM users WHERE id = ?')
+        .get(userId);
 
       if (registeredUser?.scrobbles_on === 1) {
         await this.updateNowPlaying(
@@ -242,13 +243,11 @@ export class LastfmService {
 
     for (const userId of playbackData.listeningUsersId) {
       const registeredUser = db
-        .prepare(
-          'SELECT lastfm_session_token, scrobbles_on FROM users WHERE id = ?',
-        )
-        .get(userId) as Pick<
-        UserRow,
-        'lastfm_session_token' | 'scrobbles_on'
-      > | null;
+        .prepare<
+          Pick<UserRow, 'lastfm_session_token' | 'scrobbles_on'>,
+          [string]
+        >('SELECT lastfm_session_token, scrobbles_on FROM users WHERE id = ?')
+        .get(userId);
 
       if (registeredUser?.scrobbles_on === 1) {
         const scrobblingRequestPromise = this.scrobble(
@@ -306,8 +305,8 @@ export class LastfmService {
     try {
       await this._performRequest(params, 'post', true);
     } catch (error: unknown) {
-      const err = error as LastfmErrorResponse;
-      if (err?.response?.data?.error !== 9) {
+      const errorCode = getLastfmErrorCode(error);
+      if (errorCode !== 9) {
         logger.warn('updateNowPlaying failed:', error);
       }
     }
@@ -445,14 +444,18 @@ export class LastfmService {
 
   async removeUserFromScrobble(scrobbleId: string, userId: string) {
     const row = db
-      .prepare('SELECT playback_data FROM scrobbles_queue WHERE id = ?')
-      .get(scrobbleId) as Pick<ScrobbleRow, 'playback_data'> | null;
+      .prepare<Pick<ScrobbleRow, 'playback_data'>, [string]>(
+        'SELECT playback_data FROM scrobbles_queue WHERE id = ?',
+      )
+      .get(scrobbleId);
 
     if (!row) {
       throw new Error('ScrobbleNotFound');
     }
 
-    const playbackData = JSON.parse(row.playback_data) as PlaybackData;
+    const playbackData = playbackDataSchema.parse(
+      JSON.parse(row.playback_data),
+    );
     const updatedUsers = playbackData.listeningUsersId.filter(
       (user) => user !== userId,
     );
@@ -480,14 +483,18 @@ export class LastfmService {
     }
 
     const row = db
-      .prepare('SELECT playback_data FROM scrobbles_queue WHERE id = ?')
-      .get(scrobbleId) as Pick<ScrobbleRow, 'playback_data'> | null;
+      .prepare<Pick<ScrobbleRow, 'playback_data'>, [string]>(
+        'SELECT playback_data FROM scrobbles_queue WHERE id = ?',
+      )
+      .get(scrobbleId);
 
     if (!row) {
       throw new Error('ScrobbleNotFound');
     }
 
-    const playbackData = JSON.parse(row.playback_data) as PlaybackData;
+    const playbackData = playbackDataSchema.parse(
+      JSON.parse(row.playback_data),
+    );
 
     if (playbackData.listeningUsersId.includes(userId)) {
       throw new Error('UserAlreadyOnScrobble');
