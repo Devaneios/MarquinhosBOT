@@ -67,7 +67,7 @@ const byId = new Map(
   definitions.map((definition) => [definition.id, definition]),
 );
 
-export const PONG_RULESETS = definitions as readonly PongRulesetDefinition[];
+export const PONG_RULESETS: readonly PongRulesetDefinition[] = definitions;
 
 export function isPongRulesetId(value: unknown): value is PongRulesetId {
   return typeof value === 'string' && byId.has(value as PongRulesetId);

@@ -4,10 +4,7 @@ import {
   type PongArenaEngineConfig,
 } from 'services/activity/pong/PongArenaEngine';
 import type { BotDifficulty } from 'services/activity/pong/PongBotAI';
-import {
-  PongCompetitionService,
-  type PongRatingPool,
-} from 'services/activity/pong/PongCompetitionService';
+import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
 import {
   encodeStateSnapshot,
   PONG_PROTOCOL_VERSION,
@@ -665,11 +662,12 @@ export class PongSession {
       results,
     });
     const config = this.engine.getConfig();
-    if (config.ranked && getPongRuleset(config.ruleset).rankedPool) {
+    const rankedPool = getPongRuleset(config.ruleset).rankedPool;
+    if (config.ranked && rankedPool) {
       this.competition.recordMatch(
         this.identity.instanceId,
         this.identity.guildId,
-        config.ruleset as PongRatingPool,
+        rankedPool,
         results,
       );
     }

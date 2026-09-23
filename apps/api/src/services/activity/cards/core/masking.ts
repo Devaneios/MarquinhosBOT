@@ -15,7 +15,7 @@ export type MaskedCard<TProps = Record<string, unknown>> =
   Card<TProps> | HiddenCard;
 
 export function isHidden<TProps>(card: MaskedCard<TProps>): card is HiddenCard {
-  return (card as HiddenCard).hidden;
+  return 'hidden' in card && card.hidden;
 }
 
 export interface ZoneView<TProps = Record<string, unknown>> {

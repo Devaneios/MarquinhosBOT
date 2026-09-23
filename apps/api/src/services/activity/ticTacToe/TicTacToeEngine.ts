@@ -37,7 +37,7 @@ export class TicTacToeEngine {
 
   getState(): Readonly<TicTacToeState> {
     return {
-      board: this.state.board.map((row) => [...row]) as CellValue[][],
+      board: this.state.board.map((row) => [...row]),
       currentPlayer: this.state.currentPlayer,
       winner: this.state.winner,
       isDraw: this.state.isDraw,
