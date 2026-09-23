@@ -1,14 +1,10 @@
 import type { Request, Response } from 'express';
+import {
+  addScrobbleToQueueSchema,
+  scrobbleIdParamsSchema,
+  scrobbleUserParamsSchema,
+} from 'schemas/scrobble.schema';
 import { ScrobblerService } from 'services/scrobbler';
-
-interface IdParams {
-  id: string;
-}
-
-interface ScrobbleUserParams {
-  scrobbleId: string;
-  userId: string;
-}
 
 class ScrobbleController {
   scrobblerService: ScrobblerService;
@@ -19,8 +15,12 @@ class ScrobbleController {
 
   async addScrobbleToQueue(req: Request, res: Response) {
     try {
+      const body = addScrobbleToQueueSchema.shape.body.safeParse(req.body);
+      if (!body.success) {
+        return res.status(400).json({ message: 'Invalid playback data' });
+      }
       const data = await this.scrobblerService.addScrobbleToQueue(
-        req.body.playbackData,
+        body.data.playbackData,
       );
       return res.status(200).json({ data, message: 'Scrobble added to queue' });
     } catch (error: unknown) {
@@ -29,12 +29,13 @@ class ScrobbleController {
     }
   }
 
-  async dispatchScrobble(
-    req: Request<IdParams, Record<string, unknown>, Record<string, unknown>>,
-    res: Response,
-  ) {
+  async dispatchScrobble(req: Request, res: Response) {
     try {
-      const id = await this.scrobblerService.dispatchScrobble(req.params.id);
+      const params = scrobbleIdParamsSchema.safeParse(req.params);
+      if (!params.success) {
+        return res.status(400).json({ message: 'id is required' });
+      }
+      const id = await this.scrobblerService.dispatchScrobble(params.data.id);
       return res.status(200).json({ data: id, message: 'Scrobbled' });
     } catch (error: unknown) {
       console.error(error);
@@ -42,18 +43,17 @@ class ScrobbleController {
     }
   }
 
-  async removeUserFromScrobble(
-    req: Request<
-      ScrobbleUserParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
-    res: Response,
-  ) {
+  async removeUserFromScrobble(req: Request, res: Response) {
     try {
+      const params = scrobbleUserParamsSchema.safeParse(req.params);
+      if (!params.success) {
+        return res
+          .status(400)
+          .json({ message: 'scrobbleId and userId are required' });
+      }
       const id = await this.scrobblerService.removeUserFromScrobble(
-        req.params.scrobbleId,
-        req.params.userId,
+        params.data.scrobbleId,
+        params.data.userId,
       );
       return res.status(200).json({ data: id, message: 'User removed' });
     } catch (error: unknown) {
@@ -62,18 +62,17 @@ class ScrobbleController {
     }
   }
 
-  async addUserToScrobble(
-    req: Request<
-      ScrobbleUserParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
-    res: Response,
-  ) {
+  async addUserToScrobble(req: Request, res: Response) {
     try {
+      const params = scrobbleUserParamsSchema.safeParse(req.params);
+      if (!params.success) {
+        return res
+          .status(400)
+          .json({ message: 'scrobbleId and userId are required' });
+      }
       const id = await this.scrobblerService.addUserToScrobble(
-        req.params.scrobbleId,
-        req.params.userId,
+        params.data.scrobbleId,
+        params.data.userId,
       );
       return res.status(200).json({ data: id, message: 'User removed' });
     } catch (error: unknown) {
