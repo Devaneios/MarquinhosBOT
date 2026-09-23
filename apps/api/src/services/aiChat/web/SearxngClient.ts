@@ -1,3 +1,6 @@
+import { getErrorMessage } from 'utils/errorHandling';
+import { z } from 'zod';
+
 const DEFAULT_BASE_URL =
   process.env.SEARXNG_URL ?? 'https://searxng.frois.net.br';
 const SEARCH_TIMEOUT_MS = 12_000;
@@ -38,14 +41,19 @@ export interface SearxngClientDeps {
   baseUrl?: string;
 }
 
-interface SearxngRawResult {
-  url?: unknown;
-  title?: unknown;
-  content?: unknown;
-  engines?: unknown;
-  score?: unknown;
-  publishedDate?: unknown;
-}
+const searxngRawResultSchema = z.object({
+  url: z.unknown().optional(),
+  title: z.unknown().optional(),
+  content: z.unknown().optional(),
+  engines: z.unknown().optional(),
+  score: z.unknown().optional(),
+  publishedDate: z.unknown().optional(),
+});
+
+const searxngPayloadSchema = z.object({
+  results: z.array(z.unknown()).catch([]),
+  unresponsive_engines: z.unknown().optional(),
+});
 
 function asString(value: unknown): string {
   return typeof value === 'string' ? value : '';
@@ -119,13 +127,13 @@ export class SearxngClient {
         signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS),
       });
     } catch (error) {
-      if ((error as Error).name === 'TimeoutError') {
+      if (error instanceof Error && error.name === 'TimeoutError') {
         throw new SearxngError(
           `A busca por "${query}" passou de ${SEARCH_TIMEOUT_MS / 1000}s e foi abortada.`,
         );
       }
       throw new SearxngError(
-        `Não consegui falar com o SearXNG: ${(error as Error).message}`,
+        `Não consegui falar com o SearXNG: ${getErrorMessage(error)}`,
       );
     }
 
@@ -135,21 +143,26 @@ export class SearxngClient {
       );
     }
 
-    let payload: { results?: unknown; unresponsive_engines?: unknown };
+    let body: unknown;
     try {
-      payload = (await response.json()) as {
-        results?: unknown;
-        unresponsive_engines?: unknown;
-      };
+      body = await response.json();
     } catch {
       throw new SearxngError(
         `O SearXNG devolveu uma resposta que não é JSON para "${query}".`,
       );
     }
+    const parsed = searxngPayloadSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new SearxngError(
+        `O SearXNG devolveu um JSON inesperado para "${query}".`,
+      );
+    }
+    const payload = parsed.data;
 
-    const raw = Array.isArray(payload.results)
-      ? (payload.results as SearxngRawResult[])
-      : [];
+    const raw = payload.results.flatMap((item) => {
+      const result = searxngRawResultSchema.safeParse(item);
+      return result.success ? [result.data] : [];
+    });
     const limit = options.limit ?? DEFAULT_LIMIT;
     const seen = new Set<string>();
     const hits: SearchHit[] = [];

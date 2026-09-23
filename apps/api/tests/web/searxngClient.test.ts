@@ -174,6 +174,26 @@ describe('SearxngClient.search', () => {
     expect(client.search('x')).rejects.toThrow(SearxngError);
   });
 
+  it('skips result entries that are not objects', async () => {
+    const fetchFn = mock(async () =>
+      jsonResponse({
+        results: [null, 'junk', { url: 'https://ok.example.com', title: 'ok' }],
+      }),
+    );
+    const client = new SearxngClient({ fetchFn });
+
+    const hits = await client.search('x');
+
+    expect(hits.map((hit) => hit.url)).toEqual(['https://ok.example.com']);
+  });
+
+  it('throws a SearxngError when the json body is not an object', async () => {
+    const fetchFn = mock(async () => jsonResponse(null));
+    const client = new SearxngClient({ fetchFn });
+
+    expect(client.search('x')).rejects.toThrow(SearxngError);
+  });
+
   it('returns an empty list when the instance has no results for the query', async () => {
     const fetchFn = mock(async () => jsonResponse({ results: [] }));
     const client = new SearxngClient({ fetchFn });
