@@ -124,10 +124,7 @@ export class ParserService {
     }
 
     try {
-      return (await this.spotifyService.searchTrack(
-        filteredTitle,
-        'full',
-      )) as Track;
+      return await this.spotifyService.searchTrack(filteredTitle, 'full');
     } catch (error: unknown) {
       console.error(error);
     }

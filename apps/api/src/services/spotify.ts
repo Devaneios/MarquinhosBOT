@@ -39,6 +39,11 @@ export class SpotifyService {
     }
   }
 
+  async searchTrack(query: string, trackPayload: 'full'): Promise<Track>;
+  async searchTrack(
+    query: string,
+    trackPayload: 'minimal',
+  ): Promise<Pick<Track, 'name' | 'coverArtUrl'>>;
   async searchTrack(
     query: string,
     trackPayload: 'full' | 'minimal',
