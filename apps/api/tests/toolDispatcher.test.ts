@@ -87,6 +87,23 @@ describe('ToolDispatcher.dispatch', () => {
     expect(parsed.message).toContain('JSON');
   });
 
+  it('rejects json arguments that are not an object before running the tool', async () => {
+    for (const rawArguments of ['null', '[1, 2]', '"path"', '42']) {
+      const sandbox = fakeSandbox();
+      const dispatcher = new ToolDispatcher(sandbox);
+
+      const raw = await dispatcher.dispatch(
+        { name: 'read_file', rawArguments },
+        'container-1',
+      );
+
+      const parsed = JSON.parse(raw) as { status: string; message: string };
+      expect(parsed.status).toBe('error');
+      expect(parsed.message).toContain('Argumentos inválidos');
+      expect(sandbox.exec).not.toHaveBeenCalled();
+    }
+  });
+
   it('turns a tool throw into an error envelope instead of propagating it', async () => {
     const dispatcher = new ToolDispatcher(
       fakeSandbox(async () => {

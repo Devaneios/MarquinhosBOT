@@ -1,7 +1,11 @@
 import { NOOP_TRACE, type TraceContext } from 'services/aiChat/AiTraceRecorder';
 import type { SandboxManager } from 'services/aiChat/sandbox/SandboxManager';
 import { findTool } from 'services/aiChat/tools/registry';
+import { getErrorMessage } from 'utils/errorHandling';
 import { logger } from 'utils/logger';
+import { z } from 'zod';
+
+const toolArgumentsSchema = z.record(z.string(), z.unknown());
 
 export const TOOL_RESULT_MAX_CHARS = 4000;
 
@@ -44,14 +48,14 @@ export class ToolDispatcher {
 
     let args: Record<string, unknown>;
     try {
-      args = JSON.parse(call.rawArguments) as Record<string, unknown>;
+      args = toolArgumentsSchema.parse(JSON.parse(call.rawArguments));
     } catch {
       return this.failure(
         trace,
         iteration,
         tool.name,
         call.rawArguments,
-        'Argumentos inválidos (JSON malformado). Corrija e tente novamente.',
+        'Argumentos inválidos (esperado um objeto JSON). Corrija e tente novamente.',
       );
     }
 
@@ -75,7 +79,7 @@ export class ToolDispatcher {
         result: result.slice(0, TOOL_RESULT_MAX_CHARS),
       });
     } catch (error) {
-      const message = `Erro ao executar ${tool.name}: ${(error as Error).message}`;
+      const message = `Erro ao executar ${tool.name}: ${getErrorMessage(error)}`;
       trace.tool({
         name: tool.name,
         iteration,
@@ -149,7 +153,7 @@ export class ToolDispatcher {
         containerId,
         argv,
         stdout: '',
-        stderr: (error as Error).message,
+        stderr: getErrorMessage(error),
         exitCode: -1,
         durationMs: Date.now() - startedAt,
       });
