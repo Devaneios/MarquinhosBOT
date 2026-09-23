@@ -1,26 +1,31 @@
 import { Database } from 'bun:sqlite';
 import { randomUUID } from 'crypto';
 import { db as defaultDb } from 'database/sqlite';
+import { z } from 'zod';
 
 export type ResearchJobStatus = 'queued' | 'running' | 'done' | 'error';
 
-export interface ResearchSource {
-  index: number;
-  url: string;
-  title: string;
-  publishedDate?: string;
-}
+const researchSourceSchema = z.object({
+  index: z.number(),
+  url: z.string(),
+  title: z.string(),
+  publishedDate: z.string().optional(),
+});
 
-export interface ResearchStats {
-  rounds: number;
-  searches: number;
-  fetched: number;
-  relevantSources: number;
+export type ResearchSource = z.infer<typeof researchSourceSchema>;
+
+const researchStatsSchema = z.object({
+  rounds: z.number(),
+  searches: z.number(),
+  fetched: z.number(),
+  relevantSources: z.number(),
   /** How far the follow-up recursion went: 0 when only the plan was searched. */
-  maxDepth: number;
-  durationMs: number;
-  truncatedByBudget?: boolean;
-}
+  maxDepth: z.number(),
+  durationMs: z.number(),
+  truncatedByBudget: z.boolean().optional(),
+});
+
+export type ResearchStats = z.infer<typeof researchStatsSchema>;
 
 export interface ResearchProgressEvent {
   seq: number;
@@ -76,10 +81,11 @@ interface JobRow {
   finished_at: number | null;
 }
 
-function parseJson<T>(raw: string | null): T | undefined {
+function parseJson<T>(raw: string | null, schema: z.ZodType<T>): T | undefined {
   if (!raw) return undefined;
   try {
-    return JSON.parse(raw) as T;
+    const parsed = schema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : undefined;
   } catch {
     return undefined;
   }
@@ -95,11 +101,11 @@ function toJob(row: JobRow): ResearchJob {
     query: row.query,
     status: row.status,
     ...(row.report ? { report: row.report } : {}),
-    ...(parseJson<ResearchSource[]>(row.sources)
-      ? { sources: parseJson<ResearchSource[]>(row.sources) }
+    ...(parseJson(row.sources, z.array(researchSourceSchema))
+      ? { sources: parseJson(row.sources, z.array(researchSourceSchema)) }
       : {}),
-    ...(parseJson<ResearchStats>(row.stats)
-      ? { stats: parseJson<ResearchStats>(row.stats) }
+    ...(parseJson(row.stats, researchStatsSchema)
+      ? { stats: parseJson(row.stats, researchStatsSchema) }
       : {}),
     ...(row.error ? { error: row.error } : {}),
     createdAt: row.created_at,

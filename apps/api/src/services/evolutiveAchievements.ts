@@ -1,4 +1,5 @@
 import { db } from 'database/sqlite';
+import { z } from 'zod';
 
 type Rarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythical';
 type StatKey =
@@ -129,11 +130,15 @@ interface UserStatsRow {
   games_won: number;
 }
 
-export interface EvolutionEvent {
-  tier: number;
-  evolvedAt: string;
-  reason: string;
-}
+const evolutionLogSchema = z.array(
+  z.object({
+    tier: z.number(),
+    evolvedAt: z.string(),
+    reason: z.string(),
+  }),
+);
+
+export type EvolutionEvent = z.infer<typeof evolutionLogSchema>[number];
 
 export interface EvolutiveAchievement {
   baseId: string;
@@ -219,7 +224,7 @@ export class EvolutiveAchievementsService {
       // Evolve to next tier
       const nextTierDef = def.evolutionPath[row.current_tier]; // index = current_tier (0-based), which is next tier
       if (!nextTierDef) continue;
-      const log: EvolutionEvent[] = JSON.parse(row.evolution_log);
+      const log = evolutionLogSchema.parse(JSON.parse(row.evolution_log));
       const now = Date.now();
       log.push({
         tier: nextTierDef.tier,
@@ -287,7 +292,7 @@ export class EvolutiveAchievementsService {
           description: def.description,
           unlockedAt: new Date(row.unlocked_at),
           lastEvolved: row.last_evolved ? new Date(row.last_evolved) : null,
-          evolutionLog: JSON.parse(row.evolution_log) as EvolutionEvent[],
+          evolutionLog: evolutionLogSchema.parse(JSON.parse(row.evolution_log)),
           nextTierThreshold: nextThreshold,
           currentStatValue: stats ? stats[def.statKey] : 0,
         },
@@ -308,7 +313,7 @@ export class EvolutiveAchievementsService {
     return rows.map((row: EvolutiveRow) => ({
       baseId: row.base_id,
       name: BASE_ACHIEVEMENTS[row.base_id]?.name ?? row.base_id,
-      events: JSON.parse(row.evolution_log) as EvolutionEvent[],
+      events: evolutionLogSchema.parse(JSON.parse(row.evolution_log)),
     }));
   }
 }

@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { db } from 'database/sqlite';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { z } from 'zod';
 
 const logger = {
   warn: (...args: unknown[]) => console.warn('[wordle]', ...args),
@@ -28,7 +29,14 @@ interface WordleSession {
   created_at: number;
 }
 
-export type LetterFeedback = 'correct' | 'present' | 'absent';
+const letterFeedbackSchema = z.enum(['correct', 'present', 'absent']);
+
+export type LetterFeedback = z.infer<typeof letterFeedbackSchema>;
+
+const storedGuessSchema = z.object({
+  guess: z.string(),
+  feedback: z.array(letterFeedbackSchema),
+});
 
 export interface GuessResult {
   guess: string;
@@ -176,18 +184,11 @@ export function buildUniqueDayGuesses(
 
     if (!Array.isArray(guesses)) continue;
 
-    for (const guess of guesses) {
-      if (
-        typeof guess !== 'object' ||
-        guess === null ||
-        !('guess' in guess) ||
-        !('feedback' in guess) ||
-        typeof guess.guess !== 'string' ||
-        !Array.isArray(guess.feedback) ||
-        guess.feedback.length !== wordLength
-      ) {
-        continue;
-      }
+    for (const entry of guesses) {
+      const parsed = storedGuessSchema.safeParse(entry);
+      if (!parsed.success) continue;
+      const guess = parsed.data;
+      if (guess.feedback.length !== wordLength) continue;
 
       const key = normalizeGuess(guess.guess);
       if (!key || key === answerKey || seen.has(key)) continue;
@@ -195,7 +196,7 @@ export function buildUniqueDayGuesses(
       seen.add(key);
       result.push({
         guess: guess.guess,
-        feedback: guess.feedback as LetterFeedback[],
+        feedback: guess.feedback,
       });
     }
   }
