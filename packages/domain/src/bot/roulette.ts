@@ -19,8 +19,7 @@ export interface RouletteState {
 }
 
 export type RouletteAction =
-  | { type: 'pull_trigger' }
-  | { type: 'spin_chamber' };
+  { type: 'pull_trigger' } | { type: 'spin_chamber' };
 
 export const ROULETTE_CHAMBER_COUNT = 6;
 
@@ -89,7 +88,9 @@ export function applyRouletteAction(
         chambers: [...spunChambers],
         currentChamber: 0,
         survived:
-          state.mode === 'solo' ? Math.max(0, state.survived - 1) : state.survived,
+          state.mode === 'solo'
+            ? Math.max(0, state.survived - 1)
+            : state.survived,
       },
     };
   }
@@ -159,7 +160,8 @@ export function getRouletteRewardBonuses(
       ? {
           [player.userId]: {
             rank: 1,
-            xpBonus: state.survived * 3 + (state.result === 'survived' ? 30 : 0),
+            xpBonus:
+              state.survived * 3 + (state.result === 'survived' ? 30 : 0),
             won: state.result === 'survived',
           },
         }
@@ -172,11 +174,18 @@ export function getRouletteRewardBonuses(
       player.userId,
       player.alive
         ? {
-            rank: survivors.findIndex((survivor) => survivor.userId === player.userId) + 1,
+            rank:
+              survivors.findIndex(
+                (survivor) => survivor.userId === player.userId,
+              ) + 1,
             xpBonus: player.survived * 5 + (survivors.length === 1 ? 40 : 0),
             won: true,
           }
-        : { rank: state.players.length, xpBonus: player.survived * 2, won: false },
+        : {
+            rank: state.players.length,
+            xpBonus: player.survived * 2,
+            won: false,
+          },
     ]),
   );
 }

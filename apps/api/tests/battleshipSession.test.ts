@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'bun:test';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import type { ShipPlacement } from '@marquinhos/domain/activity/battleship/BattleshipEngine';
+import { describe, expect, it } from 'bun:test';
 import {
   BattleshipSession,
   type BattleshipSessionIdentity,
 } from 'services/activity/battleship/BattleshipSession';
-import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import type { GamificationService } from 'services/gamification';
 
 function identity(mode: ActivityMode = 'multi'): BattleshipSessionIdentity {

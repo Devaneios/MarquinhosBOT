@@ -4,11 +4,13 @@ import { calculatePayout } from './slots';
 
 describe('casino rules', () => {
   it('treats an ace as one when eleven would bust', () => {
-    expect(calculateTotal([
-      { suit: '♠️', value: 'A', numericValue: 11 },
-      { suit: '♣️', value: 'K', numericValue: 10 },
-      { suit: '♥️', value: '5', numericValue: 5 },
-    ])).toBe(16);
+    expect(
+      calculateTotal([
+        { suit: '♠️', value: 'A', numericValue: 11 },
+        { suit: '♣️', value: 'K', numericValue: 10 },
+        { suit: '♥️', value: '5', numericValue: 5 },
+      ]),
+    ).toBe(16);
   });
 
   it('awards blackjack wins, losses, and pushes', () => {

@@ -1,6 +1,6 @@
 import type { Piece } from '@marquinhos/contracts/activity/games/checkers';
-import { describe, expect, it } from 'bun:test';
 import { CheckersEngine } from '@marquinhos/domain/activity/checkers/CheckersEngine';
+import { describe, expect, it } from 'bun:test';
 
 function emptyBoard() {
   return Array.from({ length: 8 }, () => Array<Piece | null>(8).fill(null));

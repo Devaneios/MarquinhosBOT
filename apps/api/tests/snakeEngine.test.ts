@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'bun:test';
 import {
   SnakeEngine,
   type SnakeDirection,
   type SnakeGameState,
 } from '@marquinhos/domain/activity/snake-game/SnakeEngine';
+import { describe, expect, it } from 'bun:test';
 
 function getMutableState(engine: SnakeEngine): SnakeGameState {
   return (engine as unknown as { state: SnakeGameState }).state;

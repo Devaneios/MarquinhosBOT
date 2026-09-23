@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'bun:test';
 import {
   DominoesEngine,
   type DominoesState,
   type Tile,
 } from '@marquinhos/domain/activity/dominoesBlock/DominoesEngine';
+import { describe, expect, it } from 'bun:test';
 
 // Deterministic "shuffle": returns items already in the (reverse) order the
 // tests want, by always picking index 0 during the Fisher-Yates walk.

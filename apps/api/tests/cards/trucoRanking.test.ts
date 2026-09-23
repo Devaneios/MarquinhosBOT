@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'bun:test';
 import {
   cardStrength,
   manilhaRank,
 } from '@marquinhos/domain/activity/cards/rulesets/truco/ranking';
+import { describe, expect, it } from 'bun:test';
 
 describe('manilhaRank', () => {
   it('is the next rank after the vira in Truco rank order', () => {

@@ -14,7 +14,9 @@ export class WordChainEngine {
   private currentTurnIndex = 0;
 
   constructor(words: Iterable<string>) {
-    this.wordlist = new Set(Array.from(words, (word) => word.trim().toLowerCase()).filter(Boolean));
+    this.wordlist = new Set(
+      Array.from(words, (word) => word.trim().toLowerCase()).filter(Boolean),
+    );
 
     this.state = {
       gameOver: false,

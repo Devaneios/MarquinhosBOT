@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'bun:test';
 import {
   customDeck,
   spanishSuitedDeck,
   standardFrenchDeck,
 } from '@marquinhos/domain/activity/cards/core/deckFactory';
+import { describe, expect, it } from 'bun:test';
 
 describe('standardFrenchDeck', () => {
   it('builds 52 unique cards across 4 suits by default', () => {

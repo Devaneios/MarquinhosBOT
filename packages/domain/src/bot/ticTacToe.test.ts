@@ -31,8 +31,15 @@ describe('Tic Tac Toe rules', () => {
 
   it('awards a draw and a timeout forfeit using the game scores', () => {
     const draws = [
-      [0, 0], [1, 1], [0, 1], [0, 2], [2, 0],
-      [1, 0], [1, 2], [2, 1], [2, 2],
+      [0, 0],
+      [1, 1],
+      [0, 1],
+      [0, 2],
+      [2, 0],
+      [1, 0],
+      [1, 2],
+      [2, 1],
+      [2, 2],
     ] as const;
     const state = draws.reduce(
       (current, [row, col]) => applyTicTacToeMove(current, row, col),

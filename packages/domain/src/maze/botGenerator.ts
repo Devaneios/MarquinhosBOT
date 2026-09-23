@@ -49,4 +49,3 @@ export function generateMaze(size: number): boolean[][] {
 
   return grid;
 }
-

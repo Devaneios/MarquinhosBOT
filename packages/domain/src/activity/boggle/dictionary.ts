@@ -654,10 +654,12 @@ const SHORT_WORDS = [
 
 export function buildBoggleWordSet(raw: string): Set<string> {
   const words = new Set(
-    raw.split('\n')
+    raw
+      .split('\n')
       .map((word) => stripDiacritics(word.trim().toLowerCase()))
       .filter((word) => word.length >= 3),
   );
-  for (const word of SHORT_WORDS) words.add(stripDiacritics(word.toLowerCase()));
+  for (const word of SHORT_WORDS)
+    words.add(stripDiacritics(word.toLowerCase()));
   return words;
 }

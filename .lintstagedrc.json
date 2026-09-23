@@ -10,5 +10,11 @@
   "apps/activity/src/**/*.{ts,tsx}": [
     "prettier --write",
     "pnpm --dir apps/activity exec oxlint --fix"
+  ],
+  "apps/*/tests/**/*.{ts,tsx}": [
+    "prettier --write"
+  ],
+  "packages/*/src/**/*.ts": [
+    "prettier --write"
   ]
 }

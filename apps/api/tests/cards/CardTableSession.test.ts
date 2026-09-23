@@ -1,10 +1,10 @@
-import { describe, expect, it, mock } from 'bun:test';
-import { CardTableSession } from 'services/activity/cards/CardTableSession';
 import {
   MOVE_OK,
   moveRejected,
   type GameDefinition,
 } from '@marquinhos/domain/activity/cards/core/GameDefinition';
+import { describe, expect, it, mock } from 'bun:test';
+import { CardTableSession } from 'services/activity/cards/CardTableSession';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
 
 interface StubState {

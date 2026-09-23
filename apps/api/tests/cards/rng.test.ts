@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'bun:test';
 import { SeededRng } from '@marquinhos/domain/activity/cards/core/rng';
+import { describe, expect, it } from 'bun:test';
 
 describe('SeededRng', () => {
   it('produces the same sequence for the same seed', () => {

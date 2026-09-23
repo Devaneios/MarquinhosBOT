@@ -1,4 +1,7 @@
-import type { BoardSnapshot, RevealPayload } from '@marquinhos/contracts/activity/minesweeperProtocol';
+import type {
+  BoardSnapshot,
+  RevealPayload,
+} from '@marquinhos/contracts/activity/minesweeperProtocol';
 
 export function applyRevealToBoard(
   board: BoardSnapshot,

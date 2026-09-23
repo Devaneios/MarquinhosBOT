@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'bun:test';
 import { TriviaQuizEngine } from '@marquinhos/domain/activity/trivia-quiz/TriviaQuizEngine';
 import { getQuestions } from '@marquinhos/domain/activity/trivia-quiz/questions';
+import { describe, expect, it } from 'bun:test';
 
 describe('TriviaQuizEngine', () => {
   it('starts with no players and no active question', () => {

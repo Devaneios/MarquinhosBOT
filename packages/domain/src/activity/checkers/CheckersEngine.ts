@@ -15,7 +15,6 @@ export interface CheckersMove {
   captures: Position[];
 }
 
-
 export interface MoveResult {
   ok: boolean;
   error?: string;

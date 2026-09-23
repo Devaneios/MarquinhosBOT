@@ -1,10 +1,10 @@
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import type { Piece } from '@marquinhos/contracts/activity/games/checkers';
 import { describe, expect, it } from 'bun:test';
 import {
   CheckersSession,
   type CheckersSessionIdentity,
 } from 'services/activity/checkers/CheckersSession';
-import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 
 function identity(mode: ActivityMode = 'multi'): CheckersSessionIdentity {
   return {

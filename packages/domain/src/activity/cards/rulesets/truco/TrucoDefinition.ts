@@ -7,7 +7,10 @@ import {
   type LegalMove,
   type ScoreboardEntry,
 } from '@marquinhos/domain/activity/cards/core/GameDefinition';
-import { maskZones, type ZoneView } from '@marquinhos/domain/activity/cards/core/masking';
+import {
+  maskZones,
+  type ZoneView,
+} from '@marquinhos/domain/activity/cards/core/masking';
 import {
   opposingTeamSeats,
   owesResponse,

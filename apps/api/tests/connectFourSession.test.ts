@@ -1,9 +1,9 @@
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import { describe, expect, it } from 'bun:test';
 import {
   ConnectFourSession,
   type ConnectFourSessionIdentity,
 } from 'services/activity/connectFour/ConnectFourSession';
-import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 
 function identity(mode: ActivityMode = 'multi'): ConnectFourSessionIdentity {
   return {

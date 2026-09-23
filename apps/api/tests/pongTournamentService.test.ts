@@ -8,7 +8,10 @@ function database(): Database {
   const db = new Database(':memory:');
   db.run(
     readFileSync(
-      join(import.meta.dir, '../../../packages/database/src/migrations/003_pong_competitive.sql'),
+      join(
+        import.meta.dir,
+        '../../../packages/database/src/migrations/003_pong_competitive.sql',
+      ),
       'utf8',
     ),
   );

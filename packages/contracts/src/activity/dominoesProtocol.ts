@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { dominoTileSchema, chainEndSchema } from './payloadSchemas';
+import { chainEndSchema, dominoTileSchema } from './payloadSchemas';
 
 export type Tile = z.infer<typeof dominoTileSchema>;
 
@@ -32,4 +32,3 @@ export const opponentDisconnectedPayloadSchema = z.object({
   userId: z.string(),
   timeoutMs: z.number(),
 });
-

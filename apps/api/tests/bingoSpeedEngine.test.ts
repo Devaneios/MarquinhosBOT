@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'bun:test';
 import { BingoSpeedEngine } from '@marquinhos/domain/activity/bingoSpeed/BingoSpeedEngine';
+import { describe, expect, it } from 'bun:test';
 
 describe('BingoSpeedEngine', () => {
   describe('Card Generation', () => {

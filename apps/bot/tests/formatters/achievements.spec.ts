@@ -1,9 +1,9 @@
+import type { UserAchievement } from '@marquinhos/contracts/http/routes/gamification';
 import {
   groupByRarity,
   RARITY_LABELS,
   RARITY_ORDER,
 } from '@marquinhos/formatters/achievements';
-import type { UserAchievement } from '@marquinhos/contracts/http/routes/gamification';
 import { describe, expect, test } from 'bun:test';
 
 const makeAchievement = (

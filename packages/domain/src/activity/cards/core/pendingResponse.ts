@@ -1,4 +1,7 @@
-import { isSeatActive, type Seat } from '@marquinhos/domain/activity/cards/core/seating';
+import {
+  isSeatActive,
+  type Seat,
+} from '@marquinhos/domain/activity/cards/core/seating';
 
 // After "move a card", the most common mechanic in card games is that the turn
 // *leaves the rotation* while a specific set of players owes an answer:

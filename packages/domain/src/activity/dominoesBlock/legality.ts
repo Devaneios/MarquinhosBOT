@@ -1,4 +1,7 @@
-import type { Tile, ChainEnd } from '@marquinhos/contracts/activity/dominoesProtocol';
+import type {
+  ChainEnd,
+  Tile,
+} from '@marquinhos/contracts/activity/dominoesProtocol';
 
 export function tileMatches(candidate: Tile, tile: Tile): boolean {
   return (

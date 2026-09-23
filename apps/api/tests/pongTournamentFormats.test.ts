@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'bun:test';
 import {
   doubleElimination,
   roundRobin,
   swissRound,
   topFourPlayoff,
 } from '@marquinhos/domain/activity/pong/PongTournamentFormats';
+import { describe, expect, it } from 'bun:test';
 
 const players = ['a', 'b', 'c', 'd'].map((userId, index) => ({
   userId,

@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'bun:test';
 import {
   allowsMove,
   opposingTeamSeats,
@@ -6,6 +5,7 @@ import {
   type PendingResponse,
 } from '@marquinhos/domain/activity/cards/core/pendingResponse';
 import type { Seat } from '@marquinhos/domain/activity/cards/core/seating';
+import { describe, expect, it } from 'bun:test';
 
 const SEATS: Seat[] = [
   { seatIndex: 0, playerId: 'p1', teamId: 'A' },

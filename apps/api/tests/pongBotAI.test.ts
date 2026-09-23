@@ -1,13 +1,13 @@
-import { describe, expect, it } from 'bun:test';
+import type {
+  PongEngineConfig,
+  PongState,
+} from '@marquinhos/domain/activity/pong/PongBotAI';
 import {
   BOT_TUNING,
   PongBot,
   predictImpactY,
 } from '@marquinhos/domain/activity/pong/PongBotAI';
-import type {
-  PongEngineConfig,
-  PongState,
-} from '@marquinhos/domain/activity/pong/PongBotAI';
+import { describe, expect, it } from 'bun:test';
 
 const CONFIG: Required<PongEngineConfig> = {
   width: 800,

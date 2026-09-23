@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'bun:test';
 import { determineRoundWinners } from '@marquinhos/domain/bot/rockPaperScissors';
+import { describe, expect, it } from 'bun:test';
 
 describe('determineRoundWinners', () => {
   it('awards the winning choice to each player who made it', () => {

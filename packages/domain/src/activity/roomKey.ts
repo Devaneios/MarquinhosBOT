@@ -1,4 +1,7 @@
-import type { ActivityMode, GameId } from '@marquinhos/contracts/activity/gameId';
+import type {
+  ActivityMode,
+  GameId,
+} from '@marquinhos/contracts/activity/gameId';
 
 export interface ActivityScope {
   instanceId: string;

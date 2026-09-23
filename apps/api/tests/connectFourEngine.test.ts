@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'bun:test';
 import {
   COLS,
   ConnectFourEngine,
   ROWS,
   type Disc,
 } from '@marquinhos/domain/activity/connectFour/ConnectFourEngine';
+import { describe, expect, it } from 'bun:test';
 
 describe('ConnectFourEngine', () => {
   it('starts empty with p1 to move and no winner', () => {

@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'bun:test';
 import { RpsEngine } from '@marquinhos/domain/activity/rps/RpsEngine';
+import { describe, expect, it } from 'bun:test';
 
 describe('RpsEngine', () => {
   describe('submitPick', () => {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test';
+import type { GridCell as Cell } from '@marquinhos/contracts/activity/payloadSchemas';
 import {
   BoggleEngine,
   extractWord,
@@ -6,7 +6,7 @@ import {
   isValidPath,
   scoreForLength,
 } from '@marquinhos/domain/activity/boggle/BoggleEngine';
-import type { GridCell as Cell } from '@marquinhos/contracts/activity/payloadSchemas';
+import { describe, expect, it } from 'bun:test';
 
 const GRID = [
   ['C', 'A', 'T', 'S'],

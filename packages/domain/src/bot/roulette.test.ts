@@ -3,12 +3,14 @@ import {
   applyRouletteAction,
   createRouletteChambers,
   getRouletteBulletCount,
-  getRouletteScores,
   getRouletteRewardBonuses,
+  getRouletteScores,
   type RouletteState,
 } from './roulette';
 
-const createState = (overrides: Partial<RouletteState> = {}): RouletteState => ({
+const createState = (
+  overrides: Partial<RouletteState> = {},
+): RouletteState => ({
   chambers: [false, true, false, false, false, false],
   currentChamber: 0,
   totalChambers: 6,
@@ -29,18 +31,27 @@ describe('Russian roulette rules', () => {
   it('uses one or two bullets and places them in the selected chambers', () => {
     expect(getRouletteBulletCount(0)).toBe(1);
     expect(getRouletteBulletCount(0.99)).toBe(2);
-    expect(createRouletteChambers(4, [1, 3])).toEqual([false, true, false, true]);
+    expect(createRouletteChambers(4, [1, 3])).toEqual([
+      false,
+      true,
+      false,
+      true,
+    ]);
   });
 
   it('rejects actions from the wrong multiplayer player', () => {
-    const result = applyRouletteAction(createState(), 'two', { type: 'pull_trigger' });
+    const result = applyRouletteAction(createState(), 'two', {
+      type: 'pull_trigger',
+    });
 
     expect(result.error).toBe('not-your-turn');
     expect(result.state.currentChamber).toBe(0);
   });
 
   it('advances after an empty chamber and awards survival points', () => {
-    const result = applyRouletteAction(createState(), 'one', { type: 'pull_trigger' });
+    const result = applyRouletteAction(createState(), 'one', {
+      type: 'pull_trigger',
+    });
 
     expect(result.state.currentChamber).toBe(1);
     expect(result.state.players[0]?.survived).toBe(1);
@@ -67,7 +78,14 @@ describe('Russian roulette rules', () => {
       survived: 2,
       currentChamber: 3,
     });
-    const result = applyRouletteAction(state, 'one', { type: 'spin_chamber' }, [true, false, false, false, false, false]);
+    const result = applyRouletteAction(state, 'one', { type: 'spin_chamber' }, [
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
 
     expect(result.state.survived).toBe(1);
     expect(result.state.currentChamber).toBe(0);

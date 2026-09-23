@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'bun:test';
 import {
   boardSnapshotSchema,
   revealPayloadSchema,
 } from '@marquinhos/contracts/activity/minesweeperProtocol';
+import { describe, expect, it } from 'bun:test';
 import { applyRevealToBoard } from './reveal';
 
 describe('applyRevealToBoard', () => {

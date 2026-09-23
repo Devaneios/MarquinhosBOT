@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'bun:test';
 import {
   decisiveWinner,
   resolveHandWinner,
 } from '@marquinhos/domain/activity/cards/rulesets/truco/handResolution';
+import { describe, expect, it } from 'bun:test';
 
 describe('decisiveWinner', () => {
   it('returns null until a team has 2 non-tied trick wins', () => {

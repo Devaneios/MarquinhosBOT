@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'bun:test';
 import { HangmanEngine } from '@marquinhos/domain/activity/hangman/HangmanEngine';
+import { describe, expect, it } from 'bun:test';
 
 describe('HangmanEngine', () => {
   it('initializes with word, no guessed letters, and 6 strikes remaining', () => {

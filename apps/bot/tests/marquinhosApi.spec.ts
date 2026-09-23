@@ -1,10 +1,10 @@
+import { HttpClient, HttpError } from '@marquinhos/api-client/bot';
 import { beforeEach, describe, expect, it, spyOn } from 'bun:test';
 import {
   handleApiResponseError,
   MarquinhosApiService,
 } from '../src/services/marquinhosApi';
 import * as errorHandling from '../src/utils/errorHandling';
-import { HttpClient, HttpError } from '@marquinhos/api-client/bot';
 
 describe('handleApiResponseError', () => {
   const reportErrorSpy = spyOn(errorHandling, 'reportError').mockImplementation(

@@ -7,7 +7,11 @@ const MIGRATION = '002_raise_ai_chat_limits.sql';
 
 function migrationSql(): string {
   return fs.readFileSync(
-    path.join(import.meta.dir, '../../../packages/database/src/migrations', MIGRATION),
+    path.join(
+      import.meta.dir,
+      '../../../packages/database/src/migrations',
+      MIGRATION,
+    ),
     'utf8',
   );
 }

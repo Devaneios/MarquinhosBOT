@@ -1,5 +1,8 @@
 import type { Card } from '@marquinhos/domain/activity/cards/core/card';
-import { Zone, type ZoneConfig } from '@marquinhos/domain/activity/cards/core/zone';
+import {
+  Zone,
+  type ZoneConfig,
+} from '@marquinhos/domain/activity/cards/core/zone';
 
 // Named registry of every zone on one table (hand_p1, hand_p2, discard, stock,
 // trickPile_p1, ...). A GameDefinition.setup() declares exactly the zones its

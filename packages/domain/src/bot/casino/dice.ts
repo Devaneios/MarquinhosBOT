@@ -31,10 +31,13 @@ export function checkBet(
       return { isWin: count > 0, payout: count * 2 };
     }
     case 'even_odd':
-      return { isWin: (sum % 2 === 0) === (bet.betValue === 'even'), payout: 2 };
+      return {
+        isWin: (sum % 2 === 0) === (bet.betValue === 'even'),
+        payout: 2,
+      };
     case 'high_low':
       return {
-        isWin: (sum > (bet.diceCount * 6) / 2) === (bet.betValue === 'high'),
+        isWin: sum > (bet.diceCount * 6) / 2 === (bet.betValue === 'high'),
         payout: 2,
       };
     default:

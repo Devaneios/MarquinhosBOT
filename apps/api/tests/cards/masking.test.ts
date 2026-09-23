@@ -1,9 +1,12 @@
-import { describe, expect, it } from 'bun:test';
 import type { Card } from '@marquinhos/domain/activity/cards/core/card';
-import { isHidden, maskZones } from '@marquinhos/domain/activity/cards/core/masking';
+import {
+  isHidden,
+  maskZones,
+} from '@marquinhos/domain/activity/cards/core/masking';
 import type { Seat } from '@marquinhos/domain/activity/cards/core/seating';
 import { Visibility } from '@marquinhos/domain/activity/cards/core/zone';
 import { ZoneSet } from '@marquinhos/domain/activity/cards/core/zoneSet';
+import { describe, expect, it } from 'bun:test';
 
 // maskZones is the engine's only security boundary, so it gets a truth table
 // rather than a couple of happy-path cases: every visibility level crossed with

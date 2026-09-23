@@ -52,7 +52,13 @@ export function applyTicTacToeMove(
   const won = hasTicTacToeLine(board, symbol);
 
   if (won) {
-    return { ...state, board, moves, gameOver: true, winnerIndex: state.currentPlayer };
+    return {
+      ...state,
+      board,
+      moves,
+      gameOver: true,
+      winnerIndex: state.currentPlayer,
+    };
   }
 
   if (moves === 9) {
@@ -81,9 +87,7 @@ export function forfeitTicTacToeTurn(
   };
 }
 
-export function getTicTacToeScores(
-  state: TicTacToeState,
-): [number, number] {
+export function getTicTacToeScores(state: TicTacToeState): [number, number] {
   if (state.winnerIndex !== null) {
     return state.winnerIndex === 0 ? [100, 20] : [20, 100];
   }

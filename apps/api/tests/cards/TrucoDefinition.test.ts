@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'bun:test';
 import type { Card } from '@marquinhos/domain/activity/cards/core/card';
 import { isHidden } from '@marquinhos/domain/activity/cards/core/masking';
 import type { Seat } from '@marquinhos/domain/activity/cards/core/seating';
@@ -10,6 +9,7 @@ import {
   trucoDefinition,
   type TrucoState,
 } from '@marquinhos/domain/activity/cards/rulesets/truco/TrucoDefinition';
+import { describe, expect, it } from 'bun:test';
 
 const PLAYERS = [
   { userId: 'p1', seatIndex: 0 },

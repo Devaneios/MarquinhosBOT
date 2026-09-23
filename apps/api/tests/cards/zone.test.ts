@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'bun:test';
 import type { Card } from '@marquinhos/domain/activity/cards/core/card';
 import { SeededRng } from '@marquinhos/domain/activity/cards/core/rng';
 import { Visibility, Zone } from '@marquinhos/domain/activity/cards/core/zone';
+import { describe, expect, it } from 'bun:test';
 
 function cards(...ids: string[]): Card[] {
   return ids.map((id) => ({ id }));

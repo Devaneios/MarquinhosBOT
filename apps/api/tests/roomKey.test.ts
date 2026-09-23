@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'bun:test';
 import { roomKey } from '@marquinhos/domain/activity/roomKey';
+import { describe, expect, it } from 'bun:test';
 
 describe('roomKey', () => {
   it('scopes multi-mode sessions to instance and game, shared across users', () => {

@@ -5,7 +5,11 @@ import * as path from 'path';
 
 function readMigration(name: string): string {
   return fs.readFileSync(
-    path.join(import.meta.dir, '../../../packages/database/src/migrations', name),
+    path.join(
+      import.meta.dir,
+      '../../../packages/database/src/migrations',
+      name,
+    ),
     'utf8',
   );
 }

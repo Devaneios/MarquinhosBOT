@@ -1,6 +1,9 @@
 import type { Card } from '@marquinhos/domain/activity/cards/core/card';
 import type { Seat } from '@marquinhos/domain/activity/cards/core/seating';
-import type { VisibilityLevel, Zone } from '@marquinhos/domain/activity/cards/core/zone';
+import type {
+  VisibilityLevel,
+  Zone,
+} from '@marquinhos/domain/activity/cards/core/zone';
 import type { ZoneSet } from '@marquinhos/domain/activity/cards/core/zoneSet';
 
 // A card the viewer may not see. Hidden cards keep their *position* in the
