@@ -197,6 +197,7 @@ describe('ActivityController.getWsSessionToken', () => {
       instanceId: 'inst-1',
       guildId: 'guild-1',
       mode: 'multi',
+      game: 'pong',
       roomId: 'ROOM01',
     });
     const res = makeRes();
@@ -218,6 +219,7 @@ describe('ActivityController.getWsSessionToken', () => {
       instanceId: 'inst-1',
       guildId: 'guild-not-mine',
       mode: 'multi',
+      game: 'pong',
       roomId: 'ROOM01',
     });
     const res = makeRes();
@@ -295,6 +297,7 @@ describe('ActivityController.getWsSessionToken', () => {
       instanceId: 'inst-1',
       guildId: 'guild-1',
       mode: 'multi',
+      game: 'pong',
       roomId: 'ROOM01',
     });
     const res = makeRes();
@@ -318,6 +321,7 @@ describe('ActivityController.getWsSessionToken', () => {
       instanceId: 'inst-1',
       guildId: 'guild-1',
       mode: 'multi',
+      game: 'pong',
       roomId: 'ROOM01',
     });
     const res = makeRes();
@@ -387,6 +391,7 @@ describe('ActivityController.getWsSessionToken', () => {
       instanceId: 'inst-1',
       guildId: 'guild-1',
       mode: 'multi',
+      game: 'pong',
       roomId: 'ROOM01',
     });
     const res = makeRes();
@@ -426,6 +431,57 @@ describe('ActivityController.listRooms', () => {
         },
       ];
     }) as unknown as typeof matchMaker.query;
+    const controller = new ActivityController(fakeService, queryRooms);
+
+    const req = makeReq({
+      accessToken: 'token',
+      instanceId: 'inst-1',
+      guildId: 'guild-1',
+    });
+    const res = makeRes();
+
+    await controller.listRooms(req, res as any);
+
+    expect(res.getStatus()).toBe(200);
+    expect(res.getPayload()).toEqual({
+      data: [
+        {
+          instanceId: 'inst-1',
+          roomId: 'ROOM01',
+          game: 'tic-tac-toe',
+          hostUserId: 'u2',
+          playerCount: 1,
+          spectatorCount: 0,
+          queueDepth: 0,
+          queueEnabled: false,
+          mode: 'multi',
+        },
+      ],
+    });
+  });
+
+  it('skips rooms whose metadata has no host yet', async () => {
+    const fakeService = {
+      getDiscordUser: async () => ({ id: 'user-1' }),
+      isGuildMember: async () => true,
+    } as unknown as DiscordService;
+    const listing = {
+      roomKey: 'multi:inst-1:ROOM01',
+      instanceId: 'inst-1',
+      roomId: 'ROOM01',
+      game: 'tic-tac-toe',
+      hostUserId: 'u2',
+      playerCount: 1,
+      spectatorCount: 0,
+      queueDepth: 0,
+      queueEnabled: false,
+      mode: 'multi',
+    };
+    const queryRooms = (async () => [
+      { metadata: listing },
+      { metadata: { ...listing, roomId: 'ROOM02', hostUserId: null } },
+      { metadata: undefined },
+    ]) as unknown as typeof matchMaker.query;
     const controller = new ActivityController(fakeService, queryRooms);
 
     const req = makeReq({

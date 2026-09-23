@@ -1,6 +1,12 @@
-import { Room, type Client } from 'colyseus';
-import type { ActivityMode, GameId } from 'services/activity/gameId';
+import { Room } from 'colyseus';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
+import {
+  gameIdSchema,
+  type ActivityMode,
+  type GameId,
+} from 'services/activity/gameId';
 import { roomKey } from 'services/activity/roomKey';
+import type { MatchRoomMetadata } from 'services/activity/roomListing';
 import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
 import {
@@ -29,12 +35,15 @@ interface Member {
 // ruleset/winningScore/bestOf/ranked) that switch_game has no way to supply
 // (see this task's "known, accepted limitation").
 const SWITCHABLE_GAMES: ReadonlySet<GameId> = new Set(
-  Object.keys(ADAPTER_REGISTRY).filter(
-    (g) => g !== 'cards' && g !== 'pong',
-  ) as GameId[],
+  gameIdSchema.options.filter(
+    (g) => ADAPTER_REGISTRY[g] !== undefined && g !== 'cards' && g !== 'pong',
+  ),
 );
 
-export class MatchRoom extends Room {
+export class MatchRoom extends Room<{
+  client: AuthedClient;
+  metadata: MatchRoomMetadata;
+}> {
   private adapter!: GameRoomAdapter<unknown>;
   private session!: unknown;
   // Per-instance override of `adapter.maxPlayers`, set from setup()'s return
@@ -94,7 +103,7 @@ export class MatchRoom extends Room {
   } = { instanceId: '', guildId: '' };
 
   override async onAuth(
-    _client: Client,
+    _client: AuthedClient,
     options: { token?: string; roomKey?: string },
   ): Promise<WsSessionPayload> {
     const session = options.token ? verifyWsSessionToken(options.token) : null;
@@ -215,7 +224,7 @@ export class MatchRoom extends Room {
       },
       sendToPlayer: (userId: string, type: string, payload?: unknown) => {
         for (const client of this.clients) {
-          if ((client.auth as WsSessionPayload)?.userId !== userId) continue;
+          if (client.auth?.userId !== userId) continue;
           client.send(type, payload);
         }
         Promise.resolve().then(() => this.maybeRotateAfterMatchEnd());
@@ -239,7 +248,7 @@ export class MatchRoom extends Room {
       const unsubscribe = this.onMessage(type, (client, payload) => {
         const limiter = this.rateLimiters.get(type);
         if (limiter?.isOverLimit(client)) return;
-        const auth = client.auth as WsSessionPayload;
+        const auth = requireAuth(client);
         // For a deliberate quit, try handing this seat straight to the
         // queue head BEFORE the adapter's own handler runs. `substitutePlayer`
         // requires the outgoing party to still be present in the session —
@@ -269,44 +278,50 @@ export class MatchRoom extends Room {
   // and re-registered by switch_game — they route to the adapter indirectly
   // through `this.adapter`/`this.session`, which switch_game reassigns).
   private registerRoomLevelMessages() {
-    this.onMessage('switch_game', (client, payload: { game?: GameId }) => {
-      const auth = client.auth as WsSessionPayload;
-      if (auth.userId !== this.hostUserId) {
-        client.send(ACTION_REJECTED, {
-          error: 'Only the host can switch games',
-        });
-        return;
-      }
-      if (this.isMatchInProgress()) {
-        client.send(ACTION_REJECTED, {
-          error: 'Cannot switch games mid-match',
-        });
-        return;
-      }
-      const game = payload?.game;
-      if (!game || !SWITCHABLE_GAMES.has(game)) {
-        client.send(ACTION_REJECTED, {
-          error: 'Unknown or unswitchable game',
-        });
-        return;
-      }
-      this.switchGame(game);
-    });
+    this.onMessage(
+      'switch_game',
+      (client: AuthedClient, payload: { game?: GameId }) => {
+        const auth = requireAuth(client);
+        if (auth.userId !== this.hostUserId) {
+          client.send(ACTION_REJECTED, {
+            error: 'Only the host can switch games',
+          });
+          return;
+        }
+        if (this.isMatchInProgress()) {
+          client.send(ACTION_REJECTED, {
+            error: 'Cannot switch games mid-match',
+          });
+          return;
+        }
+        const game = payload?.game;
+        if (!game || !SWITCHABLE_GAMES.has(game)) {
+          client.send(ACTION_REJECTED, {
+            error: 'Unknown or unswitchable game',
+          });
+          return;
+        }
+        this.switchGame(game);
+      },
+    );
 
-    this.onMessage('toggle_queue', (client, payload: { enabled?: boolean }) => {
-      const auth = client.auth as WsSessionPayload;
-      if (auth.userId !== this.hostUserId) {
-        client.send(ACTION_REJECTED, {
-          error: 'Only the host can toggle the queue',
-        });
-        return;
-      }
-      this.queueEnabled = Boolean(payload?.enabled);
-      this.syncMetadata();
-    });
+    this.onMessage(
+      'toggle_queue',
+      (client: AuthedClient, payload: { enabled?: boolean }) => {
+        const auth = requireAuth(client);
+        if (auth.userId !== this.hostUserId) {
+          client.send(ACTION_REJECTED, {
+            error: 'Only the host can toggle the queue',
+          });
+          return;
+        }
+        this.queueEnabled = Boolean(payload?.enabled);
+        this.syncMetadata();
+      },
+    );
 
-    this.onMessage('rotate_seat', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('rotate_seat', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       if (this.isMatchInProgress()) {
         client.send(ACTION_REJECTED, {
           error: 'Cannot rotate seats mid-match',
@@ -380,7 +395,7 @@ export class MatchRoom extends Room {
 
   private rotateSeat(outgoingUserId: string, incomingUserId: string) {
     const incomingClient = this.clients.find(
-      (c) => (c.auth as WsSessionPayload)?.userId === incomingUserId,
+      (c) => c.auth?.userId === incomingUserId,
     );
     if (!incomingClient || !this.adapter.substitutePlayer) return;
 
@@ -417,7 +432,7 @@ export class MatchRoom extends Room {
   // connection count instead of double-counting it toward `assignSeat()`),
   // while still calling `adapter.onJoin` for every individual connection so
   // each socket gets its own `init` message.
-  private seatClient(client: Client, auth: WsSessionPayload): SeatRole {
+  private seatClient(client: AuthedClient, auth: WsSessionPayload): SeatRole {
     const existing = this.members.find((m) => m.userId === auth.userId);
     let role: SeatRole;
     if (existing) {
@@ -431,14 +446,18 @@ export class MatchRoom extends Room {
     return role;
   }
 
-  override onJoin(client: Client, _options: unknown, auth: WsSessionPayload) {
+  override onJoin(
+    client: AuthedClient,
+    _options: unknown,
+    auth: WsSessionPayload,
+  ) {
     if (this.hostUserId === null) this.hostUserId = auth.userId;
     this.seatClient(client, auth);
     this.syncMetadata();
   }
 
-  override onLeave(client: Client) {
-    const auth = client.auth as WsSessionPayload;
+  override onLeave(client: AuthedClient) {
+    const auth = requireAuth(client);
 
     for (const limiter of this.rateLimiters.values()) limiter.clear(client);
 
@@ -494,7 +513,7 @@ export class MatchRoom extends Room {
     const queueHead = this.members.find((m) => m.role === 'queued');
     if (!queueHead) return false;
     const queueHeadClient = this.clients.find(
-      (c) => (c.auth as WsSessionPayload)?.userId === queueHead.userId,
+      (c) => c.auth?.userId === queueHead.userId,
     );
     if (!queueHeadClient) return false;
 
@@ -545,7 +564,7 @@ export class MatchRoom extends Room {
 
     this.members = [];
     for (const client of this.clients) {
-      const auth = client.auth as WsSessionPayload;
+      const auth = requireAuth(client);
       this.seatClient(client, auth);
     }
     this.syncMetadata();

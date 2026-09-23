@@ -1,39 +1,32 @@
 import { matchMaker } from 'colyseus';
 import type { Request, Response } from 'express';
 import { customAlphabet } from 'nanoid';
-import type { ActivityMode, GameId } from 'services/activity/gameId';
-import type { BotDifficulty } from 'services/activity/pong/PongBotAI';
 import {
-  PongCompetitionService,
-  type PongRatingPool,
-} from 'services/activity/pong/PongCompetitionService';
+  activityCreateRoomSchema,
+  activityDeepLinkClaimSchema,
+  activityDeepLinkRecordSchema,
+  activityListRoomsSchema,
+  activityTokenExchangeSchema,
+  activityWsSessionSchema,
+  pongLeaderboardSchema,
+  pongTournamentCreateSchema,
+  pongTournamentListSchema,
+  pongTournamentReportSchema,
+} from 'schemas/activity.schema';
+import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
 import {
   isPongRulesetId,
   normalizePongMatchConfig,
 } from 'services/activity/pong/PongRulesetRegistry';
-import {
-  PongTournamentService,
-  type CreatePongTournamentInput,
-} from 'services/activity/pong/PongTournamentService';
+import { PongTournamentService } from 'services/activity/pong/PongTournamentService';
 import { roomKey } from 'services/activity/roomKey';
+import { roomListingSchema } from 'services/activity/roomListing';
 import { mintWsSessionToken } from 'services/activity/wsSessionToken';
 import { claimDeepLink, recordDeepLink } from 'services/activityDeepLink';
 import { DiscordGuildMembershipError, DiscordService } from 'services/discord';
 import { logger } from 'utils/logger';
 
 const generateRoomId = customAlphabet('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 6);
-
-interface RoomListing {
-  instanceId: string;
-  roomId: string;
-  game: GameId;
-  hostUserId: string;
-  playerCount: number;
-  spectatorCount: number;
-  queueDepth: number;
-  queueEnabled: boolean;
-  mode: ActivityMode;
-}
 
 class ActivityController {
   private discordService: DiscordService;
@@ -49,12 +42,11 @@ class ActivityController {
 
   getPongLeaderboard = async (req: Request, res: Response) => {
     try {
-      const { accessToken, guildId, pool, limit } = req.body as {
-        accessToken: string;
-        guildId: string;
-        pool: PongRatingPool;
-        limit?: number;
-      };
+      const body = pongLeaderboardSchema.shape.body.safeParse(req.body);
+      if (!body.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
+      const { accessToken, guildId, pool, limit } = body.data;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
@@ -82,9 +74,11 @@ class ActivityController {
 
   createPongTournament = async (req: Request, res: Response) => {
     try {
-      const input = req.body as Omit<CreatePongTournamentInput, 'createdBy'> & {
-        accessToken: string;
-      };
+      const body = pongTournamentCreateSchema.shape.body.safeParse(req.body);
+      if (!body.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
+      const input = body.data;
       const user = await this.discordService.getDiscordUser(input.accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
@@ -123,10 +117,11 @@ class ActivityController {
 
   listPongTournaments = async (req: Request, res: Response) => {
     try {
-      const { accessToken, guildId } = req.body as {
-        accessToken: string;
-        guildId: string;
-      };
+      const body = pongTournamentListSchema.shape.body.safeParse(req.body);
+      if (!body.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
+      const { accessToken, guildId } = body.data;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
@@ -149,11 +144,11 @@ class ActivityController {
 
   reportPongTournamentMatch = async (req: Request, res: Response) => {
     try {
-      const { accessToken, matchId, winnerId } = req.body as {
-        accessToken: string;
-        matchId: string;
-        winnerId: string;
-      };
+      const body = pongTournamentReportSchema.shape.body.safeParse(req.body);
+      if (!body.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
+      const { accessToken, matchId, winnerId } = body.data;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
@@ -176,7 +171,11 @@ class ActivityController {
 
   exchangeToken = async (req: Request, res: Response) => {
     try {
-      const { code } = req.body as { code: string };
+      const body = activityTokenExchangeSchema.shape.body.safeParse(req.body);
+      if (!body.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
+      const { code } = body.data;
       const data = await this.discordService.exchangeActivityCode(code);
       return res
         .status(200)
@@ -189,6 +188,10 @@ class ActivityController {
 
   getWsSessionToken = async (req: Request, res: Response) => {
     try {
+      const body = activityWsSessionSchema.shape.body.safeParse(req.body);
+      if (!body.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
       const {
         accessToken,
         instanceId,
@@ -200,18 +203,7 @@ class ActivityController {
         ruleset,
         options,
         roomId,
-      } = req.body as {
-        accessToken: string;
-        instanceId: string;
-        guildId: string;
-        mode: ActivityMode;
-        game: GameId;
-        difficulty?: BotDifficulty;
-        winningScore?: number;
-        ruleset?: string;
-        options?: Record<string, unknown>;
-        roomId?: string;
-      };
+      } = body.data;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
@@ -302,11 +294,11 @@ class ActivityController {
   // classic getAvailableRooms used server-side.
   listRooms = async (req: Request, res: Response) => {
     try {
-      const { accessToken, instanceId, guildId } = req.body as {
-        accessToken: string;
-        instanceId: string;
-        guildId: string;
-      };
+      const body = activityListRoomsSchema.shape.body.safeParse(req.body);
+      if (!body.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
+      const { accessToken, instanceId, guildId } = body.data;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
@@ -326,7 +318,10 @@ class ActivityController {
         mode: 'multi',
         locked: false,
       });
-      const data = rooms.map((room) => room.metadata as RoomListing);
+      const data = rooms.flatMap((room) => {
+        const listing = roomListingSchema.safeParse(room.metadata);
+        return listing.success ? [listing.data] : [];
+      });
       return res.status(200).json({ data });
     } catch (error) {
       logger.error('activity.controller.list_rooms_failed', { error });
@@ -343,11 +338,11 @@ class ActivityController {
   // since Discord's LaunchActivity interaction response has no data field of
   // its own to tell the Activity which game to open.
   recordDeepLinkIntent = (req: Request, res: Response) => {
-    const { userId, guildId, game } = req.body as {
-      userId: string;
-      guildId: string;
-      game: string;
-    };
+    const body = activityDeepLinkRecordSchema.shape.body.safeParse(req.body);
+    if (!body.success) {
+      return res.status(400).json({ message: 'Validation failed' });
+    }
+    const { userId, guildId, game } = body.data;
     try {
       recordDeepLink(userId, guildId, game);
       return res.status(200).json({ data: { ok: true } });
@@ -362,10 +357,11 @@ class ActivityController {
   // Discord, not trusted from the request body, matching getWsSessionToken.
   claimDeepLinkIntent = async (req: Request, res: Response) => {
     try {
-      const { accessToken, guildId } = req.body as {
-        accessToken: string;
-        guildId: string;
-      };
+      const body = activityDeepLinkClaimSchema.shape.body.safeParse(req.body);
+      if (!body.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
+      const { accessToken, guildId } = body.data;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
@@ -380,13 +376,11 @@ class ActivityController {
 
   createRoom = async (req: Request, res: Response) => {
     try {
-      const { accessToken, instanceId, guildId, game } = req.body as {
-        accessToken: string;
-        instanceId: string;
-        guildId: string;
-        game: GameId;
-        queueEnabled: boolean;
-      };
+      const body = activityCreateRoomSchema.shape.body.safeParse(req.body);
+      if (!body.success) {
+        return res.status(400).json({ message: 'Validation failed' });
+      }
+      const { accessToken, instanceId, guildId, game } = body.data;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
