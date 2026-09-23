@@ -1,3 +1,4 @@
+import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import {
   act,
   fireEvent,
@@ -7,7 +8,6 @@ import {
 } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
 import '../../../i18n';
-import type { WordleUserConfig } from '../types';
 import { WordleSettingsScreen } from './WordleSettingsScreen';
 
 describe('WordleSettingsScreen', () => {

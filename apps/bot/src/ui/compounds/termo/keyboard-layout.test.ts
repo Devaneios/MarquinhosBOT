@@ -1,7 +1,12 @@
+import type { GuessRow } from '@marquinhos/contracts/wordle';
+import { buildLetterStates as buildStates } from '@marquinhos/domain/wordle/keyboardState';
 import { describe, expect, test } from 'bun:test';
-import { buildLetterStates } from './letter-states';
+import { TERMO_KB_LETTERS } from './keyboard-layout';
 
-describe('buildLetterStates', () => {
+const buildLetterStates = (guesses: GuessRow[]) =>
+  buildStates(guesses, TERMO_KB_LETTERS);
+
+describe('letter states on the termo keyboard', () => {
   test('returns empty object when no guesses', () => {
     expect(buildLetterStates([])).toEqual({});
   });

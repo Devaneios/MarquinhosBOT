@@ -1,4 +1,4 @@
-import type { LetterFeedback } from './types';
+import type { LetterFeedback } from '@marquinhos/contracts/wordle';
 
 export const FEEDBACK_COLORS: Record<
   LetterFeedback | 'unused',

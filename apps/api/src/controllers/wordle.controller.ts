@@ -1,3 +1,7 @@
+import {
+  wordleUserConfigSchema,
+  type WordleUserConfig,
+} from '@marquinhos/contracts/wordle';
 import type { Request, Response } from 'express';
 import {
   guildIdBodySchema,
@@ -11,7 +15,6 @@ import {
   validateGuessQuerySchema,
 } from 'schemas/wordle.schema';
 import { WordleService } from 'services/wordle';
-import type { WordleUserConfig } from 'services/wordleUserConfig';
 import type { IUser } from 'types';
 
 const service = new WordleService();
@@ -28,36 +31,6 @@ interface UserConfigRequest {
 
 interface UserConfigResponse {
   status(code: number): { json(payload: unknown): unknown };
-}
-
-function parseWordleUserConfig(value: unknown): WordleUserConfig | null {
-  if (
-    typeof value !== 'object' ||
-    value === null ||
-    !('invertActionKeys' in value) ||
-    !('enableSounds' in value) ||
-    !('enableSpaceKey' in value) ||
-    !('enableArrowKeys' in value) ||
-    typeof value.invertActionKeys !== 'boolean' ||
-    typeof value.enableSounds !== 'boolean' ||
-    typeof value.enableSpaceKey !== 'boolean' ||
-    typeof value.enableArrowKeys !== 'boolean' ||
-    (!value.enableSpaceKey && value.enableArrowKeys)
-  ) {
-    return null;
-  }
-
-  const baseConfig = {
-    invertActionKeys: value.invertActionKeys,
-    enableSounds: value.enableSounds,
-  };
-  return value.enableSpaceKey
-    ? {
-        ...baseConfig,
-        enableSpaceKey: true,
-        enableArrowKeys: value.enableArrowKeys,
-      }
-    : { ...baseConfig, enableSpaceKey: false, enableArrowKeys: false };
 }
 
 export default class WordleController {
@@ -78,8 +51,8 @@ export default class WordleController {
       return;
     }
 
-    const config = parseWordleUserConfig(req.body);
-    if (!config) {
+    const config = wordleUserConfigSchema.safeParse(req.body);
+    if (!config.success) {
       res.status(400).json({
         message:
           'Wordle config fields must be booleans, and arrow keys require space.',
@@ -87,7 +60,9 @@ export default class WordleController {
       return;
     }
 
-    res.status(200).json({ data: this.userConfig.update(req.user.id, config) });
+    res
+      .status(200)
+      .json({ data: this.userConfig.update(req.user.id, config.data) });
   }
 
   submitGuess(req: Request, res: Response): void {

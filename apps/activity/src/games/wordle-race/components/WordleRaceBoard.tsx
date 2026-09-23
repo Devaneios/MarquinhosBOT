@@ -1,4 +1,8 @@
 import {
+  type GuessRow,
+  type LetterFeedback,
+} from '@marquinhos/contracts/wordle';
+import {
   buildLetterStates,
   normalizeKey,
 } from '@marquinhos/domain/wordle/keyboardState';
@@ -22,8 +26,6 @@ import {
   playerExhaustedPayloadSchema,
   playerSolvedPayloadSchema,
   type GameState,
-  type GuessRow,
-  type LetterFeedback,
 } from '../types';
 
 function Tile({

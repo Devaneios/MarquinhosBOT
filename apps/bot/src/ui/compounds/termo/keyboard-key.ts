@@ -1,7 +1,7 @@
+import type { LetterFeedback } from '@marquinhos/contracts/wordle';
 import { Box, Style, Text } from '@meonode/canvas';
 import { defaultTheme, type Theme } from '../../theme';
 import type { CanvasNode } from '../../types';
-import type { LetterFeedback } from './letter-states';
 
 export function keyboardKey(
   letter: string,

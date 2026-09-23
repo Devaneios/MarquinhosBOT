@@ -1,3 +1,4 @@
+import { type GuessRow } from '@marquinhos/contracts/wordle';
 import {
   buildLetterStates,
   normalizeKey,
@@ -21,7 +22,6 @@ import {
   wordleGuessErrorPayloadSchema,
   wordleGuessResultPayloadSchema,
   wordleInitPayloadSchema,
-  type GuessRow,
 } from '../types';
 
 interface WordleBoardOptions {

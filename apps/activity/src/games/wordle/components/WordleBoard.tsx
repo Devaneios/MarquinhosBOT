@@ -1,3 +1,4 @@
+import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +11,6 @@ import {
   WORDLE_FOCUS_KEYS,
 } from '../constants';
 import { useWordleBoard } from '../hooks/useWordleBoard';
-import type { WordleUserConfig } from '../types';
 import { CurrentRow } from './CurrentRow';
 import { GuessRow } from './GuessRow';
 import { WordleSettingsScreen } from './WordleSettingsScreen';

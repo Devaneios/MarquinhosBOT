@@ -1,41 +1,21 @@
 import { requestJson } from '@marquinhos/api-client/browser';
+import {
+  wordleUserConfigSchema,
+  type WordleUserConfig,
+} from '@marquinhos/contracts/wordle';
+import { z } from 'zod';
 import { apiUrl } from '../../lib/apiBase';
-import type { WordleUserConfig } from './types';
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
+const wordleUserConfigResponseSchema = z.object({
+  data: wordleUserConfigSchema,
+});
 
-function parseWordleUserConfig(value: unknown): WordleUserConfig {
-  if (
-    !isRecord(value) ||
-    typeof value.invertActionKeys !== 'boolean' ||
-    typeof value.enableSounds !== 'boolean' ||
-    typeof value.enableSpaceKey !== 'boolean' ||
-    typeof value.enableArrowKeys !== 'boolean' ||
-    (!value.enableSpaceKey && value.enableArrowKeys)
-  ) {
+function parseResponse(payload: unknown): WordleUserConfig {
+  const parsed = wordleUserConfigResponseSchema.safeParse(payload);
+  if (!parsed.success) {
     throw new Error('Invalid Wordle user configuration response');
   }
-
-  const baseConfig = {
-    invertActionKeys: value.invertActionKeys,
-    enableSounds: value.enableSounds,
-  };
-  return value.enableSpaceKey
-    ? {
-        ...baseConfig,
-        enableSpaceKey: true,
-        enableArrowKeys: value.enableArrowKeys,
-      }
-    : { ...baseConfig, enableSpaceKey: false, enableArrowKeys: false };
-}
-
-function parseResponse(payload: unknown) {
-  if (!isRecord(payload)) {
-    throw new Error('Invalid Wordle user configuration response');
-  }
-  return parseWordleUserConfig(payload.data);
+  return parsed.data.data;
 }
 
 export async function getWordleUserConfig(

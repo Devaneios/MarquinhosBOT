@@ -1,4 +1,4 @@
-import type { GuessRow as GuessRowData } from '../types';
+import type { GuessRow as GuessRowData } from '@marquinhos/contracts/wordle';
 import { Tile } from './Tile';
 
 export function GuessRow({ row }: { row: GuessRowData }) {

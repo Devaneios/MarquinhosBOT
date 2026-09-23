@@ -1,3 +1,4 @@
+import type { LetterFeedback } from '@marquinhos/contracts/wordle';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import sharp from 'sharp';
@@ -8,7 +9,6 @@ import {
   buildTermoLeaderboardImage,
   buildWordPreviewImage,
   type DailyEntry,
-  type LetterFeedback,
   type RankedEntry,
 } from './termo';
 

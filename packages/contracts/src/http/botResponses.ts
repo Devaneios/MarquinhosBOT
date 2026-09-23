@@ -1,4 +1,5 @@
-import { z } from 'zod';
+import { z } from "zod";
+import { guessRowSchema, letterFeedbackSchema } from "../wordle";
 
 export function apiResponseSchema<T extends z.ZodTypeAny>(dataSchema: T) {
   return z.object({
@@ -7,13 +8,6 @@ export function apiResponseSchema<T extends z.ZodTypeAny>(dataSchema: T) {
     error: z.string().optional(),
   });
 }
-
-const letterFeedbackSchema = z.enum(['correct', 'present', 'absent']);
-
-const guessEntrySchema = z.object({
-  guess: z.string(),
-  feedback: z.array(letterFeedbackSchema),
-});
 
 export const userLevelSchema = z.object({
   userId: z.string(),
@@ -40,42 +34,41 @@ export const userAchievementSchema = z.object({
   name: z.string(),
   description: z.string(),
   category: z.string(),
-  rarity: z.enum(['common', 'rare', 'epic', 'legendary']),
+  rarity: z.enum(["common", "rare", "epic", "legendary"]),
   icon: z.string(),
   rewardXp: z.number(),
 });
 
 const aiChatCategorySchema = z.enum([
-  'general_question',
-  'code_technical_question',
-  'trick_riddle',
-  'praise_thanks',
-  'follow_up_on_bot',
-  'opinion_reference',
-  'bot_help_info',
-  'user_roast_provocation',
-  'casual_chat',
-  'off_topic_unclear',
-  'guardrail_roast',
-  'agent_task',
+  "general_question",
+  "code_technical_question",
+  "trick_riddle",
+  "praise_thanks",
+  "follow_up_on_bot",
+  "opinion_reference",
+  "bot_help_info",
+  "user_roast_provocation",
+  "casual_chat",
+  "off_topic_unclear",
+  "guardrail_roast",
+  "agent_task",
 ]);
 
 export const aiChatResponseSchema = z.object({
-  status: z.enum(['ok', 'rate_limited', 'error']),
+  status: z.enum(["ok", "rate_limited", "error"]),
   category: aiChatCategorySchema.optional(),
   reply: z.string().optional(),
-  format: z.enum(['embed', 'text']).optional(),
+  format: z.enum(["embed", "text"]).optional(),
   embedTitle: z.string().optional(),
   traceId: z.string().optional(),
 });
 
-export const researchStartResponseSchema =
-  z.object({
-    status: z.enum(['accepted', 'rate_limited', 'rejected']),
-    jobId: z.string().optional(),
-    created: z.boolean().optional(),
-    reply: z.string().optional(),
-  });
+export const researchStartResponseSchema = z.object({
+  status: z.enum(["accepted", "rate_limited", "rejected"]),
+  jobId: z.string().optional(),
+  created: z.boolean().optional(),
+  reply: z.string().optional(),
+});
 
 const researchProgressEventSchema = z.object({
   seq: z.number(),
@@ -101,22 +94,20 @@ const researchStatsSchema = z.object({
   truncatedByBudget: z.boolean().optional(),
 });
 
-export const researchJobResponseSchema =
-  z.object({
-    jobId: z.string(),
-    status: z.enum(['queued', 'running', 'done', 'error']),
-    query: z.string(),
-    progress: z.array(researchProgressEventSchema),
-    report: z.string().optional(),
-    sources: z.array(researchSourceSchema).optional(),
-    stats: researchStatsSchema.optional(),
-    error: z.string().optional(),
-  });
+export const researchJobResponseSchema = z.object({
+  jobId: z.string(),
+  status: z.enum(["queued", "running", "done", "error"]),
+  query: z.string(),
+  progress: z.array(researchProgressEventSchema),
+  report: z.string().optional(),
+  sources: z.array(researchSourceSchema).optional(),
+  stats: researchStatsSchema.optional(),
+  error: z.string().optional(),
+});
 
-export const emojiReactionResponseSchema =
-  z.object({
-    emojis: z.array(z.string()),
-  });
+export const emojiReactionResponseSchema = z.object({
+  emojis: z.array(z.string()),
+});
 
 export const mazeViewportStateSchema = z.object({
   sessionId: z.string(),
@@ -137,7 +128,7 @@ export type WordleConfig = z.infer<typeof wordleConfigSchema>;
 export const wordleGuessResultSchema = z.object({
   guess: z.string(),
   feedback: z.array(letterFeedbackSchema),
-  guesses: z.array(guessEntrySchema),
+  guesses: z.array(guessRowSchema),
   solved: z.boolean(),
   attempts: z.number(),
   wordLength: z.number(),
@@ -158,12 +149,12 @@ export const wordleDayGuessesSchema = z.object({
   word: z.string(),
   wordDate: z.string(),
   wordLength: z.number(),
-  guesses: z.array(guessEntrySchema),
+  guesses: z.array(guessRowSchema),
 });
 export type WordleDayGuesses = z.infer<typeof wordleDayGuessesSchema>;
 
 export const userWordleSessionSchema = z.object({
-  guesses: z.array(guessEntrySchema),
+  guesses: z.array(guessRowSchema),
   solved: z.boolean(),
   attempts: z.number(),
 });
@@ -186,7 +177,7 @@ export const markWordleAnnouncedResultSchema = z.object({
 
 export const unannouncedWordleWinSchema = z.object({
   userId: z.string(),
-  guesses: z.array(guessEntrySchema),
+  guesses: z.array(guessRowSchema),
   attempts: z.number(),
 });
 export type UnannouncedWordleWin = z.infer<typeof unannouncedWordleWinSchema>;

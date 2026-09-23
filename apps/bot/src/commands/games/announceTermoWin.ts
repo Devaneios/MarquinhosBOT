@@ -1,7 +1,5 @@
-import {
-  buildResultImage,
-  type LetterFeedback,
-} from '@marquinhos/ui/screens/termo';
+import type { GuessRow } from '@marquinhos/contracts/wordle';
+import { buildResultImage } from '@marquinhos/ui/screens/termo';
 import { baseEmbed } from '@marquinhos/utils/discord';
 import {
   AttachmentBuilder,
@@ -11,7 +9,7 @@ import {
 import { buildTermoWinActionRow } from './termoResponse';
 
 export interface TermoWinResult {
-  guesses: { guess: string; feedback: LetterFeedback[] }[];
+  guesses: GuessRow[];
   attempts: number;
 }
 

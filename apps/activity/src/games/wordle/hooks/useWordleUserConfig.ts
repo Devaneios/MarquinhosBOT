@@ -1,6 +1,6 @@
+import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import { useCallback, useEffect, useState } from 'react';
 import { errorMessage, isAuthError } from '../../../lib/http';
-import type { WordleUserConfig } from '../types';
 import {
   getWordleUserConfig,
   updateWordleUserConfig,

@@ -1,28 +1,12 @@
+import {
+  guessRowSchema,
+  type LetterFeedback,
+} from '@marquinhos/contracts/wordle';
 import type { KeyboardEvent, RefObject } from 'react';
 import { z } from 'zod';
 import type { WsSession } from '../shared/activitySession';
 
-const letterFeedbackSchema = z.enum(['correct', 'present', 'absent']);
-export type LetterFeedback = z.infer<typeof letterFeedbackSchema>;
 export type KeyState = LetterFeedback | 'unused';
-
-interface WordleUserConfigBase {
-  invertActionKeys: boolean;
-  enableSounds: boolean;
-}
-
-export type WordleUserConfig = WordleUserConfigBase &
-  (
-    | { enableSpaceKey: false; enableArrowKeys: false }
-    | { enableSpaceKey: true; enableArrowKeys: boolean }
-  );
-
-const guessRowSchema = z.object({
-  guess: z.string(),
-  feedback: z.array(letterFeedbackSchema),
-});
-
-export type GuessRow = z.infer<typeof guessRowSchema>;
 
 export type WordleSessionState =
   | { status: 'connecting' }

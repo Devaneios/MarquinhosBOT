@@ -1,11 +1,5 @@
-import { z } from 'zod';
-import { stripDiacritics, type LetterFeedback } from './feedback';
-
-const letterFeedbackSchema = z.enum(['correct', 'present', 'absent']);
-const storedGuessSchema = z.object({
-  guess: z.string(),
-  feedback: z.array(letterFeedbackSchema),
-});
+import { guessRowSchema, type GuessRow } from "@marquinhos/contracts/wordle";
+import { stripDiacritics } from "./feedback";
 
 export interface WordleSessionGuessesRow {
   guesses: string;
@@ -18,11 +12,11 @@ function normalizeGuess(s: string): string {
 export function buildUniqueDayGuesses(
   answerWord: string,
   rows: WordleSessionGuessesRow[],
-): { guess: string; feedback: LetterFeedback[] }[] {
+): GuessRow[] {
   const answerKey = normalizeGuess(answerWord);
   const wordLength = answerWord.length;
   const seen = new Set<string>();
-  const result: { guess: string; feedback: LetterFeedback[] }[] = [];
+  const result: GuessRow[] = [];
 
   for (const row of rows) {
     let guesses: unknown;
@@ -35,7 +29,7 @@ export function buildUniqueDayGuesses(
     if (!Array.isArray(guesses)) continue;
 
     for (const entry of guesses) {
-      const parsed = storedGuessSchema.safeParse(entry);
+      const parsed = guessRowSchema.safeParse(entry);
       if (!parsed.success) continue;
       const guess = parsed.data;
       if (guess.feedback.length !== wordLength) continue;
@@ -53,4 +47,3 @@ export function buildUniqueDayGuesses(
 
   return result;
 }
-

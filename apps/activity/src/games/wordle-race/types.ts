@@ -1,13 +1,8 @@
+import {
+  guessRowSchema,
+  letterFeedbackSchema,
+} from '@marquinhos/contracts/wordle';
 import { z } from 'zod';
-
-const letterFeedbackSchema = z.enum(['correct', 'present', 'absent']);
-export type LetterFeedback = z.infer<typeof letterFeedbackSchema>;
-
-const guessRowSchema = z.object({
-  guess: z.string(),
-  feedback: z.array(letterFeedbackSchema),
-});
-export type GuessRow = z.infer<typeof guessRowSchema>;
 
 export const gameStateSchema = z.object({
   targetWordLength: z.number(),

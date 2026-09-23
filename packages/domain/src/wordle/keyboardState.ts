@@ -1,14 +1,10 @@
-import type { LetterFeedback } from './feedback';
-
-export interface GuessRow {
-  guess: string;
-  feedback: LetterFeedback[];
-}
+import type { GuessRow, LetterFeedback } from "@marquinhos/contracts/wordle";
+import { stripDiacritics } from "./feedback";
 
 export function normalizeKey(ch: string, letters: ReadonlySet<string>): string {
   const lower = ch.toLowerCase();
   if (letters.has(lower)) return lower;
-  const stripped = lower.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+  const stripped = stripDiacritics(lower);
   return letters.has(stripped) ? stripped : lower;
 }
 

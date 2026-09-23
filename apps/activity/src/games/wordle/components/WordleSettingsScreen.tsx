@@ -1,3 +1,4 @@
+import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -5,7 +6,6 @@ import {
   MenuScreen,
   menuButtonPrimary,
 } from '../../../components/game-shell';
-import type { WordleUserConfig } from '../types';
 import { WordleToggleTile } from './WordleToggleTile';
 
 const fieldLabel = 'font-pixel text-sm text-marquinhos-text';

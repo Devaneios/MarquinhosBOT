@@ -1,5 +1,6 @@
+import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import type { KeyboardKey, KeyboardKeyStyle } from '../../components/keyboard';
-import type { KeyState, WordleUserConfig } from './types';
+import type { KeyState } from './types';
 
 export const FEEDBACK_COLORS: Record<KeyState, KeyboardKeyStyle> = {
   correct: {

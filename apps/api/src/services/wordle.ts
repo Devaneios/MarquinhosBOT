@@ -1,3 +1,4 @@
+import type { GuessRow, LetterFeedback } from '@marquinhos/contracts/wordle';
 import { db } from '@marquinhos/database/sqlite';
 import {
   buildUniqueDayGuesses,
@@ -6,7 +7,6 @@ import {
 import {
   computeFeedback,
   stripDiacritics,
-  type LetterFeedback,
 } from '@marquinhos/domain/wordle/feedback';
 import { randomUUID } from 'crypto';
 import { readFileSync } from 'fs';
@@ -31,7 +31,7 @@ interface WordleSession {
   user_id: string;
   guild_id: string;
   word_date: string;
-  guesses: { guess: string; feedback: LetterFeedback[] }[];
+  guesses: GuessRow[];
   solved: boolean;
   attempts: number;
   created_at: number;
@@ -40,7 +40,7 @@ interface WordleSession {
 export interface GuessResult {
   guess: string;
   feedback: LetterFeedback[];
-  guesses: { guess: string; feedback: LetterFeedback[] }[];
+  guesses: GuessRow[];
   solved: boolean;
   attempts: number;
   wordLength: number;
@@ -65,7 +65,7 @@ export interface DayGuesses {
   word: string;
   wordDate: string;
   wordLength: number;
-  guesses: { guess: string; feedback: LetterFeedback[] }[];
+  guesses: GuessRow[];
 }
 
 export interface ReviewWordResult {
@@ -296,8 +296,9 @@ export class WordleService {
       return { error: 'Você já acertou a palavra de hoje!' };
     }
 
-    const previousGuesses: { guess: string; feedback: LetterFeedback[] }[] =
-      sessionRow ? JSON.parse(sessionRow.guesses) : [];
+    const previousGuesses: GuessRow[] = sessionRow
+      ? JSON.parse(sessionRow.guesses)
+      : [];
 
     if (
       previousGuesses.some((g) => stripDiacritics(g.guess) === strippedGuess)
@@ -454,7 +455,7 @@ export class WordleService {
 
   getUnannouncedWins(guildId: string): {
     userId: string;
-    guesses: { guess: string; feedback: LetterFeedback[] }[];
+    guesses: GuessRow[];
     attempts: number;
   }[] {
     const today = getRecifeDate();

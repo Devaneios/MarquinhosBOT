@@ -1,4 +1,5 @@
-import { computeFeedback, type LetterFeedback } from '@marquinhos/domain/wordle/feedback';
+import type { LetterFeedback } from "@marquinhos/contracts/wordle";
+import { computeFeedback } from "@marquinhos/domain/wordle/feedback";
 
 export interface PlayerState {
   userId: string;
@@ -72,15 +73,15 @@ export class WordleRaceEngine {
   ): { feedback: LetterFeedback[]; solved: boolean } | { error: string } {
     const player = this.state.players.get(userId);
     if (!player) {
-      return { error: 'Player not in room' };
+      return { error: "Player not in room" };
     }
 
     if (player.solved) {
-      return { error: 'Already solved' };
+      return { error: "Already solved" };
     }
 
     if (player.exhausted) {
-      return { error: 'No attempts remaining' };
+      return { error: "No attempts remaining" };
     }
 
     const normalizedGuess = guess.trim().toLowerCase();
@@ -92,7 +93,7 @@ export class WordleRaceEngine {
 
     const canonicalGuess = this.resolveCanonical(guess);
     if (!canonicalGuess) {
-      return { error: 'Invalid word' };
+      return { error: "Invalid word" };
     }
 
     if (
@@ -100,7 +101,7 @@ export class WordleRaceEngine {
         (g) => g.guess.toLowerCase() === canonicalGuess.toLowerCase(),
       )
     ) {
-      return { error: 'Already guessed this word' };
+      return { error: "Already guessed this word" };
     }
 
     const feedback = computeFeedback(canonicalGuess, this.state.targetWord);

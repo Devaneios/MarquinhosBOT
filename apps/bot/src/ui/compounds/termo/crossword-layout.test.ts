@@ -1,6 +1,6 @@
+import type { GuessRow } from '@marquinhos/contracts/wordle';
 import { describe, expect, test } from 'bun:test';
 import { buildCrosswordLayout } from './crossword-layout';
-import type { TermoGuess } from './types';
 
 describe('buildCrosswordLayout', () => {
   test('places answer word at row 0 col 0 horizontal', () => {
@@ -27,7 +27,7 @@ describe('buildCrosswordLayout', () => {
   });
 
   test('guess with matching letter is placed vertically', () => {
-    const guesses: TermoGuess[] = [
+    const guesses: GuessRow[] = [
       {
         guess: 'tapete',
         feedback: [
@@ -47,7 +47,7 @@ describe('buildCrosswordLayout', () => {
   });
 
   test('guess with no matching letter is not placed', () => {
-    const guesses: TermoGuess[] = [
+    const guesses: GuessRow[] = [
       {
         guess: 'bronco',
         feedback: ['absent', 'absent', 'absent', 'absent', 'absent', 'absent'],
@@ -58,7 +58,7 @@ describe('buildCrosswordLayout', () => {
   });
 
   test('intersection cell keeps answer word feedback (correct/green)', () => {
-    const guesses: TermoGuess[] = [
+    const guesses: GuessRow[] = [
       {
         guess: 'tapete',
         feedback: ['absent', 'present', 'absent', 'absent', 'absent', 'absent'],
@@ -71,7 +71,7 @@ describe('buildCrosswordLayout', () => {
   });
 
   test('bounding box covers all placed words', () => {
-    const guesses: TermoGuess[] = [
+    const guesses: GuessRow[] = [
       {
         guess: 'tapete',
         feedback: ['absent', 'present', 'absent', 'absent', 'absent', 'absent'],
@@ -87,7 +87,7 @@ describe('buildCrosswordLayout', () => {
   });
 
   test('two guesses sharing different answer letters both placed', () => {
-    const guesses: TermoGuess[] = [
+    const guesses: GuessRow[] = [
       {
         guess: 'tapete',
         feedback: ['absent', 'present', 'absent', 'absent', 'absent', 'absent'],
@@ -104,7 +104,7 @@ describe('buildCrosswordLayout', () => {
   test('secondary guess connects to placed vertical word when no match with answer', () => {
     // 'nomis' has no letters in 'paleta' (p,a,l,e,t,a) but has 'p' matching 'tapete' at index 2
     // → should connect horizontally to the vertical 'tapete'
-    const guesses: TermoGuess[] = [
+    const guesses: GuessRow[] = [
       {
         guess: 'tapete',
         feedback: ['absent', 'present', 'absent', 'absent', 'absent', 'absent'],
@@ -121,7 +121,7 @@ describe('buildCrosswordLayout', () => {
 
   test('two guesses at adjacent answer columns are both placed', () => {
     // Without crossword adjacency rules, both should be placed even if their tiles are side-by-side
-    const guesses: TermoGuess[] = [
+    const guesses: GuessRow[] = [
       {
         guess: 'tapete',
         feedback: ['absent', 'present', 'absent', 'absent', 'absent', 'absent'],
@@ -136,7 +136,7 @@ describe('buildCrosswordLayout', () => {
   });
 
   test('no two words occupy the same cell with different letters', () => {
-    const guesses: TermoGuess[] = [
+    const guesses: GuessRow[] = [
       {
         guess: 'tapete',
         feedback: ['absent', 'present', 'absent', 'absent', 'absent', 'absent'],

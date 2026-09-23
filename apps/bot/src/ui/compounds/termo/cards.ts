@@ -1,3 +1,4 @@
+import type { GuessRow } from '@marquinhos/contracts/wordle';
 import { card, panel } from '../../primitives';
 import { defaultTheme, type Theme } from '../../theme';
 import type { CanvasNode } from '../../types';
@@ -8,7 +9,7 @@ import { termoKeyboardPanel } from './keyboard-panel';
 import { resultSummaryPanel } from './result-summary';
 import { wordPreview } from './stats';
 import { solvedStatusBanner } from './status-banner';
-import type { TermoGuess, TermoSolvedStatus } from './types';
+import type { TermoSolvedStatus } from './types';
 
 export type TermoKeyboardCardOptions = {
   streak?: number;
@@ -17,7 +18,7 @@ export type TermoKeyboardCardOptions = {
 };
 
 export function termoKeyboardCard(
-  guesses: TermoGuess[],
+  guesses: GuessRow[],
   wordLength: number,
   options?: TermoKeyboardCardOptions,
   theme: Theme = defaultTheme,
@@ -41,7 +42,7 @@ export function termoKeyboardCard(
 }
 
 export function termoResultCard(
-  guesses: TermoGuess[],
+  guesses: GuessRow[],
   theme: Theme = defaultTheme,
 ): CanvasNode {
   return card([resultSummaryPanel(guesses, theme)], theme);

@@ -1,11 +1,11 @@
+import type { GuessRow } from '@marquinhos/contracts/wordle';
 import { Column, Row, Style } from '@meonode/canvas';
 import { defaultTheme, type Theme } from '../../theme';
 import type { CanvasNode } from '../../types';
 import { attemptRow } from './rows';
-import type { TermoGuess } from './types';
 
 export function attemptGrid(
-  guesses: TermoGuess[],
+  guesses: GuessRow[],
   wordLength: number,
   maxAttempts: number,
   theme: Theme = defaultTheme,

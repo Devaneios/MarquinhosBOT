@@ -1,8 +1,8 @@
+import type { LetterFeedback } from '@marquinhos/contracts/wordle';
 import { Box, Column, Row, Style, Text } from '@meonode/canvas';
 import { defaultTheme, type Theme } from '../../theme';
 import type { CanvasNode } from '../../types';
 import type { CrosswordLayout } from './crossword-layout';
-import type { LetterFeedback } from './letter-states';
 import { attemptTile } from './tiles';
 
 function spacerTile(): CanvasNode {

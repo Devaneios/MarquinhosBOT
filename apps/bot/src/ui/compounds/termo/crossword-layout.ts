@@ -1,5 +1,4 @@
-import type { LetterFeedback } from './letter-states';
-import type { TermoGuess } from './types';
+import type { GuessRow, LetterFeedback } from '@marquinhos/contracts/wordle';
 
 export type Direction = 'h' | 'v';
 
@@ -83,7 +82,7 @@ function isValidPlacement(
 function findCandidates(
   grid: Grid,
   placed: PlacedWord[],
-  guess: TermoGuess,
+  guess: GuessRow,
 ): Candidate[] {
   const candidates: Candidate[] = [];
 
@@ -155,7 +154,7 @@ function scoreCandidate(
 
 export function buildCrosswordLayout(
   answerWord: string,
-  guesses: TermoGuess[],
+  guesses: GuessRow[],
 ): CrosswordLayout {
   const grid: Grid = new Map();
   const placed: PlacedWord[] = [];

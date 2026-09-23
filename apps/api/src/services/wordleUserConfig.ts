@@ -1,15 +1,5 @@
+import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import type { Database } from 'bun:sqlite';
-
-interface WordleUserConfigBase {
-  invertActionKeys: boolean;
-  enableSounds: boolean;
-}
-
-export type WordleUserConfig = WordleUserConfigBase &
-  (
-    | { enableSpaceKey: false; enableArrowKeys: false }
-    | { enableSpaceKey: true; enableArrowKeys: boolean }
-  );
 
 interface WordleUserConfigRow {
   invert_action_keys: number;

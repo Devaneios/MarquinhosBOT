@@ -1,3 +1,4 @@
+import type { GuessRow } from '@marquinhos/contracts/wordle';
 import sharp from 'sharp';
 import {
   buildCrosswordLayout,
@@ -9,18 +10,16 @@ import {
   wordPreviewCard,
   type DailyEntry,
   type LeaderboardPeriod,
-  type LetterFeedback,
   type RankedEntry,
-  type TermoGuess,
   type TermoSolvedStatus,
 } from '../compounds/termo';
 import { render } from '../render';
 import { defaultTheme, type Theme } from '../theme';
 
-export { type LetterFeedback, type TermoSolvedStatus };
+export { type TermoSolvedStatus };
 
 export async function buildKeyboardImage(
-  guesses: TermoGuess[],
+  guesses: GuessRow[],
   wordLength: number,
   options?: {
     streak?: number;
@@ -34,7 +33,7 @@ export async function buildKeyboardImage(
 }
 
 export async function buildResultImage(
-  guesses: TermoGuess[],
+  guesses: GuessRow[],
   options?: { theme?: Theme },
 ): Promise<Buffer> {
   const theme = options?.theme ?? defaultTheme;
@@ -55,7 +54,7 @@ export async function buildWordPreviewImage(
 }
 
 export async function buildCrosswordImage(
-  guesses: TermoGuess[],
+  guesses: GuessRow[],
   answerWord: string,
   options?: { theme?: Theme },
 ): Promise<Buffer> {

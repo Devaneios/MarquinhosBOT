@@ -13,6 +13,7 @@ export {
   type PlacedWord,
 } from './crossword-layout';
 export { keyboardKey } from './keyboard-key';
+export { TERMO_KB_ROWS } from './keyboard-layout';
 export { termoKeyboardPanel } from './keyboard-panel';
 export {
   denseRanks,
@@ -21,13 +22,8 @@ export {
   type LeaderboardPeriod,
   type RankedEntry,
 } from './leaderboard';
-export {
-  TERMO_KB_ROWS,
-  buildLetterStates,
-  type LetterFeedback,
-} from './letter-states';
 export { resultSummaryPanel } from './result-summary';
 export { attemptRow, keyboardRow } from './rows';
 export { solvedStatusBanner } from './status-banner';
 export { attemptTile, emptyTile, resultTile } from './tiles';
-export type { TermoGuess, TermoSolvedStatus } from './types';
+export type { TermoSolvedStatus } from './types';

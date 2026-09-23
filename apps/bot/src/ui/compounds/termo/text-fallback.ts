@@ -1,5 +1,4 @@
-import type { LetterFeedback } from './letter-states';
-import type { TermoGuess } from './types';
+import type { GuessRow, LetterFeedback } from '@marquinhos/contracts/wordle';
 
 const FEEDBACK_EMOJI: Record<LetterFeedback, string> = {
   correct: '🟩',
@@ -7,7 +6,7 @@ const FEEDBACK_EMOJI: Record<LetterFeedback, string> = {
   absent: '⬛',
 };
 
-export function formatGuessesAsText(guesses: TermoGuess[]): string {
+export function formatGuessesAsText(guesses: GuessRow[]): string {
   if (guesses.length === 0) return '';
   return guesses
     .map(({ guess, feedback }) => {

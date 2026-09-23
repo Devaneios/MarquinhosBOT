@@ -1,4 +1,4 @@
-import type { TermoGuess } from '@marquinhos/ui/compounds/termo';
+import type { GuessRow } from '@marquinhos/contracts/wordle';
 import {
   buildKeyboardImage,
   normalizeKeyboardBuffer,
@@ -50,7 +50,7 @@ export function buildTermoWinActionRow(): ActionRowBuilder<ButtonBuilder> {
 }
 
 export async function buildKeyboardAttachment(
-  guesses: TermoGuess[],
+  guesses: GuessRow[],
   wordLength: number,
   options: KeyboardImageOptions,
 ): Promise<AttachmentBuilder> {

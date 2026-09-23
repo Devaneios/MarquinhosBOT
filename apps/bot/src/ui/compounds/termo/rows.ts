@@ -1,8 +1,8 @@
+import type { LetterFeedback } from '@marquinhos/contracts/wordle';
 import { Row, Style } from '@meonode/canvas';
 import { defaultTheme, type Theme } from '../../theme';
 import type { CanvasNode } from '../../types';
 import { keyboardKey } from './keyboard-key';
-import type { LetterFeedback } from './letter-states';
 import { attemptTile, emptyTile } from './tiles';
 
 export function attemptRow(
