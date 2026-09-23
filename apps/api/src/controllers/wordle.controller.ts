@@ -1,8 +1,8 @@
 import * as contract from '@marquinhos/contracts/http/routes/wordle';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import type { Request, Response } from 'express';
+import type { DiscordUser } from 'services/discord';
 import { WordleService } from 'services/wordle';
-import type { IUser } from 'types';
 import { parseRequest, sendContract } from 'utils/contract';
 
 const service = new WordleService();
@@ -14,7 +14,7 @@ export interface WordleUserConfigStore {
 
 interface UserConfigRequest {
   body: unknown;
-  user?: IUser;
+  user?: DiscordUser;
 }
 
 interface UserConfigResponse {

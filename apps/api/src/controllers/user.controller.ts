@@ -1,125 +1,59 @@
+import * as contract from '@marquinhos/contracts/http/routes/user';
 import type { Request, Response } from 'express';
-import {
-  enableLastfmBodySchema,
-  userIdParamsSchema,
-  userTopListenedParamsSchema,
-} from 'schemas/user.schema';
-import { DiscordService } from 'services/discord';
-import { LastfmService } from 'services/lastfm';
 import { UserService } from 'services/user';
-import type { ApiResponse } from 'types';
-import { decryptToken } from 'utils/crypto';
+import { parseRequest, sendContract } from 'utils/contract';
 
 class UserController {
-  userService: UserService;
-  discordService: DiscordService;
-  lastfmService: LastfmService;
+  constructor(private userService: UserService = new UserService()) {}
 
-  constructor() {
-    this.userService = new UserService();
-    this.discordService = new DiscordService();
-    this.lastfmService = new LastfmService();
-  }
-
-  public async create(
-    req: Request,
-    res: Response,
-  ): Promise<Response<ApiResponse<void>>> {
-    try {
-      const authorization = req.headers.authorization;
-      const access_token = authorization && authorization.split(' ')[1];
-
-      if (!access_token) {
-        return res.status(401).json({ message: 'Token not provided' });
-      }
-
-      const decryptedToken = decryptToken(access_token);
-
-      if (!decryptedToken) {
-        return res.status(500).json({ message: 'Internal Server Error' });
-      }
-
-      const discordUser =
-        await this.discordService.getDiscordUser(decryptedToken);
-      if (!discordUser) {
-        return res.status(401).json({ message: 'Unauthorized' });
-      }
-      await this.userService.create(discordUser.id);
-    } catch (error: unknown) {
-      console.error(error);
-
-      if (error instanceof Error && error.message === 'User already exists') {
-        return res.status(409).json({ message: error.message });
-      }
-      return res.status(500).json({ message: 'Unknown Error' });
-    }
-
-    return res.status(200).json(req.user);
-  }
-
-  public async enableLastfm(
-    req: Request,
-    res: Response,
-  ): Promise<Response<ApiResponse<void>>> {
+  public async enableLastfm(req: Request, res: Response) {
     if (!req.user) {
       return res.status(500).json({ message: 'Internal Server error' });
     }
 
-    const body = enableLastfmBodySchema.safeParse(req.body);
-
-    if (!body.success) {
+    const input = parseRequest(contract.enableLastfm, req);
+    if (!input) {
       return res.status(400).json({ message: 'Missing credentials' });
     }
-    const { token } = body.data;
 
     try {
-      await this.userService.enableLastfm(req.user.id, token);
+      await this.userService.enableLastfm(req.user.id, input.body.token);
     } catch (error: unknown) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
     }
 
-    return res.status(200).json({ message: 'Lastfm enabled' });
+    return sendContract(res, contract.enableLastfm, {
+      message: 'Lastfm enabled',
+    });
   }
 
-  public async getProfile(
-    req: Request,
-    res: Response,
-  ): Promise<Response<ApiResponse<void>>> {
+  public async getProfile(req: Request, res: Response) {
+    if (!req.user) {
+      return res.status(500).json({ message: 'Internal Server error' });
+    }
+
+    return sendContract(res, contract.getProfile, req.user);
+  }
+
+  public async toggleScrobbles(req: Request, res: Response) {
     if (!req.user) {
       return res.status(500).json({ message: 'Internal Server error' });
     }
 
     try {
-      return res.status(200).json(req.user);
+      return sendContract(
+        res,
+        contract.toggleScrobbles,
+        await this.userService.toggleScrobbles(req.user.id),
+      );
     } catch (error: unknown) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
     }
   }
 
-  public async toggleScrobbles(
-    req: Request,
-    res: Response,
-  ): Promise<Response<ApiResponse<boolean>>> {
-    if (!req.user) {
-      return res.status(500).json({ message: 'Internal Server error' });
-    }
-
-    try {
-      return res
-        .status(200)
-        .json(await this.userService.toggleScrobbles(req.user.id));
-    } catch (error: unknown) {
-      console.error(error);
-      return res.status(500).json({ message: 'Unknown Error' });
-    }
-  }
-
-  public async deleteLastfmData(
-    req: Request,
-    res: Response,
-  ): Promise<Response<ApiResponse<string>>> {
+  public async deleteLastfmData(req: Request, res: Response) {
     if (!req.user) {
       return res.status(500).json({ message: 'Internal Server error' });
     }
@@ -131,13 +65,12 @@ class UserController {
       return res.status(500).json({ message: 'Unknown Error' });
     }
 
-    return res.status(200).json({ message: 'User deleted' });
+    return sendContract(res, contract.deleteLastfmData, {
+      message: 'User deleted',
+    });
   }
 
-  public async deleteAllData(
-    req: Request,
-    res: Response,
-  ): Promise<Response<ApiResponse<string>>> {
+  public async deleteAllData(req: Request, res: Response) {
     if (!req.user) {
       return res.status(500).json({ message: 'Internal Server error' });
     }
@@ -149,35 +82,33 @@ class UserController {
       return res.status(500).json({ message: 'Unknown Error' });
     }
 
-    return res.status(200).json({ message: 'User deleted' });
+    return sendContract(res, contract.deleteAllData, {
+      message: 'User deleted',
+    });
   }
 
-  public async exists(
-    req: Request,
-    res: Response,
-  ): Promise<Response<ApiResponse<boolean>>> {
+  public async exists(req: Request, res: Response) {
     if (!req.user) {
       return res.status(500).json({ message: 'Internal Server error' });
     }
 
     try {
-      const params = userIdParamsSchema.safeParse(req.params);
-      if (!params.success) {
+      const input = parseRequest(contract.exists, req);
+      if (!input) {
         return res.status(400).json({ message: 'id is required' });
       }
-      return res
-        .status(200)
-        .json(await this.userService.exists(params.data.id));
+      return sendContract(
+        res,
+        contract.exists,
+        await this.userService.exists(input.params.id),
+      );
     } catch (error: unknown) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
     }
   }
 
-  public async lastfmStatus(
-    req: Request,
-    res: Response,
-  ): Promise<Response<ApiResponse<boolean>>> {
+  public async lastfmStatus(req: Request, res: Response) {
     if (!req.user) {
       return res.status(500).json({ message: 'Internal Server error' });
     }
@@ -188,7 +119,7 @@ class UserController {
       );
 
       if (lastfmStatus) {
-        return res.status(200).json(lastfmStatus);
+        return sendContract(res, contract.lastfmStatus, lastfmStatus);
       } else {
         return res.status(404).json({ message: 'Lastfm token not found' });
       }
@@ -198,51 +129,57 @@ class UserController {
     }
   }
 
-  public async getTopArtists(req: Request, res: Response): Promise<Response> {
-    const params = userTopListenedParamsSchema.safeParse(req.params);
-    if (!params.success) {
+  public async getTopArtists(req: Request, res: Response) {
+    const input = parseRequest(contract.getTopArtists, req);
+    if (!input) {
       return res.status(400).json({ message: 'Invalid user id or period' });
     }
-    const { id, period } = params.data;
+    const { id, period } = input.params;
 
     try {
-      const topArtists = await this.userService.getTopArtists(id, period);
-
-      return res.status(200).json(topArtists);
+      return sendContract(
+        res,
+        contract.getTopArtists,
+        await this.userService.getTopArtists(id, period),
+      );
     } catch (error: unknown) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
     }
   }
 
-  public async getTopAlbums(req: Request, res: Response): Promise<Response> {
-    const params = userTopListenedParamsSchema.safeParse(req.params);
-    if (!params.success) {
+  public async getTopAlbums(req: Request, res: Response) {
+    const input = parseRequest(contract.getTopAlbums, req);
+    if (!input) {
       return res.status(400).json({ message: 'Invalid user id or period' });
     }
-    const { id, period } = params.data;
+    const { id, period } = input.params;
 
     try {
-      const topAlbums = await this.userService.getTopAlbums(id, period);
-
-      return res.status(200).json(topAlbums);
+      return sendContract(
+        res,
+        contract.getTopAlbums,
+        await this.userService.getTopAlbums(id, period),
+      );
     } catch (error: unknown) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
     }
   }
 
-  public async getTopTracks(req: Request, res: Response): Promise<Response> {
-    const params = userTopListenedParamsSchema.safeParse(req.params);
-    if (!params.success) {
+  public async getTopTracks(req: Request, res: Response) {
+    const input = parseRequest(contract.getTopTracks, req);
+    if (!input) {
       return res.status(400).json({ message: 'Invalid user id or period' });
     }
-    const { id, period } = params.data;
+    const { id, period } = input.params;
 
     try {
-      const topTracks = await this.userService.getTopTracks(id, period);
-
-      return res.status(200).json(topTracks);
+      return sendContract(
+        res,
+        contract.getTopTracks,
+        await this.userService.getTopTracks(id, period),
+      );
     } catch (error: unknown) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
