@@ -1,13 +1,14 @@
+import { requiredXpForLevel } from '@marquinhos/domain/gamification/leveling';
 import { UserLevel } from '@marquinhos/types';
 import { baseEmbed, type BaseEmbedClient } from '@marquinhos/utils/discord';
 import { EmbedBuilder, User } from 'discord.js';
 
 export function buildLevelEmbed(
   client: BaseEmbedClient,
-  user: User,
+  user: Pick<User, 'username' | 'displayAvatarURL'>,
   data: UserLevel,
 ): EmbedBuilder {
-  const requiredXP = Math.floor(Math.pow(data.level + 1, 2) * 100);
+  const requiredXP = requiredXpForLevel(data.level);
   const progressPercentage = Math.floor((data.xp / requiredXP) * 100);
 
   return baseEmbed(client)

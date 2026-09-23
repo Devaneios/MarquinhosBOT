@@ -1,4 +1,5 @@
 import {
+  buildLevelEmbed,
   createProgressBar,
   getBadgeForLevel,
   getColorForLevel,
@@ -44,5 +45,26 @@ describe('getColorForLevel', () => {
 
   test('returns purple for level 50', () => {
     expect(getColorForLevel(50)).toBe(0x9b59b6);
+  });
+});
+
+describe('buildLevelEmbed', () => {
+  test('shows the XP the API requires to leave the current level', () => {
+    const user = {
+      username: 'marquinhos',
+      displayAvatarURL: () => 'https://cdn/avatar.png',
+    };
+
+    const embed = buildLevelEmbed({ user: null }, user, {
+      userId: '1',
+      guildId: '1',
+      level: 3,
+      xp: 450,
+      totalXp: 1850,
+      lastXpGain: null,
+    });
+
+    expect(embed.data.description).toContain('`450 / 900 XP`');
+    expect(embed.data.description).toContain('`50%`');
   });
 });
