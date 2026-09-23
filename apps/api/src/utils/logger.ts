@@ -1,3 +1,5 @@
+import { getErrorMessage } from 'utils/errorHandling';
+
 export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 
 export type LogFields = Record<string, unknown>;
@@ -45,7 +47,7 @@ function serialize(level: LogLevel, event: string, fields: LogFields): string {
       ts: payload.ts,
       level,
       event,
-      serializationError: (error as Error).message,
+      serializationError: getErrorMessage(error),
     });
   }
 }

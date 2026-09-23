@@ -15,6 +15,7 @@ import {
 } from 'services/aiChat/sandbox/SandboxManager';
 import { toOpenAiTools } from 'services/aiChat/tools/registry';
 import type { AiChatRequest, AiChatResult } from 'services/aiChat/types';
+import { getErrorMessage } from 'utils/errorHandling';
 import { logger } from 'utils/logger';
 
 export const MAX_ITERATIONS = 15;
@@ -198,7 +199,7 @@ export class AgentToolLoopService {
       logger.warn('ai.agent.wrap_up_failed', {
         traceId: trace.traceId,
         reason: outcome.reason,
-        error: (error as Error).message,
+        error: getErrorMessage(error),
       });
     }
 

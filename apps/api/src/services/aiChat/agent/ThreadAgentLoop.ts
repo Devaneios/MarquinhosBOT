@@ -6,6 +6,7 @@ import {
   type FunctionToolSpec,
 } from 'services/aiChat/llm/ResponsesClient';
 import { AGENT_TOOLS } from 'services/aiChat/tools/registry';
+import { getErrorMessage } from 'utils/errorHandling';
 import { logger } from 'utils/logger';
 
 export const THREAD_MAX_ITERATIONS = 12;
@@ -188,7 +189,7 @@ export class ThreadAgentLoop {
       logger.warn('ai.thread.wrap_up_failed', {
         traceId: trace.traceId,
         reason: outcome.reason,
-        error: (error as Error).message,
+        error: getErrorMessage(error),
       });
       return this.finish(newItems, WRAP_UP_FALLBACK, {
         ...outcome,

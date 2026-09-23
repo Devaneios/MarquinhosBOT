@@ -24,6 +24,7 @@ import {
   type ThreadMode,
 } from 'services/aiChat/thread/ThreadSessionStore';
 import type { AiChatResult } from 'services/aiChat/types';
+import { getErrorMessage } from 'utils/errorHandling';
 import { logger } from 'utils/logger';
 
 const EMBED_THRESHOLD_CHARS = 1800;
@@ -272,7 +273,7 @@ export class AiThreadService {
     } catch (error) {
       logger.warn('ai.thread.compaction_failed', {
         threadId,
-        error: (error as Error).message,
+        error: getErrorMessage(error),
       });
     }
   }

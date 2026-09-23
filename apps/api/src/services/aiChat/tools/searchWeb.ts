@@ -5,6 +5,7 @@ import {
   type SearchHit,
   type SearchOptions,
 } from 'services/aiChat/web/SearxngClient';
+import { getErrorMessage } from 'utils/errorHandling';
 
 const MAX_RESULTS = 8;
 const MAX_SNIPPET_CHARS = 240;
@@ -87,7 +88,7 @@ export function createSearchWebTool(deps?: Partial<SearchWebDeps>): AgentTool {
         return `${hits.length} resultados para "${query}":\n${formatSearchHits(hits)}`;
       } catch (error) {
         if (error instanceof SearxngError) return error.message;
-        return `A busca por "${query}" falhou: ${(error as Error).message}`;
+        return `A busca por "${query}" falhou: ${getErrorMessage(error)}`;
       }
     },
   };

@@ -8,6 +8,7 @@ import {
 } from 'services/aiChat/research/ResearchJobStore';
 import { ResearchRateLimitService } from 'services/aiChat/research/ResearchRateLimitService';
 import { ThreadSessionStore } from 'services/aiChat/thread/ThreadSessionStore';
+import { getErrorMessage } from 'utils/errorHandling';
 import { logger } from 'utils/logger';
 
 export interface StartResearchInput {
@@ -140,7 +141,7 @@ export class ResearchOrchestrator {
     } catch (error) {
       logger.warn('ai.research.thread_seed_failed', {
         jobId: job.jobId,
-        error: (error as Error).message,
+        error: getErrorMessage(error),
       });
     }
   }
@@ -172,7 +173,7 @@ export class ResearchOrchestrator {
             // Losing a progress line must never abort the research itself.
             logger.warn('ai.research.progress_persist_failed', {
               jobId: job.jobId,
-              error: (error as Error).message,
+              error: getErrorMessage(error),
             });
           }
         },
@@ -195,7 +196,7 @@ export class ResearchOrchestrator {
         ...result.stats,
       });
     } catch (error) {
-      const message = (error as Error).message;
+      const message = getErrorMessage(error);
       this.jobStore.fail(job.jobId, message);
       trace.finish({ status: 'error', error });
       logger.error('ai.research.job_failed', {

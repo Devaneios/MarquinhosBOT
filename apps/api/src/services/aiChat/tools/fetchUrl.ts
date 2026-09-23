@@ -4,6 +4,7 @@ import {
   FetchPageError,
   type FetchPageDeps,
 } from 'services/aiChat/web/fetchPage';
+import { getErrorMessage } from 'utils/errorHandling';
 
 export {
   MAX_BODY_BYTES,
@@ -66,7 +67,7 @@ export function createFetchUrlTool(deps?: Partial<FetchPageDeps>): AgentTool {
         return capped || `"${page.finalUrl}" respondeu vazio.`;
       } catch (error) {
         if (error instanceof FetchPageError) return error.message;
-        return `Não consegui buscar "${rawUrl}": ${(error as Error).message}`;
+        return `Não consegui buscar "${rawUrl}": ${getErrorMessage(error)}`;
       }
     },
   };

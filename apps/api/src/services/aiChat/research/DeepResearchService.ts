@@ -40,6 +40,7 @@ import {
   SearxngClient,
   type SearchHit,
 } from 'services/aiChat/web/SearxngClient';
+import { getErrorMessage } from 'utils/errorHandling';
 import { logger } from 'utils/logger';
 
 export const MAX_ROUNDS = Number(process.env.AI_RESEARCH_MAX_ROUNDS ?? 5);
@@ -731,7 +732,7 @@ export class DeepResearchService {
           // One dead sub-query must not kill the round; the other angles still
           // produce a report. But a search that errored is not a search that
           // found nothing, and the difference has to reach the user.
-          const message = (error as Error).message;
+          const message = getErrorMessage(error);
           errors.push(message);
           logger.warn('ai.research.search_failed', {
             traceId: trace.traceId,
@@ -813,7 +814,7 @@ export class DeepResearchService {
       // ranking, which is what the pipeline used before triage existed.
       logger.warn('ai.research.triage_failed', {
         traceId: trace.traceId,
-        error: (error as Error).message,
+        error: getErrorMessage(error),
       });
       return candidates.slice(0, limit);
     }
@@ -872,12 +873,12 @@ export class DeepResearchService {
       logger.warn('ai.research.extract_failed', {
         traceId: trace.traceId,
         url: hit.url,
-        error: (error as Error).message,
+        error: getErrorMessage(error),
       });
       return {
         ok: false,
         url: hit.url,
-        reason: `falha ao interpretar a página: ${(error as Error).message}`,
+        reason: `falha ao interpretar a página: ${getErrorMessage(error)}`,
       };
     }
   }
@@ -917,7 +918,7 @@ export class DeepResearchService {
       // queries nobody vetted.
       logger.warn('ai.research.reflection_failed', {
         traceId: trace.traceId,
-        error: (error as Error).message,
+        error: getErrorMessage(error),
       });
       return { sufficient: true, gaps: [], followUpQueries: [] };
     }
@@ -954,7 +955,7 @@ export class DeepResearchService {
       // less structure — better than losing a job that took ten minutes.
       logger.warn('ai.research.analysis_failed', {
         traceId: trace.traceId,
-        error: (error as Error).message,
+        error: getErrorMessage(error),
       });
       return undefined;
     }
