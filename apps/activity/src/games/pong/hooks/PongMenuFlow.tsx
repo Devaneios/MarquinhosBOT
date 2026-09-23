@@ -1,46 +1,39 @@
 import { useState } from 'react';
 import { Outlet, useOutletContext } from 'react-router-dom';
-import type {
-  BestOf,
-  BotDifficulty,
-  GameMode,
-  PongRulesetId,
-  WinScore,
+import { z } from 'zod';
+import {
+  bestOfSchema,
+  botDifficultySchema,
+  pongRulesetIdSchema,
+  winScoreSchema,
+  type BestOf,
+  type BotDifficulty,
+  type GameMode,
+  type PongRulesetId,
+  type WinScore,
 } from '../types';
 
 const STORAGE_KEY = 'pong-menu-settings';
 
-interface StoredSettings {
-  difficulty: BotDifficulty;
-  winScore: WinScore;
-  sound: boolean;
-  ruleset: PongRulesetId;
-  bestOf: BestOf;
-  ranked: boolean;
-}
+const storedSettingsSchema = z.object({
+  difficulty: botDifficultySchema.catch('normal'),
+  winScore: winScoreSchema.catch(11),
+  sound: z.boolean().catch(true),
+  ruleset: pongRulesetIdSchema.catch('classic-1v1'),
+  bestOf: bestOfSchema.catch(1),
+  ranked: z.boolean().catch(false),
+});
 
-const DEFAULT_SETTINGS: StoredSettings = {
-  difficulty: 'normal',
-  winScore: 11,
-  sound: true,
-  ruleset: 'classic-1v1',
-  bestOf: 1,
-  ranked: false,
-};
+type StoredSettings = z.infer<typeof storedSettingsSchema>;
+
+const DEFAULT_SETTINGS: StoredSettings = storedSettingsSchema.parse({});
 
 function loadStoredSettings(): StoredSettings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_SETTINGS;
-    const parsed = JSON.parse(raw) as Partial<StoredSettings>;
-    return {
-      difficulty: parsed.difficulty ?? DEFAULT_SETTINGS.difficulty,
-      winScore: parsed.winScore ?? DEFAULT_SETTINGS.winScore,
-      sound: parsed.sound ?? DEFAULT_SETTINGS.sound,
-      ruleset: parsed.ruleset ?? DEFAULT_SETTINGS.ruleset,
-      bestOf: parsed.bestOf ?? DEFAULT_SETTINGS.bestOf,
-      ranked: parsed.ranked ?? DEFAULT_SETTINGS.ranked,
-    };
+    const parsed = storedSettingsSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : DEFAULT_SETTINGS;
   } catch {
     return DEFAULT_SETTINGS;
   }

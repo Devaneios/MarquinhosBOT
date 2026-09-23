@@ -1,23 +1,39 @@
-export type GameMode = 'single' | 'multi' | 'local';
-export type BotDifficulty = 'easy' | 'normal' | 'hard';
-export type WinScore = 7 | 10 | 11 | 15 | 21;
-export type BestOf = 1 | 3 | 5;
+import { z } from 'zod';
 
-export type PongRulesetId =
-  | 'classic-1v1'
-  | 'doubles-2v2'
-  | 'quad-elimination'
-  | 'superpong'
-  | 'rebound'
-  | 'breakout'
-  | 'brick-battle'
-  | 'multiball'
-  | 'powerup-battle'
-  | 'radial-solo'
-  | 'radial-duel'
-  | 'pong-tennis'
-  | 'air-hockey'
-  | 'coop-keep-alive';
+export type GameMode = 'single' | 'multi' | 'local';
+
+export const botDifficultySchema = z.enum(['easy', 'normal', 'hard']);
+export type BotDifficulty = z.infer<typeof botDifficultySchema>;
+
+export const winScoreSchema = z.union([
+  z.literal(7),
+  z.literal(10),
+  z.literal(11),
+  z.literal(15),
+  z.literal(21),
+]);
+export type WinScore = z.infer<typeof winScoreSchema>;
+
+export const bestOfSchema = z.union([z.literal(1), z.literal(3), z.literal(5)]);
+export type BestOf = z.infer<typeof bestOfSchema>;
+
+export const pongRulesetIdSchema = z.enum([
+  'classic-1v1',
+  'doubles-2v2',
+  'quad-elimination',
+  'superpong',
+  'rebound',
+  'breakout',
+  'brick-battle',
+  'multiball',
+  'powerup-battle',
+  'radial-solo',
+  'radial-duel',
+  'pong-tennis',
+  'air-hockey',
+  'coop-keep-alive',
+]);
+export type PongRulesetId = z.infer<typeof pongRulesetIdSchema>;
 
 export type PongArenaKind =
   | 'rectangular'
