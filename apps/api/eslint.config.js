@@ -1,5 +1,5 @@
-import { rules } from '@marquinhos/eslint-config/rules';
 import js from '@eslint/js';
+import { rules } from '@marquinhos/eslint-config/rules';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
 import importPlugin from 'eslint-plugin-import';
