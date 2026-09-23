@@ -113,6 +113,19 @@ export class CheckersEngine {
     };
   }
 
+  clone(): CheckersEngine {
+    const copy = new CheckersEngine();
+    this.board.forEach((row, index) => {
+      copy.board[index] = [...row];
+    });
+    copy.turn = this.turn;
+    copy.winner = this.winner;
+    copy.mustContinueFrom = this.mustContinueFrom
+      ? { ...this.mustContinueFrom }
+      : null;
+    return copy;
+  }
+
   forceWinner(color: Color) {
     if (this.winner) return;
     this.winner = color;

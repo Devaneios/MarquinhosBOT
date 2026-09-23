@@ -233,4 +233,17 @@ describe('CheckersEngine', () => {
     expect(result.ok).toBe(false);
     expect(result.error).toBe('game_over');
   });
+
+  it('clones into an independent engine with the same state', () => {
+    const engine = new CheckersEngine();
+    engine.move('black', { row: 2, col: 1 }, { row: 3, col: 0 });
+
+    const copy = engine.clone();
+    expect(copy.getState()).toEqual(engine.getState());
+
+    copy.move('red', { row: 5, col: 0 }, { row: 4, col: 1 });
+    expect(copy.getState().turn).toBe('black');
+    expect(engine.getState().turn).toBe('red');
+    expect(engine.getState().board[4]![1]).toBeNull();
+  });
 });

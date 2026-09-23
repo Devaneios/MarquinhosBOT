@@ -1,7 +1,6 @@
 import type {
   CheckersEngine,
   CheckersMove,
-  CheckersState,
   Color,
   Position,
 } from 'services/activity/checkers/CheckersEngine';
@@ -15,7 +14,7 @@ function chainCaptureCount(
   color: Color,
   move: CheckersMove,
 ): number {
-  const scratch = cloneViaState(engine);
+  const scratch = engine.clone();
   const result = scratch.move(color, move.from, move.to);
   if (!result.ok) return move.captures.length;
   let count = move.captures.length;
@@ -28,19 +27,6 @@ function chainCaptureCount(
     cursor = step.mustContinue ?? null;
   }
   return count;
-}
-
-function cloneViaState(engine: CheckersEngine): CheckersEngine {
-  const EngineCtor = engine.constructor as new () => CheckersEngine;
-  const copy = new EngineCtor() as unknown as CheckersState;
-  const state = engine.getState();
-  copy.board = state.board.map((row) => [...row]);
-  copy.turn = state.turn;
-  copy.winner = state.winner;
-  copy.mustContinueFrom = state.mustContinueFrom
-    ? { ...state.mustContinueFrom }
-    : null;
-  return copy as unknown as CheckersEngine;
 }
 
 function isCenter(pos: Position): boolean {
