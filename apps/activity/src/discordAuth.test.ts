@@ -35,7 +35,8 @@ async function freshDiscordAuthModule(sdk: ReturnType<typeof fakeSdk>) {
     resetDiscordSdk,
   }));
   mock.module('./lib/apiBase', () => ({
-    apiUrl: (path: string) => `http://fake.test${path}`,
+    apiBase: () => 'http://fake.test/api',
+    apiUrl: (path: string) => `http://fake.test/api${path}`,
     // mock.module replaces this for the whole bun test process, not just
     // this file — keep this mock's shape matching every real export, or a
     // different test file that transitively loads the real module later in

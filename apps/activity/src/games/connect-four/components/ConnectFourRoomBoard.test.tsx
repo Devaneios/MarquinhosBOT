@@ -2,11 +2,16 @@ import { act, render } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
 import { RoomConnectionContext } from '../../shared/RoomConnectionProvider';
 
-const capturedProps: Array<{ interactive: boolean }> = [];
+type CanvasProps = { interactive: boolean; onDrop: (col: number) => void };
+
+const capturedProps: CanvasProps[] = [];
 
 mock.module('./ConnectFourCanvas', () => ({
-  ConnectFourCanvas: (props: { interactive: boolean }) => {
-    capturedProps.push({ interactive: props.interactive });
+  ConnectFourCanvas: (props: CanvasProps) => {
+    capturedProps.push({
+      interactive: props.interactive,
+      onDrop: props.onDrop,
+    });
     return null;
   },
 }));
@@ -97,27 +102,9 @@ describe('ConnectFourRoomBoard interactivity', () => {
 
   it('sends a drop message when the canvas reports one, for a seated player', async () => {
     const send = mock(() => {});
-    let capturedOnDrop: ((col: number) => void) | undefined;
-    mock.module('./ConnectFourCanvas', () => ({
-      ConnectFourCanvas: (props: { onDrop: (col: number) => void }) => {
-        capturedOnDrop = props.onDrop;
-        return null;
-      },
-    }));
-    const { ConnectFourRoomBoard } = await import(
-      `./ConnectFourRoomBoard.tsx?${Math.random()}`
-    );
-    await act(async () => {
-      render(
-        <RoomConnectionContext.Provider
-          value={baseValue({ send, role: 'player' })}
-        >
-          <ConnectFourRoomBoard />
-        </RoomConnectionContext.Provider>,
-      );
-    });
+    await renderRoomBoard(baseValue({ send, role: 'player' }));
 
-    capturedOnDrop?.(3);
+    capturedProps.at(-1)?.onDrop(3);
 
     expect(send).toHaveBeenCalledWith({ type: 'drop', payload: { col: 3 } });
   });

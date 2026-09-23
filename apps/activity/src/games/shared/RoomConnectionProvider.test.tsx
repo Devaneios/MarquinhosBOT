@@ -21,7 +21,8 @@ async function freshUseColyseusRoom(room: ReturnType<typeof fakeRoom>) {
     },
   }));
   mock.module('../../lib/apiBase', () => ({
-    apiUrl: (path: string) => `http://fake.test${path}`,
+    apiBase: () => 'http://fake.test/api',
+    apiUrl: (path: string) => `http://fake.test/api${path}`,
     colyseusUrl: () => 'ws://fake.test',
   }));
   // Only useColyseusRoom.ts needs cache-busting between tests — it holds

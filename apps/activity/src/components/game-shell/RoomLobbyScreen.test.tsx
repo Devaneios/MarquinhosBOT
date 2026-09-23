@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, mock } from 'bun:test';
+import { afterEach, describe, expect, it, mock } from 'bun:test';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import type { RoomListing } from '../../games/shared/activitySession';
 
@@ -10,23 +10,40 @@ const identity: DiscordIdentity = {
   accessToken: 'acc',
 };
 
+const originalFetch = globalThis.fetch;
+
+afterEach(() => {
+  globalThis.fetch = originalFetch;
+});
+
 function mockDeps(
   rooms: RoomListing[],
   overrides: {
-    createRoom?: () => Promise<unknown>;
-    fetchWsSessionToken?: () => Promise<unknown>;
+    createdRoom?: { roomId: string; token: string; roomKey: string };
     participants?: Record<string, string>;
   } = {},
 ) {
-  mock.module('../../games/shared/activitySession', () => ({
-    getAvailableRooms: async () => rooms,
-    createRoom:
-      overrides.createRoom ??
-      (async () => ({ roomId: 'NEWROOM', token: 'tok', roomKey: 'key' })),
-    fetchWsSessionToken:
-      overrides.fetchWsSessionToken ??
-      (async () => ({ token: 'tok', roomKey: 'key' })),
-  }));
+  const responses: [string, unknown][] = [
+    ['/activities/rooms/list', rooms],
+    [
+      '/activities/rooms',
+      overrides.createdRoom ?? {
+        roomId: 'NEWROOM',
+        token: 'tok',
+        roomKey: 'key',
+      },
+    ],
+    ['/activities/ws-session', { token: 'tok', roomKey: 'key' }],
+  ];
+  globalThis.fetch = Object.assign(
+    async (input: Parameters<typeof fetch>[0]) => {
+      const url = input.toString();
+      const match = responses.find(([path]) => url.endsWith(path));
+      if (!match) return new Response('', { status: 404 });
+      return new Response(JSON.stringify({ data: match[1] }), { status: 200 });
+    },
+    { preconnect: originalFetch.preconnect },
+  );
   mock.module('../../lib/discordParticipants', () => ({
     getParticipantDisplayNames: async () => overrides.participants ?? {},
   }));
@@ -94,11 +111,7 @@ describe('RoomLobbyScreen', () => {
 
   it('creates a room for the selected game and calls onRoomReady', async () => {
     mockDeps([], {
-      createRoom: async () => ({
-        roomId: 'NEWROOM',
-        token: 'tok-2',
-        roomKey: 'key-2',
-      }),
+      createdRoom: { roomId: 'NEWROOM', token: 'tok-2', roomKey: 'key-2' },
     });
     const { RoomLobbyScreen } = await import(
       `./RoomLobbyScreen.tsx?${Math.random()}`
