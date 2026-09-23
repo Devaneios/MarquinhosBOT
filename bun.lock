@@ -30,6 +30,7 @@
         "react-router-dom": "^7.18.2",
         "simple-keyboard": "^3.8.187",
         "tailwind-merge": "^3.6.0",
+        "zod": "^4.4.3",
       },
       "devDependencies": {
         "@happy-dom/global-registrator": "^20.13.2",

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { z } from 'zod';
 import {
   MenuAction,
   MenuPanel,
@@ -10,40 +11,54 @@ import { apiUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
 import { errorMessage, postJson } from '../../../lib/http';
 
-type Pool = 'classic-1v1' | 'quad-elimination';
-type Format = 'round-robin' | 'double-elimination' | 'swiss-playoff';
+const poolSchema = z.enum(['classic-1v1', 'quad-elimination']);
+type Pool = z.infer<typeof poolSchema>;
 
-interface RatingEntry {
-  userId: string;
-  rating: number;
-  deviation: number;
-  matches: number;
-  wins: number;
-}
+const formatSchema = z.enum([
+  'round-robin',
+  'double-elimination',
+  'swiss-playoff',
+]);
+type Format = z.infer<typeof formatSchema>;
 
-interface Tournament {
-  id: string;
-  name: string;
-  format: Format;
-  pool: Pool;
-  status: string;
-  createdBy: string;
-  entries: {
-    userId: string;
-    seed: number;
-    rating: number;
-    score: number;
-  }[];
-  matches: {
-    id: string;
-    bracket: string;
-    round: number;
-    playerA: string | null;
-    playerB: string | null;
-    winnerId: string | null;
-    status: string;
-  }[];
-}
+const ratingEntrySchema = z.object({
+  userId: z.string(),
+  rating: z.number(),
+  deviation: z.number(),
+  matches: z.number(),
+  wins: z.number(),
+});
+
+const tournamentSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  format: formatSchema,
+  pool: poolSchema,
+  status: z.string(),
+  createdBy: z.string(),
+  entries: z.array(
+    z.object({
+      userId: z.string(),
+      seed: z.number(),
+      rating: z.number(),
+      score: z.number(),
+    }),
+  ),
+  matches: z.array(
+    z.object({
+      id: z.string(),
+      bracket: z.string(),
+      round: z.number(),
+      playerA: z.string().nullable(),
+      playerB: z.string().nullable(),
+      winnerId: z.string().nullable(),
+      status: z.string(),
+    }),
+  ),
+});
+
+type RatingEntry = z.infer<typeof ratingEntrySchema>;
+type Tournament = z.infer<typeof tournamentSchema>;
 
 const tabBtnBase =
   'notch-4 cursor-pointer border px-4 py-2 font-pixel text-[10px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent motion-safe:transition-colors';
@@ -76,16 +91,24 @@ export function CompetitiveScreen({
     setError(null);
     try {
       const [ratings, events] = await Promise.all([
-        postJson<RatingEntry[]>(apiUrl('/activities/pong/leaderboard'), {
-          accessToken: identity.accessToken,
-          guildId: identity.guildId,
-          pool,
-          limit: 50,
-        }),
-        postJson<Tournament[]>(apiUrl('/activities/pong/tournaments/list'), {
-          accessToken: identity.accessToken,
-          guildId: identity.guildId,
-        }),
+        postJson(
+          apiUrl('/activities/pong/leaderboard'),
+          {
+            accessToken: identity.accessToken,
+            guildId: identity.guildId,
+            pool,
+            limit: 50,
+          },
+          z.array(ratingEntrySchema),
+        ),
+        postJson(
+          apiUrl('/activities/pong/tournaments/list'),
+          {
+            accessToken: identity.accessToken,
+            guildId: identity.guildId,
+          },
+          z.array(tournamentSchema),
+        ),
       ]);
       setLeaderboard(ratings);
       setTournaments(events);

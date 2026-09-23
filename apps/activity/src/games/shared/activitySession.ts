@@ -1,7 +1,8 @@
+import { z } from 'zod';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { apiUrl } from '../../lib/apiBase';
 import { postJson } from '../../lib/http';
-import type { GameId } from '../gameId';
+import { gameIdSchema, type GameId } from '../gameId';
 
 export interface WsSessionParams {
   game: GameId;
@@ -10,28 +11,45 @@ export interface WsSessionParams {
   extra?: Record<string, unknown>;
 }
 
-export interface WsSession {
-  token: string;
-  roomKey: string;
-}
+const wsSessionSchema = z.object({
+  token: z.string(),
+  roomKey: z.string(),
+});
 
-export interface CreatedRoom {
-  roomId: string;
-  token: string;
-  roomKey: string;
-}
+export type WsSession = z.infer<typeof wsSessionSchema>;
 
-export interface RoomListing {
-  instanceId: string;
-  roomId: string;
-  game: GameId;
-  hostUserId: string;
-  playerCount: number;
-  spectatorCount: number;
-  queueDepth: number;
-  queueEnabled: boolean;
-  mode: 'single' | 'multi';
-}
+const createdRoomSchema = z.object({
+  roomId: z.string(),
+  token: z.string(),
+  roomKey: z.string(),
+});
+
+export type CreatedRoom = z.infer<typeof createdRoomSchema>;
+
+const roomListingSchema = z.object({
+  instanceId: z.string(),
+  roomId: z.string(),
+  game: gameIdSchema,
+  hostUserId: z.string(),
+  playerCount: z.number(),
+  spectatorCount: z.number(),
+  queueDepth: z.number(),
+  queueEnabled: z.boolean(),
+  mode: z.enum(['single', 'multi']),
+});
+
+export type RoomListing = z.infer<typeof roomListingSchema>;
+
+const roomListingsSchema = z.array(z.unknown()).transform((rooms) =>
+  rooms.flatMap((room) => {
+    const listing = roomListingSchema.safeParse(room);
+    return listing.success ? [listing.data] : [];
+  }),
+);
+
+const deepLinkIntentSchema = z.object({
+  game: gameIdSchema.nullable().catch(null),
+});
 
 // Shared by every game's session hook: mints a game-scoped WS token (and its
 // matching Colyseus roomKey) from the player's Discord identity. Pong layers
@@ -43,14 +61,18 @@ export function fetchWsSessionToken({
   identity,
   extra,
 }: WsSessionParams): Promise<WsSession> {
-  return postJson<WsSession>(apiUrl('/activities/ws-session'), {
-    accessToken: identity.accessToken,
-    instanceId: identity.instanceId,
-    guildId: identity.guildId,
-    mode,
-    game,
-    ...extra,
-  });
+  return postJson(
+    apiUrl('/activities/ws-session'),
+    {
+      accessToken: identity.accessToken,
+      instanceId: identity.instanceId,
+      guildId: identity.guildId,
+      mode,
+      game,
+      ...extra,
+    },
+    wsSessionSchema,
+  );
 }
 
 // Mints a new multiplayer room (a fresh roomId) and its creating host's
@@ -66,13 +88,17 @@ export function createRoom({
   identity: DiscordIdentity;
   queueEnabled: boolean;
 }): Promise<CreatedRoom> {
-  return postJson<CreatedRoom>(apiUrl('/activities/rooms'), {
-    accessToken: identity.accessToken,
-    instanceId: identity.instanceId,
-    guildId: identity.guildId,
-    game,
-    queueEnabled,
-  });
+  return postJson(
+    apiUrl('/activities/rooms'),
+    {
+      accessToken: identity.accessToken,
+      instanceId: identity.instanceId,
+      guildId: identity.guildId,
+      game,
+      queueEnabled,
+    },
+    createdRoomSchema,
+  );
 }
 
 // Claims (and consumes) a pending deep-link intent recorded server-side by
@@ -82,12 +108,13 @@ export function createRoom({
 export function fetchDeepLinkIntent(
   identity: DiscordIdentity,
 ): Promise<{ game: GameId | null }> {
-  return postJson<{ game: GameId | null }>(
+  return postJson(
     apiUrl('/activities/deep-link/claim'),
     {
       accessToken: identity.accessToken,
       guildId: identity.guildId,
     },
+    deepLinkIntentSchema,
   );
 }
 
@@ -100,9 +127,13 @@ export function fetchDeepLinkIntent(
 export function getAvailableRooms(
   identity: DiscordIdentity,
 ): Promise<RoomListing[]> {
-  return postJson<RoomListing[]>(apiUrl('/activities/rooms/list'), {
-    accessToken: identity.accessToken,
-    instanceId: identity.instanceId,
-    guildId: identity.guildId,
-  });
+  return postJson(
+    apiUrl('/activities/rooms/list'),
+    {
+      accessToken: identity.accessToken,
+      instanceId: identity.instanceId,
+      guildId: identity.guildId,
+    },
+    roomListingsSchema,
+  );
 }

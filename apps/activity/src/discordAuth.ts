@@ -3,6 +3,7 @@
 // keeps running, independently of whether React's module graph ever finishes
 // evaluating or main.tsx ever manages to mount. React (useDiscordIdentity)
 // only ever reads a snapshot of this; it never triggers or drives it.
+import { z } from 'zod';
 import { discordSdk, isMock, resetDiscordSdk } from './discordSdk';
 import { tImperative } from './i18n/i18nImperative';
 import { apiUrl } from './lib/apiBase';
@@ -41,10 +42,12 @@ async function doHandshake(): Promise<DiscordIdentity> {
   const access_token = isMock
     ? 'mock-access-token'
     : (
-        await postJson<{ access_token: string }>(apiUrl('/activities/token'), {
-          code,
-        })
-      )?.access_token;
+        await postJson(
+          apiUrl('/activities/token'),
+          { code },
+          z.object({ access_token: z.string() }),
+        )
+      ).access_token;
   devlog('[auth] exchanged code for access token');
 
   const auth = await discordSdk.commands.authenticate({ access_token });

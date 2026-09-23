@@ -1,5 +1,6 @@
 import { ServerError } from '@colyseus/sdk';
 import { afterEach, describe, expect, it } from 'bun:test';
+import { z } from 'zod';
 import { errorMessage, HttpError, isAuthError, postJson } from './http';
 
 describe('postJson', () => {
@@ -15,11 +16,24 @@ describe('postJson', () => {
         status: 200,
       })) as unknown as typeof fetch;
 
-    const result = await postJson<{ token: string }>('https://api.test/x', {
-      foo: 'bar',
-    });
+    const result = await postJson(
+      'https://api.test/x',
+      { foo: 'bar' },
+      z.object({ token: z.string() }),
+    );
 
     expect(result).toEqual({ token: 'abc' });
+  });
+
+  it('rejects a response whose data does not match the schema', async () => {
+    globalThis.fetch = (async () =>
+      new Response(JSON.stringify({ data: { token: 42 } }), {
+        status: 200,
+      })) as unknown as typeof fetch;
+
+    await expect(
+      postJson('https://api.test/x', {}, z.object({ token: z.string() })),
+    ).rejects.toThrow('Invalid response from https://api.test/x');
   });
 
   it('throws an HttpError carrying the response status on a non-ok response', async () => {

@@ -1,4 +1,5 @@
 import { ServerError } from '@colyseus/sdk';
+import { z } from 'zod';
 
 export class HttpError extends Error {
   readonly status: number;
@@ -18,7 +19,17 @@ export function isAuthError(err: unknown): boolean {
   return err instanceof ServerError;
 }
 
-export async function postJson<T>(url: string, body: unknown): Promise<T> {
+export async function postJson(url: string, body: unknown): Promise<unknown>;
+export async function postJson<T>(
+  url: string,
+  body: unknown,
+  schema: z.ZodType<T>,
+): Promise<T>;
+export async function postJson(
+  url: string,
+  body: unknown,
+  schema: z.ZodType = z.unknown().optional(),
+): Promise<unknown> {
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -27,8 +38,11 @@ export async function postJson<T>(url: string, body: unknown): Promise<T> {
   if (!res.ok) {
     throw new HttpError(res.status, url);
   }
-  const { data } = await res.json();
-  return data;
+  const parsed = z.object({ data: schema }).safeParse(await res.json());
+  if (!parsed.success) {
+    throw new Error(`Invalid response from ${url}`);
+  }
+  return parsed.data.data;
 }
 
 // Discord's embedded-app-sdk rejects RPC command failures (e.g. authorize,
