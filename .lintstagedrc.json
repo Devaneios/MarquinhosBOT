@@ -1,14 +1,14 @@
 {
   "apps/bot/src/**/*.ts": [
     "prettier --write",
-    "bun --cwd apps/bot node_modules/.bin/eslint --fix"
+    "pnpm --dir apps/bot exec eslint --fix"
   ],
   "apps/api/src/**/*.ts": [
     "prettier --write",
-    "bun --cwd apps/api node_modules/.bin/eslint --fix"
+    "pnpm --dir apps/api exec eslint --fix"
   ],
   "apps/activity/src/**/*.{ts,tsx}": [
     "prettier --write",
-    "bun --cwd apps/activity node_modules/.bin/oxlint --fix"
+    "pnpm --dir apps/activity exec oxlint --fix"
   ]
 }
