@@ -1,12 +1,15 @@
 import { logger } from 'utils/logger';
+import { z } from 'zod';
 
 const REQUEST_TIMEOUT_MS = 4000;
 
-export interface KnowledgeBaseChunk {
-  canal: string;
-  autores: string[];
-  texto: string;
-}
+const knowledgeBaseChunkSchema = z.object({
+  canal: z.string(),
+  autores: z.array(z.string()),
+  texto: z.string(),
+});
+
+export type KnowledgeBaseChunk = z.infer<typeof knowledgeBaseChunkSchema>;
 
 export interface KnowledgeBaseSearchResult {
   found: boolean;
@@ -20,15 +23,11 @@ const NOT_FOUND: KnowledgeBaseSearchResult = {
   chunks: [],
 };
 
-function isValidResult(data: unknown): data is KnowledgeBaseSearchResult {
-  if (typeof data !== 'object' || data === null) return false;
-  const candidate = data as Record<string, unknown>;
-  return (
-    typeof candidate.found === 'boolean' &&
-    typeof candidate.context === 'string' &&
-    Array.isArray(candidate.chunks)
-  );
-}
+const knowledgeBaseSearchResultSchema = z.object({
+  found: z.boolean(),
+  context: z.string(),
+  chunks: z.array(knowledgeBaseChunkSchema),
+});
 
 // Cliente fino para o serviço local de RAG do devaneios-chats — nunca lança:
 // qualquer falha (serviço fora do ar, timeout, resposta malformada) vira
@@ -61,10 +60,12 @@ export class KnowledgeBaseClient {
 
       if (!response.ok) return NOT_FOUND;
 
-      const data: unknown = await response.json();
-      if (!isValidResult(data)) return NOT_FOUND;
+      const result = knowledgeBaseSearchResultSchema.safeParse(
+        await response.json(),
+      );
+      if (!result.success) return NOT_FOUND;
 
-      return data;
+      return result.data;
     } catch (error) {
       logger.warn('knowledge_base.search.failed', { error });
       return NOT_FOUND;

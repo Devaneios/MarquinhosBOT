@@ -2,6 +2,7 @@ import { Database } from 'bun:sqlite';
 import { randomUUID } from 'crypto';
 import { db as defaultDb } from 'database/sqlite';
 import type { AiChatRequest } from 'services/aiChat/types';
+import { getErrorMessage } from 'utils/errorHandling';
 import { isLevelEnabled, logger, type LogFields } from 'utils/logger';
 
 export interface TraceUsage {
@@ -89,7 +90,7 @@ function stringify(value: unknown): string {
   try {
     return JSON.stringify(value) ?? 'null';
   } catch (error) {
-    return JSON.stringify({ serializationError: (error as Error).message });
+    return JSON.stringify({ serializationError: getErrorMessage(error) });
   }
 }
 
@@ -312,9 +313,9 @@ class RecordedTrace implements TraceContext {
     );
   }
 
-  private run(sql: string, params: Record<string, unknown>): void {
+  private run(sql: string, params: TraceRowParams): void {
     try {
-      this.db.query(sql).run(params as never);
+      this.db.query<unknown, TraceRowParams>(sql).run(params);
     } catch (error) {
       logger.warn('ai.trace.persist_failed', {
         traceId: this.traceId,
@@ -323,6 +324,8 @@ class RecordedTrace implements TraceContext {
     }
   }
 }
+
+type TraceRowParams = Record<string, string | number | boolean | null>;
 
 export class AiTraceRecorder {
   constructor(private db: Database = defaultDb) {}

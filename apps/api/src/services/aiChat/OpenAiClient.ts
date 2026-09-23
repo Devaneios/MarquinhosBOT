@@ -28,12 +28,8 @@ export interface OpenAiStructuredOptions extends OpenAiTraceOptions {
   maxTokens: number;
 }
 
-export interface OpenAiToolMessage {
-  role: 'system' | 'user' | 'assistant' | 'tool';
-  content: string | null;
-  tool_calls?: OpenAI.Chat.Completions.ChatCompletionMessageToolCall[];
-  tool_call_id?: string;
-}
+export type OpenAiToolMessage =
+  OpenAI.Chat.Completions.ChatCompletionMessageParam;
 
 export class OpenAiClient {
   constructor(
@@ -95,8 +91,7 @@ export class OpenAiClient {
     return this.traced(options, messages, async () => {
       const completion = await this.client.chat.completions.create({
         model: OPENAI_MODEL,
-        messages:
-          messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+        messages,
         tools,
         tool_choice: options.toolChoice ?? 'auto',
         temperature: options.temperature,

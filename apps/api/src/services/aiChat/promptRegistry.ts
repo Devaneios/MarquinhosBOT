@@ -59,11 +59,12 @@ export function summarizeMessages(messages: unknown): unknown {
     if (
       typeof message !== 'object' ||
       message === null ||
-      typeof (message as { content?: unknown }).content !== 'string'
+      !('content' in message) ||
+      typeof message.content !== 'string'
     ) {
       return message;
     }
-    const ref = BY_CONTENT.get((message as { content: string }).content);
+    const ref = BY_CONTENT.get(message.content);
     if (!ref) return message;
     return { ...message, content: undefined, promptRef: ref };
   });
