@@ -1,3 +1,4 @@
+import { determineRoundWinners } from '@marquinhos/domain/bot/rockPaperScissors';
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import { z } from 'zod';
 import {
@@ -12,8 +13,6 @@ import { GameUtils } from '../core/GameUtils';
 const RPSChoiceSchema = z.enum(['rock', 'paper', 'scissors']);
 
 type RPSChoice = z.infer<typeof RPSChoiceSchema>;
-
-const RPS_CHOICES = RPSChoiceSchema.options;
 
 interface RPSData {
   rounds: number;
@@ -40,13 +39,10 @@ const RPSActionSchema = z.object({
 type RPSAction = z.infer<typeof RPSActionSchema>;
 
 export class RockPaperScissorsGame extends BaseGame<RPSData, RPSAction> {
-  private readonly choices: Record<
-    RPSChoice,
-    { emoji: string; beats: RPSChoice }
-  > = {
-    rock: { emoji: '🪨', beats: 'scissors' },
-    paper: { emoji: '📄', beats: 'rock' },
-    scissors: { emoji: '✂️', beats: 'paper' },
+  private readonly choices: Record<RPSChoice, { emoji: string }> = {
+    rock: { emoji: '🪨' },
+    paper: { emoji: '📄' },
+    scissors: { emoji: '✂️' },
   };
 
   constructor(session: GameSession) {
@@ -104,7 +100,7 @@ export class RockPaperScissorsGame extends BaseGame<RPSData, RPSAction> {
   private async resolveRound(): Promise<void> {
     const data = this.data;
 
-    const winners = this.determineRoundWinners();
+    const winners = determineRoundWinners(data.playerChoices);
     const eliminated: string[] = [];
 
     // Award points to winners
@@ -130,43 +126,6 @@ export class RockPaperScissorsGame extends BaseGame<RPSData, RPSAction> {
     } else {
       data.waitingForChoices = true;
     }
-  }
-
-  private determineRoundWinners(): string[] {
-    const data = this.data;
-    const choiceGroups: Record<RPSChoice, string[]> = {
-      rock: [],
-      paper: [],
-      scissors: [],
-    };
-
-    // Group players by their choices
-    Object.entries(data.playerChoices).forEach(([userId, choice]) => {
-      choiceGroups[choice].push(userId);
-    });
-
-    // Determine winners based on RPS rules
-    const nonEmptyChoices = RPS_CHOICES.map(
-      (choice) => [choice, choiceGroups[choice]] as const,
-    ).filter(([, players]) => players.length > 0);
-
-    if (nonEmptyChoices.length === 1 || nonEmptyChoices.length === 3) {
-      // All players chose the same or all three choices were made - tie
-      return [];
-    }
-
-    if (nonEmptyChoices.length === 2) {
-      const [choice1, players1] = nonEmptyChoices[0];
-      const [choice2, players2] = nonEmptyChoices[1];
-
-      if (this.choices[choice1].beats === choice2) {
-        return players1;
-      } else {
-        return players2;
-      }
-    }
-
-    return [];
   }
 
   getGameEmbed(): EmbedBuilder {

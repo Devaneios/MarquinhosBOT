@@ -1,3 +1,4 @@
+import { HttpClient, HttpError } from '@marquinhos/api-client/bot';
 import { env } from '@marquinhos/config/environment';
 import {
   addXpResultSchema,
@@ -29,7 +30,7 @@ import {
   wordlistPoolStatsSchema,
   type DailyLeaderboardEntry,
   type RankedLeaderboardEntry,
-} from '@marquinhos/services/marquinhosApi.schemas';
+} from '@marquinhos/contracts/http/botResponses';
 import {
   AddXpResult,
   AiChatResponse,
@@ -45,7 +46,6 @@ import {
   UserLevel,
 } from '@marquinhos/types';
 import { reportError } from '@marquinhos/utils/errorHandling';
-import { HttpClient, HttpError } from '@marquinhos/utils/httpClient';
 import { logger } from '@marquinhos/utils/logger';
 import { z } from 'zod';
 
@@ -89,6 +89,7 @@ export class MarquinhosApiService {
       },
       timeout: 15000,
       retries: 3,
+      onRetry: (message) => logger.warn(message),
     });
 
     this.client.interceptors.request.use((config) => {

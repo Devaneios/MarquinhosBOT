@@ -1,3 +1,13 @@
+import {
+  applyRouletteAction,
+  createRouletteChambers,
+  createRouletteState,
+  getRouletteBulletCount,
+  getRouletteRewardBonuses,
+  getRouletteScores,
+  ROULETTE_CHAMBER_COUNT,
+  type RouletteState,
+} from '@marquinhos/domain/bot/roulette';
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import { z } from 'zod';
 import {
@@ -10,26 +20,6 @@ import {
 import { GameUtils } from '../core/GameUtils';
 import { UserFacingError } from '../core/UserFacingError';
 
-interface RouletteData {
-  chambers: boolean[]; // true = bullet, false = empty
-  currentChamber: number;
-  totalChambers: number;
-  bullets: number;
-  survived: number;
-  gameOver: boolean;
-  result: 'survived' | 'dead' | null;
-  players: RoulettePlayer[];
-  currentPlayerIndex: number;
-  mode: 'solo' | 'multiplayer';
-}
-
-interface RoulettePlayer {
-  userId: string;
-  username: string;
-  alive: boolean;
-  survived: number;
-}
-
 const RouletteActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('pull_trigger') }),
   z.object({ type: z.literal('spin_chamber') }),
@@ -37,47 +27,32 @@ const RouletteActionSchema = z.discriminatedUnion('type', [
 
 type RouletteAction = z.infer<typeof RouletteActionSchema>;
 
-export class RouletteGame extends BaseGame<RouletteData, RouletteAction> {
+export class RouletteGame extends BaseGame<RouletteState, RouletteAction> {
   constructor(session: GameSession) {
     super(session);
     this.initializeGame();
   }
 
   private initializeGame(): void {
-    const bullets = Math.floor(Math.random() * 2) + 1; // 1-2 bullets
-    const chambers = this.setupChambers(6, bullets);
-
-    this.data = {
-      chambers,
-      currentChamber: 0,
-      totalChambers: 6,
-      bullets,
-      survived: 0,
-      gameOver: false,
-      result: null,
-      players: this.session.players.map((p) => ({
-        userId: p.userId,
-        username: p.username,
-        alive: true,
-        survived: 0,
+    const bullets = getRouletteBulletCount(Math.random());
+    this.data = createRouletteState(
+      this.session.players.map(({ userId, username }) => ({
+        userId,
+        username,
       })),
-      currentPlayerIndex: 0,
-      mode: this.session.players.length > 1 ? 'multiplayer' : 'solo',
-    };
+      bullets,
+      this.setupChambers(ROULETTE_CHAMBER_COUNT, bullets),
+    );
   }
 
   private setupChambers(total: number, bullets: number): boolean[] {
-    const chambers = new Array(total).fill(false);
     const bulletPositions = GameUtils.getRandomElements(
       Array.from({ length: total }, (_, i) => i),
       bullets,
     );
-
-    bulletPositions.forEach((pos) => {
-      chambers[pos] = true;
-    });
-
-    return GameUtils.shuffleArray(chambers);
+    return GameUtils.shuffleArray(
+      createRouletteChambers(total, bulletPositions),
+    );
   }
 
   async start(): Promise<void> {
@@ -89,108 +64,23 @@ export class RouletteGame extends BaseGame<RouletteData, RouletteAction> {
     action: RouletteAction,
   ): Promise<void> {
     const parsed = RouletteActionSchema.parse(action);
-    const data = this.data;
+    const state = this.data;
+    const spunChambers =
+      parsed.type === 'spin_chamber'
+        ? GameUtils.shuffleArray(state.chambers)
+        : undefined;
+    const result = applyRouletteAction(state, userId, parsed, spunChambers);
 
-    if (data.gameOver) return;
-
-    // Check if it's the player's turn (in multiplayer)
-    if (data.mode === 'multiplayer') {
-      const currentPlayer = data.players[data.currentPlayerIndex];
-      if (currentPlayer.userId !== userId) {
-        throw new UserFacingError('Não é sua vez!');
-      }
+    if (result.error === 'not-your-turn') {
+      throw new UserFacingError('Não é sua vez!');
     }
 
+    this.data = result.state;
     if (parsed.type === 'pull_trigger') {
-      await this.pullTrigger();
-    } else if (parsed.type === 'spin_chamber') {
-      await this.spinChamber();
-    }
-  }
-
-  private async pullTrigger(): Promise<void> {
-    const data = this.data;
-    const currentPlayer =
-      data.mode === 'multiplayer'
-        ? data.players[data.currentPlayerIndex]
-        : data.players[0];
-
-    const hasBullet = data.chambers[data.currentChamber];
-
-    if (hasBullet) {
-      // Player is out
-      currentPlayer.alive = false;
-      data.gameOver = true;
-      data.result = data.mode === 'solo' ? 'dead' : null;
-
-      if (data.mode === 'multiplayer') {
-        const alivePlayers = data.players.filter((p) => p.alive);
-        if (alivePlayers.length <= 1) {
-          data.gameOver = true;
-        }
+      const scores = getRouletteScores(this.data);
+      for (const [playerId, score] of Object.entries(scores)) {
+        this.updatePlayerScore(playerId, score);
       }
-    } else {
-      // Survived this round
-      currentPlayer.survived++;
-      data.survived++;
-      data.currentChamber = (data.currentChamber + 1) % data.totalChambers;
-
-      if (data.mode === 'multiplayer') {
-        // Next player's turn
-        do {
-          data.currentPlayerIndex =
-            (data.currentPlayerIndex + 1) % data.players.length;
-        } while (
-          !data.players[data.currentPlayerIndex].alive &&
-          data.players.filter((p) => p.alive).length > 1
-        );
-      }
-
-      // Solo mode: Check if survived all chambers
-      if (data.mode === 'solo' && data.currentChamber === 0) {
-        data.gameOver = true;
-        data.result = 'survived';
-      }
-    }
-
-    // Update scores
-    this.updateScores();
-  }
-
-  private async spinChamber(): Promise<void> {
-    const data = this.data;
-
-    // Re-randomize the chambers (costs survival points in solo mode)
-    if (data.mode === 'solo' && data.survived > 0) {
-      data.survived = Math.max(0, data.survived - 1);
-    }
-
-    data.chambers = GameUtils.shuffleArray(data.chambers);
-    data.currentChamber = 0;
-  }
-
-  private updateScores(): void {
-    const data = this.data;
-
-    if (data.mode === 'solo') {
-      const survivalBonus = data.survived * 10;
-      const completionBonus = data.result === 'survived' ? 100 : 0;
-      this.updatePlayerScore(
-        this.session.players[0].userId,
-        survivalBonus + completionBonus,
-      );
-    } else {
-      // Multiplayer scoring
-      data.players.forEach((roulettePlayer) => {
-        const player = this.session.players.find(
-          (p) => p.userId === roulettePlayer.userId,
-        );
-        if (player) {
-          const score =
-            roulettePlayer.survived * 15 + (roulettePlayer.alive ? 50 : 0);
-          this.updatePlayerScore(player.userId, score);
-        }
-      });
     }
   }
 
@@ -296,51 +186,20 @@ export class RouletteGame extends BaseGame<RouletteData, RouletteAction> {
     const losers: string[] = [];
     const rewards: Record<string, GameReward> = {};
 
-    if (data.mode === 'solo') {
-      const player = this.session.players[0];
-      const baseRewards = this.calculateRewards(player, 1);
+    const rewardBonuses = getRouletteRewardBonuses(data);
 
-      if (data.result === 'survived') {
-        winners.push(player.userId);
-        baseRewards.xp += 30; // Bonus for full survival
-      } else {
-        losers.push(player.userId);
-      }
-
-      // Survival bonus XP
-      baseRewards.xp += data.survived * 3;
+    data.players.forEach((roulettePlayer) => {
+      const player = this.session.players.find(
+        (sessionPlayer) => sessionPlayer.userId === roulettePlayer.userId,
+      )!;
+      const bonus = rewardBonuses[player.userId]!;
+      const baseRewards = this.calculateRewards(player, bonus.rank);
+      baseRewards.xp += bonus.xpBonus;
       rewards[player.userId] = baseRewards;
-    } else {
-      // Multiplayer results
-      const alivePlayers = data.players.filter((p) => p.alive);
-      const deadPlayers = data.players.filter((p) => !p.alive);
 
-      alivePlayers.forEach((roulettePlayer, index) => {
-        const player = this.session.players.find(
-          (p) => p.userId === roulettePlayer.userId,
-        )!;
-        const baseRewards = this.calculateRewards(player, index + 1);
-        baseRewards.xp += roulettePlayer.survived * 5;
-
-        if (alivePlayers.length === 1) {
-          baseRewards.xp += 40; // Winner bonus
-        }
-
-        winners.push(player.userId);
-        rewards[player.userId] = baseRewards;
-      });
-
-      deadPlayers.forEach((roulettePlayer) => {
-        const player = this.session.players.find(
-          (p) => p.userId === roulettePlayer.userId,
-        )!;
-        const baseRewards = this.calculateRewards(player, data.players.length);
-        baseRewards.xp += roulettePlayer.survived * 2;
-
-        losers.push(player.userId);
-        rewards[player.userId] = baseRewards;
-      });
-    }
+      if (bonus.won) winners.push(player.userId);
+      else losers.push(player.userId);
+    });
 
     return {
       sessionId: this.session.id,

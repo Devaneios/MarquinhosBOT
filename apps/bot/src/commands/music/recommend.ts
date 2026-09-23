@@ -1,7 +1,7 @@
+import { HttpClient } from '@marquinhos/api-client/bot';
 import { env } from '@marquinhos/config/environment';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { baseEmbed } from '@marquinhos/utils/discord';
-import { HttpClient } from '@marquinhos/utils/httpClient';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import { z } from 'zod';
@@ -22,6 +22,7 @@ const httpClient = new HttpClient({
   baseURL: env.MARQUINHOS_API_URL,
   headers: { Authorization: `Bearer ${env.MARQUINHOS_API_KEY}` },
   retries: 2,
+  onRetry: (message) => logger.warn(message),
 });
 
 export class RecommendCommand extends MarquinhosCommand {

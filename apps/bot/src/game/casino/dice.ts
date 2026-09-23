@@ -1,3 +1,4 @@
+import { checkBet, type DiceBet } from '@marquinhos/domain/bot/casino/dice';
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import { z } from 'zod';
 import {
@@ -8,13 +9,6 @@ import {
   PlayerStatus,
 } from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
-
-type DiceBet =
-  | { betType: 'sum'; betValue: number }
-  | { betType: 'exact'; betValue: number }
-  | { betType: 'even_odd'; betValue: 'even' | 'odd' }
-  | { betType: 'high_low'; betValue: 'high' | 'low' }
-  | { betType: null; betValue: null };
 
 type DiceData = {
   diceCount: number;
@@ -122,7 +116,7 @@ export class DiceGame extends BaseGame<DiceData, DiceAction> {
     }
 
     const sum = roll.reduce((a, b) => a + b, 0);
-    const { isWin, payout } = this.checkBet(roll, sum);
+    const { isWin, payout } = checkBet(data, roll);
 
     const rollResult: DiceRoll = {
       dice: [...roll],
@@ -146,67 +140,6 @@ export class DiceGame extends BaseGame<DiceData, DiceAction> {
     this.setBet({ betType: null, betValue: null });
 
     this.updatePlayerScore(this.session.players[0].userId, data.winnings);
-  }
-
-  private checkBet(
-    roll: number[],
-    sum: number,
-  ): { isWin: boolean; payout: number } {
-    const data = this.data;
-
-    switch (data.betType) {
-      case 'sum':
-        return {
-          isWin: sum === data.betValue,
-          payout: this.getSumPayout(data.diceCount, data.betValue),
-        };
-
-      case 'exact': {
-        const exactValue = data.betValue;
-        const hasExact = roll.includes(exactValue);
-        const count = roll.filter((d) => d === exactValue).length;
-        return {
-          isWin: hasExact,
-          payout: count * 2,
-        };
-      }
-
-      case 'even_odd': {
-        const isEven = sum % 2 === 0;
-        const betEven = data.betValue === 'even';
-        return {
-          isWin: isEven === betEven,
-          payout: 2,
-        };
-      }
-
-      case 'high_low': {
-        const maxSum = data.diceCount * 6;
-        const midPoint = maxSum / 2;
-        const isHigh = sum > midPoint;
-        const betHigh = data.betValue === 'high';
-        return {
-          isWin: isHigh === betHigh,
-          payout: 2,
-        };
-      }
-
-      default:
-        return { isWin: false, payout: 0 };
-    }
-  }
-
-  private getSumPayout(diceCount: number, targetSum: number): number {
-    // Higher payouts for harder to achieve sums
-    const minSum = diceCount;
-    const maxSum = diceCount * 6;
-    const midPoint = (minSum + maxSum) / 2;
-
-    const distance = Math.abs(targetSum - midPoint);
-    const maxDistance = midPoint - minSum;
-    const difficulty = distance / maxDistance;
-
-    return Math.floor(2 + difficulty * 8); // 2x to 10x payout
   }
 
   private setBet(bet: DiceBet): void {

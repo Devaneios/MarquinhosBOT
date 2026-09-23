@@ -1,3 +1,4 @@
+import { calculatePayout } from '@marquinhos/domain/bot/casino/slots';
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import { z } from 'zod';
 import {
@@ -32,18 +33,6 @@ type SlotsAction = z.infer<typeof SlotsActionSchema>;
 
 export class SlotsGame extends BaseGame<SlotsData, SlotsAction> {
   private readonly symbols = ['🍒', '🍋', '🍊', '🍇', '🔔', '💎', '7️⃣', '⭐'];
-  private readonly payouts = {
-    '💎💎💎': 100,
-    '7️⃣7️⃣7️⃣': 50,
-    '⭐⭐⭐': 25,
-    '🔔🔔🔔': 15,
-    '🍇🍇🍇': 10,
-    '🍊🍊🍊': 8,
-    '🍋🍋🍋': 6,
-    '🍒🍒🍒': 4,
-    ANY_TWO: 2,
-  };
-
   constructor(session: GameSession) {
     super(session);
     this.data = {
@@ -99,7 +88,7 @@ export class SlotsGame extends BaseGame<SlotsData, SlotsAction> {
       GameUtils.getRandomElement(this.symbols),
     ];
 
-    const { multiplier, winType } = this.calculatePayout(result);
+    const { multiplier, winType } = calculatePayout(result);
     const prev = this.data;
     const winnings = prev.currentBet * multiplier;
     const newTotalWinnings = prev.totalWinnings + winnings;
@@ -116,31 +105,6 @@ export class SlotsGame extends BaseGame<SlotsData, SlotsAction> {
       totalWinnings: newTotalWinnings,
       currentBet: prev.currentBet,
     };
-  }
-
-  private calculatePayout(result: string[]): {
-    multiplier: number;
-    winType: string;
-  } {
-    const resultString = result.join('');
-
-    // Check for exact matches
-    for (const [combination, payout] of Object.entries(this.payouts)) {
-      if (combination === resultString) {
-        return { multiplier: payout, winType: combination };
-      }
-    }
-
-    // Check for two matching symbols
-    if (
-      result[0] === result[1] ||
-      result[1] === result[2] ||
-      result[0] === result[2]
-    ) {
-      return { multiplier: this.payouts.ANY_TWO, winType: 'Dois iguais' };
-    }
-
-    return { multiplier: 0, winType: 'Sem prêmio' };
   }
 
   private changeBet(amount: number): void {

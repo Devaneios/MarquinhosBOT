@@ -1,9 +1,9 @@
+import { HttpError } from '@marquinhos/api-client/bot';
 import { isDevelopmentChannelAllowed } from '@marquinhos/config/developmentScope';
+import { type WordleGuessResult } from '@marquinhos/contracts/http/botResponses';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
-import { type WordleGuessResult } from '@marquinhos/services/marquinhosApi.schemas';
 import { requireGuildMember } from '@marquinhos/utils/discord';
-import { HttpError } from '@marquinhos/utils/httpClient';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import {

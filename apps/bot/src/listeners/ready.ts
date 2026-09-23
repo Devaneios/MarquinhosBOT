@@ -6,12 +6,12 @@ import {
 import { buildTermoWinActionRow } from '@marquinhos/commands/games/termoResponse';
 import { env } from '@marquinhos/config/environment';
 import { GuildConfig } from '@marquinhos/config/guild';
+import { getBicho } from '@marquinhos/domain/bot/bichoGame';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
   buildCrosswordImage,
   buildWordHiddenPreviewImage,
 } from '@marquinhos/ui/screens/termo';
-import { getBicho } from '@marquinhos/utils/bichoGame';
 import { asTextChannel, baseEmbed } from '@marquinhos/utils/discord';
 import { reportError } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';

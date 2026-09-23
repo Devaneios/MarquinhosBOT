@@ -1,8 +1,8 @@
+import { HttpError } from '@marquinhos/api-client/bot';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { Playlist, PlaylistTrack } from '@marquinhos/types';
 import { baseEmbed } from '@marquinhos/utils/discord';
-import { HttpError } from '@marquinhos/utils/httpClient';
 import { logger } from '@marquinhos/utils/logger';
 import { parseArtistTitle } from '@marquinhos/utils/parser';
 import { Command } from '@sapphire/framework';

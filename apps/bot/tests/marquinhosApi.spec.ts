@@ -4,7 +4,7 @@ import {
   MarquinhosApiService,
 } from '../src/services/marquinhosApi';
 import * as errorHandling from '../src/utils/errorHandling';
-import { HttpClient, HttpError } from '../src/utils/httpClient';
+import { HttpClient, HttpError } from '@marquinhos/api-client/bot';
 
 describe('handleApiResponseError', () => {
   const reportErrorSpy = spyOn(errorHandling, 'reportError').mockImplementation(

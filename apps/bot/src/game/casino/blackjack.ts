@@ -1,3 +1,8 @@
+import {
+  calculateTotal,
+  determineWinner,
+  type Card,
+} from '@marquinhos/domain/bot/casino/blackjack';
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import { z } from 'zod';
 import {
@@ -7,12 +12,6 @@ import {
   PlayerStatus,
 } from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
-
-interface Card {
-  suit: string;
-  value: string;
-  numericValue: number;
-}
 
 interface BlackjackData {
   playerCards: Card[];
@@ -65,8 +64,8 @@ export class BlackjackGame extends BaseGame<BlackjackData, BlackjackAction> {
       playerCards,
       dealerCards,
       deck,
-      playerTotal: this.calculateTotal(playerCards),
-      dealerTotal: this.calculateTotal([dealerCards[0]]), // Only show first card
+      playerTotal: calculateTotal(playerCards),
+      dealerTotal: calculateTotal([dealerCards[0]]), // Only show first card
       gamePhase: 'initial',
       result: null,
       bet: 20,
@@ -105,28 +104,6 @@ export class BlackjackGame extends BaseGame<BlackjackData, BlackjackAction> {
       deck.push(...freshDeck);
     }
     return deck.pop()!;
-  }
-
-  private calculateTotal(cards: Card[]): number {
-    let total = 0;
-    let aces = 0;
-
-    for (const card of cards) {
-      if (card.value === 'A') {
-        aces++;
-        total += 11;
-      } else {
-        total += card.numericValue;
-      }
-    }
-
-    // Adjust for aces
-    while (total > 21 && aces > 0) {
-      total -= 10;
-      aces--;
-    }
-
-    return total;
   }
 
   private formatCards(cards: Card[], hideSecond = false): string {
@@ -170,7 +147,7 @@ export class BlackjackGame extends BaseGame<BlackjackData, BlackjackAction> {
     const data = this.data;
     const newCard = this.drawCard(data.deck);
     data.playerCards.push(newCard);
-    data.playerTotal = this.calculateTotal(data.playerCards);
+    data.playerTotal = calculateTotal(data.playerCards);
 
     if (data.playerTotal > 21) {
       data.gamePhase = 'finished';
@@ -185,17 +162,17 @@ export class BlackjackGame extends BaseGame<BlackjackData, BlackjackAction> {
     data.gamePhase = 'dealer_turn';
 
     // Reveal dealer's second card and calculate total
-    data.dealerTotal = this.calculateTotal(data.dealerCards);
+    data.dealerTotal = calculateTotal(data.dealerCards);
 
     // Dealer hits on 16 and below
     while (data.dealerTotal < 17) {
       const newCard = this.drawCard(data.deck);
       data.dealerCards.push(newCard);
-      data.dealerTotal = this.calculateTotal(data.dealerCards);
+      data.dealerTotal = calculateTotal(data.dealerCards);
     }
 
     data.gamePhase = 'finished';
-    data.result = this.determineWinner();
+    data.result = determineWinner(data.playerTotal, data.dealerTotal);
   }
 
   private async double(): Promise<void> {
@@ -205,22 +182,6 @@ export class BlackjackGame extends BaseGame<BlackjackData, BlackjackAction> {
 
     if (data.gamePhase === 'player_turn') {
       await this.stand();
-    }
-  }
-
-  private determineWinner(): 'win' | 'lose' | 'push' {
-    const data = this.data;
-
-    if (data.dealerTotal > 21) {
-      return 'win'; // Dealer bust
-    }
-
-    if (data.playerTotal > data.dealerTotal) {
-      return 'win';
-    } else if (data.playerTotal < data.dealerTotal) {
-      return 'lose';
-    } else {
-      return 'push'; // Tie
     }
   }
 
@@ -243,7 +204,7 @@ export class BlackjackGame extends BaseGame<BlackjackData, BlackjackAction> {
     if (showDealerCards) {
       description += `**Total do Dealer:** ${data.dealerTotal}\n\n`;
     } else {
-      description += `**Total do Dealer:** ${this.calculateTotal([data.dealerCards[0]])}\n\n`;
+      description += `**Total do Dealer:** ${calculateTotal([data.dealerCards[0]])}\n\n`;
     }
 
     // Game result
