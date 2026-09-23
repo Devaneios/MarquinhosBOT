@@ -7,7 +7,7 @@ import {
 } from 'services/aiChat/AiTraceRecorder';
 import { summarizeMessages } from 'services/aiChat/promptRegistry';
 import { logger } from 'utils/logger';
-import type { ZodType } from 'zod';
+import { z, type ZodType } from 'zod';
 
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5.4-mini';
 const REQUEST_TIMEOUT_MS = 120_000;
@@ -20,7 +20,9 @@ const DEFAULT_REASONING_EFFORT =
  * verbatim — including `reasoning` items carrying `encrypted_content` — so
  * narrowing them here would only invite lossy conversions.
  */
-export type ConversationItem = Record<string, unknown>;
+export const conversationItemSchema = z.record(z.string(), z.unknown());
+
+export type ConversationItem = z.infer<typeof conversationItemSchema>;
 
 export interface FunctionToolSpec {
   name: string;
@@ -66,12 +68,31 @@ export interface ResponsesResult {
   usage?: TraceUsage;
 }
 
-interface RawResponse {
-  output?: unknown;
-  output_text?: unknown;
-  status?: unknown;
-  incomplete_details?: { reason?: unknown };
-  usage?: { input_tokens?: number; output_tokens?: number };
+const rawResponseSchema = z.object({
+  output: z.unknown().optional(),
+  output_text: z.unknown().optional(),
+  status: z.unknown().optional(),
+  incomplete_details: z
+    .object({ reason: z.unknown().optional() })
+    .optional()
+    .catch(undefined),
+  usage: z
+    .object({
+      input_tokens: z.number().optional(),
+      output_tokens: z.number().optional(),
+    })
+    .optional()
+    .catch(undefined),
+});
+
+type RawResponse = z.infer<typeof rawResponseSchema>;
+
+function conversationItems(value: unknown): ConversationItem[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry) => {
+    const item = conversationItemSchema.safeParse(entry);
+    return item.success ? [item.data] : [];
+  });
 }
 
 /**
@@ -89,9 +110,7 @@ function truncationReason(response: RawResponse): string | null {
 }
 
 function outputItems(response: RawResponse): ConversationItem[] {
-  return Array.isArray(response.output)
-    ? (response.output as ConversationItem[])
-    : [];
+  return conversationItems(response.output);
 }
 
 function collectText(response: RawResponse, items: ConversationItem[]): string {
@@ -100,9 +119,7 @@ function collectText(response: RawResponse, items: ConversationItem[]): string {
   }
   return items
     .filter((item) => item.type === 'message')
-    .flatMap((item) =>
-      Array.isArray(item.content) ? (item.content as ConversationItem[]) : [],
-    )
+    .flatMap((item) => conversationItems(item.content))
     .filter((part) => part.type === 'output_text')
     .map((part) => (typeof part.text === 'string' ? part.text : ''))
     .join('');
@@ -112,9 +129,7 @@ function collectText(response: RawResponse, items: ConversationItem[]): string {
 function collectRefusal(items: ConversationItem[]): string | null {
   const refusal = items
     .filter((item) => item.type === 'message')
-    .flatMap((item) =>
-      Array.isArray(item.content) ? (item.content as ConversationItem[]) : [],
-    )
+    .flatMap((item) => conversationItems(item.content))
     .find((part) => part.type === 'refusal');
   if (!refusal) return null;
   return typeof refusal.refusal === 'string' ? refusal.refusal : 'sem motivo';
@@ -135,9 +150,7 @@ function collectFunctionCalls(
 function collectReasoningSummaries(items: ConversationItem[]): string[] {
   return items
     .filter((item) => item.type === 'reasoning')
-    .flatMap((item) =>
-      Array.isArray(item.summary) ? (item.summary as ConversationItem[]) : [],
-    )
+    .flatMap((item) => conversationItems(item.summary))
     .map((part) => (typeof part.text === 'string' ? part.text : ''))
     .filter((text) => text.length > 0);
 }
@@ -180,9 +193,9 @@ export class ResponsesClient {
     }
 
     return this.traced(options, options.input, async () => {
-      const response = (await this.client.responses.create(
-        params as never,
-      )) as RawResponse;
+      const response = rawResponseSchema.parse(
+        await this.client.responses.create(params as never),
+      );
 
       const items = outputItems(response);
       if (items.length === 0) {
@@ -250,9 +263,9 @@ export class ResponsesClient {
     if (options.instructions) params.instructions = options.instructions;
 
     return this.traced(options, options.input, async () => {
-      const response = (await this.client.responses.create(
-        params as never,
-      )) as RawResponse;
+      const response = rawResponseSchema.parse(
+        await this.client.responses.create(params as never),
+      );
 
       const truncated = truncationReason(response);
       if (truncated) {

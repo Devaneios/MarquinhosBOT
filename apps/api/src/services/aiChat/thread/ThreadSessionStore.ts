@@ -1,6 +1,10 @@
 import { Database } from 'bun:sqlite';
 import { db as defaultDb } from 'database/sqlite';
-import type { ConversationItem } from 'services/aiChat/llm/ResponsesClient';
+import {
+  conversationItemSchema,
+  type ConversationItem,
+} from 'services/aiChat/llm/ResponsesClient';
+import { getErrorMessage } from 'utils/errorHandling';
 import { logger } from 'utils/logger';
 
 /**
@@ -111,14 +115,14 @@ export class ThreadSessionStore {
     const items: ConversationItem[] = [];
     for (const row of rows) {
       try {
-        items.push(JSON.parse(row.item_json) as ConversationItem);
+        items.push(conversationItemSchema.parse(JSON.parse(row.item_json)));
       } catch (error) {
         // A single unreadable row must not take the whole thread down; the
         // model can still work from the turns that survived.
         logger.warn('ai.thread.item_unreadable', {
           threadId,
           seq: row.seq,
-          error: (error as Error).message,
+          error: getErrorMessage(error),
         });
       }
     }
