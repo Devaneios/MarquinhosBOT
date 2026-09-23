@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { guessRowSchema, letterFeedbackSchema } from "../wordle";
+import { z } from 'zod';
+import { guessRowSchema, letterFeedbackSchema } from '../wordle';
 
 export function apiResponseSchema<T extends z.ZodTypeAny>(dataSchema: T) {
   return z.object({
@@ -34,37 +34,37 @@ export const userAchievementSchema = z.object({
   name: z.string(),
   description: z.string(),
   category: z.string(),
-  rarity: z.enum(["common", "rare", "epic", "legendary"]),
+  rarity: z.enum(['common', 'rare', 'epic', 'legendary']),
   icon: z.string(),
   rewardXp: z.number(),
 });
 
 const aiChatCategorySchema = z.enum([
-  "general_question",
-  "code_technical_question",
-  "trick_riddle",
-  "praise_thanks",
-  "follow_up_on_bot",
-  "opinion_reference",
-  "bot_help_info",
-  "user_roast_provocation",
-  "casual_chat",
-  "off_topic_unclear",
-  "guardrail_roast",
-  "agent_task",
+  'general_question',
+  'code_technical_question',
+  'trick_riddle',
+  'praise_thanks',
+  'follow_up_on_bot',
+  'opinion_reference',
+  'bot_help_info',
+  'user_roast_provocation',
+  'casual_chat',
+  'off_topic_unclear',
+  'guardrail_roast',
+  'agent_task',
 ]);
 
 export const aiChatResponseSchema = z.object({
-  status: z.enum(["ok", "rate_limited", "error"]),
+  status: z.enum(['ok', 'rate_limited', 'error']),
   category: aiChatCategorySchema.optional(),
   reply: z.string().optional(),
-  format: z.enum(["embed", "text"]).optional(),
+  format: z.enum(['embed', 'text']).optional(),
   embedTitle: z.string().optional(),
   traceId: z.string().optional(),
 });
 
 export const researchStartResponseSchema = z.object({
-  status: z.enum(["accepted", "rate_limited", "rejected"]),
+  status: z.enum(['accepted', 'rate_limited', 'rejected']),
   jobId: z.string().optional(),
   created: z.boolean().optional(),
   reply: z.string().optional(),
@@ -96,7 +96,7 @@ const researchStatsSchema = z.object({
 
 export const researchJobResponseSchema = z.object({
   jobId: z.string(),
-  status: z.enum(["queued", "running", "done", "error"]),
+  status: z.enum(['queued', 'running', 'done', 'error']),
   query: z.string(),
   progress: z.array(researchProgressEventSchema),
   report: z.string().optional(),

@@ -1,5 +1,5 @@
-import type { GuessRow, LetterFeedback } from "@marquinhos/contracts/wordle";
-import { stripDiacritics } from "./feedback";
+import type { GuessRow, LetterFeedback } from '@marquinhos/contracts/wordle';
+import { stripDiacritics } from './feedback';
 
 export function normalizeKey(ch: string, letters: ReadonlySet<string>): string {
   const lower = ch.toLowerCase();

@@ -1,6 +1,6 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const letterFeedbackSchema = z.enum(["correct", "present", "absent"]);
+export const letterFeedbackSchema = z.enum(['correct', 'present', 'absent']);
 export type LetterFeedback = z.infer<typeof letterFeedbackSchema>;
 
 export const guessRowSchema = z.object({
@@ -14,7 +14,7 @@ const wordleUserConfigBaseSchema = z.object({
   enableSounds: z.boolean(),
 });
 
-export const wordleUserConfigSchema = z.discriminatedUnion("enableSpaceKey", [
+export const wordleUserConfigSchema = z.discriminatedUnion('enableSpaceKey', [
   wordleUserConfigBaseSchema.extend({
     enableSpaceKey: z.literal(false),
     enableArrowKeys: z.literal(false),

@@ -1,5 +1,5 @@
-import { guessRowSchema, type GuessRow } from "@marquinhos/contracts/wordle";
-import { stripDiacritics } from "./feedback";
+import { guessRowSchema, type GuessRow } from '@marquinhos/contracts/wordle';
+import { stripDiacritics } from './feedback';
 
 export interface WordleSessionGuessesRow {
   guesses: string;

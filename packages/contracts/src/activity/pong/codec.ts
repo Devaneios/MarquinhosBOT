@@ -11,7 +11,7 @@ import {
   type PongPaddleState,
   type PongPowerUpState,
   type PongRulesetId,
-} from "./types";
+} from './types';
 
 export const PONG_PROTOCOL_VERSION = 2;
 export const PONG_SNAPSHOT_HEADER_BYTES = 32;
@@ -128,8 +128,8 @@ export function encodeStateSnapshot(snapshot: PongSnapshot): ArrayBuffer {
     let flags = paddle.active ? 1 : 0;
     if (paddle.reversedUntilMs > snapshot.serverTimeMs) flags |= 2;
     if (paddle.stickyUntilMs > snapshot.serverTimeMs) flags |= 4;
-    if (paddle.orientation === "horizontal") flags |= 8;
-    if (paddle.orientation === "radial") flags |= 16;
+    if (paddle.orientation === 'horizontal') flags |= 8;
+    if (paddle.orientation === 'radial') flags |= 16;
     view.setUint16(offset + 36, flags);
     view.setUint8(offset + 38, paddle.shield);
     view.setUint8(offset + 39, Math.round(paddle.sizeMultiplier * 100));
@@ -187,11 +187,11 @@ function readEnum<T>(values: readonly T[], index: number, name: string): T {
 
 export function decodeStateSnapshot(buffer: ArrayBuffer): PongSnapshot {
   if (buffer.byteLength < PONG_SNAPSHOT_HEADER_BYTES) {
-    throw new Error("Truncated Pong snapshot header");
+    throw new Error('Truncated Pong snapshot header');
   }
   const view = new DataView(buffer);
   if (view.getUint8(0) !== PONG_PROTOCOL_VERSION) {
-    throw new Error("Unsupported Pong protocol version");
+    throw new Error('Unsupported Pong protocol version');
   }
   const ackCount = view.getUint8(19);
   const paddleCount = view.getUint8(20);
@@ -212,7 +212,7 @@ export function decodeStateSnapshot(buffer: ArrayBuffer): PongSnapshot {
     brickCount * PONG_BRICK_BYTES +
     powerUpCount * PONG_POWERUP_BYTES;
   if (buffer.byteLength !== expectedBytes) {
-    throw new Error("Invalid Pong snapshot size");
+    throw new Error('Invalid Pong snapshot size');
   }
 
   const serverTimeMs = view.getUint32(8);
@@ -235,7 +235,7 @@ export function decodeStateSnapshot(buffer: ArrayBuffer): PongSnapshot {
   );
 
   const paddles = Array.from({ length: paddleCount }, (): PongPaddleState => {
-    const side = readEnum(PONG_SIDES, view.getUint8(offset + 3), "paddle side");
+    const side = readEnum(PONG_SIDES, view.getUint8(offset + 3), 'paddle side');
     const flags = view.getUint16(offset + 36);
     const paddle: PongPaddleState = {
       id: view.getUint8(offset),
@@ -244,10 +244,10 @@ export function decodeStateSnapshot(buffer: ArrayBuffer): PongSnapshot {
       side,
       orientation:
         (flags & 16) !== 0
-          ? "radial"
+          ? 'radial'
           : (flags & 8) !== 0
-            ? "horizontal"
-            : "vertical",
+            ? 'horizontal'
+            : 'vertical',
       x: view.getFloat32(offset + 4),
       y: view.getFloat32(offset + 8),
       width: view.getFloat32(offset + 12),
@@ -308,7 +308,7 @@ export function decodeStateSnapshot(buffer: ArrayBuffer): PongSnapshot {
         kind: readEnum(
           PONG_POWERUPS,
           view.getUint8(offset + 2),
-          "power-up kind",
+          'power-up kind',
         ),
         active: view.getUint8(offset + 3) !== 0,
         x: view.getFloat32(offset + 4),
@@ -325,10 +325,10 @@ export function decodeStateSnapshot(buffer: ArrayBuffer): PongSnapshot {
   return {
     seq: view.getUint32(4),
     serverTimeMs,
-    phase: readEnum(PONG_PHASES, view.getUint8(1), "phase"),
+    phase: readEnum(PONG_PHASES, view.getUint8(1), 'phase'),
     phaseRemainingMs: view.getFloat32(12),
-    ruleset: readEnum(PONG_RULESETS, view.getUint8(2), "ruleset"),
-    arena: readEnum(PONG_ARENAS, view.getUint8(27), "arena"),
+    ruleset: readEnum(PONG_RULESETS, view.getUint8(2), 'ruleset'),
+    arena: readEnum(PONG_ARENAS, view.getUint8(27), 'arena'),
     targetScore: view.getUint8(16),
     bestOf: view.getUint8(17),
     gameIndex: view.getUint8(18),
@@ -349,13 +349,13 @@ export interface DecodedSnapshot extends PongSnapshot {
   ball: PongBallState;
   classicPaddles: { left: number; right: number };
   classicScore: { left: number; right: number };
-  winner: "left" | "right" | null;
+  winner: 'left' | 'right' | null;
 }
 
 export function withClassicView(snapshot: PongSnapshot): DecodedSnapshot {
-  const leftPaddle = snapshot.paddles.find((paddle) => paddle.side === "left");
+  const leftPaddle = snapshot.paddles.find((paddle) => paddle.side === 'left');
   const rightPaddle = snapshot.paddles.find(
-    (paddle) => paddle.side === "right",
+    (paddle) => paddle.side === 'right',
   );
   return {
     ...snapshot,
@@ -381,9 +381,9 @@ export function withClassicView(snapshot: PongSnapshot): DecodedSnapshot {
     },
     winner:
       snapshot.winnerSlot === 0
-        ? "left"
+        ? 'left'
         : snapshot.winnerSlot === 1
-          ? "right"
+          ? 'right'
           : null,
   };
 }

@@ -1,27 +1,27 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from 'bun:test';
 import {
   decodeStateSnapshot,
   encodeStateSnapshot,
   PONG_PROTOCOL_VERSION,
   withClassicView,
   type PongSnapshot,
-} from "./codec";
+} from './codec';
 import {
   PONG_ARENAS,
   PONG_PHASES,
   PONG_POWERUPS,
   PONG_RULESETS,
   PONG_SIDES,
-} from "./types";
+} from './types';
 
 function snapshot(): PongSnapshot {
   return {
     seq: 17,
     serverTimeMs: 1234,
-    phase: "rally",
+    phase: 'rally',
     phaseRemainingMs: 0,
-    ruleset: "classic-1v1",
-    arena: "rectangular",
+    ruleset: 'classic-1v1',
+    arena: 'rectangular',
     targetScore: 11,
     bestOf: 3,
     gameIndex: 1,
@@ -36,8 +36,8 @@ function snapshot(): PongSnapshot {
         id: 0,
         slot: 0,
         team: 0,
-        side: "left",
-        orientation: "vertical",
+        side: 'left',
+        orientation: 'vertical',
         x: 12,
         y: 100,
         width: 12,
@@ -82,7 +82,7 @@ function snapshot(): PongSnapshot {
     powerUps: [
       {
         id: 3,
-        kind: "grow",
+        kind: 'grow',
         x: 300,
         y: 200,
         radius: 10,
@@ -93,44 +93,44 @@ function snapshot(): PongSnapshot {
   };
 }
 
-describe("pong protocol v2", () => {
-  it("round-trips every entity family", () => {
+describe('pong protocol v2', () => {
+  it('round-trips every entity family', () => {
     const decoded = decodeStateSnapshot(encodeStateSnapshot(snapshot()));
 
     expect(decoded).toEqual(snapshot());
   });
 
-  it("round-trips radial orientation independently from paddle side", () => {
+  it('round-trips radial orientation independently from paddle side', () => {
     const state = snapshot();
-    state.paddles[0]!.side = "bottom";
-    state.paddles[0]!.orientation = "radial";
+    state.paddles[0]!.side = 'bottom';
+    state.paddles[0]!.orientation = 'radial';
     state.paddles[0]!.angle = Math.PI / 2;
     state.paddles[0]!.arc = Math.PI / 3;
 
     const decoded = decodeStateSnapshot(encodeStateSnapshot(state));
 
-    expect(decoded.paddles[0]!.orientation).toBe("radial");
-    expect(decoded.paddles[0]!.side).toBe("bottom");
+    expect(decoded.paddles[0]!.orientation).toBe('radial');
+    expect(decoded.paddles[0]!.side).toBe('bottom');
   });
 
-  it("rejects a truncated buffer", () => {
+  it('rejects a truncated buffer', () => {
     const encoded = encodeStateSnapshot(snapshot());
 
     expect(() =>
       decodeStateSnapshot(encoded.slice(0, encoded.byteLength - 1)),
-    ).toThrow("Invalid Pong snapshot size");
+    ).toThrow('Invalid Pong snapshot size');
   });
 
-  it("rejects a different protocol version", () => {
+  it('rejects a different protocol version', () => {
     const encoded = encodeStateSnapshot(snapshot());
     new DataView(encoded).setUint8(0, PONG_PROTOCOL_VERSION + 1);
 
     expect(() => decodeStateSnapshot(encoded)).toThrow(
-      "Unsupported Pong protocol version",
+      'Unsupported Pong protocol version',
     );
   });
 
-  it("round-trips every phase, ruleset, arena, side and power-up kind", () => {
+  it('round-trips every phase, ruleset, arena, side and power-up kind', () => {
     const decode = (state: PongSnapshot) =>
       decodeStateSnapshot(encodeStateSnapshot(state));
 
@@ -155,13 +155,13 @@ describe("pong protocol v2", () => {
     }
   });
 
-  it("keeps enum wire indexes stable", () => {
+  it('keeps enum wire indexes stable', () => {
     const view = new DataView(
       encodeStateSnapshot({
         ...snapshot(),
-        phase: "no-contest",
-        ruleset: "coop-keep-alive",
-        arena: "air-hockey",
+        phase: 'no-contest',
+        ruleset: 'coop-keep-alive',
+        arena: 'air-hockey',
       }),
     );
 
@@ -170,7 +170,7 @@ describe("pong protocol v2", () => {
     ]);
   });
 
-  it("derives the classic two-player view from the wire snapshot", () => {
+  it('derives the classic two-player view from the wire snapshot', () => {
     const state = snapshot();
     state.winnerSlot = 1;
 
@@ -181,6 +181,6 @@ describe("pong protocol v2", () => {
     expect(view.ball.id).toBe(5);
     expect(view.classicPaddles).toEqual({ left: 100, right: 0 });
     expect(view.classicScore).toEqual({ left: 3, right: 2 });
-    expect(view.winner).toBe("right");
+    expect(view.winner).toBe('right');
   });
 });

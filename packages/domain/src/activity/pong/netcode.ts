@@ -1,4 +1,4 @@
-import type { DecodedSnapshot } from "@marquinhos/contracts/activity/pong/codec";
+import type { DecodedSnapshot } from '@marquinhos/contracts/activity/pong/codec';
 
 export interface PongInputCommand {
   seq: number;
@@ -133,8 +133,8 @@ function interpolateSnapshot(
       : ball;
   });
   const ball = balls[0] ?? to.ball;
-  const left = paddles.find((paddle) => paddle.side === "left");
-  const right = paddles.find((paddle) => paddle.side === "right");
+  const left = paddles.find((paddle) => paddle.side === 'left');
+  const right = paddles.find((paddle) => paddle.side === 'right');
   return {
     ...to,
     paddles,
@@ -207,7 +207,7 @@ export class PongSnapshotBuffer {
       0,
       this.maxExtrapolationMs,
     );
-    if (dtMs === 0 || before.state.phase !== "rally") {
+    if (dtMs === 0 || before.state.phase !== 'rally') {
       return { state: before.state, extrapolated: false };
     }
     const balls = before.state.balls.map((ball) => ({
@@ -219,17 +219,17 @@ export class PongSnapshotBuffer {
       ...paddle,
       x:
         paddle.x +
-        (paddle.orientation === "horizontal"
+        (paddle.orientation === 'horizontal'
           ? paddle.velocity * (dtMs / 1000)
           : 0),
       y:
         paddle.y +
-        (paddle.orientation === "vertical"
+        (paddle.orientation === 'vertical'
           ? paddle.velocity * (dtMs / 1000)
           : 0),
     }));
-    const left = paddles.find((paddle) => paddle.side === "left");
-    const right = paddles.find((paddle) => paddle.side === "right");
+    const left = paddles.find((paddle) => paddle.side === 'left');
+    const right = paddles.find((paddle) => paddle.side === 'right');
     return {
       state: {
         ...before.state,

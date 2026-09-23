@@ -1,9 +1,9 @@
-import type { BotDifficulty } from "@marquinhos/contracts/activity/pong/types";
+import type { BotDifficulty } from '@marquinhos/contracts/activity/pong/types';
 // The bot predicts ball trajectory with plain reflection math (see
 // predictImpactY below) — it never runs a physics engine, so these types
 // exist only to describe the paddle/ball/config shape it reads, not to pull
 // in PongEngine.ts's (now-deleted) standalone simulation.
-export type PaddleSide = "left" | "right";
+export type PaddleSide = 'left' | 'right';
 export type PaddleInput = -1 | 0 | 1;
 
 export interface PongEngineConfig {
@@ -52,7 +52,7 @@ export interface PongState {
   paddles: { left: number; right: number };
   score: { left: number; right: number };
   winner: PaddleSide | null;
-  phase: "serving" | "rally" | "point-scored" | "game-over";
+  phase: 'serving' | 'rally' | 'point-scored' | 'game-over';
   phaseRemainingMs: number;
   lastScorer: PaddleSide | null;
 }
@@ -103,7 +103,7 @@ export class PongBot {
   ): PaddleInput {
     this.reactionElapsedMs += dtMs;
     const ballIncoming =
-      this.side === "right" ? state.ball.vx > 0 : state.ball.vx < 0;
+      this.side === 'right' ? state.ball.vx > 0 : state.ball.vx < 0;
 
     if (
       this.targetY === null ||
@@ -113,7 +113,7 @@ export class PongBot {
       const error = (this.rng() * 2 - 1) * this.tuning.aimError;
       if (ballIncoming) {
         const paddleX =
-          this.side === "right"
+          this.side === 'right'
             ? config.width - config.paddleWidth
             : config.paddleWidth;
         this.targetY =

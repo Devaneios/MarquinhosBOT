@@ -8,7 +8,7 @@ import type {
   PongPowerUpKind,
   PongPowerUpState,
   PongRulesetId,
-} from "@marquinhos/contracts/activity/pong/types";
+} from '@marquinhos/contracts/activity/pong/types';
 
 export type PongAxis = -1 | 0 | 1;
 
@@ -20,7 +20,7 @@ export interface PongMatchConfig {
   lives: number;
   maxBalls: number;
   powerUps: PongPowerUpKind[];
-  disconnectReplacement: "wall" | "ai";
+  disconnectReplacement: 'wall' | 'ai';
   seed: number;
 }
 
@@ -29,7 +29,7 @@ export interface PongRulesetDefinition {
   arena: PongArenaKind;
   minPlayers: number;
   maxPlayers: number;
-  rankedPool: "classic-1v1" | "quad-elimination" | null;
+  rankedPool: 'classic-1v1' | 'quad-elimination' | null;
   supportsBot: boolean;
   defaultConfig: PongMatchConfig;
 }
@@ -37,16 +37,16 @@ export interface PongRulesetDefinition {
 export interface PongEngineEvent {
   seq: number;
   type:
-    | "serve"
-    | "paddle-hit"
-    | "wall-hit"
-    | "point-scored"
-    | "game-won"
-    | "series-won"
-    | "brick-destroyed"
-    | "powerup-collected"
-    | "player-eliminated"
-    | "rally-ended";
+    | 'serve'
+    | 'paddle-hit'
+    | 'wall-hit'
+    | 'point-scored'
+    | 'game-won'
+    | 'series-won'
+    | 'brick-destroyed'
+    | 'powerup-collected'
+    | 'player-eliminated'
+    | 'rally-ended';
   slot: number | null;
   entityId: number | null;
   value: number | null;
