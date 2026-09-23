@@ -1079,11 +1079,7 @@ describe('MatchRoom', () => {
         token: cardsCreds('user-c', 'ROOM63', 'truco-1v1').token,
         roomKey: key,
       });
-      let state: Record<string, unknown> | undefined;
-      watcher.onMessage('state', (payload: Record<string, unknown>) => {
-        state = payload;
-      });
-      await room.waitForNextPatch();
+      const state = await nextMessage(watcher, 'state');
 
       expect(state).toBeDefined();
 
@@ -1120,12 +1116,9 @@ describe('MatchRoom', () => {
     it('seats a single-mode joiner and starts a bot match without error', async () => {
       const { key, token } = dominoesCreds('user-a', 'ROOM05', 'single');
       const room = await colyseus.createRoom('match', { roomKey: key, token });
-      const messages: unknown[] = [];
       const client = await colyseus.connectTo(room, { token, roomKey: key });
-      client.onMessage('state', (msg) => messages.push(msg));
-      await room.waitForNextPatch();
 
-      expect(messages.length).toBeGreaterThan(0);
+      expect(await nextMessage(client, 'state')).toBeDefined();
 
       client.leave();
     });
@@ -1156,11 +1149,7 @@ describe('MatchRoom', () => {
         token: dominoesCreds('user-c', 'ROOM64').token,
         roomKey: key,
       });
-      let state: Record<string, unknown> | undefined;
-      watcher.onMessage('state', (payload: Record<string, unknown>) => {
-        state = payload;
-      });
-      await room.waitForNextPatch();
+      const state = await nextMessage(watcher, 'state');
 
       expect(state).toBeDefined();
 
@@ -1915,19 +1904,17 @@ describe('MatchRoom', () => {
       });
       await room.waitForNextPatch();
 
-      const spectatorStates: { currentWord: string }[] = [];
-      clientC.onMessage('state', (msg: { currentWord: string }) =>
-        spectatorStates.push(msg),
-      );
-
       // currentTurn starts as '' (WordChainEngine.ts) and is claimed by
       // whichever seated player submits first, so clientA can move
       // unconditionally here without first inspecting whose turn it is.
       clientA.send('word', { word: 'abelha' });
-      await room.waitForNextPatch();
+      const spectatorState = await nextMessage<{ currentWord: string }>(
+        clientC,
+        'state',
+        (state) => state.currentWord === 'abelha',
+      );
 
-      expect(spectatorStates.length).toBeGreaterThan(0);
-      expect(spectatorStates[0]!.currentWord).toBe('abelha');
+      expect(spectatorState.currentWord).toBe('abelha');
 
       clientA.leave();
       clientB.leave();
