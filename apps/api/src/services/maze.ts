@@ -1,6 +1,8 @@
+import type { mazeViewportStateSchema } from '@marquinhos/contracts/http/routes/maze';
 import { db } from '@marquinhos/database/sqlite';
 import { generateMaze } from '@marquinhos/domain/maze/generator';
 import crypto from 'crypto';
+import type { z } from 'zod';
 
 /**
  * Viewport cell types returned to the bot.
@@ -12,14 +14,7 @@ import crypto from 'crypto';
  *   5 = hidden → ⬛  (foggy mode: not visible to player)
  */
 
-export interface MazeViewportState {
-  sessionId: string;
-  playerPosition: { x: number; y: number };
-  viewport: number[][];
-  moves: number;
-  isCompleted: boolean;
-  isAbandoned?: boolean;
-}
+export type MazeViewportState = z.input<typeof mazeViewportStateSchema>;
 
 interface MazeSessionRow {
   id: string;

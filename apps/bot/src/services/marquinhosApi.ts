@@ -7,7 +7,6 @@ import { env } from '@marquinhos/config/environment';
 import {
   apiResponseSchema,
   emojiReactionResponseSchema,
-  mazeViewportStateSchema,
 } from '@marquinhos/contracts/http/botResponses';
 import type { ContractRequest } from '@marquinhos/contracts/http/contract';
 import * as aiChat from '@marquinhos/contracts/http/routes/aiChat';
@@ -21,7 +20,6 @@ import * as wordle from '@marquinhos/contracts/http/routes/wordle';
 import {
   ApiResponse,
   EmojiReactionResponse,
-  MazeViewportState,
   PlaybackData,
 } from '@marquinhos/types';
 import { reportError } from '@marquinhos/utils/errorHandling';
@@ -225,49 +223,6 @@ export class MarquinhosApiService {
   ) {
     return callContract(this.client, gamification.unlockAchievement, {
       body: { userId, guildId, achievementId },
-    });
-  }
-
-  // Maze Game API calls
-  async startMaze(
-    userId: string,
-    guildId: string,
-    mode: 'open' | 'foggy',
-    size: number,
-  ): Promise<MazeViewportState> {
-    const data = await this.client.post('/api/games/maze/start', {
-      userId,
-      guildId,
-      mode,
-      size,
-    });
-    return apiResponseSchema(mazeViewportStateSchema).parse(data).data;
-  }
-
-  async moveMaze(
-    sessionId: string,
-    userId: string,
-    direction: string,
-  ): Promise<MazeViewportState> {
-    const data = await this.client.post(`/api/games/maze/${sessionId}/move`, {
-      userId,
-      direction,
-    });
-    return apiResponseSchema(mazeViewportStateSchema).parse(data).data;
-  }
-
-  async getMazeState(sessionId: string): Promise<MazeViewportState | null> {
-    try {
-      const data = await this.client.get(`/api/games/maze/${sessionId}`);
-      return apiResponseSchema(mazeViewportStateSchema).parse(data).data;
-    } catch {
-      return null;
-    }
-  }
-
-  async abandonMaze(sessionId: string, userId: string): Promise<void> {
-    await this.client.delete(`/api/games/maze/${sessionId}`, {
-      body: JSON.stringify({ userId }),
     });
   }
 
