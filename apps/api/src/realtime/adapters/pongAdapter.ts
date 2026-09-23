@@ -65,7 +65,7 @@ export const pongAdapter: GameRoomAdapter<PongSession> = {
         // key is legacy/unused (see ActivityBroadcaster.ts), but the client
         // listens for binary snapshots specifically under message type
         // 'state', so that has to be hardcoded here rather than passed
-        // through, exactly like PongRoom.ts does today.
+        // through.
         broadcastBinary: (_key, data) =>
           ctx.broadcastBinary('state', new Uint8Array(data)),
       },

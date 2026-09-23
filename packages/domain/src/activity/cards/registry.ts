@@ -5,7 +5,7 @@ import {
 } from '@marquinhos/domain/activity/cards/rulesets/truco/TrucoDefinition';
 
 // The single populated registry: wsSessionToken.ts's ruleset validation and
-// CardTableRoom's onCreate both read from this same instance. Adding a new
+// cardTableAdapter's setup both read from this same instance. Adding a new
 // card game means a new ruleset file plus one more `.register(...)` call
 // here — nothing else in the stack changes.
 export const cardGameRegistry = new GameDefinitionRegistry();

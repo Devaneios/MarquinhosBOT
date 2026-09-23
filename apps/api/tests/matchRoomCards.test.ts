@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
 
-const { CardTableRoom } = await import('../src/realtime/CardTableRoom');
+const { MatchRoom } = await import('../src/realtime/MatchRoom');
 const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
@@ -13,7 +13,7 @@ let colyseus: ColyseusTestServer;
 
 beforeAll(async () => {
   colyseus = await bootColyseusTestServer((server) => {
-    server.define('cards', CardTableRoom).filterBy(['roomKey']);
+    server.define('match', MatchRoom).filterBy(['roomKey']);
   });
 });
 
@@ -73,7 +73,8 @@ async function seatFourPlayers(): Promise<{
   for (const userId of ['user-a', 'user-b', 'user-c', 'user-d']) {
     const session = sessionFor(userId);
     if (!room) {
-      room = await colyseus.createRoom('cards', {
+      room = await colyseus.createRoom('match', {
+        game: 'cards',
         roomKey: session.roomKey,
         token: session.token,
       });
@@ -92,15 +93,16 @@ async function seatFourPlayers(): Promise<{
   return { clients, inits, states, room: room! };
 }
 
-describe('CardTableRoom', () => {
+describe('MatchRoom · cards', () => {
   it('rejects a join with an invalid session token', async () => {
     const session = sessionFor('user-a');
-    const room = await colyseus.createRoom('cards', {
+    const room = await colyseus.createRoom('match', {
+      game: 'cards',
       roomKey: session.roomKey,
       token: session.token,
     });
 
-    expect(
+    await expect(
       colyseus.connectTo(room, { token: 'garbage', roomKey: session.roomKey }),
     ).rejects.toBeTruthy();
   });
@@ -151,7 +153,8 @@ describe('CardTableRoom', () => {
     // Two tabs, or a React remount mid-reconnect, is two clients for one
     // userId. Resolving just the first one leaves the other tab dead.
     const session = sessionFor('user-a');
-    const room = await colyseus.createRoom('cards', {
+    const room = await colyseus.createRoom('match', {
+      game: 'cards',
       roomKey: session.roomKey,
       token: session.token,
     });

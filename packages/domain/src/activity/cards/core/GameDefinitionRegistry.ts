@@ -3,7 +3,7 @@ import type { GameDefinition } from '@marquinhos/domain/activity/cards/core/Game
 // Map<rulesetId, GameDefinition> populated at module load from each
 // concrete ruleset file. This is the single place a new game gets
 // "plugged in" — wsSessionToken.ts's ruleset validation and
-// CardTableRoom's onCreate both read from the same table.
+// cardTableAdapter's setup both read from the same table.
 export class GameDefinitionRegistry {
   private definitions = new Map<string, GameDefinition<unknown>>();
 

@@ -376,7 +376,7 @@ export function PongCanvas({
   );
 
   // Sending 'leave' before the room disconnects (rather than a bare close)
-  // is what tells PongRoom to forfeit the match immediately instead of
+  // is what tells the server to forfeit the match immediately instead of
   // treating this like a network drop and holding the slot open.
   const sendLeaveOnDisconnect = useCallback((room: Room) => {
     room.send('leave');
@@ -1488,7 +1488,7 @@ export function PongCanvas({
         );
       }
       // The room's own leave (including the 'leave' message that tells
-      // PongRoom to forfeit immediately rather than treat this as a
+      // the server to forfeit immediately rather than treat this as a
       // transient network drop) is handled by useColyseusRoom's cleanup.
       messageHandlerRef.current = () => {};
       sfx.dispose();

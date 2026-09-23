@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 // tests/wordle.spec.ts so this suite doesn't touch the real marquinhos.db.
 process.env.SQLITE_PATH = ':memory:';
 
-const { WordleRoom } = await import('../src/realtime/WordleRoom');
+const { MatchRoom } = await import('../src/realtime/MatchRoom');
 const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
@@ -19,7 +19,7 @@ const testRunId = randomUUID();
 
 beforeAll(async () => {
   colyseus = await bootColyseusTestServer((server) => {
-    server.define('wordle', WordleRoom).filterBy(['roomKey']);
+    server.define('match', MatchRoom).filterBy(['roomKey']);
   });
 });
 
@@ -53,13 +53,14 @@ function pickWordOfLength(length: number): string {
   throw new Error(`no validation word of length ${length} found`);
 }
 
-describe('WordleRoom', () => {
+describe('MatchRoom · wordle', () => {
   it('rejects a join with an invalid session token', async () => {
-    const room = await colyseus.createRoom('wordle', {
+    const room = await colyseus.createRoom('match', {
+      game: 'wordle',
       roomKey: 'inst-1:wordle:single:user-a',
     });
 
-    expect(
+    await expect(
       colyseus.connectTo(room, {
         token: 'garbage',
         roomKey: 'inst-1:wordle:single:user-a',
@@ -69,11 +70,12 @@ describe('WordleRoom', () => {
 
   it('rejects a join whose roomKey does not match the token identity', async () => {
     const session = sessionFor('user-a', 'guild-1');
-    const room = await colyseus.createRoom('wordle', {
+    const room = await colyseus.createRoom('match', {
+      game: 'wordle',
       roomKey: session.roomKey,
     });
 
-    expect(
+    await expect(
       colyseus.connectTo(room, {
         token: session.token,
         roomKey: 'inst-1:wordle:single:someone-else',
@@ -83,7 +85,8 @@ describe('WordleRoom', () => {
 
   it('sends an init payload with word length and empty guess history on join', async () => {
     const session = sessionFor('user-a', 'guild-init');
-    const room = await colyseus.createRoom('wordle', {
+    const room = await colyseus.createRoom('match', {
+      game: 'wordle',
       roomKey: session.roomKey,
     });
     const client = await colyseus.connectTo(room, session);
@@ -98,7 +101,8 @@ describe('WordleRoom', () => {
 
   it('replies guess_result for a valid guess of the right length', async () => {
     const session = sessionFor('user-a', 'guild-validguess');
-    const room = await colyseus.createRoom('wordle', {
+    const room = await colyseus.createRoom('match', {
+      game: 'wordle',
       roomKey: session.roomKey,
     });
     const client = await colyseus.connectTo(room, session);
@@ -115,7 +119,8 @@ describe('WordleRoom', () => {
 
   it('replies guess_error for a guess of the wrong length', async () => {
     const session = sessionFor('user-a', 'guild-wronglen');
-    const room = await colyseus.createRoom('wordle', {
+    const room = await colyseus.createRoom('match', {
+      game: 'wordle',
       roomKey: session.roomKey,
     });
     const client = await colyseus.connectTo(room, session);
@@ -130,7 +135,8 @@ describe('WordleRoom', () => {
 
   it('rate-limits rapid guesses from the same connection', async () => {
     const session = sessionFor('user-a', 'guild-ratelimit');
-    const room = await colyseus.createRoom('wordle', {
+    const room = await colyseus.createRoom('match', {
+      game: 'wordle',
       roomKey: session.roomKey,
     });
     const client = await colyseus.connectTo(room, session);

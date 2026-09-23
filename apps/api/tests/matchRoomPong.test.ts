@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
 
-const { PongRoom } = await import('../src/realtime/PongRoom');
+const { MatchRoom } = await import('../src/realtime/MatchRoom');
 const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
@@ -12,7 +12,7 @@ let colyseus: ColyseusTestServer;
 
 beforeAll(async () => {
   colyseus = await bootColyseusTestServer((server) => {
-    server.define('pong', PongRoom).filterBy(['roomKey']);
+    server.define('match', MatchRoom).filterBy(['roomKey']);
   });
 });
 
@@ -61,13 +61,14 @@ function sessionFor(
   return { token, roomKey: key };
 }
 
-describe('PongRoom', () => {
+describe('MatchRoom · pong', () => {
   it('rejects a join with an invalid session token', async () => {
-    const room = await colyseus.createRoom('pong', {
+    const room = await colyseus.createRoom('match', {
+      game: 'pong',
       roomKey: 'inst-1:pong:multi',
     });
 
-    expect(
+    await expect(
       colyseus.connectTo(room, {
         token: 'garbage',
         roomKey: 'inst-1:pong:multi',
@@ -77,7 +78,8 @@ describe('PongRoom', () => {
 
   it('assigns left/right sides to the first two joiners of a multi match', async () => {
     const session = sessionFor('user-a', 'multi');
-    const room = await colyseus.createRoom('pong', {
+    const room = await colyseus.createRoom('match', {
+      game: 'pong',
       roomKey: session.roomKey,
       token: session.token,
     });
@@ -92,7 +94,8 @@ describe('PongRoom', () => {
   });
 
   it('admits a third joiner as a spectator with a null side', async () => {
-    const room = await colyseus.createRoom('pong', {
+    const room = await colyseus.createRoom('match', {
+      game: 'pong',
       ...sessionFor('user-a', 'multi'),
     });
     await colyseus.connectTo(room, sessionFor('user-a', 'multi'));
@@ -108,7 +111,8 @@ describe('PongRoom', () => {
 
   it('starts ticking immediately on a single-player (vs bot) join', async () => {
     const session = sessionFor('user-a', 'single', { difficulty: 'easy' });
-    const room = await colyseus.createRoom('pong', {
+    const room = await colyseus.createRoom('match', {
+      game: 'pong',
       roomKey: session.roomKey,
       token: session.token,
     });
@@ -126,7 +130,8 @@ describe('PongRoom', () => {
 
   it('does not start a plain multi-mode session on a single join', async () => {
     const session = sessionFor('user-a', 'multi');
-    const room = await colyseus.createRoom('pong', {
+    const room = await colyseus.createRoom('match', {
+      game: 'pong',
       roomKey: session.roomKey,
       token: session.token,
     });
@@ -144,7 +149,8 @@ describe('PongRoom', () => {
 
   it('forfeits the match to the opponent when a player explicitly leaves', async () => {
     const sessionA = sessionFor('user-a', 'multi');
-    const room = await colyseus.createRoom('pong', {
+    const room = await colyseus.createRoom('match', {
+      game: 'pong',
       roomKey: sessionA.roomKey,
       token: sessionA.token,
     });

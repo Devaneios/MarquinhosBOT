@@ -87,15 +87,6 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
       attempts: userSession?.attempts ?? 0,
     });
   },
-  onLeave() {
-    // The original WordleRoom.onLeave only cleared its rate limiter — that's
-    // handled generically by MatchRoom's per-message-type RateLimiter now,
-    // so there is nothing game-specific left to do here. WordleRoom also
-    // never registered a `leave` message handler (only `guess`), so there's
-    // no message-level cleanup to port either — see wordleAdapter's
-    // investigation notes in the task-20 report.
-  },
-  onDispose() {
-    // The original WordleRoom has no onDispose at all.
-  },
+  onLeave() {},
+  onDispose() {},
 };

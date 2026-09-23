@@ -1727,12 +1727,8 @@ describe('MatchRoom', () => {
     });
 
     it('advances the question when a leave message drops a player who never answered', async () => {
-      // Regression test: the original TriviaQuizRoom.ts registered no
-      // `this.onMessage('leave', ...)` handler at all, even though
-      // TriviaQuizSession already exposes a `leave(userId, connection)`
-      // method (delegating to pauseForDisconnect) that every other
-      // completed adapter's session wires up to a `leave` message. Without
-      // it, a player who explicitly leaves mid-question still counts as
+      // The `leave` message must reach TriviaQuizSession.leave (which
+      // delegates to pauseForDisconnect). Without it, a player who explicitly leaves mid-question still counts as
       // "connected" for checkAllAnswered()'s purposes, so the other player
       // answering alone can never advance the question — the room stalls
       // forever waiting on a player who said they were leaving.

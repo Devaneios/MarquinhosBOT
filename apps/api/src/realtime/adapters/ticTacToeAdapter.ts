@@ -58,8 +58,7 @@ export const ticTacToeAdapter: GameRoomAdapter<TicTacToeSession> = {
         leave: {
           // A deliberate quit uses the immediate-detach path (`leave`), not
           // the disconnect-with-grace path (`pauseForDisconnect`) that
-          // `onLeave` uses for a network drop — matches TicTacToeRoom's
-          // original distinction between the two.
+          // `onLeave` uses for a network drop.
           handle: (auth, client) => session.leave(auth.userId, client),
         },
       },
@@ -67,9 +66,8 @@ export const ticTacToeAdapter: GameRoomAdapter<TicTacToeSession> = {
   },
 
   onJoin(session, auth, client, seat, ctx) {
-    // Matches TicTacToeRoom.onJoin's original behavior exactly: it never
-    // kicked an overflow joiner, it just sent `init` with a null `player`
-    // and left the connection open watching broadcasts.
+    // An overflow joiner is never kicked: it gets `init` with a null
+    // `player` and stays connected watching broadcasts.
     if (seat !== 'player') {
       client.send('init', { player: null, state: session.getPublicState() });
       return;
