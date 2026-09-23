@@ -31,6 +31,7 @@
     "@marquinhos/domain": "workspace:*"
   },
   "devDependencies": {
+    "@colyseus/sdk": "^0.17.43",
     "@eslint/js": "^10.0.1",
     "@marquinhos/api-client": "workspace:*",
     "@marquinhos/eslint-config": "workspace:*",

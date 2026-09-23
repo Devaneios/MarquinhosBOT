@@ -1,7 +1,8 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
 
 const { MatchRoom } = await import('../src/realtime/MatchRoom');
-const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
+const { bootColyseusTestServer, nextMessage } =
+  await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
 const { roomKey } = await import('@marquinhos/domain/activity/roomKey');
@@ -152,7 +153,7 @@ describe('MatchRoom', () => {
       roomId: 'ROOM02',
     });
     const client = await colyseus.connectTo(room, { token, roomKey: key });
-    await client.waitForNextMessage(); // init
+    await nextMessage(client, 'init');
 
     // HangmanSession.guessLetter() first broadcasts `game_state` to the
     // whole room, then the adapter sends `guess_success` directly to the
@@ -189,7 +190,7 @@ describe('MatchRoom', () => {
       roomId: 'ROOM03',
     });
     const client = await colyseus.connectTo(room, { token, roomKey: key });
-    await client.waitForNextMessage(); // init
+    await nextMessage(client, 'init');
 
     let replies = 0;
     client.onMessage('guess_success', () => {
@@ -259,7 +260,7 @@ describe('MatchRoom', () => {
       token: a1.token,
       roomKey: a1.key,
     });
-    await clientA1.waitForNextMessage(); // init
+    await nextMessage(clientA1, 'init');
 
     const b1 = ticTacToeSession('b-user-1', 'ROOMB');
     const roomB = await colyseus.createRoom('match', {
@@ -270,14 +271,14 @@ describe('MatchRoom', () => {
       token: b1.token,
       roomKey: b1.key,
     });
-    await clientB1.waitForNextMessage(); // init
+    await nextMessage(clientB1, 'init');
 
     const b2 = ticTacToeSession('b-user-2', 'ROOMB');
     const clientB2 = await colyseus.connectTo(roomB, {
       token: b2.token,
       roomKey: b2.key,
     });
-    await clientB2.waitForNextMessage(); // init
+    await nextMessage(clientB2, 'init');
 
     let aGotGameReady = false;
     let bGotGameReady = false;
@@ -293,7 +294,7 @@ describe('MatchRoom', () => {
       token: a2.token,
       roomKey: a2.key,
     });
-    await clientA2.waitForNextMessage(); // init
+    await nextMessage(clientA2, 'init');
 
     await new Promise((resolve) => setTimeout(resolve, 150));
 
@@ -462,11 +463,8 @@ describe('MatchRoom', () => {
       game: 'bingo-speed',
       roomId: 'ROOM03',
     });
-    const messages: unknown[] = [];
     const client = await colyseus.connectTo(room, { token, roomKey: key });
-    client.onMessage('init', (msg) => messages.push(msg));
-    await room.waitForNextPatch();
-    expect(messages.length).toBeGreaterThan(0);
+    const messages = [await nextMessage(client, 'init')];
   });
 
   it('seats a player into a boggle-word-race room and returns the grid on init', async () => {
@@ -489,11 +487,8 @@ describe('MatchRoom', () => {
       game: 'boggle-word-race',
       roomId: 'ROOM04',
     });
-    const messages: unknown[] = [];
     const client = await colyseus.connectTo(room, { token, roomKey: key });
-    client.onMessage('init', (msg) => messages.push(msg));
-    await room.waitForNextPatch();
-    expect(messages.length).toBeGreaterThan(0);
+    const messages = [await nextMessage(client, 'init')];
     expect((messages[0] as { grid: unknown }).grid).toBeTruthy();
   });
 
@@ -871,10 +866,10 @@ describe('MatchRoom', () => {
         token: connectFourCreds('user-c', 'ROOM50').token,
         roomKey: key,
       });
-      const [, payload] = (await clientC.waitForNextMessage()) as [
-        string,
-        { disc: string | null },
-      ];
+      const payload = await nextMessage<{ disc: string | null }>(
+        clientC,
+        'init',
+      );
       expect(payload.disc).toBeNull();
 
       clientA.leave();
@@ -968,10 +963,10 @@ describe('MatchRoom', () => {
       const room = await colyseus.createRoom('match', { roomKey: key, token });
       const client = await colyseus.connectTo(room, { token, roomKey: key });
 
-      const [, payload] = (await client.waitForNextMessage()) as [
-        string,
-        { seatIndex: number | null },
-      ];
+      const payload = await nextMessage<{ seatIndex: number | null }>(
+        client,
+        'init',
+      );
       expect(payload.seatIndex).toBe(0);
 
       client.leave();
@@ -999,10 +994,10 @@ describe('MatchRoom', () => {
         token: cardsCreds('user-c', 'ROOM61', 'truco-1v1').token,
         roomKey: oneVOneKey,
       });
-      const [, oneVOneCInit] = (await oneVOneC.waitForNextMessage()) as [
-        string,
-        { seatIndex: number | null },
-      ];
+      const oneVOneCInit = await nextMessage<{ seatIndex: number | null }>(
+        oneVOneC,
+        'init',
+      );
       expect(oneVOneCInit.seatIndex).toBeNull();
       // The seatIndex above comes from CardTableSession's own per-ruleset
       // cap (definition.maxPlayers), independent of MatchRoom's seat
@@ -1036,10 +1031,10 @@ describe('MatchRoom', () => {
         token: cardsCreds('user-c', 'ROOM62', 'truco').token,
         roomKey: trucoKey,
       });
-      const [, trucoCInit] = (await trucoC.waitForNextMessage()) as [
-        string,
-        { seatIndex: number | null },
-      ];
+      const trucoCInit = await nextMessage<{ seatIndex: number | null }>(
+        trucoC,
+        'init',
+      );
       expect(trucoCInit.seatIndex).toBe(2);
       const trucoInternals = trucoRoom as unknown as {
         members: Array<{ userId: string; role: string }>;
@@ -1201,11 +1196,8 @@ describe('MatchRoom', () => {
         roomKey: key,
         game: 'minesweeper-versus',
       });
-      const messages: unknown[] = [];
       const client = await colyseus.connectTo(room, { token, roomKey: key });
-      client.onMessage('init', (msg) => messages.push(msg));
-      await room.waitForNextPatch();
-      expect(messages.length).toBeGreaterThan(0);
+      const messages = [await nextMessage(client, 'init')];
       expect((messages[0] as { grid: unknown }).grid).toBeTruthy();
 
       client.leave();
@@ -1237,10 +1229,7 @@ describe('MatchRoom', () => {
         roomKey: key,
       });
 
-      const messages: unknown[] = [];
-      clientC.onMessage('init', (msg) => messages.push(msg));
-      await room.waitForNextPatch();
-      expect(messages.length).toBeGreaterThan(0);
+      const messages = [await nextMessage(clientC, 'init')];
       expect((messages[0] as { grid: unknown }).grid).toBeTruthy();
 
       const errors: unknown[] = [];
@@ -1329,11 +1318,8 @@ describe('MatchRoom', () => {
         roomKey: key,
         game: 'snake-game',
       });
-      const messages: unknown[] = [];
       const client = await colyseus.connectTo(room, { token, roomKey: key });
-      client.onMessage('init', (msg) => messages.push(msg));
-      await room.waitForNextPatch();
-      expect(messages.length).toBeGreaterThan(0);
+      const messages = [await nextMessage(client, 'init')];
       expect((messages[0] as { playerId: unknown }).playerId).toBeTruthy();
 
       client.leave();
@@ -1370,10 +1356,7 @@ describe('MatchRoom', () => {
         roomKey: key,
       });
 
-      const initMessages: unknown[] = [];
-      clientC.onMessage('init', (msg) => initMessages.push(msg));
-      await room.waitForNextPatch();
-      expect(initMessages.length).toBeGreaterThan(0);
+      const initMessages = [await nextMessage(clientC, 'init')];
       expect((initMessages[0] as { playerId: unknown }).playerId).toBeNull();
 
       let lastState: { snakes: Record<string, unknown> } | undefined;
@@ -1484,11 +1467,8 @@ describe('MatchRoom', () => {
         roomKey: key,
         game: 'tower-unstable',
       });
-      const messages: unknown[] = [];
       const client = await colyseus.connectTo(room, { token, roomKey: key });
-      client.onMessage('init', (msg) => messages.push(msg));
-      await room.waitForNextPatch();
-      expect(messages.length).toBeGreaterThan(0);
+      const messages = [await nextMessage(client, 'init')];
       expect((messages[0] as { joined: unknown }).joined).toBe(true);
 
       client.leave();
@@ -1524,10 +1504,7 @@ describe('MatchRoom', () => {
         roomKey: key,
       });
 
-      const initMessages: unknown[] = [];
-      clientC.onMessage('init', (msg) => initMessages.push(msg));
-      await room.waitForNextPatch();
-      expect(initMessages.length).toBeGreaterThan(0);
+      const initMessages = [await nextMessage(clientC, 'init')];
       const ack = initMessages[0] as {
         joined: unknown;
         state: { turnOrder: string[] } | null;
@@ -1623,11 +1600,8 @@ describe('MatchRoom', () => {
         roomKey: key,
         game: 'trivia-quiz',
       });
-      const messages: unknown[] = [];
       const client = await colyseus.connectTo(room, { token, roomKey: key });
-      client.onMessage('init', (msg) => messages.push(msg));
-      await room.waitForNextPatch();
-      expect(messages.length).toBeGreaterThan(0);
+      const messages = [await nextMessage(client, 'init')];
       const ack = messages[0] as {
         playerScores: unknown[];
         leaderboard: unknown[];
@@ -1666,10 +1640,7 @@ describe('MatchRoom', () => {
         roomKey: key,
       });
 
-      const initMessages: unknown[] = [];
-      clientC.onMessage('init', (msg) => initMessages.push(msg));
-      await room.waitForNextPatch();
-      expect(initMessages.length).toBeGreaterThan(0);
+      const initMessages = [await nextMessage(clientC, 'init')];
       const ack = initMessages[0] as {
         playerScores: { userId: string }[];
         leaderboard: { userId: string }[];
@@ -1802,22 +1773,21 @@ describe('MatchRoom', () => {
         token: triviaCreds('user-c', 'ROOM09d').token,
         roomKey: key,
       });
-      const [messageType, init] = await clientC.waitForNextMessage();
-      expect(messageType).toBe('init');
+      const init = await nextMessage(clientC, 'init');
       expect(init).toBeDefined();
 
       // Proves the malformed submissions above never consumed user-b's
       // answer slot for the question: user-b can still submit the correct
       // answer and score points for it.
       clientB.send('answer', { answerIndex: 1 });
-      const [updateType, update] = await clientA.waitForNextMessage();
-      expect(updateType).toBe('state_update');
-      const userBScore = (
-        update as {
-          playerScores: { userId: string; score: number }[];
-        }
-      ).playerScores.find((p) => p.userId === 'user-b')?.score;
-      expect(userBScore).toBeGreaterThan(0);
+      const scoreOf = (
+        update: { playerScores: { userId: string; score: number }[] },
+        userId: string,
+      ) => update.playerScores.find((p) => p.userId === userId)?.score ?? 0;
+      const update = await nextMessage<{
+        playerScores: { userId: string; score: number }[];
+      }>(clientA, 'state_update', (u) => scoreOf(u, 'user-b') > 0);
+      expect(scoreOf(update, 'user-b')).toBeGreaterThan(0);
 
       clientA.leave();
       clientB.leave();
@@ -1855,11 +1825,8 @@ describe('MatchRoom', () => {
         roomKey: key,
         game: 'word-chain',
       });
-      const messages: unknown[] = [];
       const client = await colyseus.connectTo(room, { token, roomKey: key });
-      client.onMessage('init', (msg) => messages.push(msg));
-      await room.waitForNextPatch();
-      expect(messages.length).toBeGreaterThan(0);
+      const messages = [await nextMessage(client, 'init')];
       expect(messages[0]).toHaveProperty('currentWord');
 
       client.leave();
@@ -1895,10 +1862,7 @@ describe('MatchRoom', () => {
         roomKey: key,
       });
 
-      const initMessages: unknown[] = [];
-      clientC.onMessage('init', (msg) => initMessages.push(msg));
-      await room.waitForNextPatch();
-      expect(initMessages.length).toBeGreaterThan(0);
+      const initMessages = [await nextMessage(clientC, 'init')];
       const ack = initMessages[0] as { players: { userId: string }[] };
       expect(ack.players.map((p) => p.userId).sort()).toEqual([
         'user-a',
@@ -2041,11 +2005,8 @@ describe('MatchRoom', () => {
         roomKey: key,
         game: 'wordle-race',
       });
-      const messages: unknown[] = [];
       const client = await colyseus.connectTo(room, { token, roomKey: key });
-      client.onMessage('init', (msg) => messages.push(msg));
-      await room.waitForNextPatch();
-      expect(messages.length).toBeGreaterThan(0);
+      const messages = [await nextMessage(client, 'init')];
       expect(messages[0]).toHaveProperty('targetWordLength');
 
       client.leave();
@@ -2075,13 +2036,17 @@ describe('MatchRoom', () => {
         roomKey: key,
       });
 
-      const raceSession = (room as unknown as {
-        session: { getGameState(userId: string): {
-          currentPlayerGuesses: unknown[];
-          currentPlayerSolved: boolean;
-          currentPlayerExhausted: boolean;
-        } };
-      }).session;
+      const raceSession = (
+        room as unknown as {
+          session: {
+            getGameState(userId: string): {
+              currentPlayerGuesses: unknown[];
+              currentPlayerSolved: boolean;
+              currentPlayerExhausted: boolean;
+            };
+          };
+        }
+      ).session;
       const spectatorState = raceSession.getGameState('user-spectator');
       expect(spectatorState.currentPlayerGuesses).toEqual([]);
       expect(spectatorState.currentPlayerSolved).toBe(false);
@@ -2251,11 +2216,8 @@ describe('MatchRoom', () => {
         roomKey: key,
         game: 'wordle',
       });
-      const messages: unknown[] = [];
       const client = await colyseus.connectTo(room, { token, roomKey: key });
-      client.onMessage('init', (msg) => messages.push(msg));
-      await room.waitForNextPatch();
-      expect(messages.length).toBeGreaterThan(0);
+      const messages = [await nextMessage(client, 'init')];
       expect(messages[0]).toHaveProperty('wordLength');
       expect(
         (messages[0] as { wordLength: number }).wordLength,
@@ -2336,11 +2298,7 @@ describe('MatchRoom', () => {
         roomKey: key,
       });
 
-      const initMessages: unknown[] = [];
-      spectator.onMessage('init', (msg) => initMessages.push(msg));
-      await room.waitForNextPatch();
-
-      expect(initMessages.length).toBeGreaterThan(0);
+      const initMessages = [await nextMessage(spectator, 'init')];
       expect(initMessages[0]).toEqual({
         wordLength: expect.any(Number),
         guesses: [],
@@ -2383,11 +2341,8 @@ describe('MatchRoom', () => {
         roomKey: key,
         game: 'word-search-race',
       });
-      const messages: unknown[] = [];
       const client = await colyseus.connectTo(room, { token, roomKey: key });
-      client.onMessage('init', (msg) => messages.push(msg));
-      await room.waitForNextPatch();
-      expect(messages.length).toBeGreaterThan(0);
+      const messages = [await nextMessage(client, 'init')];
       expect(messages[0]).toHaveProperty('grid');
 
       client.leave();
@@ -2426,10 +2381,7 @@ describe('MatchRoom', () => {
         roomKey: key,
       });
 
-      const initMessages: unknown[] = [];
-      spectator.onMessage('init', (msg) => initMessages.push(msg));
-      await room.waitForNextPatch();
-      expect(initMessages.length).toBeGreaterThan(0);
+      const initMessages = [await nextMessage(spectator, 'init')];
       expect(initMessages[0]).toHaveProperty('grid');
 
       const errors: { message: string }[] = [];

@@ -6,7 +6,8 @@ import { randomUUID } from 'node:crypto';
 process.env.SQLITE_PATH = ':memory:';
 
 const { MatchRoom } = await import('../src/realtime/MatchRoom');
-const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
+const { bootColyseusTestServer, nextMessage } =
+  await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
 const { roomKey } = await import('@marquinhos/domain/activity/roomKey');
@@ -91,7 +92,12 @@ describe('MatchRoom · wordle', () => {
     });
     const client = await colyseus.connectTo(room, session);
 
-    const [, init] = await client.waitForNextMessage();
+    const init = await nextMessage<{
+      wordLength: number;
+      guesses: unknown[];
+      solved: boolean;
+      attempts: number;
+    }>(client, 'init');
 
     expect(init.wordLength).toBeGreaterThanOrEqual(5);
     expect(init.guesses).toEqual([]);
@@ -106,7 +112,12 @@ describe('MatchRoom · wordle', () => {
       roomKey: session.roomKey,
     });
     const client = await colyseus.connectTo(room, session);
-    const [, init] = await client.waitForNextMessage();
+    const init = await nextMessage<{
+      wordLength: number;
+      guesses: unknown[];
+      solved: boolean;
+      attempts: number;
+    }>(client, 'init');
     const guess = pickWordOfLength(init.wordLength);
 
     client.send('guess', { guess });
@@ -124,7 +135,12 @@ describe('MatchRoom · wordle', () => {
       roomKey: session.roomKey,
     });
     const client = await colyseus.connectTo(room, session);
-    const [, init] = await client.waitForNextMessage();
+    const init = await nextMessage<{
+      wordLength: number;
+      guesses: unknown[];
+      solved: boolean;
+      attempts: number;
+    }>(client, 'init');
 
     client.send('guess', { guess: 'a'.repeat(init.wordLength + 2) });
     const [type, payload] = await client.waitForNextMessage();
@@ -140,7 +156,12 @@ describe('MatchRoom · wordle', () => {
       roomKey: session.roomKey,
     });
     const client = await colyseus.connectTo(room, session);
-    const [, init] = await client.waitForNextMessage();
+    const init = await nextMessage<{
+      wordLength: number;
+      guesses: unknown[];
+      solved: boolean;
+      attempts: number;
+    }>(client, 'init');
     const badGuess = 'a'.repeat(init.wordLength + 2);
 
     let replies = 0;

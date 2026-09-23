@@ -1,7 +1,8 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
 
 const { MatchRoom } = await import('../src/realtime/MatchRoom');
-const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
+const { bootColyseusTestServer, nextMessage } =
+  await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
 const { roomKey } = await import('@marquinhos/domain/activity/roomKey');
@@ -44,11 +45,9 @@ describe('MatchRoom · battleship', () => {
       roomKey: session.roomKey,
     });
     const client = await colyseus.connectTo(room, session);
-    const init = new Promise<{ side: unknown }>((resolve) =>
-      client.onMessage('init', resolve),
-    );
+    const init = await nextMessage<{ side: unknown }>(client, 'init');
 
-    expect((await init).side).toBeTruthy();
+    expect(init.side).toBeTruthy();
   });
 
   it('rejects a join with an invalid session token', async () => {

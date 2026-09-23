@@ -1,7 +1,8 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
 
 const { MatchRoom } = await import('../src/realtime/MatchRoom');
-const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
+const { bootColyseusTestServer, nextMessage } =
+  await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
 const { roomKey } = await import('@marquinhos/domain/activity/roomKey');
@@ -84,12 +85,12 @@ describe('MatchRoom · pong', () => {
       token: session.token,
     });
     const clientA = await colyseus.connectTo(room, session);
-    const [, initA] = await clientA.waitForNextMessage();
+    const initA = await nextMessage<{ side: string | null }>(clientA, 'init');
     expect(initA.side).toBe('left');
 
     const sessionB = sessionFor('user-b', 'multi');
     const clientB = await colyseus.connectTo(room, sessionB);
-    const [, initB] = await clientB.waitForNextMessage();
+    const initB = await nextMessage<{ side: string | null }>(clientB, 'init');
     expect(initB.side).toBe('right');
   });
 
@@ -104,7 +105,7 @@ describe('MatchRoom · pong', () => {
       room,
       sessionFor('user-c', 'multi'),
     );
-    const [, init] = await spectator.waitForNextMessage();
+    const init = await nextMessage<{ side: string | null }>(spectator, 'init');
 
     expect(init.side).toBeNull();
   });
@@ -117,7 +118,7 @@ describe('MatchRoom · pong', () => {
       token: session.token,
     });
     const client = await colyseus.connectTo(room, session);
-    await client.waitForNextMessage();
+    await nextMessage(client, 'init');
 
     let stateMessages = 0;
     client.onMessage('state', () => {
@@ -136,7 +137,7 @@ describe('MatchRoom · pong', () => {
       token: session.token,
     });
     const client = await colyseus.connectTo(room, session);
-    await client.waitForNextMessage();
+    await nextMessage(client, 'init');
 
     let stateMessages = 0;
     client.onMessage('state', () => {
@@ -155,12 +156,12 @@ describe('MatchRoom · pong', () => {
       token: sessionA.token,
     });
     const clientA = await colyseus.connectTo(room, sessionA);
-    await clientA.waitForNextMessage();
+    await nextMessage(clientA, 'init');
     const clientB = await colyseus.connectTo(
       room,
       sessionFor('user-b', 'multi'),
     );
-    await clientB.waitForNextMessage();
+    await nextMessage(clientB, 'init');
     await wait(20);
 
     clientA.send('ready', { ready: true });

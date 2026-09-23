@@ -1,7 +1,8 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
 
 const { MatchRoom } = await import('../src/realtime/MatchRoom');
-const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
+const { bootColyseusTestServer, nextMessage } =
+  await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
 const { roomKey } = await import('@marquinhos/domain/activity/roomKey');
@@ -54,43 +55,33 @@ function sessionFor(userId: string) {
   return { token, roomKey: key };
 }
 
-// Joins all 4 seats, registering a persistent 'state'/'init' listener on
-// each client BEFORE the next one joins — waitForNextMessage() only
-// resolves for messages that arrive after it's called, so collecting the
-// table-filling broadcast (which fires the instant the 4th seat joins)
-// requires listeners already attached, not a sequence of one-shot awaits.
 async function seatFourPlayers(): Promise<{
   clients: TestClient[];
   inits: Record<string, unknown>[];
   states: Record<string, unknown>[];
   room: Awaited<ReturnType<typeof colyseus.createRoom>>;
 }> {
+  const first = sessionFor('user-a');
+  const room = await colyseus.createRoom('match', {
+    game: 'cards',
+    roomKey: first.roomKey,
+    token: first.token,
+  });
   const clients: TestClient[] = [];
-  const inits: Record<string, unknown>[] = [];
-  const states: Record<string, unknown>[] = [];
-  let room: Awaited<ReturnType<typeof colyseus.createRoom>> | undefined;
-
   for (const userId of ['user-a', 'user-b', 'user-c', 'user-d']) {
-    const session = sessionFor(userId);
-    if (!room) {
-      room = await colyseus.createRoom('match', {
-        game: 'cards',
-        roomKey: session.roomKey,
-        token: session.token,
-      });
-    }
-    const client = await colyseus.connectTo(room!, session);
-    const index = clients.length;
-    client.onMessage('init', (payload: Record<string, unknown>) => {
-      inits[index] = payload;
-    });
-    client.onMessage('state', (payload: Record<string, unknown>) => {
-      states[index] = payload;
-    });
-    clients.push(client);
+    clients.push(await colyseus.connectTo(room, sessionFor(userId)));
   }
-  await wait(30);
-  return { clients, inits, states, room: room! };
+  const inits = await Promise.all(
+    clients.map((client) =>
+      nextMessage<Record<string, unknown>>(client, 'init'),
+    ),
+  );
+  const states = await Promise.all(
+    clients.map((client) =>
+      nextMessage<Record<string, unknown>>(client, 'state'),
+    ),
+  );
+  return { clients, inits, states, room };
 }
 
 describe('MatchRoom · cards', () => {
@@ -183,21 +174,14 @@ describe('MatchRoom · cards', () => {
     const { room } = await seatFourPlayers();
 
     const watcher = await colyseus.connectTo(room, sessionFor('user-e'));
-    let init: { seatIndex: number | null } | undefined;
-    let state: Record<string, unknown> | undefined;
-    watcher.onMessage('init', (p: { seatIndex: number | null }) => {
-      init = p;
-    });
-    watcher.onMessage('state', (p: Record<string, unknown>) => {
-      state = p;
-    });
-    await wait(30);
+    const init = await nextMessage<{ seatIndex: number | null }>(
+      watcher,
+      'init',
+    );
+    const state = await nextMessage<Record<string, unknown>>(watcher, 'state');
 
-    expect(init?.seatIndex).toBeNull();
-    const hands = state!.hands as Record<
-      number,
-      { cards: { hidden?: true }[] }
-    >;
+    expect(init.seatIndex).toBeNull();
+    const hands = state.hands as Record<number, { cards: { hidden?: true }[] }>;
     for (const seatIndex of [0, 1, 2, 3]) {
       expect(hands[seatIndex]!.cards.every((c) => c.hidden === true)).toBe(
         true,

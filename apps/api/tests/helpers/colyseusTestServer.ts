@@ -1,6 +1,79 @@
+import { Room as ClientRoom } from '@colyseus/sdk';
 import { ColyseusTestServer } from '@colyseus/testing';
 import { matchMaker, Server } from 'colyseus';
 import { randomInt } from 'node:crypto';
+
+interface Inbox {
+  received: { type: string; message: unknown }[];
+  waiters: {
+    type: string;
+    matches: (message: unknown) => boolean;
+    resolve: (message: unknown) => void;
+  }[];
+}
+
+const inboxes = new WeakMap<object, Inbox>();
+
+function inboxOf(room: object): Inbox {
+  let inbox = inboxes.get(room);
+  if (!inbox) {
+    inbox = { received: [], waiters: [] };
+    inboxes.set(room, inbox);
+  }
+  return inbox;
+}
+
+const clientRoomPrototype = ClientRoom.prototype as unknown as {
+  dispatchMessage: (type: string | number, message: unknown) => void;
+};
+const originalDispatch = clientRoomPrototype.dispatchMessage;
+clientRoomPrototype.dispatchMessage = function (
+  this: object,
+  type: string | number,
+  message: unknown,
+) {
+  const inbox = inboxOf(this);
+  const waiter = inbox.waiters.findIndex(
+    (w) => w.type === String(type) && w.matches(message),
+  );
+  if (waiter >= 0) inbox.waiters.splice(waiter, 1)[0]!.resolve(message);
+  else inbox.received.push({ type: String(type), message });
+  originalDispatch.call(this, type, message);
+};
+
+// Colyseus flushes messages sent during onJoin right after the join
+// confirmation, so a listener attached after connectTo() resolves can miss
+// them. Every client room records what it receives from construction on;
+// this returns the earliest unconsumed message of a type (optionally one
+// that matches), or waits for one.
+export function nextMessage<T = unknown>(
+  client: object,
+  type: string,
+  matches: (message: T) => boolean = () => true,
+  timeoutMs = 3_000,
+): Promise<T> {
+  const inbox = inboxOf(client);
+  const index = inbox.received.findIndex(
+    (m) => m.type === type && matches(m.message as T),
+  );
+  if (index >= 0) {
+    return Promise.resolve(inbox.received.splice(index, 1)[0]!.message as T);
+  }
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`No matching '${type}' within ${timeoutMs}ms`)),
+      timeoutMs,
+    );
+    inbox.waiters.push({
+      type,
+      matches: (message) => matches(message as T),
+      resolve: (message) => {
+        clearTimeout(timer);
+        resolve(message as T);
+      },
+    });
+  });
+}
 
 export async function bootColyseusTestServer(
   configure: (server: Server) => void,

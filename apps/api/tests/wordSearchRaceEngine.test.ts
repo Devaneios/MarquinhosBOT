@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'bun:test';
 import { WordSearchRaceEngine } from '@marquinhos/domain/activity/word-search-race/WordSearchRaceEngine';
+import { describe, expect, it } from 'bun:test';
 
 const TEST_WORDS = ['ROBO', 'PIXEL', 'ARCADE', 'CODIGO'];
 
@@ -150,16 +150,22 @@ describe('WordSearchRaceEngine', () => {
 
   it('rejects a selection whose letters spell no remaining word', () => {
     const engine = new WordSearchRaceEngine({ size: 12, words: TEST_WORDS });
-
-    const result = engine.submitSelection(
-      'user-a',
-      { row: 0, col: 0 },
-      { row: 0, col: 3 },
+    const grid = engine.getGrid();
+    const runs = grid.flatMap((_, row) =>
+      Array.from({ length: grid.length - 3 }, (__, col) => ({
+        start: { row, col },
+        end: { row, col: col + 3 },
+      })),
     );
+    const nonWord = runs.find(({ start, end }) => {
+      const letters = lettersOnLine(grid, start, end);
+      const reversed = [...letters].reverse().join('');
+      return !TEST_WORDS.includes(letters) && !TEST_WORDS.includes(reversed);
+    })!;
 
-    if (!('error' in (result as object))) {
-      throw new Error('expected a random 4-letter run to not match a word');
-    }
+    const result = engine.submitSelection('user-a', nonWord.start, nonWord.end);
+
+    expect(result).toEqual({ error: 'No matching word in that selection' });
   });
 
   it('cannot find the same word twice', () => {
