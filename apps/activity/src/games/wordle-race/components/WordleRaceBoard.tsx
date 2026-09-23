@@ -214,7 +214,7 @@ export function WordleRaceBoard({
         });
         setCurrentGuess('');
         setError(null);
-      } else if (message.type === 'guess_error') {
+      } else if (message.type === 'action_rejected') {
         const payload = message.payload as { error: string };
         setError(payload.error);
         triggerShake();
