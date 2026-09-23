@@ -1,4 +1,4 @@
-import { UserAchievement } from '@marquinhos/types';
+import type { UserAchievement } from '@marquinhos/contracts/http/routes/gamification';
 import { baseEmbed, type BaseEmbedClient } from '@marquinhos/utils/discord';
 import { EmbedBuilder, User } from 'discord.js';
 

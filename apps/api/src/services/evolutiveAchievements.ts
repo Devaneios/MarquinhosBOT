@@ -1,3 +1,9 @@
+import {
+  evolutionEventSchema,
+  type EvolutionEvent,
+  type evolutionResultSchema,
+  type evolutiveAchievementSchema,
+} from '@marquinhos/contracts/http/routes/evolutiveAchievements';
 import { db } from '@marquinhos/database/sqlite';
 import { z } from 'zod';
 
@@ -130,37 +136,10 @@ interface UserStatsRow {
   games_won: number;
 }
 
-const evolutionLogSchema = z.array(
-  z.object({
-    tier: z.number(),
-    evolvedAt: z.string(),
-    reason: z.string(),
-  }),
-);
+const evolutionLogSchema = z.array(evolutionEventSchema);
 
-export type EvolutionEvent = z.infer<typeof evolutionLogSchema>[number];
-
-export interface EvolutiveAchievement {
-  baseId: string;
-  name: string;
-  currentTier: number;
-  currentTierName: string;
-  icon: string;
-  rarity: string;
-  description: string;
-  unlockedAt: Date;
-  lastEvolved: Date | null;
-  evolutionLog: EvolutionEvent[];
-  nextTierThreshold: number | null;
-  currentStatValue: number;
-}
-
-export interface EvolutionResult {
-  baseId: string;
-  newTier: number;
-  newTierName: string;
-  icon: string;
-}
+type EvolutiveAchievement = z.input<typeof evolutiveAchievementSchema>;
+type EvolutionResult = z.input<typeof evolutionResultSchema>;
 
 export class EvolutiveAchievementsService {
   checkAndEvolveAll(userId: string, guildId: string): EvolutionResult[] {

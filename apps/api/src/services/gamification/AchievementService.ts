@@ -1,3 +1,7 @@
+import {
+  achievementConditionSchema,
+  type AchievementCondition,
+} from '@marquinhos/contracts/http/routes/gamification';
 import { db } from '@marquinhos/database/sqlite';
 import { LevelingService } from 'services/gamification/LevelingService';
 import type {
@@ -6,7 +10,6 @@ import type {
   UserLevel,
   UserStats,
 } from 'services/gamification/types';
-import { z } from 'zod';
 
 const DEFAULT_ACHIEVEMENTS = [
   {
@@ -70,13 +73,6 @@ const DEFAULT_ACHIEVEMENTS = [
     reward_xp: 400,
   },
 ];
-
-export const achievementConditionSchema = z.object({
-  type: z.string(),
-  threshold: z.number(),
-});
-
-type AchievementCondition = z.infer<typeof achievementConditionSchema>;
 
 export class AchievementService {
   private levelingService: LevelingService;

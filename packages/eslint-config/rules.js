@@ -23,6 +23,7 @@ export const rules = {
       'no-debugger': 'error',
       'no-duplicate-imports': 'off',
       'no-unused-vars': 'off',
+      'no-redeclare': 'off',
       'prefer-const': 'error',
       'no-var': 'error',
       'object-shorthand': 'error',

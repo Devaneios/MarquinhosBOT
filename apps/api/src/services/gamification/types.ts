@@ -32,7 +32,7 @@ export interface UserAchievement {
   name: string;
   description: string;
   category: string;
-  rarity: string;
+  rarity: Achievement['rarity'];
   icon: string;
   reward_xp: number;
 }

@@ -3,7 +3,7 @@ import {
   RARITY_LABELS,
   RARITY_ORDER,
 } from '@marquinhos/formatters/achievements';
-import { UserAchievement } from '@marquinhos/types';
+import type { UserAchievement } from '@marquinhos/contracts/http/routes/gamification';
 import { describe, expect, test } from 'bun:test';
 
 const makeAchievement = (

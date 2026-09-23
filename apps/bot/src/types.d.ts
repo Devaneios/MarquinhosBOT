@@ -32,38 +32,6 @@ export type FlipCoinResult = {
   elapsedTime: number;
 };
 
-// Gamification Types
-export interface UserLevel {
-  userId: string;
-  guildId: string;
-  level: number;
-  xp: number;
-  totalXp: number;
-  lastXpGain: Date | null;
-}
-
-// UserAchievement includes joined Achievement fields (flat response from backend JOIN)
-export interface UserAchievement {
-  userId: string;
-  guildId: string;
-  achievementId: string;
-  unlockedAt: Date;
-  name: string;
-  description: string;
-  category: string;
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
-  icon: string;
-  rewardXp: number;
-}
-
-export interface AddXpResult {
-  userLevel: UserLevel;
-  onCooldown: boolean;
-  leveledUp: boolean;
-  newLevel?: number;
-  unlockedAchievements: string[];
-}
-
 // AI Chat Types
 export type AiChatCategory =
   | 'general_question'

@@ -1,3 +1,11 @@
+import {
+  contractUrl,
+  type ContractRequest,
+  type ContractRequestParts,
+  type ContractResponse,
+  type EndpointContract,
+} from '@marquinhos/contracts/http/contract';
+
 export interface HttpClientOptions {
   baseURL?: string;
   headers?: Record<string, string>;
@@ -283,4 +291,29 @@ export class HttpClient {
   ): Promise<unknown> {
     return this.request(endpoint, { ...options, method: 'DELETE' });
   }
+}
+
+export function callContract<C extends EndpointContract>(
+  http: HttpClient,
+  contract: C,
+  request: ContractRequest<C>,
+  options?: Omit<RequestConfig, 'method' | 'body'>,
+): Promise<ContractResponse<C>>;
+export async function callContract(
+  http: HttpClient,
+  contract: EndpointContract,
+  request: ContractRequestParts,
+  options?: Omit<RequestConfig, 'method' | 'body'>,
+): Promise<unknown> {
+  const url = contractUrl(contract, request.params, request.query);
+  const hasBody = request.body !== undefined;
+  const raw = await http.request(url, {
+    ...options,
+    method: contract.method,
+    body: hasBody ? JSON.stringify(request.body) : undefined,
+    headers: hasBody
+      ? { 'Content-Type': 'application/json', ...options?.headers }
+      : options?.headers,
+  });
+  return contract.response.parse(raw);
 }

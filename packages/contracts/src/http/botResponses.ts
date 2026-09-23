@@ -9,36 +9,6 @@ export function apiResponseSchema<T extends z.ZodTypeAny>(dataSchema: T) {
   });
 }
 
-export const userLevelSchema = z.object({
-  userId: z.string(),
-  guildId: z.string(),
-  level: z.number(),
-  xp: z.number(),
-  totalXp: z.number(),
-  lastXpGain: z.coerce.date().nullable(),
-});
-
-export const addXpResultSchema = z.object({
-  userLevel: userLevelSchema,
-  onCooldown: z.boolean(),
-  leveledUp: z.boolean(),
-  newLevel: z.number().optional(),
-  unlockedAchievements: z.array(z.string()),
-});
-
-export const userAchievementSchema = z.object({
-  userId: z.string(),
-  guildId: z.string(),
-  achievementId: z.string(),
-  unlockedAt: z.coerce.date(),
-  name: z.string(),
-  description: z.string(),
-  category: z.string(),
-  rarity: z.enum(['common', 'rare', 'epic', 'legendary']),
-  icon: z.string(),
-  rewardXp: z.number(),
-});
-
 const aiChatCategorySchema = z.enum([
   'general_question',
   'code_technical_question',
@@ -225,36 +195,3 @@ export const wordleLeaderboardResultSchema = <T extends z.ZodTypeAny>(
   );
 
 // Gamification
-
-const userStatsSchema = z.object({
-  user_id: z.string(),
-  guild_id: z.string(),
-  total_commands: z.number(),
-  total_scrobbles: z.number(),
-  total_voice_joins: z.number(),
-  total_games: z.number(),
-  games_won: z.number(),
-});
-
-export const userGameStatsSchema = z.object({
-  stats: userStatsSchema,
-  byGame: z.array(
-    z.object({
-      game_type: z.string(),
-      games_played: z.number(),
-      wins: z.number(),
-    }),
-  ),
-});
-export type UserGameStats = z.infer<typeof userGameStatsSchema>;
-
-export const gameLeaderboardEntrySchema = z.object({
-  user_id: z.string(),
-  wins: z.number(),
-  games_played: z.number(),
-  total_xp_earned: z.number(),
-});
-
-export const unlockAchievementResultSchema = z.object({
-  unlocked: z.boolean(),
-});

@@ -1,20 +1,12 @@
+import * as contract from '@marquinhos/contracts/http/routes/gamification';
 import type { Request, Response } from 'express';
-import {
-  addXpBodySchema,
-  createAchievementBodySchema,
-  guildGameTypeParamsSchema,
-  guildParamsSchema,
-  leaderboardQuerySchema,
-  recordGameResultBodySchema,
-  unlockAchievementBodySchema,
-  userGuildParamsSchema,
-} from 'schemas/gamification.schema';
 import type {
   AddXpResult,
   UserAchievement,
   UserLevel,
 } from 'services/gamification';
 import { GamificationService } from 'services/gamification';
+import { parseRequest, sendContract } from 'utils/contract';
 
 // Transform helpers — convert snake_case DB rows to camelCase for bot/web consumers
 function formatLevel(row: UserLevel) {
@@ -63,7 +55,7 @@ class GamificationController {
   getXpConfig(req: Request, res: Response) {
     try {
       const data = this.service.getXpConfig();
-      return res.status(200).json({ data });
+      return sendContract(res, contract.getXpConfig, { data });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
@@ -72,17 +64,17 @@ class GamificationController {
 
   addXP(req: Request, res: Response) {
     try {
-      const body = addXpBodySchema.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.addXp, req);
+      if (!input) {
         return res
           .status(400)
           .json({ message: 'userId, guildId, and eventType are required' });
       }
-      const { userId, guildId, eventType } = body.data;
+      const { userId, guildId, eventType } = input.body;
 
       const result = this.service.addXP(userId, guildId, eventType);
       const data = formatAddXpResult(result);
-      return res.status(200).json({
+      return sendContract(res, contract.addXp, {
         data,
         message: result.onCooldown ? 'On cooldown' : 'XP added',
       });
@@ -94,15 +86,17 @@ class GamificationController {
 
   getUserLevel(req: Request, res: Response) {
     try {
-      const params = userGuildParamsSchema.safeParse(req.params);
-      if (!params.success) {
+      const input = parseRequest(contract.getUserLevel, req);
+      if (!input) {
         return res
           .status(400)
           .json({ message: 'userId and guildId are required' });
       }
-      const { userId, guildId } = params.data;
+      const { userId, guildId } = input.params;
       const row = this.service.getUserLevel(userId, guildId);
-      return res.status(200).json({ data: formatLevel(row) });
+      return sendContract(res, contract.getUserLevel, {
+        data: formatLevel(row),
+      });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
@@ -111,14 +105,16 @@ class GamificationController {
 
   getLeaderboard(req: Request, res: Response) {
     try {
-      const params = guildParamsSchema.safeParse(req.params);
-      if (!params.success) {
+      const input = parseRequest(contract.getLeaderboard, req);
+      if (!input) {
         return res.status(400).json({ message: 'guildId is required' });
       }
-      const { guildId } = params.data;
-      const limit = Math.min(leaderboardQuerySchema.parse(req.query).limit, 25);
+      const { guildId } = input.params;
+      const limit = Math.min(input.query.limit, 25);
       const rows = this.service.getLeaderboard(guildId, limit);
-      return res.status(200).json({ data: rows.map(formatLevel) });
+      return sendContract(res, contract.getLeaderboard, {
+        data: rows.map(formatLevel),
+      });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
@@ -127,20 +123,20 @@ class GamificationController {
 
   unlockAchievement(req: Request, res: Response) {
     try {
-      const body = unlockAchievementBodySchema.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.unlockAchievement, req);
+      if (!input) {
         return res
           .status(400)
           .json({ message: 'userId, guildId, and achievementId are required' });
       }
-      const { userId, guildId, achievementId } = body.data;
+      const { userId, guildId, achievementId } = input.body;
 
       const unlocked = this.service.unlockAchievement(
         userId,
         guildId,
         achievementId,
       );
-      return res.status(200).json({
+      return sendContract(res, contract.unlockAchievement, {
         data: { unlocked },
         message: unlocked ? 'Achievement unlocked' : 'Already unlocked',
       });
@@ -152,15 +148,17 @@ class GamificationController {
 
   getUserAchievements(req: Request, res: Response) {
     try {
-      const params = userGuildParamsSchema.safeParse(req.params);
-      if (!params.success) {
+      const input = parseRequest(contract.getUserAchievements, req);
+      if (!input) {
         return res
           .status(400)
           .json({ message: 'userId and guildId are required' });
       }
-      const { userId, guildId } = params.data;
+      const { userId, guildId } = input.params;
       const rows = this.service.getUserAchievements(userId, guildId);
-      return res.status(200).json({ data: rows.map(formatAchievement) });
+      return sendContract(res, contract.getUserAchievements, {
+        data: rows.map(formatAchievement),
+      });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
@@ -170,7 +168,7 @@ class GamificationController {
   getAllAchievements(req: Request, res: Response) {
     try {
       const data = this.service.getAllAchievements();
-      return res.status(200).json({ data });
+      return sendContract(res, contract.getAllAchievements, { data });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
@@ -179,12 +177,17 @@ class GamificationController {
 
   createAchievement(req: Request, res: Response) {
     try {
-      const body = createAchievementBodySchema.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.createAchievement, req);
+      if (!input) {
         return res.status(400).json({ message: 'Invalid achievement' });
       }
-      const data = this.service.createAchievement(body.data);
-      return res.status(201).json({ data, message: 'Achievement created' });
+      const data = this.service.createAchievement(input.body);
+      return sendContract(
+        res,
+        contract.createAchievement,
+        { data, message: 'Achievement created' },
+        201,
+      );
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
@@ -194,7 +197,9 @@ class GamificationController {
   initializeDefaults(req: Request, res: Response) {
     try {
       this.service.initializeDefaults();
-      return res.status(200).json({ message: 'Defaults initialized' });
+      return sendContract(res, contract.initializeDefaults, {
+        message: 'Defaults initialized',
+      });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
@@ -203,15 +208,17 @@ class GamificationController {
 
   recordGameResult(req: Request, res: Response) {
     try {
-      const body = recordGameResultBodySchema.safeParse(req.body);
-      if (!body.success) {
+      const input = parseRequest(contract.recordGameResult, req);
+      if (!input) {
         return res.status(400).json({
           message: 'sessionId, guildId, gameType, and results are required',
         });
       }
 
-      this.service.recordGameResult(body.data);
-      return res.status(200).json({ message: 'Game result recorded' });
+      this.service.recordGameResult(input.body);
+      return sendContract(res, contract.recordGameResult, {
+        message: 'Game result recorded',
+      });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
@@ -220,15 +227,15 @@ class GamificationController {
 
   getUserGameStats(req: Request, res: Response) {
     try {
-      const params = userGuildParamsSchema.safeParse(req.params);
-      if (!params.success) {
+      const input = parseRequest(contract.getUserGameStats, req);
+      if (!input) {
         return res
           .status(400)
           .json({ message: 'userId and guildId are required' });
       }
-      const { userId, guildId } = params.data;
+      const { userId, guildId } = input.params;
       const data = this.service.getUserGameStats(userId, guildId);
-      return res.status(200).json({ data });
+      return sendContract(res, contract.getUserGameStats, { data });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });
@@ -237,15 +244,15 @@ class GamificationController {
 
   getGameLeaderboard(req: Request, res: Response) {
     try {
-      const params = guildGameTypeParamsSchema.safeParse(req.params);
-      if (!params.success) {
+      const input = parseRequest(contract.getGameLeaderboard, req);
+      if (!input) {
         return res
           .status(400)
           .json({ message: 'guildId and gameType are required' });
       }
-      const { guildId, gameType } = params.data;
+      const { guildId, gameType } = input.params;
       const data = this.service.getGameLeaderboard(guildId, gameType);
-      return res.status(200).json({ data });
+      return sendContract(res, contract.getGameLeaderboard, { data });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Unknown Error' });

@@ -1,5 +1,5 @@
+import type { UserLevel } from '@marquinhos/contracts/http/routes/gamification';
 import { requiredXpForLevel } from '@marquinhos/domain/gamification/leveling';
-import { UserLevel } from '@marquinhos/types';
 import { baseEmbed, type BaseEmbedClient } from '@marquinhos/utils/discord';
 import { EmbedBuilder, User } from 'discord.js';
 

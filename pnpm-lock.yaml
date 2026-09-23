@@ -216,6 +216,9 @@ importers:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
+      '@marquinhos/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
       '@marquinhos/eslint-config':
         specifier: workspace:*
         version: link:../../packages/eslint-config

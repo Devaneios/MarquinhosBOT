@@ -11,6 +11,8 @@
     "./activity/pong/codec": "./src/activity/pong/codec.ts",
     "./activity/pong/types": "./src/activity/pong/types.ts",
     "./http/botResponses": "./src/http/botResponses.ts",
+    "./http/contract": "./src/http/contract.ts",
+    "./http/routes/*": "./src/http/routes/*.ts",
     "./wordle": "./src/wordle.ts"
   },
   "scripts": {

@@ -1,23 +1,21 @@
-import { HttpClient, HttpError } from '@marquinhos/api-client/bot';
+import {
+  callContract,
+  HttpClient,
+  HttpError,
+} from '@marquinhos/api-client/bot';
 import { env } from '@marquinhos/config/environment';
 import {
-  addXpResultSchema,
   aiChatResponseSchema,
   apiResponseSchema,
   dailyLeaderboardEntrySchema,
   emojiReactionResponseSchema,
   forceNewWordResultSchema,
-  gameLeaderboardEntrySchema,
   markWordleAnnouncedResultSchema,
   mazeViewportStateSchema,
   rankedLeaderboardEntrySchema,
   researchJobResponseSchema,
   researchStartResponseSchema,
   unannouncedWordleWinSchema,
-  unlockAchievementResultSchema,
-  userAchievementSchema,
-  userGameStatsSchema,
-  userLevelSchema,
   userWordleSessionSchema,
   validateWordleGuessResultSchema,
   wordleConfigSchema,
@@ -30,8 +28,9 @@ import {
   type DailyLeaderboardEntry,
   type RankedLeaderboardEntry,
 } from '@marquinhos/contracts/http/botResponses';
+import type { ContractRequest } from '@marquinhos/contracts/http/contract';
+import * as gamification from '@marquinhos/contracts/http/routes/gamification';
 import {
-  AddXpResult,
   AiChatResponse,
   ApiResponse,
   EmojiReactionResponse,
@@ -39,8 +38,6 @@ import {
   PlaybackData,
   ResearchJobResponse,
   ResearchStartResponse,
-  UserAchievement,
-  UserLevel,
 } from '@marquinhos/types';
 import { reportError } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
@@ -139,31 +136,16 @@ export class MarquinhosApiService {
   }
 
   // Gamification API calls
-  async addXP(
-    userId: string,
-    guildId: string,
-    eventType: string,
-  ): Promise<ApiResponse<AddXpResult>> {
-    const data = await this.client.post('/api/gamification/xp', {
-      userId,
-      guildId,
-      eventType,
+  async addXP(userId: string, guildId: string, eventType: string) {
+    return callContract(this.client, gamification.addXp, {
+      body: { userId, guildId, eventType },
     });
-    return apiResponseSchema(addXpResultSchema).parse(data);
   }
 
-  async postGameResult(payload: {
-    sessionId: string;
-    guildId: string;
-    gameType: string;
-    durationMs?: number;
-    results: { userId: string; position: number }[];
-  }): Promise<ApiResponse> {
-    const data = await this.client.post(
-      '/api/gamification/game-result',
-      payload,
-    );
-    return apiResponseSchema(z.unknown()).parse(data);
+  async postGameResult(
+    body: ContractRequest<typeof gamification.recordGameResult>['body'],
+  ) {
+    return callContract(this.client, gamification.recordGameResult, { body });
   }
 
   async respondToTag(payload: {
@@ -235,88 +217,45 @@ export class MarquinhosApiService {
     return apiResponseSchema(emojiReactionResponseSchema).parse(data);
   }
 
-  async getUserGameStats(
-    userId: string,
-    guildId: string,
-  ): Promise<
-    ApiResponse<{
-      stats: {
-        user_id: string;
-        guild_id: string;
-        total_commands: number;
-        total_scrobbles: number;
-        total_voice_joins: number;
-        total_games: number;
-        games_won: number;
-      };
-      byGame: { game_type: string; games_played: number; wins: number }[];
-    }>
-  > {
-    const data = await this.client.get(
-      `/api/gamification/game-stats/${userId}/${guildId}`,
-    );
-    return apiResponseSchema(userGameStatsSchema).parse(data);
+  async getUserGameStats(userId: string, guildId: string) {
+    return callContract(this.client, gamification.getUserGameStats, {
+      params: { userId, guildId },
+    });
   }
 
-  async getGameLeaderboard(
-    guildId: string,
-    gameType: string,
-  ): Promise<
-    ApiResponse<
-      {
-        user_id: string;
-        wins: number;
-        games_played: number;
-        total_xp_earned: number;
-      }[]
-    >
-  > {
-    const data = await this.client.get(
-      `/api/gamification/game-leaderboard/${guildId}/${gameType}`,
-    );
-    return apiResponseSchema(z.array(gameLeaderboardEntrySchema)).parse(data);
+  async getGameLeaderboard(guildId: string, gameType: string) {
+    return callContract(this.client, gamification.getGameLeaderboard, {
+      params: { guildId, gameType },
+    });
   }
 
-  async getUserLevel(
-    userId: string,
-    guildId: string,
-  ): Promise<ApiResponse<UserLevel>> {
-    const data = await this.client.get(
-      `/api/gamification/level/${userId}/${guildId}`,
-    );
-    return apiResponseSchema(userLevelSchema).parse(data);
+  async getUserLevel(userId: string, guildId: string) {
+    return callContract(this.client, gamification.getUserLevel, {
+      params: { userId, guildId },
+    });
   }
 
-  async getLeaderboard(
-    guildId: string,
-    limit: number = 10,
-  ): Promise<ApiResponse<UserLevel[]>> {
-    const data = await this.client.get(
-      `/api/gamification/leaderboard/${guildId}?limit=${limit}`,
-    );
-    return apiResponseSchema(z.array(userLevelSchema)).parse(data);
+  async getLeaderboard(guildId: string, limit: number = 10) {
+    return callContract(this.client, gamification.getLeaderboard, {
+      params: { guildId },
+      query: { limit },
+    });
   }
 
-  async getUserAchievements(
-    userId: string,
-    guildId: string,
-  ): Promise<ApiResponse<UserAchievement[]>> {
-    const data = await this.client.get(
-      `/api/gamification/achievements/${userId}/${guildId}`,
-    );
-    return apiResponseSchema(z.array(userAchievementSchema)).parse(data);
+  async getUserAchievements(userId: string, guildId: string) {
+    return callContract(this.client, gamification.getUserAchievements, {
+      params: { userId, guildId },
+    });
   }
 
   async unlockAchievement(
     userId: string,
     guildId: string,
     achievementId: string,
-  ): Promise<ApiResponse<{ unlocked: boolean }>> {
-    const data = await this.client.post(
-      '/api/gamification/achievement/unlock',
-      { userId, guildId, achievementId },
-    );
-    return apiResponseSchema(unlockAchievementResultSchema).parse(data);
+  ) {
+    return callContract(this.client, gamification.unlockAchievement, {
+      body: { userId, guildId, achievementId },
+    });
   }
 
   // Maze Game API calls
