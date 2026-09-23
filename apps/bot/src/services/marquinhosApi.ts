@@ -10,6 +10,7 @@ import * as activity from '@marquinhos/contracts/http/routes/activity';
 import * as aiChat from '@marquinhos/contracts/http/routes/aiChat';
 import * as emojiReaction from '@marquinhos/contracts/http/routes/emojiReaction';
 import * as gamification from '@marquinhos/contracts/http/routes/gamification';
+import { health } from '@marquinhos/contracts/http/routes/health';
 import type {
   DailyLeaderboardEntry,
   RankedLeaderboardEntry,
@@ -198,7 +199,7 @@ export class MarquinhosApiService {
 
   async healthCheck(): Promise<boolean> {
     try {
-      await this.client.get('/api/health');
+      await callContract(this.client, health, {});
       return true;
     } catch {
       return false;

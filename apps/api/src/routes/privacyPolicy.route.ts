@@ -1,5 +1,6 @@
-import type { Request, Response } from 'express';
+import { privacyPolicy } from '@marquinhos/contracts/http/routes/privacyPolicy';
 import express from 'express';
+import { sendContract } from 'utils/contract';
 
 const router = express.Router();
 
@@ -51,8 +52,8 @@ const PRIVACY_POLICY = {
   ],
 };
 
-router.get('/', async (req: Request, res: Response) => {
-  return res.status(200).json(PRIVACY_POLICY);
-});
+router.get('/', (_req, res) =>
+  sendContract(res, privacyPolicy, PRIVACY_POLICY),
+);
 
 export default router;

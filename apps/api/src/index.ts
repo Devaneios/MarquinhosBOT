@@ -14,6 +14,7 @@ import * as auth from 'routes/auth.route';
 import emojiReactionRouter from 'routes/emojiReaction.route';
 import evolutiveAchievementsRouter from 'routes/evolutiveAchievements.route';
 import gamificationRouter from 'routes/gamification.route';
+import healthRouter from 'routes/health.route';
 import mazeRouter from 'routes/maze.route';
 import * as privacyPolicy from 'routes/privacyPolicy.route';
 import * as scrobble from 'routes/scrobble.route';
@@ -103,9 +104,7 @@ app.use(express.urlencoded({ extended: true }));
 // app.use('/api/auth/login', authLimiter);
 // app.use('/api/wordle/guess', wordleLimiter);
 
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok' });
-});
+app.use('/api/health', healthRouter);
 
 app.use('/api/activities', activityRouter);
 app.use('/api/auth', auth.default);
