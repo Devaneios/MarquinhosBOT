@@ -1,8 +1,11 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import type {
+  RpsPick,
+  RpsServerMessage,
+} from '@marquinhos/contracts/activity/games/rockPaperScissors';
 import {
   RpsEngine,
   type RpsEngineConfig,
-  type RpsPick,
 } from '@marquinhos/domain/activity/rps/RpsEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
@@ -47,7 +50,7 @@ export class RpsSession {
 
   constructor(
     private identity: RpsSessionIdentity,
-    private broadcaster: ActivityBroadcaster,
+    private broadcaster: ActivityBroadcaster<RpsServerMessage>,
     private gamification: GamificationService = new GamificationService(),
     engineConfig: RpsEngineConfig = {},
     options: RpsSessionOptions = {},
@@ -139,8 +142,8 @@ export class RpsSession {
       payload: state,
     });
 
-    if (state.submitted.length === 2) {
-      const roundResult = this.engine.resolveRound();
+    const roundResult = this.engine.resolveRound();
+    if (roundResult) {
       this.broadcaster.broadcast(this.roomKey, {
         type: 'round_result',
         payload: roundResult,
@@ -253,7 +256,7 @@ export class RpsSession {
     if (this.players.length === 0) this.onSessionEnded?.();
   }
 
-  getPublicConfig(): object {
+  getPublicConfig(): { bestOf: number } {
     return {
       bestOf: this.engine.getRoundState().bestOf,
     };

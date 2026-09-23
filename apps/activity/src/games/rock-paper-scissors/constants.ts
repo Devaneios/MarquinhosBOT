@@ -1,5 +1,3 @@
-import type { RpsPick } from './types';
-
 export const PICK_ICONS: Record<RpsPick, string> = {
   rock: '🪨',
   paper: '📄',
@@ -11,3 +9,4 @@ export const PICK_LABEL_KEYS: Record<RpsPick, string> = {
   paper: 'pickPaper',
   scissors: 'pickScissors',
 };
+import type { RpsPick } from '@marquinhos/contracts/activity/games/rockPaperScissors';

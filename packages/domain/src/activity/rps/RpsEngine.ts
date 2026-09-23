@@ -1,29 +1,16 @@
-export type RpsPick = 'rock' | 'paper' | 'scissors';
+import {
+  rpsPickSchema,
+  type RoundResult,
+  type RpsPick,
+  type RpsPlayerId,
+  type RpsRoundState,
+} from '@marquinhos/contracts/activity/games/rockPaperScissors';
 
 export interface RpsEngineConfig {
   bestOf?: number;
 }
 
-export interface RoundResult {
-  round: number;
-  p1Pick: RpsPick;
-  p2Pick: RpsPick;
-  winner: string | null;
-}
-
-export interface RpsRoundState {
-  round: number;
-  bestOf: number;
-  submitted: string[];
-  scores: {
-    player1: number;
-    player2: number;
-  };
-}
-
-const VALID_PICKS = new Set<RpsPick>(['rock', 'paper', 'scissors']);
-
-function determineWinner(p1Pick: RpsPick, p2Pick: RpsPick): string | null {
+function determineWinner(p1Pick: RpsPick, p2Pick: RpsPick): RpsPlayerId | null {
   if (p1Pick === p2Pick) return null;
 
   const winMap: Record<RpsPick, RpsPick> = {
@@ -36,7 +23,7 @@ function determineWinner(p1Pick: RpsPick, p2Pick: RpsPick): string | null {
 }
 
 function isValidPick(pick: unknown): pick is RpsPick {
-  return VALID_PICKS.has(pick as RpsPick);
+  return rpsPickSchema.safeParse(pick).success;
 }
 
 export class RpsEngine {
@@ -52,7 +39,7 @@ export class RpsEngine {
     };
   }
 
-  submitPick(playerId: string, pick: unknown): boolean {
+  submitPick(playerId: RpsPlayerId, pick: unknown): boolean {
     if (!isValidPick(pick)) return false;
 
     if (playerId === 'player1') {
@@ -109,7 +96,7 @@ export class RpsEngine {
   }
 
   getRoundState(): RpsRoundState {
-    const submitted: string[] = [];
+    const submitted: RpsPlayerId[] = [];
     if (this.currentPicks.player1 !== undefined) submitted.push('player1');
     if (this.currentPicks.player2 !== undefined) submitted.push('player2');
 
@@ -121,7 +108,7 @@ export class RpsEngine {
     };
   }
 
-  getMatchWinner(): 'player1' | 'player2' | null {
+  getMatchWinner(): RpsPlayerId | null {
     const winsNeeded = Math.floor(this.config.bestOf / 2) + 1;
     if (this.scores.player1 >= winsNeeded) return 'player1';
     if (this.scores.player2 >= winsNeeded) return 'player2';

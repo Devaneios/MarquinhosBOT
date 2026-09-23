@@ -1,11 +1,13 @@
+import {
+  pickPayloadSchema,
+  type RpsServerMessage,
+} from '@marquinhos/contracts/activity/games/rockPaperScissors';
 import { RpsSession } from 'services/activity/rps/RpsSession';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { broadcastMessage, sendMessage } from '../sendMessage';
 
 const PICK_RATE_LIMIT_WINDOW_MS = 1000;
 const PICK_RATE_LIMIT_MAX = 10;
-
-const pickPayloadSchema = z.object({ pick: z.string() });
 
 export const rpsAdapter: GameRoomAdapter<RpsSession> = {
   maxPlayers: 2,
@@ -42,7 +44,11 @@ export const rpsAdapter: GameRoomAdapter<RpsSession> = {
             const success =
               parsed.success &&
               session.submitPick(auth.userId, parsed.data.pick);
-            if (!success) client.send('error', { message: 'Invalid move' });
+            if (!success)
+              sendMessage<RpsServerMessage>(client, {
+                type: 'error',
+                payload: { message: 'Invalid move' },
+              });
           },
         },
         leave: {
@@ -54,23 +60,35 @@ export const rpsAdapter: GameRoomAdapter<RpsSession> = {
 
   onJoin(session, auth, client, seat, ctx) {
     if (seat !== 'player') {
-      client.send('init', {
-        playerId: null,
-        config: session.getPublicConfig(),
+      sendMessage<RpsServerMessage>(client, {
+        type: 'init',
+        payload: { playerId: null, config: session.getPublicConfig() },
       });
       return;
     }
     const playerId = session.addPlayer(auth.userId, client);
     if (!playerId) {
-      client.send('error', { message: 'Game is full' });
+      sendMessage<RpsServerMessage>(client, {
+        type: 'error',
+        payload: { message: 'Game is full' },
+      });
       client.leave();
       return;
     }
-    client.send('init', { playerId, config: session.getPublicConfig() });
+    sendMessage<RpsServerMessage>(client, {
+      type: 'init',
+      payload: { playerId, config: session.getPublicConfig() },
+    });
     if (auth.mode === 'single') session.enableBot(playerId);
     if (session.playerCount === 2 || auth.mode === 'single') {
-      ctx.broadcast('game_start', {});
-      ctx.broadcast('round_state', session.getRoundState());
+      broadcastMessage<RpsServerMessage>(ctx, {
+        type: 'game_start',
+        payload: {},
+      });
+      broadcastMessage<RpsServerMessage>(ctx, {
+        type: 'round_state',
+        payload: session.getRoundState(),
+      });
     }
   },
   onLeave(session, auth, client) {

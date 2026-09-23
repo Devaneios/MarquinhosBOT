@@ -1,26 +1,26 @@
-import { useMemo, useState } from 'react';
+import {
+  serverMessageSchema,
+  type RpsClientMessage,
+  type RpsPick,
+} from '@marquinhos/contracts/activity/games/rockPaperScissors';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { EndScreen, GameHeader } from '../../../components/game-shell';
 import { colyseusUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
-import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
 import { PICK_ICONS, PICK_LABEL_KEYS } from '../constants';
 import {
-  initPayloadSchema,
-  roundResultSchema,
-  rpsErrorPayloadSchema,
-  rpsStateSchema,
-  type GamePhase,
-  type RoundResult,
-  type RpsPick,
-  type RpsPlayerId,
-  type RpsState,
-} from '../types';
+  advanceAfterRoundResult,
+  applyRpsMessage,
+  initialRpsView,
+  ROUND_RESULT_DISPLAY_MS,
+} from '../rpsMessages';
 
 export function PickButton({
   pick,
@@ -72,53 +72,32 @@ export function RpsBoard({
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation(['rock-paper-scissors', 'common']);
-  const [playerId, setPlayerId] = useState<RpsPlayerId | null>(null);
-  const [phase, setPhase] = useState<GamePhase>('waiting');
-  const [roundState, setRoundState] = useState<RpsState | null>(null);
-  const [myPick, setMyPick] = useState<RpsPick | null>(null);
-  const [roundResult, setRoundResult] = useState<RoundResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState(initialRpsView);
+  const { playerId, phase, roundState, myPick, roundResult, error } = view;
 
   const { send, connectionState } = useColyseusRoom(
     'rock-paper-scissors',
     session,
     colyseusUrl(),
-    (message: ActivityMessage) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(initPayloadSchema, message);
-        if (payload) setPlayerId(payload.playerId);
-      } else if (message.type === 'game_start') {
-        setPhase('playing');
-      } else if (message.type === 'round_state') {
-        const payload = parsePayload(rpsStateSchema, message);
-        if (payload) setRoundState(payload);
-      } else if (message.type === 'round_result') {
-        const payload = parsePayload(roundResultSchema, message);
-        if (!payload) return;
-        setRoundResult(payload);
-        setPhase('round_result');
-        setMyPick(null);
-        setTimeout(() => {
-          setRoundState((prev) =>
-            prev && prev.round < Math.ceil(payload.round + 1)
-              ? { ...prev, round: payload.round + 1 }
-              : prev,
-          );
-          setPhase('playing');
-        }, 2000);
-      } else if (message.type === 'match_end') {
-        setPhase('match_end');
-      } else if (message.type === 'error') {
-        const payload = parsePayload(rpsErrorPayloadSchema, message);
-        if (payload) setError(payload.message);
-      }
+    (raw: ActivityMessage) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (message) setView((current) => applyRpsMessage(current, message));
     },
   );
 
+  useEffect(() => {
+    if (phase !== 'round_result') return;
+    const timer = setTimeout(
+      () => setView(advanceAfterRoundResult),
+      ROUND_RESULT_DISPLAY_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [phase]);
+
   const handlePickSubmit = (pick: RpsPick) => {
     if (myPick || !roundState) return;
-    setMyPick(pick);
-    send({ type: 'pick', payload: { pick } });
+    setView((current) => ({ ...current, myPick: pick }));
+    send({ type: 'pick', payload: { pick } } satisfies RpsClientMessage);
   };
 
   const isPlayerWinning = useMemo(() => {
