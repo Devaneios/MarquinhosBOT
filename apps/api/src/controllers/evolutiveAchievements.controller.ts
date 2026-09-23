@@ -1,23 +1,17 @@
 import type { Request, Response } from 'express';
+import { userGuildParamsSchema } from 'schemas/gamification.schema';
 import { EvolutiveAchievementsService } from 'services/evolutiveAchievements';
 
 const service = new EvolutiveAchievementsService();
 
-interface UserGuildParams {
-  userId: string;
-  guildId: string;
-}
-
 export const evolutiveAchievements = {
-  checkAndEvolve(
-    req: Request<
-      UserGuildParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
-    res: Response,
-  ): void {
-    const { userId, guildId } = req.params;
+  checkAndEvolve(req: Request, res: Response): void {
+    const params = userGuildParamsSchema.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ message: 'userId and guildId are required' });
+      return;
+    }
+    const { userId, guildId } = params.data;
     try {
       const evolutions = service.checkAndEvolveAll(userId, guildId);
       res.json({ data: evolutions });
@@ -27,15 +21,13 @@ export const evolutiveAchievements = {
     }
   },
 
-  getUserEvolutiveAchievements(
-    req: Request<
-      UserGuildParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
-    res: Response,
-  ): void {
-    const { userId, guildId } = req.params;
+  getUserEvolutiveAchievements(req: Request, res: Response): void {
+    const params = userGuildParamsSchema.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ message: 'userId and guildId are required' });
+      return;
+    }
+    const { userId, guildId } = params.data;
     try {
       const achievements = service.getUserEvolutiveAchievements(
         userId,
@@ -51,15 +43,13 @@ export const evolutiveAchievements = {
     }
   },
 
-  getEvolutionTimeline(
-    req: Request<
-      UserGuildParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
-    res: Response,
-  ): void {
-    const { userId, guildId } = req.params;
+  getEvolutionTimeline(req: Request, res: Response): void {
+    const params = userGuildParamsSchema.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ message: 'userId and guildId are required' });
+      return;
+    }
+    const { userId, guildId } = params.data;
     try {
       const timeline = service.getEvolutionTimeline(userId, guildId);
       res.json({ data: timeline });

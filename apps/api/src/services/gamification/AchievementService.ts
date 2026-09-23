@@ -6,6 +6,7 @@ import type {
   UserLevel,
   UserStats,
 } from 'services/gamification/types';
+import { z } from 'zod';
 
 const DEFAULT_ACHIEVEMENTS = [
   {
@@ -70,6 +71,13 @@ const DEFAULT_ACHIEVEMENTS = [
   },
 ];
 
+export const achievementConditionSchema = z.object({
+  type: z.string(),
+  threshold: z.number(),
+});
+
+type AchievementCondition = z.infer<typeof achievementConditionSchema>;
+
 export class AchievementService {
   private levelingService: LevelingService;
 
@@ -133,18 +141,11 @@ export class AchievementService {
     const unlocked: string[] = [];
 
     for (const achievement of candidates) {
-      let condition: { type: string; threshold: number };
+      let condition: AchievementCondition;
       try {
-        const parsed = JSON.parse(achievement.condition);
-        if (
-          !parsed ||
-          typeof parsed !== 'object' ||
-          typeof parsed.type !== 'string' ||
-          typeof parsed.threshold !== 'number'
-        ) {
-          throw new Error('Invalid condition schema');
-        }
-        condition = parsed as { type: string; threshold: number };
+        condition = achievementConditionSchema.parse(
+          JSON.parse(achievement.condition),
+        );
       } catch (e) {
         console.error(
           `[gamification] Malformed condition on achievement '${achievement.id}':`,
@@ -261,7 +262,7 @@ export class AchievementService {
     category: string;
     rarity: string;
     icon: string;
-    condition: object;
+    condition: AchievementCondition;
     reward_xp: number;
   }): Achievement {
     db.query(

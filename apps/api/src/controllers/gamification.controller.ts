@@ -1,24 +1,20 @@
 import type { Request, Response } from 'express';
+import {
+  addXpBodySchema,
+  createAchievementBodySchema,
+  guildGameTypeParamsSchema,
+  guildParamsSchema,
+  leaderboardQuerySchema,
+  recordGameResultBodySchema,
+  unlockAchievementBodySchema,
+  userGuildParamsSchema,
+} from 'schemas/gamification.schema';
 import type {
   AddXpResult,
   UserAchievement,
   UserLevel,
 } from 'services/gamification';
 import { GamificationService } from 'services/gamification';
-
-interface UserGuildParams {
-  userId: string;
-  guildId: string;
-}
-
-interface GuildParams {
-  guildId: string;
-}
-
-interface GuildGameTypeParams {
-  guildId: string;
-  gameType: string;
-}
 
 // Transform helpers — convert snake_case DB rows to camelCase for bot/web consumers
 function formatLevel(row: UserLevel) {
@@ -76,17 +72,13 @@ class GamificationController {
 
   addXP(req: Request, res: Response) {
     try {
-      const { userId, guildId, eventType } = req.body as {
-        userId: string;
-        guildId: string;
-        eventType: string;
-      };
-
-      if (!userId || !guildId || !eventType) {
+      const body = addXpBodySchema.safeParse(req.body);
+      if (!body.success) {
         return res
           .status(400)
           .json({ message: 'userId, guildId, and eventType are required' });
       }
+      const { userId, guildId, eventType } = body.data;
 
       const result = this.service.addXP(userId, guildId, eventType);
       const data = formatAddXpResult(result);
@@ -100,16 +92,15 @@ class GamificationController {
     }
   }
 
-  getUserLevel(
-    req: Request<
-      UserGuildParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
-    res: Response,
-  ) {
+  getUserLevel(req: Request, res: Response) {
     try {
-      const { userId, guildId } = req.params;
+      const params = userGuildParamsSchema.safeParse(req.params);
+      if (!params.success) {
+        return res
+          .status(400)
+          .json({ message: 'userId and guildId are required' });
+      }
+      const { userId, guildId } = params.data;
       const row = this.service.getUserLevel(userId, guildId);
       return res.status(200).json({ data: formatLevel(row) });
     } catch (error) {
@@ -118,13 +109,14 @@ class GamificationController {
     }
   }
 
-  getLeaderboard(
-    req: Request<GuildParams, Record<string, unknown>, Record<string, unknown>>,
-    res: Response,
-  ) {
+  getLeaderboard(req: Request, res: Response) {
     try {
-      const { guildId } = req.params;
-      const limit = Math.min(parseInt(req.query.limit as string) || 10, 25);
+      const params = guildParamsSchema.safeParse(req.params);
+      if (!params.success) {
+        return res.status(400).json({ message: 'guildId is required' });
+      }
+      const { guildId } = params.data;
+      const limit = Math.min(leaderboardQuerySchema.parse(req.query).limit, 25);
       const rows = this.service.getLeaderboard(guildId, limit);
       return res.status(200).json({ data: rows.map(formatLevel) });
     } catch (error) {
@@ -135,17 +127,13 @@ class GamificationController {
 
   unlockAchievement(req: Request, res: Response) {
     try {
-      const { userId, guildId, achievementId } = req.body as {
-        userId: string;
-        guildId: string;
-        achievementId: string;
-      };
-
-      if (!userId || !guildId || !achievementId) {
+      const body = unlockAchievementBodySchema.safeParse(req.body);
+      if (!body.success) {
         return res
           .status(400)
           .json({ message: 'userId, guildId, and achievementId are required' });
       }
+      const { userId, guildId, achievementId } = body.data;
 
       const unlocked = this.service.unlockAchievement(
         userId,
@@ -162,16 +150,15 @@ class GamificationController {
     }
   }
 
-  getUserAchievements(
-    req: Request<
-      UserGuildParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
-    res: Response,
-  ) {
+  getUserAchievements(req: Request, res: Response) {
     try {
-      const { userId, guildId } = req.params;
+      const params = userGuildParamsSchema.safeParse(req.params);
+      if (!params.success) {
+        return res
+          .status(400)
+          .json({ message: 'userId and guildId are required' });
+      }
+      const { userId, guildId } = params.data;
       const rows = this.service.getUserAchievements(userId, guildId);
       return res.status(200).json({ data: rows.map(formatAchievement) });
     } catch (error) {
@@ -192,7 +179,11 @@ class GamificationController {
 
   createAchievement(req: Request, res: Response) {
     try {
-      const data = this.service.createAchievement(req.body);
+      const body = createAchievementBodySchema.safeParse(req.body);
+      if (!body.success) {
+        return res.status(400).json({ message: 'Invalid achievement' });
+      }
+      const data = this.service.createAchievement(body.data);
       return res.status(201).json({ data, message: 'Achievement created' });
     } catch (error) {
       console.error(error);
@@ -212,34 +203,14 @@ class GamificationController {
 
   recordGameResult(req: Request, res: Response) {
     try {
-      const { sessionId, guildId, gameType, durationMs, results } =
-        req.body as {
-          sessionId: string;
-          guildId: string;
-          gameType: string;
-          durationMs?: number;
-          results: { userId: string; position: number }[];
-        };
-
-      if (
-        !sessionId ||
-        !guildId ||
-        !gameType ||
-        !Array.isArray(results) ||
-        results.length === 0
-      ) {
+      const body = recordGameResultBodySchema.safeParse(req.body);
+      if (!body.success) {
         return res.status(400).json({
           message: 'sessionId, guildId, gameType, and results are required',
         });
       }
 
-      this.service.recordGameResult({
-        sessionId,
-        guildId,
-        gameType,
-        durationMs,
-        results,
-      });
+      this.service.recordGameResult(body.data);
       return res.status(200).json({ message: 'Game result recorded' });
     } catch (error) {
       console.error(error);
@@ -247,16 +218,15 @@ class GamificationController {
     }
   }
 
-  getUserGameStats(
-    req: Request<
-      UserGuildParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
-    res: Response,
-  ) {
+  getUserGameStats(req: Request, res: Response) {
     try {
-      const { userId, guildId } = req.params;
+      const params = userGuildParamsSchema.safeParse(req.params);
+      if (!params.success) {
+        return res
+          .status(400)
+          .json({ message: 'userId and guildId are required' });
+      }
+      const { userId, guildId } = params.data;
       const data = this.service.getUserGameStats(userId, guildId);
       return res.status(200).json({ data });
     } catch (error) {
@@ -265,16 +235,15 @@ class GamificationController {
     }
   }
 
-  getGameLeaderboard(
-    req: Request<
-      GuildGameTypeParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
-    res: Response,
-  ) {
+  getGameLeaderboard(req: Request, res: Response) {
     try {
-      const { guildId, gameType } = req.params;
+      const params = guildGameTypeParamsSchema.safeParse(req.params);
+      if (!params.success) {
+        return res
+          .status(400)
+          .json({ message: 'guildId and gameType are required' });
+      }
+      const { guildId, gameType } = params.data;
       const data = this.service.getGameLeaderboard(guildId, gameType);
       return res.status(200).json({ data });
     } catch (error) {
