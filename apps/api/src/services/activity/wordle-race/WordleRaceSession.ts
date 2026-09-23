@@ -1,4 +1,8 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import type {
+  WordleRaceServerMessage,
+  WordleRaceState,
+} from '@marquinhos/contracts/activity/games/wordleRace';
 import { WordleRaceEngine } from '@marquinhos/domain/activity/wordle-race/WordleRaceEngine';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
@@ -33,7 +37,7 @@ export class WordleRaceSession {
 
   constructor(
     private identity: WordleRaceSessionIdentity,
-    private broadcaster: ActivityBroadcaster,
+    private broadcaster: ActivityBroadcaster<WordleRaceServerMessage>,
     gamification: GamificationService = new GamificationService(),
     options: WordleRaceSessionOptions = {},
   ) {
@@ -268,7 +272,7 @@ export class WordleRaceSession {
     }
   }
 
-  getGameState(userId: string) {
+  getGameState(userId: string): WordleRaceState {
     const engineState = this.engine.getState();
     const player = engineState.players.get(userId);
     return {

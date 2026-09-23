@@ -1,12 +1,14 @@
+import {
+  guessPayloadSchema,
+  type WordleRaceServerMessage,
+} from '@marquinhos/contracts/activity/games/wordleRace';
 import { ACTION_REJECTED } from '@marquinhos/contracts/activity/protocol';
 import { WordleRaceSession } from 'services/activity/wordle-race/WordleRaceSession';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { sendMessage } from '../sendMessage';
 
 const GUESS_RATE_LIMIT_WINDOW_MS = 1000;
 const GUESS_RATE_LIMIT_MAX = 3;
-
-const guessPayloadSchema = z.object({ guess: z.string().default('') });
 
 export const wordleRaceAdapter: GameRoomAdapter<WordleRaceSession> = {
   // WordleRaceSession.addPlayer()/WordleRaceEngine.addPlayer() have no
@@ -45,12 +47,18 @@ export const wordleRaceAdapter: GameRoomAdapter<WordleRaceSession> = {
           handle: (auth, client, payload: unknown) => {
             const parsed = guessPayloadSchema.safeParse(payload);
             if (!parsed.success) {
-              client.send(ACTION_REJECTED, { error: 'Invalid guess' });
+              sendMessage<WordleRaceServerMessage>(client, {
+                type: ACTION_REJECTED,
+                payload: { error: 'Invalid guess' },
+              });
               return;
             }
             const result = session.submitGuess(auth.userId, parsed.data.guess);
             if (!result.ok)
-              client.send(ACTION_REJECTED, { error: result.error });
+              sendMessage<WordleRaceServerMessage>(client, {
+                type: ACTION_REJECTED,
+                payload: { error: result.error },
+              });
           },
         },
         leave: { handle: (auth, client) => session.leave(auth.userId, client) },
@@ -70,11 +78,17 @@ export const wordleRaceAdapter: GameRoomAdapter<WordleRaceSession> = {
     // the `currentPlayer*` fields fall back to their empty/false defaults —
     // so it's the correct call for both cases.
     if (seat !== 'player') {
-      client.send('init', session.getGameState(auth.userId));
+      sendMessage<WordleRaceServerMessage>(client, {
+        type: 'init',
+        payload: session.getGameState(auth.userId),
+      });
       return;
     }
     session.addPlayer(auth.userId, client);
-    client.send('init', session.getGameState(auth.userId));
+    sendMessage<WordleRaceServerMessage>(client, {
+      type: 'init',
+      payload: session.getGameState(auth.userId),
+    });
   },
   onLeave(session, auth, client) {
     session.pauseForDisconnect(auth.userId, client);

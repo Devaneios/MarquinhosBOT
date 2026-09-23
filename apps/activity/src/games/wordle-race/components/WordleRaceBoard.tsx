@@ -1,4 +1,12 @@
 import {
+  serverMessageSchema,
+  type WordleRaceClientMessage,
+} from '@marquinhos/contracts/activity/games/wordleRace';
+import {
+  ACTION_REJECTED,
+  parseMessage,
+} from '@marquinhos/contracts/activity/protocol';
+import {
   type GuessRow,
   type LetterFeedback,
 } from '@marquinhos/contracts/wordle';
@@ -13,20 +21,15 @@ import { ConnectingScreen, GameHeader } from '../../../components/game-shell';
 import { colyseusUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
 import type { WsSession } from '../../shared/activitySession';
-import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
 import { FEEDBACK_COLORS, KB_LETTERS, KB_ROWS } from '../constants';
 import {
-  actionRejectedPayloadSchema,
-  gameStateSchema,
-  guessSubmittedPayloadSchema,
-  playerExhaustedPayloadSchema,
-  playerSolvedPayloadSchema,
-  type GameState,
-} from '../types';
+  applyWordleRaceMessage,
+  initialWordleRaceView,
+} from '../wordleRaceMessages';
 
 function Tile({
   letter,
@@ -180,8 +183,8 @@ export function WordleRaceBoard({
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation(['wordle-race', 'common']);
-  const [gameState, setGameState] = useState<GameState | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState(initialWordleRaceView);
+  const { state: gameState, error } = view;
   const [currentGuess, setCurrentGuess] = useState('');
   const [shake, setShake] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -191,72 +194,12 @@ export function WordleRaceBoard({
     'wordle-race',
     session,
     colyseusUrl(),
-    (message: ActivityMessage) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(gameStateSchema, message);
-        if (!payload) return;
-        setGameState(payload);
-        setError(null);
-      } else if (message.type === 'guess_submitted') {
-        const payload = parsePayload(guessSubmittedPayloadSchema, message);
-        if (!payload) return;
-        setGameState((prev) => {
-          if (!prev) return prev;
-          const newState = { ...prev };
-          if (payload.userId === userId) {
-            newState.currentPlayerGuesses = [
-              ...newState.currentPlayerGuesses,
-              { guess: payload.guess, feedback: payload.feedback },
-            ];
-            newState.currentPlayerSolved = payload.solved;
-          }
-          const playerIdx = newState.players.findIndex(
-            (p) => p.userId === payload.userId,
-          );
-          if (playerIdx >= 0) {
-            newState.players[playerIdx].attempts = payload.attempts;
-            newState.players[playerIdx].solved = payload.solved;
-            newState.players[playerIdx].guesses = [
-              ...newState.players[playerIdx].guesses,
-              { guess: payload.guess, feedback: payload.feedback },
-            ];
-          }
-          return newState;
-        });
-        setCurrentGuess('');
-        setError(null);
-      } else if (message.type === 'action_rejected') {
-        const payload = parsePayload(actionRejectedPayloadSchema, message);
-        if (!payload) return;
-        setError(payload.error);
-        triggerShake();
-      } else if (message.type === 'player_solved') {
-        const payload = parsePayload(playerSolvedPayloadSchema, message);
-        if (payload?.firstSolver) {
-          setGameState((prev) =>
-            prev ? { ...prev, firstSolver: payload.userId } : prev,
-          );
-        }
-      } else if (message.type === 'player_exhausted') {
-        const payload = parsePayload(playerExhaustedPayloadSchema, message);
-        if (!payload) return;
-        setGameState((prev) => {
-          if (!prev) return prev;
-          const newState = { ...prev };
-          const playerIdx = newState.players.findIndex(
-            (p) => p.userId === payload.userId,
-          );
-          if (playerIdx >= 0) {
-            newState.players[playerIdx].exhausted = true;
-          }
-          if (payload.userId === userId) {
-            newState.currentPlayerExhausted = true;
-          }
-          return newState;
-        });
-      } else if (message.type === 'game_ended') {
-        setGameState((prev) => (prev ? { ...prev, gameOver: true } : prev));
-      }
+    (raw: ActivityMessage) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (!message) return;
+      if (message.type === 'guess_submitted') setCurrentGuess('');
+      if (message.type === ACTION_REJECTED) triggerShake();
+      setView((current) => applyWordleRaceMessage(current, message, userId));
     },
   );
 
@@ -288,7 +231,7 @@ export function WordleRaceBoard({
       !gameState
     )
       return;
-    setError(null);
+    setView((current) => ({ ...current, error: null }));
     setCurrentGuess((prev) =>
       prev.length < gameState.targetWordLength ? prev + letter : prev,
     );
@@ -297,7 +240,7 @@ export function WordleRaceBoard({
   function backspace() {
     if (gameState?.currentPlayerSolved || gameState?.gameOver || !gameState)
       return;
-    setError(null);
+    setView((current) => ({ ...current, error: null }));
     setCurrentGuess((prev) => prev.slice(0, -1));
   }
 
@@ -313,7 +256,10 @@ export function WordleRaceBoard({
       triggerShake();
       return;
     }
-    send({ type: 'guess', payload: { guess: currentGuess } });
+    send({
+      type: 'guess',
+      payload: { guess: currentGuess },
+    } satisfies WordleRaceClientMessage);
   }
 
   useEffect(() => {
