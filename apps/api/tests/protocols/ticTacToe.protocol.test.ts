@@ -6,7 +6,8 @@ const { bootColyseusTestServer, nextMessage, unparsedMessages } =
 const { mintWsSessionToken } =
   await import('../../src/services/activity/wsSessionToken');
 const { roomKey } = await import('@marquinhos/domain/activity/roomKey');
-const checkers = await import('@marquinhos/contracts/activity/games/checkers');
+const ticTacToe =
+  await import('@marquinhos/contracts/activity/games/ticTacToe');
 
 type ColyseusTestServer = import('@colyseus/testing').ColyseusTestServer;
 let colyseus: ColyseusTestServer;
@@ -29,40 +30,35 @@ function creds(userId: string) {
     instanceId: 'inst-1',
     guildId: 'guild-1',
     mode: 'multi',
-    game: 'checkers',
-    roomId: 'CHECKERS',
+    game: 'tic-tac-toe',
+    roomId: 'TICTACTOE',
   } as const;
   return { token: mintWsSessionToken(identity), roomKey: roomKey(identity) };
 }
 
-describe('checkers protocol', () => {
-  it('sends only messages the checkers protocol describes', async () => {
+describe('tic-tac-toe protocol', () => {
+  it('sends only messages the tic-tac-toe protocol describes', async () => {
     const a = creds('user-a');
     const room = await colyseus.createRoom('match', {
       roomKey: a.roomKey,
-      game: 'checkers',
+      game: 'tic-tac-toe',
     });
     const clientA = await colyseus.connectTo(room, a);
     const clientB = await colyseus.connectTo(room, creds('user-b'));
-    const initA = await nextMessage<{ color: string }>(clientA, 'init');
-    await nextMessage(clientB, 'init');
-    const black = initA.color === 'black' ? clientA : clientB;
-    const red = black === clientA ? clientB : clientA;
+    const initA = await nextMessage<{ player: string }>(clientA, 'init');
+    await nextMessage(clientB, 'game_ready');
+    const x = initA.player === 'X' ? clientA : clientB;
+    const o = x === clientA ? clientB : clientA;
 
-    black.send('move', { from: { row: 2, col: 1 }, to: { row: 3, col: 2 } });
-    await nextMessage(
-      red,
-      'state',
-      (state: unknown) =>
-        checkers.checkersStateSchema.safeParse(state).data?.turn === 'red',
-    );
-    red.send('move', { from: { row: 0, col: 0 }, to: { row: 7, col: 7 } });
-    await nextMessage(red, 'action_rejected');
+    x.send('move', { row: 0, col: 0 });
+    await nextMessage(o, 'state_update');
+    x.send('move', { row: 1, col: 1 });
+    await nextMessage(x, 'action_rejected');
     await clientA.leave();
     await nextMessage(clientB, 'opponent_disconnected');
 
     expect(
-      unparsedMessages([clientA, clientB], checkers.serverMessageSchema),
+      unparsedMessages([clientA, clientB], ticTacToe.serverMessageSchema),
     ).toEqual([]);
   });
 });

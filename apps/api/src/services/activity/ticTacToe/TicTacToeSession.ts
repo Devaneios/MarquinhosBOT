@@ -1,9 +1,10 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import type {
+  Player,
+  TicTacToeServerMessage,
+} from '@marquinhos/contracts/activity/games/ticTacToe';
 import { TicTacToeBot } from '@marquinhos/domain/activity/ticTacToe/TicTacToeBot';
-import {
-  TicTacToeEngine,
-  type Player,
-} from '@marquinhos/domain/activity/ticTacToe/TicTacToeEngine';
+import { TicTacToeEngine } from '@marquinhos/domain/activity/ticTacToe/TicTacToeEngine';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
@@ -46,7 +47,7 @@ export class TicTacToeSession {
 
   constructor(
     private identity: TicTacToeSessionIdentity,
-    private broadcaster: ActivityBroadcaster,
+    private broadcaster: ActivityBroadcaster<TicTacToeServerMessage>,
     private gamification: GamificationService = new GamificationService(),
     options: TicTacToeSessionOptions = {},
   ) {

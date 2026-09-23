@@ -1,8 +1,3 @@
-import type {
-  CellValue,
-  Player,
-} from '@marquinhos/domain/activity/ticTacToe/TicTacToeEngine';
-
 const LINES = [
   [0, 1, 2],
   [3, 4, 5],
@@ -73,3 +68,7 @@ export class TicTacToeBot {
     return { row: Math.floor(bestIndex / 3), col: bestIndex % 3 };
   }
 }
+import type {
+  CellValue,
+  Player,
+} from '@marquinhos/contracts/activity/games/ticTacToe';

@@ -1,12 +1,14 @@
+import {
+  movePayloadSchema,
+  type TicTacToeServerMessage,
+} from '@marquinhos/contracts/activity/games/ticTacToe';
 import { ACTION_REJECTED } from '@marquinhos/contracts/activity/protocol';
 import { TicTacToeSession } from 'services/activity/ticTacToe/TicTacToeSession';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { broadcastMessage, sendMessage } from '../sendMessage';
 
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
 const MOVE_RATE_LIMIT_MAX = 10;
-
-const movePayloadSchema = z.object({ row: z.number(), col: z.number() });
 
 export const ticTacToeAdapter: GameRoomAdapter<TicTacToeSession> = {
   maxPlayers: 2,
@@ -40,7 +42,10 @@ export const ticTacToeAdapter: GameRoomAdapter<TicTacToeSession> = {
           handle: (auth, client, payload: unknown) => {
             const parsed = movePayloadSchema.safeParse(payload);
             if (!parsed.success) {
-              client.send(ACTION_REJECTED, { error: 'Invalid move' });
+              sendMessage<TicTacToeServerMessage>(client, {
+                type: ACTION_REJECTED,
+                payload: { error: 'Invalid move' },
+              });
               return;
             }
             const result = session.handleMove(
@@ -49,7 +54,10 @@ export const ticTacToeAdapter: GameRoomAdapter<TicTacToeSession> = {
               parsed.data.col,
             );
             if (!result.ok)
-              client.send(ACTION_REJECTED, { error: result.error });
+              sendMessage<TicTacToeServerMessage>(client, {
+                type: ACTION_REJECTED,
+                payload: { error: result.error },
+              });
           },
         },
         restart: {
@@ -69,18 +77,25 @@ export const ticTacToeAdapter: GameRoomAdapter<TicTacToeSession> = {
     // An overflow joiner is never kicked: it gets `init` with a null
     // `player` and stays connected watching broadcasts.
     if (seat !== 'player') {
-      client.send('init', { player: null, state: session.getPublicState() });
+      sendMessage<TicTacToeServerMessage>(client, {
+        type: 'init',
+        payload: { player: null, state: session.getPublicState() },
+      });
       return;
     }
     const player = session.addPlayer(auth.userId, client);
-    client.send('init', { player, state: session.getPublicState() });
+    sendMessage<TicTacToeServerMessage>(client, {
+      type: 'init',
+      payload: { player, state: session.getPublicState() },
+    });
     if (!player) return;
 
     if (auth.mode === 'single') session.enableBot(player);
 
     if (session.playerCount === 2) {
-      ctx.broadcast('game_ready', {
-        state: session.getPublicState(),
+      broadcastMessage<TicTacToeServerMessage>(ctx, {
+        type: 'game_ready',
+        payload: { state: session.getPublicState() },
       });
     }
   },

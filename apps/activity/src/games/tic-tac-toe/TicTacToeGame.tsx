@@ -1,4 +1,9 @@
-import { useCallback, useState } from 'react';
+import {
+  serverMessageSchema,
+  type TicTacToeClientMessage,
+} from '@marquinhos/contracts/activity/games/ticTacToe';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -9,7 +14,6 @@ import {
 } from '../../components/game-shell';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { colyseusUrl } from '../../lib/apiBase';
-import { parsePayload } from '../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
@@ -17,11 +21,9 @@ import {
 import { TicTacToeCanvas } from './components';
 import { useTicTacToeSession } from './hooks/useTicTacToeSession';
 import {
-  actionRejectedPayloadSchema,
-  initPayloadSchema,
-  ticTacToeStateSchema,
-  type TicTacToeState,
-} from './types';
+  applyTicTacToeMessage,
+  initialTicTacToeView,
+} from './ticTacToeMessages';
 
 export function TicTacToeGame({
   identity,
@@ -38,41 +40,22 @@ export function TicTacToeGame({
     backToMenu,
   } = useTicTacToeSession(identity, onAuthInvalid);
 
-  const [gameState, setGameState] = useState<TicTacToeState>({
-    board: [
-      [null, null, null],
-      [null, null, null],
-      [null, null, null],
-    ],
-    currentPlayer: 'X',
-    winner: null,
-    isDraw: false,
-    moveCount: 0,
-  });
+  const [view, setView] = useState(initialTicTacToeView);
+  const { state: gameState, player, error } = view;
 
-  const [player, setPlayer] = useState<string | null>('X');
-  const [error, setError] = useState<string>('');
-
-  const onMessage = useCallback((message: ActivityMessage) => {
-    if (message.type === 'init') {
-      const payload = parsePayload(initPayloadSchema, message);
-      if (!payload) return;
-      setPlayer(payload.player);
-      setGameState(payload.state);
-    } else if (message.type === 'state_update') {
-      const payload = parsePayload(ticTacToeStateSchema, message);
-      if (payload) setGameState(payload);
-    } else if (message.type === 'action_rejected') {
-      // ticTacToeAdapter.ts (server) sends ACTION_REJECTED ('action_rejected')
-      // for a rejected move, not 'move_error' — a pre-existing mismatch with
-      // this client code, found and fixed while adding room support (see the
-      // matching note in checkers).
-      const payload = parsePayload(actionRejectedPayloadSchema, message);
-      if (!payload) return;
-      setError(payload.error);
-      setTimeout(() => setError(''), 3000);
-    }
+  const onMessage = useCallback((raw: ActivityMessage) => {
+    const message = parseMessage(serverMessageSchema, raw);
+    if (message) setView((current) => applyTicTacToeMessage(current, message));
   }, []);
+
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(
+      () => setView((current) => ({ ...current, error: '' })),
+      3000,
+    );
+    return () => clearTimeout(timer);
+  }, [error]);
 
   const { send: roomSend, connectionState } = useColyseusRoom(
     'tic-tac-toe',
@@ -80,7 +63,7 @@ export function TicTacToeGame({
     colyseusUrl(),
     onMessage,
     (room) => {
-      room.send('leave', {});
+      room.send('leave');
     },
   );
 
@@ -178,7 +161,10 @@ export function TicTacToeGame({
             state={gameState}
             player={player}
             onMove={(row, col) => {
-              roomSend({ type: 'move', payload: { row, col } });
+              roomSend({
+                type: 'move',
+                payload: { row, col },
+              } satisfies TicTacToeClientMessage);
             }}
             gameOver={isGameOver}
           />

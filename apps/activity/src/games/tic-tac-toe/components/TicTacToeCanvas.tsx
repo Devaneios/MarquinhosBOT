@@ -1,6 +1,6 @@
+import type { TicTacToeState } from '@marquinhos/contracts/activity/games/ticTacToe';
 import { Application, Graphics, Text } from 'pixi.js';
 import { useEffect, useRef } from 'react';
-import type { TicTacToeState } from '../types';
 
 interface TicTacToeCanvasProps {
   state: TicTacToeState;

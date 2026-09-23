@@ -1,56 +1,42 @@
+import {
+  serverMessageSchema,
+  type TicTacToeClientMessage,
+} from '@marquinhos/contracts/activity/games/ticTacToe';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useState } from 'react';
-import { parsePayload } from '../../shared/colyseusConnection';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
 import {
-  actionRejectedPayloadSchema,
-  initPayloadSchema,
-  ticTacToeStateSchema,
-  type TicTacToeState,
-} from '../types';
+  applyTicTacToeMessage,
+  initialTicTacToeView,
+} from '../ticTacToeMessages';
 import { TicTacToeCanvas } from './TicTacToeCanvas';
-
-const EMPTY_BOARD: TicTacToeState = {
-  board: [
-    [null, null, null],
-    [null, null, null],
-    [null, null, null],
-  ],
-  currentPlayer: 'X',
-  winner: null,
-  isDraw: false,
-  moveCount: 0,
-};
 
 // Renders the Tic-Tac-Toe board inside a multiplayer Room view — driven by
 // RoomConnectionContext (the room's one shared connection) instead of
-// TicTacToeGame's own useColyseusRoom call, mirroring the same
-// init/state_update/action_rejected message handling TicTacToeGame.tsx
-// already does for the standalone path.
+// TicTacToeGame's own useColyseusRoom call, sharing applyTicTacToeMessage
+// with the standalone path.
 export function TicTacToeRoomBoard() {
   const ctx = useRoomConnectionContext();
-  const [gameState, setGameState] = useState<TicTacToeState>(EMPTY_BOARD);
-  const [player, setPlayer] = useState<string | null>('X');
-  const [error, setError] = useState('');
+  const [view, setView] = useState(initialTicTacToeView);
+  const { state: gameState, player, error } = view;
 
   useEffect(() => {
     if (!ctx) return;
-    return ctx.subscribe((message) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(initPayloadSchema, message);
-        if (!payload) return;
-        setPlayer(payload.player);
-        setGameState(payload.state);
-      } else if (message.type === 'state_update') {
-        const payload = parsePayload(ticTacToeStateSchema, message);
-        if (payload) setGameState(payload);
-      } else if (message.type === 'action_rejected') {
-        const payload = parsePayload(actionRejectedPayloadSchema, message);
-        if (!payload) return;
-        setError(payload.error);
-        setTimeout(() => setError(''), 3000);
-      }
+    return ctx.subscribe((raw) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (message)
+        setView((current) => applyTicTacToeMessage(current, message));
     });
   }, [ctx]);
+
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(
+      () => setView((current) => ({ ...current, error: '' })),
+      3000,
+    );
+    return () => clearTimeout(timer);
+  }, [error]);
 
   const isGameOver = gameState.winner !== null || gameState.isDraw;
 
@@ -67,7 +53,10 @@ export function TicTacToeRoomBoard() {
         role={ctx?.role ?? null}
         gameOver={isGameOver}
         onMove={(row, col) =>
-          ctx?.send({ type: 'move', payload: { row, col } })
+          ctx?.send({
+            type: 'move',
+            payload: { row, col },
+          } satisfies TicTacToeClientMessage)
         }
       />
     </div>

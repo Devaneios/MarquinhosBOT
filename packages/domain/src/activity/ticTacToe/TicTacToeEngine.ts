@@ -1,13 +1,7 @@
-export type Player = 'X' | 'O';
-export type CellValue = Player | null;
-
-export interface TicTacToeState {
-  board: CellValue[][];
-  currentPlayer: Player;
-  winner: Player | null;
-  isDraw: boolean;
-  moveCount: number;
-}
+import type {
+  Player,
+  TicTacToeState,
+} from '@marquinhos/contracts/activity/games/ticTacToe';
 
 interface MoveResult {
   success: boolean;

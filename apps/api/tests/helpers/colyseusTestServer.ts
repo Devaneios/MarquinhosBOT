@@ -82,10 +82,20 @@ export function drainMessages(client: object, type: string): void {
   inbox.received = inbox.received.filter((m) => m.type !== type);
 }
 
-export function receivedLog(
-  client: object,
-): { type: string; message: unknown }[] {
-  return [...inboxOf(client).log];
+export function unparsedMessages(
+  clients: object[],
+  schema: { safeParse(value: unknown): { success: boolean } },
+): string[] {
+  return clients.flatMap((client) =>
+    inboxOf(client)
+      .log.filter(
+        ({ type, message }) =>
+          !schema.safeParse(
+            message === undefined ? { type } : { type, payload: message },
+          ).success,
+      )
+      .map(({ type }) => type),
+  );
 }
 
 export function pendingMessages(client: object, type: string): unknown[] {

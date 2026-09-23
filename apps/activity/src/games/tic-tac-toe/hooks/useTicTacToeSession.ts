@@ -1,3 +1,4 @@
+import type { TicTacToeState } from '@marquinhos/contracts/activity/games/ticTacToe';
 import { useState } from 'react';
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { errorMessage, isAuthError } from '../../../lib/http';
@@ -5,7 +6,7 @@ import {
   fetchWsSessionToken,
   type WsSession,
 } from '../../shared/activitySession';
-import type { GameMode, TicTacToeState } from '../types';
+import type { GameMode } from '../types';
 
 export interface TicTacToeSession {
   session: WsSession;
