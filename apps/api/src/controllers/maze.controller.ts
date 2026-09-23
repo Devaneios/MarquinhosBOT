@@ -1,48 +1,34 @@
 import type { Request, Response } from 'express';
+import {
+  abandonMazeBodySchema,
+  MAZE_DIRECTIONS,
+  MAZE_MODES,
+  MAZE_SIZES,
+  mazeSessionParamsSchema,
+  moveMazeBodySchema,
+  startMazeBodySchema,
+} from 'schemas/maze.schema';
 import { MazeService } from 'services/maze';
-
-const VALID_SIZES = [15, 31, 51, 99];
-const VALID_MODES = ['open', 'foggy'];
-const VALID_DIRECTIONS = ['up', 'down', 'left', 'right'];
-
-interface SessionIdParams {
-  sessionId: string;
-}
 
 export class MazeController {
   private service = new MazeService();
 
   startMaze(req: Request, res: Response) {
     try {
-      const { userId, guildId, mode, size } = req.body as {
-        userId: string;
-        guildId: string;
-        mode: string;
-        size: number;
-      };
-
-      if (!userId || !guildId) {
-        return res
-          .status(400)
-          .json({ message: 'userId and guildId are required' });
-      }
-      if (!VALID_MODES.includes(mode)) {
-        return res
-          .status(400)
-          .json({ message: `mode must be one of: ${VALID_MODES.join(', ')}` });
-      }
-      if (!VALID_SIZES.includes(Number(size))) {
-        return res
-          .status(400)
-          .json({ message: `size must be one of: ${VALID_SIZES.join(', ')}` });
+      const body = startMazeBodySchema.safeParse(req.body);
+      if (!body.success) {
+        const field = body.error.issues[0]?.path[0];
+        const message =
+          field === 'mode'
+            ? `mode must be one of: ${MAZE_MODES.join(', ')}`
+            : field === 'size'
+              ? `size must be one of: ${MAZE_SIZES.join(', ')}`
+              : 'userId and guildId are required';
+        return res.status(400).json({ message });
       }
 
-      const data = this.service.createMazeSession(
-        userId,
-        guildId,
-        mode as 'open' | 'foggy',
-        Number(size),
-      );
+      const { userId, guildId, mode, size } = body.data;
+      const data = this.service.createMazeSession(userId, guildId, mode, size);
       return res.status(200).json({ data });
     } catch (error) {
       console.error(error);
@@ -50,31 +36,26 @@ export class MazeController {
     }
   }
 
-  moveMaze(
-    req: Request<
-      SessionIdParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
-    res: Response,
-  ) {
+  moveMaze(req: Request, res: Response) {
     try {
-      const { sessionId } = req.params;
-      const { userId, direction } = req.body as {
-        userId: string;
-        direction: string;
-      };
-
-      if (!userId) {
-        return res.status(400).json({ message: 'userId is required' });
+      const params = mazeSessionParamsSchema.safeParse(req.params);
+      if (!params.success) {
+        return res.status(400).json({ message: 'sessionId is required' });
       }
-      if (!VALID_DIRECTIONS.includes(direction)) {
-        return res.status(400).json({
-          message: `direction must be one of: ${VALID_DIRECTIONS.join(', ')}`,
-        });
+      const body = moveMazeBodySchema.safeParse(req.body);
+      if (!body.success) {
+        const message =
+          body.error.issues[0]?.path[0] === 'direction'
+            ? `direction must be one of: ${MAZE_DIRECTIONS.join(', ')}`
+            : 'userId is required';
+        return res.status(400).json({ message });
       }
 
-      const data = this.service.processMazeMove(sessionId, userId, direction);
+      const data = this.service.processMazeMove(
+        params.data.sessionId,
+        body.data.userId,
+        body.data.direction,
+      );
       if (data === null) {
         return res
           .status(404)
@@ -87,17 +68,13 @@ export class MazeController {
     }
   }
 
-  getMaze(
-    req: Request<
-      SessionIdParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
-    res: Response,
-  ) {
+  getMaze(req: Request, res: Response) {
     try {
-      const { sessionId } = req.params;
-      const data = this.service.getMazeSession(sessionId);
+      const params = mazeSessionParamsSchema.safeParse(req.params);
+      if (!params.success) {
+        return res.status(400).json({ message: 'sessionId is required' });
+      }
+      const data = this.service.getMazeSession(params.data.sessionId);
       if (data === null) {
         return res.status(404).json({ message: 'Maze session not found' });
       }
@@ -108,23 +85,18 @@ export class MazeController {
     }
   }
 
-  abandonMaze(
-    req: Request<
-      SessionIdParams,
-      Record<string, unknown>,
-      Record<string, unknown>
-    >,
-    res: Response,
-  ) {
+  abandonMaze(req: Request, res: Response) {
     try {
-      const { sessionId } = req.params;
-      const { userId } = req.body as { userId: string };
-
-      if (!userId) {
+      const params = mazeSessionParamsSchema.safeParse(req.params);
+      if (!params.success) {
+        return res.status(400).json({ message: 'sessionId is required' });
+      }
+      const body = abandonMazeBodySchema.safeParse(req.body);
+      if (!body.success) {
         return res.status(400).json({ message: 'userId is required' });
       }
 
-      this.service.abandonMazeSession(sessionId, userId);
+      this.service.abandonMazeSession(params.data.sessionId, body.data.userId);
       return res.status(200).json({ message: 'Maze session abandoned' });
     } catch (error) {
       console.error(error);
