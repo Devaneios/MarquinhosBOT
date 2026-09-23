@@ -1,6 +1,6 @@
+import { db } from '@marquinhos/database/sqlite';
+import { generateMaze } from '@marquinhos/domain/maze/generator';
 import crypto from 'crypto';
-import { db } from 'database/sqlite';
-import { generateMaze } from 'utils/mazeGenerator';
 
 /**
  * Viewport cell types returned to the bot.

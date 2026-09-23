@@ -1,12 +1,12 @@
-import type { ActivityMode } from 'services/activity/gameId';
-import type { ActionResult } from 'services/activity/shared/ActionResult';
-import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
-import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
-import { TicTacToeBot } from 'services/activity/ticTacToe/TicTacToeBot';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import { TicTacToeBot } from '@marquinhos/domain/activity/ticTacToe/TicTacToeBot';
 import {
   TicTacToeEngine,
   type Player,
-} from 'services/activity/ticTacToe/TicTacToeEngine';
+} from '@marquinhos/domain/activity/ticTacToe/TicTacToeEngine';
+import type { ActionResult } from 'services/activity/shared/ActionResult';
+import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
+import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';
 
 interface TicTacToePlayer {

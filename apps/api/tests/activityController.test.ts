@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 import { matchMaker } from 'colyseus';
+import { wsSessionSchema, createdRoomSchema, roomListingSchema } from '@marquinhos/contracts/activity/httpResponses';
 import ActivityController from 'controllers/activity.controller';
-import { roomKey } from 'services/activity/roomKey';
+import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { verifyWsSessionToken } from 'services/activity/wsSessionToken';
 import type { DiscordService } from 'services/discord';
 
@@ -110,6 +111,7 @@ describe('ActivityController.getWsSessionToken', () => {
     const payload = res.getPayload() as {
       data: { token: string; roomKey: string };
     };
+    expect(wsSessionSchema.safeParse(payload.data).success).toBe(true);
     expect(verifyWsSessionToken(payload.data.token)).toEqual({
       userId: 'user-1',
       instanceId: 'inst-1',
@@ -553,6 +555,7 @@ describe('ActivityController.createRoom', () => {
     const payload = res.getPayload() as {
       data: { roomId: string; token: string; roomKey: string };
     };
+    expect(createdRoomSchema.safeParse(payload.data).success).toBe(true);
     expect(typeof payload.data.roomId).toBe('string');
     expect(payload.data.roomId.length).toBeGreaterThan(0);
     expect(typeof payload.data.token).toBe('string');

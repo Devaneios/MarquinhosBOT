@@ -9,7 +9,7 @@ const { WordleRoom } = await import('../src/realtime/WordleRoom');
 const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
-const { roomKey } = await import('../src/services/activity/roomKey');
+const { roomKey } = await import('@marquinhos/domain/activity/roomKey');
 const { getValidationSet } = await import('../src/services/wordle');
 
 type ColyseusTestServer = import('@colyseus/testing').ColyseusTestServer;

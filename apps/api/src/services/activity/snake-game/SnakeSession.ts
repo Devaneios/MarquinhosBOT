@@ -1,18 +1,18 @@
-import type { ActivityMode } from 'services/activity/gameId';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import { GamificationService } from 'services/gamification';
 // Snake ticks at ~6.6 Hz (FIXED_DT_MS = 150) — well under the ≥10 Hz
 // threshold that requires a hand-written binary snapshot (§7.2), so state
 // goes out over the JSON `broadcast` path; previously the JSON payload was
 // smuggled through `broadcastBinary` via an `as any` cast (AP-3), which is
 // what this fixed.
-import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
-import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
-import { SnakeBot } from 'services/activity/snake-game/SnakeBotAI';
+import { SnakeBot } from '@marquinhos/domain/activity/snake-game/SnakeBotAI';
 import {
   SnakeEngine,
   type SnakeDirection,
   type SnakeEngineConfig,
-} from 'services/activity/snake-game/SnakeEngine';
+} from '@marquinhos/domain/activity/snake-game/SnakeEngine';
+import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
+import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 
 interface SnakePlayer {
   userId: string;

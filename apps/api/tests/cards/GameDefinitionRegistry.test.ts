@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import type { GameDefinition } from 'services/activity/cards/core/GameDefinition';
-import { GameDefinitionRegistry } from 'services/activity/cards/core/GameDefinitionRegistry';
+import type { GameDefinition } from '@marquinhos/domain/activity/cards/core/GameDefinition';
+import { GameDefinitionRegistry } from '@marquinhos/domain/activity/cards/core/GameDefinitionRegistry';
 
 function stubDefinition(id: string): GameDefinition<unknown> {
   return {

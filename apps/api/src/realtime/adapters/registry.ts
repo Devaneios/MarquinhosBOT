@@ -1,4 +1,4 @@
-import type { GameId } from 'services/activity/gameId';
+import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import type { GameRoomAdapter } from '../GameRoomAdapter';
 import { battleshipAdapter } from './battleshipAdapter';
 import { bingoSpeedAdapter } from './bingoSpeedAdapter';

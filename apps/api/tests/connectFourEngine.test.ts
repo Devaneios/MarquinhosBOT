@@ -4,7 +4,7 @@ import {
   ConnectFourEngine,
   ROWS,
   type Disc,
-} from 'services/activity/connectFour/ConnectFourEngine';
+} from '@marquinhos/domain/activity/connectFour/ConnectFourEngine';
 
 describe('ConnectFourEngine', () => {
   it('starts empty with p1 to move and no winner', () => {

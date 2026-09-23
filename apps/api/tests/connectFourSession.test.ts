@@ -3,7 +3,7 @@ import {
   ConnectFourSession,
   type ConnectFourSessionIdentity,
 } from 'services/activity/connectFour/ConnectFourSession';
-import type { ActivityMode } from 'services/activity/gameId';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 
 function identity(mode: ActivityMode = 'multi'): ConnectFourSessionIdentity {
   return {

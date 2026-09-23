@@ -4,7 +4,7 @@ import {
   roundRobin,
   swissRound,
   topFourPlayoff,
-} from 'services/activity/pong/PongTournamentFormats';
+} from '@marquinhos/domain/activity/pong/PongTournamentFormats';
 
 const players = ['a', 'b', 'c', 'd'].map((userId, index) => ({
   userId,

@@ -1,6 +1,6 @@
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import type { BotDifficulty } from '@marquinhos/domain/activity/pong/PongBotAI';
 import type { Client } from 'colyseus';
-import type { ActivityMode } from 'services/activity/gameId';
-import type { BotDifficulty } from 'services/activity/pong/PongBotAI';
 import type { WsSessionPayload } from 'services/activity/wsSessionToken';
 
 export type SeatRole = 'player' | 'spectator' | 'queued';

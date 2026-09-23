@@ -1,5 +1,5 @@
+import { db as defaultDb } from '@marquinhos/database/sqlite';
 import { Database } from 'bun:sqlite';
-import { db as defaultDb } from 'database/sqlite';
 import {
   conversationItemSchema,
   type ConversationItem,

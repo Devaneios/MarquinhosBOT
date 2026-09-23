@@ -1,10 +1,10 @@
-import type { ActivityMode } from 'services/activity/gameId';
-import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import type {
   Cell,
   FoundWord,
-} from 'services/activity/word-search-race/WordSearchRaceEngine';
-import { WordSearchRaceEngine } from 'services/activity/word-search-race/WordSearchRaceEngine';
+} from '@marquinhos/domain/activity/word-search-race/WordSearchRaceEngine';
+import { WordSearchRaceEngine } from '@marquinhos/domain/activity/word-search-race/WordSearchRaceEngine';
+import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { GamificationService } from 'services/gamification';
 
 interface WordSearchRacePlayer {

@@ -1,3 +1,9 @@
+import { roomListingSchema } from '@marquinhos/contracts/activity/httpResponses';
+import {
+  isPongRulesetId,
+  normalizePongMatchConfig,
+} from '@marquinhos/domain/activity/pong/PongRulesetRegistry';
+import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { matchMaker } from 'colyseus';
 import type { Request, Response } from 'express';
 import { customAlphabet } from 'nanoid';
@@ -14,13 +20,7 @@ import {
   pongTournamentReportSchema,
 } from 'schemas/activity.schema';
 import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
-import {
-  isPongRulesetId,
-  normalizePongMatchConfig,
-} from 'services/activity/pong/PongRulesetRegistry';
 import { PongTournamentService } from 'services/activity/pong/PongTournamentService';
-import { roomKey } from 'services/activity/roomKey';
-import { roomListingSchema } from 'services/activity/roomListing';
 import { mintWsSessionToken } from 'services/activity/wsSessionToken';
 import { claimDeepLink, recordDeepLink } from 'services/activityDeepLink';
 import { DiscordGuildMembershipError, DiscordService } from 'services/discord';

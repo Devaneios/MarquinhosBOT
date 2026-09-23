@@ -3,11 +3,11 @@ import {
   BOT_TUNING,
   PongBot,
   predictImpactY,
-} from 'services/activity/pong/PongBotAI';
+} from '@marquinhos/domain/activity/pong/PongBotAI';
 import type {
   PongEngineConfig,
   PongState,
-} from 'services/activity/pong/PongBotAI';
+} from '@marquinhos/domain/activity/pong/PongBotAI';
 
 const CONFIG: Required<PongEngineConfig> = {
   width: 800,

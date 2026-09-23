@@ -4,7 +4,7 @@ import type { GuessResult } from 'services/wordle';
 // Set in-memory db BEFORE any imports that load the db module
 process.env.SQLITE_PATH = ':memory:';
 
-const { db } = await import('../src/database/sqlite');
+const { db } = await import('@marquinhos/database/sqlite');
 const { WordleService } = await import('../src/services/wordle');
 
 function getRecifeDate(): string {

@@ -22,9 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
+import { db } from '@marquinhos/database/sqlite';
 import axios from 'axios';
 import crypto from 'crypto';
-import { db } from 'database/sqlite';
 import { getUnixTime, parseISO } from 'date-fns';
 import { playbackDataSchema, trackSchema } from 'schemas/scrobble.schema';
 import type {

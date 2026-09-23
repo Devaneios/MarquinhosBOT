@@ -1,4 +1,7 @@
-import { chainEndSchema, dominoTileSchema } from 'realtime/payloadSchemas';
+import {
+  chainEndSchema,
+  dominoTileSchema,
+} from '@marquinhos/contracts/activity/payloadSchemas';
 import { DominoesSession } from 'services/activity/dominoesBlock/DominoesSession';
 import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';

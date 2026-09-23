@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
-import { PongArenaEngine } from 'services/activity/pong/PongArenaEngine';
-import { PONG_RULESETS } from 'services/activity/pong/PongRulesetRegistry';
-import type { PongRulesetId } from 'services/activity/pong/PongTypes';
+import { PongArenaEngine } from '@marquinhos/domain/activity/pong/PongArenaEngine';
+import { PONG_RULESETS } from '@marquinhos/domain/activity/pong/PongRulesetRegistry';
+import type { PongRulesetId } from '@marquinhos/domain/activity/pong/PongTypes';
 
 function engine(ruleset: PongRulesetId) {
   return new PongArenaEngine({ ruleset, seed: 7 });

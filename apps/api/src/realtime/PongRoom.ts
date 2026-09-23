@@ -1,14 +1,14 @@
-import { Room } from 'colyseus';
-import { requireAuth, type AuthedClient } from 'realtime/authedClient';
-import type { PongArenaEngineConfig } from 'services/activity/pong/PongArenaEngine';
+import type { PongArenaEngineConfig } from '@marquinhos/domain/activity/pong/PongArenaEngine';
 import {
   getPongRuleset,
   isPongRulesetId,
-} from 'services/activity/pong/PongRulesetRegistry';
+} from '@marquinhos/domain/activity/pong/PongRulesetRegistry';
+import type { PongSide } from '@marquinhos/domain/activity/pong/PongTypes';
+import { roomKey } from '@marquinhos/domain/activity/roomKey';
+import { Room } from 'colyseus';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import type { ActivityBroadcaster } from 'services/activity/pong/PongSession';
 import { PongSession } from 'services/activity/pong/PongSession';
-import type { PongSide } from 'services/activity/pong/PongTypes';
-import { roomKey } from 'services/activity/roomKey';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
 import {
   verifyWsSessionToken,

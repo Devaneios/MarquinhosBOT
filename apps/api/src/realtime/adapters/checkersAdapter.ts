@@ -1,4 +1,4 @@
-import { gridCellSchema } from 'realtime/payloadSchemas';
+import { gridCellSchema } from '@marquinhos/contracts/activity/payloadSchemas';
 import { CheckersSession } from 'services/activity/checkers/CheckersSession';
 import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
 import { z } from 'zod';

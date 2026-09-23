@@ -1,7 +1,7 @@
 import {
   MinesweeperEngine,
   type MinesweeperEngineConfig,
-} from 'services/activity/minesweeper/MinesweeperEngine';
+} from '@marquinhos/domain/activity/minesweeper/MinesweeperEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { GamificationService } from 'services/gamification';
 

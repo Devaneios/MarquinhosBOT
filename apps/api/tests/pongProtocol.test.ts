@@ -4,7 +4,7 @@ import {
   encodeStateSnapshot,
   PONG_PROTOCOL_VERSION,
   type PongSnapshot,
-} from 'services/activity/pong/pongProtocol';
+} from '@marquinhos/domain/activity/pong/pongProtocol';
 
 function snapshot(): PongSnapshot {
   return {

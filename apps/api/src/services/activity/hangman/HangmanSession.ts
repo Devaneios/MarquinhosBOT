@@ -1,5 +1,5 @@
-import type { ActivityMode } from 'services/activity/gameId';
-import { HangmanEngine } from 'services/activity/hangman/HangmanEngine';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import { HangmanEngine } from '@marquinhos/domain/activity/hangman/HangmanEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';

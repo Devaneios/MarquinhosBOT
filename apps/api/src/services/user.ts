@@ -1,4 +1,4 @@
-import { db } from 'database/sqlite';
+import { db } from '@marquinhos/database/sqlite';
 import dotenv from 'dotenv';
 import { DiscordService } from 'services/discord';
 import { LastfmService } from 'services/lastfm';

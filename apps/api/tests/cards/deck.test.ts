@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
-import type { Card } from 'services/activity/cards/core/card';
-import { Deck } from 'services/activity/cards/core/deck';
-import { SeededRng } from 'services/activity/cards/core/rng';
+import type { Card } from '@marquinhos/domain/activity/cards/core/card';
+import { Deck } from '@marquinhos/domain/activity/cards/core/deck';
+import { SeededRng } from '@marquinhos/domain/activity/cards/core/rng';
 
 function cards(...ids: string[]): Card[] {
   return ids.map((id) => ({ id }));

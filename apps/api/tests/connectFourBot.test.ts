@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { ConnectFourBot } from 'services/activity/connectFour/ConnectFourBot';
-import { ConnectFourEngine } from 'services/activity/connectFour/ConnectFourEngine';
+import { ConnectFourBot } from '@marquinhos/domain/activity/connectFour/ConnectFourBot';
+import { ConnectFourEngine } from '@marquinhos/domain/activity/connectFour/ConnectFourEngine';
 
 describe('ConnectFourBot', () => {
   it('takes a winning move when one is available', () => {

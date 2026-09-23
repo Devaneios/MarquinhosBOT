@@ -1,4 +1,7 @@
-import { activityModeSchema, gameIdSchema } from 'services/activity/gameId';
+import {
+  activityModeSchema,
+  gameIdSchema,
+} from '@marquinhos/contracts/activity/gameId';
 import { z } from 'zod';
 
 export const activityTokenExchangeSchema = z.object({

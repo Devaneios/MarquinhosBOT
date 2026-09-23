@@ -5,8 +5,8 @@ import {
   generateGrid,
   isValidPath,
   scoreForLength,
-  type Cell,
-} from 'services/activity/boggle/BoggleEngine';
+} from '@marquinhos/domain/activity/boggle/BoggleEngine';
+import type { GridCell as Cell } from '@marquinhos/contracts/activity/payloadSchemas';
 
 const GRID = [
   ['C', 'A', 'T', 'S'],

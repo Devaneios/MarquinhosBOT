@@ -1,16 +1,16 @@
-import { SeededRng } from 'services/activity/cards/core/rng';
-import type { ActivityMode } from 'services/activity/gameId';
-import type { ActionResult } from 'services/activity/shared/ActionResult';
-import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
-import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import { SeededRng } from '@marquinhos/domain/activity/cards/core/rng';
 import {
   TOWER_BOT_USER_ID,
   TowerBot,
-} from 'services/activity/towerUnstable/TowerBot';
+} from '@marquinhos/domain/activity/towerUnstable/TowerBot';
 import {
   TowerEngine,
   type TowerState,
-} from 'services/activity/towerUnstable/TowerEngine';
+} from '@marquinhos/domain/activity/towerUnstable/TowerEngine';
+import type { ActionResult } from 'services/activity/shared/ActionResult';
+import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
+import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';
 
 interface TowerPlayer {

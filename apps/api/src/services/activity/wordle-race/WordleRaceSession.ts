@@ -1,8 +1,9 @@
-import type { ActivityMode } from 'services/activity/gameId';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import { WordleRaceEngine } from '@marquinhos/domain/activity/wordle-race/WordleRaceEngine';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
-import { WordleRaceEngine } from 'services/activity/wordle-race/WordleRaceEngine';
 import { GamificationService } from 'services/gamification';
+import { resolveCanonical } from 'services/wordle';
 
 interface WordleRaceSessionIdentity {
   sessionKey: string;
@@ -41,7 +42,11 @@ export class WordleRaceSession {
     this.onSessionEnded = options.onSessionEnded;
 
     const targetWord = this.pickRandomWord();
-    this.engine = new WordleRaceEngine(targetWord, Date.now());
+    this.engine = new WordleRaceEngine(
+      targetWord,
+      resolveCanonical,
+      Date.now(),
+    );
   }
 
   private pickRandomWord(): string {

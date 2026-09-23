@@ -1,11 +1,11 @@
-import { chooseCheckersMove } from 'services/activity/checkers/CheckersBotAI';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import { chooseCheckersMove } from '@marquinhos/domain/activity/checkers/CheckersBotAI';
 import {
   CheckersEngine,
   type CheckersState,
   type Color,
   type Position,
-} from 'services/activity/checkers/CheckersEngine';
-import type { ActivityMode } from 'services/activity/gameId';
+} from '@marquinhos/domain/activity/checkers/CheckersEngine';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';

@@ -1,10 +1,4 @@
-import type { Database } from 'bun:sqlite';
-import { db as defaultDb } from 'database/sqlite';
-import { nanoid } from 'nanoid';
-import {
-  PongCompetitionService,
-  type PongRatingPool,
-} from 'services/activity/pong/PongCompetitionService';
+import { db as defaultDb } from '@marquinhos/database/sqlite';
 import {
   doubleElimination,
   roundRobin,
@@ -12,7 +6,11 @@ import {
   topFourPlayoff,
   type PongTournamentPairing,
   type PongTournamentPlayer,
-} from 'services/activity/pong/PongTournamentFormats';
+} from '@marquinhos/domain/activity/pong/PongTournamentFormats';
+import type { PongRatingPool } from '@marquinhos/domain/activity/pong/rating';
+import type { Database } from 'bun:sqlite';
+import { nanoid } from 'nanoid';
+import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
 import { z } from 'zod';
 
 export type PongTournamentFormat =

@@ -1,9 +1,9 @@
-import type { ActivityMode } from 'services/activity/gameId';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import {
   RpsEngine,
   type RpsEngineConfig,
   type RpsPick,
-} from 'services/activity/rps/RpsEngine';
+} from '@marquinhos/domain/activity/rps/RpsEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';

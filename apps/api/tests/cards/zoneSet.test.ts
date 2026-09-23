@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { Visibility } from 'services/activity/cards/core/zone';
-import { ZoneSet } from 'services/activity/cards/core/zoneSet';
+import { Visibility } from '@marquinhos/domain/activity/cards/core/zone';
+import { ZoneSet } from '@marquinhos/domain/activity/cards/core/zoneSet';
 
 const hand = { id: 'hand', owner: 'p1', visibility: Visibility.ownerOnly };
 const discard = {

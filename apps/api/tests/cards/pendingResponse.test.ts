@@ -4,8 +4,8 @@ import {
   opposingTeamSeats,
   owesResponse,
   type PendingResponse,
-} from 'services/activity/cards/core/pendingResponse';
-import type { Seat } from 'services/activity/cards/core/seating';
+} from '@marquinhos/domain/activity/cards/core/pendingResponse';
+import type { Seat } from '@marquinhos/domain/activity/cards/core/seating';
 
 const SEATS: Seat[] = [
   { seatIndex: 0, playerId: 'p1', teamId: 'A' },

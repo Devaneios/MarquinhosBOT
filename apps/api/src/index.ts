@@ -1,8 +1,8 @@
 import { WebSocketTransport } from '@colyseus/ws-transport';
+import '@marquinhos/database/sqlite';
 import { Server as ColyseusServer } from 'colyseus';
 import { validateProductionEnvironment } from 'config/environment';
 import cors from 'cors';
-import 'database/sqlite';
 import type { Express, NextFunction, Request, Response } from 'express';
 import express from 'express';
 import http from 'http';
@@ -153,7 +153,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 
 // Startup initialisation — failures crash the process instead of silently
 // serving with empty XP config or missing wordle word list.
-import { runMigrations } from 'database/migrate';
+import { runMigrations } from '@marquinhos/database/migrate';
 
 try {
   runMigrations();

@@ -1,11 +1,11 @@
-import { Room } from 'colyseus';
-import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import {
   gameIdSchema,
   type ActivityMode,
   type GameId,
-} from 'services/activity/gameId';
-import { roomKey } from 'services/activity/roomKey';
+} from '@marquinhos/contracts/activity/gameId';
+import { roomKey } from '@marquinhos/domain/activity/roomKey';
+import { Room } from 'colyseus';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import type { MatchRoomMetadata } from 'services/activity/roomListing';
 import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';

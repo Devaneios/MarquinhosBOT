@@ -1,6 +1,6 @@
+import { db as defaultDb } from '@marquinhos/database/sqlite';
 import { Database } from 'bun:sqlite';
 import { randomUUID } from 'crypto';
-import { db as defaultDb } from 'database/sqlite';
 import type { AiChatRequest } from 'services/aiChat/types';
 import { getErrorMessage } from 'utils/errorHandling';
 import { isLevelEnabled, logger, type LogFields } from 'utils/logger';

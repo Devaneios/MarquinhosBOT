@@ -3,7 +3,7 @@ import {
   BLOCKS_PER_LEVEL,
   TOWER_LEVELS,
   TowerEngine,
-} from 'services/activity/towerUnstable/TowerEngine';
+} from '@marquinhos/domain/activity/towerUnstable/TowerEngine';
 
 // Seed 42 through SeededRng.next() yields, in order:
 // 0.6011037519201636, 0.44829055899754167, 0.8524657934904099,

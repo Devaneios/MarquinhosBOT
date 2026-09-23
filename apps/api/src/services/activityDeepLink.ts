@@ -1,4 +1,4 @@
-import { db } from 'database/sqlite';
+import { db } from '@marquinhos/database/sqlite';
 
 const DEEP_LINK_TTL_MS = 60_000;
 

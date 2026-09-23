@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import type { ActivityMode } from 'services/activity/gameId';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import {
   WordSearchRaceSession,
   type WordSearchRaceSessionIdentity,

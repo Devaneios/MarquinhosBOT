@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { isSeatActive, TurnOrder } from 'services/activity/cards/core/seating';
+import { isSeatActive, TurnOrder } from '@marquinhos/domain/activity/cards/core/seating';
 
 function seats() {
   return [

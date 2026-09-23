@@ -4,10 +4,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const migrationPath = path.join(
-  process.cwd(),
-  'src',
-  'database',
-  'migrations',
+  import.meta.dir,
+  '../../../packages/database/src/migrations',
   '005_create_wordle_user_config.sql',
 );
 

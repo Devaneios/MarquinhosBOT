@@ -1,9 +1,9 @@
+import { cardGameRegistry } from '@marquinhos/domain/activity/cards/registry';
+import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { Room } from 'colyseus';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { CardTableSession } from 'services/activity/cards/CardTableSession';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
-import { cardGameRegistry } from 'services/activity/cards/registry';
-import { roomKey } from 'services/activity/roomKey';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
 import {
   verifyWsSessionToken,

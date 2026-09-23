@@ -4,7 +4,7 @@ const { CardTableRoom } = await import('../src/realtime/CardTableRoom');
 const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
-const { roomKey } = await import('../src/services/activity/roomKey');
+const { roomKey } = await import('@marquinhos/domain/activity/roomKey');
 
 type ColyseusTestServer = import('@colyseus/testing').ColyseusTestServer;
 type TestClient = Awaited<ReturnType<ColyseusTestServer['connectTo']>>;

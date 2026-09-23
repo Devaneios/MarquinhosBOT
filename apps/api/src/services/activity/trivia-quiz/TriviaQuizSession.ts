@@ -1,8 +1,8 @@
-import type { ActivityMode } from 'services/activity/gameId';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import { getQuestions } from '@marquinhos/domain/activity/trivia-quiz/questions';
+import { TriviaQuizEngine } from '@marquinhos/domain/activity/trivia-quiz/TriviaQuizEngine';
+import type { TriviaQuizState } from '@marquinhos/domain/activity/trivia-quiz/types';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
-import { getQuestions } from 'services/activity/trivia-quiz/questions';
-import { TriviaQuizEngine } from 'services/activity/trivia-quiz/TriviaQuizEngine';
-import type { TriviaQuizState } from 'services/activity/trivia-quiz/types';
 import { GamificationService } from 'services/gamification';
 
 export interface TriviaQuizSessionIdentity {

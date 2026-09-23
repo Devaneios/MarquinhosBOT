@@ -1,7 +1,7 @@
+import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { Room } from 'colyseus';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { BingoSpeedSession } from 'services/activity/bingoSpeed/BingoSpeedSession';
-import { roomKey } from 'services/activity/roomKey';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
 import {

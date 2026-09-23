@@ -1,12 +1,12 @@
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import type { GridCell as Cell } from '@marquinhos/contracts/activity/payloadSchemas';
 import {
   BoggleEngine,
   GAME_DURATION_MS,
   type BoggleEngineOptions,
-  type Cell,
   type SubmitResult,
-} from 'services/activity/boggle/BoggleEngine';
+} from '@marquinhos/domain/activity/boggle/BoggleEngine';
 import { getBoggleWordSet } from 'services/activity/boggle/boggleWords';
-import type { ActivityMode } from 'services/activity/gameId';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';

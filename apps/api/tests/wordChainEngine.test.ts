@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'bun:test';
-import { WordChainEngine } from 'services/activity/word-chain/WordChainEngine';
+import { loadWordChainWords } from 'services/activity/word-chain/wordList';
+import { WordChainEngine } from '@marquinhos/domain/activity/word-chain/WordChainEngine';
 
 describe('WordChainEngine', () => {
   it('initializes with empty players and no current word', () => {
-    const engine = new WordChainEngine();
+    const engine = new WordChainEngine(loadWordChainWords());
     const state = engine.getState();
 
     expect(state.gameOver).toBe(false);
@@ -14,7 +15,7 @@ describe('WordChainEngine', () => {
   });
 
   it('adds a player to the game', () => {
-    const engine = new WordChainEngine();
+    const engine = new WordChainEngine(loadWordChainWords());
     engine.addPlayer('user-1');
     const state = engine.getState();
 
@@ -23,7 +24,7 @@ describe('WordChainEngine', () => {
   });
 
   it('rejects adding the same player twice', () => {
-    const engine = new WordChainEngine();
+    const engine = new WordChainEngine(loadWordChainWords());
     engine.addPlayer('user-1');
     engine.addPlayer('user-1');
     const state = engine.getState();
@@ -32,7 +33,7 @@ describe('WordChainEngine', () => {
   });
 
   it('validates word starts with correct letter', () => {
-    const engine = new WordChainEngine();
+    const engine = new WordChainEngine(loadWordChainWords());
     engine.addPlayer('user-1');
     engine.addPlayer('user-2');
     engine.addPlayer('user-3');
@@ -56,7 +57,7 @@ describe('WordChainEngine', () => {
   });
 
   it('rejects words not in dictionary', () => {
-    const engine = new WordChainEngine();
+    const engine = new WordChainEngine(loadWordChainWords());
     engine.addPlayer('user-1');
 
     const result = engine.submitWord('user-1', 'xyzabc');
@@ -65,7 +66,7 @@ describe('WordChainEngine', () => {
   });
 
   it('rejects duplicate words in same game', () => {
-    const engine = new WordChainEngine();
+    const engine = new WordChainEngine(loadWordChainWords());
     engine.addPlayer('user-1');
     engine.addPlayer('user-2');
 
@@ -78,7 +79,7 @@ describe('WordChainEngine', () => {
   });
 
   it('advances turn after successful word submission', () => {
-    const engine = new WordChainEngine();
+    const engine = new WordChainEngine(loadWordChainWords());
     engine.addPlayer('user-1');
     engine.addPlayer('user-2');
 
@@ -92,7 +93,7 @@ describe('WordChainEngine', () => {
   });
 
   it('rejects submission from non-current player', () => {
-    const engine = new WordChainEngine();
+    const engine = new WordChainEngine(loadWordChainWords());
     engine.addPlayer('user-1');
     engine.addPlayer('user-2');
 
@@ -102,7 +103,7 @@ describe('WordChainEngine', () => {
   });
 
   it('eliminates player and detects single survivor win', () => {
-    const engine = new WordChainEngine();
+    const engine = new WordChainEngine(loadWordChainWords());
     engine.addPlayer('user-1');
     engine.addPlayer('user-2');
 
@@ -117,7 +118,7 @@ describe('WordChainEngine', () => {
   });
 
   it('skips eliminated players during turn advancement', () => {
-    const engine = new WordChainEngine();
+    const engine = new WordChainEngine(loadWordChainWords());
     engine.addPlayer('user-1');
     engine.addPlayer('user-2');
     engine.addPlayer('user-3');
@@ -132,7 +133,7 @@ describe('WordChainEngine', () => {
   });
 
   it('hands the turn to the next alive player when the current-turn player is removed', () => {
-    const engine = new WordChainEngine();
+    const engine = new WordChainEngine(loadWordChainWords());
     engine.addPlayer('user-1');
     engine.addPlayer('user-2');
     engine.addPlayer('user-3');
@@ -150,7 +151,7 @@ describe('WordChainEngine', () => {
   });
 
   it('is case-insensitive', () => {
-    const engine = new WordChainEngine();
+    const engine = new WordChainEngine(loadWordChainWords());
     engine.addPlayer('user-1');
 
     const result = engine.submitWord('user-1', 'ABELHA');
@@ -161,7 +162,7 @@ describe('WordChainEngine', () => {
   });
 
   it('trims whitespace from submissions', () => {
-    const engine = new WordChainEngine();
+    const engine = new WordChainEngine(loadWordChainWords());
     engine.addPlayer('user-1');
 
     const result = engine.submitWord('user-1', '  abelha  ');

@@ -1,7 +1,7 @@
+import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { Room } from 'colyseus';
 import { selectPayloadSchema } from 'realtime/adapters/wordSearchRaceAdapter';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
-import { roomKey } from 'services/activity/roomKey';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
 import { WordSearchRaceSession } from 'services/activity/word-search-race/WordSearchRaceSession';

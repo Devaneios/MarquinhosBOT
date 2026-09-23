@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import {
   CheckersEngine,
   type Piece,
-} from 'services/activity/checkers/CheckersEngine';
+} from '@marquinhos/domain/activity/checkers/CheckersEngine';
 
 function emptyBoard() {
   return Array.from({ length: 8 }, () => Array<Piece | null>(8).fill(null));

@@ -1,5 +1,5 @@
+import { db } from '@marquinhos/database/sqlite';
 import WordleController from 'controllers/wordle.controller';
-import { db } from 'database/sqlite';
 import express from 'express';
 import { checkToken } from 'middlewares/botAuth';
 import { verifyActivityDiscordToken } from 'middlewares/userAuth';

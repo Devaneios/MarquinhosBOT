@@ -1,9 +1,9 @@
+import type { ShipPlacement } from '@marquinhos/domain/activity/battleship/BattleshipEngine';
+import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { Room } from 'colyseus';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
-import type { ShipPlacement } from 'services/activity/battleship/BattleshipEngine';
 import { BattleshipSession } from 'services/activity/battleship/BattleshipSession';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
-import { roomKey } from 'services/activity/roomKey';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
 import {
   verifyWsSessionToken,

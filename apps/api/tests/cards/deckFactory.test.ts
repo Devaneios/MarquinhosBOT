@@ -3,7 +3,7 @@ import {
   customDeck,
   spanishSuitedDeck,
   standardFrenchDeck,
-} from 'services/activity/cards/core/deckFactory';
+} from '@marquinhos/domain/activity/cards/core/deckFactory';
 
 describe('standardFrenchDeck', () => {
   it('builds 52 unique cards across 4 suits by default', () => {

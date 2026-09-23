@@ -1,15 +1,16 @@
-import type { ActivityMode } from 'services/activity/gameId';
-import type { ActionResult } from 'services/activity/shared/ActionResult';
-import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
-import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import {
   WORD_CHAIN_BOT_USER_ID,
   WordChainBot,
-} from 'services/activity/word-chain/WordChainBot';
+} from '@marquinhos/domain/activity/word-chain/WordChainBot';
 import {
   WordChainEngine,
   type WordChainState,
-} from 'services/activity/word-chain/WordChainEngine';
+} from '@marquinhos/domain/activity/word-chain/WordChainEngine';
+import type { ActionResult } from 'services/activity/shared/ActionResult';
+import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
+import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { loadWordChainWords } from 'services/activity/word-chain/wordList';
 import { GamificationService } from 'services/gamification';
 
 export interface WordChainSessionIdentity {
@@ -74,7 +75,7 @@ export class WordChainSession {
     options: WordChainSessionOptions = {},
   ) {
     this.broadcaster = broadcaster;
-    this.engine = new WordChainEngine();
+    this.engine = new WordChainEngine(loadWordChainWords());
     this.onSessionEnded = options.onSessionEnded;
     this.disconnectGraceMs =
       options.disconnectGraceMs ?? DEFAULT_DISCONNECT_GRACE_MS;

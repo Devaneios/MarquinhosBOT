@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 
 process.env.SQLITE_PATH = ':memory:';
 
-const { db } = await import('../src/database/sqlite');
+const { db } = await import('@marquinhos/database/sqlite');
 const { WordleService } = await import('../src/services/wordle');
 
 describe('WordleService wordlist review', () => {

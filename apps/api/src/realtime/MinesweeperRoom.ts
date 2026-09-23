@@ -1,7 +1,7 @@
+import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { Room } from 'colyseus';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { MinesweeperSession } from 'services/activity/minesweeper/MinesweeperSession';
-import { roomKey } from 'services/activity/roomKey';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
 import {

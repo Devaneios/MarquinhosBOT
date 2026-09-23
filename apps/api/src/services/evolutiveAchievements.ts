@@ -1,4 +1,4 @@
-import { db } from 'database/sqlite';
+import { db } from '@marquinhos/database/sqlite';
 import { z } from 'zod';
 
 type Rarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythical';

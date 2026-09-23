@@ -1,9 +1,8 @@
+import { calculateGlicko2, type PongRating } from '@marquinhos/domain/activity/pong/rating';
 import { Database } from 'bun:sqlite';
 import { describe, expect, it } from 'bun:test';
 import {
-  calculateGlicko2,
   PongCompetitionService,
-  type PongRating,
 } from 'services/activity/pong/PongCompetitionService';
 
 function rating(

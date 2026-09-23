@@ -1,20 +1,20 @@
-import type { ActivityMode } from 'services/activity/gameId';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import {
   PongArenaEngine,
   type PongArenaEngineConfig,
-} from 'services/activity/pong/PongArenaEngine';
-import type { BotDifficulty } from 'services/activity/pong/PongBotAI';
-import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
+} from '@marquinhos/domain/activity/pong/PongArenaEngine';
+import type { BotDifficulty } from '@marquinhos/domain/activity/pong/PongBotAI';
 import {
   encodeStateSnapshot,
   PONG_PROTOCOL_VERSION,
-} from 'services/activity/pong/pongProtocol';
-import { getPongRuleset } from 'services/activity/pong/PongRulesetRegistry';
+} from '@marquinhos/domain/activity/pong/pongProtocol';
+import { getPongRuleset } from '@marquinhos/domain/activity/pong/PongRulesetRegistry';
 import type {
   PongInputState,
   PongRulesetId,
   PongSide,
-} from 'services/activity/pong/PongTypes';
+} from '@marquinhos/domain/activity/pong/PongTypes';
+import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
 import type { BinaryActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';

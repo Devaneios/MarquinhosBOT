@@ -1,8 +1,16 @@
+import { db } from '@marquinhos/database/sqlite';
+import {
+  buildUniqueDayGuesses,
+  type WordleSessionGuessesRow,
+} from '@marquinhos/domain/wordle/dayGuesses';
+import {
+  computeFeedback,
+  stripDiacritics,
+  type LetterFeedback,
+} from '@marquinhos/domain/wordle/feedback';
 import { randomUUID } from 'crypto';
-import { db } from 'database/sqlite';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { z } from 'zod';
 
 const logger = {
   warn: (...args: unknown[]) => console.warn('[wordle]', ...args),
@@ -28,15 +36,6 @@ interface WordleSession {
   attempts: number;
   created_at: number;
 }
-
-const letterFeedbackSchema = z.enum(['correct', 'present', 'absent']);
-
-export type LetterFeedback = z.infer<typeof letterFeedbackSchema>;
-
-const storedGuessSchema = z.object({
-  guess: z.string(),
-  feedback: z.array(letterFeedbackSchema),
-});
 
 export interface GuessResult {
   guess: string;
@@ -76,10 +75,6 @@ export interface ReviewWordResult {
   done: boolean;
 }
 
-interface WordleSessionGuessesRow {
-  guesses: string;
-}
-
 // Answer bank: wordlist.txt (used for picking daily words)
 const WORDLIST_PATH = join(__dirname, '../../wordlist.txt');
 let wordlistCache: string[] | null = null;
@@ -114,14 +109,6 @@ const DEVANEIOS_WEIGHT = 0.75;
 const VALID_GUESSES_PATH = join(__dirname, '../../valid-guesses.txt');
 let validationSetCache: Set<string> | null = null;
 let validationByStrippedCache: Map<string, string> | null = null;
-
-export function stripDiacritics(s: string): string {
-  return s.normalize('NFD').replace(/\p{Diacritic}/gu, '');
-}
-
-function normalizeGuess(s: string): string {
-  return stripDiacritics(s.trim().toLowerCase());
-}
 
 function hasDiacritics(s: string): boolean {
   return stripDiacritics(s) !== s;
@@ -165,78 +152,11 @@ export function resolveCanonical(guess: string): string | null {
   return canonical ?? null;
 }
 
-export function buildUniqueDayGuesses(
-  answerWord: string,
-  rows: WordleSessionGuessesRow[],
-): { guess: string; feedback: LetterFeedback[] }[] {
-  const answerKey = normalizeGuess(answerWord);
-  const wordLength = answerWord.length;
-  const seen = new Set<string>();
-  const result: { guess: string; feedback: LetterFeedback[] }[] = [];
-
-  for (const row of rows) {
-    let guesses: unknown;
-    try {
-      guesses = JSON.parse(row.guesses);
-    } catch {
-      continue;
-    }
-
-    if (!Array.isArray(guesses)) continue;
-
-    for (const entry of guesses) {
-      const parsed = storedGuessSchema.safeParse(entry);
-      if (!parsed.success) continue;
-      const guess = parsed.data;
-      if (guess.feedback.length !== wordLength) continue;
-
-      const key = normalizeGuess(guess.guess);
-      if (!key || key === answerKey || seen.has(key)) continue;
-
-      seen.add(key);
-      result.push({
-        guess: guess.guess,
-        feedback: guess.feedback,
-      });
-    }
-  }
-
-  return result;
-}
-
 function getRecifeDate(): string {
   // Use Intl to get the correct date in Recife timezone
   const tz = process.env.WORDLE_TIMEZONE ?? 'America/Recife';
   return new Intl.DateTimeFormat('sv-SE', { timeZone: tz }).format(new Date());
   // 'sv-SE' locale gives YYYY-MM-DD format
-}
-
-export function computeFeedback(guess: string, word: string): LetterFeedback[] {
-  const result: LetterFeedback[] = new Array(guess.length).fill('absent');
-  const wordChars = word.split('');
-  const guessChars = guess.split('');
-
-  // First pass: exact matches
-  for (let i = 0; i < guessChars.length; i++) {
-    if (guessChars[i] === wordChars[i]) {
-      result[i] = 'correct';
-      wordChars[i] = '\0'; // consume
-      guessChars[i] = '\0';
-    }
-  }
-
-  // Second pass: present (wrong position)
-  for (let i = 0; i < guessChars.length; i++) {
-    const gc = guessChars[i];
-    if (gc === undefined || gc === '\0') continue;
-    const idx = wordChars.indexOf(gc);
-    if (idx !== -1) {
-      result[i] = 'present';
-      wordChars[idx] = '\0'; // consume to handle duplicates
-    }
-  }
-
-  return result;
 }
 
 export class WordleService {

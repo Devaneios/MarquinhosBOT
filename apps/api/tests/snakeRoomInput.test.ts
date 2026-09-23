@@ -4,7 +4,7 @@ const { SnakeRoom } = await import('../src/realtime/SnakeRoom');
 const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
-const { roomKey } = await import('../src/services/activity/roomKey');
+const { roomKey } = await import('@marquinhos/domain/activity/roomKey');
 
 type ColyseusTestServer = import('@colyseus/testing').ColyseusTestServer;
 

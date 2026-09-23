@@ -1,3 +1,4 @@
+import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { Room } from 'colyseus';
 import {
   endPayloadSchema,
@@ -5,7 +6,6 @@ import {
 } from 'realtime/adapters/dominoesAdapter';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { DominoesSession } from 'services/activity/dominoesBlock/DominoesSession';
-import { roomKey } from 'services/activity/roomKey';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
 import {
   verifyWsSessionToken,

@@ -1,10 +1,10 @@
-import { ConnectFourBot } from 'services/activity/connectFour/ConnectFourBot';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import { ConnectFourBot } from '@marquinhos/domain/activity/connectFour/ConnectFourBot';
 import {
   ConnectFourEngine,
   type ConnectFourState,
   type Disc,
-} from 'services/activity/connectFour/ConnectFourEngine';
-import type { ActivityMode } from 'services/activity/gameId';
+} from '@marquinhos/domain/activity/connectFour/ConnectFourEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';

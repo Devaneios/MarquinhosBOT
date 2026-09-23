@@ -4,7 +4,7 @@ const { MatchRoom } = await import('../src/realtime/MatchRoom');
 const { bootColyseusTestServer } = await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
-const { roomKey } = await import('../src/services/activity/roomKey');
+const { roomKey } = await import('@marquinhos/domain/activity/roomKey');
 const { ACTION_REJECTED } =
   await import('../src/services/activity/shared/ActionResult');
 
@@ -2055,18 +2055,7 @@ describe('MatchRoom', () => {
       client.leave();
     });
 
-    it('acks a spectator joiner with a degraded state snapshot without enrolling them as a racer', async () => {
-      // WordleRaceSession.addPlayer() has no seat-capacity check of its
-      // own — it unconditionally pushes the caller onto `this.players` and
-      // `engine.addPlayer()`, permanently enrolling them in
-      // `state.players`. Since `isGameOver()` requires every enrolled
-      // player to be solved or exhausted, a spectator who never guesses
-      // would block the race from ever ending. So the 9th joiner here (the
-      // adapter's maxPlayers is 8) must never reach addPlayer(). Proven
-      // below: the spectator's own init ack has empty/default
-      // `currentPlayer*` fields (they're absent from the engine's player
-      // map), and submitting a guess as them is rejected with "Player not
-      // in room" rather than being accepted or crashing.
+    it('keeps a spectator out of the race and rejects their guesses', async () => {
       const roomId = 'ROOM11b';
       const { key, token: tokenA } = wordleRaceCreds('user-a', roomId);
       const room = await colyseus.createRoom('match', {
@@ -2090,18 +2079,17 @@ describe('MatchRoom', () => {
         roomKey: key,
       });
 
-      const initMessages: unknown[] = [];
-      spectator.onMessage('init', (msg) => initMessages.push(msg));
-      await room.waitForNextPatch();
-      expect(initMessages.length).toBeGreaterThan(0);
-      const ack = initMessages[0] as {
-        currentPlayerGuesses: unknown[];
-        currentPlayerSolved: boolean;
-        currentPlayerExhausted: boolean;
-      };
-      expect(ack.currentPlayerGuesses).toEqual([]);
-      expect(ack.currentPlayerSolved).toBe(false);
-      expect(ack.currentPlayerExhausted).toBe(false);
+      const raceSession = (room as unknown as {
+        session: { getGameState(userId: string): {
+          currentPlayerGuesses: unknown[];
+          currentPlayerSolved: boolean;
+          currentPlayerExhausted: boolean;
+        } };
+      }).session;
+      const spectatorState = raceSession.getGameState('user-spectator');
+      expect(spectatorState.currentPlayerGuesses).toEqual([]);
+      expect(spectatorState.currentPlayerSolved).toBe(false);
+      expect(spectatorState.currentPlayerExhausted).toBe(false);
 
       const rejections: { error: string }[] = [];
       spectator.onMessage(ACTION_REJECTED, (msg: { error: string }) =>

@@ -1,8 +1,8 @@
+import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { Room } from 'colyseus';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { HangmanSession } from 'services/activity/hangman/HangmanSession';
 import { getHangmanWord } from 'services/activity/hangman/wordList';
-import { roomKey } from 'services/activity/roomKey';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
 import {

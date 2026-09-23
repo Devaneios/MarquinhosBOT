@@ -1,6 +1,6 @@
+import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { Room } from 'colyseus';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
-import { roomKey } from 'services/activity/roomKey';
 import { RpsSession } from 'services/activity/rps/RpsSession';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
 import {

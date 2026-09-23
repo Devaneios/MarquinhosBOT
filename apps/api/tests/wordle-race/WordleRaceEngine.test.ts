@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 
 process.env.SQLITE_PATH = ':memory:';
 
+const { resolveCanonical } = await import('../../src/services/wordle');
 const { WordleRaceEngine } =
-  await import('../../src/services/activity/wordle-race/WordleRaceEngine');
+  await import('@marquinhos/domain/activity/wordle-race/WordleRaceEngine');
 
 function expectError<T extends { error: string } | object>(
   result: T,
@@ -22,7 +23,7 @@ describe('WordleRaceEngine', () => {
   const targetWord = 'abrir';
 
   beforeEach(() => {
-    engine = new WordleRaceEngine(targetWord);
+    engine = new WordleRaceEngine(targetWord, resolveCanonical);
   });
 
   describe('addPlayer', () => {

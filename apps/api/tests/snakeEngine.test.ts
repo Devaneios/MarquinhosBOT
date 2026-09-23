@@ -3,7 +3,7 @@ import {
   SnakeEngine,
   type SnakeDirection,
   type SnakeGameState,
-} from 'services/activity/snake-game/SnakeEngine';
+} from '@marquinhos/domain/activity/snake-game/SnakeEngine';
 
 function getMutableState(engine: SnakeEngine): SnakeGameState {
   return (engine as unknown as { state: SnakeGameState }).state;

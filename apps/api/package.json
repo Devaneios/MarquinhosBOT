@@ -25,7 +25,10 @@
     "turndown": "^7.2.4",
     "turndown-plugin-gfm": "^1.0.2",
     "unpdf": "^1.8.0",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@marquinhos/contracts": "workspace:*",
+    "@marquinhos/database": "workspace:*",
+    "@marquinhos/domain": "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -49,7 +52,8 @@
     "eslint-plugin-prettier": "^5.5.6",
     "prettier": "3.9.4",
     "prettier-plugin-organize-imports": "^4.3.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "@marquinhos/eslint-config": "workspace:*"
   },
   "scripts": {
     "build": "bun build src/index.ts --target=bun --external cpu-features --outdir=./dist --sourcemap=external",

@@ -1,15 +1,15 @@
-import { BattleshipBot } from 'services/activity/battleship/BattleshipBot';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import { BattleshipBot } from '@marquinhos/domain/activity/battleship/BattleshipBot';
 import {
   BattleshipEngine,
   type BattleshipSide,
   type ShipPlacement,
-} from 'services/activity/battleship/BattleshipEngine';
+} from '@marquinhos/domain/activity/battleship/BattleshipEngine';
 import {
   spectatorViewFor,
   viewFor,
-} from 'services/activity/battleship/masking';
+} from '@marquinhos/domain/activity/battleship/masking';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
-import type { ActivityMode } from 'services/activity/gameId';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';
 

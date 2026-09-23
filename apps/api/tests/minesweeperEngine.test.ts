@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { MinesweeperEngine } from 'services/activity/minesweeper/MinesweeperEngine';
+import { MinesweeperEngine } from '@marquinhos/domain/activity/minesweeper/MinesweeperEngine';
 
 // A hand-laid 4x4 board with a single mine at (3,0) lets every test assert
 // on exact tile coordinates instead of fighting a random layout. Engine

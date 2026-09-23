@@ -1,9 +1,9 @@
+import type { Color } from '@marquinhos/domain/activity/checkers/CheckersEngine';
+import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { Room } from 'colyseus';
 import { checkersMovePayloadSchema } from 'realtime/adapters/checkersAdapter';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
-import type { Color } from 'services/activity/checkers/CheckersEngine';
 import { CheckersSession } from 'services/activity/checkers/CheckersSession';
-import { roomKey } from 'services/activity/roomKey';
 import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';

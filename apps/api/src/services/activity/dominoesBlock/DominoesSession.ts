@@ -1,13 +1,13 @@
 import {
   DOMINOES_BOT_USER_ID,
   DominoesBot,
-} from 'services/activity/dominoesBlock/DominoesBot';
+} from '@marquinhos/domain/activity/dominoesBlock/DominoesBot';
 import {
   DominoesEngine,
   type ChainEnd,
   type DominoesState,
   type Tile,
-} from 'services/activity/dominoesBlock/DominoesEngine';
+} from '@marquinhos/domain/activity/dominoesBlock/DominoesEngine';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';
 import { logger } from 'utils/logger';

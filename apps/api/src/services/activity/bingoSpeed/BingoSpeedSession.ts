@@ -1,8 +1,8 @@
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import {
   BingoSpeedEngine,
   type BingoCard,
-} from 'services/activity/bingoSpeed/BingoSpeedEngine';
-import type { ActivityMode } from 'services/activity/gameId';
+} from '@marquinhos/domain/activity/bingoSpeed/BingoSpeedEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';

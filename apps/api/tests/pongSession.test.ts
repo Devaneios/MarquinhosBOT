@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'bun:test';
-import type { ActivityMode } from 'services/activity/gameId';
+import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import {
   PongSession,
   type PongSessionIdentity,
 } from 'services/activity/pong/PongSession';
-import { decodeStateSnapshot } from 'services/activity/pong/pongProtocol';
+import { decodeStateSnapshot } from '@marquinhos/domain/activity/pong/pongProtocol';
 import type { GamificationService } from 'services/gamification';
 
 function identity(mode: ActivityMode = 'multi'): PongSessionIdentity {

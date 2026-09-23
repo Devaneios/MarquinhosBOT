@@ -3,7 +3,7 @@ import {
   DominoesEngine,
   type DominoesState,
   type Tile,
-} from 'services/activity/dominoesBlock/DominoesEngine';
+} from '@marquinhos/domain/activity/dominoesBlock/DominoesEngine';
 
 // Deterministic "shuffle": returns items already in the (reverse) order the
 // tests want, by always picking index 0 during the Fisher-Yates walk.

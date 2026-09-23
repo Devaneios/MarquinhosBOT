@@ -1,4 +1,4 @@
-import { db } from 'database/sqlite';
+import { db } from '@marquinhos/database/sqlite';
 import { LevelingService } from 'services/gamification/LevelingService';
 import type {
   Achievement,

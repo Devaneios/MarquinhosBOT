@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'bun:test';
-import { chooseCheckersMove } from 'services/activity/checkers/CheckersBotAI';
+import { chooseCheckersMove } from '@marquinhos/domain/activity/checkers/CheckersBotAI';
 import {
   CheckersEngine,
   type Piece,
-} from 'services/activity/checkers/CheckersEngine';
+} from '@marquinhos/domain/activity/checkers/CheckersEngine';
 
 function emptyBoard() {
   return Array.from({ length: 8 }, () => Array<Piece | null>(8).fill(null));

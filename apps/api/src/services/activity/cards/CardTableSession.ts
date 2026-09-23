@@ -1,5 +1,5 @@
-import type { GameDefinition } from 'services/activity/cards/core/GameDefinition';
-import { SeededRng } from 'services/activity/cards/core/rng';
+import type { GameDefinition } from '@marquinhos/domain/activity/cards/core/GameDefinition';
+import { SeededRng } from '@marquinhos/domain/activity/cards/core/rng';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { logger } from 'utils/logger';

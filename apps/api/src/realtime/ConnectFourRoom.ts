@@ -1,7 +1,7 @@
+import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { Room } from 'colyseus';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { ConnectFourSession } from 'services/activity/connectFour/ConnectFourSession';
-import { roomKey } from 'services/activity/roomKey';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
 import {
   verifyWsSessionToken,

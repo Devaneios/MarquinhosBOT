@@ -1,4 +1,4 @@
-import { gridCellSchema } from 'realtime/payloadSchemas';
+import { gridCellSchema } from '@marquinhos/contracts/activity/payloadSchemas';
 import { BoggleSession } from 'services/activity/boggle/BoggleSession';
 import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';

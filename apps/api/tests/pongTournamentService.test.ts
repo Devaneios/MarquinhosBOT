@@ -8,15 +8,15 @@ function database(): Database {
   const db = new Database(':memory:');
   db.run(
     readFileSync(
-      join(process.cwd(), 'src/database/migrations/003_pong_competitive.sql'),
+      join(import.meta.dir, '../../../packages/database/src/migrations/003_pong_competitive.sql'),
       'utf8',
     ),
   );
   db.run(
     readFileSync(
       join(
-        process.cwd(),
-        'src/database/migrations/004_pong_tournament_sources.sql',
+        import.meta.dir,
+        '../../../packages/database/src/migrations/004_pong_tournament_sources.sql',
       ),
       'utf8',
     ),

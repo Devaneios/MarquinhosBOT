@@ -1,6 +1,6 @@
+import { cardGameRegistry } from '@marquinhos/domain/activity/cards/registry';
 import { CardTableSession } from 'services/activity/cards/CardTableSession';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
-import { cardGameRegistry } from 'services/activity/cards/registry';
 import { GamificationService } from 'services/gamification/GamificationService';
 import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';

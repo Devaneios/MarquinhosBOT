@@ -1,8 +1,8 @@
+import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { Room } from 'colyseus';
 import { submitWordPayloadSchema } from 'realtime/adapters/boggleAdapter';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { BoggleSession } from 'services/activity/boggle/BoggleSession';
-import { roomKey } from 'services/activity/roomKey';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
 import {

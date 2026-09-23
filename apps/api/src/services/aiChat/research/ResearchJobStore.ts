@@ -1,6 +1,6 @@
+import { db as defaultDb } from '@marquinhos/database/sqlite';
 import { Database } from 'bun:sqlite';
 import { randomUUID } from 'crypto';
-import { db as defaultDb } from 'database/sqlite';
 import { z } from 'zod';
 
 export type ResearchJobStatus = 'queued' | 'running' | 'done' | 'error';
