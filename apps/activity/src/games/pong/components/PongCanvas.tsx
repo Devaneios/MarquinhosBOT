@@ -461,11 +461,7 @@ export function PongCanvas({
     }
 
     function handleBinary(bytes: Uint8Array) {
-      const data = bytes.buffer.slice(
-        bytes.byteOffset,
-        bytes.byteOffset + bytes.byteLength,
-      ) as ArrayBuffer;
-      const state = decodeStateSnapshot(data);
+      const state = decodeStateSnapshot(bytes.slice().buffer);
       const receivedAt = performance.now();
       snapshotBuffer.push(state, receivedAt);
       if (matchStartRef.current === null) matchStartRef.current = receivedAt;
@@ -608,7 +604,9 @@ export function PongCanvas({
     // everything else is the small JSON control-message set handled above.
     messageHandlerRef.current = (message) => {
       if (message.type === 'state') {
-        handleBinary(message.payload as Uint8Array);
+        if (message.payload instanceof Uint8Array) {
+          handleBinary(message.payload);
+        }
       } else {
         handleJsonMessage(message);
       }
