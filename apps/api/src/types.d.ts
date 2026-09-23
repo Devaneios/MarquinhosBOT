@@ -5,12 +5,6 @@ export interface IUser {
   scrobblesOn?: boolean;
 }
 
-export interface IScrobble {
-  id: string;
-  track: Track;
-  playbackData: PlaybackData;
-}
-
 export type LastfmSessionResponse = {
   sessionKey: string;
   userName: string;

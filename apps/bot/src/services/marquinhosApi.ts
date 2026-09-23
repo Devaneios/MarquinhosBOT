@@ -10,7 +10,6 @@ import {
   gameLeaderboardEntrySchema,
   markWordleAnnouncedResultSchema,
   mazeViewportStateSchema,
-  playlistSchema,
   rankedLeaderboardEntrySchema,
   researchJobResponseSchema,
   researchStartResponseSchema,
@@ -36,10 +35,8 @@ import {
   AiChatResponse,
   ApiResponse,
   EmojiReactionResponse,
-  LastfmTopListenedPeriod,
   MazeViewportState,
   PlaybackData,
-  Playlist,
   ResearchJobResponse,
   ResearchStartResponse,
   UserAchievement,
@@ -138,30 +135,6 @@ export class MarquinhosApiService {
     userId: string,
   ): Promise<ApiResponse> {
     const data = await this.client.post(`/api/scrobble/${id}/${userId}`);
-    return apiResponseSchema(z.unknown()).parse(data);
-  }
-
-  async getTopArtists(
-    id: string,
-    period: LastfmTopListenedPeriod,
-  ): Promise<ApiResponse> {
-    const data = await this.client.get(`/api/user/top-artists/${period}/${id}`);
-    return apiResponseSchema(z.unknown()).parse(data);
-  }
-
-  async getTopAlbums(
-    id: string,
-    period: LastfmTopListenedPeriod,
-  ): Promise<ApiResponse> {
-    const data = await this.client.get(`/api/user/top-albums/${period}/${id}`);
-    return apiResponseSchema(z.unknown()).parse(data);
-  }
-
-  async getTopTracks(
-    id: string,
-    period: LastfmTopListenedPeriod,
-  ): Promise<ApiResponse> {
-    const data = await this.client.get(`/api/user/top-tracks/${period}/${id}`);
     return apiResponseSchema(z.unknown()).parse(data);
   }
 
@@ -389,51 +362,6 @@ export class MarquinhosApiService {
     });
   }
 
-  // Playlist API calls
-  async createPlaylist(
-    name: string,
-    description: string,
-    creatorId: string,
-    guildId: string,
-    isCollaborative: boolean = false,
-  ): Promise<ApiResponse<Playlist>> {
-    const data = await this.client.post('/api/playlist', {
-      name,
-      description,
-      creatorId,
-      guildId,
-      isCollaborative,
-    });
-    return apiResponseSchema(playlistSchema).parse(data);
-  }
-
-  async getPlaylist(playlistId: string): Promise<ApiResponse<Playlist>> {
-    const data = await this.client.get(`/api/playlist/${playlistId}`);
-    return apiResponseSchema(playlistSchema).parse(data);
-  }
-
-  async getUserPlaylists(
-    userId: string,
-    guildId: string,
-  ): Promise<ApiResponse<Playlist[]>> {
-    const data = await this.client.get(
-      `/api/playlist/user/${userId}/${guildId}`,
-    );
-    return apiResponseSchema(z.array(playlistSchema)).parse(data);
-  }
-
-  async addTrackToPlaylist(
-    playlistId: string,
-    userId: string,
-    track: Record<string, unknown>,
-  ): Promise<ApiResponse<Playlist>> {
-    const data = await this.client.post(`/api/playlist/${playlistId}/tracks`, {
-      userId,
-      track,
-    });
-    return apiResponseSchema(playlistSchema).parse(data);
-  }
-
   async recordActivityDeepLink(
     userId: string,
     guildId: string,
@@ -643,19 +571,5 @@ export class MarquinhosApiService {
       decision,
     });
     return apiResponseSchema(wordleReviewWordResultSchema).parse(data);
-  }
-
-  // Voice AI API calls
-  async post(
-    endpoint: string,
-    payload: Record<string, unknown>,
-  ): Promise<ApiResponse> {
-    const data = await this.client.post(endpoint, payload);
-    return apiResponseSchema(z.unknown()).parse(data);
-  }
-
-  async get(endpoint: string): Promise<ApiResponse> {
-    const data = await this.client.get(endpoint);
-    return apiResponseSchema(z.unknown()).parse(data);
   }
 }

@@ -20,9 +20,7 @@ import { LastfmCommand } from '@marquinhos/commands/music/lastfm';
 import { MoveAllCommand } from '@marquinhos/commands/music/moveAll';
 import { PlayCommand } from '@marquinhos/commands/music/play';
 import { PlayNextCommand } from '@marquinhos/commands/music/playNext';
-import { PlaylistCommand } from '@marquinhos/commands/music/playlist';
 import { QueueCommand } from '@marquinhos/commands/music/queue';
-import { RecommendCommand } from '@marquinhos/commands/music/recommend';
 import { SkipCommand } from '@marquinhos/commands/music/skip';
 import { AchievementsCommand } from '@marquinhos/commands/social/achievements';
 import { CheckInCommand } from '@marquinhos/commands/social/checkIn';
@@ -71,9 +69,7 @@ const commands = [
   ['mover-todos', MoveAllCommand],
   ['play', PlayCommand],
   ['adicionar-a-fila', PlayNextCommand],
-  ['playlist', PlaylistCommand],
   ['fila', QueueCommand],
-  ['recommend', RecommendCommand],
   ['pular', SkipCommand],
   ['achievements', AchievementsCommand],
   ['check-in', CheckInCommand],

@@ -124,29 +124,6 @@ export const mazeViewportStateSchema = z.object({
   isAbandoned: z.boolean().optional(),
 });
 
-const playlistTrackSchema = z.object({
-  title: z.string(),
-  artist: z.string(),
-  url: z.string(),
-  addedBy: z.string(),
-  addedAt: z.coerce.date(),
-  votes: z.number(),
-  voters: z.array(z.string()),
-});
-
-export const playlistSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-  creatorId: z.string(),
-  guildId: z.string(),
-  isCollaborative: z.boolean(),
-  tracks: z.array(playlistTrackSchema),
-  followers: z.array(z.string()),
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date(),
-});
-
 // Wordle / Termo
 
 export const wordleConfigSchema = z.object({
