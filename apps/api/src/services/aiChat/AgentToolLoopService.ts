@@ -1,7 +1,10 @@
 import type OpenAI from 'openai';
 import { ToolDispatcher } from 'services/aiChat/agent/ToolDispatcher';
-import { AgentRateLimitService } from 'services/aiChat/AgentRateLimitService';
 import { NOOP_TRACE, type TraceContext } from 'services/aiChat/AiTraceRecorder';
+import {
+  AGENT_DAILY_QUOTA,
+  DailyQuotaService,
+} from 'services/aiChat/DailyQuotaService';
 import { GuardrailService } from 'services/aiChat/GuardrailService';
 import {
   OpenAiClient,
@@ -31,7 +34,9 @@ const WRAP_UP_FALLBACK =
 
 export class AgentToolLoopService {
   constructor(
-    private agentRateLimitService: AgentRateLimitService = new AgentRateLimitService(),
+    private agentRateLimitService: DailyQuotaService = new DailyQuotaService(
+      AGENT_DAILY_QUOTA,
+    ),
     private guardrailService: GuardrailService = new GuardrailService(),
     private sandboxManager: SandboxManager = new SandboxManager(
       new DockerodeSandboxClient(),

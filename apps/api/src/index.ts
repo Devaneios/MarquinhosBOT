@@ -38,11 +38,14 @@ import * as privacyPolicy from 'routes/privacyPolicy.route';
 import * as scrobble from 'routes/scrobble.route';
 import * as user from 'routes/user.route';
 import wordleRouter from 'routes/wordle.route';
-import { AgentRateLimitService } from 'services/aiChat/AgentRateLimitService';
+import {
+  AGENT_DAILY_QUOTA,
+  DailyQuotaService,
+  RESEARCH_DAILY_QUOTA,
+} from 'services/aiChat/DailyQuotaService';
 import { describeStaticPrompts } from 'services/aiChat/promptRegistry';
 import { RateLimitService } from 'services/aiChat/RateLimitService';
 import { ResearchOrchestrator } from 'services/aiChat/research/ResearchOrchestrator';
-import { ResearchRateLimitService } from 'services/aiChat/research/ResearchRateLimitService';
 import { DockerodeSandboxClient } from 'services/aiChat/sandbox/DockerodeSandboxClient';
 import { SandboxManager } from 'services/aiChat/sandbox/SandboxManager';
 import { GamificationService } from 'services/gamification';
@@ -159,8 +162,8 @@ try {
   runMigrations();
   new GamificationService().initializeDefaults();
   new RateLimitService().seedDefaults();
-  new AgentRateLimitService().seedDefaults();
-  new ResearchRateLimitService().seedDefaults();
+  new DailyQuotaService(AGENT_DAILY_QUOTA).seedDefaults();
+  new DailyQuotaService(RESEARCH_DAILY_QUOTA).seedDefaults();
   // A research job lives in this process, so a restart orphans anything still
   // queued or running. Fail those now instead of leaving the bot polling a job
   // that will never move.

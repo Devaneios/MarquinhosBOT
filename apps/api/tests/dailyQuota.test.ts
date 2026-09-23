@@ -1,6 +1,10 @@
 import { Database } from 'bun:sqlite';
 import { beforeEach, describe, expect, it } from 'bun:test';
-import { AgentRateLimitService } from 'services/aiChat/AgentRateLimitService';
+import {
+  AGENT_DAILY_QUOTA,
+  DailyQuotaService,
+  RESEARCH_DAILY_QUOTA,
+} from 'services/aiChat/DailyQuotaService';
 
 function setupDb(limit = 2): Database {
   const db = new Database(':memory:');
@@ -25,13 +29,13 @@ function setupDb(limit = 2): Database {
   return db;
 }
 
-describe('AgentRateLimitService.checkAndIncrement', () => {
+describe('DailyQuotaService.checkAndIncrement', () => {
   let db: Database;
-  let service: AgentRateLimitService;
+  let service: DailyQuotaService;
 
   beforeEach(() => {
     db = setupDb(2);
-    service = new AgentRateLimitService(db);
+    service = new DailyQuotaService(AGENT_DAILY_QUOTA, db);
   });
 
   it('allows the first call for a user', () => {
@@ -83,7 +87,7 @@ describe('AgentRateLimitService.checkAndIncrement', () => {
         PRIMARY KEY (user_id, guild_id, usage_date)
       )
     `);
-    const fallbackService = new AgentRateLimitService(emptyDb);
+    const fallbackService = new DailyQuotaService(AGENT_DAILY_QUOTA, emptyDb);
     for (let i = 0; i < 50; i++) {
       expect(
         fallbackService.checkAndIncrement('user1', 'guild1', '2026-07-22'),
@@ -95,13 +99,13 @@ describe('AgentRateLimitService.checkAndIncrement', () => {
   });
 });
 
-describe('AgentRateLimitService.seedDefaults', () => {
+describe('DailyQuotaService.seedDefaults', () => {
   it('inserts the agent_daily_limit default when the table is empty', () => {
     const db = new Database(':memory:');
     db.run(
       'CREATE TABLE ai_chat_config (key TEXT PRIMARY KEY, value INTEGER NOT NULL)',
     );
-    const service = new AgentRateLimitService(db);
+    const service = new DailyQuotaService(AGENT_DAILY_QUOTA, db);
     service.seedDefaults();
     const row = db
       .query('SELECT * FROM ai_chat_config WHERE key = ?')
@@ -117,7 +121,7 @@ describe('AgentRateLimitService.seedDefaults', () => {
     db.run(
       "INSERT INTO ai_chat_config (key, value) VALUES ('agent_daily_limit', 20)",
     );
-    const service = new AgentRateLimitService(db);
+    const service = new DailyQuotaService(AGENT_DAILY_QUOTA, db);
     service.seedDefaults();
     const row = db
       .query('SELECT value FROM ai_chat_config WHERE key = ?')
@@ -133,7 +137,7 @@ describe('AgentRateLimitService.seedDefaults', () => {
     db.run(
       "INSERT INTO ai_chat_config (key, value) VALUES ('user_daily_limit', 10), ('global_daily_limit', 200)",
     );
-    const service = new AgentRateLimitService(db);
+    const service = new DailyQuotaService(AGENT_DAILY_QUOTA, db);
     service.seedDefaults();
     const rows = db
       .query('SELECT * FROM ai_chat_config ORDER BY key')
@@ -143,5 +147,32 @@ describe('AgentRateLimitService.seedDefaults', () => {
       { key: 'global_daily_limit', value: 200 },
       { key: 'user_daily_limit', value: 10 },
     ]);
+  });
+});
+
+describe('DailyQuotaService with the research quota', () => {
+  it('enforces the research_daily_limit stored in ai_chat_config', () => {
+    const db = new Database(':memory:');
+    db.run(
+      'CREATE TABLE ai_chat_config (key TEXT PRIMARY KEY, value INTEGER NOT NULL)',
+    );
+    db.run(`
+      CREATE TABLE ai_research_usage (
+        user_id TEXT NOT NULL, guild_id TEXT NOT NULL, usage_date TEXT NOT NULL,
+        count INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (user_id, guild_id, usage_date)
+      )
+    `);
+    db.run(
+      "INSERT INTO ai_chat_config (key, value) VALUES ('research_daily_limit', 1)",
+    );
+    const service = new DailyQuotaService(RESEARCH_DAILY_QUOTA, db);
+
+    expect(service.checkAndIncrement('user1', 'guild1', '2026-07-22')).toBe(
+      true,
+    );
+    expect(service.checkAndIncrement('user1', 'guild1', '2026-07-22')).toBe(
+      false,
+    );
   });
 });

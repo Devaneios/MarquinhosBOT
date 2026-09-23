@@ -1,11 +1,11 @@
 import { Database } from 'bun:sqlite';
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { AiTraceRecorder } from 'services/aiChat/AiTraceRecorder';
+import type { DailyQuotaService } from 'services/aiChat/DailyQuotaService';
 import { GuardrailService } from 'services/aiChat/GuardrailService';
 import type { DeepResearchService } from 'services/aiChat/research/DeepResearchService';
 import { ResearchJobStore } from 'services/aiChat/research/ResearchJobStore';
 import { ResearchOrchestrator } from 'services/aiChat/research/ResearchOrchestrator';
-import type { ResearchRateLimitService } from 'services/aiChat/research/ResearchRateLimitService';
 import { ThreadSessionStore } from 'services/aiChat/thread/ThreadSessionStore';
 
 function freshDb(): Database {
@@ -83,7 +83,7 @@ function fakeTraceRecorder() {
 function limiter(allowed: boolean) {
   return {
     checkAndIncrement: mock(() => allowed),
-  } as unknown as ResearchRateLimitService;
+  } as unknown as DailyQuotaService;
 }
 
 const input = {

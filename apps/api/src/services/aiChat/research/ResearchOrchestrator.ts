@@ -1,4 +1,8 @@
 import { AiTraceRecorder } from 'services/aiChat/AiTraceRecorder';
+import {
+  DailyQuotaService,
+  RESEARCH_DAILY_QUOTA,
+} from 'services/aiChat/DailyQuotaService';
 import { GuardrailService } from 'services/aiChat/GuardrailService';
 import { DeepResearchService } from 'services/aiChat/research/DeepResearchService';
 import {
@@ -6,7 +10,6 @@ import {
   type ResearchJob,
   type ResearchProgressEvent,
 } from 'services/aiChat/research/ResearchJobStore';
-import { ResearchRateLimitService } from 'services/aiChat/research/ResearchRateLimitService';
 import { ThreadSessionStore } from 'services/aiChat/thread/ThreadSessionStore';
 import { getErrorMessage } from 'utils/errorHandling';
 import { logger } from 'utils/logger';
@@ -41,7 +44,9 @@ export class ResearchOrchestrator {
   constructor(
     private jobStore: ResearchJobStore = new ResearchJobStore(),
     private research: DeepResearchService = new DeepResearchService(),
-    private rateLimitService: ResearchRateLimitService = new ResearchRateLimitService(),
+    private rateLimitService: DailyQuotaService = new DailyQuotaService(
+      RESEARCH_DAILY_QUOTA,
+    ),
     private guardrailService: GuardrailService = new GuardrailService(),
     private threadStore: ThreadSessionStore = new ThreadSessionStore(),
     private traceRecorder: AiTraceRecorder = new AiTraceRecorder(),

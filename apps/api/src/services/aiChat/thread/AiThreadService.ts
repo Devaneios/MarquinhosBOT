@@ -1,11 +1,14 @@
 import { ThreadAgentLoop } from 'services/aiChat/agent/ThreadAgentLoop';
 import { ToolDispatcher } from 'services/aiChat/agent/ToolDispatcher';
-import { AgentRateLimitService } from 'services/aiChat/AgentRateLimitService';
 import {
   AiTraceRecorder,
   NOOP_TRACE,
   type TraceContext,
 } from 'services/aiChat/AiTraceRecorder';
+import {
+  AGENT_DAILY_QUOTA,
+  DailyQuotaService,
+} from 'services/aiChat/DailyQuotaService';
 import { GuardrailService } from 'services/aiChat/GuardrailService';
 import { ResponsesClient } from 'services/aiChat/llm/ResponsesClient';
 import {
@@ -53,7 +56,9 @@ export class AiThreadService {
   constructor(
     private store: ThreadSessionStore = new ThreadSessionStore(),
     private rateLimitService: RateLimitService = new RateLimitService(),
-    private agentRateLimitService: AgentRateLimitService = new AgentRateLimitService(),
+    private agentRateLimitService: DailyQuotaService = new DailyQuotaService(
+      AGENT_DAILY_QUOTA,
+    ),
     private guardrailService: GuardrailService = new GuardrailService(),
     private responsesClient: ResponsesClient = new ResponsesClient(),
     private sandboxManager: SandboxManager = new SandboxManager(

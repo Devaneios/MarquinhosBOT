@@ -1,8 +1,8 @@
 import { Database } from 'bun:sqlite';
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { ThreadAgentLoop } from 'services/aiChat/agent/ThreadAgentLoop';
-import type { AgentRateLimitService } from 'services/aiChat/AgentRateLimitService';
 import type { AiTraceRecorder } from 'services/aiChat/AiTraceRecorder';
+import type { DailyQuotaService } from 'services/aiChat/DailyQuotaService';
 import { GuardrailService } from 'services/aiChat/GuardrailService';
 import type {
   ConversationItem,
@@ -113,7 +113,7 @@ function service(deps: Deps = {}) {
   return new AiThreadService(
     deps.store ?? store,
     limiter(deps.chatLimit ?? true) as unknown as RateLimitService,
-    limiter(deps.agentLimit ?? true) as unknown as AgentRateLimitService,
+    limiter(deps.agentLimit ?? true) as unknown as DailyQuotaService,
     new GuardrailService(),
     deps.client ?? fakeResponsesClient(),
     deps.sandbox ?? fakeSandbox(),
