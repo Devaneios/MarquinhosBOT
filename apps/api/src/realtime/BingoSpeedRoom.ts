@@ -1,4 +1,5 @@
-import { Room, type Client } from 'colyseus';
+import { Room } from 'colyseus';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { BingoSpeedSession } from 'services/activity/bingoSpeed/BingoSpeedSession';
 import { roomKey } from 'services/activity/roomKey';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
@@ -11,7 +12,7 @@ import {
 const CLAIM_RATE_LIMIT_WINDOW_MS = 1000;
 const CLAIM_RATE_LIMIT_MAX = 5;
 
-export class BingoSpeedRoom extends Room {
+export class BingoSpeedRoom extends Room<{ client: AuthedClient }> {
   private session!: BingoSpeedSession;
   private claimRateLimiter = new RateLimiter({
     windowMs: CLAIM_RATE_LIMIT_WINDOW_MS,
@@ -19,7 +20,7 @@ export class BingoSpeedRoom extends Room {
   });
 
   override async onAuth(
-    _client: Client,
+    _client: AuthedClient,
     options: { token?: string; roomKey?: string },
   ): Promise<WsSessionPayload> {
     const session = options.token ? verifyWsSessionToken(options.token) : null;
@@ -55,20 +56,24 @@ export class BingoSpeedRoom extends Room {
       { onSessionEnded: () => this.disconnect() },
     );
 
-    this.onMessage('claim_bingo', (client) => {
+    this.onMessage('claim_bingo', (client: AuthedClient) => {
       if (this.claimRateLimiter.isOverLimit(client)) return;
-      const auth = client.auth as WsSessionPayload;
+      const auth = requireAuth(client);
       const result = this.session.claimBingo(auth.userId);
       client.send('bingo_claim_result', result);
     });
 
-    this.onMessage('leave', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('leave', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.leave(auth.userId, client);
     });
   }
 
-  override onJoin(client: Client, _options: unknown, auth: WsSessionPayload) {
+  override onJoin(
+    client: AuthedClient,
+    _options: unknown,
+    auth: WsSessionPayload,
+  ) {
     const card = this.session.addPlayer(auth.userId, client);
     const state = this.session.getPublicState();
 
@@ -82,9 +87,9 @@ export class BingoSpeedRoom extends Room {
     }
   }
 
-  override onLeave(client: Client) {
+  override onLeave(client: AuthedClient) {
     this.claimRateLimiter.clear(client);
-    const auth = client.auth as WsSessionPayload;
+    const auth = requireAuth(client);
     this.session.pauseForDisconnect(auth.userId, client);
   }
 

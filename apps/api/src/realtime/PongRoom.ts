@@ -1,4 +1,5 @@
-import { Room, type Client } from 'colyseus';
+import { Room } from 'colyseus';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import type { PongArenaEngineConfig } from 'services/activity/pong/PongArenaEngine';
 import {
   getPongRuleset,
@@ -31,7 +32,7 @@ function pongConfig(session: WsSessionPayload): Partial<PongArenaEngineConfig> {
   };
 }
 
-export class PongRoom extends Room {
+export class PongRoom extends Room<{ client: AuthedClient }> {
   private session!: PongSession;
   private inputRateLimiter = new RateLimiter({
     windowMs: INPUT_RATE_LIMIT_WINDOW_MS,
@@ -39,7 +40,7 @@ export class PongRoom extends Room {
   });
 
   override async onAuth(
-    _client: Client,
+    _client: AuthedClient,
     options: { token?: string; roomKey?: string },
   ): Promise<WsSessionPayload> {
     const session = options.token ? verifyWsSessionToken(options.token) : null;
@@ -117,7 +118,7 @@ export class PongRoom extends Room {
         ) {
           return;
         }
-        const auth = client.auth as WsSessionPayload;
+        const auth = requireAuth(client);
         this.session.handleInput(
           auth.userId,
           payload?.direction ?? 0,
@@ -129,13 +130,16 @@ export class PongRoom extends Room {
       },
     );
 
-    this.onMessage('ready', (client, payload: { ready?: boolean }) => {
-      const auth = client.auth as WsSessionPayload;
-      this.session.setReady(auth.userId, payload?.ready === true);
-    });
+    this.onMessage(
+      'ready',
+      (client: AuthedClient, payload: { ready?: boolean }) => {
+        const auth = requireAuth(client);
+        this.session.setReady(auth.userId, payload?.ready === true);
+      },
+    );
 
-    this.onMessage('sync', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('sync', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       const assignment = this.session.getAssignment(auth.userId);
       client.send('init', {
         selfUserId: auth.userId,
@@ -148,8 +152,8 @@ export class PongRoom extends Room {
 
     this.onMessage(
       'lobby_config',
-      (client, payload: Partial<PongArenaEngineConfig>) => {
-        const auth = client.auth as WsSessionPayload;
+      (client: AuthedClient, payload: Partial<PongArenaEngineConfig>) => {
+        const auth = requireAuth(client);
         const config: Partial<PongArenaEngineConfig> = {};
         if (isPongRulesetId(payload?.ruleset)) config.ruleset = payload.ruleset;
         if (
@@ -172,18 +176,22 @@ export class PongRoom extends Room {
       },
     );
 
-    this.onMessage('restart', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('restart', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.requestRestart(auth.userId);
     });
 
-    this.onMessage('leave', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('leave', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.leave(auth.userId, client);
     });
   }
 
-  override onJoin(client: Client, _options: unknown, auth: WsSessionPayload) {
+  override onJoin(
+    client: AuthedClient,
+    _options: unknown,
+    auth: WsSessionPayload,
+  ) {
     const side = this.session.addPlayer(
       auth.userId,
       client,
@@ -213,9 +221,9 @@ export class PongRoom extends Room {
     }, 0);
   }
 
-  override onLeave(client: Client) {
+  override onLeave(client: AuthedClient) {
     this.inputRateLimiter.clear(client);
-    const auth = client.auth as WsSessionPayload;
+    const auth = requireAuth(client);
     this.session.pauseForDisconnect(auth.userId, client);
   }
 

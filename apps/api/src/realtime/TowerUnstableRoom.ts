@@ -1,4 +1,5 @@
-import { Room, type Client } from 'colyseus';
+import { Room } from 'colyseus';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { roomKey } from 'services/activity/roomKey';
 import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
@@ -11,7 +12,7 @@ import {
 const PULL_RATE_LIMIT_WINDOW_MS = 1000;
 const PULL_RATE_LIMIT_MAX = 5;
 
-export class TowerUnstableRoom extends Room {
+export class TowerUnstableRoom extends Room<{ client: AuthedClient }> {
   private session!: TowerSession;
   private pullRateLimiter = new RateLimiter({
     windowMs: PULL_RATE_LIMIT_WINDOW_MS,
@@ -19,7 +20,7 @@ export class TowerUnstableRoom extends Room {
   });
 
   override async onAuth(
-    _client: Client,
+    _client: AuthedClient,
     options: { token?: string; roomKey?: string },
   ): Promise<WsSessionPayload> {
     const session = options.token ? verifyWsSessionToken(options.token) : null;
@@ -60,9 +61,12 @@ export class TowerUnstableRoom extends Room {
 
     this.onMessage(
       'pull',
-      (client, payload: { level?: number; position?: number }) => {
+      (
+        client: AuthedClient,
+        payload: { level?: number; position?: number },
+      ) => {
         if (this.pullRateLimiter.isOverLimit(client)) return;
-        const auth = client.auth as WsSessionPayload;
+        const auth = requireAuth(client);
         const result = this.session.handlePull(
           auth.userId,
           payload?.level ?? -1,
@@ -74,18 +78,22 @@ export class TowerUnstableRoom extends Room {
       },
     );
 
-    this.onMessage('restart', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('restart', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.requestRestart(auth.userId);
     });
 
-    this.onMessage('leave', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('leave', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.leave(auth.userId, client);
     });
   }
 
-  override onJoin(client: Client, _options: unknown, auth: WsSessionPayload) {
+  override onJoin(
+    client: AuthedClient,
+    _options: unknown,
+    auth: WsSessionPayload,
+  ) {
     const joined = this.session.addPlayer(auth.userId, client);
     if (joined && auth.mode === 'single') {
       this.session.enableBot();
@@ -100,9 +108,9 @@ export class TowerUnstableRoom extends Room {
     }
   }
 
-  override onLeave(client: Client) {
+  override onLeave(client: AuthedClient) {
     this.pullRateLimiter.clear(client);
-    const auth = client.auth as WsSessionPayload;
+    const auth = requireAuth(client);
     this.session.pauseForDisconnect(auth.userId, client);
   }
 

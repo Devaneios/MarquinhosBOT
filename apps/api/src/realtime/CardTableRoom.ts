@@ -1,4 +1,5 @@
-import { Room, type Client } from 'colyseus';
+import { Room } from 'colyseus';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { CardTableSession } from 'services/activity/cards/CardTableSession';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
 import { cardGameRegistry } from 'services/activity/cards/registry';
@@ -15,7 +16,7 @@ const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
 // not a held-key stream sampled every tick.
 const MOVE_RATE_LIMIT_MAX = 20;
 
-export class CardTableRoom extends Room {
+export class CardTableRoom extends Room<{ client: AuthedClient }> {
   private session!: CardTableSession<unknown>;
   private moveRateLimiter = new RateLimiter({
     windowMs: MOVE_RATE_LIMIT_WINDOW_MS,
@@ -23,7 +24,7 @@ export class CardTableRoom extends Room {
   });
 
   override async onAuth(
-    _client: Client,
+    _client: AuthedClient,
     options: { token?: string; roomKey?: string },
   ): Promise<WsSessionPayload> {
     const session = options.token ? verifyWsSessionToken(options.token) : null;
@@ -56,7 +57,7 @@ export class CardTableRoom extends Room {
       // one of them leaves the other stuck on the loading state forever.
       sendToPlayer: (userId, message) => {
         for (const client of this.clients) {
-          if ((client.auth as WsSessionPayload)?.userId !== userId) continue;
+          if (client.auth?.userId !== userId) continue;
           client.send(message.type, message.payload);
         }
       },
@@ -82,26 +83,30 @@ export class CardTableRoom extends Room {
 
     this.onMessage(
       'move',
-      (client, payload: { move?: string; args?: unknown }) => {
+      (client: AuthedClient, payload: { move?: string; args?: unknown }) => {
         if (this.moveRateLimiter.isOverLimit(client)) return;
-        const auth = client.auth as WsSessionPayload;
+        const auth = requireAuth(client);
         if (!payload?.move) return;
         this.session.handleMove(auth.userId, payload.move, payload.args);
       },
     );
 
-    this.onMessage('restart', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('restart', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.requestRestart(auth.userId);
     });
 
-    this.onMessage('leave', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('leave', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.leave(auth.userId, client);
     });
   }
 
-  override onJoin(client: Client, _options: unknown, auth: WsSessionPayload) {
+  override onJoin(
+    client: AuthedClient,
+    _options: unknown,
+    auth: WsSessionPayload,
+  ) {
     // Sent before addPlayer() so a client's first message is always its
     // seat assignment — addPlayer can synchronously trigger a masked
     // 'state' broadcast (once the table fills) that would otherwise race
@@ -111,9 +116,9 @@ export class CardTableRoom extends Room {
     this.session.addPlayer(auth.userId, client);
   }
 
-  override onLeave(client: Client) {
+  override onLeave(client: AuthedClient) {
     this.moveRateLimiter.clear(client);
-    const auth = client.auth as WsSessionPayload;
+    const auth = requireAuth(client);
     this.session.pauseForDisconnect(auth.userId, client);
   }
 

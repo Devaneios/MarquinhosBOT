@@ -1,4 +1,5 @@
-import { Room, type Client } from 'colyseus';
+import { Room } from 'colyseus';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { roomKey } from 'services/activity/roomKey';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
@@ -12,7 +13,7 @@ import { GamificationService } from 'services/gamification/GamificationService';
 const ANSWER_RATE_LIMIT_WINDOW_MS = 1000;
 const ANSWER_RATE_LIMIT_MAX = 1;
 
-export class TriviaQuizRoom extends Room {
+export class TriviaQuizRoom extends Room<{ client: AuthedClient }> {
   private session!: TriviaQuizSession;
   private answerRateLimiter = new RateLimiter({
     windowMs: ANSWER_RATE_LIMIT_WINDOW_MS,
@@ -20,7 +21,7 @@ export class TriviaQuizRoom extends Room {
   });
 
   override async onAuth(
-    _client: Client,
+    _client: AuthedClient,
     options: { token?: string; roomKey?: string },
   ): Promise<WsSessionPayload> {
     const session = options.token ? verifyWsSessionToken(options.token) : null;
@@ -55,18 +56,25 @@ export class TriviaQuizRoom extends Room {
       new GamificationService(),
     );
 
-    this.onMessage('answer', (client, payload: { answerIndex?: number }) => {
-      if (this.answerRateLimiter.isOverLimit(client)) return;
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage(
+      'answer',
+      (client: AuthedClient, payload: { answerIndex?: number }) => {
+        if (this.answerRateLimiter.isOverLimit(client)) return;
+        const auth = requireAuth(client);
 
-      const answerIndex = payload?.answerIndex ?? -1;
-      if (answerIndex < 0 || typeof answerIndex !== 'number') return;
+        const answerIndex = payload?.answerIndex ?? -1;
+        if (answerIndex < 0 || typeof answerIndex !== 'number') return;
 
-      this.session.handleAnswer(auth.userId, answerIndex, Date.now());
-    });
+        this.session.handleAnswer(auth.userId, answerIndex, Date.now());
+      },
+    );
   }
 
-  override onJoin(client: Client, _options: unknown, auth: WsSessionPayload) {
+  override onJoin(
+    client: AuthedClient,
+    _options: unknown,
+    auth: WsSessionPayload,
+  ) {
     const joined = this.session.addPlayer(auth.userId, client);
     if (!joined) {
       client.send('error', { message: 'Game is full' });
@@ -84,9 +92,9 @@ export class TriviaQuizRoom extends Room {
     }
   }
 
-  override onLeave(client: Client) {
+  override onLeave(client: AuthedClient) {
     this.answerRateLimiter.clear(client);
-    const auth = client.auth as WsSessionPayload;
+    const auth = requireAuth(client);
     this.session.pauseForDisconnect(auth.userId, client);
   }
 

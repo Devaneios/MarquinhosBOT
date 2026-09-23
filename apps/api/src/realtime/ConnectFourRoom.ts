@@ -1,4 +1,5 @@
-import { Room, type Client } from 'colyseus';
+import { Room } from 'colyseus';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { ConnectFourSession } from 'services/activity/connectFour/ConnectFourSession';
 import { roomKey } from 'services/activity/roomKey';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
@@ -10,7 +11,7 @@ import {
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
 const MOVE_RATE_LIMIT_MAX = 10;
 
-export class ConnectFourRoom extends Room {
+export class ConnectFourRoom extends Room<{ client: AuthedClient }> {
   private session!: ConnectFourSession;
   private moveRateLimiter = new RateLimiter({
     windowMs: MOVE_RATE_LIMIT_WINDOW_MS,
@@ -18,7 +19,7 @@ export class ConnectFourRoom extends Room {
   });
 
   override async onAuth(
-    _client: Client,
+    _client: AuthedClient,
     options: { token?: string; roomKey?: string },
   ): Promise<WsSessionPayload> {
     const session = options.token ? verifyWsSessionToken(options.token) : null;
@@ -52,25 +53,32 @@ export class ConnectFourRoom extends Room {
       { onSessionEnded: () => this.disconnect() },
     );
 
-    this.onMessage('drop', (client, payload: { col?: number }) => {
-      if (this.moveRateLimiter.isOverLimit(client)) return;
-      const auth = client.auth as WsSessionPayload;
-      const accepted = this.session.dropDisc(auth.userId, payload?.col ?? -1);
-      if (!accepted) client.send('move_rejected', { col: payload?.col });
-    });
+    this.onMessage(
+      'drop',
+      (client: AuthedClient, payload: { col?: number }) => {
+        if (this.moveRateLimiter.isOverLimit(client)) return;
+        const auth = requireAuth(client);
+        const accepted = this.session.dropDisc(auth.userId, payload?.col ?? -1);
+        if (!accepted) client.send('move_rejected', { col: payload?.col });
+      },
+    );
 
-    this.onMessage('restart', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('restart', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.requestRestart(auth.userId);
     });
 
-    this.onMessage('leave', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('leave', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.leave(auth.userId, client);
     });
   }
 
-  override onJoin(client: Client, _options: unknown, auth: WsSessionPayload) {
+  override onJoin(
+    client: AuthedClient,
+    _options: unknown,
+    auth: WsSessionPayload,
+  ) {
     const disc = this.session.addPlayer(auth.userId, client);
     client.send('init', { disc, state: this.session.getPublicState() });
     if (!disc) return;
@@ -80,9 +88,9 @@ export class ConnectFourRoom extends Room {
     }
   }
 
-  override onLeave(client: Client) {
+  override onLeave(client: AuthedClient) {
     this.moveRateLimiter.clear(client);
-    const auth = client.auth as WsSessionPayload;
+    const auth = requireAuth(client);
     this.session.pauseForDisconnect(auth.userId, client);
   }
 

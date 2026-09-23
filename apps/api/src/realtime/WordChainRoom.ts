@@ -1,4 +1,5 @@
-import { Room, type Client } from 'colyseus';
+import { Room } from 'colyseus';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { roomKey } from 'services/activity/roomKey';
 import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
@@ -11,7 +12,7 @@ import {
 const WORD_RATE_LIMIT_WINDOW_MS = 1000;
 const WORD_RATE_LIMIT_MAX = 3;
 
-export class WordChainRoom extends Room {
+export class WordChainRoom extends Room<{ client: AuthedClient }> {
   private session!: WordChainSession;
   private wordRateLimiter = new RateLimiter({
     windowMs: WORD_RATE_LIMIT_WINDOW_MS,
@@ -19,7 +20,7 @@ export class WordChainRoom extends Room {
   });
 
   override async onAuth(
-    _client: Client,
+    _client: AuthedClient,
     options: { token?: string; roomKey?: string },
   ): Promise<WsSessionPayload> {
     const session = options.token ? verifyWsSessionToken(options.token) : null;
@@ -57,26 +58,33 @@ export class WordChainRoom extends Room {
       { onSessionEnded: () => this.disconnect() },
     );
 
-    this.onMessage('word', (client, payload: { word?: string }) => {
-      if (this.wordRateLimiter.isOverLimit(client)) return;
+    this.onMessage(
+      'word',
+      (client: AuthedClient, payload: { word?: string }) => {
+        if (this.wordRateLimiter.isOverLimit(client)) return;
 
-      const auth = client.auth as WsSessionPayload;
-      const result = this.session.handleWordSubmission(
-        auth.userId,
-        payload?.word ?? '',
-      );
-      if (!result.ok) {
-        client.send(ACTION_REJECTED, { error: result.error });
-      }
-    });
+        const auth = requireAuth(client);
+        const result = this.session.handleWordSubmission(
+          auth.userId,
+          payload?.word ?? '',
+        );
+        if (!result.ok) {
+          client.send(ACTION_REJECTED, { error: result.error });
+        }
+      },
+    );
 
-    this.onMessage('leave', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('leave', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.leave(auth.userId, client);
     });
   }
 
-  override onJoin(client: Client, _options: unknown, auth: WsSessionPayload) {
+  override onJoin(
+    client: AuthedClient,
+    _options: unknown,
+    auth: WsSessionPayload,
+  ) {
     this.session.addPlayer(auth.userId, client);
     if (auth.mode === 'single') {
       this.session.enableBot();
@@ -92,9 +100,9 @@ export class WordChainRoom extends Room {
     });
   }
 
-  override onLeave(client: Client) {
+  override onLeave(client: AuthedClient) {
     this.wordRateLimiter.clear(client);
-    const auth = client.auth as WsSessionPayload;
+    const auth = requireAuth(client);
     this.session.pauseForDisconnect(auth.userId, client);
   }
 

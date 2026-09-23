@@ -1,4 +1,5 @@
-import { Room, type Client } from 'colyseus';
+import { Room } from 'colyseus';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { roomKey } from 'services/activity/roomKey';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
 import {
@@ -10,7 +11,7 @@ import { WordleService } from 'services/wordle';
 const GUESS_RATE_LIMIT_WINDOW_MS = 1000;
 const GUESS_RATE_LIMIT_MAX = 3;
 
-export class WordleRoom extends Room {
+export class WordleRoom extends Room<{ client: AuthedClient }> {
   private service = new WordleService();
   private guessRateLimiter = new RateLimiter({
     windowMs: GUESS_RATE_LIMIT_WINDOW_MS,
@@ -18,7 +19,7 @@ export class WordleRoom extends Room {
   });
 
   override async onAuth(
-    _client: Client,
+    _client: AuthedClient,
     options: { token?: string; roomKey?: string },
   ): Promise<WsSessionPayload> {
     const session = options.token ? verifyWsSessionToken(options.token) : null;
@@ -32,26 +33,33 @@ export class WordleRoom extends Room {
   override onCreate(options: { roomKey: string }) {
     void this.setMetadata({ roomKey: options.roomKey });
 
-    this.onMessage('guess', (client, payload: { guess?: string }) => {
-      const auth = client.auth as WsSessionPayload;
-      if (this.guessRateLimiter.isOverLimit(client)) return;
+    this.onMessage(
+      'guess',
+      (client: AuthedClient, payload: { guess?: string }) => {
+        const auth = requireAuth(client);
+        if (this.guessRateLimiter.isOverLimit(client)) return;
 
-      const result = this.service.submitGuess(
-        auth.userId,
-        auth.guildId,
-        payload?.guess ?? '',
-      );
+        const result = this.service.submitGuess(
+          auth.userId,
+          auth.guildId,
+          payload?.guess ?? '',
+        );
 
-      if ('error' in result) {
-        client.send('guess_error', { message: result.error });
-        return;
-      }
+        if ('error' in result) {
+          client.send('guess_error', { message: result.error });
+          return;
+        }
 
-      client.send('guess_result', result);
-    });
+        client.send('guess_result', result);
+      },
+    );
   }
 
-  override onJoin(client: Client, _options: unknown, auth: WsSessionPayload) {
+  override onJoin(
+    client: AuthedClient,
+    _options: unknown,
+    auth: WsSessionPayload,
+  ) {
     const daily = this.service.getDailyWord(auth.guildId);
     const session = this.service.getUserSession(auth.userId, auth.guildId);
     client.send('init', {
@@ -62,7 +70,7 @@ export class WordleRoom extends Room {
     });
   }
 
-  override onLeave(client: Client) {
+  override onLeave(client: AuthedClient) {
     this.guessRateLimiter.clear(client);
   }
 }

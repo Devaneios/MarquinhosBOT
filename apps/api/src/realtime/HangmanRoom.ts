@@ -1,4 +1,5 @@
-import { Room, type Client } from 'colyseus';
+import { Room } from 'colyseus';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { HangmanSession } from 'services/activity/hangman/HangmanSession';
 import { getHangmanWord } from 'services/activity/hangman/wordList';
 import { roomKey } from 'services/activity/roomKey';
@@ -12,7 +13,7 @@ import {
 const GUESS_RATE_LIMIT_WINDOW_MS = 1000;
 const GUESS_RATE_LIMIT_MAX = 3;
 
-export class HangmanRoom extends Room {
+export class HangmanRoom extends Room<{ client: AuthedClient }> {
   private session!: HangmanSession;
   private guessRateLimiter = new RateLimiter({
     windowMs: GUESS_RATE_LIMIT_WINDOW_MS,
@@ -20,7 +21,7 @@ export class HangmanRoom extends Room {
   });
 
   override async onAuth(
-    _client: Client,
+    _client: AuthedClient,
     options: { token?: string; roomKey?: string },
   ): Promise<WsSessionPayload> {
     const session = options.token ? verifyWsSessionToken(options.token) : null;
@@ -59,27 +60,34 @@ export class HangmanRoom extends Room {
       { onSessionEnded: () => this.disconnect() },
     );
 
-    this.onMessage('guess', (client, payload: { letter?: string }) => {
-      if (this.guessRateLimiter.isOverLimit(client)) return;
-      const auth = client.auth as WsSessionPayload;
-      const result = this.session.guessLetter(
-        auth.userId,
-        payload?.letter ?? '',
-      );
-      if (!result.success) {
-        client.send('guess_error', { message: result.message });
-        return;
-      }
-      client.send('guess_success', {});
-    });
+    this.onMessage(
+      'guess',
+      (client: AuthedClient, payload: { letter?: string }) => {
+        if (this.guessRateLimiter.isOverLimit(client)) return;
+        const auth = requireAuth(client);
+        const result = this.session.guessLetter(
+          auth.userId,
+          payload?.letter ?? '',
+        );
+        if (!result.success) {
+          client.send('guess_error', { message: result.message });
+          return;
+        }
+        client.send('guess_success', {});
+      },
+    );
 
-    this.onMessage('leave', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('leave', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.pauseForDisconnect(auth.userId, client);
     });
   }
 
-  override onJoin(client: Client, _options: unknown, auth: WsSessionPayload) {
+  override onJoin(
+    client: AuthedClient,
+    _options: unknown,
+    auth: WsSessionPayload,
+  ) {
     const added = this.session.addPlayer(auth.userId, client);
     if (!added) {
       client.leave(1008, 'Room is full');
@@ -90,9 +98,9 @@ export class HangmanRoom extends Room {
     client.send('init', state);
   }
 
-  override onLeave(client: Client) {
+  override onLeave(client: AuthedClient) {
     this.guessRateLimiter.clear(client);
-    const auth = client.auth as WsSessionPayload;
+    const auth = requireAuth(client);
     this.session.pauseForDisconnect(auth.userId, client);
   }
 

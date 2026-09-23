@@ -1,4 +1,5 @@
-import { Room, type Client } from 'colyseus';
+import { Room } from 'colyseus';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { roomKey } from 'services/activity/roomKey';
 import { ACTION_REJECTED } from 'services/activity/shared/ActionResult';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
@@ -11,7 +12,7 @@ import {
 const GUESS_RATE_LIMIT_WINDOW_MS = 1000;
 const GUESS_RATE_LIMIT_MAX = 3;
 
-export class WordleRaceRoom extends Room {
+export class WordleRaceRoom extends Room<{ client: AuthedClient }> {
   private session!: WordleRaceSession;
   private guessRateLimiter = new RateLimiter({
     windowMs: GUESS_RATE_LIMIT_WINDOW_MS,
@@ -19,7 +20,7 @@ export class WordleRaceRoom extends Room {
   });
 
   override async onAuth(
-    _client: Client,
+    _client: AuthedClient,
     options: { token?: string; roomKey?: string },
   ): Promise<WsSessionPayload> {
     const session = options.token ? verifyWsSessionToken(options.token) : null;
@@ -58,33 +59,40 @@ export class WordleRaceRoom extends Room {
       { onSessionEnded: () => this.disconnect() },
     );
 
-    this.onMessage('guess', (client, payload: { guess?: string }) => {
-      if (this.guessRateLimiter.isOverLimit(client)) return;
-      const auth = client.auth as WsSessionPayload;
-      const result = this.session.submitGuess(
-        auth.userId,
-        payload?.guess ?? '',
-      );
-      if (!result.ok) {
-        client.send(ACTION_REJECTED, { error: result.error });
-      }
-    });
+    this.onMessage(
+      'guess',
+      (client: AuthedClient, payload: { guess?: string }) => {
+        if (this.guessRateLimiter.isOverLimit(client)) return;
+        const auth = requireAuth(client);
+        const result = this.session.submitGuess(
+          auth.userId,
+          payload?.guess ?? '',
+        );
+        if (!result.ok) {
+          client.send(ACTION_REJECTED, { error: result.error });
+        }
+      },
+    );
 
-    this.onMessage('leave', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('leave', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.leave(auth.userId, client);
     });
   }
 
-  override onJoin(client: Client, _options: unknown, auth: WsSessionPayload) {
+  override onJoin(
+    client: AuthedClient,
+    _options: unknown,
+    auth: WsSessionPayload,
+  ) {
     this.session.addPlayer(auth.userId, client);
     const gameState = this.session.getGameState(auth.userId);
     client.send('init', gameState);
   }
 
-  override onLeave(client: Client) {
+  override onLeave(client: AuthedClient) {
     this.guessRateLimiter.clear(client);
-    const auth = client.auth as WsSessionPayload;
+    const auth = requireAuth(client);
     this.session.pauseForDisconnect(auth.userId, client);
   }
 

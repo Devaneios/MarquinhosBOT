@@ -1,4 +1,5 @@
-import { Room, type Client } from 'colyseus';
+import { Room } from 'colyseus';
+import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { roomKey } from 'services/activity/roomKey';
 import { RpsSession } from 'services/activity/rps/RpsSession';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
@@ -10,7 +11,7 @@ import {
 const PICK_RATE_LIMIT_WINDOW_MS = 1000;
 const PICK_RATE_LIMIT_MAX = 10;
 
-export class RpsRoom extends Room {
+export class RpsRoom extends Room<{ client: AuthedClient }> {
   private session!: RpsSession;
   private pickRateLimiter = new RateLimiter({
     windowMs: PICK_RATE_LIMIT_WINDOW_MS,
@@ -18,7 +19,7 @@ export class RpsRoom extends Room {
   });
 
   override async onAuth(
-    _client: Client,
+    _client: AuthedClient,
     options: { token?: string; roomKey?: string },
   ): Promise<WsSessionPayload> {
     const session = options.token ? verifyWsSessionToken(options.token) : null;
@@ -58,22 +59,29 @@ export class RpsRoom extends Room {
       { onSessionEnded: () => this.disconnect() },
     );
 
-    this.onMessage('pick', (client, payload: { pick?: string }) => {
-      if (this.pickRateLimiter.isOverLimit(client)) return;
-      const auth = client.auth as WsSessionPayload;
-      const success = this.session.submitPick(auth.userId, payload?.pick);
-      if (!success) {
-        client.send('error', { message: 'Invalid move' });
-      }
-    });
+    this.onMessage(
+      'pick',
+      (client: AuthedClient, payload: { pick?: string }) => {
+        if (this.pickRateLimiter.isOverLimit(client)) return;
+        const auth = requireAuth(client);
+        const success = this.session.submitPick(auth.userId, payload?.pick);
+        if (!success) {
+          client.send('error', { message: 'Invalid move' });
+        }
+      },
+    );
 
-    this.onMessage('leave', (client) => {
-      const auth = client.auth as WsSessionPayload;
+    this.onMessage('leave', (client: AuthedClient) => {
+      const auth = requireAuth(client);
       this.session.leave(auth.userId, client);
     });
   }
 
-  override onJoin(client: Client, _options: unknown, auth: WsSessionPayload) {
+  override onJoin(
+    client: AuthedClient,
+    _options: unknown,
+    auth: WsSessionPayload,
+  ) {
     const playerId = this.session.addPlayer(auth.userId, client);
     if (!playerId) {
       client.send('error', { message: 'Game is full' });
@@ -96,9 +104,9 @@ export class RpsRoom extends Room {
     }
   }
 
-  override onLeave(client: Client) {
+  override onLeave(client: AuthedClient) {
     this.pickRateLimiter.clear(client);
-    const auth = client.auth as WsSessionPayload;
+    const auth = requireAuth(client);
     this.session.pauseForDisconnect(auth.userId, client);
   }
 
