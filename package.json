@@ -13,6 +13,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test --concurrency=1",
     "test:deploy-env": "bash .github/scripts/write-deploy-env.test.sh",
+    "test:dev": "SQLITE_PATH=:memory: bun test ./dev apps/activity/devGateway.test.ts && tsc -p dev/tsconfig.json",
     "prepare": "husky"
   },
   "devDependencies": {
