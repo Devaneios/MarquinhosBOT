@@ -25,6 +25,7 @@ import type { BinaryActivityBroadcaster } from 'services/activity/shared/Activit
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
+import { logger } from 'utils/logger';
 
 interface PongPlayer {
   userId: string;
@@ -668,12 +669,21 @@ export class PongSession {
     const config = this.engine.getConfig();
     const rankedPool = getPongRuleset(config.ruleset).rankedPool;
     if (config.ranked && rankedPool) {
-      this.competition.recordMatch(
-        this.identity.instanceId,
-        this.identity.guildId,
-        rankedPool,
-        results,
-      );
+      // Runs from the game loop and forfeit timers: a rejection must be
+      // logged here, never left to crash the process.
+      this.competition
+        .recordMatch(
+          this.identity.instanceId,
+          this.identity.guildId,
+          rankedPool,
+          results,
+        )
+        .catch((error: unknown) =>
+          logger.error('pong.record_ranked_match_failed', {
+            error,
+            guildId: this.identity.guildId,
+          }),
+        );
     }
   }
 

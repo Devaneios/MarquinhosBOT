@@ -1,44 +1,37 @@
-import { Database } from 'bun:sqlite';
+import { wordleUserConfig } from '@marquinhos/database/schema';
 import { describe, expect, it } from 'bun:test';
+import { count } from 'drizzle-orm';
 import { WordleUserConfigService } from 'services/wordleUserConfig';
+import { useTestDb } from './helpers/testDb';
 
-function createDatabase(): Database {
-  const db = new Database(':memory:');
-  db.run(`
-    CREATE TABLE wordle_user_config (
-      user_id TEXT NOT NULL PRIMARY KEY,
-      invert_action_keys INTEGER NOT NULL DEFAULT 0 CHECK (invert_action_keys IN (0, 1)),
-      enable_sounds INTEGER NOT NULL DEFAULT 0 CHECK (enable_sounds IN (0, 1)),
-      enable_space_key INTEGER NOT NULL DEFAULT 0 CHECK (enable_space_key IN (0, 1)),
-      enable_arrow_keys INTEGER NOT NULL DEFAULT 0 CHECK (enable_arrow_keys IN (0, 1)),
-      updated_at INTEGER NOT NULL DEFAULT (cast(strftime('%s','now') as int))
-    )
-  `);
-  return db;
+const testDb = useTestDb();
+
+function createDatabase() {
+  return testDb.current.db;
 }
 
 describe('WordleUserConfigService', () => {
-  it('returns disabled defaults without creating a row', () => {
+  it('returns disabled defaults without creating a row', async () => {
     const db = createDatabase();
     const service = new WordleUserConfigService(db);
 
-    expect(service.get('user-1')).toEqual({
+    expect(await service.get('user-1')).toEqual({
       invertActionKeys: false,
       enableSounds: false,
       enableSpaceKey: false,
       enableArrowKeys: false,
     });
-    expect(
-      db.query('SELECT COUNT(*) AS count FROM wordle_user_config').get(),
-    ).toEqual({ count: 0 });
+    expect(await db.select({ count: count() }).from(wordleUserConfig)).toEqual([
+      { count: 0 },
+    ]);
   });
 
-  it('creates and replaces the complete configuration', () => {
+  it('creates and replaces the complete configuration', async () => {
     const db = createDatabase();
     const service = new WordleUserConfigService(db);
 
     expect(
-      service.update('user-1', {
+      await service.update('user-1', {
         invertActionKeys: true,
         enableSounds: false,
         enableSpaceKey: true,
@@ -52,7 +45,7 @@ describe('WordleUserConfigService', () => {
     });
 
     expect(
-      service.update('user-1', {
+      await service.update('user-1', {
         invertActionKeys: false,
         enableSounds: true,
         enableSpaceKey: true,
@@ -64,27 +57,29 @@ describe('WordleUserConfigService', () => {
       enableSpaceKey: true,
       enableArrowKeys: false,
     });
-    expect(service.get('user-1')).toEqual({
+    expect(await service.get('user-1')).toEqual({
       invertActionKeys: false,
       enableSounds: true,
       enableSpaceKey: true,
       enableArrowKeys: false,
     });
     expect(
-      db
-        .query(
-          `SELECT user_id, invert_action_keys, enable_sounds,
-                  enable_space_key, enable_arrow_keys
-           FROM wordle_user_config`,
-        )
-        .all(),
+      await db
+        .select({
+          user_id: wordleUserConfig.user_id,
+          invert_action_keys: wordleUserConfig.invert_action_keys,
+          enable_sounds: wordleUserConfig.enable_sounds,
+          enable_space_key: wordleUserConfig.enable_space_key,
+          enable_arrow_keys: wordleUserConfig.enable_arrow_keys,
+        })
+        .from(wordleUserConfig),
     ).toEqual([
       {
         user_id: 'user-1',
-        invert_action_keys: 0,
-        enable_sounds: 1,
-        enable_space_key: 1,
-        enable_arrow_keys: 0,
+        invert_action_keys: false,
+        enable_sounds: true,
+        enable_space_key: true,
+        enable_arrow_keys: false,
       },
     ]);
   });

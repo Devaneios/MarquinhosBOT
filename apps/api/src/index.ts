@@ -1,5 +1,4 @@
 import { WebSocketTransport } from '@colyseus/ws-transport';
-import '@marquinhos/database/sqlite';
 import { Server as ColyseusServer } from 'colyseus';
 import { validateProductionEnvironment } from 'config/environment';
 import cors from 'cors';
@@ -31,7 +30,7 @@ import { ResearchOrchestrator } from 'services/aiChat/research/ResearchOrchestra
 import { DockerodeSandboxClient } from 'services/aiChat/sandbox/DockerodeSandboxClient';
 import { SandboxManager } from 'services/aiChat/sandbox/SandboxManager';
 import { GamificationService } from 'services/gamification';
-import { getValidationSet } from 'services/wordle';
+import { getValidationSet, loadBannedWords } from 'services/wordle';
 import { logger } from 'utils/logger';
 
 validateProductionEnvironment();
@@ -136,22 +135,40 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 
 // Startup initialisation — failures crash the process instead of silently
 // serving with empty XP config or missing wordle word list.
+import { db } from '@marquinhos/database/client';
+import { importLegacySqliteOnce } from '@marquinhos/database/etl';
+import { startMaintenance } from '@marquinhos/database/maintenance';
 import { runMigrations } from '@marquinhos/database/migrate';
 
 try {
-  runMigrations();
-  new GamificationService().initializeDefaults();
-  new RateLimitService().seedDefaults();
-  new DailyQuotaService(AGENT_DAILY_QUOTA).seedDefaults();
-  new DailyQuotaService(RESEARCH_DAILY_QUOTA).seedDefaults();
+  await runMigrations();
+  // One-off SQLite → Postgres cutover. Runs before the defaults are seeded and
+  // before anything is served; a failure stops startup so a deploy rolls back
+  // to the SQLite build with its data untouched.
+  if (process.env.SQLITE_PATH) {
+    const outcome = await importLegacySqliteOnce(process.env.SQLITE_PATH, db);
+    if (outcome.status === 'imported') {
+      logger.info('db.legacy_sqlite_imported', {
+        snapshotPath: outcome.snapshotPath,
+        tables: outcome.reports,
+      });
+    }
+  }
+  await new GamificationService().initializeDefaults();
+  await new RateLimitService().seedDefaults();
+  await new DailyQuotaService(AGENT_DAILY_QUOTA).seedDefaults();
+  await new DailyQuotaService(RESEARCH_DAILY_QUOTA).seedDefaults();
   // A research job lives in this process, so a restart orphans anything still
   // queued or running. Fail those now instead of leaving the bot polling a job
   // that will never move.
-  new ResearchOrchestrator().reapStaleJobs();
+  await new ResearchOrchestrator().reapStaleJobs();
+  await loadBannedWords();
 } catch (err) {
   console.error('Fatal: gamification initialization failed', err);
   process.exit(1);
 }
+
+startMaintenance(db);
 
 const SANDBOX_SWEEP_INTERVAL_MS = 5 * 60_000;
 const sandboxManager = new SandboxManager(new DockerodeSandboxClient());

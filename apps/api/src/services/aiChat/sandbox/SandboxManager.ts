@@ -1,5 +1,6 @@
-import { db as defaultDb } from '@marquinhos/database/sqlite';
-import { Database } from 'bun:sqlite';
+import { db as defaultDb, type Db } from '@marquinhos/database/client';
+import { agentSandboxSessions } from '@marquinhos/database/schema';
+import { and, eq } from 'drizzle-orm';
 import type { DockerClient } from 'services/aiChat/sandbox/DockerClient';
 import { logger } from 'utils/logger';
 
@@ -20,20 +21,16 @@ export class SandboxCapacityError extends Error {
   }
 }
 
-interface SandboxSessionRow {
-  user_id: string;
-  guild_id: string;
-  channel_id: string;
-  container_id: string;
-  status: string;
-  created_at: number;
-  last_used_at: number;
-}
+const bySession = (userId: string, channelId: string) =>
+  and(
+    eq(agentSandboxSessions.user_id, userId),
+    eq(agentSandboxSessions.channel_id, channelId),
+  );
 
 export class SandboxManager {
   constructor(
     private docker: DockerClient,
-    private db: Database = defaultDb,
+    private db: Db = defaultDb,
   ) {}
 
   async getOrCreateSession(
@@ -41,16 +38,15 @@ export class SandboxManager {
     guildId: string,
     channelId: string,
   ): Promise<string> {
-    const existing = this.db
-      .query<SandboxSessionRow, { $userId: string; $channelId: string }>(
-        'SELECT * FROM agent_sandbox_sessions WHERE user_id = $userId AND channel_id = $channelId',
-      )
-      .get({ $userId: userId, $channelId: channelId });
+    const [existing] = await this.db
+      .select()
+      .from(agentSandboxSessions)
+      .where(bySession(userId, channelId));
 
     if (existing) {
       const running = await this.docker.isRunning(existing.container_id);
       if (running) {
-        this.touchSession(userId, channelId);
+        await this.touchSession(userId, channelId);
         logger.info('sandbox.session_reused', {
           userId,
           channelId,
@@ -63,7 +59,7 @@ export class SandboxManager {
         channelId,
         containerId: existing.container_id,
       });
-      this.deleteSession(userId, channelId);
+      await this.deleteSession(userId, channelId);
     }
 
     await this.assertCapacityAvailable();
@@ -106,23 +102,25 @@ export class SandboxManager {
     });
 
     const now = Date.now();
-    this.db
-      .query(
-        `INSERT INTO agent_sandbox_sessions
-         (user_id, guild_id, channel_id, container_id, status, created_at, last_used_at)
-       VALUES ($userId, $guildId, $channelId, $containerId, 'running', $now, $now)
-       ON CONFLICT(user_id, channel_id) DO UPDATE SET
-         container_id = excluded.container_id,
-         status = 'running',
-         created_at = excluded.created_at,
-         last_used_at = excluded.last_used_at`,
-      )
-      .run({
-        $userId: userId,
-        $guildId: guildId,
-        $channelId: channelId,
-        $containerId: containerId,
-        $now: now,
+    await this.db
+      .insert(agentSandboxSessions)
+      .values({
+        user_id: userId,
+        guild_id: guildId,
+        channel_id: channelId,
+        container_id: containerId,
+        status: 'running',
+        created_at: now,
+        last_used_at: now,
+      })
+      .onConflictDoUpdate({
+        target: [agentSandboxSessions.user_id, agentSandboxSessions.channel_id],
+        set: {
+          container_id: containerId,
+          status: 'running',
+          created_at: now,
+          last_used_at: now,
+        },
       });
 
     return containerId;
@@ -137,22 +135,18 @@ export class SandboxManager {
 
   async sweepIdleSessions(): Promise<void> {
     const cutoff = Date.now() - IDLE_TTL_MS;
-    const rows = this.db
-      .query<SandboxSessionRow, []>(
-        "SELECT * FROM agent_sandbox_sessions WHERE status = 'running'",
-      )
-      .all();
+    const rows = await this.runningSessions();
 
     for (const row of rows) {
       const running = await this.docker.isRunning(row.container_id);
       if (!running) {
-        this.deleteSession(row.user_id, row.channel_id);
+        await this.deleteSession(row.user_id, row.channel_id);
         continue;
       }
       if (row.last_used_at < cutoff) {
         await this.docker.stopContainer(row.container_id);
         await this.docker.removeContainer(row.container_id);
-        this.deleteSession(row.user_id, row.channel_id);
+        await this.deleteSession(row.user_id, row.channel_id);
         logger.info('sandbox.session_swept', {
           userId: row.user_id,
           channelId: row.channel_id,
@@ -163,28 +157,31 @@ export class SandboxManager {
     }
   }
 
-  private touchSession(userId: string, channelId: string): void {
-    this.db
-      .query(
-        'UPDATE agent_sandbox_sessions SET last_used_at = $now WHERE user_id = $userId AND channel_id = $channelId',
-      )
-      .run({ $now: Date.now(), $userId: userId, $channelId: channelId });
+  private runningSessions() {
+    return this.db
+      .select()
+      .from(agentSandboxSessions)
+      .where(eq(agentSandboxSessions.status, 'running'));
   }
 
-  private deleteSession(userId: string, channelId: string): void {
-    this.db
-      .query(
-        'DELETE FROM agent_sandbox_sessions WHERE user_id = $userId AND channel_id = $channelId',
-      )
-      .run({ $userId: userId, $channelId: channelId });
+  private async touchSession(userId: string, channelId: string): Promise<void> {
+    await this.db
+      .update(agentSandboxSessions)
+      .set({ last_used_at: Date.now() })
+      .where(bySession(userId, channelId));
+  }
+
+  private async deleteSession(
+    userId: string,
+    channelId: string,
+  ): Promise<void> {
+    await this.db
+      .delete(agentSandboxSessions)
+      .where(bySession(userId, channelId));
   }
 
   private async assertCapacityAvailable(): Promise<void> {
-    const rows = this.db
-      .query<SandboxSessionRow, []>(
-        "SELECT * FROM agent_sandbox_sessions WHERE status = 'running'",
-      )
-      .all();
+    const rows = await this.runningSessions();
 
     let liveCount = 0;
     for (const row of rows) {
@@ -192,7 +189,7 @@ export class SandboxManager {
       if (running) {
         liveCount++;
       } else {
-        this.deleteSession(row.user_id, row.channel_id);
+        await this.deleteSession(row.user_id, row.channel_id);
       }
     }
 

@@ -78,7 +78,10 @@ export class AiThreadService {
 
   async ask(request: ThreadAskRequest): Promise<AiChatResult> {
     if (
-      !this.rateLimitService.checkAndIncrement(request.userId, request.guildId)
+      !(await this.rateLimitService.checkAndIncrement(
+        request.userId,
+        request.guildId,
+      ))
     ) {
       logger.info('ai.thread.rate_limited', {
         threadId: request.threadId,
@@ -102,10 +105,10 @@ export class AiThreadService {
       }
 
       if (
-        !this.agentRateLimitService.checkAndIncrement(
+        !(await this.agentRateLimitService.checkAndIncrement(
           request.userId,
           request.guildId,
-        )
+        ))
       ) {
         logger.info('ai.thread.rate_limited', {
           threadId: request.threadId,
@@ -116,7 +119,7 @@ export class AiThreadService {
         return { status: 'rate_limited' };
       }
 
-      this.store.register({
+      await this.store.register({
         threadId: request.threadId,
         guildId: request.guildId,
         channelId: request.channelId,
@@ -168,13 +171,13 @@ export class AiThreadService {
 
       const outcome = await this.loop().run({
         instructions: THREAD_ASK_SYSTEM_PROMPT,
-        transcript: this.store.loadTranscript(request.threadId),
+        transcript: await this.store.loadTranscript(request.threadId),
         userContent: request.content,
         containerId,
         trace,
       });
 
-      this.store.append(request.threadId, outcome.newItems);
+      await this.store.append(request.threadId, outcome.newItems);
 
       const reply = outcome.text.trim();
       const isLong = reply.length > EMBED_THRESHOLD_CHARS;
@@ -255,9 +258,9 @@ export class AiThreadService {
     threadId: string,
     trace: TraceContext = NOOP_TRACE,
   ): Promise<void> {
-    if (!this.store.needsCompaction(threadId)) return;
+    if (!(await this.store.needsCompaction(threadId))) return;
 
-    const doomed = this.store.itemsToCompact(threadId);
+    const doomed = await this.store.itemsToCompact(threadId);
     if (doomed.length === 0) return;
 
     try {
@@ -274,7 +277,7 @@ export class AiThreadService {
         phase: 'thread_compaction',
       });
       const summary = response.text.trim();
-      if (summary) this.store.compact(threadId, summary);
+      if (summary) await this.store.compact(threadId, summary);
     } catch (error) {
       logger.warn('ai.thread.compaction_failed', {
         threadId,

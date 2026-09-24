@@ -3,10 +3,8 @@ services:
     env_file: !reset []
     environment:
       - NODE_ENV=development
-      - SQLITE_PATH=/app/data/marquinhos.db
     volumes:
       - ./.env:/app/apps/api/.env:ro
-      - marquinhos-sqlite-data:/app/data
     ports:
       - "3106:3106"
     networks:
@@ -15,7 +13,3 @@ services:
 networks:
   marquinhos-net:
     external: true
-
-volumes:
-  marquinhos-sqlite-data:
-    driver: local

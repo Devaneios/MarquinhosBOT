@@ -1,9 +1,5 @@
 import { beforeAll, describe, expect, it } from 'bun:test';
 
-// Set in-memory db BEFORE any imports that load the db module — mirrors
-// tests/activityDeepLink.test.ts so this suite doesn't touch the real marquinhos.db.
-process.env.SQLITE_PATH = ':memory:';
-
 let ActivityController: typeof import('../src/controllers/activity.controller').default;
 
 function makeReq(body: Record<string, unknown>) {
@@ -41,7 +37,7 @@ describe('ActivityController deep-link intent', () => {
     const controller = new ActivityController(fakeService);
 
     const recordRes = makeRes();
-    controller.recordDeepLinkIntent(
+    await controller.recordDeepLinkIntent(
       makeReq({ userId: 'user-1', guildId: 'guild-1', game: 'wordle' }),
       recordRes as any,
     );
@@ -79,7 +75,7 @@ describe('ActivityController deep-link intent', () => {
     } as any;
     const controller = new ActivityController(fakeService);
 
-    controller.recordDeepLinkIntent(
+    await controller.recordDeepLinkIntent(
       makeReq({ userId: 'user-3', guildId: 'guild-3', game: 'wordle' }),
       makeRes() as any,
     );
@@ -99,7 +95,7 @@ describe('ActivityController deep-link intent', () => {
     } as any;
     const controller = new ActivityController(fakeService);
 
-    controller.recordDeepLinkIntent(
+    await controller.recordDeepLinkIntent(
       makeReq({ userId: 'user-real', guildId: 'guild-4', game: 'wordle' }),
       makeRes() as any,
     );

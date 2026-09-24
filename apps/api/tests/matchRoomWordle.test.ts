@@ -1,10 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
 import { randomUUID } from 'node:crypto';
 
-// Set in-memory db BEFORE any imports that load the db module — mirrors
-// tests/wordle.spec.ts so this suite doesn't touch the real marquinhos.db.
-process.env.SQLITE_PATH = ':memory:';
-
 const { MatchRoom } = await import('../src/realtime/MatchRoom');
 const { bootColyseusTestServer, nextMessage, pendingMessages } =
   await import('./helpers/colyseusTestServer');

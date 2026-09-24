@@ -11,7 +11,7 @@ import { sendContract } from 'utils/contract';
 export class MazeController {
   private service = new MazeService();
 
-  startMaze(req: Request, res: Response) {
+  async startMaze(req: Request, res: Response) {
     try {
       const body = contract.startMaze.body.safeParse(req.body);
       if (!body.success) {
@@ -26,7 +26,12 @@ export class MazeController {
       }
 
       const { userId, guildId, mode, size } = body.data;
-      const data = this.service.createMazeSession(userId, guildId, mode, size);
+      const data = await this.service.createMazeSession(
+        userId,
+        guildId,
+        mode,
+        size,
+      );
       return sendContract(res, contract.startMaze, { data });
     } catch (error) {
       console.error(error);
@@ -34,7 +39,7 @@ export class MazeController {
     }
   }
 
-  moveMaze(req: Request, res: Response) {
+  async moveMaze(req: Request, res: Response) {
     try {
       const params = contract.getMaze.params.safeParse(req.params);
       if (!params.success) {
@@ -49,7 +54,7 @@ export class MazeController {
         return res.status(400).json({ message });
       }
 
-      const data = this.service.processMazeMove(
+      const data = await this.service.processMazeMove(
         params.data.sessionId,
         body.data.userId,
         body.data.direction,
@@ -66,13 +71,13 @@ export class MazeController {
     }
   }
 
-  getMaze(req: Request, res: Response) {
+  async getMaze(req: Request, res: Response) {
     try {
       const params = contract.getMaze.params.safeParse(req.params);
       if (!params.success) {
         return res.status(400).json({ message: 'sessionId is required' });
       }
-      const data = this.service.getMazeSession(params.data.sessionId);
+      const data = await this.service.getMazeSession(params.data.sessionId);
       if (data === null) {
         return res.status(404).json({ message: 'Maze session not found' });
       }
@@ -83,7 +88,7 @@ export class MazeController {
     }
   }
 
-  abandonMaze(req: Request, res: Response) {
+  async abandonMaze(req: Request, res: Response) {
     try {
       const params = contract.getMaze.params.safeParse(req.params);
       if (!params.success) {
@@ -94,7 +99,10 @@ export class MazeController {
         return res.status(400).json({ message: 'userId is required' });
       }
 
-      this.service.abandonMazeSession(params.data.sessionId, body.data.userId);
+      await this.service.abandonMazeSession(
+        params.data.sessionId,
+        body.data.userId,
+      );
       return sendContract(res, contract.abandonMaze, {
         message: 'Maze session abandoned',
       });

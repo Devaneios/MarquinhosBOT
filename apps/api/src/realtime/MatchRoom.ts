@@ -20,6 +20,7 @@ import {
   verifyWsSessionToken,
   type WsSessionPayload,
 } from 'services/activity/wsSessionToken';
+import { logger } from 'utils/logger';
 import { ADAPTER_REGISTRY } from './adapters/registry';
 import type {
   AdapterContext,
@@ -298,7 +299,7 @@ export class MatchRoom extends Room<{
         // concluded), so attempting the hand-off *after* `handle()` runs is
         // too late — there's no marker left to hand off by then.
         if (type === 'leave') this.tryHandoffDepartingPlayer(auth.userId);
-        handle(auth, client, payload);
+        this.settle(handle(auth, client, payload), type);
         // A deliberate quit ('leave' — the same literal message name every
         // adapter uses for it) detaches the player inside the adapter's
         // handler immediately, but `this.members` otherwise wouldn't reflect
@@ -499,7 +500,10 @@ export class MatchRoom extends Room<{
         type: ROOM_STATE,
         payload: this.roomState(),
       });
-    this.adapter.onJoin(this.session, auth, client, role, this.ctx);
+    this.settle(
+      this.adapter.onJoin(this.session, auth, client, role, this.ctx),
+      'join',
+    );
   }
 
   override onLeave(client: AuthedClient) {
@@ -615,6 +619,22 @@ export class MatchRoom extends Room<{
     });
     this.syncMetadata();
     for (const { client, auth, role } of seated)
-      this.adapter.onJoin(this.session, auth, client, role, this.ctx);
+      this.settle(
+        this.adapter.onJoin(this.session, auth, client, role, this.ctx),
+        'join',
+      );
+  }
+
+  // DB-backed adapters (Wordle) answer asynchronously. Colyseus doesn't await
+  // handlers, so a rejection has to be caught here or it crashes the process.
+  private settle(result: void | Promise<void>, messageType: string) {
+    if (!result) return;
+    result.catch((error: unknown) =>
+      logger.error('match_room.adapter_call_failed', {
+        error,
+        game: this.game,
+        messageType,
+      }),
+    );
   }
 }

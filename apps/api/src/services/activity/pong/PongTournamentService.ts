@@ -3,7 +3,16 @@ import type {
   PongTournament,
   PongTournamentFormat,
 } from '@marquinhos/contracts/http/routes/activity';
-import { db as defaultDb } from '@marquinhos/database/sqlite';
+import {
+  db as defaultDb,
+  type Db,
+  type DbExecutor,
+} from '@marquinhos/database/client';
+import {
+  pongTournamentEntries,
+  pongTournamentMatches,
+  pongTournaments,
+} from '@marquinhos/database/schema';
 import {
   doubleElimination,
   roundRobin,
@@ -12,7 +21,7 @@ import {
   type PongTournamentPairing,
   type PongTournamentPlayer,
 } from '@marquinhos/domain/games/pong/PongTournamentFormats';
-import type { Database } from 'bun:sqlite';
+import { and, asc, desc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
 import { z } from 'zod';
@@ -55,14 +64,31 @@ interface MatchRow {
 
 const tournamentConfigSchema = z.object({ swissRounds: z.number() });
 
+const TOURNAMENT_LIST_LIMIT = 50;
+
+const bracketOrder = sql`CASE ${pongTournamentMatches.bracket}
+  WHEN 'upper' THEN 1 WHEN 'lower' THEN 2 WHEN 'grand-final' THEN 3
+  WHEN 'swiss' THEN 1 WHEN 'playoff' THEN 2 ELSE 1 END`;
+
+async function findTournament(
+  exec: DbExecutor,
+  id: string,
+): Promise<TournamentRow | undefined> {
+  const [row] = await exec
+    .select()
+    .from(pongTournaments)
+    .where(eq(pongTournaments.id, id));
+  return row as TournamentRow | undefined;
+}
+
 export class PongTournamentService {
   private competition: PongCompetitionService;
 
-  constructor(private database: Database = defaultDb) {
+  constructor(private database: Db = defaultDb) {
     this.competition = new PongCompetitionService(database);
   }
 
-  create(input: CreatePongTournamentInput) {
+  async create(input: CreatePongTournamentInput) {
     const unique = [...new Set(input.playerIds)];
     const min = input.format === 'double-elimination' ? 4 : 2;
     if (unique.length < min)
@@ -70,14 +96,18 @@ export class PongTournamentService {
     if (input.format === 'double-elimination' && unique.length > 16) {
       throw new Error('Double elimination supports at most 16 players');
     }
-    const players = unique.map((userId) => {
-      const current = this.competition.getRating(
-        userId,
-        input.guildId,
-        input.pool,
-      );
-      return { userId, rating: current.rating };
-    });
+    // Seeding reads ratings once; a ranked match finishing mid-create only
+    // shifts a seed, which the tournament tolerates.
+    const players = await Promise.all(
+      unique.map(async (userId) => {
+        const current = await this.competition.getRating(
+          userId,
+          input.guildId,
+          input.pool,
+        );
+        return { userId, rating: current.rating };
+      }),
+    );
     const id = nanoid();
     const config = {
       swissRounds: Math.min(
@@ -91,63 +121,67 @@ export class PongTournamentService {
         : input.format === 'double-elimination'
           ? doubleElimination(players)
           : swissRound(players, 1);
-    this.database.transaction(() => {
-      this.database
-        .query(
-          `INSERT INTO pong_tournaments
-           (id, guild_id, name, format, pool, status, config_json, created_by, created_at)
-           VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?)`,
-        )
-        .run(
-          id,
-          input.guildId,
-          input.name,
-          input.format,
-          input.pool,
-          JSON.stringify(config),
-          input.createdBy,
-          Date.now(),
-        );
-      const seeded = [...players].sort((a, b) => b.rating - a.rating);
-      seeded.forEach((player, index) => {
-        this.database
-          .query(
-            `INSERT INTO pong_tournament_entries
-             (tournament_id, user_id, seed, rating, score, eliminated)
-             VALUES (?, ?, ?, ?, 0, 0)`,
-          )
-          .run(id, player.userId, index + 1, player.rating);
+    await this.database.transaction(async (tx) => {
+      await tx.insert(pongTournaments).values({
+        id,
+        guild_id: input.guildId,
+        name: input.name,
+        format: input.format,
+        pool: input.pool,
+        status: 'active',
+        config_json: JSON.stringify(config),
+        created_by: input.createdBy,
+        created_at: Date.now(),
       });
-      this.insertPairings(id, pairings);
-      this.advanceByes(id);
-    })();
+      const seeded = [...players].sort((a, b) => b.rating - a.rating);
+      await tx.insert(pongTournamentEntries).values(
+        seeded.map((player, index) => ({
+          tournament_id: id,
+          user_id: player.userId,
+          seed: index + 1,
+          rating: player.rating,
+          score: 0,
+          eliminated: false,
+        })),
+      );
+      await this.insertPairings(tx, id, pairings);
+      await this.advanceByes(tx, id);
+    });
     return this.snapshot(id);
   }
 
-  private snapshot(id: string): PongTournament {
-    const tournament = this.database
-      .query<TournamentRow, [string]>(
-        'SELECT * FROM pong_tournaments WHERE id = ?',
-      )
-      .get(id);
+  private async snapshot(id: string): Promise<PongTournament> {
+    const tournament = await findTournament(this.database, id);
     if (!tournament) throw new Error('Tournament not found');
-    const entries = this.database
-      .query<PongTournament['entries'][number], [string]>(
-        `SELECT user_id AS userId, seed, rating, score, eliminated
-         FROM pong_tournament_entries WHERE tournament_id = ? ORDER BY seed`,
-      )
-      .all(id);
-    const matches = this.database
-      .query<PongTournament['matches'][number], [string]>(
-        `SELECT id, bracket, round, position, player_a AS playerA,
-         player_b AS playerB, winner_id AS winnerId, status
-         FROM pong_tournament_matches WHERE tournament_id = ?
-         ORDER BY CASE bracket
-           WHEN 'upper' THEN 1 WHEN 'lower' THEN 2 WHEN 'grand-final' THEN 3
-           WHEN 'swiss' THEN 1 WHEN 'playoff' THEN 2 ELSE 1 END,
-         round, position`,
-      )
-      .all(id);
+    const entries = await this.database
+      .select({
+        userId: pongTournamentEntries.user_id,
+        seed: pongTournamentEntries.seed,
+        rating: pongTournamentEntries.rating,
+        score: pongTournamentEntries.score,
+        eliminated: pongTournamentEntries.eliminated,
+      })
+      .from(pongTournamentEntries)
+      .where(eq(pongTournamentEntries.tournament_id, id))
+      .orderBy(asc(pongTournamentEntries.seed));
+    const matches = await this.database
+      .select({
+        id: pongTournamentMatches.id,
+        bracket: pongTournamentMatches.bracket,
+        round: pongTournamentMatches.round,
+        position: pongTournamentMatches.position,
+        playerA: pongTournamentMatches.player_a,
+        playerB: pongTournamentMatches.player_b,
+        winnerId: pongTournamentMatches.winner_id,
+        status: pongTournamentMatches.status,
+      })
+      .from(pongTournamentMatches)
+      .where(eq(pongTournamentMatches.tournament_id, id))
+      .orderBy(
+        bracketOrder,
+        asc(pongTournamentMatches.round),
+        asc(pongTournamentMatches.position),
+      );
     return {
       id: tournament.id,
       guildId: tournament.guild_id,
@@ -158,111 +192,123 @@ export class PongTournamentService {
       config: tournamentConfigSchema.parse(JSON.parse(tournament.config_json)),
       createdBy: tournament.created_by,
       createdAt: tournament.created_at,
-      entries,
-      matches,
+      // The wire contract predates boolean columns and carries 0/1.
+      entries: entries.map((entry) => ({
+        ...entry,
+        eliminated: entry.eliminated ? 1 : 0,
+      })),
+      matches: matches as PongTournament['matches'],
     };
   }
 
-  list(guildId: string) {
-    const ids = this.database
-      .query<{ id: string }, [string]>(
-        `SELECT id FROM pong_tournaments WHERE guild_id = ?
-         ORDER BY created_at DESC LIMIT 50`,
-      )
-      .all(guildId);
-    return ids.map((row) => this.snapshot(row.id));
+  async list(guildId: string) {
+    const ids = await this.database
+      .select({ id: pongTournaments.id })
+      .from(pongTournaments)
+      .where(eq(pongTournaments.guild_id, guildId))
+      .orderBy(desc(pongTournaments.created_at))
+      .limit(TOURNAMENT_LIST_LIMIT);
+    return Promise.all(ids.map((row) => this.snapshot(row.id)));
   }
 
-  report(matchId: string, winnerId: string, actorId: string) {
-    const match = this.database
-      .query<MatchRow, [string]>(
-        'SELECT * FROM pong_tournament_matches WHERE id = ?',
-      )
-      .get(matchId);
-    if (!match || match.status !== 'ready')
-      throw new Error('Match is not ready');
-    const tournament = this.database
-      .query<TournamentRow, [string]>(
-        'SELECT * FROM pong_tournaments WHERE id = ?',
-      )
-      .get(match.tournament_id);
-    if (!tournament) throw new Error('Tournament not found');
-    const participants = [match.player_a, match.player_b].filter(Boolean);
-    if (!participants.includes(winnerId))
-      throw new Error('Winner is not in the match');
-    if (actorId !== tournament.created_by && !participants.includes(actorId)) {
-      throw new Error('Actor cannot report this match');
-    }
-    const loserId =
-      match.player_a === winnerId ? match.player_b : match.player_a;
-    this.database.transaction(() => {
-      this.database
-        .query(
-          `UPDATE pong_tournament_matches
-           SET winner_id = ?, status = 'complete' WHERE id = ?`,
-        )
-        .run(winnerId, matchId);
-      this.database
-        .query(
-          `UPDATE pong_tournament_entries SET score = score + 1
-           WHERE tournament_id = ? AND user_id = ?`,
-        )
-        .run(match.tournament_id, winnerId);
-      this.resolveSources(match, winnerId, loserId);
-      this.advanceByes(match.tournament_id);
-      this.advanceSwiss(tournament, match.round);
-      this.finishIfComplete(tournament, match, winnerId);
-    })();
-    return this.snapshot(match.tournament_id);
+  async report(matchId: string, winnerId: string, actorId: string) {
+    const tournamentId = await this.database.transaction(async (tx) => {
+      // Locked so two reports of the same match can't both see it 'ready'.
+      const [matchRow] = await tx
+        .select()
+        .from(pongTournamentMatches)
+        .where(eq(pongTournamentMatches.id, matchId))
+        .for('update');
+      const match = matchRow as MatchRow | undefined;
+      if (!match || match.status !== 'ready')
+        throw new Error('Match is not ready');
+      // Serialises bracket advancement for the whole tournament: two
+      // different matches finishing at once both feed later rounds.
+      const [tournamentRow] = await tx
+        .select()
+        .from(pongTournaments)
+        .where(eq(pongTournaments.id, match.tournament_id))
+        .for('update');
+      const tournament = tournamentRow as TournamentRow | undefined;
+      if (!tournament) throw new Error('Tournament not found');
+      const participants = [match.player_a, match.player_b].filter(Boolean);
+      if (!participants.includes(winnerId))
+        throw new Error('Winner is not in the match');
+      if (
+        actorId !== tournament.created_by &&
+        !participants.includes(actorId)
+      ) {
+        throw new Error('Actor cannot report this match');
+      }
+      const loserId =
+        match.player_a === winnerId ? match.player_b : match.player_a;
+      await tx
+        .update(pongTournamentMatches)
+        .set({ winner_id: winnerId, status: 'complete' })
+        .where(eq(pongTournamentMatches.id, matchId));
+      await tx
+        .update(pongTournamentEntries)
+        .set({ score: sql`${pongTournamentEntries.score} + 1` })
+        .where(
+          and(
+            eq(pongTournamentEntries.tournament_id, match.tournament_id),
+            eq(pongTournamentEntries.user_id, winnerId),
+          ),
+        );
+      await this.resolveSources(tx, match, winnerId, loserId);
+      await this.advanceByes(tx, match.tournament_id);
+      await this.advanceSwiss(tx, tournament, match.round);
+      await this.finishIfComplete(tx, tournament, match, winnerId);
+      return match.tournament_id;
+    });
+    return this.snapshot(tournamentId);
   }
 
-  private insertPairings(
+  private async insertPairings(
+    tx: DbExecutor,
     tournamentId: string,
     pairings: PongTournamentPairing[],
-  ): void {
-    for (const pairing of pairings) {
-      this.database
-        .query(
-          `INSERT INTO pong_tournament_matches
-           (id, tournament_id, bracket, round, position, player_a, player_b,
-            winner_id, source_a, source_b, status)
-           VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)`,
-        )
-        .run(
-          nanoid(),
-          tournamentId,
-          pairing.bracket,
-          pairing.round,
-          pairing.position,
-          pairing.playerA,
-          pairing.playerB,
-          pairing.sourceA ?? null,
-          pairing.sourceB ?? null,
-          pairing.playerA && pairing.playerB ? 'ready' : 'pending',
-        );
-    }
+  ): Promise<void> {
+    if (pairings.length === 0) return;
+    await tx.insert(pongTournamentMatches).values(
+      pairings.map((pairing) => ({
+        id: nanoid(),
+        tournament_id: tournamentId,
+        bracket: pairing.bracket,
+        round: pairing.round,
+        position: pairing.position,
+        player_a: pairing.playerA,
+        player_b: pairing.playerB,
+        winner_id: null,
+        source_a: pairing.sourceA ?? null,
+        source_b: pairing.sourceB ?? null,
+        status: pairing.playerA && pairing.playerB ? 'ready' : 'pending',
+      })),
+    );
   }
 
-  private resolveSources(
+  private async resolveSources(
+    tx: DbExecutor,
     match: MatchRow,
     winnerId: string | null,
     loserId: string | null,
-  ): void {
+  ): Promise<void> {
     const winnerSource = `winner:${match.bracket}:${match.round}:${match.position}`;
     const loserSource = `loser:${match.bracket}:${match.round}:${match.position}`;
-    const pending = this.database
-      .query<MatchRow, [string, string, string, string, string]>(
-        `SELECT * FROM pong_tournament_matches
-         WHERE tournament_id = ? AND status = 'pending'
-         AND (source_a IN (?, ?) OR source_b IN (?, ?))`,
-      )
-      .all(
-        match.tournament_id,
-        winnerSource,
-        loserSource,
-        winnerSource,
-        loserSource,
-      );
+    const sources = [winnerSource, loserSource];
+    const pending = (await tx
+      .select()
+      .from(pongTournamentMatches)
+      .where(
+        and(
+          eq(pongTournamentMatches.tournament_id, match.tournament_id),
+          eq(pongTournamentMatches.status, 'pending'),
+          or(
+            inArray(pongTournamentMatches.source_a, sources),
+            inArray(pongTournamentMatches.source_b, sources),
+          ),
+        ),
+      )) as MatchRow[];
     for (const target of pending) {
       const value = (source: string | null) =>
         source === winnerSource
@@ -280,19 +326,16 @@ export class PongTournamentService {
         target.source_b === winnerSource || target.source_b === loserSource
           ? null
           : target.source_b;
-      this.database
-        .query(
-          `UPDATE pong_tournament_matches SET player_a = ?, player_b = ?,
-           source_a = ?, source_b = ?, status = ? WHERE id = ?`,
-        )
-        .run(
-          playerA,
-          playerB,
-          sourceA,
-          sourceB,
-          playerA && playerB ? 'ready' : 'pending',
-          target.id,
-        );
+      await tx
+        .update(pongTournamentMatches)
+        .set({
+          player_a: playerA,
+          player_b: playerB,
+          source_a: sourceA,
+          source_b: sourceB,
+          status: playerA && playerB ? 'ready' : 'pending',
+        })
+        .where(eq(pongTournamentMatches.id, target.id));
     }
   }
 
@@ -306,105 +349,124 @@ export class PongTournamentService {
   // ever fill it) lets the cascade keep resolving until it reaches a
   // round where a real survivor is waiting on the other side, exactly
   // like a normal bye.
-  private advanceByes(tournamentId: string): void {
+  private async advanceByes(
+    tx: DbExecutor,
+    tournamentId: string,
+  ): Promise<void> {
     while (true) {
       // status='pending' with both sources already cleared means this slot
       // will never receive another player from elsewhere — it's either a
       // one-sided bye (one real player waiting, normal case) or a dead
       // match (both sides empty, see the comment above) — either way it's
       // final as-is and should resolve now.
-      const bye = this.database
-        .query<MatchRow, [string]>(
-          `SELECT * FROM pong_tournament_matches
-           WHERE tournament_id = ? AND status = 'pending'
-           AND source_a IS NULL AND source_b IS NULL LIMIT 1`,
+      const [bye] = (await tx
+        .select()
+        .from(pongTournamentMatches)
+        .where(
+          and(
+            eq(pongTournamentMatches.tournament_id, tournamentId),
+            eq(pongTournamentMatches.status, 'pending'),
+            isNull(pongTournamentMatches.source_a),
+            isNull(pongTournamentMatches.source_b),
+          ),
         )
-        .get(tournamentId);
+        .limit(1)) as MatchRow[];
       if (!bye) return;
       const winner = bye.player_a ?? bye.player_b ?? null;
-      this.database
-        .query(
-          `UPDATE pong_tournament_matches
-           SET winner_id = ?, status = 'complete' WHERE id = ?`,
-        )
-        .run(winner, bye.id);
-      this.resolveSources(bye, winner, null);
+      await tx
+        .update(pongTournamentMatches)
+        .set({ winner_id: winner, status: 'complete' })
+        .where(eq(pongTournamentMatches.id, bye.id));
+      await this.resolveSources(tx, bye, winner, null);
     }
   }
 
-  private advanceSwiss(
+  private async advanceSwiss(
+    tx: DbExecutor,
     tournament: TournamentRow,
     completedRound: number,
-  ): void {
+  ): Promise<void> {
     if (tournament.format !== 'swiss-playoff') return;
-    const incomplete = this.database
-      .query(
-        `SELECT 1 FROM pong_tournament_matches
-         WHERE tournament_id = ? AND bracket = 'swiss' AND round = ?
-         AND status != 'complete' LIMIT 1`,
+    const [incomplete] = await tx
+      .select({ id: pongTournamentMatches.id })
+      .from(pongTournamentMatches)
+      .where(
+        and(
+          eq(pongTournamentMatches.tournament_id, tournament.id),
+          eq(pongTournamentMatches.bracket, 'swiss'),
+          eq(pongTournamentMatches.round, completedRound),
+          ne(pongTournamentMatches.status, 'complete'),
+        ),
       )
-      .get(tournament.id, completedRound);
+      .limit(1);
     if (incomplete) return;
     const config = tournamentConfigSchema.parse(
       JSON.parse(tournament.config_json),
     );
-    const players = this.swissPlayers(tournament.id);
+    const players = await this.swissPlayers(tx, tournament.id);
     if (completedRound < config.swissRounds) {
-      this.insertPairings(
+      await this.insertPairings(
+        tx,
         tournament.id,
         swissRound(players, completedRound + 1),
       );
     } else {
-      this.insertPairings(tournament.id, topFourPlayoff(players));
+      await this.insertPairings(tx, tournament.id, topFourPlayoff(players));
     }
   }
 
-  private swissPlayers(tournamentId: string): PongTournamentPlayer[] {
-    const entries = this.database
-      .query<
-        {
-          user_id: string;
-          rating: number;
-          score: number;
-        },
-        [string]
-      >(
-        `SELECT user_id, rating, score FROM pong_tournament_entries
-         WHERE tournament_id = ?`,
-      )
-      .all(tournamentId);
-    const matches = this.database
-      .query<{ player_a: string; player_b: string }, [string]>(
-        `SELECT player_a, player_b FROM pong_tournament_matches
-         WHERE tournament_id = ? AND bracket = 'swiss' AND status = 'complete'`,
-      )
-      .all(tournamentId);
+  private async swissPlayers(
+    tx: DbExecutor,
+    tournamentId: string,
+  ): Promise<PongTournamentPlayer[]> {
+    const entries = await tx
+      .select({
+        user_id: pongTournamentEntries.user_id,
+        rating: pongTournamentEntries.rating,
+        score: pongTournamentEntries.score,
+      })
+      .from(pongTournamentEntries)
+      .where(eq(pongTournamentEntries.tournament_id, tournamentId));
+    const matches = await tx
+      .select({
+        player_a: pongTournamentMatches.player_a,
+        player_b: pongTournamentMatches.player_b,
+      })
+      .from(pongTournamentMatches)
+      .where(
+        and(
+          eq(pongTournamentMatches.tournament_id, tournamentId),
+          eq(pongTournamentMatches.bracket, 'swiss'),
+          eq(pongTournamentMatches.status, 'complete'),
+        ),
+      );
     return entries.map((entry) => ({
       userId: entry.user_id,
       rating: entry.rating,
       score: entry.score,
       opponents: matches.flatMap((match) =>
         match.player_a === entry.user_id
-          ? [match.player_b]
+          ? [match.player_b!]
           : match.player_b === entry.user_id
-            ? [match.player_a]
+            ? [match.player_a!]
             : [],
       ),
     }));
   }
 
-  private finishIfComplete(
+  private async finishIfComplete(
+    tx: DbExecutor,
     tournament: TournamentRow,
     match: MatchRow,
     winnerId: string,
-  ): void {
+  ): Promise<void> {
     if (
       tournament.format === 'double-elimination' &&
       match.bracket === 'grand-final' &&
       match.round === 1 &&
       winnerId === match.player_b
     ) {
-      this.insertPairings(tournament.id, [
+      await this.insertPairings(tx, tournament.id, [
         {
           round: 2,
           position: 0,
@@ -421,16 +483,21 @@ export class PongTournamentService {
       (tournament.format === 'swiss-playoff' &&
         match.bracket === 'playoff' &&
         match.round === 2);
-    const remaining = this.database
-      .query(
-        `SELECT 1 FROM pong_tournament_matches
-         WHERE tournament_id = ? AND status != 'complete' LIMIT 1`,
+    const [remaining] = await tx
+      .select({ id: pongTournamentMatches.id })
+      .from(pongTournamentMatches)
+      .where(
+        and(
+          eq(pongTournamentMatches.tournament_id, tournament.id),
+          ne(pongTournamentMatches.status, 'complete'),
+        ),
       )
-      .get(tournament.id);
+      .limit(1);
     if (terminal || (tournament.format === 'round-robin' && !remaining)) {
-      this.database
-        .query("UPDATE pong_tournaments SET status = 'complete' WHERE id = ?")
-        .run(tournament.id);
+      await tx
+        .update(pongTournaments)
+        .set({ status: 'complete' })
+        .where(eq(pongTournaments.id, tournament.id));
     }
   }
 }

@@ -1,4 +1,12 @@
-import { db } from '@marquinhos/database/sqlite';
+import { db, type DbExecutor } from '@marquinhos/database/client';
+import {
+  gameResults,
+  userGameResults,
+  userStats,
+  xpConfig,
+  xpCooldowns,
+} from '@marquinhos/database/schema';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { EvolutiveAchievementsService } from 'services/evolutiveAchievements';
 import { AchievementService } from 'services/gamification/AchievementService';
 import { LevelingService } from 'services/gamification/LevelingService';
@@ -12,6 +20,33 @@ import type {
 
 const evolutiveService = new EvolutiveAchievementsService();
 
+const DEFAULT_WIN_XP = 20;
+const DEFAULT_PARTICIPATE_XP = 5;
+const GAME_LEADERBOARD_LIMIT = 25;
+
+const STAT_BY_EVENT: Record<
+  string,
+  'total_commands' | 'total_scrobbles' | 'total_voice_joins'
+> = {
+  command: 'total_commands',
+  scrobble: 'total_scrobbles',
+  voice_join: 'total_voice_joins',
+};
+
+const winsSql = sql<number>`sum(CASE WHEN ${userGameResults.position} = 1 THEN 1 ELSE 0 END)::int`;
+
+async function xpAmount(
+  exec: DbExecutor,
+  eventType: string,
+  fallback: number,
+): Promise<number> {
+  const [row] = await exec
+    .select({ xp_amount: xpConfig.xp_amount })
+    .from(xpConfig)
+    .where(eq(xpConfig.event_type, eventType));
+  return row?.xp_amount ?? fallback;
+}
+
 export class GamificationService {
   private readonly levelingService: LevelingService;
   private achievementService: AchievementService;
@@ -21,63 +56,60 @@ export class GamificationService {
     this.achievementService = new AchievementService(this.levelingService);
   }
 
-  initializeDefaults(): void {
-    this.levelingService.initializeDefaults();
-    this.achievementService.initializeDefaults();
+  async initializeDefaults(): Promise<void> {
+    await this.levelingService.initializeDefaults();
+    await this.achievementService.initializeDefaults();
   }
 
-  getXpConfig(): XpConfig[] {
+  getXpConfig(): Promise<XpConfig[]> {
     return this.levelingService.getXpConfig();
   }
 
-  getUserLevel(userId: string, guildId: string): UserLevel {
+  getUserLevel(userId: string, guildId: string): Promise<UserLevel> {
     return this.levelingService.getUserLevel(userId, guildId);
   }
 
-  addXP(userId: string, guildId: string, eventType: string): AddXpResult {
-    this.levelingService.ensureUser(userId, guildId);
+  async addXP(
+    userId: string,
+    guildId: string,
+    eventType: string,
+  ): Promise<AddXpResult> {
+    await this.levelingService.ensureUser(userId, guildId);
 
-    const config = db
-      .query<XpConfig, { $eventType: string }>(
-        'SELECT * FROM xp_config WHERE event_type = $eventType',
-      )
-      .get({ $eventType: eventType });
+    const [config] = await db
+      .select()
+      .from(xpConfig)
+      .where(eq(xpConfig.event_type, eventType));
 
     if (!config) throw new Error(`Unknown event type: ${eventType}`);
 
     if (config.cooldown_ms !== null) {
       const now = Date.now();
-      const result = db
-        .query<
-          { granted: number },
-          {
-            $userId: string;
-            $guildId: string;
-            $eventType: string;
-            $now: number;
-            $cooldownMs: number;
-          }
-        >(
-          `INSERT INTO xp_cooldowns (user_id, guild_id, event_type, last_gain)
-           VALUES ($userId, $guildId, $eventType, $now)
-           ON CONFLICT(user_id, guild_id, event_type) DO UPDATE SET
-             last_gain = CASE
-               WHEN ($now - xp_cooldowns.last_gain) >= $cooldownMs THEN $now
-               ELSE xp_cooldowns.last_gain
-             END
-           RETURNING (last_gain = $now) AS granted`,
-        )
-        .get({
-          $userId: userId,
-          $guildId: guildId,
-          $eventType: eventType,
-          $now: now,
-          $cooldownMs: config.cooldown_ms,
-        });
+      // A row comes back only when this call earned the XP: a fresh insert,
+      // or an update the cooldown allowed. Comparing timestamps instead would
+      // grant every concurrent call made within the same millisecond.
+      const granted = await db
+        .insert(xpCooldowns)
+        .values({
+          user_id: userId,
+          guild_id: guildId,
+          event_type: eventType,
+          last_gain: now,
+        })
+        .onConflictDoUpdate({
+          target: [
+            xpCooldowns.user_id,
+            xpCooldowns.guild_id,
+            xpCooldowns.event_type,
+          ],
+          set: { last_gain: now },
+          setWhere: sql`${now}::bigint - ${xpCooldowns.last_gain} >= ${config.cooldown_ms}::bigint`,
+        })
+        .returning({ lastGain: xpCooldowns.last_gain });
 
-      if (result && result.granted !== 1) {
+      if (granted.length === 0) {
         return {
-          userLevel: this.levelingService.getUserLevel(userId, guildId),
+          userLevel: await this.levelingService.getUserLevel(userId, guildId),
           onCooldown: true,
           leveledUp: false,
           unlockedAchievements: [],
@@ -85,34 +117,23 @@ export class GamificationService {
       }
     }
 
-    if (eventType === 'command') {
-      db.query(
-        'UPDATE user_stats SET total_commands = total_commands + 1 WHERE user_id = $userId AND guild_id = $guildId',
-      ).run({ $userId: userId, $guildId: guildId });
-    } else if (eventType === 'scrobble') {
-      db.query(
-        'UPDATE user_stats SET total_scrobbles = total_scrobbles + 1 WHERE user_id = $userId AND guild_id = $guildId',
-      ).run({ $userId: userId, $guildId: guildId });
-    } else if (eventType === 'voice_join') {
-      db.query(
-        'UPDATE user_stats SET total_voice_joins = total_voice_joins + 1 WHERE user_id = $userId AND guild_id = $guildId',
-      ).run({ $userId: userId, $guildId: guildId });
+    const statColumn = STAT_BY_EVENT[eventType];
+    if (statColumn) {
+      await db
+        .update(userStats)
+        .set({ [statColumn]: sql`${userStats[statColumn]} + 1` })
+        .where(
+          and(eq(userStats.user_id, userId), eq(userStats.guild_id, guildId)),
+        );
     }
 
-    db.query(
-      'UPDATE user_levels SET xp = xp + $amount, total_xp = total_xp + $amount, last_xp_gain = $now WHERE user_id = $userId AND guild_id = $guildId',
-    ).run({
-      $amount: config.xp_amount,
-      $now: Date.now(),
-      $userId: userId,
-      $guildId: guildId,
-    });
+    await this.levelingService.addXpToUser(userId, guildId, config.xp_amount);
 
-    const leveledUp = this.levelingService.applyLevelUps(userId, guildId);
-    const userLevel = this.levelingService.getUserLevel(userId, guildId);
+    const leveledUp = await this.levelingService.applyLevelUps(userId, guildId);
+    const userLevel = await this.levelingService.getUserLevel(userId, guildId);
     const unlockedAchievements =
-      this.achievementService.checkAndAwardAchievements(userId, guildId);
-    evolutiveService.checkAndEvolveAll(userId, guildId);
+      await this.achievementService.checkAndAwardAchievements(userId, guildId);
+    await evolutiveService.checkAndEvolveAll(userId, guildId);
 
     return {
       userLevel,
@@ -123,138 +144,144 @@ export class GamificationService {
     };
   }
 
-  recordGameResult(input: GameResultInput): void {
-    const fn = db.transaction(() => {
+  async recordGameResult(input: GameResultInput): Promise<void> {
+    await db.transaction(async (tx) => {
       const now = Date.now();
+      const winXp = await xpAmount(tx, 'game_win', DEFAULT_WIN_XP);
+      const participateXp = await xpAmount(
+        tx,
+        'game_participate',
+        DEFAULT_PARTICIPATE_XP,
+      );
 
-      const winXp = (
-        db
-          .query<{ xp_amount: number }, { $event: string }>(
-            'SELECT xp_amount FROM xp_config WHERE event_type = $event',
-          )
-          .get({ $event: 'game_win' }) ?? { xp_amount: 20 }
-      ).xp_amount;
-
-      const participateXp = (
-        db
-          .query<{ xp_amount: number }, { $event: string }>(
-            'SELECT xp_amount FROM xp_config WHERE event_type = $event',
-          )
-          .get({ $event: 'game_participate' }) ?? { xp_amount: 5 }
-      ).xp_amount;
-
-      db.query(
-        'INSERT OR IGNORE INTO game_results (id, guild_id, game_type, played_at, duration_ms) VALUES ($id, $guildId, $gameType, $playedAt, $durationMs)',
-      ).run({
-        $id: input.sessionId,
-        $guildId: input.guildId,
-        $gameType: input.gameType,
-        $playedAt: now,
-        $durationMs: input.durationMs ?? null,
-      });
+      await tx
+        .insert(gameResults)
+        .values({
+          id: input.sessionId,
+          guild_id: input.guildId,
+          game_type: input.gameType,
+          played_at: now,
+          duration_ms: input.durationMs ?? null,
+        })
+        .onConflictDoNothing();
 
       for (const player of input.results) {
-        this.levelingService.ensureUser(player.userId, input.guildId);
+        await this.levelingService.ensureUser(player.userId, input.guildId, tx);
         const xpAwarded = player.position === 1 ? winXp : participateXp;
 
-        const insertResult = db
-          .query(
-            'INSERT OR IGNORE INTO user_game_results (game_result_id, user_id, guild_id, position, xp_awarded) VALUES ($gameId, $userId, $guildId, $position, $xpAwarded)',
-          )
-          .run({
-            $gameId: input.sessionId,
-            $userId: player.userId,
-            $guildId: input.guildId,
-            $position: player.position,
-            $xpAwarded: xpAwarded,
-          });
+        // Only a freshly inserted row awards XP, so a replayed result is a no-op.
+        const inserted = await tx
+          .insert(userGameResults)
+          .values({
+            game_result_id: input.sessionId,
+            user_id: player.userId,
+            guild_id: input.guildId,
+            position: player.position,
+            xp_awarded: xpAwarded,
+          })
+          .onConflictDoNothing()
+          .returning({ userId: userGameResults.user_id });
 
-        if (insertResult.changes > 0) {
-          db.query(
-            'UPDATE user_levels SET xp = xp + $amount, total_xp = total_xp + $amount, last_xp_gain = $now WHERE user_id = $userId AND guild_id = $guildId',
-          ).run({
-            $amount: xpAwarded,
-            $now: now,
-            $userId: player.userId,
-            $guildId: input.guildId,
-          });
+        if (inserted.length === 0) continue;
 
-          db.query(
-            'UPDATE user_stats SET total_games = total_games + 1, games_won = games_won + $wonIncrement WHERE user_id = $userId AND guild_id = $guildId',
-          ).run({
-            $wonIncrement: player.position === 1 ? 1 : 0,
-            $userId: player.userId,
-            $guildId: input.guildId,
-          });
+        await this.levelingService.addXpToUser(
+          player.userId,
+          input.guildId,
+          xpAwarded,
+          tx,
+          now,
+        );
 
-          this.levelingService.applyLevelUps(player.userId, input.guildId);
-          this.achievementService.checkAndAwardAchievements(
-            player.userId,
-            input.guildId,
+        await tx
+          .update(userStats)
+          .set({
+            total_games: sql`${userStats.total_games} + 1`,
+            games_won: sql`${userStats.games_won} + ${player.position === 1 ? 1 : 0}`,
+          })
+          .where(
+            and(
+              eq(userStats.user_id, player.userId),
+              eq(userStats.guild_id, input.guildId),
+            ),
           );
-        }
+
+        await this.levelingService.applyLevelUps(
+          player.userId,
+          input.guildId,
+          tx,
+        );
+        await this.achievementService.checkAndAwardAchievements(
+          player.userId,
+          input.guildId,
+          tx,
+        );
       }
     });
-    fn();
   }
 
-  getUserGameStats(
+  async getUserGameStats(
     userId: string,
     guildId: string,
-  ): {
+  ): Promise<{
     stats: UserStats;
     byGame: { game_type: string; games_played: number; wins: number }[];
-  } {
-    this.levelingService.ensureUser(userId, guildId);
+  }> {
+    await this.levelingService.ensureUser(userId, guildId);
 
-    const stats = db
-      .query<UserStats, { $userId: string; $guildId: string }>(
-        'SELECT * FROM user_stats WHERE user_id = $userId AND guild_id = $guildId',
+    const [stats] = await db
+      .select()
+      .from(userStats)
+      .where(
+        and(eq(userStats.user_id, userId), eq(userStats.guild_id, guildId)),
+      );
+
+    const gamesPlayed = sql<number>`count(*)::int`;
+    const byGame = await db
+      .select({
+        game_type: gameResults.game_type,
+        games_played: gamesPlayed,
+        wins: winsSql,
+      })
+      .from(userGameResults)
+      .innerJoin(
+        gameResults,
+        eq(gameResults.id, userGameResults.game_result_id),
       )
-      .get({ $userId: userId, $guildId: guildId })!;
-
-    const byGame = db
-      .query<
-        { game_type: string; games_played: number; wins: number },
-        { $userId: string; $guildId: string }
-      >(
-        `SELECT gr.game_type,
-                COUNT(*) as games_played,
-                SUM(CASE WHEN ugr.position = 1 THEN 1 ELSE 0 END) as wins
-         FROM user_game_results ugr
-         JOIN game_results gr ON gr.id = ugr.game_result_id
-         WHERE ugr.user_id = $userId AND ugr.guild_id = $guildId
-         GROUP BY gr.game_type
-         ORDER BY games_played DESC`,
+      .where(
+        and(
+          eq(userGameResults.user_id, userId),
+          eq(userGameResults.guild_id, guildId),
+        ),
       )
-      .all({ $userId: userId, $guildId: guildId });
+      .groupBy(gameResults.game_type)
+      .orderBy(desc(gamesPlayed));
 
-    return { stats, byGame };
+    return { stats: stats!, byGame };
   }
 
-  getGameLeaderboard(guildId: string, gameType: string) {
+  async getGameLeaderboard(guildId: string, gameType: string) {
+    const totalXpEarned = sql<number>`sum(${userGameResults.xp_awarded})::int`;
     return db
-      .query<
-        {
-          user_id: string;
-          wins: number;
-          games_played: number;
-          total_xp_earned: number;
-        },
-        { $guildId: string; $gameType: string }
-      >(
-        `SELECT ugr.user_id,
-                COUNT(*) as games_played,
-                SUM(CASE WHEN ugr.position = 1 THEN 1 ELSE 0 END) as wins,
-                SUM(ugr.xp_awarded) as total_xp_earned
-         FROM user_game_results ugr
-         JOIN game_results gr ON gr.id = ugr.game_result_id
-         WHERE ugr.guild_id = $guildId AND gr.game_type = $gameType
-         GROUP BY ugr.user_id
-         ORDER BY wins DESC, total_xp_earned DESC
-         LIMIT 25`,
+      .select({
+        user_id: userGameResults.user_id,
+        games_played: sql<number>`count(*)::int`,
+        wins: winsSql,
+        total_xp_earned: totalXpEarned,
+      })
+      .from(userGameResults)
+      .innerJoin(
+        gameResults,
+        eq(gameResults.id, userGameResults.game_result_id),
       )
-      .all({ $guildId: guildId, $gameType: gameType });
+      .where(
+        and(
+          eq(userGameResults.guild_id, guildId),
+          eq(gameResults.game_type, gameType),
+        ),
+      )
+      .groupBy(userGameResults.user_id)
+      .orderBy(desc(winsSql), desc(totalXpEarned))
+      .limit(GAME_LEADERBOARD_LIMIT);
   }
 
   getLeaderboard(guildId: string, limit: number = 10) {
@@ -274,7 +301,7 @@ export class GamificationService {
     userId: string,
     guildId: string,
     achievementId: string,
-  ): boolean {
+  ): Promise<boolean> {
     return this.achievementService.unlockAchievement(
       userId,
       guildId,

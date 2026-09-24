@@ -1,13 +1,12 @@
 import type { Express } from 'express';
 
-process.env.SQLITE_PATH = ':memory:';
 process.env.MARQUINHOS_API_KEY = 'contract-test-key';
 
 export async function startContractServer(mount: (app: Express) => void) {
   const { default: express } = await import('express');
   const { runMigrations } = await import('@marquinhos/database/migrate');
   const { HttpClient } = await import('@marquinhos/api-client/bot');
-  runMigrations();
+  await runMigrations();
 
   const app = express();
   app.use(express.json());

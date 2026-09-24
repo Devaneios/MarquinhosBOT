@@ -11,6 +11,7 @@
     },
     "test": {
       "dependsOn": ["^build"],
+      "passThroughEnv": ["TEST_DATABASE_URL"],
       "outputs": []
     },
     "lint": {

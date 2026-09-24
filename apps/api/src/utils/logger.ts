@@ -1,3 +1,4 @@
+import { DrizzleQueryError } from 'drizzle-orm/errors';
 import { getErrorMessage } from 'utils/errorHandling';
 
 export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
@@ -26,6 +27,10 @@ export function isLevelEnabled(level: LogLevel): boolean {
 }
 
 function replacer(_key: string, value: unknown): unknown {
+  // Its message and stack carry every bound parameter; see getErrorMessage.
+  if (value instanceof DrizzleQueryError) {
+    return { message: getErrorMessage(value) };
+  }
   if (value instanceof Error) {
     return { message: value.message, stack: value.stack };
   }

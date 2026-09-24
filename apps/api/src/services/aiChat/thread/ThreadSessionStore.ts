@@ -1,5 +1,10 @@
-import { db as defaultDb } from '@marquinhos/database/sqlite';
-import { Database } from 'bun:sqlite';
+import {
+  db as defaultDb,
+  type Db,
+  type DbExecutor,
+} from '@marquinhos/database/client';
+import { aiThreadItems, aiThreadSessions } from '@marquinhos/database/schema';
+import { and, asc, desc, eq, lte, max, sql } from 'drizzle-orm';
 import {
   conversationItemSchema,
   type ConversationItem,
@@ -31,21 +36,6 @@ export interface ThreadSession {
   turnCount: number;
 }
 
-interface SessionRow {
-  thread_id: string;
-  guild_id: string;
-  channel_id: string;
-  owner_user_id: string;
-  mode: ThreadMode;
-  status: 'active' | 'closed';
-  turn_count: number;
-}
-
-interface ItemRow {
-  seq: number;
-  item_json: string;
-}
-
 export interface ThreadRegistration {
   threadId: string;
   guildId: string;
@@ -61,56 +51,55 @@ export interface ThreadRegistration {
  */
 export class ThreadSessionStore {
   constructor(
-    private db: Database = defaultDb,
+    private db: Db = defaultDb,
     private tokenBudget: number = DEFAULT_TOKEN_BUDGET,
   ) {}
 
   /** Registers a thread, or refreshes it if the bot re-registers the same one. */
-  register(registration: ThreadRegistration): void {
+  async register(registration: ThreadRegistration): Promise<void> {
     const now = Date.now();
-    this.db
-      .query(
-        `INSERT INTO ai_thread_sessions
-           (thread_id, guild_id, channel_id, owner_user_id, mode, status, turn_count, created_at, last_used_at)
-         VALUES ($threadId, $guildId, $channelId, $ownerUserId, $mode, 'active', 0, $now, $now)
-         ON CONFLICT(thread_id) DO UPDATE SET
-           last_used_at = $now,
-           status = 'active'`,
-      )
-      .run({
-        $threadId: registration.threadId,
-        $guildId: registration.guildId,
-        $channelId: registration.channelId,
-        $ownerUserId: registration.ownerUserId,
-        $mode: registration.mode,
-        $now: now,
+    await this.db
+      .insert(aiThreadSessions)
+      .values({
+        thread_id: registration.threadId,
+        guild_id: registration.guildId,
+        channel_id: registration.channelId,
+        owner_user_id: registration.ownerUserId,
+        mode: registration.mode,
+        status: 'active',
+        turn_count: 0,
+        created_at: now,
+        last_used_at: now,
+      })
+      .onConflictDoUpdate({
+        target: aiThreadSessions.thread_id,
+        set: { last_used_at: now, status: 'active' },
       });
   }
 
-  get(threadId: string): ThreadSession | null {
-    const row = this.db
-      .query<SessionRow, { $threadId: string }>(
-        'SELECT * FROM ai_thread_sessions WHERE thread_id = $threadId',
-      )
-      .get({ $threadId: threadId });
+  async get(threadId: string): Promise<ThreadSession | null> {
+    const [row] = await this.db
+      .select()
+      .from(aiThreadSessions)
+      .where(eq(aiThreadSessions.thread_id, threadId));
     if (!row) return null;
     return {
       threadId: row.thread_id,
       guildId: row.guild_id,
       channelId: row.channel_id,
       ownerUserId: row.owner_user_id,
-      mode: row.mode,
-      status: row.status,
+      mode: row.mode as ThreadMode,
+      status: row.status as ThreadSession['status'],
       turnCount: row.turn_count,
     };
   }
 
-  loadTranscript(threadId: string): ConversationItem[] {
-    const rows = this.db
-      .query<ItemRow, { $threadId: string }>(
-        'SELECT seq, item_json FROM ai_thread_items WHERE thread_id = $threadId ORDER BY seq ASC',
-      )
-      .all({ $threadId: threadId });
+  async loadTranscript(threadId: string): Promise<ConversationItem[]> {
+    const rows = await this.db
+      .select({ seq: aiThreadItems.seq, item_json: aiThreadItems.item_json })
+      .from(aiThreadItems)
+      .where(eq(aiThreadItems.thread_id, threadId))
+      .orderBy(asc(aiThreadItems.seq));
 
     const items: ConversationItem[] = [];
     for (const row of rows) {
@@ -129,47 +118,45 @@ export class ThreadSessionStore {
     return items;
   }
 
-  append(threadId: string, items: ConversationItem[]): void {
+  async append(threadId: string, items: ConversationItem[]): Promise<void> {
     if (items.length === 0) return;
     const now = Date.now();
-    let seq = this.nextSeq(threadId);
 
-    const insert = this.db.prepare(
-      `INSERT INTO ai_thread_items (thread_id, seq, item_json, created_at)
-       VALUES ($threadId, $seq, $itemJson, $createdAt)`,
-    );
-
-    this.db.transaction(() => {
-      for (const item of items) {
-        insert.run({
-          $threadId: threadId,
-          $seq: seq++,
-          $itemJson: JSON.stringify(item),
-          $createdAt: now,
-        });
-      }
-      this.db
-        .query(
-          `UPDATE ai_thread_sessions
-             SET turn_count = turn_count + 1, last_used_at = $now
-           WHERE thread_id = $threadId`,
-        )
-        .run({ $threadId: threadId, $now: now });
-    })();
+    await this.db.transaction(async (tx) => {
+      // Bumping the session row first takes its lock, which serialises seq
+      // allocation between concurrent appends to the same thread.
+      await tx
+        .update(aiThreadSessions)
+        .set({
+          turn_count: sql`${aiThreadSessions.turn_count} + 1`,
+          last_used_at: now,
+        })
+        .where(eq(aiThreadSessions.thread_id, threadId));
+      let seq = await this.nextSeq(tx, threadId);
+      await tx.insert(aiThreadItems).values(
+        items.map((item) => ({
+          thread_id: threadId,
+          seq: seq++,
+          item_json: JSON.stringify(item),
+          created_at: now,
+        })),
+      );
+    });
   }
 
   /** Estimated tokens the stored transcript would cost to replay. */
-  estimateTokens(threadId: string): number {
-    const row = this.db
-      .query<{ total: number | null }, { $threadId: string }>(
-        'SELECT SUM(LENGTH(item_json)) AS total FROM ai_thread_items WHERE thread_id = $threadId',
-      )
-      .get({ $threadId: threadId });
+  async estimateTokens(threadId: string): Promise<number> {
+    const [row] = await this.db
+      .select({
+        total: sql<number | null>`sum(length(${aiThreadItems.item_json}))::int`,
+      })
+      .from(aiThreadItems)
+      .where(eq(aiThreadItems.thread_id, threadId));
     return Math.ceil((row?.total ?? 0) / CHARS_PER_TOKEN);
   }
 
-  needsCompaction(threadId: string): boolean {
-    return this.estimateTokens(threadId) > this.tokenBudget;
+  async needsCompaction(threadId: string): Promise<boolean> {
+    return (await this.estimateTokens(threadId)) > this.tokenBudget;
   }
 
   /**
@@ -177,12 +164,12 @@ export class ThreadSessionStore {
    * items with a single summary item. Without this a long-lived thread
    * eventually exceeds the model's context window and every turn starts failing.
    */
-  compact(threadId: string, summary: string): void {
-    const rows = this.db
-      .query<{ seq: number }, { $threadId: string }>(
-        'SELECT seq FROM ai_thread_items WHERE thread_id = $threadId ORDER BY seq DESC',
-      )
-      .all({ $threadId: threadId });
+  async compact(threadId: string, summary: string): Promise<void> {
+    const rows = await this.db
+      .select({ seq: aiThreadItems.seq })
+      .from(aiThreadItems)
+      .where(eq(aiThreadItems.thread_id, threadId))
+      .orderBy(desc(aiThreadItems.seq));
     if (rows.length <= KEEP_RECENT_ITEMS) return;
 
     const cutoffSeq = rows[KEEP_RECENT_ITEMS]!.seq;
@@ -191,24 +178,22 @@ export class ThreadSessionStore {
       content: `<conversa_anterior_resumida>\n${summary}\n</conversa_anterior_resumida>`,
     };
 
-    this.db.transaction(() => {
-      this.db
-        .query(
-          'DELETE FROM ai_thread_items WHERE thread_id = $threadId AND seq <= $cutoffSeq',
-        )
-        .run({ $threadId: threadId, $cutoffSeq: cutoffSeq });
-      this.db
-        .query(
-          `INSERT INTO ai_thread_items (thread_id, seq, item_json, created_at)
-           VALUES ($threadId, $seq, $itemJson, $createdAt)`,
-        )
-        .run({
-          $threadId: threadId,
-          $seq: cutoffSeq,
-          $itemJson: JSON.stringify(summaryItem),
-          $createdAt: Date.now(),
-        });
-    })();
+    await this.db.transaction(async (tx) => {
+      await tx
+        .delete(aiThreadItems)
+        .where(
+          and(
+            eq(aiThreadItems.thread_id, threadId),
+            lte(aiThreadItems.seq, cutoffSeq),
+          ),
+        );
+      await tx.insert(aiThreadItems).values({
+        thread_id: threadId,
+        seq: cutoffSeq,
+        item_json: JSON.stringify(summaryItem),
+        created_at: Date.now(),
+      });
+    });
 
     logger.info('ai.thread.compacted', {
       threadId,
@@ -221,18 +206,17 @@ export class ThreadSessionStore {
    * Items that would be dropped by the next compaction, so a caller can
    * summarize exactly what it is about to lose.
    */
-  itemsToCompact(threadId: string): ConversationItem[] {
-    const all = this.loadTranscript(threadId);
+  async itemsToCompact(threadId: string): Promise<ConversationItem[]> {
+    const all = await this.loadTranscript(threadId);
     if (all.length <= KEEP_RECENT_ITEMS) return [];
     return all.slice(0, all.length - KEEP_RECENT_ITEMS);
   }
 
-  private nextSeq(threadId: string): number {
-    const row = this.db
-      .query<{ maxSeq: number | null }, { $threadId: string }>(
-        'SELECT MAX(seq) AS maxSeq FROM ai_thread_items WHERE thread_id = $threadId',
-      )
-      .get({ $threadId: threadId });
+  private async nextSeq(exec: DbExecutor, threadId: string): Promise<number> {
+    const [row] = await exec
+      .select({ maxSeq: max(aiThreadItems.seq) })
+      .from(aiThreadItems)
+      .where(eq(aiThreadItems.thread_id, threadId));
     return (row?.maxSeq ?? 0) + 1;
   }
 }

@@ -30,7 +30,11 @@ export interface AdapterContext {
 
 export interface MessageHandler {
   rateLimit?: { windowMs: number; max: number };
-  handle: (auth: WsSessionPayload, client: Client, payload: unknown) => void;
+  handle: (
+    auth: WsSessionPayload,
+    client: Client,
+    payload: unknown,
+  ) => void | Promise<void>;
 }
 
 export interface GameRoomAdapter<TSession> {
@@ -53,7 +57,7 @@ export interface GameRoomAdapter<TSession> {
     client: Client,
     seat: SeatRole,
     ctx: AdapterContext,
-  ): void;
+  ): void | Promise<void>;
   onLeave(session: TSession, auth: WsSessionPayload, client: Client): void;
   onDispose(session: TSession): void;
 

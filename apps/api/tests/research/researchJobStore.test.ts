@@ -1,30 +1,8 @@
-import { Database } from 'bun:sqlite';
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { ResearchJobStore } from 'services/aiChat/research/ResearchJobStore';
+import { useTestDb } from '../helpers/testDb';
 
-function freshDb(): Database {
-  const db = new Database(':memory:');
-  db.run(`
-    CREATE TABLE ai_research_jobs (
-      job_id TEXT NOT NULL PRIMARY KEY,
-      idempotency_key TEXT NOT NULL UNIQUE,
-      thread_id TEXT NOT NULL, user_id TEXT NOT NULL,
-      guild_id TEXT NOT NULL, channel_id TEXT NOT NULL,
-      query TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'queued' CHECK(status IN ('queued','running','done','error')),
-      report TEXT, sources TEXT, stats TEXT, error TEXT,
-      created_at INTEGER NOT NULL, finished_at INTEGER
-    )
-  `);
-  db.run(`
-    CREATE TABLE ai_research_events (
-      id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, job_id TEXT NOT NULL,
-      seq INTEGER NOT NULL, stage TEXT NOT NULL, message TEXT NOT NULL,
-      created_at INTEGER NOT NULL
-    )
-  `);
-  return db;
-}
+const testDb = useTestDb();
 
 const input = {
   idempotencyKey: 'interaction-1',
@@ -37,13 +15,13 @@ const input = {
 
 let store: ResearchJobStore;
 
-beforeEach(() => {
-  store = new ResearchJobStore(freshDb());
+beforeEach(async () => {
+  store = new ResearchJobStore(testDb.current.db);
 });
 
 describe('ResearchJobStore.create', () => {
-  it('creates a queued job', () => {
-    const { job, created } = store.create(input);
+  it('creates a queued job', async () => {
+    const { job, created } = await store.create(input);
 
     expect(created).toBe(true);
     expect(job).toMatchObject({
@@ -55,17 +33,20 @@ describe('ResearchJobStore.create', () => {
     expect(job.jobId).toBeTruthy();
   });
 
-  it('returns the same job for a repeated idempotency key, so a retry cannot start two jobs', () => {
-    const first = store.create(input);
-    const second = store.create(input);
+  it('returns the same job for a repeated idempotency key, so a retry cannot start two jobs', async () => {
+    const first = await store.create(input);
+    const second = await store.create(input);
 
     expect(second.created).toBe(false);
     expect(second.job.jobId).toBe(first.job.jobId);
   });
 
-  it('creates separate jobs for different idempotency keys', () => {
-    const first = store.create(input);
-    const second = store.create({ ...input, idempotencyKey: 'interaction-2' });
+  it('creates separate jobs for different idempotency keys', async () => {
+    const first = await store.create(input);
+    const second = await store.create({
+      ...input,
+      idempotencyKey: 'interaction-2',
+    });
 
     expect(second.created).toBe(true);
     expect(second.job.jobId).not.toBe(first.job.jobId);
@@ -73,28 +54,28 @@ describe('ResearchJobStore.create', () => {
 });
 
 describe('ResearchJobStore lifecycle', () => {
-  it('reads back a job by id', () => {
-    const { job } = store.create(input);
+  it('reads back a job by id', async () => {
+    const { job } = await store.create(input);
 
-    expect(store.get(job.jobId)?.jobId).toBe(job.jobId);
+    expect((await store.get(job.jobId))?.jobId).toBe(job.jobId);
   });
 
-  it('returns null for a job that does not exist', () => {
-    expect(store.get('nao-existe')).toBeNull();
+  it('returns null for a job that does not exist', async () => {
+    expect(await store.get('nao-existe')).toBeNull();
   });
 
-  it('marks a job running', () => {
-    const { job } = store.create(input);
+  it('marks a job running', async () => {
+    const { job } = await store.create(input);
 
-    store.markRunning(job.jobId);
+    await store.markRunning(job.jobId);
 
-    expect(store.get(job.jobId)?.status).toBe('running');
+    expect((await store.get(job.jobId))?.status).toBe('running');
   });
 
-  it('stores the report, sources and stats on completion', () => {
-    const { job } = store.create(input);
+  it('stores the report, sources and stats on completion', async () => {
+    const { job } = await store.create(input);
 
-    store.complete(job.jobId, {
+    await store.complete(job.jobId, {
       report: '## Resumo\n\nachei [1].',
       sources: [{ index: 1, url: 'https://a.com', title: 'A' }],
       stats: {
@@ -107,7 +88,7 @@ describe('ResearchJobStore lifecycle', () => {
       },
     });
 
-    const done = store.get(job.jobId)!;
+    const done = (await store.get(job.jobId))!;
     expect(done.status).toBe('done');
     expect(done.report).toContain('achei [1]');
     expect(done.sources).toEqual([
@@ -117,21 +98,21 @@ describe('ResearchJobStore lifecycle', () => {
     expect(done.finishedAt).toBeGreaterThan(0);
   });
 
-  it('stores the error message on failure', () => {
-    const { job } = store.create(input);
+  it('stores the error message on failure', async () => {
+    const { job } = await store.create(input);
 
-    store.fail(job.jobId, 'openai down');
+    await store.fail(job.jobId, 'openai down');
 
-    const failed = store.get(job.jobId)!;
+    const failed = (await store.get(job.jobId))!;
     expect(failed.status).toBe('error');
     expect(failed.error).toBe('openai down');
     expect(failed.finishedAt).toBeGreaterThan(0);
   });
 
-  it('leaves optional fields undefined while the job is still queued', () => {
-    const { job } = store.create(input);
+  it('leaves optional fields undefined while the job is still queued', async () => {
+    const { job } = await store.create(input);
 
-    const queued = store.get(job.jobId)!;
+    const queued = (await store.get(job.jobId))!;
     expect(queued.report).toBeUndefined();
     expect(queued.sources).toBeUndefined();
     expect(queued.error).toBeUndefined();
@@ -140,64 +121,63 @@ describe('ResearchJobStore lifecycle', () => {
 });
 
 describe('ResearchJobStore progress events', () => {
-  it('records events in order with increasing seq', () => {
-    const { job } = store.create(input);
+  it('records events in order with increasing seq', async () => {
+    const { job } = await store.create(input);
 
-    store.addEvent(job.jobId, 'plan', 'plano tracado');
-    store.addEvent(job.jobId, 'search', 'buscando');
+    await store.addEvent(job.jobId, 'plan', 'plano tracado');
+    await store.addEvent(job.jobId, 'search', 'buscando');
 
-    const events = store.events(job.jobId);
+    const events = await store.events(job.jobId);
     expect(events.map((e) => [e.seq, e.stage])).toEqual([
       [1, 'plan'],
       [2, 'search'],
     ]);
   });
 
-  it('returns only events after the given seq, so a poller does not repost', () => {
-    const { job } = store.create(input);
-    store.addEvent(job.jobId, 'plan', 'a');
-    store.addEvent(job.jobId, 'search', 'b');
-    store.addEvent(job.jobId, 'read', 'c');
+  it('returns only events after the given seq, so a poller does not repost', async () => {
+    const { job } = await store.create(input);
+    await store.addEvent(job.jobId, 'plan', 'a');
+    await store.addEvent(job.jobId, 'search', 'b');
+    await store.addEvent(job.jobId, 'read', 'c');
 
-    const fresh = store.events(job.jobId, 2);
+    const fresh = await store.events(job.jobId, 2);
 
     expect(fresh.map((e) => e.stage)).toEqual(['read']);
   });
 
-  it('keeps events of different jobs apart', () => {
-    const first = store.create(input);
-    const second = store.create({ ...input, idempotencyKey: 'other' });
-    store.addEvent(first.job.jobId, 'plan', 'do primeiro');
-    store.addEvent(second.job.jobId, 'plan', 'do segundo');
+  it('keeps events of different jobs apart', async () => {
+    const first = await store.create(input);
+    const second = await store.create({ ...input, idempotencyKey: 'other' });
+    await store.addEvent(first.job.jobId, 'plan', 'do primeiro');
+    await store.addEvent(second.job.jobId, 'plan', 'do segundo');
 
-    expect(store.events(first.job.jobId)).toHaveLength(1);
-    expect(store.events(first.job.jobId)[0]?.message).toBe('do primeiro');
+    expect(await store.events(first.job.jobId)).toHaveLength(1);
+    expect((await store.events(first.job.jobId))[0]?.message).toBe(
+      'do primeiro',
+    );
   });
 
-  it('returns an empty list for a job with no events yet', () => {
-    const { job } = store.create(input);
+  it('returns an empty list for a job with no events yet', async () => {
+    const { job } = await store.create(input);
 
-    expect(store.events(job.jobId)).toEqual([]);
+    expect(await store.events(job.jobId)).toEqual([]);
   });
 });
 
 describe('ResearchJobStore.findStale', () => {
-  it('finds queued and running jobs, which is what a restart orphans', () => {
-    const queued = store.create(input);
-    const running = store.create({ ...input, idempotencyKey: 'b' });
-    store.markRunning(running.job.jobId);
+  it('finds queued and running jobs, which is what a restart orphans', async () => {
+    const queued = await store.create(input);
+    const running = await store.create({ ...input, idempotencyKey: 'b' });
+    await store.markRunning(running.job.jobId);
 
-    const stale = store
-      .findStale()
-      .map((job) => job.jobId)
-      .sort();
+    const stale = (await store.findStale()).map((job) => job.jobId).sort();
 
     expect(stale).toEqual([queued.job.jobId, running.job.jobId].sort());
   });
 
-  it('ignores finished jobs', () => {
-    const done = store.create(input);
-    store.complete(done.job.jobId, {
+  it('ignores finished jobs', async () => {
+    const done = await store.create(input);
+    await store.complete(done.job.jobId, {
       report: 'r',
       sources: [],
       stats: {
@@ -209,9 +189,9 @@ describe('ResearchJobStore.findStale', () => {
         durationMs: 1,
       },
     });
-    const failed = store.create({ ...input, idempotencyKey: 'b' });
-    store.fail(failed.job.jobId, 'x');
+    const failed = await store.create({ ...input, idempotencyKey: 'b' });
+    await store.fail(failed.job.jobId, 'x');
 
-    expect(store.findStale()).toEqual([]);
+    expect(await store.findStale()).toEqual([]);
   });
 });

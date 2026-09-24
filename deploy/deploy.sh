@@ -49,7 +49,15 @@ backup_api_data() {
     -v "$BACKUP_DIR":/backup \
     alpine:3.21 \
     tar -C /data -czf "/backup/marquinhos-api-$timestamp.tar.gz" .
-  find "$BACKUP_DIR" -maxdepth 1 -type f -name 'marquinhos-api-*.tar.gz' -mtime +14 -delete
+  # Absent on the first Postgres deploy; nothing to dump yet.
+  if docker inspect marquinhos-postgres >/dev/null 2>&1; then
+    docker exec marquinhos-postgres \
+      pg_dump -U marquinhos -d marquinhos --format=custom \
+      > "$BACKUP_DIR/marquinhos-postgres-$timestamp.dump"
+  fi
+  find "$BACKUP_DIR" -maxdepth 1 -type f \
+    \( -name 'marquinhos-api-*.tar.gz' -o -name 'marquinhos-postgres-*.dump' \) \
+    -mtime +14 -delete
 }
 
 rollback_api() {
@@ -75,7 +83,10 @@ deploy_api() {
   tag_rollback_image marquinhos-api marquinhos-api
   tag_sandbox_rollback_image
   compose build api sandbox
-  if ! compose up --detach --no-deps --force-recreate --wait --wait-timeout 90 api; then
+  compose up --detach --wait --wait-timeout 90 postgres
+  # Generous: the first Postgres boot also imports the SQLite data before the
+  # API reports healthy.
+  if ! compose up --detach --no-deps --force-recreate --wait --wait-timeout 300 api; then
     docker logs marquinhos-api --tail 200 2>&1 || true
     rollback_api || true
     exit 1

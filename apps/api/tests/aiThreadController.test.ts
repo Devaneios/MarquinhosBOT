@@ -124,7 +124,7 @@ const researchBody = {
 
 describe('AiChatController.startResearch', () => {
   it('returns 202 with the job id when the job is accepted', async () => {
-    const start = mock(() => ({
+    const start = mock(async () => ({
       status: 'accepted' as const,
       jobId: 'job-1',
       created: true,
@@ -143,7 +143,7 @@ describe('AiChatController.startResearch', () => {
   });
 
   it('reports created false for a retried idempotency key', async () => {
-    const start = mock(() => ({
+    const start = mock(async () => ({
       status: 'accepted' as const,
       jobId: 'job-1',
       created: false,
@@ -159,7 +159,7 @@ describe('AiChatController.startResearch', () => {
   });
 
   it('returns 200 rate_limited when the daily limit is spent', async () => {
-    const start = mock(() => ({ status: 'rate_limited' as const }));
+    const start = mock(async () => ({ status: 'rate_limited' as const }));
     const res = makeRes();
 
     await controllerWith({}, { start }).startResearch(
@@ -172,7 +172,7 @@ describe('AiChatController.startResearch', () => {
   });
 
   it('returns 200 rejected with the roast when the query is an injection attempt', async () => {
-    const start = mock(() => ({
+    const start = mock(async () => ({
       status: 'rejected' as const,
       reply: 'Trouxa, eu sou filho do Rei :P',
     }));

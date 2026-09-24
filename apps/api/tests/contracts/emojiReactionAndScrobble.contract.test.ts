@@ -44,26 +44,29 @@ describe('emoji reaction contracts', () => {
 
 describe('scrobble contracts', () => {
   it('adds and removes a listener, then dispatches the queued scrobble', async () => {
-    const { db } = await import('@marquinhos/database/sqlite');
+    const { db } = await import('@marquinhos/database/client');
+    const { scrobblesQueue, users } =
+      await import('@marquinhos/database/schema');
     const scrobbleId = randomUUID();
     const userId = `contract-user-${randomUUID()}`;
-    db.run('INSERT INTO users (id, scrobbles_on) VALUES (?, 0)', [userId]);
-    db.run(
-      'INSERT INTO scrobbles_queue (id, track, playback_data, created_at) VALUES (?, ?, ?, ?)',
-      [
-        scrobbleId,
-        JSON.stringify({ artist: 'A', name: 'Song', durationInMillis: 180000 }),
-        JSON.stringify({
-          title: 'A - Song',
-          listeningUsersId: ['listener-without-lastfm'],
-          timestamp: new Date().toISOString(),
-          guildId: 'g1',
-          channelId: 'c1',
-          providerName: 'test',
-        }),
-        Math.floor(Date.now() / 1000),
-      ],
-    );
+    await db.insert(users).values({ id: userId, scrobbles_on: false });
+    await db.insert(scrobblesQueue).values({
+      id: scrobbleId,
+      track: JSON.stringify({
+        artist: 'A',
+        name: 'Song',
+        durationInMillis: 180000,
+      }),
+      playback_data: JSON.stringify({
+        title: 'A - Song',
+        listeningUsersId: ['listener-without-lastfm'],
+        timestamp: new Date().toISOString(),
+        guildId: 'g1',
+        channelId: 'c1',
+        providerName: 'test',
+      }),
+      created_at: Math.floor(Date.now() / 1000),
+    });
 
     const added = await callContract(server.http, scrobble.addUser, {
       params: { scrobbleId, userId },

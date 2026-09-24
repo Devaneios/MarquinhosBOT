@@ -1,6 +1,27 @@
 name: marquinhos
 
 services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: marquinhos-postgres
+    environment:
+      POSTGRES_DB: marquinhos
+      POSTGRES_USER: marquinhos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      # Byte-order text sorting, the same ordering SQLite used.
+      POSTGRES_INITDB_ARGS: --locale-provider=builtin --builtin-locale=C.UTF-8
+    volumes:
+      - marquinhos-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U marquinhos -d marquinhos]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+    stop_grace_period: 30s
+    networks:
+      - marquinhos
+
   api:
     build:
       context: ..
@@ -11,8 +32,12 @@ services:
     container_name: marquinhos-api
     env_file:
       - ./api.env
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required}
+      DATABASE_URL: postgres://marquinhos@postgres:5432/marquinhos
       DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:?DISCORD_BOT_TOKEN is required}
       DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:?DISCORD_CLIENT_ID is required}
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:?DISCORD_CLIENT_SECRET is required}
@@ -26,16 +51,21 @@ services:
       MARQUINHOS_SECRET_KEY: ${MARQUINHOS_SECRET_KEY:?MARQUINHOS_SECRET_KEY is required}
       NODE_ENV: production
       OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY is required}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       SANDBOX_IMAGE: marquinhos-sandbox:${DEPLOY_IMAGE_TAG:?DEPLOY_IMAGE_TAG is required}
       SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:?SPOTIFY_CLIENT_ID is required}
       SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET:?SPOTIFY_CLIENT_SECRET is required}
+      # The API imports this file into Postgres once, on the first boot that
+      # finds it; the rollback (SQLite) image also reads its data from here.
       SQLITE_PATH: /app/data/marquinhos.db
     volumes:
+      # Legacy SQLite data and the pre-import snapshot. Drop together with
+      # SQLITE_PATH once the Postgres cutover is done.
       - marquinhos-api-data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
       - ${SANDBOX_MIRROR_PATH:-/opt/marquinhos/sandbox-mirror}:${SANDBOX_MIRROR_PATH:-/opt/marquinhos/sandbox-mirror}:ro
     ports:
-      - "127.0.0.1:3106:3106"
+      - '127.0.0.1:3106:3106'
     restart: unless-stopped
     stop_grace_period: 30s
     networks:
@@ -77,7 +107,7 @@ services:
     image: marquinhos-activity:${DEPLOY_IMAGE_TAG}
     container_name: marquinhos-gateway
     ports:
-      - "127.0.0.1:5173:80"
+      - '127.0.0.1:5173:80'
     restart: unless-stopped
     networks:
       - marquinhos
@@ -89,3 +119,5 @@ networks:
 volumes:
   marquinhos-api-data:
     name: marquinhos-api-data
+  marquinhos-postgres-data:
+    name: marquinhos-postgres-data

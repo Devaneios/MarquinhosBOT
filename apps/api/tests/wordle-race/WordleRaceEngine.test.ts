@@ -1,7 +1,5 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 
-process.env.SQLITE_PATH = ':memory:';
-
 const { resolveCanonical } = await import('../../src/services/wordle');
 const { WordleRaceEngine } =
   await import('@marquinhos/domain/games/wordle/race/WordleRaceEngine');

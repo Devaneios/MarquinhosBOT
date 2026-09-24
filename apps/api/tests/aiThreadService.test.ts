@@ -1,4 +1,3 @@
-import { Database } from 'bun:sqlite';
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { ThreadAgentLoop } from 'services/aiChat/agent/ThreadAgentLoop';
 import type { AiTraceRecorder } from 'services/aiChat/AiTraceRecorder';
@@ -15,27 +14,9 @@ import {
 } from 'services/aiChat/sandbox/SandboxManager';
 import { AiThreadService } from 'services/aiChat/thread/AiThreadService';
 import { ThreadSessionStore } from 'services/aiChat/thread/ThreadSessionStore';
+import { useTestDb } from './helpers/testDb';
 
-function freshDb(): Database {
-  const db = new Database(':memory:');
-  db.run(`
-    CREATE TABLE ai_thread_sessions (
-      thread_id TEXT NOT NULL PRIMARY KEY, guild_id TEXT NOT NULL,
-      channel_id TEXT NOT NULL, owner_user_id TEXT NOT NULL,
-      mode TEXT NOT NULL CHECK(mode IN ('ask','research')),
-      status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','closed')),
-      turn_count INTEGER NOT NULL DEFAULT 0,
-      created_at INTEGER NOT NULL, last_used_at INTEGER NOT NULL
-    )
-  `);
-  db.run(`
-    CREATE TABLE ai_thread_items (
-      id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, thread_id TEXT NOT NULL,
-      seq INTEGER NOT NULL, item_json TEXT NOT NULL, created_at INTEGER NOT NULL
-    )
-  `);
-  return db;
-}
+const testDb = useTestDb();
 
 function limiter(allowed: boolean) {
   return { checkAndIncrement: mock(() => allowed) };
@@ -101,12 +82,10 @@ interface Deps {
   recorder?: AiTraceRecorder;
 }
 
-let db: Database;
 let store: ThreadSessionStore;
 
-beforeEach(() => {
-  db = freshDb();
-  store = new ThreadSessionStore(db);
+beforeEach(async () => {
+  store = new ThreadSessionStore(testDb.current.db);
 });
 
 function service(deps: Deps = {}) {
@@ -146,7 +125,7 @@ describe('AiThreadService.ask happy path', () => {
   it('registers the thread so later turns are recognised', async () => {
     await service().ask(baseRequest);
 
-    expect(store.get('thread-1')).toMatchObject({
+    expect(await store.get('thread-1')).toMatchObject({
       guildId: 'guild-1',
       ownerUserId: 'user-1',
       mode: 'ask',
@@ -167,13 +146,17 @@ describe('AiThreadService.ask happy path', () => {
 
     await service({ loop: fakeLoop('4', items) }).ask(baseRequest);
 
-    expect(store.loadTranscript('thread-1')).toEqual(items);
+    expect(await store.loadTranscript('thread-1')).toEqual(items);
   });
 
   it('replays the stored transcript on the next turn', async () => {
     const loop = fakeLoop('segunda resposta');
-    store.register({ ...baseRequest, ownerUserId: 'user-1', mode: 'ask' });
-    store.append('thread-1', [{ role: 'user', content: 'turno antigo' }]);
+    await store.register({
+      ...baseRequest,
+      ownerUserId: 'user-1',
+      mode: 'ask',
+    });
+    await store.append('thread-1', [{ role: 'user', content: 'turno antigo' }]);
 
     await service({ loop }).ask(baseRequest);
 
@@ -287,7 +270,7 @@ describe('AiThreadService.ask guardrail', () => {
   it('does not persist an injection attempt into the transcript', async () => {
     await service().ask(injection);
 
-    expect(store.loadTranscript('thread-1')).toEqual([]);
+    expect(await store.loadTranscript('thread-1')).toEqual([]);
   });
 });
 
@@ -327,9 +310,13 @@ describe('AiThreadService.ask failures', () => {
 });
 
 describe('AiThreadService compaction', () => {
-  function bigTranscript() {
-    store.register({ ...baseRequest, ownerUserId: 'user-1', mode: 'ask' });
-    store.append(
+  async function bigTranscript() {
+    await store.register({
+      ...baseRequest,
+      ownerUserId: 'user-1',
+      mode: 'ask',
+    });
+    await store.append(
       'thread-1',
       Array.from({ length: 40 }, (_, i) => ({
         role: 'user',
@@ -339,20 +326,24 @@ describe('AiThreadService compaction', () => {
   }
 
   it('summarizes and drops the oldest items once the budget is exceeded', async () => {
-    bigTranscript();
-    const tight = new ThreadSessionStore(db, 200);
+    await bigTranscript();
+    const tight = new ThreadSessionStore(testDb.current.db, 200);
     const client = fakeResponsesClient('resumo do que falamos');
 
     await service({ store: tight, client }).ask(baseRequest);
 
-    const items = tight.loadTranscript('thread-1');
+    const items = await tight.loadTranscript('thread-1');
     expect(String(items[0]!.content)).toContain('resumo do que falamos');
     expect(items.length).toBeLessThan(40);
   });
 
   it('does not compact a short thread', async () => {
-    store.register({ ...baseRequest, ownerUserId: 'user-1', mode: 'ask' });
-    store.append('thread-1', [{ role: 'user', content: 'curto' }]);
+    await store.register({
+      ...baseRequest,
+      ownerUserId: 'user-1',
+      mode: 'ask',
+    });
+    await store.append('thread-1', [{ role: 'user', content: 'curto' }]);
     const client = fakeResponsesClient();
 
     await service({ client }).ask(baseRequest);
@@ -361,8 +352,8 @@ describe('AiThreadService compaction', () => {
   });
 
   it('still answers the turn when compaction itself fails', async () => {
-    bigTranscript();
-    const tight = new ThreadSessionStore(db, 200);
+    await bigTranscript();
+    const tight = new ThreadSessionStore(testDb.current.db, 200);
     const client = {
       create: mock(async () => {
         throw new Error('openai down');

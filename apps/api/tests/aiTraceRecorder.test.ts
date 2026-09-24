@@ -1,48 +1,11 @@
-import { Database } from 'bun:sqlite';
+import { createDb } from '@marquinhos/database/client';
+import { aiTraceEvents, aiTraces } from '@marquinhos/database/schema';
 import { afterEach, describe, expect, it } from 'bun:test';
+import { asc } from 'drizzle-orm';
 import { AiTraceRecorder, NOOP_TRACE } from 'services/aiChat/AiTraceRecorder';
+import { useTestDb } from './helpers/testDb';
 
-function setupDb(): Database {
-  const db = new Database(':memory:');
-  db.run(`
-    CREATE TABLE ai_traces (
-      trace_id          TEXT NOT NULL PRIMARY KEY,
-      user_id           TEXT NOT NULL,
-      guild_id          TEXT NOT NULL,
-      channel_id        TEXT NOT NULL,
-      content           TEXT NOT NULL,
-      main_category     TEXT,
-      category          TEXT,
-      status            TEXT,
-      reply             TEXT,
-      format            TEXT,
-      error             TEXT,
-      iterations        INTEGER NOT NULL DEFAULT 0,
-      tool_calls_used   INTEGER NOT NULL DEFAULT 0,
-      prompt_tokens     INTEGER NOT NULL DEFAULT 0,
-      completion_tokens INTEGER NOT NULL DEFAULT 0,
-      duration_ms       INTEGER,
-      created_at        INTEGER NOT NULL
-    )
-  `);
-  db.run(`
-    CREATE TABLE ai_trace_events (
-      id          INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-      trace_id    TEXT NOT NULL,
-      seq         INTEGER NOT NULL,
-      type        TEXT NOT NULL,
-      phase       TEXT,
-      name        TEXT,
-      input       TEXT,
-      output      TEXT,
-      status      TEXT,
-      exit_code   INTEGER,
-      duration_ms INTEGER,
-      created_at  INTEGER NOT NULL
-    )
-  `);
-  return db;
-}
+const testDb = useTestDb();
 
 const baseRequest = {
   userId: 'user1',
@@ -52,22 +15,16 @@ const baseRequest = {
   recentMessages: [],
 };
 
-function events(db: Database) {
-  return db
-    .query<
-      {
-        seq: number;
-        type: string;
-        phase: string | null;
-        name: string | null;
-        input: string | null;
-        output: string | null;
-        status: string | null;
-        exit_code: number | null;
-      },
-      []
-    >('SELECT * FROM ai_trace_events ORDER BY seq')
-    .all();
+function events() {
+  return testDb.current.db
+    .select()
+    .from(aiTraceEvents)
+    .orderBy(asc(aiTraceEvents.seq));
+}
+
+async function traceRow() {
+  const [row] = await testDb.current.db.select().from(aiTraces);
+  return row;
 }
 
 afterEach(() => {
@@ -75,24 +32,21 @@ afterEach(() => {
 });
 
 describe('AiTraceRecorder', () => {
-  it('inserts a trace row on start and returns a usable trace id', () => {
-    const db = setupDb();
-    const trace = new AiTraceRecorder(db).start(baseRequest);
+  it('inserts a trace row on start and returns a usable trace id', async () => {
+    const recorder = new AiTraceRecorder(testDb.current.db);
+    const trace = recorder.start(baseRequest);
 
     expect(trace.traceId).toMatch(/^[0-9a-f-]{36}$/);
-    const row = db
-      .query<{ trace_id: string; user_id: string; content: string }, []>(
-        'SELECT * FROM ai_traces',
-      )
-      .get();
+    await recorder.flush();
+    const row = await traceRow();
     expect(row?.trace_id).toBe(trace.traceId);
     expect(row?.user_id).toBe('user1');
     expect(row?.content).toBe('roda um script python');
   });
 
-  it('records llm, tool, exec and sandbox events in order with full payloads', () => {
-    const db = setupDb();
-    const trace = new AiTraceRecorder(db).start(baseRequest);
+  it('records llm, tool, exec and sandbox events in order with full payloads', async () => {
+    const recorder = new AiTraceRecorder(testDb.current.db);
+    const trace = recorder.start(baseRequest);
 
     trace.sandbox({ action: 'session_created', containerId: 'c1' });
     trace.llm({
@@ -120,7 +74,8 @@ describe('AiTraceRecorder', () => {
       durationMs: 250,
     });
 
-    const rows = events(db);
+    await recorder.flush();
+    const rows = await events();
     expect(rows.map((r) => r.type)).toEqual([
       'sandbox',
       'llm_call',
@@ -153,9 +108,9 @@ describe('AiTraceRecorder', () => {
     expect(exec.exit_code).toBe(0);
   });
 
-  it('accumulates token usage and writes the summary on finish', () => {
-    const db = setupDb();
-    const trace = new AiTraceRecorder(db).start(baseRequest);
+  it('accumulates token usage and writes the summary on finish', async () => {
+    const recorder = new AiTraceRecorder(testDb.current.db);
+    const trace = recorder.start(baseRequest);
 
     trace.llm({
       phase: 'classify_main',
@@ -183,21 +138,8 @@ describe('AiTraceRecorder', () => {
       toolCallsUsed: 3,
     });
 
-    const row = db
-      .query<
-        {
-          status: string;
-          category: string;
-          reply: string;
-          prompt_tokens: number;
-          completion_tokens: number;
-          iterations: number;
-          tool_calls_used: number;
-          duration_ms: number;
-        },
-        []
-      >('SELECT * FROM ai_traces')
-      .get();
+    await recorder.flush();
+    const row = await traceRow();
 
     expect(row?.status).toBe('ok');
     expect(row?.category).toBe('agent_task');
@@ -209,25 +151,40 @@ describe('AiTraceRecorder', () => {
     expect(row?.duration_ms).toBeGreaterThanOrEqual(0);
   });
 
-  it('serializes errors on finish instead of dropping them', () => {
-    const db = setupDb();
-    const trace = new AiTraceRecorder(db).start(baseRequest);
+  it('serializes errors on finish instead of dropping them', async () => {
+    const recorder = new AiTraceRecorder(testDb.current.db);
+    const trace = recorder.start(baseRequest);
 
     trace.finish({ status: 'error', error: new Error('docker unreachable') });
 
-    const row = db
-      .query<{ status: string; error: string }, []>('SELECT * FROM ai_traces')
-      .get();
+    await recorder.flush();
+    const row = await traceRow();
     expect(row?.status).toBe('error');
     expect(row?.error).toContain('docker unreachable');
   });
 
-  it('never throws when persistence fails', () => {
-    const db = setupDb();
-    const recorder = new AiTraceRecorder(db);
+  it('stops tracking a trace once its finish has been written', async () => {
+    const recorder = new AiTraceRecorder(testDb.current.db);
+    const tracked = () =>
+      (recorder as unknown as { open: Set<unknown> }).open.size;
+
+    recorder.start(baseRequest).finish({ status: 'ok' });
+    const unfinished = recorder.start(baseRequest);
+    await (recorder.start(baseRequest) as unknown as { settled: Promise<void> })
+      .settled;
+    await Bun.sleep(50);
+
+    expect(tracked()).toBe(2);
+    unfinished.finish({ status: 'ok' });
+    await recorder.flush();
+    expect(tracked()).toBe(0);
+  });
+
+  it('never throws or rejects when persistence fails', async () => {
+    // Nothing listens on port 1, so every write fails to connect.
+    const unreachable = createDb('postgres://postgres@127.0.0.1:1/none', 1);
+    const recorder = new AiTraceRecorder(unreachable.db);
     const trace = recorder.start(baseRequest);
-    db.run('DROP TABLE ai_trace_events');
-    db.run('DROP TABLE ai_traces');
 
     expect(() =>
       trace.exec({
@@ -241,12 +198,14 @@ describe('AiTraceRecorder', () => {
     ).not.toThrow();
     expect(() => trace.finish({ status: 'ok' })).not.toThrow();
     expect(() => recorder.start(baseRequest)).not.toThrow();
+    await recorder.flush();
+    await unreachable.close();
   });
 
-  it('returns the noop trace and writes nothing when tracing is disabled', () => {
+  it('returns the noop trace and writes nothing when tracing is disabled', async () => {
     process.env.AI_TRACE_ENABLED = 'false';
-    const db = setupDb();
-    const trace = new AiTraceRecorder(db).start(baseRequest);
+    const recorder = new AiTraceRecorder(testDb.current.db);
+    const trace = recorder.start(baseRequest);
 
     trace.tool({
       name: 'read_file',
@@ -258,11 +217,9 @@ describe('AiTraceRecorder', () => {
     trace.finish({ status: 'ok' });
 
     expect(trace).toBe(NOOP_TRACE);
-    expect(
-      db.query<{ c: number }, []>('SELECT COUNT(*) AS c FROM ai_traces').get()
-        ?.c,
-    ).toBe(0);
-    expect(events(db)).toHaveLength(0);
+    await recorder.flush();
+    expect(await traceRow()).toBeUndefined();
+    expect(await events()).toHaveLength(0);
   });
 
   it('exposes a stable no-op trace that ignores every call', () => {

@@ -7,10 +7,19 @@ import type {
   wordleSessionSchema,
 } from '@marquinhos/contracts/http/routes/wordle';
 import type { GuessRow } from '@marquinhos/contracts/wordle';
-import { db } from '@marquinhos/database/sqlite';
+import { db, type DbExecutor } from '@marquinhos/database/client';
+import {
+  wordleConfig,
+  wordleDaily,
+  wordleSessions,
+  wordleStreaks,
+  wordleUsedWords,
+  wordlistReview,
+} from '@marquinhos/database/schema';
 import { computeFeedback } from '@marquinhos/domain/games/wordle/feedback';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 import { randomUUID } from 'crypto';
+import { and, asc, count, desc, eq, isNull, ne, sql } from 'drizzle-orm';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import {
@@ -127,15 +136,17 @@ const RACE_WORD_LENGTH = 5;
 // Wordle Race draws from the curated daily bank, minus words the review
 // banned. A race is won only by a guess whose canonical spelling equals the
 // target, so the target is the canonical spelling too.
+// Race sessions are built synchronously inside MatchRoom, so they read the ban
+// list from memory. This process is the only writer (submitReviewDecision),
+// and loadBannedWords() primes it at startup.
+let bannedWordsCache = new Set<string>();
+
+export async function loadBannedWords(): Promise<void> {
+  bannedWordsCache = await getBannedWords();
+}
+
 export function pickRaceWord(): string {
-  const banned = new Set(
-    db
-      .query<{ word: string }, []>(
-        'SELECT word FROM wordlist_review WHERE is_banned = 1',
-      )
-      .all()
-      .map((row) => row.word),
-  );
+  const banned = bannedWordsCache;
   const candidates = getDevaneiosWordlist().flatMap((word) => {
     if (word.length !== RACE_WORD_LENGTH || banned.has(word)) return [];
     const canonical = resolveCanonical(word);
@@ -145,6 +156,20 @@ export function pickRaceWord(): string {
   return candidates[Math.floor(Math.random() * candidates.length)]!;
 }
 
+async function getBannedWords(): Promise<Set<string>> {
+  const rows = await db
+    .select({ word: wordlistReview.word })
+    .from(wordlistReview)
+    .where(eq(wordlistReview.is_banned, true));
+  return new Set(rows.map((row) => row.word));
+}
+
+// Keeps each multi-row insert well under Postgres' 65535 bind-parameter cap.
+const REVIEW_SEED_BATCH_SIZE = 5_000;
+
+/** `ifStale` keeps a word another caller already picked for `wordDate`. */
+type PickMode = 'force' | 'ifStale';
+
 function getRecifeDate(): string {
   // Use Intl to get the correct date in Recife timezone
   const tz = process.env.WORDLE_TIMEZONE ?? 'America/Recife';
@@ -153,19 +178,16 @@ function getRecifeDate(): string {
 }
 
 export class WordleService {
-  pickNewWord(guildId: string, wordDate: string): ForceNewWordResult {
-    // Load used words into a Set for O(1) lookup
-    const usedRows = db
-      .query<{ word: string }, []>('SELECT word FROM wordle_used_words')
-      .all();
-    const usedSet = new Set(usedRows.map((r: { word: string }) => r.word));
-
-    const bannedRows = db
-      .query<{ word: string }, []>(
-        'SELECT word FROM wordlist_review WHERE is_banned = 1',
-      )
-      .all();
-    const bannedSet = new Set(bannedRows.map((r: { word: string }) => r.word));
+  async pickNewWord(
+    guildId: string,
+    wordDate: string,
+    mode: PickMode = 'force',
+  ): Promise<ForceNewWordResult> {
+    const usedRows = await db
+      .select({ word: wordleUsedWords.word })
+      .from(wordleUsedWords);
+    const usedSet = new Set(usedRows.map((r) => r.word));
+    const bannedSet = await getBannedWords();
 
     // Only pick words of reasonable length for playability
     const MIN_LENGTH = 5;
@@ -214,53 +236,87 @@ export class WordleService {
     }
     const now = Math.floor(Date.now() / 1000);
 
-    // Save to used words
-    db.query(
-      'INSERT OR REPLACE INTO wordle_used_words (word, used_at) VALUES ($word, $used_at)',
-    ).run({ $word: word, $used_at: now });
+    return db.transaction(async (tx) => {
+      const fresh = {
+        guild_id: guildId,
+        word,
+        word_date: wordDate,
+        players_count: 0,
+        winners_count: 0,
+        total_attempts: 0,
+        created_at: now,
+      };
+      const { guild_id: _guildId, ...replacement } = fresh;
+      // In `ifStale` mode two concurrent joins race here; the WHERE lets only
+      // the first replace yesterday's row, and the loser adopts its word.
+      const written = await tx
+        .insert(wordleDaily)
+        .values(fresh)
+        .onConflictDoUpdate({
+          target: wordleDaily.guild_id,
+          set: replacement,
+          ...(mode === 'ifStale'
+            ? { setWhere: ne(wordleDaily.word_date, wordDate) }
+            : {}),
+        })
+        .returning({ word: wordleDaily.word });
 
-    // Upsert daily game (overwrite if forcing new word)
-    db.query(
-      `INSERT OR REPLACE INTO wordle_daily
-        (guild_id, word, word_date, players_count, winners_count, total_attempts, created_at)
-       VALUES ($guild_id, $word, $word_date, 0, 0, 0, $now)`,
-    ).run({ $guild_id: guildId, $word: word, $word_date: wordDate, $now: now });
+      if (written.length === 0) {
+        const [current] = await tx
+          .select()
+          .from(wordleDaily)
+          .where(eq(wordleDaily.guild_id, guildId));
+        return {
+          word: current!.word,
+          wordDate: current!.word_date,
+          wordLength: current!.word.length,
+        };
+      }
 
-    return { word, wordDate, wordLength: word.length };
+      await tx
+        .insert(wordleUsedWords)
+        .values({ word, used_at: now })
+        .onConflictDoUpdate({
+          target: wordleUsedWords.word,
+          set: { used_at: now },
+        });
+
+      return { word, wordDate, wordLength: word.length };
+    });
   }
 
-  getDailyWord(guildId: string): WordleDaily {
+  async getDailyWord(guildId: string): Promise<WordleDaily> {
     const today = getRecifeDate();
-    const row = db
-      .query<WordleDaily, { $guild_id: string }>(
-        'SELECT * FROM wordle_daily WHERE guild_id = $guild_id',
-      )
-      .get({ $guild_id: guildId });
+    const row = await this.findDaily(guildId);
 
     if (!row || row.word_date !== today) {
       // Lazy init: pick a new word for today
-      this.pickNewWord(guildId, today);
-      return db
-        .query<WordleDaily, { $guild_id: string }>(
-          'SELECT * FROM wordle_daily WHERE guild_id = $guild_id',
-        )
-        .get({ $guild_id: guildId })!;
+      await this.pickNewWord(guildId, today, 'ifStale');
+      return (await this.findDaily(guildId))!;
     }
 
     return row;
   }
 
-  submitGuess(
+  private async findDaily(guildId: string): Promise<WordleDaily | undefined> {
+    const [row] = await db
+      .select()
+      .from(wordleDaily)
+      .where(eq(wordleDaily.guild_id, guildId));
+    return row;
+  }
+
+  async submitGuess(
     userId: string,
     guildId: string,
     guess: string,
-  ): GuessResult | { error: string } {
+  ): Promise<GuessResult | { error: string }> {
     const canonicalGuess = resolveCanonical(guess);
     if (!canonicalGuess) {
       return { error: 'Palavra não encontrada na lista de palavras válidas.' };
     }
 
-    const daily = this.getDailyWord(guildId);
+    const daily = await this.getDailyWord(guildId);
 
     // Validate length matches today's word
     if (canonicalGuess.length !== daily.word.length) {
@@ -275,100 +331,88 @@ export class WordleService {
     const today = getRecifeDate();
     const now = Math.floor(Date.now() / 1000);
 
-    // Get existing session, if any
-    const sessionRow = db
-      .query<
-        { id: string; guesses: string; solved: number; attempts: number },
-        { $user_id: string; $guild_id: string; $word_date: string }
-      >(
-        'SELECT id, guesses, solved, attempts FROM wordle_sessions WHERE user_id = $user_id AND guild_id = $guild_id AND word_date = $word_date',
-      )
-      .get({ $user_id: userId, $guild_id: guildId, $word_date: today });
+    return db.transaction(async (tx) => {
+      // The row must exist before it can be locked: create an empty session
+      // unless one is already there, then lock it for the read-modify-write.
+      // A concurrent first guess waits here instead of failing on the
+      // unique key.
+      await tx
+        .insert(wordleSessions)
+        .values({
+          id: randomUUID(),
+          user_id: userId,
+          guild_id: guildId,
+          word_date: today,
+          guesses: '[]',
+          solved: false,
+          attempts: 0,
+          word_length: daily.word.length,
+          created_at: now,
+        })
+        .onConflictDoNothing();
+      const [sessionRow] = await tx
+        .select({
+          id: wordleSessions.id,
+          guesses: wordleSessions.guesses,
+          solved: wordleSessions.solved,
+          attempts: wordleSessions.attempts,
+        })
+        .from(wordleSessions)
+        .where(sessionOf(userId, guildId, today))
+        .for('update');
+      const session = sessionRow!;
 
-    if (sessionRow?.solved) {
-      return { error: 'Você já acertou a palavra de hoje!' };
-    }
-
-    const previousGuesses: GuessRow[] = sessionRow
-      ? JSON.parse(sessionRow.guesses)
-      : [];
-
-    if (
-      previousGuesses.some((g) => stripDiacritics(g.guess) === strippedGuess)
-    ) {
-      return { error: 'Você já tentou essa palavra.' };
-    }
-
-    const feedback = computeFeedback(strippedGuess, strippedWord);
-    const solved = strippedGuess === strippedWord;
-    const newGuesses = [
-      ...previousGuesses,
-      { guess: canonicalGuess, feedback },
-    ];
-    const newAttempts = (sessionRow?.attempts ?? 0) + 1;
-
-    const fn = db.transaction(() => {
-      const sessionId = sessionRow?.id ?? randomUUID();
-
-      if (!sessionRow) {
-        db.query(
-          `INSERT INTO wordle_sessions (id, user_id, guild_id, word_date, guesses, solved, attempts, word_length, created_at)
-           VALUES ($id, $user_id, $guild_id, $word_date, '[]', 0, 0, $word_length, $now)`,
-        ).run({
-          $id: sessionId,
-          $user_id: userId,
-          $guild_id: guildId,
-          $word_date: today,
-          $word_length: daily.word.length,
-          $now: now,
-        });
+      if (session.solved) {
+        return { error: 'Você já acertou a palavra de hoje!' };
       }
 
-      // Update session
-      db.query(
-        `UPDATE wordle_sessions SET guesses = $guesses, solved = $solved, attempts = $attempts
-         WHERE id = $id`,
-      ).run({
-        $guesses: JSON.stringify(newGuesses),
-        $solved: solved ? 1 : 0,
-        $attempts: newAttempts,
-        $id: sessionId,
-      });
+      const previousGuesses: GuessRow[] = JSON.parse(session.guesses);
+
+      if (
+        previousGuesses.some((g) => stripDiacritics(g.guess) === strippedGuess)
+      ) {
+        return { error: 'Você já tentou essa palavra.' };
+      }
+
+      const feedback = computeFeedback(strippedGuess, strippedWord);
+      const solved = strippedGuess === strippedWord;
+      const newGuesses = [
+        ...previousGuesses,
+        { guess: canonicalGuess, feedback },
+      ];
+      const newAttempts = session.attempts + 1;
+      const sessionId = session.id;
+
+      await tx
+        .update(wordleSessions)
+        .set({
+          guesses: JSON.stringify(newGuesses),
+          solved,
+          attempts: newAttempts,
+        })
+        .where(eq(wordleSessions.id, sessionId));
 
       // Update daily stats.
       // players_count is incremented exactly once per user per day: on their first guess,
       // regardless of whether that guess solves the puzzle. The previous CASE WHEN expression
       // caused a bug where a user who solved on a later guess never incremented players_count
       // (previousGuesses.length > 0 → $is_new_player = 0).
-      if (previousGuesses.length === 0) {
-        // First guess of the day for this user
-        if (solved) {
-          db.query(
-            `UPDATE wordle_daily SET
-              players_count = players_count + 1,
-              winners_count = winners_count + 1,
-              total_attempts = total_attempts + $attempts
-             WHERE guild_id = $guild_id`,
-          ).run({
-            $attempts: newAttempts,
-            $guild_id: guildId,
-          });
-        } else {
-          db.query(
-            'UPDATE wordle_daily SET players_count = players_count + 1 WHERE guild_id = $guild_id',
-          ).run({ $guild_id: guildId });
-        }
-      } else if (solved) {
-        // Returning player (already counted) who now solved
-        db.query(
-          `UPDATE wordle_daily SET
-            winners_count = winners_count + 1,
-            total_attempts = total_attempts + $attempts
-           WHERE guild_id = $guild_id`,
-        ).run({
-          $attempts: newAttempts,
-          $guild_id: guildId,
-        });
+      const isNewPlayer = previousGuesses.length === 0;
+      if (isNewPlayer || solved) {
+        await tx
+          .update(wordleDaily)
+          .set({
+            ...(isNewPlayer
+              ? { players_count: sql`${wordleDaily.players_count} + 1` }
+              : {}),
+            ...(solved
+              ? {
+                  winners_count: sql`${wordleDaily.winners_count} + 1`,
+                  total_attempts: sql`${wordleDaily.total_attempts} + ${newAttempts}`,
+                }
+              : {}),
+          })
+          .where(eq(wordleDaily.guild_id, guildId));
       }
 
       const result: GuessResult = {
@@ -381,31 +425,28 @@ export class WordleService {
       };
 
       if (solved) {
-        result.streak = this.updateStreak(userId, guildId);
+        result.streak = await this.updateStreak(userId, guildId, tx);
       }
 
       return result;
     });
-
-    return fn();
   }
 
-  getUserSession(userId: string, guildId: string): WordleSession | null {
+  async getUserSession(
+    userId: string,
+    guildId: string,
+  ): Promise<WordleSession | null> {
     const today = getRecifeDate();
-    const row = db
-      .query<
-        {
-          id: string;
-          guesses: string;
-          solved: number;
-          attempts: number;
-          created_at: number;
-        },
-        { $user_id: string; $guild_id: string; $word_date: string }
-      >(
-        'SELECT id, guesses, solved, attempts, created_at FROM wordle_sessions WHERE user_id = $user_id AND guild_id = $guild_id AND word_date = $word_date',
-      )
-      .get({ $user_id: userId, $guild_id: guildId, $word_date: today });
+    const [row] = await db
+      .select({
+        id: wordleSessions.id,
+        guesses: wordleSessions.guesses,
+        solved: wordleSessions.solved,
+        attempts: wordleSessions.attempts,
+        created_at: wordleSessions.created_at,
+      })
+      .from(wordleSessions)
+      .where(sessionOf(userId, guildId, today));
 
     if (!row) return null;
 
@@ -415,7 +456,7 @@ export class WordleService {
       guild_id: guildId,
       word_date: today,
       guesses: JSON.parse(row.guesses),
-      solved: row.solved === 1,
+      solved: row.solved,
       attempts: row.attempts,
       created_at: row.created_at,
     };
@@ -428,39 +469,46 @@ export class WordleService {
   // and sending the announcement, not after — claiming after sending still
   // leaves a window where both the command and the poller can observe the
   // win as unannounced and both send it.
-  markAnnounced(userId: string, guildId: string): boolean {
+  async markAnnounced(userId: string, guildId: string): Promise<boolean> {
     const today = getRecifeDate();
     const now = Math.floor(Date.now() / 1000);
-    const result = db
-      .query(
-        `UPDATE wordle_sessions SET announced_at = $now
-         WHERE user_id = $user_id AND guild_id = $guild_id AND word_date = $word_date
-           AND solved = 1 AND announced_at IS NULL`,
+    const claimed = await db
+      .update(wordleSessions)
+      .set({ announced_at: now })
+      .where(
+        and(
+          sessionOf(userId, guildId, today),
+          eq(wordleSessions.solved, true),
+          isNull(wordleSessions.announced_at),
+        ),
       )
-      .run({
-        $now: now,
-        $user_id: userId,
-        $guild_id: guildId,
-        $word_date: today,
-      });
-    return result.changes > 0;
+      .returning({ id: wordleSessions.id });
+    return claimed.length > 0;
   }
 
-  getUnannouncedWins(guildId: string): {
-    userId: string;
-    guesses: GuessRow[];
-    attempts: number;
-  }[] {
+  async getUnannouncedWins(guildId: string): Promise<
+    {
+      userId: string;
+      guesses: GuessRow[];
+      attempts: number;
+    }[]
+  > {
     const today = getRecifeDate();
-    const rows = db
-      .query<
-        { user_id: string; guesses: string; attempts: number },
-        { $guild_id: string; $word_date: string }
-      >(
-        `SELECT user_id, guesses, attempts FROM wordle_sessions
-         WHERE guild_id = $guild_id AND word_date = $word_date AND solved = 1 AND announced_at IS NULL`,
-      )
-      .all({ $guild_id: guildId, $word_date: today });
+    const rows = await db
+      .select({
+        user_id: wordleSessions.user_id,
+        guesses: wordleSessions.guesses,
+        attempts: wordleSessions.attempts,
+      })
+      .from(wordleSessions)
+      .where(
+        and(
+          eq(wordleSessions.guild_id, guildId),
+          eq(wordleSessions.word_date, today),
+          eq(wordleSessions.solved, true),
+          isNull(wordleSessions.announced_at),
+        ),
+      );
 
     return rows.map((row) => ({
       userId: row.user_id,
@@ -469,12 +517,12 @@ export class WordleService {
     }));
   }
 
-  validateGuess(
+  async validateGuess(
     guildId: string,
     guess: string,
-  ): { valid: boolean; wordLength: number; message: string } {
+  ): Promise<{ valid: boolean; wordLength: number; message: string }> {
     const normalized = guess.trim().toLowerCase();
-    const daily = this.getDailyWord(guildId);
+    const daily = await this.getDailyWord(guildId);
 
     if (normalized.length !== daily.word.length) {
       return {
@@ -494,8 +542,8 @@ export class WordleService {
     };
   }
 
-  getDailyStats(guildId: string): DailyStats {
-    const daily = this.getDailyWord(guildId);
+  async getDailyStats(guildId: string): Promise<DailyStats> {
+    const daily = await this.getDailyWord(guildId);
     const avgAttempts =
       daily.winners_count > 0
         ? Math.round((daily.total_attempts / daily.winners_count) * 10) / 10
@@ -510,26 +558,21 @@ export class WordleService {
     };
   }
 
-  getDayGuesses(guildId: string): DayGuesses | null {
-    const daily = db
-      .query<WordleDaily, { $guild_id: string }>(
-        'SELECT * FROM wordle_daily WHERE guild_id = $guild_id',
-      )
-      .get({ $guild_id: guildId });
+  async getDayGuesses(guildId: string): Promise<DayGuesses | null> {
+    const daily = await this.findDaily(guildId);
 
     if (!daily) return null;
 
-    const rows = db
-      .query<
-        WordleSessionGuessesRow,
-        { $guild_id: string; $word_date: string }
-      >(
-        `SELECT guesses
-         FROM wordle_sessions
-         WHERE guild_id = $guild_id AND word_date = $word_date
-         ORDER BY created_at ASC`,
+    const rows: WordleSessionGuessesRow[] = await db
+      .select({ guesses: wordleSessions.guesses })
+      .from(wordleSessions)
+      .where(
+        and(
+          eq(wordleSessions.guild_id, guildId),
+          eq(wordleSessions.word_date, daily.word_date),
+        ),
       )
-      .all({ $guild_id: guildId, $word_date: daily.word_date });
+      .orderBy(asc(wordleSessions.created_at));
 
     return {
       word: daily.word,
@@ -545,18 +588,23 @@ export class WordleService {
     return d.toISOString().slice(0, 10);
   }
 
-  private computeStreakFromHistory(
+  private async computeStreakFromHistory(
     userId: string,
     guildId: string,
     today: string,
-  ): number {
-    const rows = db
-      .query<{ word_date: string }, { $user_id: string; $guild_id: string }>(
-        `SELECT word_date FROM wordle_sessions
-         WHERE user_id = $user_id AND guild_id = $guild_id AND solved = 1
-         ORDER BY word_date DESC`,
+    exec: DbExecutor = db,
+  ): Promise<number> {
+    const rows = await exec
+      .select({ word_date: wordleSessions.word_date })
+      .from(wordleSessions)
+      .where(
+        and(
+          eq(wordleSessions.user_id, userId),
+          eq(wordleSessions.guild_id, guildId),
+          eq(wordleSessions.solved, true),
+        ),
       )
-      .all({ $user_id: userId, $guild_id: guildId });
+      .orderBy(desc(wordleSessions.word_date));
 
     if (rows.length === 0) return 0;
 
@@ -575,33 +623,49 @@ export class WordleService {
     return streak;
   }
 
-  updateStreak(userId: string, guildId: string): number {
+  private async findStreak(
+    userId: string,
+    guildId: string,
+    exec: DbExecutor = db,
+  ) {
+    const [row] = await exec
+      .select({
+        current_streak: wordleStreaks.current_streak,
+        max_streak: wordleStreaks.max_streak,
+        last_solved_date: wordleStreaks.last_solved_date,
+      })
+      .from(wordleStreaks)
+      .where(
+        and(
+          eq(wordleStreaks.user_id, userId),
+          eq(wordleStreaks.guild_id, guildId),
+        ),
+      );
+    return row;
+  }
+
+  async updateStreak(
+    userId: string,
+    guildId: string,
+    exec: DbExecutor = db,
+  ): Promise<number> {
     const today = getRecifeDate();
 
-    const row = db
-      .query<
-        {
-          current_streak: number;
-          max_streak: number;
-          last_solved_date: string | null;
-        },
-        { $user_id: string; $guild_id: string }
-      >(
-        `SELECT current_streak, max_streak, last_solved_date FROM wordle_streaks
-         WHERE user_id = $user_id AND guild_id = $guild_id`,
-      )
-      .get({ $user_id: userId, $guild_id: guildId });
+    const row = await this.findStreak(userId, guildId, exec);
 
     if (!row) {
-      const streak = this.computeStreakFromHistory(userId, guildId, today);
-      db.query(
-        `INSERT INTO wordle_streaks (user_id, guild_id, current_streak, max_streak, last_solved_date)
-         VALUES ($user_id, $guild_id, $streak, $streak, $today)`,
-      ).run({
-        $user_id: userId,
-        $guild_id: guildId,
-        $streak: streak,
-        $today: today,
+      const streak = await this.computeStreakFromHistory(
+        userId,
+        guildId,
+        today,
+        exec,
+      );
+      await exec.insert(wordleStreaks).values({
+        user_id: userId,
+        guild_id: guildId,
+        current_streak: streak,
+        max_streak: streak,
+        last_solved_date: today,
       });
       return streak;
     }
@@ -621,41 +685,36 @@ export class WordleService {
 
     const newMax = Math.max(newStreak, row.max_streak);
 
-    db.query(
-      `UPDATE wordle_streaks SET current_streak = $streak, max_streak = $max, last_solved_date = $today
-       WHERE user_id = $user_id AND guild_id = $guild_id`,
-    ).run({
-      $user_id: userId,
-      $guild_id: guildId,
-      $streak: newStreak,
-      $max: newMax,
-      $today: today,
-    });
+    await exec
+      .update(wordleStreaks)
+      .set({
+        current_streak: newStreak,
+        max_streak: newMax,
+        last_solved_date: today,
+      })
+      .where(
+        and(
+          eq(wordleStreaks.user_id, userId),
+          eq(wordleStreaks.guild_id, guildId),
+        ),
+      );
 
     return newStreak;
   }
 
-  getStreak(
+  async getStreak(
     userId: string,
     guildId: string,
-  ): { currentStreak: number; maxStreak: number } {
-    const row = db
-      .query<
-        {
-          current_streak: number;
-          max_streak: number;
-          last_solved_date: string | null;
-        },
-        { $user_id: string; $guild_id: string }
-      >(
-        `SELECT current_streak, max_streak, last_solved_date FROM wordle_streaks
-         WHERE user_id = $user_id AND guild_id = $guild_id`,
-      )
-      .get({ $user_id: userId, $guild_id: guildId });
+  ): Promise<{ currentStreak: number; maxStreak: number }> {
+    const row = await this.findStreak(userId, guildId);
 
     if (!row) {
       const today = getRecifeDate();
-      const streak = this.computeStreakFromHistory(userId, guildId, today);
+      const streak = await this.computeStreakFromHistory(
+        userId,
+        guildId,
+        today,
+      );
       return { currentStreak: streak, maxStreak: streak };
     }
 
@@ -672,33 +731,41 @@ export class WordleService {
     };
   }
 
-  getLeaderboard(
+  async getLeaderboard(
     guildId: string,
     limit = 10,
     period: 'all-time' | 'weekly' | 'monthly' | 'daily' = 'all-time',
     date?: string,
-  ):
+  ): Promise<
     | { userId: string; totalDays: number; avgScore: number }[]
-    | { userId: string; attempts: number; solved: boolean }[] {
+    | { userId: string; attempts: number; solved: boolean }[]
+  > {
     if (period === 'daily') {
       const wordDate = date ?? getRecifeDate();
-      return db
-        .query<
-          { user_id: string; attempts: number; solved: number },
-          { $guild_id: string; $today: string; $limit: number }
-        >(
-          `SELECT user_id, attempts, solved
- FROM wordle_sessions
- WHERE guild_id = $guild_id AND word_date = $today
- ORDER BY solved DESC, attempts ASC, created_at ASC
- LIMIT $limit`,
+      const rows = await db
+        .select({
+          user_id: wordleSessions.user_id,
+          attempts: wordleSessions.attempts,
+          solved: wordleSessions.solved,
+        })
+        .from(wordleSessions)
+        .where(
+          and(
+            eq(wordleSessions.guild_id, guildId),
+            eq(wordleSessions.word_date, wordDate),
+          ),
         )
-        .all({ $guild_id: guildId, $today: wordDate, $limit: limit })
-        .map((row: { user_id: string; attempts: number; solved: number }) => ({
-          userId: row.user_id,
-          attempts: row.attempts,
-          solved: row.solved === 1,
-        }));
+        .orderBy(
+          desc(wordleSessions.solved),
+          asc(wordleSessions.attempts),
+          asc(wordleSessions.created_at),
+        )
+        .limit(limit);
+      return rows.map((row) => ({
+        userId: row.user_id,
+        attempts: row.attempts,
+        solved: row.solved,
+      }));
     }
 
     let dateFrom: string | null = null;
@@ -711,62 +778,53 @@ export class WordleService {
       dateFrom = `${getRecifeDate().substring(0, 8)}01`;
     }
 
-    const dateFilter = dateFrom ? 'AND word_date >= $date_from' : '';
+    const dateFilter = dateFrom ? sql`AND word_date >= ${dateFrom}` : sql``;
 
-    return db
-      .query<
-        { user_id: string; total_days: number; avg_score: number },
-        { $guild_id: string; $limit: number; $date_from?: string }
-      >(
-        `SELECT
-           p.user_id,
-           COUNT(d.word_date) AS total_days,
-           ROUND(
-             CAST(SUM(COALESCE(s.attempts, d.word_length + 1)) AS REAL) / COUNT(d.word_date),
-             2
-           ) AS avg_score
-         FROM (
-           SELECT DISTINCT user_id FROM wordle_sessions
-           WHERE guild_id = $guild_id ${dateFilter}
-         ) p
-         CROSS JOIN (
-           SELECT DISTINCT word_date, word_length
-           FROM wordle_sessions
-           WHERE guild_id = $guild_id AND word_length > 0 ${dateFilter}
-         ) d
-         LEFT JOIN wordle_sessions s
-           ON s.user_id = p.user_id
-           AND s.guild_id = $guild_id
-           AND s.word_date = d.word_date
-         GROUP BY p.user_id
-         ORDER BY avg_score ASC
-         LIMIT $limit`,
-      )
-      .all(
-        dateFrom
-          ? { $guild_id: guildId, $limit: limit, $date_from: dateFrom }
-          : { $guild_id: guildId, $limit: limit },
-      )
-      .map(
-        (row: { user_id: string; total_days: number; avg_score: number }) => ({
-          userId: row.user_id,
-          totalDays: row.total_days,
-          avgScore: row.avg_score,
-        }),
-      );
+    const rows = await db.execute<{
+      user_id: string;
+      total_days: number;
+      avg_score: number;
+    }>(sql`
+      SELECT
+        p.user_id,
+        COUNT(d.word_date)::int AS total_days,
+        ROUND(
+          SUM(COALESCE(s.attempts, d.word_length + 1))::numeric / COUNT(d.word_date),
+          2
+        )::float8 AS avg_score
+      FROM (
+        SELECT DISTINCT user_id FROM wordle_sessions
+        WHERE guild_id = ${guildId} ${dateFilter}
+      ) p
+      CROSS JOIN (
+        SELECT DISTINCT word_date, word_length
+        FROM wordle_sessions
+        WHERE guild_id = ${guildId} AND word_length > 0 ${dateFilter}
+      ) d
+      LEFT JOIN wordle_sessions s
+        ON s.user_id = p.user_id
+        AND s.guild_id = ${guildId}
+        AND s.word_date = d.word_date
+      GROUP BY p.user_id
+      ORDER BY avg_score ASC
+      LIMIT ${limit}`);
+
+    return rows.map((row) => ({
+      userId: row.user_id,
+      totalDays: row.total_days,
+      avgScore: row.avg_score,
+    }));
   }
 
-  getGroupStreak(guildId: string): number {
+  async getGroupStreak(guildId: string): Promise<number> {
     const today = getRecifeDate();
     const yesterday = this.getYesterday(today);
 
-    const rows = db
-      .query<{ word_date: string }, { $guild_id: string }>(
-        `SELECT DISTINCT word_date FROM wordle_sessions
-         WHERE guild_id = $guild_id
-         ORDER BY word_date DESC`,
-      )
-      .all({ $guild_id: guildId });
+    const rows = await db
+      .selectDistinct({ word_date: wordleSessions.word_date })
+      .from(wordleSessions)
+      .where(eq(wordleSessions.guild_id, guildId))
+      .orderBy(desc(wordleSessions.word_date));
 
     if (rows.length === 0) return 0;
 
@@ -786,81 +844,91 @@ export class WordleService {
     return streak;
   }
 
-  forceNewWord(guildId: string): ForceNewWordResult {
+  async forceNewWord(guildId: string): Promise<ForceNewWordResult> {
     const today = getRecifeDate();
-    const result = this.pickNewWord(guildId, today);
+    const result = await this.pickNewWord(guildId, today);
     // Clear all player sessions for today so everyone can play the new word
-    db.query(
-      'DELETE FROM wordle_sessions WHERE guild_id = $guild_id AND word_date = $word_date',
-    ).run({ $guild_id: guildId, $word_date: today });
+    await db
+      .delete(wordleSessions)
+      .where(
+        and(
+          eq(wordleSessions.guild_id, guildId),
+          eq(wordleSessions.word_date, today),
+        ),
+      );
     return result;
   }
 
-  setConfig(guildId: string, channelId: string): void {
+  async setConfig(guildId: string, channelId: string): Promise<void> {
     const now = Math.floor(Date.now() / 1000);
-    db.query(
-      `INSERT OR REPLACE INTO wordle_config (guild_id, channel_id, updated_at)
-       VALUES ($guild_id, $channel_id, $now)`,
-    ).run({ $guild_id: guildId, $channel_id: channelId, $now: now });
+    await db
+      .insert(wordleConfig)
+      .values({ guild_id: guildId, channel_id: channelId, updated_at: now })
+      .onConflictDoUpdate({
+        target: wordleConfig.guild_id,
+        set: { channel_id: channelId, updated_at: now },
+      });
   }
 
-  getConfig(guildId: string): { channelId: string } | null {
-    const row = db
-      .query<{ channel_id: string }, { $guild_id: string }>(
-        'SELECT channel_id FROM wordle_config WHERE guild_id = $guild_id',
-      )
-      .get({ $guild_id: guildId });
+  async getConfig(guildId: string): Promise<{ channelId: string } | null> {
+    const [row] = await db
+      .select({ channel_id: wordleConfig.channel_id })
+      .from(wordleConfig)
+      .where(eq(wordleConfig.guild_id, guildId));
 
     return row ? { channelId: row.channel_id } : null;
   }
 
-  getAllConfiguredGuilds(): { guildId: string; channelId: string }[] {
-    return db
-      .query<{ guild_id: string; channel_id: string }, []>(
-        'SELECT guild_id, channel_id FROM wordle_config',
-      )
-      .all()
-      .map((r: { guild_id: string; channel_id: string }) => ({
-        guildId: r.guild_id,
-        channelId: r.channel_id,
-      }));
+  async getAllConfiguredGuilds(): Promise<
+    { guildId: string; channelId: string }[]
+  > {
+    const rows = await db
+      .select({
+        guild_id: wordleConfig.guild_id,
+        channel_id: wordleConfig.channel_id,
+      })
+      .from(wordleConfig);
+    return rows.map((r) => ({ guildId: r.guild_id, channelId: r.channel_id }));
   }
 
-  private ensureReviewSeeded(): void {
-    const { count } = db
-      .query<{ count: number }, []>(
-        'SELECT COUNT(*) as count FROM wordlist_review',
-      )
-      .get()!;
-    if (count > 0) return;
+  private async ensureReviewSeeded(): Promise<void> {
+    const [row] = await db.select({ count: count() }).from(wordlistReview);
+    if (row && row.count > 0) return;
 
-    const insert = db.prepare(
-      'INSERT OR IGNORE INTO wordlist_review (word, is_banned) VALUES ($word, NULL)',
-    );
-    const insertAll = db.transaction((words: string[]) => {
-      for (const w of words) insert.run({ $word: w });
+    const words = getWordlist();
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < words.length; i += REVIEW_SEED_BATCH_SIZE) {
+        // Inserted one batch at a time, in file order, so seq follows the
+        // wordlist and the review walks it top to bottom.
+        await tx
+          .insert(wordlistReview)
+          .values(
+            words
+              .slice(i, i + REVIEW_SEED_BATCH_SIZE)
+              .map((word) => ({ word, is_banned: null })),
+          )
+          .onConflictDoNothing();
+      }
     });
-    insertAll(getWordlist());
   }
 
-  getNextReviewWord(): ReviewWordResult {
-    this.ensureReviewSeeded();
+  async getNextReviewWord(): Promise<ReviewWordResult> {
+    await this.ensureReviewSeeded();
 
-    const total = db
-      .query<{ count: number }, []>(
-        'SELECT COUNT(*) as count FROM wordlist_review',
-      )
-      .get()!.count;
-    const reviewed = db
-      .query<{ count: number }, []>(
-        'SELECT COUNT(*) as count FROM wordlist_review WHERE is_banned IS NOT NULL',
-      )
-      .get()!.count;
-    const next = db
-      .query<{ word: string }, []>(
-        'SELECT word FROM wordlist_review WHERE is_banned IS NULL ORDER BY rowid LIMIT 1',
-      )
-      .get();
+    const [counts] = await db
+      .select({
+        total: count(),
+        reviewed: count(wordlistReview.is_banned),
+      })
+      .from(wordlistReview);
+    const total = counts?.total ?? 0;
+    const reviewed = counts?.reviewed ?? 0;
+    const [next] = await db
+      .select({ word: wordlistReview.word })
+      .from(wordlistReview)
+      .where(isNull(wordlistReview.is_banned))
+      .orderBy(asc(wordlistReview.seq))
+      .limit(1);
 
     if (!next) {
       return { word: null, index: total, total, done: true };
@@ -869,28 +937,39 @@ export class WordleService {
     return { word: next.word, index: reviewed, total, done: false };
   }
 
-  submitReviewDecision(
+  async submitReviewDecision(
     word: string,
     decision: 'keep' | 'remove',
-  ): ReviewWordResult {
-    this.ensureReviewSeeded();
+  ): Promise<ReviewWordResult> {
+    await this.ensureReviewSeeded();
 
-    db.query(
-      'UPDATE wordlist_review SET is_banned = $is_banned WHERE word = $word',
-    ).run({ $is_banned: decision === 'remove' ? 1 : 0, $word: word });
+    await db
+      .update(wordlistReview)
+      .set({ is_banned: decision === 'remove' })
+      .where(eq(wordlistReview.word, word));
+    if (decision === 'remove') bannedWordsCache.add(word);
+    else bannedWordsCache.delete(word);
 
     return this.getNextReviewWord();
   }
 
-  getWordlistPoolStats(): { total: number; used: number; remaining: number } {
+  async getWordlistPoolStats(): Promise<{
+    total: number;
+    used: number;
+    remaining: number;
+  }> {
     const wordlist = getWordlist();
     const total = wordlist.filter((w) => w.length >= 5 && w.length <= 6).length;
-    const used =
-      db
-        .query<{ count: number }, []>(
-          'SELECT COUNT(*) as count FROM wordle_used_words',
-        )
-        .get()?.count ?? 0;
+    const [row] = await db.select({ count: count() }).from(wordleUsedWords);
+    const used = row?.count ?? 0;
     return { total, used, remaining: total - used };
   }
+}
+
+function sessionOf(userId: string, guildId: string, wordDate: string) {
+  return and(
+    eq(wordleSessions.user_id, userId),
+    eq(wordleSessions.guild_id, guildId),
+    eq(wordleSessions.word_date, wordDate),
+  );
 }

@@ -116,3 +116,55 @@ describe('failed requests carrying secrets', () => {
     expect(lines.join('\n')).not.toContain(SECRET);
   });
 });
+
+describe('database errors', () => {
+  it('keep bound parameters out of the structured log', async () => {
+    const { DrizzleQueryError } = await import('drizzle-orm/errors');
+    const { logger } = await import('utils/logger');
+    const lines = captureConsole();
+
+    logger.error('db.failed', {
+      error: new DrizzleQueryError(
+        'update "users" set "lastfm_session_token" = $1',
+        [SECRET],
+        new Error('connection refused'),
+      ),
+    });
+
+    const output = lines.join('\n');
+    expect(output).toContain('connection refused');
+    expect(output).not.toContain(SECRET);
+  });
+});
+
+describe('error messages built from database errors', () => {
+  it('never carry bound parameters', async () => {
+    const { DrizzleQueryError } = await import('drizzle-orm/errors');
+    const { getErrorMessage } = await import('utils/errorHandling');
+    const { AiTraceRecorder } = await import('services/aiChat/AiTraceRecorder');
+    const { createDb } = await import('@marquinhos/database/client');
+    const error = new DrizzleQueryError(
+      'insert into "ai_traces" values ($1)',
+      [SECRET],
+      new Error('connection refused'),
+    );
+
+    expect(getErrorMessage(error)).toContain('connection refused');
+    expect(getErrorMessage(error)).not.toContain(SECRET);
+
+    const lines = captureConsole();
+    const unreachable = createDb('postgres://postgres@127.0.0.1:1/none', 1);
+    const recorder = new AiTraceRecorder(unreachable.db);
+    recorder.start({
+      userId: 'u',
+      guildId: 'g',
+      channelId: 'c',
+      content: SECRET,
+      recentMessages: [],
+    });
+    await recorder.flush();
+    await unreachable.close();
+    expect(lines.join('\n')).toContain('ai.trace.persist_failed');
+    expect(lines.join('\n')).not.toContain(SECRET);
+  });
+});

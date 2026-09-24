@@ -1,10 +1,10 @@
-import { db as defaultDb } from '@marquinhos/database/sqlite';
-import { Database } from 'bun:sqlite';
-
-interface AiChatConfigRow {
-  key: string;
-  value: number;
-}
+import { db as defaultDb, type Db } from '@marquinhos/database/client';
+import {
+  aiChatConfig,
+  aiChatGlobalUsage,
+  aiChatUsage,
+} from '@marquinhos/database/schema';
+import { eq, sql } from 'drizzle-orm';
 
 const DEFAULT_USER_DAILY_LIMIT = 100;
 const DEFAULT_GLOBAL_DAILY_LIMIT = 2000;
@@ -16,80 +16,82 @@ function today(): string {
 class RateLimitExceededSignal extends Error {}
 
 export class RateLimitService {
-  constructor(private db: Database = defaultDb) {}
+  constructor(private db: Db = defaultDb) {}
 
-  seedDefaults(): void {
-    const insert = this.db.prepare(
-      'INSERT OR IGNORE INTO ai_chat_config (key, value) VALUES ($key, $value)',
-    );
-    insert.run({ $key: 'user_daily_limit', $value: DEFAULT_USER_DAILY_LIMIT });
-    insert.run({
-      $key: 'global_daily_limit',
-      $value: DEFAULT_GLOBAL_DAILY_LIMIT,
-    });
+  async seedDefaults(): Promise<void> {
+    await this.db
+      .insert(aiChatConfig)
+      .values([
+        { key: 'user_daily_limit', value: DEFAULT_USER_DAILY_LIMIT },
+        { key: 'global_daily_limit', value: DEFAULT_GLOBAL_DAILY_LIMIT },
+      ])
+      .onConflictDoNothing();
   }
 
-  checkAndIncrement(
+  async checkAndIncrement(
     userId: string,
     guildId: string,
     date: string = today(),
-  ): boolean {
-    const userLimit = this.getConfigValue(
+  ): Promise<boolean> {
+    const userLimit = await this.getConfigValue(
       'user_daily_limit',
       DEFAULT_USER_DAILY_LIMIT,
     );
-    const globalLimit = this.getConfigValue(
+    const globalLimit = await this.getConfigValue(
       'global_daily_limit',
       DEFAULT_GLOBAL_DAILY_LIMIT,
     );
 
-    const attempt = this.db.transaction(() => {
-      const userRow = this.db
-        .query<
-          { count: number },
-          { $userId: string; $guildId: string; $date: string }
-        >(
-          `INSERT INTO ai_chat_usage (user_id, guild_id, usage_date, count)
-           VALUES ($userId, $guildId, $date, 1)
-           ON CONFLICT(user_id, guild_id, usage_date) DO UPDATE SET
-             count = count + 1
-           RETURNING count`,
-        )
-        .get({ $userId: userId, $guildId: guildId, $date: date });
-
-      if (!userRow || userRow.count > userLimit)
-        throw new RateLimitExceededSignal();
-
-      const globalRow = this.db
-        .query<{ count: number }, { $guildId: string; $date: string }>(
-          `INSERT INTO ai_chat_global_usage (guild_id, usage_date, count)
-           VALUES ($guildId, $date, 1)
-           ON CONFLICT(guild_id, usage_date) DO UPDATE SET
-             count = count + 1
-           RETURNING count`,
-        )
-        .get({ $guildId: guildId, $date: date });
-
-      if (!globalRow || globalRow.count > globalLimit)
-        throw new RateLimitExceededSignal();
-
-      return true;
-    });
-
     try {
-      return attempt();
+      // Both counters move together or not at all: throwing the signal rolls
+      // back the increment that pushed a counter over its limit.
+      return await this.db.transaction(async (tx) => {
+        const [userRow] = await tx
+          .insert(aiChatUsage)
+          .values({
+            user_id: userId,
+            guild_id: guildId,
+            usage_date: date,
+            count: 1,
+          })
+          .onConflictDoUpdate({
+            target: [
+              aiChatUsage.user_id,
+              aiChatUsage.guild_id,
+              aiChatUsage.usage_date,
+            ],
+            set: { count: sql`${aiChatUsage.count} + 1` },
+          })
+          .returning({ count: aiChatUsage.count });
+
+        if (!userRow || userRow.count > userLimit)
+          throw new RateLimitExceededSignal();
+
+        const [globalRow] = await tx
+          .insert(aiChatGlobalUsage)
+          .values({ guild_id: guildId, usage_date: date, count: 1 })
+          .onConflictDoUpdate({
+            target: [aiChatGlobalUsage.guild_id, aiChatGlobalUsage.usage_date],
+            set: { count: sql`${aiChatGlobalUsage.count} + 1` },
+          })
+          .returning({ count: aiChatGlobalUsage.count });
+
+        if (!globalRow || globalRow.count > globalLimit)
+          throw new RateLimitExceededSignal();
+
+        return true;
+      });
     } catch (err) {
       if (err instanceof RateLimitExceededSignal) return false;
       throw err;
     }
   }
 
-  private getConfigValue(key: string, fallback: number): number {
-    const row = this.db
-      .query<AiChatConfigRow, { $key: string }>(
-        'SELECT * FROM ai_chat_config WHERE key = $key',
-      )
-      .get({ $key: key });
+  private async getConfigValue(key: string, fallback: number): Promise<number> {
+    const [row] = await this.db
+      .select({ value: aiChatConfig.value })
+      .from(aiChatConfig)
+      .where(eq(aiChatConfig.key, key));
     return row ? row.value : fallback;
   }
 }

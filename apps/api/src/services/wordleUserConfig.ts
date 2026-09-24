@@ -1,12 +1,7 @@
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
-import type { Database } from 'bun:sqlite';
-
-interface WordleUserConfigRow {
-  invert_action_keys: number;
-  enable_sounds: number;
-  enable_space_key: number;
-  enable_arrow_keys: number;
-}
+import type { Db } from '@marquinhos/database/client';
+import { wordleUserConfig } from '@marquinhos/database/schema';
+import { eq } from 'drizzle-orm';
 
 const DEFAULT_WORDLE_USER_CONFIG: WordleUserConfig = {
   invertActionKeys: false,
@@ -16,55 +11,49 @@ const DEFAULT_WORDLE_USER_CONFIG: WordleUserConfig = {
 };
 
 export class WordleUserConfigService {
-  constructor(private readonly db: Database) {}
+  constructor(private readonly db: Db) {}
 
-  get(userId: string): WordleUserConfig {
-    const row = this.db
-      .query<WordleUserConfigRow, [string]>(
-        `SELECT invert_action_keys, enable_sounds,
-                enable_space_key, enable_arrow_keys
-         FROM wordle_user_config
-         WHERE user_id = ?`,
-      )
-      .get(userId);
+  async get(userId: string): Promise<WordleUserConfig> {
+    const [row] = await this.db
+      .select({
+        invert_action_keys: wordleUserConfig.invert_action_keys,
+        enable_sounds: wordleUserConfig.enable_sounds,
+        enable_space_key: wordleUserConfig.enable_space_key,
+        enable_arrow_keys: wordleUserConfig.enable_arrow_keys,
+      })
+      .from(wordleUserConfig)
+      .where(eq(wordleUserConfig.user_id, userId));
 
     if (!row) return { ...DEFAULT_WORDLE_USER_CONFIG };
 
     const baseConfig = {
-      invertActionKeys: row.invert_action_keys === 1,
-      enableSounds: row.enable_sounds === 1,
+      invertActionKeys: row.invert_action_keys,
+      enableSounds: row.enable_sounds,
     };
-    return row.enable_space_key === 1
+    return row.enable_space_key
       ? {
           ...baseConfig,
           enableSpaceKey: true,
-          enableArrowKeys: row.enable_arrow_keys === 1,
+          enableArrowKeys: row.enable_arrow_keys,
         }
       : { ...baseConfig, enableSpaceKey: false, enableArrowKeys: false };
   }
 
-  update(userId: string, config: WordleUserConfig): WordleUserConfig {
-    this.db
-      .query<unknown, [string, number, number, number, number, number]>(
-        `INSERT INTO wordle_user_config
-           (user_id, invert_action_keys, enable_sounds, enable_space_key,
-            enable_arrow_keys, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)
-         ON CONFLICT(user_id) DO UPDATE SET
-           invert_action_keys = excluded.invert_action_keys,
-           enable_sounds = excluded.enable_sounds,
-           enable_space_key = excluded.enable_space_key,
-           enable_arrow_keys = excluded.enable_arrow_keys,
-           updated_at = excluded.updated_at`,
-      )
-      .run(
-        userId,
-        Number(config.invertActionKeys),
-        Number(config.enableSounds),
-        Number(config.enableSpaceKey),
-        Number(config.enableArrowKeys),
-        Math.floor(Date.now() / 1000),
-      );
+  async update(
+    userId: string,
+    config: WordleUserConfig,
+  ): Promise<WordleUserConfig> {
+    const values = {
+      invert_action_keys: config.invertActionKeys,
+      enable_sounds: config.enableSounds,
+      enable_space_key: config.enableSpaceKey,
+      enable_arrow_keys: config.enableArrowKeys,
+      updated_at: Math.floor(Date.now() / 1000),
+    };
+    await this.db
+      .insert(wordleUserConfig)
+      .values({ user_id: userId, ...values })
+      .onConflictDoUpdate({ target: wordleUserConfig.user_id, set: values });
 
     return config;
   }

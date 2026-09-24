@@ -33,7 +33,7 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
             windowMs: GUESS_RATE_LIMIT_WINDOW_MS,
             max: GUESS_RATE_LIMIT_MAX,
           },
-          handle: (
+          handle: async (
             auth: WsSessionPayload,
             client: Client,
             payload: unknown,
@@ -46,7 +46,7 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
               });
               return;
             }
-            const result = service.submitGuess(
+            const result = await service.submitGuess(
               auth.userId,
               auth.guildId,
               parsed.data.guess,
@@ -68,7 +68,7 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
     };
   },
 
-  onJoin(service, auth, client, seat: SeatRole) {
+  async onJoin(service, auth, client, seat: SeatRole) {
     // maxPlayers: 64 makes this branch effectively unreachable via normal
     // simultaneous joins, but MatchRoom.switchGame() re-seats every
     // currently-connected client against the *new* adapter's maxPlayers
@@ -80,7 +80,7 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
     // shape a real player gets (with the same safe defaults used in the
     // player branch below) instead of leaving them without any ack at all.
     if (seat !== 'player') {
-      const daily = service.getDailyWord(auth.guildId);
+      const daily = await service.getDailyWord(auth.guildId);
       sendMessage<WordleServerMessage>(client, {
         type: 'init',
         payload: {
@@ -92,8 +92,8 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
       });
       return;
     }
-    const daily = service.getDailyWord(auth.guildId);
-    const userSession = service.getUserSession(auth.userId, auth.guildId);
+    const daily = await service.getDailyWord(auth.guildId);
+    const userSession = await service.getUserSession(auth.userId, auth.guildId);
     sendMessage<WordleServerMessage>(client, {
       type: 'init',
       payload: {

@@ -141,8 +141,9 @@ describe('wordle contracts', () => {
   });
 
   it('serves the word pool and the review queue', async () => {
-    const { db } = await import('@marquinhos/database/sqlite');
-    db.run('DELETE FROM wordlist_review');
+    const { db } = await import('@marquinhos/database/client');
+    const { sql } = await import('drizzle-orm');
+    await db.execute(sql`TRUNCATE wordlist_review RESTART IDENTITY`);
     const pool = await callContract(
       server.http,
       wordle.getWordlistPoolStats,

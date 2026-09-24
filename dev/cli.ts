@@ -190,7 +190,8 @@ async function main() {
   if (action === 'test') {
     const build = await compose(['build', 'tests']);
     return (
-      build.code || (await compose(['run', '--rm', '--no-deps', 'tests'])).code
+      // No --no-deps: the suites need the postgres service running.
+      build.code || (await compose(['run', '--rm', 'tests'])).code
     );
   }
   if (action !== 'up' && action !== 'register')
