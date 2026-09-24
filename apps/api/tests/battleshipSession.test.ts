@@ -219,7 +219,7 @@ describe('BattleshipSession', () => {
 
     expect(recorded).toEqual([
       {
-        sessionId: 'inst-1',
+        sessionId: expect.any(String),
         guildId: 'guild-1',
         gameType: 'battleship',
         results: [

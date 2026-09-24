@@ -8,6 +8,7 @@ import { TicTacToeEngine } from '@marquinhos/domain/games/tic-tac-toe/room/TicTa
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 
 interface TicTacToePlayer {
@@ -332,8 +333,7 @@ export class TicTacToeSession {
 
   private recordResult(winner: Player) {
     if (this.players.length < 2) return;
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'tic-tac-toe',
       results: this.players.map((player) => ({

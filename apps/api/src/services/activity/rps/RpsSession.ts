@@ -9,6 +9,7 @@ import {
 } from '@marquinhos/domain/games/rock-paper-scissors/room/RpsEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 
 const BOT_PICKS: RpsPick[] = ['rock', 'paper', 'scissors'];
@@ -184,8 +185,7 @@ export class RpsSession {
     });
 
     if (this.players.length === 2) {
-      this.gamification.recordGameResult({
-        sessionId: this.identity.instanceId,
+      recordMatchResult(this.gamification, {
         guildId: this.identity.guildId,
         gameType: 'rock-paper-scissors',
         results: this.players.map((p) => ({

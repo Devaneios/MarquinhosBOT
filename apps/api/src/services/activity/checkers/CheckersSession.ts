@@ -10,6 +10,7 @@ import { CheckersEngine } from '@marquinhos/domain/games/checkers/CheckersEngine
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 
 interface CheckersPlayer {
@@ -298,8 +299,7 @@ export class CheckersSession {
 
   private recordResult(winner: Color) {
     if (this.players.length < 2) return;
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'checkers',
       results: this.players.map((player) => ({

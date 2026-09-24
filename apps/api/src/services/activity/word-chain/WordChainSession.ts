@@ -14,6 +14,7 @@ import {
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { loadWordChainWords } from 'services/activity/word-chain/wordList';
 import { GamificationService } from 'services/gamification';
 
@@ -361,8 +362,7 @@ export class WordChainSession {
         };
       });
 
-      this.gamification.recordGameResult({
-        sessionId: this.identity.instanceId,
+      recordMatchResult(this.gamification, {
         guildId: this.identity.guildId,
         gameType: 'word-chain',
         durationMs,

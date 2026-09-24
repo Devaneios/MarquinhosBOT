@@ -12,6 +12,7 @@ import { SeededRng } from '@marquinhos/domain/shared/random/SeededRng';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 
 interface TowerPlayer {
@@ -341,8 +342,7 @@ export class TowerSession {
     // rank against — matches the fleet-wide convention of skipping
     // gamification recording in solo/bot mode.
     if (this.players.length < 2 || this.botUserId) return;
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'tower-unstable',
       results: this.players.map((player) => ({

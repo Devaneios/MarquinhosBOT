@@ -255,7 +255,7 @@ describe('PongSession', () => {
 
     expect(recorded).toEqual([
       {
-        sessionId: 'inst-1',
+        sessionId: expect.any(String),
         guildId: 'guild-1',
         gameType: 'pong',
         results: [

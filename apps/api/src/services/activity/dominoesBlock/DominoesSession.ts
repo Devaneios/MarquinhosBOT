@@ -14,6 +14,7 @@ import {
 } from '@marquinhos/domain/games/dominoes-block/DominoesEngine';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 import { logger } from 'utils/logger';
 
@@ -339,8 +340,7 @@ export class DominoesSession {
     if (this.botUserId) return;
     const state = this.engine.getState();
     const winners = new Set(state.winners ?? []);
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'dominoes-block',
       results: this.players.map((player) => ({

@@ -7,6 +7,7 @@ import type {
 import { TriviaQuizEngine } from '@marquinhos/domain/games/trivia-quiz/TriviaQuizEngine';
 import type { TriviaQuizState } from '@marquinhos/domain/games/trivia-quiz/types';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { getQuestions } from 'services/activity/trivia-quiz/questions';
 import { GamificationService } from 'services/gamification';
 
@@ -151,8 +152,7 @@ export class TriviaQuizSession {
       position: index + 1,
     }));
 
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'trivia-quiz',
       results,

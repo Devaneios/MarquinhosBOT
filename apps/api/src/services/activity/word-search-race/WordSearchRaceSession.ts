@@ -7,6 +7,7 @@ import type {
 } from '@marquinhos/contracts/activity/games/wordSearchRace';
 import { WordSearchRaceEngine } from '@marquinhos/domain/games/word-search-race/WordSearchRaceEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 
 interface WordSearchRacePlayer {
@@ -164,8 +165,7 @@ export class WordSearchRaceSession {
       .map((p) => ({ userId: p.userId, score: scores[p.userId] ?? 0 }))
       .sort((a, b) => b.score - a.score);
 
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'word-search-race',
       results: ranked.map((entry, index) => ({

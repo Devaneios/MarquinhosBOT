@@ -8,6 +8,7 @@ import { ConnectFourBot } from '@marquinhos/domain/games/connect-four/ConnectFou
 import { ConnectFourEngine } from '@marquinhos/domain/games/connect-four/ConnectFourEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 
 interface ConnectFourPlayer {
@@ -296,8 +297,7 @@ export class ConnectFourSession {
 
   private recordResult(winner: Disc) {
     if (this.players.length < 2) return;
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'connect-four',
       results: this.players.map((player) => ({

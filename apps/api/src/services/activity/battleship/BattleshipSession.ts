@@ -12,6 +12,7 @@ import {
 } from '@marquinhos/domain/games/battleship/masking';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 
 export interface BattleshipSessionIdentity {
@@ -353,8 +354,7 @@ export class BattleshipSession {
 
   private recordResult(winner: BattleshipSide) {
     if (this.players.length < 2) return;
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'battleship',
       results: this.players.map((player) => ({

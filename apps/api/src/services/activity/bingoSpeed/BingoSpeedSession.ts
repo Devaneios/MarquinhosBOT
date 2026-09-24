@@ -8,6 +8,7 @@ import type {
 import { BingoSpeedEngine } from '@marquinhos/domain/games/bingo-speed/BingoSpeedEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 
 interface BingoPlayer {
@@ -311,8 +312,7 @@ export class BingoSpeedSession {
     const players = Array.from(this.players.values());
     if (players.length < 2) return;
 
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'bingo-speed',
       results: players.map((player) => ({
