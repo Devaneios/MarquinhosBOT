@@ -1,6 +1,6 @@
+import type { TowerState } from '@marquinhos/contracts/activity/games/towerUnstable';
 import { act, render } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
-import type { TowerState } from '../types';
 
 interface FakeGraphics {
   handlers: Record<string, () => void>;

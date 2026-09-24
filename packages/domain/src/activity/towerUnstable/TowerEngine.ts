@@ -1,3 +1,7 @@
+import type {
+  TowerLastPull,
+  TowerState,
+} from '@marquinhos/contracts/activity/games/towerUnstable';
 import { SeededRng } from '@marquinhos/domain/activity/cards/core/rng';
 
 export const TOWER_LEVELS = 18;
@@ -17,32 +21,6 @@ const PROTECTED_TOP_LEVELS = 2;
 const BASE_INSTABILITY_WEIGHT = 0.4;
 const LEVEL_INSTABILITY_WEIGHT = 0.6;
 const MAX_INSTABILITY = 0.97;
-
-export interface TowerLevelState {
-  present: boolean[];
-}
-
-export interface TowerLastPull {
-  level: number;
-  position: number;
-  instability: number;
-  toppled: boolean;
-  puller: string;
-}
-
-export interface TowerState {
-  levels: TowerLevelState[];
-  pendingBlocks: number;
-  totalRemoved: number;
-  totalBlocksOriginal: number;
-  eligibleLevelCount: number;
-  currentPlayer: string;
-  turnOrder: string[];
-  eliminated: string[];
-  status: 'playing' | 'ended';
-  winner: string | null;
-  lastPull: TowerLastPull | null;
-}
 
 export interface PullResult {
   success: boolean;

@@ -1,4 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import {
+  serverMessageSchema,
+  type TowerClientMessage,
+} from '@marquinhos/contracts/activity/games/towerUnstable';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   GameHeader,
@@ -8,19 +13,10 @@ import {
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
 import {
-  parsePayload,
-  restartStatusPayloadSchema,
-} from '../../shared/colyseusConnection';
-import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import {
-  actionRejectedPayloadSchema,
-  initPayloadSchema,
-  statePayloadSchema,
-  type TowerState,
-} from '../types';
+import { applyTowerMessage, initialTowerView } from '../towerMessages';
 import { TowerBoardCanvas } from './TowerBoardCanvas';
 
 interface Props {
@@ -31,18 +27,15 @@ interface Props {
 
 export function TowerCanvas({ session, userId, onMainMenu }: Props) {
   const { t } = useTranslation(['tower-unstable', 'common']);
-  const messageHandlerRef = useRef<(message: ActivityMessage) => void>(
-    () => {},
-  );
-  const [state, setState] = useState<TowerState | null>(null);
-  const [joined, setJoined] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [opponentDisconnected, setOpponentDisconnected] = useState(false);
-  const [restartStatus, setRestartStatus] = useState<{
-    votes: number;
-    required: number;
-  } | null>(null);
-  const [requested, setRequested] = useState(false);
+  const [view, setView] = useState(initialTowerView);
+  const {
+    state,
+    joined,
+    error,
+    opponentDisconnected,
+    restartStatus,
+    restartRequested,
+  } = view;
 
   const sendLeaveOnDisconnect = useRef(
     (room: { send: (t: string) => void }) => {
@@ -54,52 +47,12 @@ export function TowerCanvas({ session, userId, onMainMenu }: Props) {
     'tower-unstable',
     session,
     colyseusUrl(),
-    (message) => messageHandlerRef.current(message),
+    (raw: ActivityMessage) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (message) setView((current) => applyTowerMessage(current, message));
+    },
     sendLeaveOnDisconnect,
   );
-
-  useEffect(() => {
-    function applyState(next: TowerState) {
-      setState(next);
-      setOpponentDisconnected(false);
-      if (next.status === 'playing') {
-        setRestartStatus(null);
-        setRequested(false);
-      }
-    }
-
-    messageHandlerRef.current = (message) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(initPayloadSchema, message);
-        if (!payload) return;
-        setJoined(payload.joined);
-        if (payload.state) applyState(payload.state);
-      } else if (
-        message.type === 'game_ready' ||
-        message.type === 'state_update'
-      ) {
-        const payload = parsePayload(statePayloadSchema, message);
-        if (payload) applyState(payload.state);
-      } else if (message.type === 'action_rejected') {
-        // towerUnstableAdapter.ts (server) sends ACTION_REJECTED
-        // ('action_rejected') for a rejected pull, not 'pull_error' — same
-        // bug class found in Checkers/Tic-Tac-Toe, fixed here too.
-        const payload = parsePayload(actionRejectedPayloadSchema, message);
-        if (payload) setError(payload.error);
-      } else if (message.type === 'restart_status') {
-        const payload = parsePayload(restartStatusPayloadSchema, message);
-        if (payload) setRestartStatus(payload);
-      } else if (message.type === 'opponent_disconnected') {
-        setOpponentDisconnected(true);
-      } else if (message.type === 'opponent_reconnected') {
-        setOpponentDisconnected(false);
-      }
-    };
-
-    return () => {
-      messageHandlerRef.current = () => {};
-    };
-  }, []);
 
   const isMyTurn =
     state?.status === 'playing' && state.currentPlayer === userId;
@@ -125,7 +78,10 @@ export function TowerCanvas({ session, userId, onMainMenu }: Props) {
             state={state}
             userId={userId}
             onPull={(level, position) =>
-              roomSend({ type: 'pull', payload: { level, position } })
+              roomSend({
+                type: 'pull',
+                payload: { level, position },
+              } satisfies TowerClientMessage)
             }
           />
           {!state && (
@@ -177,13 +133,16 @@ export function TowerCanvas({ session, userId, onMainMenu }: Props) {
               <button
                 type="button"
                 className={menuButtonPrimary}
-                disabled={requested}
+                disabled={restartRequested}
                 onClick={() => {
-                  roomSend({ type: 'restart' });
-                  setRequested(true);
+                  roomSend({ type: 'restart' } satisfies TowerClientMessage);
+                  setView((current) => ({
+                    ...current,
+                    restartRequested: true,
+                  }));
                 }}
               >
-                {requested
+                {restartRequested
                   ? t('tower-unstable:waitingRematch', {
                       votes: restartStatus?.votes ?? 1,
                       required: restartStatus?.required ?? 2,

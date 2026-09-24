@@ -1,12 +1,12 @@
+import {
+  serverMessageSchema,
+  type TowerClientMessage,
+} from '@marquinhos/contracts/activity/games/towerUnstable';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
-import { parsePayload } from '../../shared/colyseusConnection';
-import {
-  actionRejectedPayloadSchema,
-  statePayloadSchema,
-  type TowerState,
-} from '../types';
+import { applyTowerMessage, initialTowerView } from '../towerMessages';
 import { TowerBoardCanvas } from './TowerBoardCanvas';
 
 // Renders Tower Unstable inside a multiplayer Room view — driven by
@@ -15,19 +15,14 @@ import { TowerBoardCanvas } from './TowerBoardCanvas';
 export function TowerRoomBoard() {
   const ctx = useRoomConnectionContext();
   const { t } = useTranslation(['tower-unstable', 'common']);
-  const [state, setState] = useState<TowerState | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState(initialTowerView);
+  const { state, error } = view;
 
   useEffect(() => {
     if (!ctx) return;
-    return ctx.subscribe((message) => {
-      if (message.type === 'game_ready' || message.type === 'state_update') {
-        const payload = parsePayload(statePayloadSchema, message);
-        if (payload) setState(payload.state);
-      } else if (message.type === 'action_rejected') {
-        const payload = parsePayload(actionRejectedPayloadSchema, message);
-        if (payload) setError(payload.error);
-      }
+    return ctx.subscribe((raw) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (message) setView((current) => applyTowerMessage(current, message));
     });
   }, [ctx]);
 
@@ -41,7 +36,10 @@ export function TowerRoomBoard() {
           userId={userId}
           role={ctx?.role ?? null}
           onPull={(level, position) =>
-            ctx?.send({ type: 'pull', payload: { level, position } })
+            ctx?.send({
+              type: 'pull',
+              payload: { level, position },
+            } satisfies TowerClientMessage)
           }
         />
         {!state && (

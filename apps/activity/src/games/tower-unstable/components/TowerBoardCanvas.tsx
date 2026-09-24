@@ -1,6 +1,6 @@
+import type { TowerState } from '@marquinhos/contracts/activity/games/towerUnstable';
 import { Application, Graphics } from 'pixi.js';
 import { useEffect, useRef } from 'react';
-import type { TowerState } from '../types';
 
 const BLOCK_WIDTH = 46;
 const BLOCK_HEIGHT = 16;

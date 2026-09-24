@@ -1,4 +1,4 @@
-import type { TowerState } from '@marquinhos/domain/activity/towerUnstable/TowerEngine';
+import type { TowerState } from '@marquinhos/contracts/activity/games/towerUnstable';
 
 // Sentinel seat id for the bot — never a real Discord snowflake, so it
 // can't collide with an actual player.

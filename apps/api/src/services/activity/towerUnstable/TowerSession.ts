@@ -1,13 +1,14 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import type {
+  TowerServerMessage,
+  TowerState,
+} from '@marquinhos/contracts/activity/games/towerUnstable';
 import { SeededRng } from '@marquinhos/domain/activity/cards/core/rng';
 import {
   TOWER_BOT_USER_ID,
   TowerBot,
 } from '@marquinhos/domain/activity/towerUnstable/TowerBot';
-import {
-  TowerEngine,
-  type TowerState,
-} from '@marquinhos/domain/activity/towerUnstable/TowerEngine';
+import { TowerEngine } from '@marquinhos/domain/activity/towerUnstable/TowerEngine';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
@@ -59,7 +60,7 @@ export class TowerSession {
 
   constructor(
     private identity: TowerSessionIdentity,
-    private broadcaster: ActivityBroadcaster,
+    private broadcaster: ActivityBroadcaster<TowerServerMessage>,
     private gamification: GamificationService = new GamificationService(),
     options: TowerSessionOptions = {},
   ) {

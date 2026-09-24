@@ -1,7 +1,11 @@
+import {
+  pullPayloadSchema,
+  type TowerServerMessage,
+} from '@marquinhos/contracts/activity/games/towerUnstable';
 import { ACTION_REJECTED } from '@marquinhos/contracts/activity/protocol';
 import { TowerSession } from 'services/activity/towerUnstable/TowerSession';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { broadcastMessage, sendMessage } from '../sendMessage';
 
 const PULL_RATE_LIMIT_WINDOW_MS = 1000;
 const PULL_RATE_LIMIT_MAX = 5;
@@ -19,10 +23,6 @@ const PULL_RATE_LIMIT_MAX = 5;
 // 0)` throws "undefined is not an object (evaluating
 // 'this.levels[level].blocks')"). Reject anything that isn't a genuine
 // integer before it ever reaches `session.handlePull`.
-const pullPayloadSchema = z.object({
-  level: z.number().int(),
-  position: z.number().int(),
-});
 
 export const towerUnstableAdapter: GameRoomAdapter<TowerSession> = {
   maxPlayers: 2,
@@ -56,8 +56,9 @@ export const towerUnstableAdapter: GameRoomAdapter<TowerSession> = {
           handle: (auth, client, payload: unknown) => {
             const parsed = pullPayloadSchema.safeParse(payload);
             if (!parsed.success) {
-              client.send(ACTION_REJECTED, {
-                error: 'Invalid pull coordinates',
+              sendMessage<TowerServerMessage>(client, {
+                type: ACTION_REJECTED,
+                payload: { error: 'Invalid pull coordinates' },
               });
               return;
             }
@@ -67,7 +68,10 @@ export const towerUnstableAdapter: GameRoomAdapter<TowerSession> = {
               parsed.data.position,
             );
             if (!result.ok)
-              client.send(ACTION_REJECTED, { error: result.error });
+              sendMessage<TowerServerMessage>(client, {
+                type: ACTION_REJECTED,
+                payload: { error: result.error },
+              });
           },
         },
         restart: { handle: (auth) => session.requestRestart(auth.userId) },
@@ -90,9 +94,16 @@ export const towerUnstableAdapter: GameRoomAdapter<TowerSession> = {
     // engine — safe to call unconditionally.
     const joined = session.addPlayer(auth.userId, client);
     if (seat === 'player' && auth.mode === 'single') session.enableBot();
-    client.send('init', { joined, state: session.getPublicState() });
-    if (session.playerCount === 2) {
-      ctx.broadcast('game_ready', { state: session.getPublicState() });
+    const state = session.getPublicState();
+    sendMessage<TowerServerMessage>(client, {
+      type: 'init',
+      payload: { joined, state },
+    });
+    if (session.playerCount === 2 && state) {
+      broadcastMessage<TowerServerMessage>(ctx, {
+        type: 'game_ready',
+        payload: { state },
+      });
     }
   },
   onLeave(session, auth, client) {
