@@ -38,24 +38,37 @@ export function PlacementPanel({
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <div className="text-sm uppercase tracking-[0.2em] text-marquinhos-text-dim">
-        {t('placeFleet')}
+    <div className="flex w-full flex-col gap-4 p-4 sm:w-72 sm:shrink-0">
+      <div className="flex items-baseline justify-between gap-3 text-sm uppercase tracking-[0.2em] text-marquinhos-text-dim">
+        <span>{t('placeFleet')}</span>
+        <span className="tabular-nums text-marquinhos-accent">
+          {placedTypes.size}/{SHIP_TYPES.length}
+        </span>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-2">
         {SHIP_TYPES.map((type) => (
           <button
             key={type}
             type="button"
             disabled={placedTypes.has(type)}
             onClick={() => onSelectType(type)}
-            className={`notch-4 border px-3 py-2 text-xs uppercase tracking-[0.14em] transition disabled:opacity-40 ${
+            className={`notch-4 flex items-center justify-between gap-3 border px-3 py-2 text-xs uppercase tracking-[0.14em] transition disabled:opacity-40 ${
               selectedType === type
                 ? 'border-marquinhos-accent bg-marquinhos-accent/20 text-marquinhos-accent'
-                : 'border-marquinhos-border bg-marquinhos-panel text-marquinhos-text-dim'
+                : 'border-marquinhos-border bg-marquinhos-panel text-marquinhos-text-dim hover:border-marquinhos-border-hover'
             }`}
           >
-            {t(shipLabelKey[type])} ({SHIP_SIZES[type]})
+            <span className={placedTypes.has(type) ? 'line-through' : ''}>
+              {t(shipLabelKey[type])}
+            </span>
+            <span
+              className="flex gap-0.5"
+              aria-label={String(SHIP_SIZES[type])}
+            >
+              {Array.from({ length: SHIP_SIZES[type] }, (_, i) => (
+                <span key={i} className="h-2.5 w-2.5 bg-current opacity-80" />
+              ))}
+            </span>
           </button>
         ))}
       </div>
