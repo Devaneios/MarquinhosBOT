@@ -3,13 +3,13 @@ import {
   parseMessage,
 } from '@marquinhos/contracts/activity/protocol';
 import {
+  isQueueEligible,
   roomServerMessageSchema,
   type RoomClientMessage,
 } from '@marquinhos/contracts/activity/room';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GAME_REGISTRY } from '../../games/registry';
-import { isQueueEligible } from '../../games/shared/queueEligibility';
 import { useRoomConnectionContext } from '../../games/shared/RoomConnectionProvider';
 import { getParticipantDisplayNames } from '../../lib/discordParticipants';
 

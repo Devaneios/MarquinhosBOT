@@ -1,4 +1,5 @@
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
+import { isQueueEligible } from '@marquinhos/contracts/activity/room';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DiscordIdentity } from '../../discordAuth.ts';
@@ -9,7 +10,6 @@ import {
   getAvailableRooms,
   type RoomListing,
 } from '../../games/shared/activitySession';
-import { isQueueEligible } from '../../games/shared/queueEligibility';
 import { getParticipantDisplayNames } from '../../lib/discordParticipants';
 import { GameEmblem } from './GameEmblem';
 import { MenuAction } from './MenuAction';
