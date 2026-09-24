@@ -9,7 +9,6 @@ export function fakeRoom() {
   const reconnectHandlers: Array<() => void> = [];
   const leaveHandlers: Array<(code: number, reason?: string) => void> = [];
   const errorHandlers: Array<(code: number, message?: string) => void> = [];
-  const stateChangeHandlers: Array<(state: unknown) => void> = [];
   return {
     roomId: 'room-1',
     onMessage: mock(
@@ -30,13 +29,6 @@ export function fakeRoom() {
     onError: mock((cb: (code: number, message?: string) => void) => {
       errorHandlers.push(cb);
     }),
-    onStateChange: mock((cb: (state: unknown) => void) => {
-      stateChangeHandlers.push(cb);
-      return () => {
-        const i = stateChangeHandlers.indexOf(cb);
-        if (i >= 0) stateChangeHandlers.splice(i, 1);
-      };
-    }),
     send: mock((_type: string, _payload?: unknown) => {}),
     leave: mock(async (_consented?: boolean) => 0),
     emit(type: string, payload: unknown) {
@@ -53,9 +45,6 @@ export function fakeRoom() {
     },
     emitError(code = 4000, message?: string) {
       errorHandlers.forEach((h) => h(code, message));
-    },
-    emitStateChange(state: unknown) {
-      stateChangeHandlers.forEach((h) => h(state));
     },
   };
 }

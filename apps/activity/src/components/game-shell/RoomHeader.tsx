@@ -1,8 +1,14 @@
+import {
+  ACTION_REJECTED,
+  parseMessage,
+} from '@marquinhos/contracts/activity/protocol';
+import {
+  roomServerMessageSchema,
+  type RoomClientMessage,
+} from '@marquinhos/contracts/activity/room';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { z } from 'zod';
 import { GAME_REGISTRY } from '../../games/registry';
-import { parsePayload } from '../../games/shared/colyseusConnection';
 import { isQueueEligible } from '../../games/shared/queueEligibility';
 import { useRoomConnectionContext } from '../../games/shared/RoomConnectionProvider';
 import { getParticipantDisplayNames } from '../../lib/discordParticipants';
@@ -10,10 +16,6 @@ import { getParticipantDisplayNames } from '../../lib/discordParticipants';
 export interface RoomHeaderProps {
   onLeave: () => void;
 }
-
-const actionRejectedPayloadSchema = z
-  .object({ error: z.string().optional() })
-  .optional();
 
 export function RoomHeader({ onLeave }: RoomHeaderProps) {
   const { t } = useTranslation(['common', 'games', 'rooms']);
@@ -29,9 +31,13 @@ export function RoomHeader({ onLeave }: RoomHeaderProps) {
   useEffect(() => {
     if (!ctx) return;
     return ctx.subscribe((message) => {
-      if (message.type !== 'action_rejected') return;
-      const payload = parsePayload(actionRejectedPayloadSchema, message);
-      setRejection(payload?.error ?? t('rooms:actionRejected'));
+      if (message.type !== ACTION_REJECTED) return;
+      const parsed = parseMessage(roomServerMessageSchema, message);
+      setRejection(
+        parsed?.type === ACTION_REJECTED
+          ? parsed.payload.error
+          : t('rooms:actionRejected'),
+      );
       const timer = setTimeout(() => setRejection(null), 3000);
       return () => clearTimeout(timer);
     });
@@ -45,8 +51,8 @@ export function RoomHeader({ onLeave }: RoomHeaderProps) {
     roomState?.members.some((m) => m.role === 'queued') ?? false;
   const matchInProgress = roomState?.matchInProgress ?? false;
 
-  function send(type: string, payload?: unknown) {
-    ctx?.send({ type, payload });
+  function send(message: RoomClientMessage) {
+    ctx?.send(message);
   }
 
   return (
@@ -64,7 +70,10 @@ export function RoomHeader({ onLeave }: RoomHeaderProps) {
                 type="checkbox"
                 checked={roomState?.queueEnabled ?? false}
                 onChange={(event) =>
-                  send('toggle_queue', { enabled: event.target.checked })
+                  send({
+                    type: 'toggle_queue',
+                    payload: { enabled: event.target.checked },
+                  })
                 }
               />
               {t('rooms:enableQueue')}
@@ -84,7 +93,7 @@ export function RoomHeader({ onLeave }: RoomHeaderProps) {
             <button
               type="button"
               className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-4 py-2 text-xs uppercase tracking-[0.2em] text-marquinhos-text-dim transition"
-              onClick={() => send('rotate_seat')}
+              onClick={() => send({ type: 'rotate_seat' })}
             >
               {t('rooms:giveUpSeat')}
             </button>
@@ -107,7 +116,7 @@ export function RoomHeader({ onLeave }: RoomHeaderProps) {
               type="button"
               className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-3 py-1.5 text-xs text-marquinhos-text transition hover:border-marquinhos-border-hover"
               onClick={() => {
-                send('switch_game', { game: g.id });
+                send({ type: 'switch_game', payload: { game: g.id } });
                 setPickerOpen(false);
               }}
             >

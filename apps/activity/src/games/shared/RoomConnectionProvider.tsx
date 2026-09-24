@@ -1,8 +1,12 @@
 import type { Room } from '@colyseus/sdk';
+import type { GameId } from '@marquinhos/contracts/activity/gameId';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import {
-  gameIdSchema,
-  type GameId,
-} from '@marquinhos/contracts/activity/gameId';
+  ROOM_STATE,
+  roomServerMessageSchema,
+  type RoomMemberRole,
+  type RoomState,
+} from '@marquinhos/contracts/activity/room';
 import {
   createContext,
   useContext,
@@ -11,7 +15,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { z } from 'zod';
 import type { DiscordIdentity } from '../../discordAuth.ts';
 import { colyseusUrl } from '../../lib/apiBase';
 import { devwarn } from '../../lib/devlog';
@@ -23,28 +26,11 @@ import {
   type ColyseusConnectionState,
 } from './colyseusConnection';
 
-const roomMemberSchema = z.object({
-  userId: z.string(),
-  role: z.enum(['player', 'spectator', 'queued']),
-});
-
-export type RoomMember = z.infer<typeof roomMemberSchema>;
-
-const roomStateSchema = z.object({
-  game: gameIdSchema,
-  hostUserId: z.string(),
-  queueEnabled: z.boolean(),
-  matchInProgress: z.boolean(),
-  members: z.array(roomMemberSchema),
-});
-
-export type RoomState = z.infer<typeof roomStateSchema>;
-
 interface RoomConnectionContextValue {
   send: (message: ActivityMessage) => void;
   connectionState: ColyseusConnectionState;
   roomState: RoomState | null;
-  role: RoomMember['role'] | null;
+  role: RoomMemberRole | null;
   currentUserId: string;
   isHost: boolean;
   subscribe: (onMessage: (message: ActivityMessage) => void) => () => void;
@@ -84,17 +70,18 @@ export function RoomConnectionProvider({
     setConnectionState('connecting');
 
     connectToRoom(game, session, colyseusUrl(), (message) => {
+      if (message.type === ROOM_STATE) {
+        const parsed = parseMessage(roomServerMessageSchema, message);
+        if (parsed?.type === ROOM_STATE) setRoomState(parsed.payload);
+        else devwarn('[room] ignoring malformed room state', message.payload);
+        return;
+      }
       listenersRef.current.forEach((listener) => listener(message));
     })
       .then((room) => {
         if (cancelled) return;
         roomRef.current = room;
         setConnectionState('connected');
-        room.onStateChange((state: unknown) => {
-          const parsed = roomStateSchema.safeParse(state);
-          if (parsed.success) setRoomState(parsed.data);
-          else devwarn('[room] ignoring malformed room state', parsed.error);
-        });
         wireRoomLifecycle(room, game, (state) => {
           if (!cancelled) setConnectionState(state);
         });

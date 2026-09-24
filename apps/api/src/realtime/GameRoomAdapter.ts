@@ -1,9 +1,10 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import type { BotDifficulty } from '@marquinhos/contracts/activity/pong/types';
+import type { RoomMemberRole } from '@marquinhos/contracts/activity/room';
 import type { Client } from 'colyseus';
 import type { WsSessionPayload } from 'services/activity/wsSessionToken';
 
-export type SeatRole = 'player' | 'spectator' | 'queued';
+export type SeatRole = RoomMemberRole;
 
 // Everything an adapter needs to talk to the outside world, backed by the
 // live MatchRoom instance. One shape covers all three broadcaster styles

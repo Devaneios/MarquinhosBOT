@@ -121,9 +121,11 @@ describe('MatchRoom · wordle', () => {
     const guess = pickWordOfLength(init.wordLength);
 
     client.send('guess', { guess });
-    const [type, payload] = await client.waitForNextMessage();
+    const payload = await nextMessage<{
+      feedback: unknown[];
+      attempts: number;
+    }>(client, 'guess_result');
 
-    expect(type).toBe('guess_result');
     expect(payload.feedback.length).toBe(init.wordLength);
     expect(payload.attempts).toBe(1);
   });
@@ -143,9 +145,11 @@ describe('MatchRoom · wordle', () => {
     }>(client, 'init');
 
     client.send('guess', { guess: 'a'.repeat(init.wordLength + 2) });
-    const [type, payload] = await client.waitForNextMessage();
+    const payload = await nextMessage<{ message: unknown }>(
+      client,
+      'guess_error',
+    );
 
-    expect(type).toBe('guess_error');
     expect(typeof payload.message).toBe('string');
   });
 

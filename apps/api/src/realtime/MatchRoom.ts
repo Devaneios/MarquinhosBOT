@@ -4,6 +4,13 @@ import {
   type GameId,
 } from '@marquinhos/contracts/activity/gameId';
 import { ACTION_REJECTED } from '@marquinhos/contracts/activity/protocol';
+import {
+  ROOM_STATE,
+  switchGamePayloadSchema,
+  toggleQueuePayloadSchema,
+  type RoomServerMessage,
+  type RoomState,
+} from '@marquinhos/contracts/activity/room';
 import { Room } from 'colyseus';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { roomKey } from 'services/activity/roomKey';
@@ -19,6 +26,7 @@ import type {
   GameRoomAdapter,
   SeatRole,
 } from './GameRoomAdapter';
+import { broadcastMessage, sendMessage } from './sendMessage';
 
 interface Member {
   userId: string;
@@ -85,6 +93,7 @@ export class MatchRoom extends Room<{
   // available synchronously the moment onCreate runs, and again later from
   // `loadSession()`/`syncMetadata()` when `switch_game` calls them a second
   // time without a fresh `options` object.
+  private publishedRoomState = '';
   private roomKeyValue = '';
   private roomIdValue = '';
   private game!: GameId;
@@ -188,6 +197,34 @@ export class MatchRoom extends Room<{
       queueEnabled: this.queueEnabled,
       mode: this.mode,
     });
+    this.publishRoomState();
+  }
+
+  private roomState(): RoomState {
+    return {
+      game: this.game,
+      hostUserId: this.hostUserId,
+      queueEnabled: this.queueEnabled,
+      matchInProgress: this.isMatchInProgress(),
+      members: this.members.map(({ userId, role }) => ({ userId, role })),
+    };
+  }
+
+  private publishRoomState(): boolean {
+    const state = this.roomState();
+    const serialized = JSON.stringify(state);
+    if (serialized === this.publishedRoomState) return false;
+    this.publishedRoomState = serialized;
+    broadcastMessage<RoomServerMessage>(this, {
+      type: ROOM_STATE,
+      payload: state,
+    });
+    return true;
+  }
+
+  private afterOutbound() {
+    this.maybeRotateAfterMatchEnd();
+    this.publishRoomState();
   }
 
   private loadSession() {
@@ -216,18 +253,18 @@ export class MatchRoom extends Room<{
       // `recordResult()`), corrupting whose result gets recorded.
       broadcast: (type: string, payload?: unknown) => {
         this.broadcast(type, payload);
-        Promise.resolve().then(() => this.maybeRotateAfterMatchEnd());
+        Promise.resolve().then(() => this.afterOutbound());
       },
       broadcastBinary: (type: string, data: Uint8Array) => {
         this.broadcastBytes(type, data, {});
-        Promise.resolve().then(() => this.maybeRotateAfterMatchEnd());
+        Promise.resolve().then(() => this.afterOutbound());
       },
       sendToPlayer: (userId: string, type: string, payload?: unknown) => {
         for (const client of this.clients) {
           if (client.auth?.userId !== userId) continue;
           client.send(type, payload);
         }
-        Promise.resolve().then(() => this.maybeRotateAfterMatchEnd());
+        Promise.resolve().then(() => this.afterOutbound());
       },
       onSessionEnded: () => this.disconnect(),
     };
@@ -278,47 +315,47 @@ export class MatchRoom extends Room<{
   // and re-registered by switch_game — they route to the adapter indirectly
   // through `this.adapter`/`this.session`, which switch_game reassigns).
   private registerRoomLevelMessages() {
-    this.onMessage(
-      'switch_game',
-      (client: AuthedClient, payload: { game?: GameId }) => {
-        const auth = requireAuth(client);
-        if (auth.userId !== this.hostUserId) {
-          client.send(ACTION_REJECTED, {
-            error: 'Only the host can switch games',
-          });
-          return;
-        }
-        if (this.isMatchInProgress()) {
-          client.send(ACTION_REJECTED, {
-            error: 'Cannot switch games mid-match',
-          });
-          return;
-        }
-        const game = payload?.game;
-        if (!game || !SWITCHABLE_GAMES.has(game)) {
-          client.send(ACTION_REJECTED, {
-            error: 'Unknown or unswitchable game',
-          });
-          return;
-        }
-        this.switchGame(game);
-      },
-    );
+    this.onMessage('switch_game', (client: AuthedClient, payload: unknown) => {
+      const auth = requireAuth(client);
+      if (auth.userId !== this.hostUserId) {
+        client.send(ACTION_REJECTED, {
+          error: 'Only the host can switch games',
+        });
+        return;
+      }
+      if (this.isMatchInProgress()) {
+        client.send(ACTION_REJECTED, {
+          error: 'Cannot switch games mid-match',
+        });
+        return;
+      }
+      const parsed = switchGamePayloadSchema.safeParse(payload);
+      const game = parsed.success ? parsed.data.game : null;
+      if (!game || !SWITCHABLE_GAMES.has(game)) {
+        client.send(ACTION_REJECTED, {
+          error: 'Unknown or unswitchable game',
+        });
+        return;
+      }
+      this.switchGame(game);
+    });
 
-    this.onMessage(
-      'toggle_queue',
-      (client: AuthedClient, payload: { enabled?: boolean }) => {
-        const auth = requireAuth(client);
-        if (auth.userId !== this.hostUserId) {
-          client.send(ACTION_REJECTED, {
-            error: 'Only the host can toggle the queue',
-          });
-          return;
-        }
-        this.queueEnabled = Boolean(payload?.enabled);
-        this.syncMetadata();
-      },
-    );
+    this.onMessage('toggle_queue', (client: AuthedClient, payload: unknown) => {
+      const auth = requireAuth(client);
+      if (auth.userId !== this.hostUserId) {
+        client.send(ACTION_REJECTED, {
+          error: 'Only the host can toggle the queue',
+        });
+        return;
+      }
+      const parsed = toggleQueuePayloadSchema.safeParse(payload);
+      if (!parsed.success) {
+        client.send(ACTION_REJECTED, { error: 'Invalid queue toggle' });
+        return;
+      }
+      this.queueEnabled = parsed.data.enabled;
+      this.syncMetadata();
+    });
 
     this.onMessage('rotate_seat', (client: AuthedClient) => {
       const auth = requireAuth(client);
@@ -453,7 +490,13 @@ export class MatchRoom extends Room<{
   ) {
     if (this.hostUserId === null) this.hostUserId = auth.userId;
     this.seatClient(client, auth);
+    const published = this.publishedRoomState;
     this.syncMetadata();
+    if (this.publishedRoomState === published)
+      sendMessage<RoomServerMessage>(client, {
+        type: ROOM_STATE,
+        payload: this.roomState(),
+      });
   }
 
   override onLeave(client: AuthedClient) {

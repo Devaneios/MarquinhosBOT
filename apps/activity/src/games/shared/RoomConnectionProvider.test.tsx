@@ -74,7 +74,7 @@ describe('RoomConnectionProvider + useColyseusRoom', () => {
     expect(joinOrCreate).toHaveBeenCalledTimes(1);
 
     act(() => {
-      room.emitStateChange({
+      room.emit('room_state', {
         game: 'tic-tac-toe',
         hostUserId: 'user-a',
         queueEnabled: false,

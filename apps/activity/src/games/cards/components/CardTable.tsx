@@ -8,7 +8,10 @@ import {
   type ScoreboardEntry,
   type TableView,
 } from '@marquinhos/contracts/activity/games/cards';
-import { parseMessage } from '@marquinhos/contracts/activity/protocol';
+import {
+  parseMessage,
+  type RestartStatus,
+} from '@marquinhos/contracts/activity/protocol';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -22,7 +25,6 @@ import {
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
-import type { RestartStatus } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,

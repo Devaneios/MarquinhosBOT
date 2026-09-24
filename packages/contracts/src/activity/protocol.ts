@@ -29,5 +29,9 @@ export const restartStatusMessageSchema = z.object({
   payload: z.object({ votes: z.number(), required: z.number() }),
 });
 
+export type RestartStatus = z.output<
+  typeof restartStatusMessageSchema
+>['payload'];
+
 export const restartMessageSchema = z.object({ type: z.literal('restart') });
 export const leaveMessageSchema = z.object({ type: z.literal('leave') });

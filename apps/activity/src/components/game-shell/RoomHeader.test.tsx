@@ -1,3 +1,4 @@
+import type { RoomState } from '@marquinhos/contracts/activity/room';
 import {
   act,
   fireEvent,
@@ -7,10 +8,7 @@ import {
 } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
 import React, { type ReactNode } from 'react';
-import {
-  RoomConnectionContext,
-  type RoomState,
-} from '../../games/shared/RoomConnectionProvider';
+import { RoomConnectionContext } from '../../games/shared/RoomConnectionProvider';
 import { RoomHeader } from './RoomHeader';
 
 mock.module('../../lib/discordParticipants', () => ({

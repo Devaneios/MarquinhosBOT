@@ -9,6 +9,7 @@
     "./activity/pong/codec": "./src/activity/pong/codec.ts",
     "./activity/pong/types": "./src/activity/pong/types.ts",
     "./activity/protocol": "./src/activity/protocol.ts",
+    "./activity/room": "./src/activity/room.ts",
     "./http/contract": "./src/http/contract.ts",
     "./http/routes/*": "./src/http/routes/*.ts",
     "./wordle": "./src/wordle.ts"

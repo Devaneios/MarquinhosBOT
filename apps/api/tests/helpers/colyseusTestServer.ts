@@ -1,5 +1,6 @@
 import { Room as ClientRoom } from '@colyseus/sdk';
 import { ColyseusTestServer } from '@colyseus/testing';
+import { roomServerMessageSchema } from '@marquinhos/contracts/activity/room';
 import { matchMaker, Server } from 'colyseus';
 
 interface Inbox {
@@ -87,12 +88,14 @@ export function unparsedMessages(
 ): string[] {
   return clients.flatMap((client) =>
     inboxOf(client)
-      .log.filter(
-        ({ type, message }) =>
-          !schema.safeParse(
-            message === undefined ? { type } : { type, payload: message },
-          ).success,
-      )
+      .log.filter(({ type, message }) => {
+        const wire =
+          message === undefined ? { type } : { type, payload: message };
+        return (
+          !schema.safeParse(wire).success &&
+          !roomServerMessageSchema.safeParse(wire).success
+        );
+      })
       .map(({ type }) => type),
   );
 }
