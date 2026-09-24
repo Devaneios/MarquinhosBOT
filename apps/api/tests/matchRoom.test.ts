@@ -4,6 +4,7 @@ const { MatchRoom } = await import('../src/realtime/MatchRoom');
 const {
   bootColyseusTestServer,
   drainMessages,
+  messageLog,
   nextMessage,
   pendingMessages,
   waitUntil,
@@ -13,6 +14,7 @@ const { mintWsSessionToken } =
 const { roomKey } = await import('services/activity/roomKey');
 const { ACTION_REJECTED } =
   await import('@marquinhos/contracts/activity/protocol');
+const { ROOM_STATE } = await import('@marquinhos/contracts/activity/room');
 
 type ColyseusTestServer = import('@colyseus/testing').ColyseusTestServer;
 
@@ -482,6 +484,53 @@ describe('MatchRoom', () => {
     expect((messages[0] as { grid: unknown }).grid).toBeTruthy();
   });
 
+  describe('room_state ordering', () => {
+    // A room board mounts only once room_state names its game, so game
+    // messages sent before it would reach no board.
+    it('sends room_state before the game init to a joining client', async () => {
+      const { key, token } = ticTacToeCreds('user-a', 'ROOM60');
+      const room = await colyseus.createRoom('match', {
+        roomKey: key,
+        game: 'tic-tac-toe',
+      });
+      const client = await colyseus.connectTo(room, { token, roomKey: key });
+      await nextMessage(client, 'init');
+
+      const types = messageLog(client).map((m) => m.type);
+      expect(types).toContain(ROOM_STATE);
+      expect(types.indexOf(ROOM_STATE)).toBeLessThan(types.indexOf('init'));
+
+      client.leave();
+    });
+
+    it("sends the new game's room_state before its init after switch_game", async () => {
+      const { key, token } = ticTacToeCreds('user-a', 'ROOM61');
+      const room = await colyseus.createRoom('match', {
+        roomKey: key,
+        game: 'tic-tac-toe',
+      });
+      const client = await colyseus.connectTo(room, { token, roomKey: key });
+      await nextMessage(client, 'init');
+
+      client.send('switch_game', { game: 'connect-four' });
+      await nextMessage<{ disc?: unknown }>(client, 'init', (m) => 'disc' in m);
+
+      const log = messageLog(client);
+      const switchedState = log.findIndex(
+        (m) =>
+          m.type === ROOM_STATE &&
+          (m.message as { game: string }).game === 'connect-four',
+      );
+      const newInit = log.findIndex(
+        (m) => m.type === 'init' && 'disc' in (m.message as object),
+      );
+      expect(switchedState).toBeGreaterThanOrEqual(0);
+      expect(switchedState).toBeLessThan(newInit);
+
+      client.leave();
+    });
+  });
+
   describe('switch_game', () => {
     it('rejects a non-host request', async () => {
       const { key } = ticTacToeCreds('user-a', 'ROOM30');
@@ -693,6 +742,12 @@ describe('MatchRoom', () => {
       expect(
         roomInternals.members.find((m) => m.userId === 'user-c')?.role,
       ).toBe('player');
+      const init = await nextMessage<{ player: string | null }>(
+        clientC,
+        'init',
+        (m) => m.player !== null,
+      );
+      expect(init.player).toBe('O');
 
       clientA.leave();
       clientB.leave();
@@ -914,6 +969,12 @@ describe('MatchRoom', () => {
       expect(
         roomInternals.members.find((m) => m.userId === 'user-c')?.role,
       ).toBe('player');
+      const init = await nextMessage<{ disc: string | null }>(
+        clientC,
+        'init',
+        (m) => m.disc !== null,
+      );
+      expect(init.disc).toBe('p2');
 
       clientA.leave();
       clientC.leave();

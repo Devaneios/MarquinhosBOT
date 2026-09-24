@@ -41,8 +41,8 @@ describe('TicTacToeSession.substitutePlayer', () => {
     session.addPlayer('user-x', {}); // X
     session.addPlayer('user-o', {}); // O
 
-    const ok = session.substitutePlayer('user-o', 'user-new', {});
-    expect(ok).toBe(true);
+    const seat = session.substitutePlayer('user-o', 'user-new', {});
+    expect(seat).toBe('O');
 
     // 'user-new' now owns O's seat: a move from 'user-o' is no longer valid...
     const rejected = session.handleMove('user-o', 1, 1);
@@ -59,6 +59,6 @@ describe('TicTacToeSession.substitutePlayer', () => {
       noopBroadcaster(),
     );
     session.addPlayer('user-x', {});
-    expect(session.substitutePlayer('nobody', 'user-new', {})).toBe(false);
+    expect(session.substitutePlayer('nobody', 'user-new', {})).toBeNull();
   });
 });

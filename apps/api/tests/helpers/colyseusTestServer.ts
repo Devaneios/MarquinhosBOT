@@ -100,6 +100,12 @@ export function unparsedMessages(
   );
 }
 
+export function messageLog(
+  client: object,
+): readonly { type: string; message: unknown }[] {
+  return inboxOf(client).log;
+}
+
 export function pendingMessages(client: object, type: string): unknown[] {
   return inboxOf(client)
     .received.filter((m) => m.type === type)

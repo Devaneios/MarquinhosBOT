@@ -92,10 +92,16 @@ export const checkersAdapter: GameRoomAdapter<CheckersSession> = {
     return session.getWinnerUserId();
   },
   substitutePlayer(session, outgoingUserId, incomingUserId, incomingClient) {
-    return session.substitutePlayer(
+    const color = session.substitutePlayer(
       outgoingUserId,
       incomingUserId,
       incomingClient,
     );
+    if (!color) return false;
+    sendMessage<CheckersServerMessage>(incomingClient, {
+      type: 'init',
+      payload: { color, state: session.getPublicState() },
+    });
+    return true;
   },
 };

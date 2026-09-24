@@ -231,13 +231,15 @@ export class TicTacToeSession {
   // addPlayer() can't be reused here: it assigns markers by array length
   // (`players.length === 0 ? 'X' : 'O'`), which collides with the remaining
   // player's marker once one seat is vacated and refilled.
+  // Returns the seat the incoming player took over, or null when the
+  // outgoing player isn't seated.
   substitutePlayer(
     outgoingUserId: string,
     incomingUserId: string,
     connection: unknown,
-  ): boolean {
+  ): Player | null {
     const outgoing = this.players.find((p) => p.userId === outgoingUserId);
-    if (!outgoing) return false;
+    if (!outgoing) return null;
 
     this.players = this.players.filter((p) => p.userId !== outgoingUserId);
     this.restartVotes.delete(outgoingUserId);
@@ -247,7 +249,7 @@ export class TicTacToeSession {
       connected: true,
       connections: new Set([connection]),
     });
-    return true;
+    return outgoing.player;
   }
 
   // Returns the outcome instead of broadcasting a rejection — a rejected

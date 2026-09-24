@@ -101,10 +101,16 @@ export const rpsAdapter: GameRoomAdapter<RpsSession> = {
     return session.getWinnerUserId();
   },
   substitutePlayer(session, outgoingUserId, incomingUserId, incomingClient) {
-    return session.substitutePlayer(
+    const playerId = session.substitutePlayer(
       outgoingUserId,
       incomingUserId,
       incomingClient,
     );
+    if (!playerId) return false;
+    sendMessage<RpsServerMessage>(incomingClient, {
+      type: 'init',
+      payload: { playerId, config: session.getPublicConfig() },
+    });
+    return true;
   },
 };

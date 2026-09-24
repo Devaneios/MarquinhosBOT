@@ -466,30 +466,30 @@ export class MatchRoom extends Room<{
 
   // Shared by onJoin and switchGame's client-reseating loop: dedupes a
   // second connection under an already-seated userId (incrementing its
-  // connection count instead of double-counting it toward `assignSeat()`),
-  // while still calling `adapter.onJoin` for every individual connection so
+  // connection count instead of double-counting it toward `assignSeat()`).
+  // Callers still call `adapter.onJoin` for every individual connection so
   // each socket gets its own `init` message.
-  private seatClient(client: AuthedClient, auth: WsSessionPayload): SeatRole {
+  private admitMember(auth: WsSessionPayload): SeatRole {
     const existing = this.members.find((m) => m.userId === auth.userId);
-    let role: SeatRole;
     if (existing) {
       existing.connections += 1;
-      role = existing.role;
-    } else {
-      role = this.assignSeat();
-      this.members.push({ userId: auth.userId, role, connections: 1 });
+      return existing.role;
     }
-    this.adapter.onJoin(this.session, auth, client, role, this.ctx);
+    const role = this.assignSeat();
+    this.members.push({ userId: auth.userId, role, connections: 1 });
     return role;
   }
 
+  // room_state goes out before the adapter's `init`: the client mounts a
+  // game's board only once room_state names the game, so anything sent
+  // earlier would reach no board.
   override onJoin(
     client: AuthedClient,
     _options: unknown,
     auth: WsSessionPayload,
   ) {
     if (this.hostUserId === null) this.hostUserId = auth.userId;
-    this.seatClient(client, auth);
+    const role = this.admitMember(auth);
     const published = this.publishedRoomState;
     this.syncMetadata();
     if (this.publishedRoomState === published)
@@ -497,6 +497,7 @@ export class MatchRoom extends Room<{
         type: ROOM_STATE,
         payload: this.roomState(),
       });
+    this.adapter.onJoin(this.session, auth, client, role, this.ctx);
   }
 
   override onLeave(client: AuthedClient) {
@@ -606,10 +607,12 @@ export class MatchRoom extends Room<{
     this.loadSession();
 
     this.members = [];
-    for (const client of this.clients) {
+    const seated = this.clients.map((client) => {
       const auth = requireAuth(client);
-      this.seatClient(client, auth);
-    }
+      return { client, auth, role: this.admitMember(auth) };
+    });
     this.syncMetadata();
+    for (const { client, auth, role } of seated)
+      this.adapter.onJoin(this.session, auth, client, role, this.ctx);
   }
 }

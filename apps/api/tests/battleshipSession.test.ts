@@ -333,8 +333,8 @@ describe('BattleshipSession', () => {
     it('reseats the incoming player and resets the engine for a fresh match', () => {
       const { session } = placedSession();
       playToVictory(session);
-      const ok = session.substitutePlayer('user-b', 'user-new', {});
-      expect(ok).toBe(true);
+      const seat = session.substitutePlayer('user-b', 'user-new', {});
+      expect(seat).toBe('p2');
       expect(session.getWinnerUserId()).toBe(null); // engine reset, no winner yet
     });
   });

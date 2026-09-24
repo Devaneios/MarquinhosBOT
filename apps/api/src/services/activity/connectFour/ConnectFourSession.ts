@@ -174,13 +174,15 @@ export class ConnectFourSession {
     return this.players.find((p) => p.disc === winner)?.userId ?? null;
   }
 
+  // Returns the seat the incoming player took over, or null when the
+  // outgoing player isn't seated.
   substitutePlayer(
     outgoingUserId: string,
     incomingUserId: string,
     connection: unknown,
-  ): boolean {
+  ): Disc | null {
     const outgoing = this.players.find((p) => p.userId === outgoingUserId);
-    if (!outgoing) return false;
+    if (!outgoing) return null;
 
     this.players = this.players.filter((p) => p.userId !== outgoingUserId);
     this.restartVotes.delete(outgoingUserId);
@@ -190,7 +192,7 @@ export class ConnectFourSession {
       connected: true,
       connections: new Set([connection]),
     });
-    return true;
+    return outgoing.disc;
   }
 
   enableBot(humanDisc?: Disc) {
