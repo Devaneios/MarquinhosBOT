@@ -8,7 +8,7 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { legalEndsFor } from '@marquinhos/domain/games/dominoes-block/legality';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
+import { useRoomConnectionContext } from '../../../realtime/RoomConnectionProvider';
 import { applyDominoesMessage, initialDominoesView } from '../dominoesMessages';
 import { DominoesBlockCanvas } from './DominoesBlockCanvas';
 

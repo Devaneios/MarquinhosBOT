@@ -15,16 +15,16 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { DiscordIdentity } from '../../discordAuth.ts';
-import { colyseusUrl } from '../../lib/apiBase';
-import { devwarn } from '../../lib/devlog';
-import type { WsSession } from './activitySession';
+import type { DiscordIdentity } from '../discord/auth.ts';
+import { colyseusUrl } from '../lib/apiBase';
+import { devwarn } from '../lib/devlog';
 import {
   connectToRoom,
   wireRoomLifecycle,
   type ActivityMessage,
   type ColyseusConnectionState,
 } from './colyseusConnection';
+import type { WsSession } from './gameSession';
 
 type Listener = (message: ActivityMessage) => void;
 

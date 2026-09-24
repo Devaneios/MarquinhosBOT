@@ -1,4 +1,4 @@
-import type { GameDescriptor } from '../registry';
+import type { GameDescriptor } from '../GameDescriptor';
 import { wordleRoutes } from './wordleRoutes';
 
 export const gameDescriptor: GameDescriptor = {

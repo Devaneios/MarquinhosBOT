@@ -1,6 +1,6 @@
-import type { GameDescriptor } from '../registry';
+import type { GameDescriptor } from '../GameDescriptor';
 import { checkersRoutes } from './checkersRoutes';
-import { CheckersRoomBoard } from './components';
+import { CheckersRoomBoard } from './components/index';
 
 export const gameDescriptor: GameDescriptor = {
   id: 'checkers',

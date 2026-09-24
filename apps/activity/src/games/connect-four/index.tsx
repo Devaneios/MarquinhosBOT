@@ -1,5 +1,5 @@
-import type { GameDescriptor } from '../registry';
-import { ConnectFourRoomBoard } from './components';
+import type { GameDescriptor } from '../GameDescriptor';
+import { ConnectFourRoomBoard } from './components/index';
 import { connectFourRoutes } from './connectFourRoutes';
 
 export const gameDescriptor: GameDescriptor = {

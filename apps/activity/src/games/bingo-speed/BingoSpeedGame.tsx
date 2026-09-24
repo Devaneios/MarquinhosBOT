@@ -3,9 +3,9 @@ import {
   ConnectingScreen,
   ErrorScreen,
   GameMenu,
-} from '../../components/game-shell';
-import type { DiscordIdentity } from '../../discordAuth.ts';
-import { BingoSpeedCanvas } from './components';
+} from '../../components/game-shell/index';
+import type { DiscordIdentity } from '../../discord/auth.ts';
+import { BingoSpeedCanvas } from './components/index';
 import { useBingoSpeedSession } from './hooks/useBingoSpeedSession';
 
 export function BingoSpeedGame({

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { HowToPlayScreen } from '../../../components/game-shell';
+import { HowToPlayScreen } from '../../../components/game-shell/index';
 
 const key =
   'notch-4 font-pixel flex h-11 w-11 items-center justify-center border border-marquinhos-border bg-marquinhos-bg text-sm text-marquinhos-text';

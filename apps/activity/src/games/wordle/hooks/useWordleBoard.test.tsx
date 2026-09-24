@@ -1,12 +1,12 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
-import type { ActivityMessage } from '../../shared/useColyseusRoom';
+import type { ActivityMessage } from '../../../realtime/useColyseusRoom';
 
 let deliverMessage: (message: ActivityMessage) => void = () => {
   throw new Error('Wordle room is not connected');
 };
 
-mock.module('../../shared/useColyseusRoom', () => ({
+mock.module('../../../realtime/useColyseusRoom', () => ({
   useColyseusRoom(
     _game: string,
     _session: unknown,

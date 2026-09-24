@@ -9,9 +9,9 @@ import {
 } from '@marquinhos/contracts/activity/room';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GAME_REGISTRY } from '../../games/registry';
-import { useRoomConnectionContext } from '../../games/shared/RoomConnectionProvider';
-import { getParticipantDisplayNames } from '../../lib/discordParticipants';
+import { getParticipantDisplayNames } from '../discord/participants';
+import { GAME_REGISTRY } from '../games/registry';
+import { useRoomConnectionContext } from '../realtime/RoomConnectionProvider';
 
 export interface RoomHeaderProps {
   onLeave: () => void;

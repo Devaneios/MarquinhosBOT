@@ -18,11 +18,11 @@ import {
 import { colyseusUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
 import { devlog } from '../../../lib/devlog';
-import type { WsSession } from '../../shared/activitySession';
+import type { WsSession } from '../../../realtime/gameSession';
 import {
   useColyseusRoom,
   type ActivityMessage,
-} from '../../shared/useColyseusRoom';
+} from '../../../realtime/useColyseusRoom';
 import type { SnakeMode } from '../hooks/useSnakeSession';
 import { applySnakeMessage, initialSnakeView } from '../snakeMessages';
 

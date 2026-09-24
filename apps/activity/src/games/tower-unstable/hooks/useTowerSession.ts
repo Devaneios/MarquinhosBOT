@@ -1,5 +1,5 @@
-import type { DiscordIdentity } from '../../../discordAuth.ts';
-import { useGameSession } from '../../shared/useGameSession';
+import type { DiscordIdentity } from '../../../discord/auth.ts';
+import { useGameSession } from '../../../realtime/useGameSession';
 
 export function useTowerSession(
   identity: DiscordIdentity,

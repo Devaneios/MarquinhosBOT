@@ -29,12 +29,12 @@ function fakeSdk(overrides: { userIds?: string[] } = {}) {
 
 async function freshDiscordAuthModule(sdk: ReturnType<typeof fakeSdk>) {
   const resetDiscordSdk = mock(() => {});
-  mock.module('./discordSdk', () => ({
+  mock.module('./sdk', () => ({
     discordSdk: sdk,
     isMock: false,
     resetDiscordSdk,
   }));
-  mock.module('./lib/apiBase', () => ({
+  mock.module('../lib/apiBase', () => ({
     apiBase: () => 'http://fake.test/api',
     apiUrl: (path: string) => `http://fake.test/api${path}`,
     // mock.module replaces this for the whole bun test process, not just
@@ -44,9 +44,9 @@ async function freshDiscordAuthModule(sdk: ReturnType<typeof fakeSdk>) {
     colyseusUrl: () => 'ws://fake.test',
   }));
   // Importing this module has an immediate side effect: it starts the
-  // handshake right away (see discordAuth.ts) — that's the behavior under
+  // handshake right away (see discord/auth.ts) — that's the behavior under
   // test, not something to work around.
-  const mod = await import(`./discordAuth.ts?${Math.random()}`);
+  const mod = await import(`./auth.ts?${Math.random()}`);
   return {
     runAuthFlow: mod.runAuthFlow as (force?: boolean) => Promise<unknown>,
     resetDiscordSdk,
@@ -82,7 +82,7 @@ describe('runAuthFlow', () => {
     });
     const { runAuthFlow } = await freshDiscordAuthModule(sdk);
 
-    // The module self-starts on import (see discordAuth.ts), so this may be
+    // The module self-starts on import (see discord/auth.ts), so this may be
     // joining that attempt or a fresh one depending on timing — either way,
     // with authorize always throwing, it must surface the same failure.
     await expect(runAuthFlow()).rejects.toThrow('Already authing');

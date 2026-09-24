@@ -9,13 +9,13 @@ import {
   GameHeader,
   menuButtonPrimary,
   menuButtonSecondary,
-} from '../../../components/game-shell';
+} from '../../../components/game-shell/index';
 import { colyseusUrl } from '../../../lib/apiBase';
-import type { WsSession } from '../../shared/activitySession';
+import type { WsSession } from '../../../realtime/gameSession';
 import {
   useColyseusRoom,
   type ActivityMessage,
-} from '../../shared/useColyseusRoom';
+} from '../../../realtime/useColyseusRoom';
 import { applyTowerMessage, initialTowerView } from '../towerMessages';
 import { TowerBoardCanvas } from './TowerBoardCanvas';
 

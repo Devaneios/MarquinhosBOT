@@ -5,11 +5,11 @@
 // only ever reads a snapshot of this; it never triggers or drives it.
 import { fetchContract } from '@marquinhos/api-client/browser';
 import * as activityApi from '@marquinhos/contracts/http/routes/activity';
-import { discordSdk, isMock, resetDiscordSdk } from './discordSdk';
-import { tImperative } from './i18n/i18nImperative';
-import { apiBase } from './lib/apiBase';
-import { devinfo, devlog } from './lib/devlog';
-import { errorMessage } from './lib/http';
+import { tImperative } from '../i18n/i18nImperative';
+import { apiBase } from '../lib/apiBase';
+import { devinfo, devlog } from '../lib/devlog';
+import { errorMessage } from '../lib/http';
+import { discordSdk, isMock, resetDiscordSdk } from './sdk';
 
 export interface DiscordIdentity {
   userId: string;

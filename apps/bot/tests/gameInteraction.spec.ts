@@ -1,10 +1,10 @@
 import {
-  afterAll,
   afterEach,
   beforeEach,
   describe,
   expect,
   it,
+  type Mock,
   spyOn,
 } from 'bun:test';
 import { GameManager } from '../src/game/core/GameManager';
@@ -17,22 +17,18 @@ import * as errorHandling from '../src/utils/errorHandling';
 // so tests must reuse that same singleton rather than resetting it.
 let manager: GameManager;
 let sessionIds: string[] = [];
-const reportErrorSpy = spyOn(errorHandling, 'reportError').mockImplementation(
-  () => {},
-);
+let reportErrorSpy: Mock<typeof errorHandling.reportError>;
 
 beforeEach(() => {
   manager = GameManager.getInstance();
   sessionIds = [];
-  reportErrorSpy.mockClear();
+  reportErrorSpy = spyOn(errorHandling, 'reportError').mockImplementation(
+    () => {},
+  );
 });
 
 afterEach(() => {
   sessionIds.forEach((id) => manager.endSession(id));
-});
-
-afterAll(() => {
-  reportErrorSpy.mockRestore();
 });
 
 describe('handleGameInteraction error escalation', () => {

@@ -1,5 +1,5 @@
 import { HttpClient, HttpError } from '@marquinhos/api-client/bot';
-import { beforeEach, describe, expect, it, spyOn } from 'bun:test';
+import { beforeEach, describe, expect, it, type Mock, spyOn } from 'bun:test';
 import {
   handleApiResponseError,
   MarquinhosApiService,
@@ -7,12 +7,12 @@ import {
 import * as errorHandling from '../src/utils/errorHandling';
 
 describe('handleApiResponseError', () => {
-  const reportErrorSpy = spyOn(errorHandling, 'reportError').mockImplementation(
-    () => {},
-  );
+  let reportErrorSpy: Mock<typeof errorHandling.reportError>;
 
   beforeEach(() => {
-    reportErrorSpy.mockClear();
+    reportErrorSpy = spyOn(errorHandling, 'reportError').mockImplementation(
+      () => {},
+    );
   });
 
   it('rethrows the original error', () => {

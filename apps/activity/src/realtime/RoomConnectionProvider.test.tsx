@@ -24,7 +24,7 @@ async function freshUseColyseusRoom(room: ReturnType<typeof fakeRoom>) {
       joinOrCreate = joinOrCreate;
     },
   }));
-  mock.module('../../lib/apiBase', () => ({
+  mock.module('../lib/apiBase', () => ({
     apiBase: () => 'http://fake.test/api',
     apiUrl: (path: string) => `http://fake.test/api${path}`,
     colyseusUrl: () => 'ws://fake.test',

@@ -1,5 +1,5 @@
-import type { GameDescriptor } from '../registry';
-import { DominoesBlockRoomBoard } from './components';
+import type { GameDescriptor } from '../GameDescriptor';
+import { DominoesBlockRoomBoard } from './components/index';
 import { dominoesBlockRoutes } from './dominoesBlockRoutes';
 
 export const gameDescriptor: GameDescriptor = {

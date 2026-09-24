@@ -19,14 +19,14 @@ import {
   ErrorScreen,
   GameHeader,
   GameMenu,
-} from '../../../components/game-shell';
-import type { DiscordIdentity } from '../../../discordAuth.ts';
+} from '../../../components/game-shell/index';
+import type { DiscordIdentity } from '../../../discord/auth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
-import type { WsSession } from '../../shared/activitySession';
+import type { WsSession } from '../../../realtime/gameSession';
 import {
   useColyseusRoom,
   type ActivityMessage,
-} from '../../shared/useColyseusRoom';
+} from '../../../realtime/useColyseusRoom';
 import {
   applyBattleshipMessage,
   initialBattleshipView,

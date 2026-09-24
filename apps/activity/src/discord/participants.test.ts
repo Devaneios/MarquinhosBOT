@@ -10,14 +10,14 @@ async function freshModule(
     }>;
   }>,
 ) {
-  mock.module('../discordSdk', () => ({
+  mock.module('./sdk', () => ({
     discordSdk: {
       commands: {
         getActivityInstanceConnectedParticipants: getParticipants,
       },
     },
   }));
-  const mod = await import(`./discordParticipants.ts?${Math.random()}`);
+  const mod = await import(`./participants.ts?${Math.random()}`);
   return mod.getParticipantDisplayNames as () => Promise<
     Record<string, string>
   >;

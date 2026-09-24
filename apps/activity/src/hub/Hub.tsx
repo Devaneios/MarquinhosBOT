@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { GameHeader } from '../components/game-shell';
+import { GameHeader } from '../components/game-shell/index';
 import { GAME_REGISTRY } from '../games/registry';
 import { FeaturedGame } from './FeaturedGame';
 import { GameCard } from './GameCard';

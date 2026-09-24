@@ -5,7 +5,7 @@ import {
   MenuPanel,
   MenuScreen,
   menuButtonPrimary,
-} from '../../../components/game-shell';
+} from '../../../components/game-shell/index';
 import { WordleToggleTile } from './WordleToggleTile';
 
 const fieldLabel = 'font-pixel text-sm text-marquinhos-text';

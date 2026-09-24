@@ -3,9 +3,9 @@ import {
   ConnectingScreen,
   ErrorScreen,
   GameMenu,
-} from '../../components/game-shell';
-import type { DiscordIdentity } from '../../discordAuth.ts';
-import { SnakeCanvas } from './components';
+} from '../../components/game-shell/index';
+import type { DiscordIdentity } from '../../discord/auth.ts';
+import { SnakeCanvas } from './components/index';
 import { useSnakeSession } from './hooks/useSnakeSession';
 
 export function SnakeGame({

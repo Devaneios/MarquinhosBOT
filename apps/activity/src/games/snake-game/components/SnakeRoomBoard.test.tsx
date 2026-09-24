@@ -1,6 +1,6 @@
 import { act, render } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
-import { RoomConnectionContext } from '../../shared/RoomConnectionProvider';
+import { RoomConnectionContext } from '../../../realtime/RoomConnectionProvider';
 
 function installPixiMock() {
   mock.module('pixi.js', () => {

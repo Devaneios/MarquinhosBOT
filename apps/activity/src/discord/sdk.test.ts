@@ -34,7 +34,7 @@ async function freshDiscordSdkModule() {
     self: {},
     top: {},
   };
-  const mod = await import(`./discordSdk.ts?${Math.random()}`);
+  const mod = await import(`./sdk.ts?${Math.random()}`);
   return { mod, close, constructCount: () => constructCount };
 }
 

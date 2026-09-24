@@ -13,13 +13,13 @@ import {
   GameHeader,
   menuButtonPrimary,
   menuButtonSecondary,
-} from '../../../components/game-shell';
-import type { DiscordIdentity } from '../../../discordAuth.ts';
+} from '../../../components/game-shell/index';
+import type { DiscordIdentity } from '../../../discord/auth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import {
   useColyseusRoom,
   type ActivityMessage,
-} from '../../shared/useColyseusRoom';
+} from '../../../realtime/useColyseusRoom';
 import {
   applyConnectFourMessage,
   initialConnectFourView,
@@ -35,7 +35,7 @@ export function ConnectFourBoard({
   mode,
   onBackToMenu,
 }: {
-  session: import('../../shared/activitySession').WsSession;
+  session: import('../../../realtime/gameSession').WsSession;
   mode: 'single' | 'multi';
   onBackToMenu: () => void;
 }) {

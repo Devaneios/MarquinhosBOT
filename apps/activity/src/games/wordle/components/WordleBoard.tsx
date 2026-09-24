@@ -2,9 +2,12 @@ import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { backChipClass, GameHeader } from '../../../components/game-shell';
-import { Keyboard } from '../../../components/keyboard';
-import type { WsSession } from '../../shared/activitySession';
+import {
+  backChipClass,
+  GameHeader,
+} from '../../../components/game-shell/index';
+import { Keyboard } from '../../../components/keyboard/index';
+import type { WsSession } from '../../../realtime/gameSession';
 import {
   buildKeyboardRows,
   FEEDBACK_COLORS,

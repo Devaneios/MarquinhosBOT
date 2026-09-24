@@ -1,18 +1,26 @@
-import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type Mock,
+  spyOn,
+} from 'bun:test';
 import { GameManager } from '../src/game/core/GameManager';
 import { GameState, GameType } from '../src/game/core/GameTypes';
 import { MarquinhosApiService } from '../src/services/marquinhosApi';
 import * as errorHandling from '../src/utils/errorHandling';
 
 let manager: GameManager;
-const reportErrorSpy = spyOn(errorHandling, 'reportError').mockImplementation(
-  () => {},
-);
+let reportErrorSpy: Mock<typeof errorHandling.reportError>;
 
 beforeEach(() => {
   (GameManager as any).instance = undefined;
   manager = GameManager.getInstance();
-  reportErrorSpy.mockClear();
+  reportErrorSpy = spyOn(errorHandling, 'reportError').mockImplementation(
+    () => {},
+  );
 });
 
 afterEach(() => {

@@ -1,4 +1,4 @@
-import type { GameDescriptor } from '../registry';
+import type { GameDescriptor } from '../GameDescriptor';
 import { cardsRoutes } from './cardsRoutes';
 
 export const gameDescriptor: GameDescriptor = {
