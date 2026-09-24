@@ -7,7 +7,8 @@
     "./schema": "./src/schema/index.ts",
     "./migrate": "./src/migrate.ts",
     "./maintenance": "./src/maintenance.ts",
-    "./testing": "./src/testing.ts"
+    "./testing": "./src/testing.ts",
+    "./etl": "./src/etl/importSqlite.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

@@ -48,11 +48,12 @@ The deploy script retains the previously running image under a `rollback` tag an
 
 ## SQLite to PostgreSQL cutover
 
-The first release on PostgreSQL starts with an empty database. Existing data stays in the `marquinhos-api-data` volume until it is imported once:
+The import is automatic. Add `POSTGRES_PASSWORD` to the environment's secrets and deploy the API. On boot, after applying migrations and before seeding defaults or serving anything, the API finds the SQLite file at `SQLITE_PATH` (`/app/data/marquinhos.db`) and imports it once:
 
-1. Add `POSTGRES_PASSWORD` to the environment's secrets and deploy the API. On boot it creates the schema in the new, empty database. Until step 4 it serves no historical data.
-2. Stop the API: `docker compose -f deploy/docker-compose.yml --env-file deploy/.env stop api`.
-3. Import: `docker compose -f deploy/docker-compose.yml --env-file deploy/.env run --rm --no-deps api bun /app/packages/database/src/etl/importSqlite.ts /app/data/marquinhos.db`. It replaces the defaults the API seeded on boot (`xp_config`, `achievements`, `ai_chat_config`) with the SQLite values, refuses to run if any other table already has rows, copies every table in one transaction, and rolls back unless every table's row count matches the source. Before copying, it saves a consistent snapshot next to the source as `/app/data/marquinhos.pre-postgres-<timestamp>.db` and imports from that snapshot; restore that file to roll back. It prints the snapshot path and the per-table counts.
-4. Start the API again: `… up --detach --wait api`.
+1. It saves a consistent snapshot next to the source as `/app/data/marquinhos.pre-postgres-<timestamp>.db` and imports from that snapshot. Restore that file to roll back.
+2. It copies every table in one transaction, replacing the defaults seeded by earlier boots (`xp_config`, `achievements`, `ai_chat_config`). It refuses if any other table already has rows, and rolls back unless every table's row count matches the source.
+3. In the same transaction it writes a row to `legacy_sqlite_import`. Every later boot sees that row and skips the import. The log line `db.legacy_sqlite_imported` carries the snapshot path and per-table counts.
 
-Writes made between step 1 and step 2 land in PostgreSQL. Importing over them is refused, so keep that window short, or stop the API before deploying and run the import before its first start. The rollback image of that first deploy is the SQLite build: rolling back returns to the untouched SQLite data and drops anything written to PostgreSQL. Once the cutover is verified, a later release removes the `marquinhos-api-data` mount.
+If the import fails, the API does not start and the deploy rolls back to the previous (SQLite) image, whose data is untouched; the failed attempt's snapshot is deleted. Fix the cause and deploy again. The same import can be run by hand with `docker compose -f deploy/docker-compose.yml --env-file deploy/.env run --rm --no-deps api bun /app/packages/database/src/etl/importSqlite.ts /app/data/marquinhos.db`; it also stops if the marker row exists.
+
+After a successful cutover, rolling back to the SQLite image drops anything written to PostgreSQL. Copy the snapshot out of the volume, then retire the legacy path in a later release: remove `SQLITE_PATH` and the `marquinhos-api-data` mount from the compose file, the import call in `apps/api/src/index.ts`, `packages/database/src/etl`, and the `legacy_sqlite_import` table (in a new migration).

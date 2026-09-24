@@ -136,11 +136,24 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 // Startup initialisation — failures crash the process instead of silently
 // serving with empty XP config or missing wordle word list.
 import { db } from '@marquinhos/database/client';
+import { importLegacySqliteOnce } from '@marquinhos/database/etl';
 import { startMaintenance } from '@marquinhos/database/maintenance';
 import { runMigrations } from '@marquinhos/database/migrate';
 
 try {
   await runMigrations();
+  // One-off SQLite → Postgres cutover. Runs before the defaults are seeded and
+  // before anything is served; a failure stops startup so a deploy rolls back
+  // to the SQLite build with its data untouched.
+  if (process.env.SQLITE_PATH) {
+    const outcome = await importLegacySqliteOnce(process.env.SQLITE_PATH, db);
+    if (outcome.status === 'imported') {
+      logger.info('db.legacy_sqlite_imported', {
+        snapshotPath: outcome.snapshotPath,
+        tables: outcome.reports,
+      });
+    }
+  }
   await new GamificationService().initializeDefaults();
   await new RateLimitService().seedDefaults();
   await new DailyQuotaService(AGENT_DAILY_QUOTA).seedDefaults();

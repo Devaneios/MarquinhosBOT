@@ -1,7 +1,7 @@
 import { Database } from 'bun:sqlite';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { asc, eq } from 'drizzle-orm';
-import { mkdtempSync, rmSync } from 'fs';
+import { existsSync, mkdtempSync, readdirSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import * as path from 'path';
 import {
@@ -13,7 +13,7 @@ import {
   wordlistReview,
 } from '../schema';
 import { createTestDb, type TestDb } from '../testing';
-import { importSqlite } from './importSqlite';
+import { importLegacySqliteOnce, importSqlite } from './importSqlite';
 
 const LEGACY_SCHEMA = path.join(import.meta.dir, 'fixtures/legacySchema.sql');
 
@@ -161,5 +161,44 @@ describe('importSqlite', () => {
 
     await expect(importSqlite(sqlitePath, testDb.db)).rejects.toThrow();
     expect(await testDb.db.select().from(users)).toEqual([]);
+  });
+
+  test('imports once from a snapshot, then skips on later boots', async () => {
+    const sqlite = await legacyDatabase();
+    sqlite.run("INSERT INTO users (id) VALUES ('legacy')");
+    sqlite.close();
+
+    const first = await importLegacySqliteOnce(sqlitePath, testDb.db);
+    const second = await importLegacySqliteOnce(sqlitePath, testDb.db);
+
+    expect(first.status).toBe('imported');
+    const snapshotPath = (first as { snapshotPath: string }).snapshotPath;
+    expect(existsSync(snapshotPath)).toBe(true);
+    expect(second).toMatchObject({ status: 'already-imported', snapshotPath });
+    expect(
+      readdirSync(workDir).filter((f) => f.includes('pre-postgres')),
+    ).toHaveLength(1);
+    expect(await testDb.db.select().from(users)).toHaveLength(1);
+  });
+
+  test('does nothing when there is no SQLite file', async () => {
+    expect(
+      await importLegacySqliteOnce(path.join(workDir, 'absent.db'), testDb.db),
+    ).toEqual({ status: 'no-source' });
+  });
+
+  test('deletes the snapshot when the import fails', async () => {
+    const sqlite = await legacyDatabase();
+    sqlite.run(
+      "INSERT INTO scrobbles_queue (id, track, playback_data, created_at) VALUES ('q', '{}', '{}', 'not-a-number')",
+    );
+    sqlite.close();
+
+    await expect(
+      importLegacySqliteOnce(sqlitePath, testDb.db),
+    ).rejects.toThrow();
+    expect(
+      readdirSync(workDir).filter((f) => f.includes('pre-postgres')),
+    ).toEqual([]);
   });
 });

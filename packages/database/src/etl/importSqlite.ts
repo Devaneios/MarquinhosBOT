@@ -11,9 +11,11 @@
 import { Database } from 'bun:sqlite';
 import { is, sql } from 'drizzle-orm';
 import { getTableConfig, PgTable, type PgColumn } from 'drizzle-orm/pg-core';
+import { existsSync, rmSync } from 'fs';
 import { closeDefaultDb, db as defaultDb, type Db, type Tx } from '../client';
 import { runMigrations } from '../migrate';
 import * as schema from '../schema';
+import { legacySqliteImport } from '../schema';
 
 // Postgres caps one statement at 65535 bind parameters.
 const MAX_PARAMS_PER_INSERT = 60_000;
@@ -201,10 +203,51 @@ export async function importSqlite(
             .join(', ')}`,
         );
       }
+      // Same transaction as the copy: the marker exists iff the data does.
+      await tx
+        .insert(legacySqliteImport)
+        .values({ imported_at: Date.now(), snapshot_path: sqlitePath });
       return reports;
     });
   } finally {
     sqlite.close();
+  }
+}
+
+export type LegacyImportOutcome =
+  | { status: 'no-source' }
+  | { status: 'already-imported'; importedAt: number; snapshotPath: string }
+  | { status: 'imported'; snapshotPath: string; reports: TableReport[] };
+
+/**
+ * Runs the SQLite import unless it already ran. Snapshots the source first and
+ * imports from the snapshot, which is kept as the rollback point. On failure
+ * the snapshot is deleted (the source is read-only, so it is unchanged) and
+ * the error propagates, so a crash-looping API can't fill the disk.
+ */
+export async function importLegacySqliteOnce(
+  sqlitePath: string,
+  db: Db,
+): Promise<LegacyImportOutcome> {
+  if (!existsSync(sqlitePath)) return { status: 'no-source' };
+
+  await runMigrations(db);
+  const [done] = await db.select().from(legacySqliteImport);
+  if (done) {
+    return {
+      status: 'already-imported',
+      importedAt: done.imported_at,
+      snapshotPath: done.snapshot_path,
+    };
+  }
+
+  const snapshotPath = backupSqlite(sqlitePath);
+  try {
+    const reports = await importSqlite(snapshotPath, db);
+    return { status: 'imported', snapshotPath, reports };
+  } catch (error) {
+    rmSync(snapshotPath, { force: true });
+    throw error;
   }
 }
 
@@ -215,12 +258,9 @@ if (import.meta.main) {
     process.exit(2);
   }
   try {
-    const backupPath = backupSqlite(sqlitePath);
-    console.log(`SQLite backup written to ${backupPath}`);
-    // Import from the snapshot so the copied data is exactly what was saved.
-    const reports = await importSqlite(backupPath, defaultDb);
-    console.table(reports);
-    console.log('Import complete.');
+    const outcome = await importLegacySqliteOnce(sqlitePath, defaultDb);
+    if (outcome.status === 'imported') console.table(outcome.reports);
+    console.log(outcome);
   } catch (error) {
     console.error('Import failed; Postgres was left unchanged.', error);
     process.exitCode = 1;

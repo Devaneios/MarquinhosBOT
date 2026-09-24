@@ -15,6 +15,13 @@
       "when": 1790235392317,
       "tag": "0001_updated_at_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790268151219,
+      "tag": "0002_legacy_sqlite_import",
+      "breakpoints": true
     }
   ]
 }

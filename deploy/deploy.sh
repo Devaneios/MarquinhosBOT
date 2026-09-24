@@ -84,7 +84,9 @@ deploy_api() {
   tag_sandbox_rollback_image
   compose build api sandbox
   compose up --detach --wait --wait-timeout 90 postgres
-  if ! compose up --detach --no-deps --force-recreate --wait --wait-timeout 90 api; then
+  # Generous: the first Postgres boot also imports the SQLite data before the
+  # API reports healthy.
+  if ! compose up --detach --no-deps --force-recreate --wait --wait-timeout 300 api; then
     docker logs marquinhos-api --tail 200 2>&1 || true
     rollback_api || true
     exit 1

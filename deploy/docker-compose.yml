@@ -55,9 +55,12 @@ services:
       SANDBOX_IMAGE: marquinhos-sandbox:${DEPLOY_IMAGE_TAG:?DEPLOY_IMAGE_TAG is required}
       SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:?SPOTIFY_CLIENT_ID is required}
       SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET:?SPOTIFY_CLIENT_SECRET is required}
+      # The API imports this file into Postgres once, on the first boot that
+      # finds it; the rollback (SQLite) image also reads its data from here.
+      SQLITE_PATH: /app/data/marquinhos.db
     volumes:
-      # Legacy SQLite data, mounted only so the one-off import can read it.
-      # Drop once the Postgres cutover is done.
+      # Legacy SQLite data and the pre-import snapshot. Drop together with
+      # SQLITE_PATH once the Postgres cutover is done.
       - marquinhos-api-data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
       - ${SANDBOX_MIRROR_PATH:-/opt/marquinhos/sandbox-mirror}:${SANDBOX_MIRROR_PATH:-/opt/marquinhos/sandbox-mirror}:ro
