@@ -32,7 +32,7 @@ container via its `tunnel run --token` argument — no other service receives it
 
 API and bot configuration is read from their respective `.env` files. The old
 root `.env` is not used by the development commands. Compose explicitly sets
-`NODE_ENV=development`, the container URLs, and the SQLite path. After changing
+`NODE_ENV=development`, the container URLs, and the PostgreSQL connection. After changing
 an app environment file, restart `pnpm run dev` so Compose recreates the affected
 container. In Docker, `localhost` refers to that container; the bot reaches the
 API at `http://api:3000`.
@@ -106,7 +106,7 @@ registration replaces that application's command list. The Activity entry-point
 configuration is managed separately in Discord.
 
 Ctrl+C stops the foreground stack. `pnpm run dev:down` removes its containers and
-network while retaining the development SQLite volume. It does not remove
+network while retaining the development PostgreSQL volume. It does not remove
 production data. This workflow starts with a fresh database and never imports
 production state automatically.
 
@@ -119,7 +119,8 @@ pnpm run dev:doctor
 
 The test command builds the current checkout and runs configuration tests,
 real Vite/Express/Colyseus gateway smoke tests, and the workspace test suites in
-a disposable container. It uses dummy credentials and temporary SQLite storage;
+a disposable container. It uses dummy credentials and throwaway databases on the
+Compose PostgreSQL service;
 Discord login and the tunnel are not needed. Gateway tests run outside the
 Activity's happy-dom browser mocks so they exercise real network sockets.
 

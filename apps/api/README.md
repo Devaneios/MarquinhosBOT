@@ -19,7 +19,7 @@ REST API backend for the Marquinhos Discord bot ecosystem. Serves gamification (
 
 - [Bun](https://bun.sh) 1.3.x — runtime, package manager, and test runner
 - Node.js 22.x (only needed for editor tooling / type-checking with `tsc`)
-- SQLite (bundled via `bun:sqlite`, no external install required)
+- PostgreSQL 17 (the development stack runs it in Docker; tests need `TEST_DATABASE_URL` pointing at a server whose user may create databases)
 - Docker (optional, for containerized runs)
 
 ## Local Setup & Installation
@@ -27,7 +27,7 @@ REST API backend for the Marquinhos Discord bot ecosystem. Serves gamification (
 Use the monorepo [local development guide](../../docs/local-development.md).
 From the repository root, `bun run dev` starts the API, bot, Activity gateway,
 and tunnel in development containers. The API watches source changes, runs
-migrations at startup, and stores SQLite in a development-only Docker volume.
+migrations at startup, and stores data in a development-only PostgreSQL container.
 
 `bun run dev:test` runs tests with disposable storage and dummy credentials.
 `bun run dev:doctor` checks configuration and service readiness.
@@ -35,7 +35,7 @@ migrations at startup, and stores SQLite in a development-only Docker volume.
 Configure API credentials in `apps/api/.env` using `.env.example` as a reference.
 Optional integrations such as Last.fm, Spotify, and the knowledge-base service
 require their own credentials and reachable URLs. Docker Compose overrides the
-API port to 3000 and the database path to `/app/data/marquinhos.db`.
+API port to 3000 and `DATABASE_URL` to its PostgreSQL service.
 
 ## Usage
 
@@ -84,7 +84,7 @@ curl -X POST http://localhost:3000/api/gamification/xp \
 
 - **Runtime**: Express app on Bun, entry point `src/index.ts`.
 - **Auth**: bot routes (`middlewares/botAuth.ts`) accept only `MARQUINHOS_API_KEY`, checked with a timing-safe buffer comparison. User routes use `verifyDiscordToken` (`middlewares/userAuth.ts`), which decrypts the token, checks expiry, and fetches the user's Discord identity + guild role.
-- **Persistence**: `bun:sqlite`, single file DB at `SQLITE_PATH`. Schema is created idempotently in `packages/database/src/sqlite.ts` (`CREATE TABLE IF NOT EXISTS`), with incremental changes applied via numbered SQL files in `packages/database/src/migrations/` and run through `packages/database/src/migrate.ts` at boot.
+- **Persistence**: PostgreSQL through Drizzle (`postgres.js` driver) at `DATABASE_URL`. The schema lives in `packages/database/src/schema/`; `pnpm --filter @marquinhos/database db:generate` turns schema changes into SQL migrations under `packages/database/drizzle/`, which `runMigrations()` applies at boot. Periodic cleanups (scrobble queue TTL, AI trace/research/thread retention) run from `packages/database/src/maintenance.ts`. Tests get throwaway databases from `@marquinhos/database/testing`.
 - **Gamification**: `services/gamification.ts` handles XP awards, level-up detection, and cooldowns; `services/evolutiveAchievements.ts` tracks per-user stat counters and auto-evolves tiered achievements when thresholds are crossed. Both are wired into the same `addXP` call path.
 - **Wordle**: valid-guess word list is pre-generated at Docker build time (`scripts/build-valid-guesses.ts`) from `wordlist.txt` + an external word frequency list, then loaded into memory once on boot (`getValidationSet()`) to avoid disk I/O per request.
 - **AI features**: three separate paths share one set of tools and one trace recorder.

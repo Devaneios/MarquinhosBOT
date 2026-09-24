@@ -3,7 +3,7 @@
 pnpm workspace with Bun services containing the Discord bot, API, and Discord Activity frontend.
 
 Daily development uses a dedicated Docker Compose stack with source watching,
-an isolated SQLite database, and a Cloudflare tunnel. Production releases use
+an isolated PostgreSQL database, and a Cloudflare tunnel. Production releases use
 the separate deployment workflow.
 
 Install Node 22, pnpm 11.10.0, and Bun 1.4.2, then run `pnpm install --frozen-lockfile`. Start with [local development](docs/local-development.md) for environment setup,
