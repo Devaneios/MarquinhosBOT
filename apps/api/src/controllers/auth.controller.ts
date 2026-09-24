@@ -5,6 +5,7 @@ import { LastfmService } from 'services/lastfm';
 import { UserService } from 'services/user';
 import { parseRequest, sendContract } from 'utils/contract';
 import { decryptToken, encryptToken } from 'utils/crypto';
+import { logger } from 'utils/logger';
 
 class AuthController {
   constructor(
@@ -61,7 +62,7 @@ class AuthController {
         message: 'Authenticated successfully',
       });
     } catch (error) {
-      console.error(error);
+      logger.error('auth.controller.login_failed', { error });
       return res.status(500).json({ message: 'Internal Server Error' });
     }
   }
@@ -97,7 +98,7 @@ class AuthController {
         message: 'Token refreshed',
       });
     } catch (error) {
-      console.error(error);
+      logger.error('auth.controller.refresh_token_failed', { error });
       return res.status(500).json({ message: 'Internal Server Error' });
     }
   }

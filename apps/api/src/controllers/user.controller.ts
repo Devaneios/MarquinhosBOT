@@ -2,6 +2,7 @@ import * as contract from '@marquinhos/contracts/http/routes/user';
 import type { Request, Response } from 'express';
 import { UserService } from 'services/user';
 import { parseRequest, sendContract } from 'utils/contract';
+import { logger } from 'utils/logger';
 
 class UserController {
   constructor(private userService: UserService = new UserService()) {}
@@ -19,7 +20,7 @@ class UserController {
     try {
       await this.userService.enableLastfm(req.user.id, input.body.token);
     } catch (error: unknown) {
-      console.error(error);
+      logger.error('user.controller.enable_lastfm_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
     }
 
@@ -48,7 +49,7 @@ class UserController {
         await this.userService.toggleScrobbles(req.user.id),
       );
     } catch (error: unknown) {
-      console.error(error);
+      logger.error('user.controller.toggle_scrobbles_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
     }
   }
@@ -61,7 +62,7 @@ class UserController {
     try {
       await this.userService.deleteLastfmData(req.user.id);
     } catch (error: unknown) {
-      console.error(error);
+      logger.error('user.controller.delete_lastfm_data_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
     }
 
@@ -78,7 +79,7 @@ class UserController {
     try {
       await this.userService.deleteAllData(req.user.id);
     } catch (error: unknown) {
-      console.error(error);
+      logger.error('user.controller.delete_all_data_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
     }
 
@@ -103,7 +104,7 @@ class UserController {
         await this.userService.exists(input.params.id),
       );
     } catch (error: unknown) {
-      console.error(error);
+      logger.error('user.controller.exists_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
     }
   }
@@ -124,7 +125,7 @@ class UserController {
         return res.status(404).json({ message: 'Lastfm token not found' });
       }
     } catch (error: unknown) {
-      console.error(error);
+      logger.error('user.controller.lastfm_status_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
     }
   }
@@ -143,7 +144,7 @@ class UserController {
         await this.userService.getTopArtists(id, period),
       );
     } catch (error: unknown) {
-      console.error(error);
+      logger.error('user.controller.get_top_artists_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
     }
   }
@@ -162,7 +163,7 @@ class UserController {
         await this.userService.getTopAlbums(id, period),
       );
     } catch (error: unknown) {
-      console.error(error);
+      logger.error('user.controller.get_top_albums_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
     }
   }
@@ -181,7 +182,7 @@ class UserController {
         await this.userService.getTopTracks(id, period),
       );
     } catch (error: unknown) {
-      console.error(error);
+      logger.error('user.controller.get_top_tracks_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
     }
   }
