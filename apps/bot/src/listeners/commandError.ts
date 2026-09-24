@@ -1,10 +1,14 @@
+import { reportError } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { Events, Listener } from '@sapphire/framework';
 import type {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
 } from 'discord.js';
-import { DiscordAPIError } from 'discord.js';
+import { DiscordAPIError, MessageFlags } from 'discord.js';
+
+const COMMAND_FAILED_MESSAGE =
+  'Algo deu errado ao executar esse comando. O erro foi registrado.';
 
 interface CommandErrorPayload {
   command: { name: string };
@@ -35,13 +39,44 @@ export class ChatInputCommandErrorListener extends Listener<
     super(context, { event: Events.ChatInputCommandError });
   }
 
-  public run(error: unknown, { command, interaction }: CommandErrorPayload) {
+  public async run(
+    error: unknown,
+    { command, interaction }: CommandErrorPayload,
+  ) {
     const prefix = [
       `Command error in /${command.name}`,
       `User: ${interaction.user.tag} (${interaction.user.id})`,
       `Guild: ${interaction.guildId} | Channel: ${interaction.channelId}`,
     ].join(' | ');
     logger.error(formatError(error, prefix));
+    reportError(error, { origin: `command:/${command.name}` });
+    await tellUserItFailed(interaction, command.name);
+  }
+}
+
+// Otherwise the user is left on "thinking…" or sees "did not respond".
+async function tellUserItFailed(
+  interaction: ChatInputCommandInteraction,
+  commandName: string,
+) {
+  try {
+    if (interaction.deferred && !interaction.replied) {
+      await interaction.editReply({ content: COMMAND_FAILED_MESSAGE });
+    } else if (interaction.replied) {
+      await interaction.followUp({
+        content: COMMAND_FAILED_MESSAGE,
+        flags: MessageFlags.Ephemeral,
+      });
+    } else {
+      await interaction.reply({
+        content: COMMAND_FAILED_MESSAGE,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+  } catch (replyError) {
+    logger.warn(
+      `Could not tell the user /${commandName} failed: ${replyError}`,
+    );
   }
 }
 
