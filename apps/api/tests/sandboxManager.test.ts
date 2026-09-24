@@ -1,47 +1,53 @@
-import { Database } from 'bun:sqlite';
+import type { Db } from '@marquinhos/database/client';
+import { agentSandboxSessions } from '@marquinhos/database/schema';
 import { describe, expect, it, mock, spyOn } from 'bun:test';
+import { and, eq } from 'drizzle-orm';
 import type { DockerClient } from 'services/aiChat/sandbox/DockerClient';
 import {
   SandboxCapacityError,
   SandboxManager,
 } from 'services/aiChat/sandbox/SandboxManager';
 import { logger } from 'utils/logger';
+import { useTestDb } from './helpers/testDb';
 
-function setupDb(): Database {
-  const db = new Database(':memory:');
-  db.run(`
-    CREATE TABLE agent_sandbox_sessions (
-      user_id TEXT NOT NULL,
-      guild_id TEXT NOT NULL,
-      channel_id TEXT NOT NULL,
-      container_id TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'running',
-      created_at INTEGER NOT NULL,
-      last_used_at INTEGER NOT NULL,
-      PRIMARY KEY (user_id, channel_id)
-    )
-  `);
-  return db;
+const testDb = useTestDb();
+
+function setupDb(): Db {
+  return testDb.current.db;
 }
 
-function insertSession(
-  db: Database,
+async function insertSession(
+  db: Db,
   overrides: Partial<{
     userId: string;
     channelId: string;
     containerId: string;
     lastUsedAt: number;
   }> = {},
-): void {
-  const userId = overrides.userId ?? 'u1';
-  const channelId = overrides.channelId ?? 'c1';
-  const containerId = overrides.containerId ?? 'container-old';
+): Promise<void> {
   const lastUsedAt = overrides.lastUsedAt ?? 1000;
-  db.run(
-    `INSERT INTO agent_sandbox_sessions
-       (user_id, guild_id, channel_id, container_id, status, created_at, last_used_at)
-     VALUES ('${userId}', 'g1', '${channelId}', '${containerId}', 'running', ${lastUsedAt}, ${lastUsedAt})`,
-  );
+  await db.insert(agentSandboxSessions).values({
+    user_id: overrides.userId ?? 'u1',
+    guild_id: 'g1',
+    channel_id: overrides.channelId ?? 'c1',
+    container_id: overrides.containerId ?? 'container-old',
+    status: 'running',
+    created_at: lastUsedAt,
+    last_used_at: lastUsedAt,
+  });
+}
+
+async function findSession(db: Db, userId: string, channelId?: string) {
+  const [row] = await db
+    .select()
+    .from(agentSandboxSessions)
+    .where(
+      and(
+        eq(agentSandboxSessions.user_id, userId),
+        channelId ? eq(agentSandboxSessions.channel_id, channelId) : undefined,
+      ),
+    );
+  return row ?? null;
 }
 
 function fakeDocker(overrides: Partial<DockerClient> = {}): DockerClient {
@@ -67,17 +73,13 @@ describe('SandboxManager.getOrCreateSession', () => {
     expect(containerId).toBe('container-new');
     expect(docker.createContainer).toHaveBeenCalledTimes(1);
     expect(docker.startContainer).toHaveBeenCalledWith('container-new');
-    const row = db
-      .query(
-        'SELECT * FROM agent_sandbox_sessions WHERE user_id = ? AND channel_id = ?',
-      )
-      .get('u1', 'c1');
+    const row = await findSession(db, 'u1', 'c1');
     expect(row).not.toBeNull();
   });
 
   it('reuses the existing container when the row exists and it is still running', async () => {
     const db = setupDb();
-    insertSession(db);
+    await insertSession(db);
     const docker = fakeDocker({ isRunning: mock(async () => true) });
     const manager = new SandboxManager(docker, db);
 
@@ -89,23 +91,19 @@ describe('SandboxManager.getOrCreateSession', () => {
 
   it('updates last_used_at when reusing an existing session', async () => {
     const db = setupDb();
-    insertSession(db, { lastUsedAt: 1000 });
+    await insertSession(db, { lastUsedAt: 1000 });
     const docker = fakeDocker({ isRunning: mock(async () => true) });
     const manager = new SandboxManager(docker, db);
 
     await manager.getOrCreateSession('u1', 'g1', 'c1');
 
-    const row = db
-      .query<{ last_used_at: number }, []>(
-        "SELECT last_used_at FROM agent_sandbox_sessions WHERE user_id = 'u1' AND channel_id = 'c1'",
-      )
-      .get();
+    const row = await findSession(db, 'u1', 'c1');
     expect(row!.last_used_at).toBeGreaterThan(1000);
   });
 
   it('self-heals by creating a new container when the row exists but the container is dead', async () => {
     const db = setupDb();
-    insertSession(db, { containerId: 'container-dead' });
+    await insertSession(db, { containerId: 'container-dead' });
     const docker = fakeDocker({ isRunning: mock(async () => false) });
     const manager = new SandboxManager(docker, db);
 
@@ -118,7 +116,7 @@ describe('SandboxManager.getOrCreateSession', () => {
   it('rejects creating a new session when the concurrency limit (8) is reached', async () => {
     const db = setupDb();
     for (let i = 0; i < 8; i++) {
-      insertSession(db, {
+      await insertSession(db, {
         userId: `u${i}`,
         channelId: `c${i}`,
         containerId: `container-${i}`,
@@ -127,7 +125,7 @@ describe('SandboxManager.getOrCreateSession', () => {
     const docker = fakeDocker({ isRunning: mock(async () => true) });
     const manager = new SandboxManager(docker, db);
 
-    expect(
+    await expect(
       manager.getOrCreateSession('new-user', 'g1', 'new-channel'),
     ).rejects.toThrow(SandboxCapacityError);
     expect(docker.createContainer).not.toHaveBeenCalled();
@@ -136,7 +134,7 @@ describe('SandboxManager.getOrCreateSession', () => {
   it('does not count dead sessions against the concurrency limit', async () => {
     const db = setupDb();
     for (let i = 0; i < 8; i++) {
-      insertSession(db, {
+      await insertSession(db, {
         userId: `u${i}`,
         channelId: `c${i}`,
         containerId: `container-${i}`,
@@ -165,16 +163,12 @@ describe('SandboxManager.getOrCreateSession', () => {
     });
     const manager = new SandboxManager(docker, db);
 
-    expect(manager.getOrCreateSession('u1', 'g1', 'c1')).rejects.toThrow(
+    await expect(manager.getOrCreateSession('u1', 'g1', 'c1')).rejects.toThrow(
       'start failed',
     );
 
     expect(docker.removeContainer).toHaveBeenCalledWith('container-new');
-    const row = db
-      .query(
-        'SELECT * FROM agent_sandbox_sessions WHERE user_id = ? AND channel_id = ?',
-      )
-      .get('u1', 'c1');
+    const row = await findSession(db, 'u1', 'c1');
     expect(row).toBeNull();
   });
 
@@ -240,7 +234,7 @@ describe('SandboxManager.sweepIdleSessions', () => {
   it('stops and removes containers idle past the TTL and deletes their row', async () => {
     const db = setupDb();
     const oldTimestamp = Date.now() - 60 * 60 * 1000;
-    insertSession(db, {
+    await insertSession(db, {
       containerId: 'container-idle',
       lastUsedAt: oldTimestamp,
     });
@@ -251,15 +245,13 @@ describe('SandboxManager.sweepIdleSessions', () => {
 
     expect(docker.stopContainer).toHaveBeenCalledWith('container-idle');
     expect(docker.removeContainer).toHaveBeenCalledWith('container-idle');
-    const row = db
-      .query('SELECT * FROM agent_sandbox_sessions WHERE user_id = ?')
-      .get('u1');
+    const row = await findSession(db, 'u1');
     expect(row).toBeNull();
   });
 
   it('leaves recently used containers untouched', async () => {
     const db = setupDb();
-    insertSession(db, {
+    await insertSession(db, {
       containerId: 'container-fresh',
       lastUsedAt: Date.now(),
     });
@@ -269,15 +261,13 @@ describe('SandboxManager.sweepIdleSessions', () => {
     await manager.sweepIdleSessions();
 
     expect(docker.stopContainer).not.toHaveBeenCalled();
-    const row = db
-      .query('SELECT * FROM agent_sandbox_sessions WHERE user_id = ?')
-      .get('u1');
+    const row = await findSession(db, 'u1');
     expect(row).not.toBeNull();
   });
 
   it('reconciles rows whose container no longer exists, without calling stop/remove', async () => {
     const db = setupDb();
-    insertSession(db, {
+    await insertSession(db, {
       containerId: 'container-gone',
       lastUsedAt: Date.now(),
     });
@@ -287,9 +277,7 @@ describe('SandboxManager.sweepIdleSessions', () => {
     await manager.sweepIdleSessions();
 
     expect(docker.stopContainer).not.toHaveBeenCalled();
-    const row = db
-      .query('SELECT * FROM agent_sandbox_sessions WHERE user_id = ?')
-      .get('u1');
+    const row = await findSession(db, 'u1');
     expect(row).toBeNull();
   });
 });
@@ -321,7 +309,7 @@ describe('SandboxManager lifecycle logging', () => {
 
   it('logs a reused session instead of creating a second container', async () => {
     const db = setupDb();
-    insertSession(db, { userId: 'u1', channelId: 'c1' });
+    await insertSession(db, { userId: 'u1', channelId: 'c1' });
     const { events, restore } = captureLogs();
     try {
       await new SandboxManager(fakeDocker(), db).getOrCreateSession(
@@ -338,11 +326,11 @@ describe('SandboxManager lifecycle logging', () => {
   it('logs the capacity ceiling before rejecting a new session', async () => {
     const db = setupDb();
     for (let i = 0; i < 8; i++) {
-      insertSession(db, { userId: `u${i}`, channelId: `c${i}` });
+      await insertSession(db, { userId: `u${i}`, channelId: `c${i}` });
     }
     const { events, restore } = captureLogs();
     try {
-      expect(
+      await expect(
         new SandboxManager(fakeDocker(), db).getOrCreateSession(
           'new',
           'g1',

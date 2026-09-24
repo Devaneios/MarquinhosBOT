@@ -25,7 +25,9 @@ function fakeBroadcaster() {
 function fakeGamification() {
   const recorded: unknown[] = [];
   return {
-    recordGameResult: (input: unknown) => recorded.push(input),
+    recordGameResult: (input: unknown) => {
+      recorded.push(input);
+    },
     recorded,
   };
 }

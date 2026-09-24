@@ -8,8 +8,8 @@ import { parseRequest, sendContract } from 'utils/contract';
 const service = new WordleService();
 
 export interface WordleUserConfigStore {
-  get(userId: string): WordleUserConfig;
-  update(userId: string, config: WordleUserConfig): WordleUserConfig;
+  get(userId: string): Promise<WordleUserConfig>;
+  update(userId: string, config: WordleUserConfig): Promise<WordleUserConfig>;
 }
 
 interface UserConfigRequest {
@@ -24,18 +24,24 @@ interface UserConfigResponse {
 export default class WordleController {
   constructor(private readonly userConfig: WordleUserConfigStore) {}
 
-  getUserConfig(req: UserConfigRequest, res: UserConfigResponse): void {
+  async getUserConfig(
+    req: UserConfigRequest,
+    res: UserConfigResponse,
+  ): Promise<void> {
     if (!req.user) {
       res.status(401).json({ message: 'Unauthorized' });
       return;
     }
 
     sendContract(res, contract.getUserConfig, {
-      data: this.userConfig.get(req.user.id),
+      data: await this.userConfig.get(req.user.id),
     });
   }
 
-  updateUserConfig(req: UserConfigRequest, res: UserConfigResponse): void {
+  async updateUserConfig(
+    req: UserConfigRequest,
+    res: UserConfigResponse,
+  ): Promise<void> {
     if (!req.user) {
       res.status(401).json({ message: 'Unauthorized' });
       return;
@@ -51,11 +57,11 @@ export default class WordleController {
     }
 
     sendContract(res, contract.updateUserConfig, {
-      data: this.userConfig.update(req.user.id, config.data),
+      data: await this.userConfig.update(req.user.id, config.data),
     });
   }
 
-  submitGuess(req: Request, res: Response): void {
+  async submitGuess(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.submitGuess, req);
     if (!input) {
       res
@@ -66,7 +72,7 @@ export default class WordleController {
     const { userId, guildId, guess } = input.body;
 
     try {
-      const result = service.submitGuess(userId, guildId, guess);
+      const result = await service.submitGuess(userId, guildId, guess);
       if ('error' in result) {
         res.status(400).json({ message: result.error });
         return;
@@ -78,7 +84,7 @@ export default class WordleController {
     }
   }
 
-  getStats(req: Request, res: Response): void {
+  async getStats(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.getStats, req);
     if (!input) {
       res.status(400).json({ message: 'guildId é obrigatório.' });
@@ -87,7 +93,7 @@ export default class WordleController {
     const { guildId } = input.params;
 
     try {
-      const stats = service.getDailyStats(guildId);
+      const stats = await service.getDailyStats(guildId);
       sendContract(res, contract.getStats, { data: stats });
     } catch (err) {
       console.error('WordleController.getStats error:', err);
@@ -95,7 +101,7 @@ export default class WordleController {
     }
   }
 
-  getUserSession(req: Request, res: Response): void {
+  async getUserSession(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.getUserSession, req);
     if (!input) {
       res.status(400).json({ message: 'userId e guildId são obrigatórios.' });
@@ -104,7 +110,7 @@ export default class WordleController {
     const { userId, guildId } = input.params;
 
     try {
-      const session = service.getUserSession(userId, guildId);
+      const session = await service.getUserSession(userId, guildId);
       sendContract(res, contract.getUserSession, { data: session });
     } catch (err) {
       console.error('WordleController.getUserSession error:', err);
@@ -112,7 +118,7 @@ export default class WordleController {
     }
   }
 
-  getDayGuesses(req: Request, res: Response): void {
+  async getDayGuesses(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.getDayGuesses, req);
     if (!input) {
       res.status(400).json({ message: 'guildId é obrigatório.' });
@@ -121,7 +127,7 @@ export default class WordleController {
     const { guildId } = input.params;
 
     try {
-      const data = service.getDayGuesses(guildId);
+      const data = await service.getDayGuesses(guildId);
       sendContract(res, contract.getDayGuesses, { data });
     } catch (err) {
       console.error('WordleController.getDayGuesses error:', err);
@@ -129,7 +135,7 @@ export default class WordleController {
     }
   }
 
-  forceNewWord(req: Request, res: Response): void {
+  async forceNewWord(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.forceNewWord, req);
     if (!input) {
       res.status(400).json({ message: 'guildId é obrigatório.' });
@@ -138,8 +144,8 @@ export default class WordleController {
     const { guildId } = input.body;
 
     try {
-      const result = service.forceNewWord(guildId);
-      const stats = service.getDailyStats(guildId);
+      const result = await service.forceNewWord(guildId);
+      const stats = await service.getDailyStats(guildId);
       sendContract(res, contract.forceNewWord, { data: { ...result, stats } });
     } catch (err) {
       console.error('WordleController.forceNewWord error:', err);
@@ -147,7 +153,7 @@ export default class WordleController {
     }
   }
 
-  getLeaderboard(req: Request, res: Response): void {
+  async getLeaderboard(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.getLeaderboard, req);
     if (!input) {
       res.status(400).json({ message: 'guildId é obrigatório.' });
@@ -157,8 +163,8 @@ export default class WordleController {
     const { period, date } = input.query;
 
     try {
-      const data = service.getLeaderboard(guildId, 10, period, date);
-      const groupStreak = service.getGroupStreak(guildId);
+      const data = await service.getLeaderboard(guildId, 10, period, date);
+      const groupStreak = await service.getGroupStreak(guildId);
       sendContract(res, contract.getLeaderboard, { data, groupStreak });
     } catch (err) {
       console.error('WordleController.getLeaderboard error:', err);
@@ -166,7 +172,7 @@ export default class WordleController {
     }
   }
 
-  setConfig(req: Request, res: Response): void {
+  async setConfig(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.setConfig, req);
     if (!input) {
       res
@@ -177,7 +183,7 @@ export default class WordleController {
     const { guildId, channelId } = input.body;
 
     try {
-      service.setConfig(guildId, channelId);
+      await service.setConfig(guildId, channelId);
       sendContract(res, contract.setConfig, { message: 'Configuração salva.' });
     } catch (err) {
       console.error('WordleController.setConfig error:', err);
@@ -185,7 +191,7 @@ export default class WordleController {
     }
   }
 
-  validateGuess(req: Request, res: Response): void {
+  async validateGuess(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.validateGuess, req);
     if (!input) {
       res.status(400).json({ message: 'guildId e guess são obrigatórios.' });
@@ -195,7 +201,7 @@ export default class WordleController {
     const { guess } = input.query;
 
     try {
-      const result = service.validateGuess(guildId, guess);
+      const result = await service.validateGuess(guildId, guess);
       sendContract(res, contract.validateGuess, { data: result });
     } catch (err) {
       console.error('WordleController.validateGuess error:', err);
@@ -203,7 +209,7 @@ export default class WordleController {
     }
   }
 
-  getConfig(req: Request, res: Response): void {
+  async getConfig(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.getConfig, req);
     if (!input) {
       res.status(400).json({ message: 'guildId é obrigatório.' });
@@ -212,7 +218,7 @@ export default class WordleController {
     const { guildId } = input.params;
 
     try {
-      const config = service.getConfig(guildId);
+      const config = await service.getConfig(guildId);
       sendContract(res, contract.getConfig, { data: config });
     } catch (err) {
       console.error('WordleController.getConfig error:', err);
@@ -220,7 +226,7 @@ export default class WordleController {
     }
   }
 
-  markAnnounced(req: Request, res: Response): void {
+  async markAnnounced(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.markAnnounced, req);
     if (!input) {
       res.status(400).json({ message: 'userId e guildId são obrigatórios.' });
@@ -229,7 +235,7 @@ export default class WordleController {
     const { userId, guildId } = input.body;
 
     try {
-      const claimed = service.markAnnounced(userId, guildId);
+      const claimed = await service.markAnnounced(userId, guildId);
       sendContract(res, contract.markAnnounced, { data: { claimed } });
     } catch (err) {
       console.error('WordleController.markAnnounced error:', err);
@@ -237,7 +243,7 @@ export default class WordleController {
     }
   }
 
-  getUnannouncedWins(req: Request, res: Response): void {
+  async getUnannouncedWins(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.getUnannouncedWins, req);
     if (!input) {
       res.status(400).json({ message: 'guildId é obrigatório.' });
@@ -246,7 +252,7 @@ export default class WordleController {
     const { guildId } = input.params;
 
     try {
-      const data = service.getUnannouncedWins(guildId);
+      const data = await service.getUnannouncedWins(guildId);
       sendContract(res, contract.getUnannouncedWins, { data });
     } catch (err) {
       console.error('WordleController.getUnannouncedWins error:', err);
@@ -254,7 +260,7 @@ export default class WordleController {
     }
   }
 
-  getStreak(req: Request, res: Response): void {
+  async getStreak(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.getStreak, req);
     if (!input) {
       res.status(400).json({ message: 'userId e guildId são obrigatórios.' });
@@ -263,7 +269,7 @@ export default class WordleController {
     const { userId, guildId } = input.params;
 
     try {
-      const streak = service.getStreak(userId, guildId);
+      const streak = await service.getStreak(userId, guildId);
       sendContract(res, contract.getStreak, { data: streak });
     } catch (err) {
       console.error('WordleController.getStreak error:', err);
@@ -271,9 +277,9 @@ export default class WordleController {
     }
   }
 
-  getWordlistPoolStats(_req: Request, res: Response): void {
+  async getWordlistPoolStats(_req: Request, res: Response): Promise<void> {
     try {
-      const stats = service.getWordlistPoolStats();
+      const stats = await service.getWordlistPoolStats();
       sendContract(res, contract.getWordlistPoolStats, { data: stats });
     } catch (err) {
       console.error('WordleController.getWordlistPoolStats error:', err);
@@ -281,9 +287,9 @@ export default class WordleController {
     }
   }
 
-  getNextReviewWord(_req: Request, res: Response): void {
+  async getNextReviewWord(_req: Request, res: Response): Promise<void> {
     try {
-      const data = service.getNextReviewWord();
+      const data = await service.getNextReviewWord();
       sendContract(res, contract.getNextReviewWord, { data });
     } catch (err) {
       console.error('WordleController.getNextReviewWord error:', err);
@@ -291,7 +297,7 @@ export default class WordleController {
     }
   }
 
-  submitReviewDecision(req: Request, res: Response): void {
+  async submitReviewDecision(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.submitReviewDecision, req);
     if (!input) {
       res.status(400).json({
@@ -302,7 +308,7 @@ export default class WordleController {
     const { word, decision } = input.body;
 
     try {
-      const data = service.submitReviewDecision(word, decision);
+      const data = await service.submitReviewDecision(word, decision);
       sendContract(res, contract.submitReviewDecision, { data });
     } catch (err) {
       console.error('WordleController.submitReviewDecision error:', err);

@@ -59,7 +59,7 @@ class AiChatController {
       const { threadId, guildId, channelId, userId, query, idempotencyKey } =
         input.body;
 
-      const outcome = this.research.start({
+      const outcome = await this.research.start({
         threadId,
         guildId,
         channelId,
@@ -103,7 +103,7 @@ class AiChatController {
       if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
-      const job = this.research.get(input.params.jobId);
+      const job = await this.research.get(input.params.jobId);
       if (!job) return res.status(404).json({ message: 'Job not found' });
       return sendContract(res, contract.getResearchJob, { data: job });
     } catch (error) {
@@ -150,7 +150,7 @@ class AiChatController {
         return res.status(400).json({ message: 'Validation failed' });
       }
 
-      const traces = this.traceQuery.list(input.query);
+      const traces = await this.traceQuery.list(input.query);
 
       return sendContract(res, contract.listTraces, { data: traces });
     } catch (error) {
@@ -165,7 +165,7 @@ class AiChatController {
       if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
-      const trace = this.traceQuery.get(input.params.traceId);
+      const trace = await this.traceQuery.get(input.params.traceId);
       if (!trace) return res.status(404).json({ message: 'Trace not found' });
       return sendContract(res, contract.getTrace, { data: trace });
     } catch (error) {

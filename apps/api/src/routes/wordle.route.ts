@@ -1,4 +1,4 @@
-import { db } from '@marquinhos/database/sqlite';
+import { db } from '@marquinhos/database/client';
 import WordleController from 'controllers/wordle.controller';
 import express from 'express';
 import { checkToken } from 'middlewares/botAuth';

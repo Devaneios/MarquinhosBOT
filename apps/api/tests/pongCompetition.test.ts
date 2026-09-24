@@ -1,8 +1,12 @@
 import type { PongRating } from '@marquinhos/contracts/http/routes/activity';
+import { pongRankedMatches } from '@marquinhos/database/schema';
 import { calculateGlicko2 } from '@marquinhos/domain/games/pong/rating';
-import { Database } from 'bun:sqlite';
 import { describe, expect, it } from 'bun:test';
+import { count } from 'drizzle-orm';
 import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
+import { useTestDb } from './helpers/testDb';
+
+const testDb = useTestDb();
 
 function rating(
   userId: string,
@@ -22,23 +26,8 @@ function rating(
   };
 }
 
-function database(): Database {
-  const db = new Database(':memory:');
-  db.run(`CREATE TABLE pong_ratings (
-    user_id TEXT NOT NULL, guild_id TEXT NOT NULL, pool TEXT NOT NULL,
-    rating REAL NOT NULL, deviation REAL NOT NULL, volatility REAL NOT NULL,
-    matches INTEGER NOT NULL, wins INTEGER NOT NULL, updated_at INTEGER NOT NULL,
-    PRIMARY KEY (user_id, guild_id, pool)
-  )`);
-  db.run(`CREATE TABLE pong_ranked_matches (
-    id TEXT PRIMARY KEY, session_id TEXT NOT NULL, guild_id TEXT NOT NULL,
-    pool TEXT NOT NULL, results_json TEXT NOT NULL, played_at INTEGER NOT NULL
-  )`);
-  return db;
-}
-
 describe('PongCompetitionService', () => {
-  it('matches the published Glicko-2 reference rating period', () => {
+  it('matches the published Glicko-2 reference rating period', async () => {
     const player = rating('player', 1500, 200, 0.06);
     const result = calculateGlicko2(player, [
       { opponent: rating('a', 1400, 30, 0.06), score: 1 },
@@ -51,10 +40,12 @@ describe('PongCompetitionService', () => {
     expect(result.volatility).toBeCloseTo(0.059996, 5);
   });
 
-  it('starts new players at 1500 with maximum uncertainty', () => {
-    const service = new PongCompetitionService(database());
+  it('starts new players at 1500 with maximum uncertainty', async () => {
+    const service = new PongCompetitionService(testDb.current.db);
 
-    expect(service.getRating('new', 'guild-1', 'classic-1v1')).toMatchObject({
+    expect(
+      await service.getRating('new', 'guild-1', 'classic-1v1'),
+    ).toMatchObject({
       rating: 1500,
       deviation: 350,
       volatility: 0.06,
@@ -63,16 +54,15 @@ describe('PongCompetitionService', () => {
     });
   });
 
-  it('updates both players atomically and orders the leaderboard', () => {
-    const db = database();
-    const service = new PongCompetitionService(db);
+  it('updates both players atomically and orders the leaderboard', async () => {
+    const service = new PongCompetitionService(testDb.current.db);
 
-    service.recordMatch('session-1', 'guild-1', 'classic-1v1', [
+    await service.recordMatch('session-1', 'guild-1', 'classic-1v1', [
       { userId: 'winner', position: 1 },
       { userId: 'loser', position: 2 },
     ]);
 
-    const leaderboard = service.leaderboard('guild-1', 'classic-1v1');
+    const leaderboard = await service.leaderboard('guild-1', 'classic-1v1');
     expect(leaderboard.map((entry) => entry.userId)).toEqual([
       'winner',
       'loser',
@@ -81,14 +71,33 @@ describe('PongCompetitionService', () => {
     expect(leaderboard[1]!.rating).toBeLessThan(1500);
     expect(leaderboard.every((entry) => entry.matches === 1)).toBe(true);
     expect(
-      db.query('SELECT COUNT(*) AS count FROM pong_ranked_matches').get(),
-    ).toEqual({ count: 1 });
+      await testDb.current.db
+        .select({ count: count() })
+        .from(pongRankedMatches),
+    ).toEqual([{ count: 1 }]);
   });
 
-  it('decomposes four-player placements into simultaneous pairwise results', () => {
-    const service = new PongCompetitionService(database());
+  it('applies concurrent matches for the same player one after another', async () => {
+    const service = new PongCompetitionService(testDb.current.db);
 
-    const updated = service.recordMatch(
+    await Promise.all(
+      ['a', 'b', 'c'].map((opponent, index) =>
+        service.recordMatch(`session-${index}`, 'guild-1', 'classic-1v1', [
+          { userId: 'shared', position: 1 },
+          { userId: opponent, position: 2 },
+        ]),
+      ),
+    );
+
+    const shared = await service.getRating('shared', 'guild-1', 'classic-1v1');
+    expect(shared.matches).toBe(3);
+    expect(shared.wins).toBe(3);
+  });
+
+  it('decomposes four-player placements into simultaneous pairwise results', async () => {
+    const service = new PongCompetitionService(testDb.current.db);
+
+    const updated = await service.recordMatch(
       'session-2',
       'guild-1',
       'quad-elimination',

@@ -24,7 +24,7 @@ export interface GamificationLike {
     guildId: string;
     gameType: string;
     results: { userId: string; position: number }[];
-  }): void;
+  }): void | Promise<void>;
 }
 
 export interface DominoesSessionIdentity {

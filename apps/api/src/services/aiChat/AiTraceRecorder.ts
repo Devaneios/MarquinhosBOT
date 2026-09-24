@@ -1,6 +1,8 @@
-import { db as defaultDb } from '@marquinhos/database/sqlite';
-import { Database } from 'bun:sqlite';
+import { db as defaultDb, type Db } from '@marquinhos/database/client';
+import { aiTraceEvents, aiTraces } from '@marquinhos/database/schema';
 import { randomUUID } from 'crypto';
+import { eq } from 'drizzle-orm';
+import { DrizzleQueryError } from 'drizzle-orm/errors';
 import type { AiChatRequest } from 'services/aiChat/types';
 import { getErrorMessage } from 'utils/errorHandling';
 import { isLevelEnabled, logger, type LogFields } from 'utils/logger';
@@ -82,6 +84,8 @@ function isEnabled(): boolean {
 
 function describeError(error: unknown): string | undefined {
   if (error === undefined || error === null) return undefined;
+  // A query error's stack repeats its message, bound parameters included.
+  if (error instanceof DrizzleQueryError) return getErrorMessage(error);
   if (error instanceof Error) return `${error.message}\n${error.stack ?? ''}`;
   return String(error);
 }
@@ -100,10 +104,22 @@ class RecordedTrace implements TraceContext {
   private completionTokens = 0;
   private readonly startedAt = Date.now();
 
+  // Writes for one trace are chained so they land in order: the ai_traces
+  // insert first, then events, then the finishing update. Callers never wait.
+  private pending: Promise<void>;
+
   constructor(
     readonly traceId: string,
-    private db: Database,
-  ) {}
+    private db: Db,
+    created: Promise<void>,
+    private onFinished: (trace: RecordedTrace) => void,
+  ) {
+    this.pending = created;
+  }
+
+  get settled(): Promise<void> {
+    return this.pending;
+  }
 
   llm(event: TraceLlmEvent): void {
     this.promptTokens += event.usage?.promptTokens ?? 0;
@@ -238,35 +254,26 @@ class RecordedTrace implements TraceContext {
       },
       { reply: summary.reply },
     );
-    this.run(
-      `UPDATE ai_traces SET
-         main_category = $mainCategory,
-         category = $category,
-         status = $status,
-         reply = $reply,
-         format = $format,
-         error = $error,
-         iterations = $iterations,
-         tool_calls_used = $toolCallsUsed,
-         prompt_tokens = $promptTokens,
-         completion_tokens = $completionTokens,
-         duration_ms = $durationMs
-       WHERE trace_id = $traceId`,
-      {
-        $traceId: this.traceId,
-        $mainCategory: summary.mainCategory ?? null,
-        $category: summary.category ?? null,
-        $status: summary.status,
-        $reply: summary.reply ?? null,
-        $format: summary.format ?? null,
-        $error: error ?? null,
-        $iterations: summary.iterations ?? 0,
-        $toolCallsUsed: summary.toolCallsUsed ?? 0,
-        $promptTokens: this.promptTokens,
-        $completionTokens: this.completionTokens,
-        $durationMs: durationMs,
-      },
-    );
+    const update = {
+      main_category: summary.mainCategory ?? null,
+      category: summary.category ?? null,
+      status: summary.status,
+      reply: summary.reply ?? null,
+      format: summary.format ?? null,
+      error: error ?? null,
+      iterations: summary.iterations ?? 0,
+      tool_calls_used: summary.toolCallsUsed ?? 0,
+      prompt_tokens: this.promptTokens,
+      completion_tokens: this.completionTokens,
+      duration_ms: durationMs,
+    };
+    this.enqueue(async () => {
+      await this.db
+        .update(aiTraces)
+        .set(update)
+        .where(eq(aiTraces.trace_id, this.traceId));
+    });
+    void this.pending.then(() => this.onFinished(this));
   }
 
   private nextSeq(): number {
@@ -293,68 +300,62 @@ class RecordedTrace implements TraceContext {
     exitCode?: number;
     durationMs?: number;
   }): void {
-    this.run(
-      `INSERT INTO ai_trace_events
-         (trace_id, seq, type, phase, name, input, output, status, exit_code, duration_ms, created_at)
-       VALUES ($traceId, $seq, $type, $phase, $name, $input, $output, $status, $exitCode, $durationMs, $createdAt)`,
-      {
-        $traceId: this.traceId,
-        $seq: event.seq,
-        $type: event.type,
-        $phase: event.phase ?? null,
-        $name: event.name ?? null,
-        $input: event.input ?? null,
-        $output: event.output ?? null,
-        $status: event.status ?? null,
-        $exitCode: event.exitCode ?? null,
-        $durationMs: event.durationMs ?? null,
-        $createdAt: Date.now(),
-      },
-    );
+    const row = {
+      trace_id: this.traceId,
+      seq: event.seq,
+      type: event.type,
+      phase: event.phase ?? null,
+      name: event.name ?? null,
+      input: event.input ?? null,
+      output: event.output ?? null,
+      status: event.status ?? null,
+      exit_code: event.exitCode ?? null,
+      duration_ms: event.durationMs ?? null,
+      created_at: Date.now(),
+    };
+    this.enqueue(async () => {
+      await this.db.insert(aiTraceEvents).values(row);
+    });
   }
 
-  private run(sql: string, params: TraceRowParams): void {
-    try {
-      this.db.query<unknown, TraceRowParams>(sql).run(params);
-    } catch (error) {
+  private enqueue(write: () => Promise<void>): void {
+    this.pending = this.pending.then(write).catch((error: unknown) => {
       logger.warn('ai.trace.persist_failed', {
         traceId: this.traceId,
         error: describeError(error),
       });
-    }
+    });
   }
 }
 
-type TraceRowParams = Record<string, string | number | boolean | null>;
-
 export class AiTraceRecorder {
-  constructor(private db: Database = defaultDb) {}
+  private readonly open = new Set<RecordedTrace>();
+
+  constructor(private db: Db = defaultDb) {}
 
   start(request: AiChatRequest): TraceContext {
     if (!isEnabled()) return NOOP_TRACE;
 
     const traceId = randomUUID();
-    try {
-      this.db
-        .query(
-          `INSERT INTO ai_traces
-             (trace_id, user_id, guild_id, channel_id, content, created_at)
-           VALUES ($traceId, $userId, $guildId, $channelId, $content, $createdAt)`,
-        )
-        .run({
-          $traceId: traceId,
-          $userId: request.userId,
-          $guildId: request.guildId,
-          $channelId: request.channelId,
-          $content: request.content,
-          $createdAt: Date.now(),
-        });
-    } catch (error) {
-      logger.warn('ai.trace.persist_failed', {
-        traceId,
-        error: describeError(error),
-      });
-    }
+    const created = this.db
+      .insert(aiTraces)
+      .values({
+        trace_id: traceId,
+        user_id: request.userId,
+        guild_id: request.guildId,
+        channel_id: request.channelId,
+        content: request.content,
+        created_at: Date.now(),
+      })
+      .then(
+        () => undefined,
+        (error: unknown) => {
+          logger.warn('ai.trace.persist_failed', {
+            traceId,
+            error: describeError(error),
+          });
+        },
+      );
 
     logger.info('ai.trace.start', {
       traceId,
@@ -367,6 +368,18 @@ export class AiTraceRecorder {
       content: isLevelEnabled('debug') ? request.content : undefined,
     });
 
-    return new RecordedTrace(traceId, this.db);
+    // Kept only until its last write lands, so flush() can wait for it.
+    const trace = new RecordedTrace(traceId, this.db, created, (finished) =>
+      this.open.delete(finished),
+    );
+    this.open.add(trace);
+    return trace;
+  }
+
+  /** Waits for every write queued so far (tests, graceful shutdown). */
+  async flush(): Promise<void> {
+    const traces = [...this.open];
+    this.open.clear();
+    await Promise.all(traces.map((trace) => trace.settled));
   }
 }

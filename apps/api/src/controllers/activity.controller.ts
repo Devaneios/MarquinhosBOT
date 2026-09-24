@@ -50,7 +50,7 @@ class ActivityController {
           .status(403)
           .json({ message: 'Not a member of the specified guild' });
       }
-      const data = new PongCompetitionService().leaderboard(
+      const data = await new PongCompetitionService().leaderboard(
         guildId,
         pool,
         limit,
@@ -83,7 +83,7 @@ class ActivityController {
           .status(403)
           .json({ message: 'Not a member of the specified guild' });
       }
-      const data = new PongTournamentService().create({
+      const data = await new PongTournamentService().create({
         guildId: input.guildId,
         name: input.name,
         format: input.format,
@@ -122,7 +122,7 @@ class ActivityController {
           .json({ message: 'Not a member of the specified guild' });
       }
       return sendContract(res, contract.listPongTournaments, {
-        data: new PongTournamentService().list(guildId),
+        data: await new PongTournamentService().list(guildId),
       });
     } catch (error) {
       logger.error('activity.controller.pong_tournament_list_failed', {
@@ -143,7 +143,7 @@ class ActivityController {
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
       }
-      const data = new PongTournamentService().report(
+      const data = await new PongTournamentService().report(
         matchId,
         winnerId,
         user.id,
@@ -329,14 +329,14 @@ class ActivityController {
   // Called by the bot (checkToken bot-key auth) right before launchActivity(),
   // since Discord's LaunchActivity interaction response has no data field of
   // its own to tell the Activity which game to open.
-  recordDeepLinkIntent = (req: Request, res: Response) => {
+  recordDeepLinkIntent = async (req: Request, res: Response) => {
     const input = parseRequest(contract.recordDeepLink, req);
     if (!input) {
       return res.status(400).json({ message: 'Validation failed' });
     }
     const { userId, guildId, game } = input.body;
     try {
-      recordDeepLink(userId, guildId, game);
+      await recordDeepLink(userId, guildId, game);
       return sendContract(res, contract.recordDeepLink, { data: { ok: true } });
     } catch (error) {
       logger.error('activity.controller.record_deep_link_failed', { error });
@@ -358,7 +358,7 @@ class ActivityController {
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
       }
-      const game = claimDeepLink(user.id, guildId);
+      const game = await claimDeepLink(user.id, guildId);
       return sendContract(res, contract.claimDeepLink, { data: { game } });
     } catch (error) {
       logger.error('activity.controller.claim_deep_link_failed', { error });

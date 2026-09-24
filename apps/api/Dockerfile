@@ -31,7 +31,7 @@ COPY apps/api/wordlist.txt apps/api/devaneios-wordlist.txt ./apps/api/
 COPY --from=builder /app/apps/api/valid-guesses.txt ./apps/api/
 WORKDIR /app/apps/api
 RUN mkdir -p /app/data && chown marquinhos:marquinhos /app/data
-RUN bun -e "const pkg = await Bun.file('/app/apps/api/package.json').json(); for (const name of Object.keys(pkg.dependencies)) { if (name.startsWith('@marquinhos/')) continue; try { await import(name) } catch (error) { throw new Error(name + ': ' + error.message) } } process.env.SQLITE_PATH = ':memory:'; await import('@marquinhos/database/sqlite'); process.exit(0)"
+RUN bun -e "const pkg = await Bun.file('/app/apps/api/package.json').json(); for (const name of Object.keys(pkg.dependencies)) { if (name.startsWith('@marquinhos/')) continue; try { await import(name) } catch (error) { throw new Error(name + ': ' + error.message) } } await import('@marquinhos/database/migrate'); if (!(await Bun.file('/app/packages/database/drizzle/meta/_journal.json').exists())) throw new Error('database migrations missing from image'); process.exit(0)"
 USER marquinhos
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD wget -q -O /dev/null http://127.0.0.1:${HTTP_PORT:-3000}/api/health || exit 1

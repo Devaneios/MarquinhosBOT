@@ -1,7 +1,30 @@
 import type { Track } from '@marquinhos/contracts/http/routes/scrobble';
 import type { LastfmTopListenedPeriod } from '@marquinhos/contracts/http/routes/user';
-import { db } from '@marquinhos/database/sqlite';
+import { db } from '@marquinhos/database/client';
+import {
+  activityDeepLinks,
+  aiResearchEvents,
+  aiResearchJobs,
+  aiThreadItems,
+  aiThreadSessions,
+  aiTraceEvents,
+  aiTraces,
+  evolutiveAchievements,
+  mazeSessions,
+  pongRatings,
+  userAchievements,
+  userGameResults,
+  userLevels,
+  users,
+  userStats,
+  wordleSessions,
+  wordleStreaks,
+  wordleUserConfig,
+  xpCooldowns,
+} from '@marquinhos/database/schema';
 import dotenv from 'dotenv';
+import { eq, inArray, not, sql } from 'drizzle-orm';
+import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { DiscordService } from 'services/discord';
 import { LastfmService } from 'services/lastfm';
 import { SpotifyService } from 'services/spotify';
@@ -9,36 +32,36 @@ import { decryptToken, encryptToken } from 'utils/crypto';
 
 dotenv.config();
 
-type UserRow = {
-  id: string;
-  lastfm_session_token: string | null;
-  lastfm_username: string | null;
-  scrobbles_on: number | null;
-};
-
 // Everything the privacy policy's "delete all your data" covers. Left out
 // on purpose: AI usage counters (deleting them would reset quotas), sandbox
 // sessions (the sweep needs the row to stop the container), and Pong
 // tournaments and ranked matches, which other players' results depend on.
-const USER_OWNED_TABLES: readonly (readonly [table: string, column: string])[] =
-  [
-    ['ai_traces', 'user_id'],
-    ['ai_thread_sessions', 'owner_user_id'],
-    ['ai_research_jobs', 'user_id'],
-    ['user_levels', 'user_id'],
-    ['user_achievements', 'user_id'],
-    ['user_stats', 'user_id'],
-    ['xp_cooldowns', 'user_id'],
-    ['user_game_results', 'user_id'],
-    ['evolutive_achievements', 'user_id'],
-    ['maze_sessions', 'user_id'],
-    ['activity_deep_links', 'user_id'],
-    ['wordle_sessions', 'user_id'],
-    ['wordle_streaks', 'user_id'],
-    ['wordle_user_config', 'user_id'],
-    ['pong_ratings', 'user_id'],
-    ['users', 'id'],
-  ];
+const USER_OWNED_TABLES: readonly (readonly [
+  table: PgTable,
+  column: PgColumn,
+])[] = [
+  [aiTraces, aiTraces.user_id],
+  [aiThreadSessions, aiThreadSessions.owner_user_id],
+  [aiResearchJobs, aiResearchJobs.user_id],
+  [userLevels, userLevels.user_id],
+  [userAchievements, userAchievements.user_id],
+  [userStats, userStats.user_id],
+  [xpCooldowns, xpCooldowns.user_id],
+  [userGameResults, userGameResults.user_id],
+  [evolutiveAchievements, evolutiveAchievements.user_id],
+  [mazeSessions, mazeSessions.user_id],
+  [activityDeepLinks, activityDeepLinks.user_id],
+  [wordleSessions, wordleSessions.user_id],
+  [wordleStreaks, wordleStreaks.user_id],
+  [wordleUserConfig, wordleUserConfig.user_id],
+  [pongRatings, pongRatings.user_id],
+  [users, users.id],
+];
+
+async function findUser(id: string) {
+  const [row] = await db.select().from(users).where(eq(users.id, id));
+  return row;
+}
 
 export class UserService {
   discordService: DiscordService;
@@ -53,12 +76,12 @@ export class UserService {
 
   async create(id: string) {
     // Atomic upsert — avoids SELECT-then-INSERT race condition (14.4)
-    db.prepare('INSERT OR IGNORE INTO users (id) VALUES (?)').run(id);
+    await db.insert(users).values({ id }).onConflictDoNothing();
     return { id };
   }
 
   async enableLastfm(id: string, token: string) {
-    const user = db.prepare('SELECT id FROM users WHERE id = ?').get(id);
+    const user = await findUser(id);
 
     if (!user) {
       throw new Error('User not found');
@@ -75,67 +98,95 @@ export class UserService {
     if (!encrypted) {
       throw new Error('Failed to encrypt session token');
     }
-    db.prepare(
-      'UPDATE users SET lastfm_session_token = ?, lastfm_username = ?, scrobbles_on = 1 WHERE id = ?',
-    ).run(encrypted, sessionToken.userName, id);
+    await db
+      .update(users)
+      .set({
+        lastfm_session_token: encrypted,
+        lastfm_username: sessionToken.userName,
+        scrobbles_on: true,
+      })
+      .where(eq(users.id, id));
 
     return { id };
   }
 
   async deleteLastfmData(id: string) {
-    const user = db.prepare('SELECT id FROM users WHERE id = ?').get(id);
+    const user = await findUser(id);
 
     if (!user) {
       throw new Error('User not found');
     }
 
-    db.prepare(
-      'UPDATE users SET lastfm_session_token = NULL, lastfm_username = NULL, scrobbles_on = NULL WHERE id = ?',
-    ).run(id);
+    await db
+      .update(users)
+      .set({
+        lastfm_session_token: null,
+        lastfm_username: null,
+        scrobbles_on: null,
+      })
+      .where(eq(users.id, id));
 
     return { id };
   }
 
   async deleteAllData(id: string) {
-    db.transaction(() => {
-      db.prepare(
-        'DELETE FROM ai_trace_events WHERE trace_id IN (SELECT trace_id FROM ai_traces WHERE user_id = ?)',
-      ).run(id);
-      db.prepare(
-        'DELETE FROM ai_thread_items WHERE thread_id IN (SELECT thread_id FROM ai_thread_sessions WHERE owner_user_id = ?)',
-      ).run(id);
-      db.prepare(
-        'DELETE FROM ai_research_events WHERE job_id IN (SELECT job_id FROM ai_research_jobs WHERE user_id = ?)',
-      ).run(id);
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(aiTraceEvents)
+        .where(
+          inArray(
+            aiTraceEvents.trace_id,
+            tx
+              .select({ id: aiTraces.trace_id })
+              .from(aiTraces)
+              .where(eq(aiTraces.user_id, id)),
+          ),
+        );
+      await tx
+        .delete(aiThreadItems)
+        .where(
+          inArray(
+            aiThreadItems.thread_id,
+            tx
+              .select({ id: aiThreadSessions.thread_id })
+              .from(aiThreadSessions)
+              .where(eq(aiThreadSessions.owner_user_id, id)),
+          ),
+        );
+      await tx
+        .delete(aiResearchEvents)
+        .where(
+          inArray(
+            aiResearchEvents.job_id,
+            tx
+              .select({ id: aiResearchJobs.job_id })
+              .from(aiResearchJobs)
+              .where(eq(aiResearchJobs.user_id, id)),
+          ),
+        );
       for (const [table, column] of USER_OWNED_TABLES) {
-        db.prepare(`DELETE FROM ${table} WHERE ${column} = ?`).run(id);
+        await tx.delete(table).where(eq(column, id));
       }
-    })();
+    });
   }
 
   async toggleScrobbles(id: string) {
-    const row = db
-      .prepare<Pick<UserRow, 'scrobbles_on'>, [string]>(
-        'SELECT scrobbles_on FROM users WHERE id = ?',
-      )
-      .get(id);
+    // One statement, so two concurrent toggles can't both read the old value.
+    const [row] = await db
+      .update(users)
+      .set({ scrobbles_on: not(sql`coalesce(${users.scrobbles_on}, false)`) })
+      .where(eq(users.id, id))
+      .returning({ scrobblesOn: users.scrobbles_on });
 
     if (!row) {
       throw new Error('User not found');
     }
 
-    const newValue = row.scrobbles_on ? 0 : 1;
-
-    db.prepare('UPDATE users SET scrobbles_on = ? WHERE id = ?').run(
-      newValue,
-      id,
-    );
-
-    return { id, scrobblesOn: newValue === 1 };
+    return { id, scrobblesOn: row.scrobblesOn === true };
   }
 
   async exists(id: string) {
-    const row = db.prepare('SELECT id FROM users WHERE id = ?').get(id);
+    const row = await findUser(id);
 
     if (!row) {
       return null;
@@ -145,12 +196,7 @@ export class UserService {
   }
 
   async hasValidLastfmSessionToken(id: string) {
-    const row = db
-      .prepare<
-        Pick<UserRow, 'lastfm_session_token' | 'scrobbles_on'>,
-        [string]
-      >('SELECT lastfm_session_token, scrobbles_on FROM users WHERE id = ?')
-      .get(id);
+    const row = await findUser(id);
 
     if (!row) {
       throw new Error('User not found');
@@ -171,15 +217,11 @@ export class UserService {
       return null;
     }
 
-    return { id, scrobblesOn: row.scrobbles_on === 1 };
+    return { id, scrobblesOn: row.scrobbles_on === true };
   }
 
   async getLastfmUsername(id: string) {
-    const row = db
-      .prepare<Pick<UserRow, 'lastfm_username'>, [string]>(
-        'SELECT lastfm_username FROM users WHERE id = ?',
-      )
-      .get(id);
+    const row = await findUser(id);
 
     if (!row) {
       throw new Error('User not found');
@@ -189,12 +231,7 @@ export class UserService {
   }
 
   async getTopArtists(id: string, period: LastfmTopListenedPeriod) {
-    const row = db
-      .prepare<
-        Pick<UserRow, 'lastfm_username' | 'lastfm_session_token'>,
-        [string]
-      >('SELECT lastfm_username, lastfm_session_token FROM users WHERE id = ?')
-      .get(id);
+    const row = await findUser(id);
 
     if (!row) {
       throw new Error('User not found');
@@ -246,12 +283,7 @@ export class UserService {
   }
 
   async getTopAlbums(id: string, period: LastfmTopListenedPeriod) {
-    const row = db
-      .prepare<
-        Pick<UserRow, 'lastfm_username' | 'lastfm_session_token'>,
-        [string]
-      >('SELECT lastfm_username, lastfm_session_token FROM users WHERE id = ?')
-      .get(id);
+    const row = await findUser(id);
 
     if (!row) {
       throw new Error('User not found');
@@ -303,12 +335,7 @@ export class UserService {
   }
 
   async getTopTracks(id: string, period: LastfmTopListenedPeriod) {
-    const row = db
-      .prepare<
-        Pick<UserRow, 'lastfm_username' | 'lastfm_session_token'>,
-        [string]
-      >('SELECT lastfm_username, lastfm_session_token FROM users WHERE id = ?')
-      .get(id);
+    const row = await findUser(id);
 
     if (!row) {
       throw new Error('User not found');

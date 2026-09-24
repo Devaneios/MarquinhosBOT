@@ -52,9 +52,9 @@ class GamificationController {
     this.service = new GamificationService();
   }
 
-  getXpConfig(req: Request, res: Response) {
+  async getXpConfig(req: Request, res: Response) {
     try {
-      const data = this.service.getXpConfig();
+      const data = await this.service.getXpConfig();
       return sendContract(res, contract.getXpConfig, { data });
     } catch (error) {
       console.error(error);
@@ -62,7 +62,7 @@ class GamificationController {
     }
   }
 
-  addXP(req: Request, res: Response) {
+  async addXP(req: Request, res: Response) {
     try {
       const input = parseRequest(contract.addXp, req);
       if (!input) {
@@ -72,7 +72,7 @@ class GamificationController {
       }
       const { userId, guildId, eventType } = input.body;
 
-      const result = this.service.addXP(userId, guildId, eventType);
+      const result = await this.service.addXP(userId, guildId, eventType);
       const data = formatAddXpResult(result);
       return sendContract(res, contract.addXp, {
         data,
@@ -84,7 +84,7 @@ class GamificationController {
     }
   }
 
-  getUserLevel(req: Request, res: Response) {
+  async getUserLevel(req: Request, res: Response) {
     try {
       const input = parseRequest(contract.getUserLevel, req);
       if (!input) {
@@ -93,7 +93,7 @@ class GamificationController {
           .json({ message: 'userId and guildId are required' });
       }
       const { userId, guildId } = input.params;
-      const row = this.service.getUserLevel(userId, guildId);
+      const row = await this.service.getUserLevel(userId, guildId);
       return sendContract(res, contract.getUserLevel, {
         data: formatLevel(row),
       });
@@ -103,7 +103,7 @@ class GamificationController {
     }
   }
 
-  getLeaderboard(req: Request, res: Response) {
+  async getLeaderboard(req: Request, res: Response) {
     try {
       const input = parseRequest(contract.getLeaderboard, req);
       if (!input) {
@@ -111,7 +111,7 @@ class GamificationController {
       }
       const { guildId } = input.params;
       const limit = Math.min(input.query.limit, 25);
-      const rows = this.service.getLeaderboard(guildId, limit);
+      const rows = await this.service.getLeaderboard(guildId, limit);
       return sendContract(res, contract.getLeaderboard, {
         data: rows.map(formatLevel),
       });
@@ -121,7 +121,7 @@ class GamificationController {
     }
   }
 
-  unlockAchievement(req: Request, res: Response) {
+  async unlockAchievement(req: Request, res: Response) {
     try {
       const input = parseRequest(contract.unlockAchievement, req);
       if (!input) {
@@ -131,7 +131,7 @@ class GamificationController {
       }
       const { userId, guildId, achievementId } = input.body;
 
-      const unlocked = this.service.unlockAchievement(
+      const unlocked = await this.service.unlockAchievement(
         userId,
         guildId,
         achievementId,
@@ -146,7 +146,7 @@ class GamificationController {
     }
   }
 
-  getUserAchievements(req: Request, res: Response) {
+  async getUserAchievements(req: Request, res: Response) {
     try {
       const input = parseRequest(contract.getUserAchievements, req);
       if (!input) {
@@ -155,7 +155,7 @@ class GamificationController {
           .json({ message: 'userId and guildId are required' });
       }
       const { userId, guildId } = input.params;
-      const rows = this.service.getUserAchievements(userId, guildId);
+      const rows = await this.service.getUserAchievements(userId, guildId);
       return sendContract(res, contract.getUserAchievements, {
         data: rows.map(formatAchievement),
       });
@@ -165,9 +165,9 @@ class GamificationController {
     }
   }
 
-  getAllAchievements(req: Request, res: Response) {
+  async getAllAchievements(req: Request, res: Response) {
     try {
-      const data = this.service.getAllAchievements();
+      const data = await this.service.getAllAchievements();
       return sendContract(res, contract.getAllAchievements, { data });
     } catch (error) {
       console.error(error);
@@ -175,13 +175,13 @@ class GamificationController {
     }
   }
 
-  createAchievement(req: Request, res: Response) {
+  async createAchievement(req: Request, res: Response) {
     try {
       const input = parseRequest(contract.createAchievement, req);
       if (!input) {
         return res.status(400).json({ message: 'Invalid achievement' });
       }
-      const data = this.service.createAchievement(input.body);
+      const data = await this.service.createAchievement(input.body);
       return sendContract(
         res,
         contract.createAchievement,
@@ -194,9 +194,9 @@ class GamificationController {
     }
   }
 
-  initializeDefaults(req: Request, res: Response) {
+  async initializeDefaults(req: Request, res: Response) {
     try {
-      this.service.initializeDefaults();
+      await this.service.initializeDefaults();
       return sendContract(res, contract.initializeDefaults, {
         message: 'Defaults initialized',
       });
@@ -206,7 +206,7 @@ class GamificationController {
     }
   }
 
-  recordGameResult(req: Request, res: Response) {
+  async recordGameResult(req: Request, res: Response) {
     try {
       const input = parseRequest(contract.recordGameResult, req);
       if (!input) {
@@ -215,7 +215,7 @@ class GamificationController {
         });
       }
 
-      this.service.recordGameResult(input.body);
+      await this.service.recordGameResult(input.body);
       return sendContract(res, contract.recordGameResult, {
         message: 'Game result recorded',
       });
@@ -225,7 +225,7 @@ class GamificationController {
     }
   }
 
-  getUserGameStats(req: Request, res: Response) {
+  async getUserGameStats(req: Request, res: Response) {
     try {
       const input = parseRequest(contract.getUserGameStats, req);
       if (!input) {
@@ -234,7 +234,7 @@ class GamificationController {
           .json({ message: 'userId and guildId are required' });
       }
       const { userId, guildId } = input.params;
-      const data = this.service.getUserGameStats(userId, guildId);
+      const data = await this.service.getUserGameStats(userId, guildId);
       return sendContract(res, contract.getUserGameStats, { data });
     } catch (error) {
       console.error(error);
@@ -242,7 +242,7 @@ class GamificationController {
     }
   }
 
-  getGameLeaderboard(req: Request, res: Response) {
+  async getGameLeaderboard(req: Request, res: Response) {
     try {
       const input = parseRequest(contract.getGameLeaderboard, req);
       if (!input) {
@@ -251,7 +251,7 @@ class GamificationController {
           .json({ message: 'guildId and gameType are required' });
       }
       const { guildId, gameType } = input.params;
-      const data = this.service.getGameLeaderboard(guildId, gameType);
+      const data = await this.service.getGameLeaderboard(guildId, gameType);
       return sendContract(res, contract.getGameLeaderboard, { data });
     } catch (error) {
       console.error(error);

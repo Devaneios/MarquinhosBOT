@@ -50,7 +50,7 @@ export class AgentToolLoopService {
     request: AiChatRequest,
     trace: TraceContext = NOOP_TRACE,
   ): Promise<AiChatResult> {
-    const allowed = this.agentRateLimitService.checkAndIncrement(
+    const allowed = await this.agentRateLimitService.checkAndIncrement(
       request.userId,
       request.guildId,
     );

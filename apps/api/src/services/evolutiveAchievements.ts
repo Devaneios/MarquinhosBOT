@@ -4,7 +4,9 @@ import {
   type evolutionResultSchema,
   type evolutiveAchievementSchema,
 } from '@marquinhos/contracts/http/routes/evolutiveAchievements';
-import { db } from '@marquinhos/database/sqlite';
+import { db } from '@marquinhos/database/client';
+import { evolutiveAchievements, userStats } from '@marquinhos/database/schema';
+import { and, asc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 type Rarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythical';
@@ -141,13 +143,49 @@ const evolutionLogSchema = z.array(evolutionEventSchema);
 type EvolutiveAchievement = z.input<typeof evolutiveAchievementSchema>;
 type EvolutionResult = z.input<typeof evolutionResultSchema>;
 
+const byUser = (userId: string, guildId: string) =>
+  and(
+    eq(evolutiveAchievements.user_id, userId),
+    eq(evolutiveAchievements.guild_id, guildId),
+  );
+
+async function getStats(
+  userId: string,
+  guildId: string,
+): Promise<UserStatsRow | undefined> {
+  const [row] = await db
+    .select({
+      total_commands: userStats.total_commands,
+      total_scrobbles: userStats.total_scrobbles,
+      total_voice_joins: userStats.total_voice_joins,
+      total_games: userStats.total_games,
+      games_won: userStats.games_won,
+    })
+    .from(userStats)
+    .where(and(eq(userStats.user_id, userId), eq(userStats.guild_id, guildId)));
+  return row;
+}
+
+async function getRow(
+  userId: string,
+  guildId: string,
+  baseId: string,
+): Promise<EvolutiveRow | undefined> {
+  const [row] = await db
+    .select()
+    .from(evolutiveAchievements)
+    .where(
+      and(byUser(userId, guildId), eq(evolutiveAchievements.base_id, baseId)),
+    );
+  return row;
+}
+
 export class EvolutiveAchievementsService {
-  checkAndEvolveAll(userId: string, guildId: string): EvolutionResult[] {
-    const stats = db
-      .query<UserStatsRow, { $userId: string; $guildId: string }>(
-        'SELECT total_commands, total_scrobbles, total_voice_joins, total_games, games_won FROM user_stats WHERE user_id = $userId AND guild_id = $guildId',
-      )
-      .get({ $userId: userId, $guildId: guildId });
+  async checkAndEvolveAll(
+    userId: string,
+    guildId: string,
+  ): Promise<EvolutionResult[]> {
+    const stats = await getStats(userId, guildId);
 
     if (!stats) return [];
 
@@ -156,14 +194,7 @@ export class EvolutiveAchievementsService {
     for (const [baseId, def] of Object.entries(BASE_ACHIEVEMENTS)) {
       const statValue = stats[def.statKey];
 
-      let row = db
-        .query<
-          EvolutiveRow,
-          { $userId: string; $guildId: string; $baseId: string }
-        >(
-          'SELECT * FROM evolutive_achievements WHERE user_id = $userId AND guild_id = $guildId AND base_id = $baseId',
-        )
-        .get({ $userId: userId, $guildId: guildId, $baseId: baseId });
+      let row = await getRow(userId, guildId, baseId);
 
       // Auto-initialize at tier 1 when the user first qualifies
       if (!row && statValue >= 1) {
@@ -175,24 +206,20 @@ export class EvolutiveAchievementsService {
             reason: 'Primeiro passo desbloqueado!',
           },
         ];
-        db.query(
-          'INSERT INTO evolutive_achievements (user_id, guild_id, base_id, current_tier, unlocked_at, last_evolved, evolution_log) VALUES ($userId, $guildId, $baseId, 1, $now, NULL, $log)',
-        ).run({
-          $userId: userId,
-          $guildId: guildId,
-          $baseId: baseId,
-          $now: now,
-          $log: JSON.stringify(initialLog),
-        });
+        await db
+          .insert(evolutiveAchievements)
+          .values({
+            user_id: userId,
+            guild_id: guildId,
+            base_id: baseId,
+            current_tier: 1,
+            unlocked_at: now,
+            last_evolved: null,
+            evolution_log: JSON.stringify(initialLog),
+          })
+          .onConflictDoNothing();
 
-        row = db
-          .query<
-            EvolutiveRow,
-            { $userId: string; $guildId: string; $baseId: string }
-          >(
-            'SELECT * FROM evolutive_achievements WHERE user_id = $userId AND guild_id = $guildId AND base_id = $baseId',
-          )
-          .get({ $userId: userId, $guildId: guildId, $baseId: baseId });
+        row = await getRow(userId, guildId, baseId);
       }
 
       if (!row || row.current_tier >= 5) continue;
@@ -213,16 +240,23 @@ export class EvolutiveAchievementsService {
           '',
       });
 
-      db.query(
-        'UPDATE evolutive_achievements SET current_tier = $tier, last_evolved = $now, evolution_log = $log WHERE user_id = $userId AND guild_id = $guildId AND base_id = $baseId',
-      ).run({
-        $tier: nextTierDef.tier,
-        $now: now,
-        $log: JSON.stringify(log),
-        $userId: userId,
-        $guildId: guildId,
-        $baseId: baseId,
-      });
+      // Guarded on the tier we read so a concurrent evolution can't apply twice.
+      const evolved = await db
+        .update(evolutiveAchievements)
+        .set({
+          current_tier: nextTierDef.tier,
+          last_evolved: now,
+          evolution_log: JSON.stringify(log),
+        })
+        .where(
+          and(
+            byUser(userId, guildId),
+            eq(evolutiveAchievements.base_id, baseId),
+            eq(evolutiveAchievements.current_tier, row.current_tier),
+          ),
+        )
+        .returning({ tier: evolutiveAchievements.current_tier });
+      if (evolved.length === 0) continue;
 
       evolutions.push({
         baseId,
@@ -235,21 +269,16 @@ export class EvolutiveAchievementsService {
     return evolutions;
   }
 
-  getUserEvolutiveAchievements(
+  async getUserEvolutiveAchievements(
     userId: string,
     guildId: string,
-  ): EvolutiveAchievement[] {
-    const rows = db
-      .query<EvolutiveRow, { $userId: string; $guildId: string }>(
-        'SELECT * FROM evolutive_achievements WHERE user_id = $userId AND guild_id = $guildId',
-      )
-      .all({ $userId: userId, $guildId: guildId });
+  ): Promise<EvolutiveAchievement[]> {
+    const rows = await db
+      .select()
+      .from(evolutiveAchievements)
+      .where(byUser(userId, guildId));
 
-    const stats = db
-      .query<UserStatsRow, { $userId: string; $guildId: string }>(
-        'SELECT total_commands, total_scrobbles, total_voice_joins, total_games, games_won FROM user_stats WHERE user_id = $userId AND guild_id = $guildId',
-      )
-      .get({ $userId: userId, $guildId: guildId });
+    const stats = await getStats(userId, guildId);
 
     return rows.flatMap((row: EvolutiveRow) => {
       const def = BASE_ACHIEVEMENTS[row.base_id];
@@ -279,15 +308,15 @@ export class EvolutiveAchievementsService {
     });
   }
 
-  getEvolutionTimeline(
+  async getEvolutionTimeline(
     userId: string,
     guildId: string,
-  ): { baseId: string; name: string; events: EvolutionEvent[] }[] {
-    const rows = db
-      .query<EvolutiveRow, { $userId: string; $guildId: string }>(
-        'SELECT * FROM evolutive_achievements WHERE user_id = $userId AND guild_id = $guildId ORDER BY unlocked_at ASC',
-      )
-      .all({ $userId: userId, $guildId: guildId });
+  ): Promise<{ baseId: string; name: string; events: EvolutionEvent[] }[]> {
+    const rows = await db
+      .select()
+      .from(evolutiveAchievements)
+      .where(byUser(userId, guildId))
+      .orderBy(asc(evolutiveAchievements.unlocked_at));
 
     return rows.map((row: EvolutiveRow) => ({
       baseId: row.base_id,

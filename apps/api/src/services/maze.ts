@@ -1,7 +1,9 @@
 import type { mazeViewportStateSchema } from '@marquinhos/contracts/http/routes/maze';
-import { db } from '@marquinhos/database/sqlite';
+import { db, type DbExecutor } from '@marquinhos/database/client';
+import { mazeSessions } from '@marquinhos/database/schema';
 import { generateWallGrid } from '@marquinhos/domain/games/maze/wallGrid';
 import crypto from 'crypto';
+import { and, eq } from 'drizzle-orm';
 import type { z } from 'zod';
 
 /**
@@ -136,17 +138,12 @@ function computeViewport(
 }
 
 export class MazeService {
-  createMazeSession(
+  async createMazeSession(
     userId: string,
     guildId: string,
     mode: 'open' | 'foggy',
     size: number,
-  ): MazeViewportState {
-    // Abandon any existing active session for this user in this guild
-    db.query(
-      "UPDATE maze_sessions SET status = 'abandoned' WHERE user_id = $userId AND guild_id = $guildId AND status = 'active'",
-    ).run({ $userId: userId, $guildId: guildId });
-
+  ): Promise<MazeViewportState> {
     const maze = generateWallGrid(size, size);
     const mazeHeight = maze.length;
     const width = mazeWidth(maze);
@@ -158,24 +155,30 @@ export class MazeService {
     const startX = 1;
     const startY = 0;
 
-    db.query(
-      `
-      INSERT INTO maze_sessions
-        (id, user_id, guild_id, game_mode, maze_width, maze_height, maze_grid, player_x, player_y, started_at)
-      VALUES
-        ($id, $userId, $guildId, $mode, $width, $height, $grid, $px, $py, $startedAt)
-    `,
-    ).run({
-      $id: sessionId,
-      $userId: userId,
-      $guildId: guildId,
-      $mode: mode,
-      $width: width,
-      $height: mazeHeight,
-      $grid: JSON.stringify(maze),
-      $px: startX,
-      $py: startY,
-      $startedAt: Math.floor(Date.now() / 1000),
+    await db.transaction(async (tx) => {
+      // Abandon any existing active session for this user in this guild
+      await tx
+        .update(mazeSessions)
+        .set({ status: 'abandoned' })
+        .where(
+          and(
+            eq(mazeSessions.user_id, userId),
+            eq(mazeSessions.guild_id, guildId),
+            eq(mazeSessions.status, 'active'),
+          ),
+        );
+      await tx.insert(mazeSessions).values({
+        id: sessionId,
+        user_id: userId,
+        guild_id: guildId,
+        game_mode: mode,
+        maze_width: width,
+        maze_height: mazeHeight,
+        maze_grid: JSON.stringify(maze),
+        player_x: startX,
+        player_y: startY,
+        started_at: Math.floor(Date.now() / 1000),
+      });
     });
 
     return {
@@ -191,12 +194,24 @@ export class MazeService {
     sessionId: string,
     userId: string,
     direction: string,
-  ): MazeViewportState | null {
-    const session = db
-      .query<MazeSessionRow, { $id: string }>(
-        'SELECT * FROM maze_sessions WHERE id = $id',
-      )
-      .get({ $id: sessionId });
+  ): Promise<MazeViewportState | null> {
+    // Locked so two quick moves can't both start from the same position.
+    return db.transaction((tx) =>
+      this.applyMove(tx, sessionId, userId, direction),
+    );
+  }
+
+  private async applyMove(
+    tx: DbExecutor,
+    sessionId: string,
+    userId: string,
+    direction: string,
+  ): Promise<MazeViewportState | null> {
+    const [session] = await tx
+      .select()
+      .from(mazeSessions)
+      .where(eq(mazeSessions.id, sessionId))
+      .for('update');
 
     if (!session || session.user_id !== userId || session.status !== 'active') {
       return null;
@@ -242,9 +257,15 @@ export class MazeService {
 
     const maxMoves = session.maze_width * session.maze_height * 2;
     if (!isCompleted && newMoves >= maxMoves) {
-      db.query(
-        "UPDATE maze_sessions SET player_x = $px, player_y = $py, moves_count = $moves, status = 'abandoned' WHERE id = $id",
-      ).run({ $px: newX, $py: newY, $moves: newMoves, $id: sessionId });
+      await tx
+        .update(mazeSessions)
+        .set({
+          player_x: newX,
+          player_y: newY,
+          moves_count: newMoves,
+          status: 'abandoned',
+        })
+        .where(eq(mazeSessions.id, sessionId));
 
       return {
         sessionId,
@@ -263,21 +284,16 @@ export class MazeService {
       };
     }
 
-    db.query(
-      `
-      UPDATE maze_sessions
-      SET player_x = $px, player_y = $py, moves_count = $moves,
-          status = $status, completed_at = $completedAt
-      WHERE id = $id
-    `,
-    ).run({
-      $px: newX,
-      $py: newY,
-      $moves: newMoves,
-      $status: isCompleted ? 'completed' : 'active',
-      $completedAt: isCompleted ? Math.floor(Date.now() / 1000) : null,
-      $id: sessionId,
-    });
+    await tx
+      .update(mazeSessions)
+      .set({
+        player_x: newX,
+        player_y: newY,
+        moves_count: newMoves,
+        status: isCompleted ? 'completed' : 'active',
+        completed_at: isCompleted ? Math.floor(Date.now() / 1000) : null,
+      })
+      .where(eq(mazeSessions.id, sessionId));
 
     return {
       sessionId,
@@ -295,12 +311,11 @@ export class MazeService {
     };
   }
 
-  getMazeSession(sessionId: string): MazeViewportState | null {
-    const session = db
-      .query<MazeSessionRow, { $id: string }>(
-        'SELECT * FROM maze_sessions WHERE id = $id',
-      )
-      .get({ $id: sessionId });
+  async getMazeSession(sessionId: string): Promise<MazeViewportState | null> {
+    const [session] = await db
+      .select()
+      .from(mazeSessions)
+      .where(eq(mazeSessions.id, sessionId));
 
     if (!session) return null;
 
@@ -311,10 +326,13 @@ export class MazeService {
     return this._buildState(session, maze, exitX, exitY);
   }
 
-  abandonMazeSession(sessionId: string, userId: string): void {
-    db.query(
-      "UPDATE maze_sessions SET status = 'abandoned' WHERE id = $id AND user_id = $userId",
-    ).run({ $id: sessionId, $userId: userId });
+  async abandonMazeSession(sessionId: string, userId: string): Promise<void> {
+    await db
+      .update(mazeSessions)
+      .set({ status: 'abandoned' })
+      .where(
+        and(eq(mazeSessions.id, sessionId), eq(mazeSessions.user_id, userId)),
+      );
   }
 
   private _buildState(

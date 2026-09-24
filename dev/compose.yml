@@ -9,6 +9,21 @@ x-app: &app
   stop_grace_period: 30s
 
 services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: marquinhos
+      POSTGRES_USER: marquinhos
+      POSTGRES_PASSWORD: marquinhos
+      POSTGRES_INITDB_ARGS: --locale-provider=builtin --builtin-locale=C.UTF-8
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U marquinhos -d marquinhos]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
   api:
     <<: *app
     working_dir: /app/apps/api
@@ -19,7 +34,7 @@ services:
     environment:
       NODE_ENV: development
       HTTP_PORT: 3000
-      SQLITE_PATH: /app/data/marquinhos.db
+      DATABASE_URL: postgres://marquinhos:marquinhos@postgres:5432/marquinhos
       CORS_ORIGINS: http://localhost:${DEV_ACTIVITY_PORT:-5173},${DEV_PUBLIC_ORIGIN:-https://marquinhos-local.frois.net.br}
       SANDBOX_IMAGE: marquinhos-sandbox:dev
       SANDBOX_MIRROR_PATH: ${SANDBOX_MIRROR_PATH:-/tmp/marquinhos-dev-mirror-unconfigured}
@@ -30,10 +45,13 @@ services:
       - ../packages/domain/src:/app/packages/domain/src:ro
       - ../packages/api-client/src:/app/packages/api-client/src:ro
       - ../packages/database/src:/app/packages/database/src:ro
-      - api-data:/app/data
+      - ../packages/database/drizzle:/app/packages/database/drizzle:ro
       - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
-      - "127.0.0.1:${DEV_API_PORT:-3000}:3000"
+      - '127.0.0.1:${DEV_API_PORT:-3000}:3000'
     healthcheck:
       test: [CMD, curl, --fail, --silent, http://127.0.0.1:3000/api/health]
       interval: 5s
@@ -92,7 +110,7 @@ services:
       - ../packages/api-client/src:/app/packages/api-client/src:ro
       - ../packages/database/src:/app/packages/database/src:ro
     ports:
-      - "127.0.0.1:${DEV_ACTIVITY_PORT:-5173}:5173"
+      - '127.0.0.1:${DEV_ACTIVITY_PORT:-5173}:5173'
     healthcheck:
       test: [CMD, curl, --fail, --silent, http://127.0.0.1:5173/]
       interval: 5s
@@ -101,7 +119,7 @@ services:
 
   cloudflared:
     image: cloudflare/cloudflared:2026.9.0
-    user: "0:0"
+    user: '0:0'
     command: tunnel --no-autoupdate run --token $CLOUDFLARE_TOKEN
     depends_on:
       activity:
@@ -120,9 +138,12 @@ services:
     profiles: [test]
     working_dir: /app
     command: bun dev/test.ts
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       NODE_ENV: test
-      SQLITE_PATH: /tmp/marquinhos-tests.db
+      TEST_DATABASE_URL: postgres://marquinhos:marquinhos@postgres:5432/marquinhos
       MARQUINHOS_TOKEN: test-token
       MARQUINHOS_CLIENT_ID: test-client
       MARQUINHOS_API_KEY: test-key
@@ -134,4 +155,4 @@ services:
       - /tmp
 
 volumes:
-  api-data:
+  postgres-data:

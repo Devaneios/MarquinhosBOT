@@ -1,89 +1,121 @@
-import { db } from '@marquinhos/database/sqlite';
+import { db, type DbExecutor } from '@marquinhos/database/client';
+import { userLevels, userStats, xpConfig } from '@marquinhos/database/schema';
 import {
   DEFAULT_XP_CONFIG,
   requiredXpForLevel,
 } from '@marquinhos/domain/gamification/leveling';
+import { and, count, desc, eq, sql } from 'drizzle-orm';
 import type { UserLevel, XpConfig } from 'services/gamification/types';
 
+const byUser = (userId: string, guildId: string) =>
+  and(eq(userLevels.user_id, userId), eq(userLevels.guild_id, guildId));
+
 export class LevelingService {
-  initializeDefaults(): void {
-    const configCount = db
-      .query<{ count: number }, []>('SELECT COUNT(*) as count FROM xp_config')
-      .get();
-    if (!configCount || configCount.count === 0) {
-      const insertConfig = db.prepare(
-        'INSERT OR IGNORE INTO xp_config (event_type, xp_amount, cooldown_ms) VALUES ($event_type, $xp_amount, $cooldown_ms)',
-      );
-      for (const c of DEFAULT_XP_CONFIG) {
-        insertConfig.run({
-          $event_type: c.event_type,
-          $xp_amount: c.xp_amount,
-          $cooldown_ms: c.cooldown_ms,
-        });
-      }
-      console.log('XP config seeded');
+  async initializeDefaults(): Promise<void> {
+    const [row] = await db.select({ count: count() }).from(xpConfig);
+    if (row && row.count > 0) return;
+    await db
+      .insert(xpConfig)
+      .values(DEFAULT_XP_CONFIG.map((c) => ({ ...c })))
+      .onConflictDoNothing();
+    console.log('XP config seeded');
+  }
+
+  async getXpConfig(): Promise<XpConfig[]> {
+    return db.select().from(xpConfig);
+  }
+
+  async ensureUser(
+    userId: string,
+    guildId: string,
+    exec: DbExecutor = db,
+  ): Promise<void> {
+    await exec
+      .insert(userLevels)
+      .values({ user_id: userId, guild_id: guildId })
+      .onConflictDoNothing();
+    await exec
+      .insert(userStats)
+      .values({ user_id: userId, guild_id: guildId })
+      .onConflictDoNothing();
+  }
+
+  async getUserLevel(
+    userId: string,
+    guildId: string,
+    exec: DbExecutor = db,
+  ): Promise<UserLevel> {
+    await this.ensureUser(userId, guildId, exec);
+    const [row] = await exec
+      .select()
+      .from(userLevels)
+      .where(byUser(userId, guildId));
+    return row!;
+  }
+
+  async applyLevelUps(
+    userId: string,
+    guildId: string,
+    exec: DbExecutor = db,
+  ): Promise<boolean> {
+    // On a transaction this nests as a savepoint.
+    return exec.transaction((tx) => this.lockAndLevelUp(userId, guildId, tx));
+  }
+
+  private async lockAndLevelUp(
+    userId: string,
+    guildId: string,
+    tx: DbExecutor,
+  ): Promise<boolean> {
+    // The row lock stops two concurrent level-ups from both subtracting the
+    // same threshold.
+    const [row] = await tx
+      .select()
+      .from(userLevels)
+      .where(byUser(userId, guildId))
+      .for('update');
+    if (!row) return false;
+
+    let { level, xp } = row;
+    while (xp >= requiredXpForLevel(level)) {
+      xp -= requiredXpForLevel(level);
+      level += 1;
     }
+    if (level === row.level) return false;
+
+    await tx
+      .update(userLevels)
+      .set({ level, xp })
+      .where(byUser(userId, guildId));
+    return true;
   }
 
-  getXpConfig(): XpConfig[] {
-    return db.query<XpConfig, []>('SELECT * FROM xp_config').all();
-  }
-
-  ensureUser(userId: string, guildId: string): void {
-    db.query(
-      'INSERT OR IGNORE INTO user_levels (user_id, guild_id) VALUES ($userId, $guildId)',
-    ).run({
-      $userId: userId,
-      $guildId: guildId,
-    });
-    db.query(
-      'INSERT OR IGNORE INTO user_stats (user_id, guild_id) VALUES ($userId, $guildId)',
-    ).run({
-      $userId: userId,
-      $guildId: guildId,
-    });
-  }
-
-  getUserLevel(userId: string, guildId: string): UserLevel {
-    this.ensureUser(userId, guildId);
+  async getLeaderboard(
+    guildId: string,
+    limit: number = 10,
+  ): Promise<UserLevel[]> {
     return db
-      .query<UserLevel, { $userId: string; $guildId: string }>(
-        'SELECT * FROM user_levels WHERE user_id = $userId AND guild_id = $guildId',
-      )
-      .get({ $userId: userId, $guildId: guildId })!;
+      .select()
+      .from(userLevels)
+      .where(eq(userLevels.guild_id, guildId))
+      .orderBy(desc(userLevels.level), desc(userLevels.total_xp))
+      .limit(limit);
   }
 
-  applyLevelUps(userId: string, guildId: string): boolean {
-    const fn = db.transaction(() => {
-      let leveled = false;
-      let row = db
-        .query<UserLevel, { $userId: string; $guildId: string }>(
-          'SELECT * FROM user_levels WHERE user_id = $userId AND guild_id = $guildId',
-        )
-        .get({ $userId: userId, $guildId: guildId })!;
-
-      while (row.xp >= requiredXpForLevel(row.level)) {
-        const required = requiredXpForLevel(row.level);
-        db.query(
-          'UPDATE user_levels SET level = level + 1, xp = xp - $required WHERE user_id = $userId AND guild_id = $guildId',
-        ).run({ $required: required, $userId: userId, $guildId: guildId });
-        row = db
-          .query<UserLevel, { $userId: string; $guildId: string }>(
-            'SELECT * FROM user_levels WHERE user_id = $userId AND guild_id = $guildId',
-          )
-          .get({ $userId: userId, $guildId: guildId })!;
-        leveled = true;
-      }
-      return leveled;
-    });
-    return fn();
-  }
-
-  getLeaderboard(guildId: string, limit: number = 10): UserLevel[] {
-    return db
-      .query<UserLevel, { $guildId: string; $limit: number }>(
-        'SELECT * FROM user_levels WHERE guild_id = $guildId ORDER BY level DESC, total_xp DESC LIMIT $limit',
-      )
-      .all({ $guildId: guildId, $limit: limit });
+  async addXpToUser(
+    userId: string,
+    guildId: string,
+    amount: number,
+    exec: DbExecutor = db,
+    gainedAt: number | null = Date.now(),
+  ): Promise<void> {
+    await exec
+      .update(userLevels)
+      .set({
+        xp: sql`${userLevels.xp} + ${amount}`,
+        total_xp: sql`${userLevels.total_xp} + ${amount}`,
+        ...(gainedAt === null ? {} : { last_xp_gain: gainedAt }),
+      })
+      .where(byUser(userId, guildId));
   }
 }

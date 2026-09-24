@@ -1,10 +1,10 @@
-import { db as defaultDb } from '@marquinhos/database/sqlite';
-import { Database } from 'bun:sqlite';
-
-interface AiChatConfigRow {
-  key: string;
-  value: number;
-}
+import { db as defaultDb, type Db } from '@marquinhos/database/client';
+import {
+  aiAgentUsage,
+  aiChatConfig,
+  aiResearchUsage,
+} from '@marquinhos/database/schema';
+import { eq, sql } from 'drizzle-orm';
 
 export interface DailyQuota {
   usageTable: 'ai_agent_usage' | 'ai_research_usage';
@@ -24,6 +24,11 @@ export const RESEARCH_DAILY_QUOTA: DailyQuota = {
   defaultLimit: 50,
 };
 
+const USAGE_TABLES = {
+  ai_agent_usage: aiAgentUsage,
+  ai_research_usage: aiResearchUsage,
+} as const;
+
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -31,44 +36,44 @@ function today(): string {
 export class DailyQuotaService {
   constructor(
     private quota: DailyQuota,
-    private db: Database = defaultDb,
+    private db: Db = defaultDb,
   ) {}
 
-  seedDefaults(): void {
-    this.db
-      .prepare(
-        'INSERT OR IGNORE INTO ai_chat_config (key, value) VALUES ($key, $value)',
-      )
-      .run({ $key: this.quota.configKey, $value: this.quota.defaultLimit });
+  async seedDefaults(): Promise<void> {
+    await this.db
+      .insert(aiChatConfig)
+      .values({ key: this.quota.configKey, value: this.quota.defaultLimit })
+      .onConflictDoNothing();
   }
 
-  checkAndIncrement(
+  async checkAndIncrement(
     userId: string,
     guildId: string,
     date: string = today(),
-  ): boolean {
-    const row = this.db
-      .query<
-        { count: number },
-        { $userId: string; $guildId: string; $date: string }
-      >(
-        `INSERT INTO ${this.quota.usageTable} (user_id, guild_id, usage_date, count)
-         VALUES ($userId, $guildId, $date, 1)
-         ON CONFLICT(user_id, guild_id, usage_date) DO UPDATE SET
-           count = count + 1
-         RETURNING count`,
-      )
-      .get({ $userId: userId, $guildId: guildId, $date: date });
+  ): Promise<boolean> {
+    const usage = USAGE_TABLES[this.quota.usageTable];
+    const [row] = await this.db
+      .insert(usage)
+      .values({
+        user_id: userId,
+        guild_id: guildId,
+        usage_date: date,
+        count: 1,
+      })
+      .onConflictDoUpdate({
+        target: [usage.user_id, usage.guild_id, usage.usage_date],
+        set: { count: sql`${usage.count} + 1` },
+      })
+      .returning({ count: usage.count });
 
-    return !!row && row.count <= this.limit();
+    return !!row && row.count <= (await this.limit());
   }
 
-  private limit(): number {
-    const row = this.db
-      .query<AiChatConfigRow, { $key: string }>(
-        'SELECT * FROM ai_chat_config WHERE key = $key',
-      )
-      .get({ $key: this.quota.configKey });
+  private async limit(): Promise<number> {
+    const [row] = await this.db
+      .select({ value: aiChatConfig.value })
+      .from(aiChatConfig)
+      .where(eq(aiChatConfig.key, this.quota.configKey));
     return row ? row.value : this.quota.defaultLimit;
   }
 }

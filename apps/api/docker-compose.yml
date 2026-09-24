@@ -11,11 +11,10 @@ services:
       - ./.env
     environment:
       - NODE_ENV=production
-      - SQLITE_PATH=/app/data/marquinhos.db
+      # DATABASE_URL comes from .env.
     volumes:
       - /etc/ssl/dvns-certificate.crt:/app/dvns-certificate.crt:ro
       - /etc/ssl/dvns-private.key:/app/dvns-private.key:ro
-      - marquinhos-sqlite-data:/app/data
       # Lets SandboxManager create/manage sibling "marquinhos-sandbox"
       # containers via dockerode. Accepted risk, chosen deliberately — see
       # docs/superpowers/plans/2026-07-24-agentic-tool-calling.md.
@@ -44,7 +43,3 @@ services:
 networks:
   marquinhos-net:
     external: true
-
-volumes:
-  marquinhos-sqlite-data:
-    driver: local

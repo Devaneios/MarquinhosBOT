@@ -3,9 +3,6 @@ import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics'
 import { beforeAll, describe, expect, it } from 'bun:test';
 import { buildUniqueDayGuesses } from 'services/wordle/dayGuesses';
 
-// Set in-memory db BEFORE any imports that load the db module
-process.env.SQLITE_PATH = ':memory:';
-
 let resolveCanonical: typeof import('../src/services/wordle').resolveCanonical;
 
 beforeAll(async () => {

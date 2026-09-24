@@ -26,10 +26,10 @@ function makeResponse() {
 }
 
 describe('WordleController user config', () => {
-  it('returns only the authenticated user config', () => {
+  it('returns only the authenticated user config', async () => {
     const calls: string[] = [];
     const store: WordleUserConfigStore = {
-      get(userId) {
+      async get(userId) {
         calls.push(userId);
         return {
           invertActionKeys: false,
@@ -38,7 +38,7 @@ describe('WordleController user config', () => {
           enableArrowKeys: false,
         };
       },
-      update() {
+      async update() {
         return {
           invertActionKeys: false,
           enableSounds: false,
@@ -50,7 +50,7 @@ describe('WordleController user config', () => {
     const controller = new WordleController(store);
     const response = makeResponse();
 
-    controller.getUserConfig(makeRequest(undefined), response);
+    await controller.getUserConfig(makeRequest(undefined), response);
 
     expect(calls).toEqual(['user-1']);
     expect(response.getStatus()).toBe(200);
@@ -64,10 +64,10 @@ describe('WordleController user config', () => {
     });
   });
 
-  it('replaces the authenticated user config when all fields are valid', () => {
+  it('replaces the authenticated user config when all fields are valid', async () => {
     const updates: Array<{ userId: string; config: unknown }> = [];
     const store: WordleUserConfigStore = {
-      get() {
+      async get() {
         return {
           invertActionKeys: false,
           enableSounds: false,
@@ -75,7 +75,7 @@ describe('WordleController user config', () => {
           enableArrowKeys: false,
         };
       },
-      update(userId, config) {
+      async update(userId, config) {
         updates.push({ userId, config });
         return config;
       },
@@ -83,7 +83,7 @@ describe('WordleController user config', () => {
     const controller = new WordleController(store);
     const response = makeResponse();
 
-    controller.updateUserConfig(
+    await controller.updateUserConfig(
       makeRequest({
         invertActionKeys: true,
         enableSounds: false,
@@ -115,9 +115,9 @@ describe('WordleController user config', () => {
     });
   });
 
-  it('rejects partial and non-boolean configurations', () => {
+  it('rejects partial and non-boolean configurations', async () => {
     const store: WordleUserConfigStore = {
-      get() {
+      async get() {
         return {
           invertActionKeys: false,
           enableSounds: false,
@@ -125,7 +125,7 @@ describe('WordleController user config', () => {
           enableArrowKeys: false,
         };
       },
-      update() {
+      async update() {
         throw new Error('must not update');
       },
     };
@@ -143,7 +143,7 @@ describe('WordleController user config', () => {
       null,
     ]) {
       const response = makeResponse();
-      controller.updateUserConfig(makeRequest(body), response);
+      await controller.updateUserConfig(makeRequest(body), response);
       expect(response.getStatus()).toBe(400);
     }
   });

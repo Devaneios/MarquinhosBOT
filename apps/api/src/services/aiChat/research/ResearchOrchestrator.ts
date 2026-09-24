@@ -51,7 +51,7 @@ export class ResearchOrchestrator {
     private traceRecorder: AiTraceRecorder = new AiTraceRecorder(),
   ) {}
 
-  start(input: StartResearchInput): StartResearchOutcome {
+  async start(input: StartResearchInput): Promise<StartResearchOutcome> {
     if (this.guardrailService.isInjectionAttempt(input.query)) {
       return {
         status: 'rejected',
@@ -60,7 +60,7 @@ export class ResearchOrchestrator {
       };
     }
 
-    const existing = this.jobStore.create({
+    const existing = await this.jobStore.create({
       idempotencyKey: input.idempotencyKey,
       threadId: input.threadId,
       userId: input.userId,
@@ -75,8 +75,13 @@ export class ResearchOrchestrator {
       return { status: 'accepted', jobId: existing.job.jobId, created: false };
     }
 
-    if (!this.rateLimitService.checkAndIncrement(input.userId, input.guildId)) {
-      this.jobStore.fail(existing.job.jobId, 'rate_limited');
+    if (
+      !(await this.rateLimitService.checkAndIncrement(
+        input.userId,
+        input.guildId,
+      ))
+    ) {
+      await this.jobStore.fail(existing.job.jobId, 'rate_limited');
       logger.info('ai.research.rate_limited', {
         userId: input.userId,
         guildId: input.guildId,
@@ -84,7 +89,7 @@ export class ResearchOrchestrator {
       return { status: 'rate_limited' };
     }
 
-    this.threadStore.register({
+    await this.threadStore.register({
       threadId: input.threadId,
       guildId: input.guildId,
       channelId: input.channelId,
@@ -92,21 +97,23 @@ export class ResearchOrchestrator {
       mode: 'research',
     });
 
+    // Marked before responding so the first poll already sees 'running'.
+    await this.jobStore.markRunning(existing.job.jobId);
     void this.execute(existing.job);
 
     return { status: 'accepted', jobId: existing.job.jobId, created: true };
   }
 
-  get(jobId: string): ResearchJobView | null {
-    const job = this.jobStore.get(jobId);
+  async get(jobId: string): Promise<ResearchJobView | null> {
+    const job = await this.jobStore.get(jobId);
     if (!job) return null;
-    return { ...job, progress: this.jobStore.events(jobId) };
+    return { ...job, progress: await this.jobStore.events(jobId) };
   }
 
   /** Fails jobs orphaned by a process restart so no poller waits forever. */
-  reapStaleJobs(): void {
-    for (const job of this.jobStore.findStale()) {
-      this.jobStore.fail(
+  async reapStaleJobs(): Promise<void> {
+    for (const job of await this.jobStore.findStale()) {
+      await this.jobStore.fail(
         job.jobId,
         'A API reiniciou no meio da pesquisa. Roda o comando de novo.',
       );
@@ -119,18 +126,18 @@ export class ResearchOrchestrator {
    * follow-up question in a research thread would reach the model with no idea
    * what report it is being asked about.
    */
-  private seedThreadTranscript(
+  private async seedThreadTranscript(
     job: ResearchJob,
     result: {
       report: string;
       sources: { index: number; url: string; title: string }[];
     },
-  ): void {
+  ): Promise<void> {
     const sourceList = result.sources
       .map((source) => `[${source.index}] ${source.title} — ${source.url}`)
       .join('\n');
     try {
-      this.threadStore.append(job.threadId, [
+      await this.threadStore.append(job.threadId, [
         {
           role: 'user',
           content: `Faz uma pesquisa profunda sobre: ${job.query}`,
@@ -159,32 +166,35 @@ export class ResearchOrchestrator {
       recentMessages: [],
     });
 
-    this.jobStore.markRunning(job.jobId);
     logger.info('ai.research.job_started', {
       jobId: job.jobId,
       traceId: trace.traceId,
       threadId: job.threadId,
     });
 
+    // Progress writes are chained so they keep their order, and drained
+    // before the job is marked done so a poller never sees 'done' first.
+    let progressWrites: Promise<void> = Promise.resolve();
     try {
       const result = await this.research.run({
         query: job.query,
         trace,
         onProgress: (stage, message) => {
-          try {
-            this.jobStore.addEvent(job.jobId, stage, message);
-          } catch (error) {
-            // Losing a progress line must never abort the research itself.
-            logger.warn('ai.research.progress_persist_failed', {
-              jobId: job.jobId,
-              error: getErrorMessage(error),
+          progressWrites = progressWrites
+            .then(() => this.jobStore.addEvent(job.jobId, stage, message))
+            .catch((error: unknown) => {
+              // Losing a progress line must never abort the research itself.
+              logger.warn('ai.research.progress_persist_failed', {
+                jobId: job.jobId,
+                error: getErrorMessage(error),
+              });
             });
-          }
         },
       });
 
-      this.jobStore.complete(job.jobId, result);
-      this.seedThreadTranscript(job, result);
+      await progressWrites;
+      await this.jobStore.complete(job.jobId, result);
+      await this.seedThreadTranscript(job, result);
       trace.finish({
         status: 'ok',
         mainCategory: 'agent_task',
@@ -201,7 +211,13 @@ export class ResearchOrchestrator {
       });
     } catch (error) {
       const message = getErrorMessage(error);
-      this.jobStore.fail(job.jobId, message);
+      await progressWrites;
+      await this.jobStore.fail(job.jobId, message).catch((failError) =>
+        logger.error('ai.research.fail_persist_failed', {
+          jobId: job.jobId,
+          error: failError,
+        }),
+      );
       trace.finish({ status: 'error', error });
       logger.error('ai.research.job_failed', {
         jobId: job.jobId,

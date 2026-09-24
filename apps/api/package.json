@@ -8,6 +8,9 @@
     "@colyseus/schema": "^4.0.30",
     "@colyseus/testing": "^0.17.11",
     "@colyseus/ws-transport": "^0.17.13",
+    "@marquinhos/contracts": "workspace:*",
+    "@marquinhos/database": "workspace:*",
+    "@marquinhos/domain": "workspace:*",
     "axios": "^1.18.1",
     "cheerio": "^1.2.0",
     "colyseus": "^0.17.10",
@@ -15,6 +18,7 @@
     "date-fns": "^4.4.0",
     "dockerode": "^5.0.1",
     "dotenv": "^17.4.2",
+    "drizzle-orm": "0.45.3",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
     "morgan": "^1.11.0",
@@ -25,10 +29,7 @@
     "turndown": "^7.2.4",
     "turndown-plugin-gfm": "^1.0.2",
     "unpdf": "^1.8.0",
-    "zod": "^4.4.3",
-    "@marquinhos/contracts": "workspace:*",
-    "@marquinhos/database": "workspace:*",
-    "@marquinhos/domain": "workspace:*"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@colyseus/sdk": "^0.17.43",
@@ -63,7 +64,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
-    "test": "SQLITE_PATH=:memory: MARQUINHOS_SECRET_KEY=test OPENAI_API_KEY=test bun test",
+    "test": "MARQUINHOS_SECRET_KEY=test OPENAI_API_KEY=test bun test",
     "lint": "eslint 'src/**/*.ts'",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
     "clean": "rm -rf dist/ .logs/",

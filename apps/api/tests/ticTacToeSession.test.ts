@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { TicTacToeSession } from 'services/activity/ticTacToe/TicTacToeSession';
+import { waitFor } from './helpers/waitFor';
 
 function noopBroadcaster() {
   return { broadcast: () => {} };
@@ -65,7 +66,9 @@ describe('TicTacToeSession.substitutePlayer', () => {
 
 describe('TicTacToeSession results', () => {
   it('records every match played in the same Activity instance', async () => {
-    const { db } = await import('@marquinhos/database/sqlite');
+    const { db } = await import('@marquinhos/database/client');
+    const { userGameResults } = await import('@marquinhos/database/schema');
+    const { count, eq } = await import('drizzle-orm');
     const { GamificationService } = await import('services/gamification');
     const session = new TicTacToeSession(
       {
@@ -92,11 +95,13 @@ describe('TicTacToeSession results', () => {
     session.requestRestart('rematch-o');
     xWinsTopRow();
 
-    const { matches } = db
-      .query<{ matches: number }, [string]>(
-        'SELECT COUNT(*) AS matches FROM user_game_results WHERE user_id = ?',
-      )
-      .get('rematch-x')!;
+    const matches = await waitFor(async () => {
+      const [row] = await db
+        .select({ matches: count() })
+        .from(userGameResults)
+        .where(eq(userGameResults.user_id, 'rematch-x'));
+      return row!.matches;
+    }, 2);
     expect(matches).toBe(2);
   });
 

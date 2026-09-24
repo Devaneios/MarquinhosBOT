@@ -41,7 +41,7 @@ export class AiChatService {
   }
 
   async respond(request: AiChatRequest): Promise<AiChatResult> {
-    const allowed = this.rateLimitService.checkAndIncrement(
+    const allowed = await this.rateLimitService.checkAndIncrement(
       request.userId,
       request.guildId,
     );

@@ -1,5 +1,6 @@
-import { db as defaultDb } from '@marquinhos/database/sqlite';
-import { Database } from 'bun:sqlite';
+import { db as defaultDb, type Db } from '@marquinhos/database/client';
+import { aiTraceEvents, aiTraces } from '@marquinhos/database/schema';
+import { and, asc, desc, eq, type SQL } from 'drizzle-orm';
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
@@ -45,46 +46,51 @@ export interface AiTraceListFilters {
 }
 
 export class AiTraceQuery {
-  constructor(private db: Database = defaultDb) {}
+  constructor(private db: Db = defaultDb) {}
 
-  list(filters: AiTraceListFilters = {}): AiTraceRow[] {
+  async list(filters: AiTraceListFilters = {}): Promise<AiTraceRow[]> {
     const limit = Math.min(
       Math.max(filters.limit ?? DEFAULT_LIMIT, 1),
       MAX_LIMIT,
     );
+    const conditions: SQL[] = [];
+    if (filters.userId) conditions.push(eq(aiTraces.user_id, filters.userId));
+    if (filters.status) conditions.push(eq(aiTraces.status, filters.status));
+    if (filters.category)
+      conditions.push(eq(aiTraces.category, filters.category));
     return this.db
-      .query<AiTraceRow, Record<string, string | number | null>>(
-        `SELECT * FROM ai_traces
-         WHERE ($userId IS NULL OR user_id = $userId)
-           AND ($status IS NULL OR status = $status)
-           AND ($category IS NULL OR category = $category)
-         ORDER BY created_at DESC
-         LIMIT $limit`,
-      )
-      .all({
-        $userId: filters.userId ?? null,
-        $status: filters.status ?? null,
-        $category: filters.category ?? null,
-        $limit: limit,
-      });
+      .select()
+      .from(aiTraces)
+      .where(and(...conditions))
+      .orderBy(desc(aiTraces.created_at))
+      .limit(limit);
   }
 
-  get(
+  async get(
     traceId: string,
-  ): { trace: AiTraceRow; events: AiTraceEventRow[] } | undefined {
-    const trace = this.db
-      .query<AiTraceRow, { $traceId: string }>(
-        'SELECT * FROM ai_traces WHERE trace_id = $traceId',
-      )
-      .get({ $traceId: traceId });
+  ): Promise<{ trace: AiTraceRow; events: AiTraceEventRow[] } | undefined> {
+    const [trace] = await this.db
+      .select()
+      .from(aiTraces)
+      .where(eq(aiTraces.trace_id, traceId));
     if (!trace) return undefined;
 
-    const events = this.db
-      .query<AiTraceEventRow, { $traceId: string }>(
-        `SELECT seq, type, phase, name, input, output, status, exit_code, duration_ms, created_at
-         FROM ai_trace_events WHERE trace_id = $traceId ORDER BY seq`,
-      )
-      .all({ $traceId: traceId });
+    const events = await this.db
+      .select({
+        seq: aiTraceEvents.seq,
+        type: aiTraceEvents.type,
+        phase: aiTraceEvents.phase,
+        name: aiTraceEvents.name,
+        input: aiTraceEvents.input,
+        output: aiTraceEvents.output,
+        status: aiTraceEvents.status,
+        exit_code: aiTraceEvents.exit_code,
+        duration_ms: aiTraceEvents.duration_ms,
+        created_at: aiTraceEvents.created_at,
+      })
+      .from(aiTraceEvents)
+      .where(eq(aiTraceEvents.trace_id, traceId))
+      .orderBy(asc(aiTraceEvents.seq));
 
     return { trace, events };
   }
