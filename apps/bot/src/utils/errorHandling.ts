@@ -102,8 +102,14 @@ export function setDiscordClient(client: Client | null): void {
   discordClient = client;
 }
 
+// While DMs keep failing the queue would otherwise grow without bound.
+const MAX_QUEUED_ERRORS = 100;
+
 function queueErrorForDM(error: QueuedError): void {
   pendingErrors.push(error);
+  if (pendingErrors.length > MAX_QUEUED_ERRORS) {
+    pendingErrors = pendingErrors.slice(-MAX_QUEUED_ERRORS);
+  }
   scheduleFlush();
 }
 
@@ -116,9 +122,10 @@ function scheduleFlush(): void {
 }
 
 /**
- * Sends the queued batch as a DM. On success the queue is cleared; on any
- * failure (client not ready, DM closed, etc.) the batch is left queued so
- * the next flush retries it, and the failure is logged to console instead.
+ * Sends the queued batch as a DM. On success the errors it covered (shown
+ * or counted) leave the queue; on any failure (client not ready, DM closed,
+ * etc.) the batch is left queued so the next flush retries it, and the
+ * failure is logged to console instead.
  */
 export async function flushPendingErrors(): Promise<void> {
   if (pendingErrors.length === 0) return;
@@ -137,34 +144,76 @@ export async function flushPendingErrors(): Promise<void> {
     return;
   }
 
-  const batch = pendingErrors.slice(0, 10);
-  const embeds = batch.map((error) => ({
+  const covered = new Set(pendingErrors);
+  const embeds = batchEmbeds(pendingErrors);
+
+  try {
+    const user = await discordClient.users.fetch(userId);
+    await user.send({ embeds });
+    // Errors reported while the DM was in flight wait for the next flush.
+    pendingErrors = pendingErrors.filter((error) => !covered.has(error));
+  } catch (error) {
+    logger.error(`Failed to DM error batch: ${error}`);
+    scheduleFlush();
+  }
+}
+
+// Discord rejects a message with more than 10 embeds or 6000 characters
+// across them; a rejected batch would stay queued and be retried forever.
+const MAX_EMBEDS_PER_MESSAGE = 10;
+const MAX_MESSAGE_CHARS = 6000;
+const SUMMARY_RESERVE_CHARS = 64;
+
+interface ErrorEmbed {
+  title: string;
+  description: string;
+  color: number;
+  fields: { name: string; value: string; inline?: boolean }[];
+}
+
+function toEmbed(error: QueuedError): ErrorEmbed {
+  return {
     title: error.message.slice(0, 256),
     description: `\`\`\`${(error.stack ?? 'No stack trace').slice(0, 1024)}\`\`\``,
     color: 0xff0000,
     fields: [
       { name: 'Level', value: error.logLevel, inline: true },
-      { name: 'Origin', value: error.origin, inline: true },
+      { name: 'Origin', value: error.origin.slice(0, 1024), inline: true },
     ],
-  }));
+  };
+}
 
-  if (pendingErrors.length > 10) {
+function embedChars(embed: ErrorEmbed): number {
+  return (
+    embed.title.length +
+    embed.description.length +
+    embed.fields.reduce((sum, f) => sum + f.name.length + f.value.length, 0)
+  );
+}
+
+// Shows as many errors in full as fit, then one embed counting the rest.
+function batchEmbeds(errors: QueuedError[]): ErrorEmbed[] {
+  const embeds: ErrorEmbed[] = [];
+  let chars = 0;
+  for (const error of errors) {
+    const embed = toEmbed(error);
+    const fits =
+      embeds.length < MAX_EMBEDS_PER_MESSAGE - 1 &&
+      chars + embedChars(embed) <= MAX_MESSAGE_CHARS - SUMMARY_RESERVE_CHARS;
+    if (!fits) break;
+    embeds.push(embed);
+    chars += embedChars(embed);
+  }
+  const summarized = errors.length - embeds.length;
+  if (summarized > 0) {
     embeds.push({
-      title: `... and ${pendingErrors.length - 10} more errors`,
+      title: `... and ${summarized} more errors`,
       description: '',
       color: 0xff0000,
       fields: [],
     });
   }
-
-  try {
-    const user = await discordClient.users.fetch(userId);
-    await user.send({ embeds });
-    pendingErrors = [];
-  } catch (error) {
-    logger.error(`Failed to DM error batch: ${error}`);
-    scheduleFlush();
-  }
+  return embeds;
 }
 
 export function _resetErrorHandlingForTests(): void {
