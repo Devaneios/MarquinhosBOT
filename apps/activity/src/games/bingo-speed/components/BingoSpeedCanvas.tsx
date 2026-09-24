@@ -1,3 +1,8 @@
+import {
+  serverMessageSchema,
+  type BingoSpeedClientMessage,
+} from '@marquinhos/contracts/activity/games/bingoSpeed';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -8,17 +13,14 @@ import {
 import { colyseusUrl } from '../../../lib/apiBase';
 import { devlog } from '../../../lib/devlog';
 import type { WsSession } from '../../shared/activitySession';
-import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
 import {
-  bingoGameEndPayloadSchema,
-  bingoInitPayloadSchema,
-  bingoNumberDrawnPayloadSchema,
-  type BingoCard,
-} from '../types';
+  applyBingoSpeedMessage,
+  initialBingoSpeedView,
+} from '../bingoSpeedMessages';
 import { BingoSpeedBoardCanvas } from './BingoSpeedBoardCanvas';
 
 export function BingoSpeedCanvas({
@@ -31,10 +33,8 @@ export function BingoSpeedCanvas({
   onMainMenu: () => void;
 }) {
   const { t } = useTranslation(['bingo-speed', 'common']);
-  const [card, setCard] = useState<BingoCard | null>(null);
-  const [drawnNumbers, setDrawnNumbers] = useState<Set<number>>(new Set());
-  const [cardLoaded, setCardLoaded] = useState(false);
-  const [winner, setWinner] = useState<string | null>(null);
+  const [view, setView] = useState(initialBingoSpeedView);
+  const { card, drawnNumbers, cardLoaded, winner } = view;
   const messageHandlerRef = useRef<(message: ActivityMessage) => void>(
     () => {},
   );
@@ -47,34 +47,18 @@ export function BingoSpeedCanvas({
   );
 
   const claimBingo = useCallback(() => {
-    send({ type: 'claim_bingo' });
+    send({ type: 'claim_bingo' } satisfies BingoSpeedClientMessage);
   }, [send]);
 
   useEffect(() => {
     devlog('[bingo-speed-canvas] mounting');
-    setCard(null);
-    setDrawnNumbers(new Set());
-    setCardLoaded(false);
-    setWinner(null);
+    setView(initialBingoSpeedView);
 
-    messageHandlerRef.current = (message) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(bingoInitPayloadSchema, message);
-        if (!payload) return;
-        devlog('[bingo-speed-canvas] init', payload);
-        setCard(payload.card);
-        setDrawnNumbers(new Set(payload.state?.drawnNumbers ?? []));
-        setCardLoaded(true);
-      } else if (message.type === 'number_drawn') {
-        const payload = parsePayload(bingoNumberDrawnPayloadSchema, message);
-        if (!payload) return;
-        setDrawnNumbers((prev) => new Set(prev).add(payload.number));
-      } else if (message.type === 'game_end') {
-        const payload = parsePayload(bingoGameEndPayloadSchema, message);
-        if (!payload) return;
-        devlog('[bingo-speed-canvas] game end', payload);
-        setWinner(payload.winner ?? null);
-      }
+    messageHandlerRef.current = (raw) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (!message) return;
+      devlog('[bingo-speed-canvas]', message.type, message.payload);
+      setView((current) => applyBingoSpeedMessage(current, message));
     };
 
     return () => {

@@ -1,7 +1,4 @@
-export interface BingoCard {
-  board: number[][];
-  marked: boolean[][];
-}
+import type { BingoCard } from '@marquinhos/contracts/activity/games/bingoSpeed';
 
 export interface BingoSpeedEngineState {
   drawnNumbers: number[];

@@ -1,13 +1,15 @@
+import {
+  serverMessageSchema,
+  type BingoSpeedClientMessage,
+} from '@marquinhos/contracts/activity/games/bingoSpeed';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
-import { parsePayload } from '../../shared/colyseusConnection';
 import {
-  bingoGameEndPayloadSchema,
-  bingoInitPayloadSchema,
-  bingoNumberDrawnPayloadSchema,
-  type BingoCard,
-} from '../types';
+  applyBingoSpeedMessage,
+  initialBingoSpeedView,
+} from '../bingoSpeedMessages';
 import { BingoSpeedBoardCanvas } from './BingoSpeedBoardCanvas';
 
 // Renders Bingo Speed inside a multiplayer Room view — driven by
@@ -24,28 +26,15 @@ import { BingoSpeedBoardCanvas } from './BingoSpeedBoardCanvas';
 export function BingoSpeedRoomBoard() {
   const ctx = useRoomConnectionContext();
   const { t } = useTranslation(['bingo-speed', 'common']);
-  const [card, setCard] = useState<BingoCard | null>(null);
-  const [drawnNumbers, setDrawnNumbers] = useState<Set<number>>(new Set());
-  const [cardLoaded, setCardLoaded] = useState(false);
-  const [winner, setWinner] = useState<string | null>(null);
+  const [view, setView] = useState(initialBingoSpeedView);
+  const { card, drawnNumbers, cardLoaded, winner } = view;
 
   useEffect(() => {
     if (!ctx) return;
-    return ctx.subscribe((message) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(bingoInitPayloadSchema, message);
-        if (!payload) return;
-        setCard(payload.card);
-        setDrawnNumbers(new Set(payload.state?.drawnNumbers ?? []));
-        setCardLoaded(true);
-      } else if (message.type === 'number_drawn') {
-        const payload = parsePayload(bingoNumberDrawnPayloadSchema, message);
-        if (!payload) return;
-        setDrawnNumbers((prev) => new Set(prev).add(payload.number));
-      } else if (message.type === 'game_end') {
-        const payload = parsePayload(bingoGameEndPayloadSchema, message);
-        if (payload) setWinner(payload.winner ?? null);
-      }
+    return ctx.subscribe((raw) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (message)
+        setView((current) => applyBingoSpeedMessage(current, message));
     });
   }, [ctx]);
 
@@ -53,7 +42,7 @@ export function BingoSpeedRoomBoard() {
   const canClaim = cardLoaded && role !== 'spectator' && role !== 'queued';
 
   const claimBingo = useCallback(() => {
-    ctx?.send({ type: 'claim_bingo' });
+    ctx?.send({ type: 'claim_bingo' } satisfies BingoSpeedClientMessage);
   }, [ctx]);
 
   return (

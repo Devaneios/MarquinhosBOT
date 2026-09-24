@@ -1,8 +1,11 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
-import {
-  BingoSpeedEngine,
-  type BingoCard,
-} from '@marquinhos/domain/activity/bingoSpeed/BingoSpeedEngine';
+import type {
+  BingoCard,
+  BingoClaimResult,
+  BingoSpeedServerMessage,
+  BingoSpeedState,
+} from '@marquinhos/contracts/activity/games/bingoSpeed';
+import { BingoSpeedEngine } from '@marquinhos/domain/activity/bingoSpeed/BingoSpeedEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';
@@ -29,13 +32,6 @@ export interface BingoSpeedSessionOptions {
   onSessionEnded?: () => void;
   disconnectGraceMs?: number;
   emptyRoomGraceMs?: number;
-}
-
-export interface BingoSpeedPublicState {
-  playerCount: number;
-  drawnNumbers: number[];
-  gameStarted: boolean;
-  winner: string | null;
 }
 
 const DEFAULT_DRAW_INTERVAL_MS = 3000;
@@ -68,7 +64,7 @@ export class BingoSpeedSession {
 
   constructor(
     private identity: BingoSpeedSessionIdentity,
-    private broadcaster: ActivityBroadcaster,
+    private broadcaster: ActivityBroadcaster<BingoSpeedServerMessage>,
     private gamification: GamificationService = new GamificationService(),
     options: BingoSpeedSessionOptions = {},
   ) {
@@ -258,7 +254,7 @@ export class BingoSpeedSession {
     this.engine.markNumber(player.card, number);
   }
 
-  claimBingo(userId: string): { success: boolean } | { error: string } {
+  claimBingo(userId: string): BingoClaimResult {
     const player = this.players.get(userId);
     if (!player) {
       return { error: 'Player not found' };
@@ -298,7 +294,7 @@ export class BingoSpeedSession {
     });
   }
 
-  getPublicState(): BingoSpeedPublicState {
+  getPublicState(): BingoSpeedState {
     return {
       playerCount: this.players.size,
       drawnNumbers: this.engine.getState().drawnNumbers,

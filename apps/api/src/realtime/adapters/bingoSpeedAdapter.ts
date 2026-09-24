@@ -1,5 +1,7 @@
+import type { BingoSpeedServerMessage } from '@marquinhos/contracts/activity/games/bingoSpeed';
 import { BingoSpeedSession } from 'services/activity/bingoSpeed/BingoSpeedSession';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { sendMessage } from '../sendMessage';
 
 const CLAIM_RATE_LIMIT_WINDOW_MS = 1000;
 const CLAIM_RATE_LIMIT_MAX = 5;
@@ -38,7 +40,10 @@ export const bingoSpeedAdapter: GameRoomAdapter<BingoSpeedSession> = {
           },
           handle: (auth, client) => {
             const result = session.claimBingo(auth.userId);
-            client.send('bingo_claim_result', result);
+            sendMessage<BingoSpeedServerMessage>(client, {
+              type: 'bingo_claim_result',
+              payload: result,
+            });
           },
         },
         leave: { handle: (auth, client) => session.leave(auth.userId, client) },
@@ -48,12 +53,18 @@ export const bingoSpeedAdapter: GameRoomAdapter<BingoSpeedSession> = {
 
   onJoin(session, auth, client, seat) {
     if (seat !== 'player') {
-      client.send('init', { card: null, state: session.getPublicState() });
+      sendMessage<BingoSpeedServerMessage>(client, {
+        type: 'init',
+        payload: { card: null, state: session.getPublicState() },
+      });
       return;
     }
     const card = session.addPlayer(auth.userId, client);
     const state = session.getPublicState();
-    client.send('init', { card, state });
+    sendMessage<BingoSpeedServerMessage>(client, {
+      type: 'init',
+      payload: { card, state },
+    });
     if (session.playerCount >= 2 && auth.mode === 'multi') session.start();
   },
   onLeave(session, auth, client) {
