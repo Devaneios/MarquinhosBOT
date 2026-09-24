@@ -122,6 +122,29 @@ export function resolveCanonical(guess: string): string | null {
   return canonical ?? null;
 }
 
+const RACE_WORD_LENGTH = 5;
+
+// Wordle Race draws from the curated daily bank, minus words the review
+// banned. A race is won only by a guess whose canonical spelling equals the
+// target, so the target is the canonical spelling too.
+export function pickRaceWord(): string {
+  const banned = new Set(
+    db
+      .query<{ word: string }, []>(
+        'SELECT word FROM wordlist_review WHERE is_banned = 1',
+      )
+      .all()
+      .map((row) => row.word),
+  );
+  const candidates = getDevaneiosWordlist().flatMap((word) => {
+    if (word.length !== RACE_WORD_LENGTH || banned.has(word)) return [];
+    const canonical = resolveCanonical(word);
+    return canonical ? [canonical] : [];
+  });
+  if (candidates.length === 0) throw new Error('No Wordle Race words left');
+  return candidates[Math.floor(Math.random() * candidates.length)]!;
+}
+
 function getRecifeDate(): string {
   // Use Intl to get the correct date in Recife timezone
   const tz = process.env.WORDLE_TIMEZONE ?? 'America/Recife';
