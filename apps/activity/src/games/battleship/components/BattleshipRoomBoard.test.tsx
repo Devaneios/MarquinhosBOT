@@ -96,6 +96,7 @@ describe('BattleshipRoomBoard', () => {
 
     expect(captured).toHaveLength(2);
     for (const props of captured) {
+      expect(props.mode).toBe('spectate');
       expect(props.canFire).toBe(false);
       expect(props.onClickOpponentCell).toBeUndefined();
     }
@@ -117,6 +118,7 @@ describe('BattleshipRoomBoard', () => {
 
     expect(captured).toHaveLength(2);
     for (const props of captured) {
+      expect(props.mode).toBe('spectate');
       expect(props.canFire).toBe(false);
     }
   });

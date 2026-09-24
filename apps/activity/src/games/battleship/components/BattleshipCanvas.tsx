@@ -2,188 +2,119 @@ import type {
   BoardView,
   ShipPlacement,
 } from '@marquinhos/contracts/activity/games/battleship';
-import {
-  BOARD_SIZE,
-  SHIP_SIZES,
-} from '@marquinhos/domain/games/battleship/BattleshipEngine';
-import { Application, Container, Graphics } from 'pixi.js';
+import { Application } from 'pixi.js';
 import { useEffect, useRef } from 'react';
+import {
+  BattleshipScene,
+  boardCountFor,
+  computeLayout,
+  type ActiveBoard,
+  type BoardInput,
+  type BoardSlot,
+  type CanvasMode,
+  type Cell,
+  type MotionPreference,
+  type SceneInput,
+} from './battleshipScene';
 
-const CELL = 30;
-const BOARD_PX = CELL * BOARD_SIZE;
-const GAP = 24;
-
-const WATER = '#0e2a3d';
-const WATER_LINE = '#1c4a63';
-const SHIP_COLOR = '#5fbf77';
-const SHIP_SUNK_COLOR = '#c0455a';
-const MISS_COLOR = '#5c6773';
-const HIT_COLOR = '#ff6b4a';
-const PREVIEW_OK = 'rgba(95,191,119,0.55)';
-const PREVIEW_BAD = 'rgba(224,80,80,0.55)';
+const EMPTY_BOARD: BoardView = { ships: [], shots: [] };
 
 export interface BattleshipCanvasProps {
-  mode: 'placement' | 'battle';
+  mode: CanvasMode;
   ownBoard: BoardView;
   opponentBoard?: BoardView;
+  ownTitle?: string;
+  opponentTitle?: string;
+  activeBoard?: ActiveBoard;
   pendingShips?: ShipPlacement[];
-  previewCells?: { x: number; y: number }[];
+  previewCells?: Cell[];
   previewValid?: boolean;
   canFire?: boolean;
-  onHoverOwnCell?: (cell: { x: number; y: number } | null) => void;
-  onClickOwnCell?: (cell: { x: number; y: number }) => void;
-  onClickOpponentCell?: (cell: { x: number; y: number }) => void;
+  className?: string;
+  onHoverOwnCell?: (cell: Cell | null) => void;
+  onClickOwnCell?: (cell: Cell) => void;
+  onClickOpponentCell?: (cell: Cell) => void;
 }
 
-function drawGrid(g: Graphics) {
-  g.clear();
-  g.rect(0, 0, BOARD_PX, BOARD_PX).fill(WATER);
-  for (let i = 0; i <= BOARD_SIZE; i++) {
-    g.moveTo(i * CELL, 0).lineTo(i * CELL, BOARD_PX);
-    g.moveTo(0, i * CELL).lineTo(BOARD_PX, i * CELL);
-  }
-  g.stroke({ width: 1, color: WATER_LINE });
+function slotsFor(mode: CanvasMode): BoardSlot[] {
+  return mode === 'battle' ? ['own', 'opponent'] : ['own'];
 }
 
-function cellFromLocal(x: number, y: number): { x: number; y: number } | null {
-  const gx = Math.floor(x / CELL);
-  const gy = Math.floor(y / CELL);
-  if (gx < 0 || gx >= BOARD_SIZE || gy < 0 || gy >= BOARD_SIZE) return null;
-  return { x: gx, y: gy };
+function sceneInputFor(props: BattleshipCanvasProps): SceneInput {
+  const active = props.activeBoard ?? 'none';
+  const own: BoardInput = {
+    board: props.ownBoard,
+    title: props.ownTitle ?? '',
+    active: active === 'own',
+    pendingShips: props.pendingShips ?? [],
+    previewCells: props.previewCells ?? [],
+    previewValid: props.previewValid ?? false,
+    canFire: false,
+  };
+  if (props.mode !== 'battle') return { mode: props.mode, boards: { own } };
+  const opponent: BoardInput = {
+    board: props.opponentBoard ?? EMPTY_BOARD,
+    title: props.opponentTitle ?? '',
+    active: active === 'opponent',
+    pendingShips: [],
+    previewCells: [],
+    previewValid: false,
+    canFire: props.canFire ?? false,
+  };
+  return { mode: props.mode, boards: { own, opponent } };
 }
 
-// Single reusable grid painter shared by the placement board and both
-// battle boards — everything it draws is derived purely from its args, so
-// mode-specific behavior (hover preview vs. fire clicks) lives entirely in
-// the callbacks the caller wires up, not in this function.
-function paintBoard(
-  ships: Container,
-  shots: Container,
-  board: BoardView,
-  showShips: boolean,
-) {
-  ships.removeChildren();
-  shots.removeChildren();
-
-  if (showShips) {
-    for (const ship of board.ships) {
-      for (const cell of ship.cells) {
-        const g = new Graphics()
-          .rect(2, 2, CELL - 4, CELL - 4)
-          .fill(ship.sunk ? SHIP_SUNK_COLOR : SHIP_COLOR);
-        g.position.set(cell.x * CELL, cell.y * CELL);
-        ships.addChild(g);
-      }
-    }
-  }
-
-  for (const shot of board.shots) {
-    const g = new Graphics();
-    if (shot.hit) {
-      g.circle(CELL / 2, CELL / 2, CELL * 0.28).fill(
-        shot.sunk ? SHIP_SUNK_COLOR : HIT_COLOR,
-      );
-    } else {
-      g.circle(CELL / 2, CELL / 2, CELL * 0.12).fill(MISS_COLOR);
-    }
-    g.position.set(shot.x * CELL, shot.y * CELL);
-    shots.addChild(g);
-  }
+function motionPreference(): MotionPreference {
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    ? 'reduced'
+    : 'full';
 }
 
-function paintPending(layer: Container, pendingShips: ShipPlacement[]) {
-  layer.removeChildren();
-  for (const ship of pendingShips) {
-    const size = SHIP_SIZES[ship.type];
-    for (let i = 0; i < size; i++) {
-      const cx = ship.orientation === 'horizontal' ? ship.x + i : ship.x;
-      const cy = ship.orientation === 'horizontal' ? ship.y : ship.y + i;
-      const g = new Graphics().rect(2, 2, CELL - 4, CELL - 4).fill(SHIP_COLOR);
-      g.position.set(cx * CELL, cy * CELL);
-      layer.addChild(g);
-    }
-  }
-}
-
-function paintPreview(
-  layer: Container,
-  cells: { x: number; y: number }[],
-  valid: boolean,
-) {
-  layer.removeChildren();
-  for (const cell of cells) {
-    const g = new Graphics()
-      .rect(1, 1, CELL - 2, CELL - 2)
-      .fill(valid ? PREVIEW_OK : PREVIEW_BAD);
-    g.position.set(cell.x * CELL, cell.y * CELL);
-    layer.addChild(g);
-  }
-}
-
-// Renders one or two 10x10 boards with PixiJS. Follows PongCanvas's
-// lifecycle pattern: a single effect owns Application creation, the
-// StrictMode-safe deferred init, and full teardown (ticker, listeners,
-// Application.destroy) on unmount.
+// Pixi lifecycle only; all drawing lives in battleshipScene.ts. The
+// Application is created once and survives mode and size changes — the
+// scene relayouts in place, since re-initializing would recreate the WebGL
+// context on every phase change.
 export function BattleshipCanvas(props: BattleshipCanvasProps) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const appRef = useRef<Application | null>(null);
   const propsRef = useRef(props);
   propsRef.current = props;
+  const syncRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     let initialized = false;
     const app = new Application();
-    appRef.current = app;
-
-    const width = props.mode === 'battle' ? BOARD_PX * 2 + GAP : BOARD_PX;
-    const height = BOARD_PX;
-
-    let ownGrid: Graphics;
-    let ownShips: Container;
-    let ownShots: Container;
-    let ownPreview: Container;
-    let ownPending: Container;
-    let ownHitBox: Graphics;
-    let opponentGrid: Graphics | null = null;
-    let opponentShips: Container | null = null;
-    let opponentShots: Container | null = null;
-    let opponentHitBox: Graphics | null = null;
-    let opponentRoot: Container | null = null;
+    let scene: BattleshipScene | null = null;
+    let observer: ResizeObserver | null = null;
     let onContextLost: ((event: Event) => void) | null = null;
     let onContextRestored: (() => void) | null = null;
     let contextCanvas: HTMLCanvasElement | null = null;
 
     function onVisibilityChange() {
       if (!initialized) return;
-      if (document.hidden) {
-        app.ticker.stop();
-      } else {
-        app.ticker.start();
-      }
+      if (document.hidden) app.ticker.stop();
+      else app.ticker.start();
     }
     document.addEventListener('visibilitychange', onVisibilityChange);
 
-    function render() {
+    function sync() {
+      if (!scene || !wrapperRef.current) return;
       const current = propsRef.current;
-      drawGrid(ownGrid);
-      paintBoard(ownShips, ownShots, current.ownBoard, true);
-      paintPreview(
-        ownPreview,
-        current.previewCells ?? [],
-        current.previewValid ?? false,
+      const slots = slotsFor(current.mode);
+      const layout = computeLayout(
+        wrapperRef.current.clientWidth,
+        boardCountFor(current.mode),
       );
-      paintPending(ownPending, current.pendingShips ?? []);
-
-      if (current.mode === 'battle' && opponentGrid && opponentShips) {
-        drawGrid(opponentGrid);
-        paintBoard(
-          opponentShips,
-          opponentShots!,
-          current.opponentBoard ?? { ships: [], shots: [] },
-          false,
-        );
+      if (!scene.hasLayout(layout, slots)) {
+        app.renderer.resize(layout.width, layout.height);
+        scene.setLayout(layout, slots);
       }
+      scene.update(sceneInputFor(current), performance.now());
+    }
+
+    function tick() {
+      scene?.tick(performance.now());
     }
 
     (async () => {
@@ -192,9 +123,9 @@ export function BattleshipCanvas(props: BattleshipCanvasProps) {
 
       await app.init({
         canvas: canvasRef.current!,
-        width,
-        height,
-        background: '#08161f',
+        width: 1,
+        height: 1,
+        backgroundAlpha: 0,
         antialias: true,
         resolution: window.devicePixelRatio,
         autoDensity: true,
@@ -220,63 +151,34 @@ export function BattleshipCanvas(props: BattleshipCanvasProps) {
         false,
       );
 
-      ownGrid = new Graphics();
-      ownShips = new Container();
-      ownShots = new Container();
-      ownPreview = new Container();
-      ownPending = new Container();
-      const ownRoot = new Container();
-      ownRoot.addChild(ownGrid, ownShips, ownPreview, ownPending, ownShots);
-      app.stage.addChild(ownRoot);
+      scene = new BattleshipScene(
+        app.stage,
+        {
+          own: {
+            onHover: (cell) => propsRef.current.onHoverOwnCell?.(cell),
+            onTap: (cell) => propsRef.current.onClickOwnCell?.(cell),
+          },
+          opponent: {
+            onTap: (cell) => {
+              if (!propsRef.current.canFire) return;
+              propsRef.current.onClickOpponentCell?.(cell);
+            },
+          },
+        },
+        motionPreference(),
+      );
+      syncRef.current = sync;
+      sync();
 
-      ownHitBox = new Graphics()
-        .rect(0, 0, BOARD_PX, BOARD_PX)
-        .fill({ color: 0x000000, alpha: 0.001 });
-      ownHitBox.eventMode = 'static';
-      ownHitBox.cursor = 'pointer';
-      ownHitBox.on('pointermove', (e) => {
-        const local = e.getLocalPosition(ownHitBox);
-        propsRef.current.onHoverOwnCell?.(cellFromLocal(local.x, local.y));
-      });
-      ownHitBox.on('pointerout', () => {
-        propsRef.current.onHoverOwnCell?.(null);
-      });
-      ownHitBox.on('pointertap', (e) => {
-        const local = e.getLocalPosition(ownHitBox);
-        const cell = cellFromLocal(local.x, local.y);
-        if (cell) propsRef.current.onClickOwnCell?.(cell);
-      });
-      ownRoot.addChild(ownHitBox);
-
-      if (props.mode === 'battle') {
-        opponentGrid = new Graphics();
-        opponentShips = new Container();
-        opponentShots = new Container();
-        opponentRoot = new Container();
-        opponentRoot.position.set(BOARD_PX + GAP, 0);
-        opponentRoot.addChild(opponentGrid, opponentShips, opponentShots);
-        app.stage.addChild(opponentRoot);
-
-        opponentHitBox = new Graphics()
-          .rect(0, 0, BOARD_PX, BOARD_PX)
-          .fill({ color: 0x000000, alpha: 0.001 });
-        opponentHitBox.eventMode = 'static';
-        opponentHitBox.cursor = 'pointer';
-        opponentHitBox.on('pointertap', (e) => {
-          if (!propsRef.current.canFire) return;
-          const local = e.getLocalPosition(opponentHitBox!);
-          const cell = cellFromLocal(local.x, local.y);
-          if (cell) propsRef.current.onClickOpponentCell?.(cell);
-        });
-        opponentRoot.addChild(opponentHitBox);
-      }
-
-      render();
-      app.ticker.add(render);
+      observer = new ResizeObserver(() => sync());
+      observer.observe(wrapperRef.current!);
+      app.ticker.add(tick);
     })();
 
     return () => {
       cancelled = true;
+      syncRef.current = null;
+      observer?.disconnect();
       document.removeEventListener('visibilitychange', onVisibilityChange);
       if (contextCanvas && onContextLost) {
         contextCanvas.removeEventListener('webglcontextlost', onContextLost);
@@ -288,17 +190,21 @@ export function BattleshipCanvas(props: BattleshipCanvasProps) {
         );
       }
       if (initialized) {
-        app.ticker.remove(render);
-        app.destroy({ removeView: false });
+        app.ticker.remove(tick);
+        app.destroy({ removeView: false }, { children: true });
       }
-      appRef.current = null;
     };
-    // Board/props updates are read live via propsRef inside the ticker's
-    // render() rather than re-running this effect, exactly like PongCanvas
-    // reads configRef — re-running would tear down and reinit the whole
-    // WebGL context on every state message.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.mode]);
+  }, []);
 
-  return <canvas ref={canvasRef} />;
+  // Board state arrives through React renders; push it into the scene after
+  // each one rather than polling props every frame.
+  useEffect(() => {
+    syncRef.current?.();
+  });
+
+  return (
+    <div ref={wrapperRef} className={props.className ?? 'w-full'}>
+      <canvas ref={canvasRef} className="mx-auto block touch-manipulation" />
+    </div>
+  );
 }

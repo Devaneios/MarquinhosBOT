@@ -119,10 +119,13 @@ export function BattleshipBoard({ session }: { session: WsSession }) {
         )}
 
         {state && phase === 'placement' && !mySelfReady && (
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+          <div className="flex w-full max-w-4xl flex-col items-center gap-4 sm:flex-row sm:items-start">
             <BattleshipCanvas
               mode="placement"
+              className="w-full min-w-0 sm:flex-1"
               ownBoard={state.own}
+              ownTitle={t('battleship:ownFleet')}
+              activeBoard="own"
               pendingShips={pendingShips}
               previewCells={previewCells}
               previewValid={previewValid}
@@ -156,7 +159,7 @@ export function BattleshipBoard({ session }: { session: WsSession }) {
         )}
 
         {state && (phase === 'battle' || phase === 'ended') && (
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex w-full max-w-5xl flex-col items-center gap-3">
             <div className="text-sm uppercase tracking-[0.2em] text-marquinhos-text-dim">
               {phase === 'ended'
                 ? state.winner === side
@@ -170,6 +173,11 @@ export function BattleshipBoard({ session }: { session: WsSession }) {
               mode="battle"
               ownBoard={state.own}
               opponentBoard={state.opponent}
+              ownTitle={t('battleship:ownFleet')}
+              opponentTitle={t('battleship:enemyFleet')}
+              activeBoard={
+                phase === 'ended' ? 'none' : myTurn ? 'opponent' : 'own'
+              }
               canFire={phase === 'battle' && myTurn}
               onClickOpponentCell={(cell) =>
                 send({

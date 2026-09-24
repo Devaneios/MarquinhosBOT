@@ -20,5 +20,9 @@
   "player1Turn": "Vez do Jogador 1",
   "player2Turn": "Vez do Jogador 2",
   "player1Wins": "Jogador 1 venceu!",
-  "player2Wins": "Jogador 2 venceu!"
+  "player2Wins": "Jogador 2 venceu!",
+  "ownFleet": "Sua frota",
+  "enemyFleet": "Frota inimiga",
+  "player1Fleet": "Frota do Jogador 1",
+  "player2Fleet": "Frota do Jogador 2"
 }

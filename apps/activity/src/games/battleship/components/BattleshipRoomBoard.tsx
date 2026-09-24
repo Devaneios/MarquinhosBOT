@@ -112,10 +112,13 @@ function BattleshipPlayerView() {
       )}
 
       {state && phase === 'placement' && !mySelfReady && (
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+        <div className="flex w-full max-w-4xl flex-col items-center gap-4 sm:flex-row sm:items-start">
           <BattleshipCanvas
             mode="placement"
+            className="w-full min-w-0 sm:flex-1"
             ownBoard={state.own}
+            ownTitle={t('battleship:ownFleet')}
+            activeBoard="own"
             pendingShips={pendingShips}
             previewCells={previewCells}
             previewValid={previewValid}
@@ -149,7 +152,7 @@ function BattleshipPlayerView() {
       )}
 
       {state && (phase === 'battle' || phase === 'ended') && (
-        <div className="flex flex-col items-center gap-3">
+        <div className="flex w-full max-w-5xl flex-col items-center gap-3">
           <div className="text-sm uppercase tracking-[0.2em] text-marquinhos-text-dim">
             {phase === 'ended'
               ? state.winner === side
@@ -163,6 +166,11 @@ function BattleshipPlayerView() {
             mode="battle"
             ownBoard={state.own}
             opponentBoard={state.opponent}
+            ownTitle={t('battleship:ownFleet')}
+            opponentTitle={t('battleship:enemyFleet')}
+            activeBoard={
+              phase === 'ended' ? 'none' : myTurn ? 'opponent' : 'own'
+            }
             canFire={phase === 'battle' && myTurn}
             onClickOpponentCell={(cell) =>
               ctx?.send({
@@ -202,6 +210,10 @@ function BattleshipSpectatorView() {
     );
   }
 
+  // The side on turn fires at the other side's fleet.
+  const firedAt =
+    state.phase !== 'battle' ? null : state.turn === 'p1' ? 'p2' : 'p1';
+
   return (
     <div className="flex flex-1 flex-col items-center gap-4 overflow-y-auto p-4 sm:p-6">
       <div className="text-sm uppercase tracking-[0.2em] text-marquinhos-text-dim">
@@ -217,9 +229,23 @@ function BattleshipSpectatorView() {
                 : 'battleship:player2Turn',
             )}
       </div>
-      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-        <BattleshipCanvas mode="battle" ownBoard={state.p1} canFire={false} />
-        <BattleshipCanvas mode="battle" ownBoard={state.p2} canFire={false} />
+      <div className="flex w-full max-w-5xl flex-col items-center gap-4 lg:flex-row lg:items-start">
+        <BattleshipCanvas
+          mode="spectate"
+          className="w-full min-w-0 lg:flex-1"
+          ownBoard={state.p1}
+          ownTitle={t('battleship:player1Fleet')}
+          activeBoard={firedAt === 'p1' ? 'own' : 'none'}
+          canFire={false}
+        />
+        <BattleshipCanvas
+          mode="spectate"
+          className="w-full min-w-0 lg:flex-1"
+          ownBoard={state.p2}
+          ownTitle={t('battleship:player2Fleet')}
+          activeBoard={firedAt === 'p2' ? 'own' : 'none'}
+          canFire={false}
+        />
       </div>
     </div>
   );
