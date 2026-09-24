@@ -5,13 +5,21 @@ import {
   scryptSync,
 } from 'crypto';
 
+// scrypt blocks the event loop for tens of milliseconds, and every request
+// with a bearer token reaches decryption, so the derived key is reused
+// until the secret or salt changes.
+let derivedKey: { secret: string; salt: string; key: Buffer } | null = null;
+
 function getKey(): Buffer {
   const secret = process.env.MARQUINHOS_SECRET_KEY;
   if (!secret) throw new Error('MARQUINHOS_SECRET_KEY is not set');
   // Accept a 64-char hex string as a raw 32-byte key; otherwise derive via scrypt
   if (/^[0-9a-f]{64}$/i.test(secret)) return Buffer.from(secret, 'hex');
   const salt = process.env.MARQUINHOS_CRYPTO_SALT ?? 'marquinhos-salt';
-  return scryptSync(secret, salt, 32);
+  if (derivedKey?.secret !== secret || derivedKey.salt !== salt) {
+    derivedKey = { secret, salt, key: scryptSync(secret, salt, 32) };
+  }
+  return derivedKey.key;
 }
 
 const ALGORITHM = 'aes-256-gcm';
