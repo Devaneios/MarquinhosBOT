@@ -1,4 +1,5 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import type { BoggleServerMessage } from '@marquinhos/contracts/activity/games/boggleWordRace';
 import type { GridCell as Cell } from '@marquinhos/contracts/activity/payloadSchemas';
 import {
   BoggleEngine,
@@ -43,7 +44,7 @@ export class BoggleSession {
 
   constructor(
     private identity: BoggleSessionIdentity,
-    private broadcaster: ActivityBroadcaster,
+    private broadcaster: ActivityBroadcaster<BoggleServerMessage>,
     private gamification: GamificationService = new GamificationService(),
     options: BoggleSessionOptions = {},
   ) {

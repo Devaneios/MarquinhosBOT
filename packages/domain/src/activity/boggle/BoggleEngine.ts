@@ -1,3 +1,8 @@
+import type {
+  BoggleFinalResult,
+  BoggleState,
+  SubmitRejectReason,
+} from '@marquinhos/contracts/activity/games/boggleWordRace';
 import type { GridCell as Cell } from '@marquinhos/contracts/activity/payloadSchemas';
 
 export const GRID_SIZE = 4;
@@ -15,15 +20,6 @@ export interface PlayerState {
   score: number;
   foundWords: { word: string; points: number }[];
 }
-
-export type SubmitRejectReason =
-  | 'not_started'
-  | 'already_ended'
-  | 'unknown_player'
-  | 'invalid_path'
-  | 'too_short'
-  | 'not_a_word'
-  | 'already_found';
 
 export type SubmitResult =
   | { accepted: true; word: string; points: number; totalScore: number }
@@ -226,7 +222,7 @@ export class BoggleEngine {
     return { accepted: true, word, points, totalScore: player.score };
   }
 
-  getState(now: number = Date.now()) {
+  getState(now: number = Date.now()): BoggleState {
     return {
       grid: this.grid,
       timeRemainingMs: this.timeRemainingMs(now),
@@ -239,7 +235,7 @@ export class BoggleEngine {
     };
   }
 
-  getFinalResults(): { userId: string; score: number; words: string[] }[] {
+  getFinalResults(): BoggleFinalResult[] {
     return Array.from(this.players.values())
       .map((p) => ({
         userId: p.userId,
