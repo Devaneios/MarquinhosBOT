@@ -676,11 +676,12 @@ export class WordleService {
     guildId: string,
     limit = 10,
     period: 'all-time' | 'weekly' | 'monthly' | 'daily' = 'all-time',
+    date?: string,
   ):
     | { userId: string; totalDays: number; avgScore: number }[]
     | { userId: string; attempts: number; solved: boolean }[] {
     if (period === 'daily') {
-      const today = getRecifeDate();
+      const wordDate = date ?? getRecifeDate();
       return db
         .query<
           { user_id: string; attempts: number; solved: number },
@@ -692,7 +693,7 @@ export class WordleService {
  ORDER BY solved DESC, attempts ASC, created_at ASC
  LIMIT $limit`,
         )
-        .all({ $guild_id: guildId, $today: today, $limit: limit })
+        .all({ $guild_id: guildId, $today: wordDate, $limit: limit })
         .map((row: { user_id: string; attempts: number; solved: number }) => ({
           userId: row.user_id,
           attempts: row.attempts,

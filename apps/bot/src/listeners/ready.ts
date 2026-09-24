@@ -7,6 +7,7 @@ import { buildTermoWinActionRow } from '@marquinhos/commands/games/termoResponse
 import { env } from '@marquinhos/config/environment';
 import { GuildConfig } from '@marquinhos/config/guild';
 import { getBicho } from '@marquinhos/lib/bichoStatus';
+import { TermoBroadcastTracker } from '@marquinhos/lib/termoBroadcastTracker';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
   buildCrosswordImage,
@@ -91,8 +92,14 @@ async function rotateTermoWord(client: Client<true>): Promise<void> {
         const channel = asTextChannel(client.channels.cache.get(channelId));
         if (!channel) continue;
 
-        await sendTermoCrossword(client, guildId, channel);
-        await sendTermoLeaderboard(client, guildId, channel);
+        // This runs just after midnight, when "today" is already the new,
+        // empty day, so the final ranking asks for the day that ended.
+        const endedWordDate = await sendTermoCrossword(
+          client,
+          guildId,
+          channel,
+        );
+        await sendTermoLeaderboard(client, guildId, channel, endedWordDate);
 
         const result = await api.forceNewWordleWord(guildId);
         const data = result.data;
@@ -181,15 +188,16 @@ async function rotateTermoWord(client: Client<true>): Promise<void> {
   }
 }
 
+// Returns the word date it summarized: the day that just ended.
 async function sendTermoCrossword(
   client: Client<true>,
   guildId: string,
   channel: TextChannel,
-): Promise<void> {
+): Promise<string | undefined> {
   try {
     const response = await api.getWordleDayGuesses(guildId);
     const data = response.data;
-    if (!data) return;
+    if (!data) return undefined;
 
     const crosswordBuffer = await buildCrosswordImage(data.guesses, data.word);
     const crosswordAttachment = new AttachmentBuilder(crosswordBuffer, {
@@ -205,11 +213,13 @@ async function sendTermoCrossword(
       embeds: [embed],
       files: [crosswordAttachment],
     });
+    return data.wordDate;
   } catch (err) {
     logger.warn(
       `Terminhos: failed to send crossword for guild ${guildId}:`,
       err,
     );
+    return undefined;
   }
 }
 
@@ -217,9 +227,14 @@ async function sendTermoLeaderboard(
   client: Client<true>,
   guildId: string,
   channel: TextChannel,
+  wordDate: string | undefined,
 ): Promise<void> {
   try {
-    const leaderboard = await buildDailyLeaderboardAttachment(client, guildId);
+    const leaderboard = await buildDailyLeaderboardAttachment(
+      client,
+      guildId,
+      wordDate,
+    );
     if (!leaderboard) return;
 
     const attachment = new AttachmentBuilder(leaderboard.buffer, {
@@ -252,7 +267,7 @@ function startTermoScheduler(client: Client<true>): void {
   }, msToMidnight);
 }
 
-const lastBroadcastWinners = new Map<string, number>();
+const broadcastTracker = new TermoBroadcastTracker();
 
 async function broadcastTermoStats(client: Client<true>): Promise<void> {
   const guilds = client.guilds.cache;
@@ -266,11 +281,7 @@ async function broadcastTermoStats(client: Client<true>): Promise<void> {
       const statsRes = await api.getWordleStats(guildId);
       const stats = statsRes.data;
 
-      if (
-        !stats ||
-        stats.winnersCount <= (lastBroadcastWinners.get(guildId) ?? 0)
-      )
-        continue;
+      if (!stats || !broadcastTracker.hasNews(guildId, stats)) continue;
 
       const channel = asTextChannel(client.channels.cache.get(channelId));
       if (!channel) continue;
@@ -278,7 +289,7 @@ async function broadcastTermoStats(client: Client<true>): Promise<void> {
       const sent = await sendTermoStatusBroadcast(client, guildId, channel);
       if (!sent) continue;
 
-      lastBroadcastWinners.set(guildId, stats.winnersCount);
+      broadcastTracker.record(guildId, stats);
     } catch (err) {
       logger.warn(`Terminhos stats: failed for guild ${guildId}:`, err);
       reportError(err, {

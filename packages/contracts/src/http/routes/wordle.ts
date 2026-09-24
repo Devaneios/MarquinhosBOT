@@ -160,7 +160,15 @@ export const getLeaderboard = defineContract({
   method: 'GET',
   path: '/api/wordle/leaderboard/:guildId',
   params: guildParams,
-  query: z.object({ period: wordleLeaderboardPeriodSchema.catch('all-time') }),
+  query: z.object({
+    period: wordleLeaderboardPeriodSchema.catch('all-time'),
+    // Daily only: the word date to rank instead of today, for the final
+    // ranking posted just after midnight.
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+  }),
   response: z.object({
     data: z.union([
       z.array(dailyLeaderboardEntrySchema),

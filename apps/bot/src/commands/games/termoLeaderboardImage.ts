@@ -26,8 +26,9 @@ export interface DailyLeaderboardImage {
 export async function buildDailyLeaderboardAttachment(
   client: Client<true>,
   guildId: string,
+  wordDate?: string,
 ): Promise<DailyLeaderboardImage | null> {
-  const response = await api.getWordleLeaderboard(guildId, 'daily');
+  const response = await api.getWordleLeaderboard(guildId, 'daily', wordDate);
   const rawEntries = response.data;
   const { groupStreak } = response;
 

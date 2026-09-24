@@ -114,3 +114,20 @@ describe('MarquinhosApiService.respondToTag', () => {
     },
   );
 });
+
+describe('MarquinhosApiService.getWordleLeaderboard', () => {
+  it('asks for a given day when the daily ranking has a date', async () => {
+    const requestSpy = spyOn(HttpClient.prototype, 'request').mockResolvedValue(
+      { data: [], groupStreak: 0 },
+    );
+
+    await MarquinhosApiService.getInstance().getWordleLeaderboard(
+      'g1',
+      'daily',
+      '2026-09-23',
+    );
+
+    expect(String(requestSpy.mock.calls[0]![0])).toContain('date=2026-09-23');
+    requestSpy.mockRestore();
+  });
+});
