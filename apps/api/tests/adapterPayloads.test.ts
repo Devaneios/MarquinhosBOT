@@ -132,9 +132,9 @@ describe('boggle adapter payloads', () => {
       ],
     ]);
     expect(h.sent.filter(([type]) => type === 'submit_error')).toEqual([
-      ['submit_error', { message: 'Invalid path' }],
-      ['submit_error', { message: 'Invalid path' }],
-      ['submit_error', { message: 'Invalid path' }],
+      ['submit_error', { reason: 'invalid_path' }],
+      ['submit_error', { reason: 'invalid_path' }],
+      ['submit_error', { reason: 'invalid_path' }],
     ]);
     h.dispose();
   });
