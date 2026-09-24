@@ -151,6 +151,26 @@ async function resetSequences(tx: Tx, tables: PgTable[]): Promise<void> {
   }
 }
 
+/**
+ * Writes a consistent, self-contained copy of the SQLite database (WAL
+ * folded in) next to it, and returns its path. This copy is the rollback
+ * point if the cutover goes wrong.
+ */
+export function backupSqlite(sqlitePath: string): string {
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backupPath = sqlitePath.replace(
+    /(\.db)?$/,
+    `.pre-postgres-${stamp}.db`,
+  );
+  const sqlite = new Database(sqlitePath, { readonly: true });
+  try {
+    sqlite.query('VACUUM INTO ?').run(backupPath);
+  } finally {
+    sqlite.close();
+  }
+  return backupPath;
+}
+
 export async function importSqlite(
   sqlitePath: string,
   db: Db,
@@ -195,11 +215,14 @@ if (import.meta.main) {
     process.exit(2);
   }
   try {
-    const reports = await importSqlite(sqlitePath, defaultDb);
+    const backupPath = backupSqlite(sqlitePath);
+    console.log(`SQLite backup written to ${backupPath}`);
+    // Import from the snapshot so the copied data is exactly what was saved.
+    const reports = await importSqlite(backupPath, defaultDb);
     console.table(reports);
     console.log('Import complete.');
   } catch (error) {
-    console.error('Import failed; nothing was written.', error);
+    console.error('Import failed; Postgres was left unchanged.', error);
     process.exitCode = 1;
   } finally {
     await closeDefaultDb();
