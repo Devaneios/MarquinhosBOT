@@ -289,30 +289,25 @@ async function startGame(
     });
   }
 
-  let gameInstance;
   try {
     const GameClass = GAME_REGISTRY[gameType];
-    gameInstance = new GameClass(session);
+    const gameInstance = new GameClass(session);
     gameManager.registerGameInstance(session.id, gameInstance);
-  } catch (_error) {
-    await interaction.reply({
-      content: '❌ Erro ao criar o jogo. Tente novamente.',
-      flags: MessageFlags.Ephemeral,
+    await gameInstance.start();
+
+    const message = await interaction.reply({
+      embeds: [gameInstance.getGameEmbed()],
+      components: gameInstance.getComponents(),
+      fetchReply: true,
     });
-    return;
+    gameManager.setUserCooldown(userId, gameType);
+    gameManager.attachMessage(session.id, message);
+  } catch (error) {
+    // Otherwise the players and the channel stay blocked until the session
+    // expires. The command error listener tells the user and reports it.
+    gameManager.endSession(session.id);
+    throw error;
   }
-
-  gameManager.setUserCooldown(userId, gameType);
-  await gameInstance.start();
-
-  const embed = gameInstance.getGameEmbed();
-  const components = gameInstance.getComponents();
-  const message = await interaction.reply({
-    embeds: [embed],
-    components,
-    fetchReply: true,
-  });
-  gameManager.attachMessage(session.id, message);
 }
 
 async function showStats(interaction: ChatInputCommandInteraction) {
