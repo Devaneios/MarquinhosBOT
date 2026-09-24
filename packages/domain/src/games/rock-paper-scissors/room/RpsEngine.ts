@@ -5,6 +5,7 @@ import {
   type RpsPlayerId,
   type RpsRoundState,
 } from '@marquinhos/contracts/activity/games/rockPaperScissors';
+import { beats } from '@marquinhos/domain/games/rock-paper-scissors/rules';
 
 export interface RpsEngineConfig {
   bestOf?: number;
@@ -12,14 +13,7 @@ export interface RpsEngineConfig {
 
 function determineWinner(p1Pick: RpsPick, p2Pick: RpsPick): RpsPlayerId | null {
   if (p1Pick === p2Pick) return null;
-
-  const winMap: Record<RpsPick, RpsPick> = {
-    rock: 'scissors',
-    paper: 'rock',
-    scissors: 'paper',
-  };
-
-  return winMap[p1Pick] === p2Pick ? 'player1' : 'player2';
+  return beats(p1Pick, p2Pick) ? 'player1' : 'player2';
 }
 
 function isValidPick(pick: unknown): pick is RpsPick {

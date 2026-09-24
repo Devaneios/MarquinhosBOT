@@ -1,3 +1,7 @@
+import {
+  rpsPickSchema,
+  type RpsPick,
+} from '@marquinhos/contracts/activity/games/rockPaperScissors';
 import { determineRoundWinners } from '@marquinhos/domain/games/rock-paper-scissors/bot/rockPaperScissors';
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import { z } from 'zod';
@@ -10,14 +14,10 @@ import {
 } from '../core/GameTypes';
 import { GameUtils } from '../core/GameUtils';
 
-const RPSChoiceSchema = z.enum(['rock', 'paper', 'scissors']);
-
-type RPSChoice = z.infer<typeof RPSChoiceSchema>;
-
 interface RPSData {
   rounds: number;
   currentRound: number;
-  playerChoices: Record<string, RPSChoice>;
+  playerChoices: Record<string, RpsPick>;
   scores: Record<string, number>;
   roundResults: RoundResult[];
   finished: boolean;
@@ -26,20 +26,20 @@ interface RPSData {
 
 interface RoundResult {
   round: number;
-  choices: Record<string, RPSChoice>;
+  choices: Record<string, RpsPick>;
   winners: string[];
   eliminated: string[];
 }
 
 const RPSActionSchema = z.object({
   type: z.literal('choose'),
-  choice: RPSChoiceSchema,
+  choice: rpsPickSchema,
 });
 
 type RPSAction = z.infer<typeof RPSActionSchema>;
 
 export class RockPaperScissorsGame extends BaseGame<RPSData, RPSAction> {
-  private readonly choices: Record<RPSChoice, { emoji: string }> = {
+  private readonly choices: Record<RpsPick, { emoji: string }> = {
     rock: { emoji: '🪨' },
     paper: { emoji: '📄' },
     scissors: { emoji: '✂️' },
@@ -82,7 +82,7 @@ export class RockPaperScissorsGame extends BaseGame<RPSData, RPSAction> {
     }
   }
 
-  private async submitChoice(userId: string, choice: RPSChoice): Promise<void> {
+  private async submitChoice(userId: string, choice: RpsPick): Promise<void> {
     const data = this.data;
 
     data.playerChoices[userId] = choice;

@@ -1,15 +1,13 @@
-export type RpsChoice = 'rock' | 'paper' | 'scissors';
-
-const choices: Record<RpsChoice, RpsChoice> = {
-  rock: 'scissors',
-  paper: 'rock',
-  scissors: 'paper',
-};
+import {
+  rpsPickSchema,
+  type RpsPick,
+} from '@marquinhos/contracts/activity/games/rockPaperScissors';
+import { beats } from '@marquinhos/domain/games/rock-paper-scissors/rules';
 
 export function determineRoundWinners(
-  playerChoices: Record<string, RpsChoice>,
+  playerChoices: Record<string, RpsPick>,
 ): string[] {
-  const choiceGroups: Record<RpsChoice, string[]> = {
+  const choiceGroups: Record<RpsPick, string[]> = {
     rock: [],
     paper: [],
     scissors: [],
@@ -19,7 +17,7 @@ export function determineRoundWinners(
     choiceGroups[choice].push(userId);
   });
 
-  const nonEmptyChoices = (['rock', 'paper', 'scissors'] as const)
+  const nonEmptyChoices = rpsPickSchema.options
     .map((choice) => [choice, choiceGroups[choice]] as const)
     .filter(([, players]) => players.length > 0);
 
@@ -31,7 +29,7 @@ export function determineRoundWinners(
     const [choice1, players1] = nonEmptyChoices[0];
     const [choice2, players2] = nonEmptyChoices[1];
 
-    return choices[choice1] === choice2 ? players1 : players2;
+    return beats(choice1, choice2) ? players1 : players2;
   }
 
   return [];
