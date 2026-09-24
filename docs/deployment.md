@@ -6,7 +6,7 @@ For daily work on your machine, use the separate [local development stack](local
 
 ## GitHub Environments
 
-Create `development` and `production` environments. The deploy workflow maps `develop` to development and `main` to production.
+Create `development` and `production` environments. The deploy workflow maps pushes to `develop` to development and `v*` tags on `main` to production. Pushes to `main` only run CI; release with `git tag v1.2.3 && git push origin v1.2.3`.
 
 Add these secrets to each environment:
 
@@ -33,7 +33,7 @@ Add the required variables `BACKUP_DIR`, `CORS_ORIGINS`, `DISCORD_CLIENT_ID`, `D
 
 Install a self-hosted GitHub Actions runner with the `devaneios-runner` label on development and `hostinger-runner` on production. The runner account must be in the Docker group and have Docker Compose v2 available. Create `BACKUP_DIR` with owner access for that account. The API sandbox mirror path defaults to `/opt/marquinhos/sandbox-mirror`; create and maintain it with `apps/api/scripts/sync-sandbox-mirror.sh` under a host timer before deploying the API.
 
-Run the first release with the Deploy workflow’s `all` input. Later pushes select the changed component automatically. API deploys create a compressed volume snapshot in `BACKUP_DIR`, retain fourteen days of snapshots, recreate only the API container, and roll back its image if the HTTP health check fails. Restore a database snapshot manually only when a migration requires it.
+Run the first release with the Deploy workflow’s `all` input. Later `develop` pushes select the changed component automatically, and a release tag selects the components changed since the previous `v*` tag. The first tag deploys everything. To redeploy production manually, dispatch the workflow from the release tag. API deploys create a compressed volume snapshot in `BACKUP_DIR`, retain fourteen days of snapshots, recreate only the API container, and roll back its image if the HTTP health check fails. Restore a database snapshot manually only when a migration requires it.
 
 ## Cloudflare and Discord
 

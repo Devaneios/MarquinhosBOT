@@ -2,7 +2,8 @@ name: Deploy
 
 on:
   push:
-    branches: [develop, main]
+    branches: [develop]
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       component:
@@ -20,24 +21,56 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       component: ${{ steps.component.outputs.component }}
+      environment: ${{ steps.environment.outputs.environment }}
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - id: environment
+        env:
+          EVENT_REF: ${{ github.ref }}
+          EVENT_SHA: ${{ github.sha }}
+        run: |
+          case "$EVENT_REF" in
+            refs/tags/v*)
+              if ! git merge-base --is-ancestor "$EVENT_SHA" origin/main; then
+                echo "::error::Tag ${EVENT_REF#refs/tags/} points to $EVENT_SHA, which is not on main"
+                exit 1
+              fi
+              echo "environment=production" >> "$GITHUB_OUTPUT"
+              ;;
+            refs/heads/develop)
+              echo "environment=development" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::error::$EVENT_REF does not deploy; use develop or a v* tag on main"
+              exit 1
+              ;;
+          esac
+
       - id: component
         env:
           DISPATCH_COMPONENT: ${{ inputs.component }}
           EVENT_BEFORE: ${{ github.event.before }}
           EVENT_NAME: ${{ github.event_name }}
+          EVENT_REF: ${{ github.ref }}
           EVENT_SHA: ${{ github.sha }}
         run: |
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             echo "component=$DISPATCH_COMPONENT" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          files=$(git diff --name-only "$EVENT_BEFORE" "$EVENT_SHA" 2>/dev/null || git show --format='' --name-only "$EVENT_SHA")
+          if [[ "$EVENT_REF" == refs/tags/* ]]; then
+            if ! previous=$(git describe --tags --abbrev=0 --match 'v*' "$EVENT_SHA^" 2>/dev/null); then
+              echo "component=all" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            files=$(git diff --name-only "$previous" "$EVENT_SHA")
+          else
+            files=$(git diff --name-only "$EVENT_BEFORE" "$EVENT_SHA" 2>/dev/null || git show --format='' --name-only "$EVENT_SHA")
+          fi
           api=false
           bot=false
           activity=false
@@ -67,7 +100,7 @@ jobs:
   verify:
     needs: changes
     if: needs.changes.outputs.component != 'none'
-    runs-on: ${{ github.ref_name == 'main' && 'hostinger-runner' || 'devaneios-runner' }}
+    runs-on: ${{ needs.changes.outputs.environment == 'production' && 'hostinger-runner' || 'devaneios-runner' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -91,10 +124,10 @@ jobs:
   deploy:
     needs: [changes, verify]
     if: needs.changes.outputs.component != 'none'
-    runs-on: ${{ github.ref_name == 'main' && 'hostinger-runner' || 'devaneios-runner' }}
-    environment: ${{ github.ref_name == 'main' && 'production' || 'development' }}
+    runs-on: ${{ needs.changes.outputs.environment == 'production' && 'hostinger-runner' || 'devaneios-runner' }}
+    environment: ${{ needs.changes.outputs.environment }}
     concurrency:
-      group: deploy-${{ github.ref_name == 'main' && 'production' || 'development' }}
+      group: deploy-${{ needs.changes.outputs.environment }}
       cancel-in-progress: false
     env:
       AI_RESEARCH_DEADLINE_MS: ${{ vars.AI_RESEARCH_DEADLINE_MS }}
