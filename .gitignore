@@ -149,7 +149,8 @@ test-output/
 # cert files
 *.pem
 *.crt
-*.key.worktrees/
+*.key
+.worktrees/
 .superpowers/
 !.idea/
 .idea/*
