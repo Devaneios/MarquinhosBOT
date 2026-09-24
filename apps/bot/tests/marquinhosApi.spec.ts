@@ -154,3 +154,20 @@ describe('MarquinhosApiService.getWordleLeaderboard', () => {
     requestSpy.mockRestore();
   });
 });
+
+describe('MarquinhosApiService.validateWordleGuess', () => {
+  // Autocomplete has to answer within Discord's 3 seconds.
+  it('gives up quickly instead of retrying', async () => {
+    const requestSpy = spyOn(HttpClient.prototype, 'request').mockResolvedValue(
+      { data: { valid: true, wordLength: 5, message: 'ok' } },
+    );
+
+    await MarquinhosApiService.getInstance().validateWordleGuess('g1', 'termo');
+
+    expect(requestSpy).toHaveBeenCalledWith(
+      expect.stringContaining('/api/wordle/validate/g1'),
+      expect.objectContaining({ timeout: 2000, retries: 0 }),
+    );
+    requestSpy.mockRestore();
+  });
+});

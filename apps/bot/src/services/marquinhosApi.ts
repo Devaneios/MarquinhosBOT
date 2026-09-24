@@ -61,6 +61,7 @@ export function handleApiResponseError(error: unknown): never {
 }
 
 const API_RETRIES = 3;
+const AUTOCOMPLETE_TIMEOUT_MS = 2000;
 
 export class MarquinhosApiService {
   private static instance: MarquinhosApiService;
@@ -304,11 +305,15 @@ export class MarquinhosApiService {
     });
   }
 
+  // Only autocomplete uses this, and it must answer within Discord's 3
+  // seconds, so a slow API gets no second try.
   async validateWordleGuess(guildId: string, guess: string) {
-    return callContract(this.client, wordle.validateGuess, {
-      params: { guildId },
-      query: { guess },
-    });
+    return callContract(
+      this.client,
+      wordle.validateGuess,
+      { params: { guildId }, query: { guess } },
+      { timeout: AUTOCOMPLETE_TIMEOUT_MS, retries: 0 },
+    );
   }
 
   async getWordlistPoolStats() {
