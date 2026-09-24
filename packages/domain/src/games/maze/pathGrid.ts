@@ -1,9 +1,11 @@
+import { shuffle } from '@marquinhos/domain/shared/random/shuffle';
+
 /**
  * Generates a perfect maze using iterative depth-first search (recursive backtracker).
  * Grid size must be odd. Cells at odd (row, col) are path nodes; even cells are walls.
  * Returns a 2D boolean array: true = walkable, false = wall.
  */
-export function generateMaze(size: number): boolean[][] {
+export function generatePathGrid(size: number): boolean[][] {
   const grid: boolean[][] = Array.from({ length: size }, () =>
     new Array(size).fill(false),
   );
@@ -22,11 +24,9 @@ export function generateMaze(size: number): boolean[][] {
   while (stack.length > 0) {
     const [r, c] = stack[stack.length - 1];
 
-    // Shuffle neighbors
-    const shuffled = [...directions].sort(() => Math.random() - 0.5);
     let moved = false;
 
-    for (const [dr, dc] of shuffled) {
+    for (const [dr, dc] of shuffle(directions)) {
       const nr = r + dr;
       const nc = c + dc;
       if (nr > 0 && nr < size - 1 && nc > 0 && nc < size - 1 && !grid[nr][nc]) {

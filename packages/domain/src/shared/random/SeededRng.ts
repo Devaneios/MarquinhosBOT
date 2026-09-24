@@ -1,3 +1,5 @@
+import { shuffle } from '@marquinhos/domain/shared/random/shuffle';
+
 // Deterministic PRNG (mulberry32) so a deal/shuffle can be reproduced from its
 // seed alone — the seed is what a replay/anti-cheat audit trail stores instead
 // of a full state snapshot.
@@ -45,13 +47,6 @@ export class SeededRng {
   }
 
   shuffle<T>(array: readonly T[]): T[] {
-    const result = [...array];
-    for (let i = result.length - 1; i > 0; i--) {
-      const j = this.nextInt(i + 1);
-      const temp = result[i]!;
-      result[i] = result[j]!;
-      result[j] = temp;
-    }
-    return result;
+    return shuffle(array, () => this.next());
   }
 }

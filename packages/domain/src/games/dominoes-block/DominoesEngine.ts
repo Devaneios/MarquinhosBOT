@@ -2,6 +2,7 @@ import type {
   ChainEnd,
   Tile,
 } from '@marquinhos/contracts/activity/games/dominoesBlock';
+import { shuffle } from '@marquinhos/domain/shared/random/shuffle';
 
 export interface DominoesState {
   players: string[];
@@ -38,15 +39,6 @@ function buildDeck(): Tile[] {
     for (let b = a; b <= 6; b++) deck.push({ a, b });
   }
   return deck;
-}
-
-function shuffle<T>(items: T[], rng: () => number): T[] {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [result[i], result[j]] = [result[j]!, result[i]!];
-  }
-  return result;
 }
 
 function pipTotal(hand: Tile[]): number {

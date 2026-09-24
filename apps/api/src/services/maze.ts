@@ -1,6 +1,6 @@
 import type { mazeViewportStateSchema } from '@marquinhos/contracts/http/routes/maze';
 import { db } from '@marquinhos/database/sqlite';
-import { generateMaze } from '@marquinhos/domain/games/maze/generator';
+import { generateWallGrid } from '@marquinhos/domain/games/maze/wallGrid';
 import crypto from 'crypto';
 import type { z } from 'zod';
 
@@ -147,7 +147,7 @@ export class MazeService {
       "UPDATE maze_sessions SET status = 'abandoned' WHERE user_id = $userId AND guild_id = $guildId AND status = 'active'",
     ).run({ $userId: userId, $guildId: guildId });
 
-    const maze = generateMaze(size, size);
+    const maze = generateWallGrid(size, size);
     const mazeHeight = maze.length;
     const width = mazeWidth(maze);
 

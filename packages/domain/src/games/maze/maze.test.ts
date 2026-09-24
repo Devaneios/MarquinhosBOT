@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { generateMaze as generateBotMaze } from './botGenerator';
-import { generateMaze } from './generator';
+import { generatePathGrid } from './pathGrid';
+import { generateWallGrid } from './wallGrid';
 
 function reachesExit(grid: boolean[][]): boolean {
   const last = grid.length - 2;
@@ -19,7 +19,7 @@ function reachesExit(grid: boolean[][]): boolean {
 
 describe('maze generators', () => {
   it('creates a reachable API maze with entry and exit in its boundary', () => {
-    const maze = generateMaze(15, 15);
+    const maze = generateWallGrid(15, 15);
     expect(maze[0][1]).toBe(0);
     expect(maze[14][13]).toBe(0);
     expect(reachesExit(maze.map((row) => row.map((cell) => cell === 0)))).toBe(
@@ -28,7 +28,7 @@ describe('maze generators', () => {
   });
 
   it('creates a reachable bot maze', () => {
-    const maze = generateBotMaze(15);
+    const maze = generatePathGrid(15);
     expect(maze[1][1]).toBe(true);
     expect(reachesExit(maze)).toBe(true);
   });

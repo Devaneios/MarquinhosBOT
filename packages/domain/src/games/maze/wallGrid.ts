@@ -1,3 +1,5 @@
+import { shuffle } from '@marquinhos/domain/shared/random/shuffle';
+
 /**
  * Randomized Kruskal's maze generation algorithm.
  * Reference: https://weblog.jamisbuck.org/2011/1/3/maze-generation-kruskal-s-algorithm
@@ -56,21 +58,9 @@ function union(
   return true;
 }
 
-// --- Fisher-Yates shuffle ---
-
-function shuffle<T>(arr: T[]): T[] {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const tmp = at(arr, i);
-    arr[i] = at(arr, j);
-    arr[j] = tmp;
-  }
-  return arr;
-}
-
 // --- Maze generation ---
 
-export function generateMaze(width: number, height: number): number[][] {
+export function generateWallGrid(width: number, height: number): number[][] {
   // Ensure odd dimensions so navigable cells land on odd indices
   if (width % 2 === 0) width++;
   if (height % 2 === 0) height++;
@@ -103,9 +93,7 @@ export function generateMaze(width: number, height: number): number[][] {
     }
   }
 
-  shuffle(edges);
-
-  for (const [r1, c1, r2, c2] of edges) {
+  for (const [r1, c1, r2, c2] of shuffle(edges)) {
     if (union(uf, cellId(r1, c1), cellId(r2, c2))) {
       // Convert navigable-cell coords to grid coords (odd indices)
       const gr1 = r1 * 2 + 1;

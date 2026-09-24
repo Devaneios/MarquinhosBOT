@@ -1,4 +1,4 @@
-import { generateMaze } from '@marquinhos/domain/games/maze/botGenerator';
+import { generatePathGrid } from '@marquinhos/domain/games/maze/pathGrid';
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -76,7 +76,7 @@ export class MazeGame extends BaseGame<MazeData, MazeAction> {
 
     if (mazeAction.type === 'setup_mode') {
       const size = data.selectedSize!;
-      const grid = generateMaze(size);
+      const grid = generatePathGrid(size);
       data.grid = grid;
       data.playerRow = 1;
       data.playerCol = 1;
