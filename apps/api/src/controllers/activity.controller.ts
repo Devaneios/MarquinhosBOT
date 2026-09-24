@@ -378,6 +378,11 @@ class ActivityController {
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
       }
+      if (!(await this.discordService.isGuildMember(accessToken, guildId))) {
+        return res
+          .status(403)
+          .json({ message: 'Not a member of the specified guild' });
+      }
 
       const roomId = generateRoomId();
       const token = mintWsSessionToken({
@@ -406,6 +411,11 @@ class ActivityController {
       });
     } catch (error) {
       logger.error('activity.controller.create_room_failed', { error });
+      if (error instanceof DiscordGuildMembershipError) {
+        return res
+          .status(503)
+          .json({ message: 'Discord membership service unavailable' });
+      }
       return res.status(500).json({ message: 'Unknown Error' });
     }
   };
