@@ -38,6 +38,21 @@ export class HttpError extends Error {
   }
 }
 
+// A repeated POST or PATCH can apply twice (a second word rotation, a guess
+// the API already took coming back as "already guessed"), so only these
+// methods are retried unless a request opts in with `retries`.
+const IDEMPOTENT_METHODS: ReadonlySet<string> = new Set([
+  'GET',
+  'HEAD',
+  'OPTIONS',
+  'PUT',
+  'DELETE',
+]);
+
+function isIdempotent(method: string | undefined): boolean {
+  return IDEMPOTENT_METHODS.has((method ?? 'GET').toUpperCase());
+}
+
 export class HttpClient {
   private baseURL: string;
   private defaultHeaders: Record<string, string>;
@@ -120,15 +135,16 @@ export class HttpClient {
 
   /** Races a promise against a timeout. Rejects with an Error if the timeout fires first. */
   private withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
     return Promise.race([
       promise,
-      new Promise<never>((_, reject) =>
-        setTimeout(
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
           () => reject(new Error(`Body read timed out after ${ms}ms`)),
           ms,
-        ),
-      ),
-    ]);
+        );
+      }),
+    ]).finally(() => clearTimeout(timer));
   }
 
   private exponentialBackoff(attempt: number): Promise<void> {
@@ -142,7 +158,8 @@ export class HttpClient {
     attempt: number = 0,
   ): Promise<Response> {
     const timeout = config.timeout ?? this.defaultTimeout;
-    const retries = config.retries ?? this.defaultRetries;
+    const retries =
+      config.retries ?? (isIdempotent(config.method) ? this.defaultRetries : 0);
     const abortController = new AbortController();
     const timeoutId = setTimeout(() => abortController.abort(), timeout);
 

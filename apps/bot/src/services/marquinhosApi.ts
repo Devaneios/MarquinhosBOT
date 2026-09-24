@@ -60,6 +60,8 @@ export function handleApiResponseError(error: unknown): never {
   throw error;
 }
 
+const API_RETRIES = 3;
+
 export class MarquinhosApiService {
   private static instance: MarquinhosApiService;
   private client: HttpClient;
@@ -72,7 +74,7 @@ export class MarquinhosApiService {
         'Content-Type': 'application/json',
       },
       timeout: 15000,
-      retries: 3,
+      retries: API_RETRIES,
       onRetry: (message) => logger.warn(message),
     });
 
@@ -141,9 +143,13 @@ export class MarquinhosApiService {
   async startResearch(
     body: ContractRequest<typeof aiChat.startResearch>['body'],
   ) {
-    const data = await callContract(this.client, aiChat.startResearch, {
-      body,
-    });
+    // Safe to repeat: the API dedupes on the body's idempotencyKey.
+    const data = await callContract(
+      this.client,
+      aiChat.startResearch,
+      { body },
+      { retries: API_RETRIES },
+    );
     logger.info(
       `[ai-chat] startResearch thread=${body.threadId} status=${data.data.status} job=${data.data.status === 'accepted' ? data.data.jobId : '-'}`,
     );
