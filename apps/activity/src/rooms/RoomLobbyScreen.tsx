@@ -1,20 +1,16 @@
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { DiscordIdentity } from '../../discordAuth.ts';
-import { GAME_REGISTRY } from '../../games/registry';
-import {
-  createRoom,
-  fetchWsSessionToken,
-  getAvailableRooms,
-  type RoomListing,
-} from '../../games/shared/activitySession';
-import { isQueueEligible } from '../../games/shared/queueEligibility';
-import { getParticipantDisplayNames } from '../../lib/discordParticipants';
-import { GameEmblem } from './GameEmblem';
-import { MenuAction } from './MenuAction';
-import { MenuPanel } from './MenuPanel';
-import { MenuScreen } from './MenuScreen';
+import { GameEmblem } from '../components/game-shell/GameEmblem';
+import { MenuAction } from '../components/game-shell/MenuAction';
+import { MenuPanel } from '../components/game-shell/MenuPanel';
+import { MenuScreen } from '../components/game-shell/MenuScreen';
+import type { DiscordIdentity } from '../discord/auth.ts';
+import { getParticipantDisplayNames } from '../discord/participants';
+import { GAME_REGISTRY } from '../games/registry';
+import { fetchWsSessionToken } from '../realtime/gameSession';
+import { isQueueEligible } from './queueEligibility';
+import { createRoom, getAvailableRooms, type RoomListing } from './roomApi';
 
 export interface RoomReadyInfo {
   roomId: string;

@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { DiscordIdentity } from '../discordAuth.ts';
+import type { DiscordIdentity } from '../discord/auth.ts';
 import { GAME_REGISTRY } from '../games/registry';
-import { fetchDeepLinkIntent } from '../games/shared/activitySession';
 import { devlog } from '../lib/devlog';
+import { fetchDeepLinkIntent } from './deepLinkIntent';
 
 // Runs once per Activity session, right after Discord auth resolves: asks
 // the API whether the bot recorded a deep-link intent (e.g. the "Jogar na

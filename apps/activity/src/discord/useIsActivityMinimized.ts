@@ -1,6 +1,6 @@
 import { Common, Events } from '@discord/embedded-app-sdk';
 import { useEffect, useState } from 'react';
-import { discordSdk, isMobilePlatform } from '../discordSdk';
+import { discordSdk, isMobilePlatform } from './sdk';
 
 // Discord doesn't document a dedicated "minimized" event for mobile. The
 // closest signal is ACTIVITY_LAYOUT_MODE_UPDATE reporting PIP — plausible

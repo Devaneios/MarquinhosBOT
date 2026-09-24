@@ -1,8 +1,8 @@
 import { isGameId } from '@marquinhos/contracts/activity/gameId';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { RoomLobbyScreen, type RoomReadyInfo } from '../components/game-shell';
-import type { DiscordIdentity } from '../discordAuth.ts';
+import type { DiscordIdentity } from '../discord/auth.ts';
+import { RoomLobbyScreen, type RoomReadyInfo } from './RoomLobbyScreen';
 import { RoomView } from './RoomView';
 
 export function RoomRoute({ identity }: { identity: DiscordIdentity }) {

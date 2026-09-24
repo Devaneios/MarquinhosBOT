@@ -14,8 +14,8 @@ import {
   MenuAction,
   MenuPanel,
   MenuScreen,
-} from '../../../components/game-shell';
-import type { DiscordIdentity } from '../../../discordAuth.ts';
+} from '../../../components/game-shell/index';
+import type { DiscordIdentity } from '../../../discord/auth.ts';
 import { apiBase } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
 import { errorMessage } from '../../../lib/http';

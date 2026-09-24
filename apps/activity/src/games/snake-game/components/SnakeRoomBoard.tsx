@@ -9,7 +9,7 @@ import { Application, Graphics } from 'pixi.js';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { devlog } from '../../../lib/devlog';
-import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
+import { useRoomConnectionContext } from '../../../realtime/RoomConnectionProvider';
 import { applySnakeMessage, initialSnakeView } from '../snakeMessages';
 import {
   BG_COLOR,

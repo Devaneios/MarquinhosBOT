@@ -15,15 +15,15 @@ import {
   GameHeader,
   GameMenu,
   menuButtonPrimary,
-} from '../../components/game-shell';
-import type { DiscordIdentity } from '../../discordAuth.ts';
+} from '../../components/game-shell/index';
+import type { DiscordIdentity } from '../../discord/auth.ts';
 import { colyseusUrl } from '../../lib/apiBase';
 import { cn } from '../../lib/cn';
 import {
   useColyseusRoom,
   type ActivityMessage,
-} from '../shared/useColyseusRoom';
-import { WordChainBoard } from './components';
+} from '../../realtime/useColyseusRoom';
+import { WordChainBoard } from './components/index';
 import { useWordChainSession } from './hooks/useWordChainSession';
 import {
   applyWordChainMessage,

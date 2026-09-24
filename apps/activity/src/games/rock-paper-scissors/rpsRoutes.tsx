@@ -1,5 +1,5 @@
 import { Route } from 'react-router-dom';
-import type { DiscordIdentity } from '../../discordAuth.ts';
+import type { DiscordIdentity } from '../../discord/auth.ts';
 import { RpsGame } from './RpsGame';
 
 export function rpsRoutes(

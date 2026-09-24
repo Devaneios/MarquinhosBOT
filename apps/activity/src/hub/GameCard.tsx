@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import type { GameDescriptor } from '../games/registry';
+import type { GameDescriptor } from '../games/GameDescriptor';
 import { GamePreview } from './GamePreview';
 import { PlayGameLink } from './PlayGameLink';
 

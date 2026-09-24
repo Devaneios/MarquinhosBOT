@@ -11,14 +11,14 @@ import {
   ErrorScreen,
   GameHeader,
   GameMenu,
-} from '../../components/game-shell';
-import type { DiscordIdentity } from '../../discordAuth.ts';
+} from '../../components/game-shell/index';
+import type { DiscordIdentity } from '../../discord/auth.ts';
 import { colyseusUrl } from '../../lib/apiBase';
 import {
   useColyseusRoom,
   type ActivityMessage,
-} from '../shared/useColyseusRoom';
-import { TicTacToeCanvas } from './components';
+} from '../../realtime/useColyseusRoom';
+import { TicTacToeCanvas } from './components/index';
 import { useTicTacToeSession } from './hooks/useTicTacToeSession';
 import {
   applyTicTacToeMessage,

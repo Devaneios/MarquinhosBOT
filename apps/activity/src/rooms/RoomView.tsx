@@ -1,16 +1,13 @@
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { useTranslation } from 'react-i18next';
-import {
-  ConnectingScreen,
-  ErrorScreen,
-  RoomHeader,
-} from '../components/game-shell';
-import type { DiscordIdentity } from '../discordAuth.ts';
+import { ConnectingScreen, ErrorScreen } from '../components/game-shell';
+import type { DiscordIdentity } from '../discord/auth.ts';
 import { GAME_REGISTRY } from '../games/registry';
 import {
   RoomConnectionProvider,
   useRoomConnectionContext,
-} from '../games/shared/RoomConnectionProvider';
+} from '../realtime/RoomConnectionProvider';
+import { RoomHeader } from './RoomHeader';
 
 function RoomBoard({ identity }: { identity: DiscordIdentity }) {
   const ctx = useRoomConnectionContext();

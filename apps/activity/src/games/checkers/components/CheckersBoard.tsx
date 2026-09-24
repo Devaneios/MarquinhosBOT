@@ -10,14 +10,14 @@ import {
   GameHeader,
   menuButtonPrimary,
   menuButtonSecondary,
-} from '../../../components/game-shell';
+} from '../../../components/game-shell/index';
 import { colyseusUrl } from '../../../lib/apiBase';
 import { devlog } from '../../../lib/devlog';
-import type { WsSession } from '../../shared/activitySession';
+import type { WsSession } from '../../../realtime/gameSession';
 import {
   useColyseusRoom,
   type ActivityMessage,
-} from '../../shared/useColyseusRoom';
+} from '../../../realtime/useColyseusRoom';
 import { applyCheckersMessage, initialCheckersView } from '../checkersMessages';
 import type { GameMode } from '../types';
 import { CheckersCanvas } from './CheckersCanvas';

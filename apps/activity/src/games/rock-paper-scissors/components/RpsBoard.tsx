@@ -7,13 +7,13 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { EndScreen, GameHeader } from '../../../components/game-shell';
+import { EndScreen, GameHeader } from '../../../components/game-shell/index';
 import { colyseusUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
 import {
   useColyseusRoom,
   type ActivityMessage,
-} from '../../shared/useColyseusRoom';
+} from '../../../realtime/useColyseusRoom';
 import { PICK_ICONS, PICK_LABEL_KEYS } from '../constants';
 import {
   advanceAfterRoundResult,

@@ -16,11 +16,11 @@ import React, {
   useState,
 } from 'react';
 import { colyseusUrl } from '../../../lib/apiBase';
-import type { WsSession } from '../../shared/activitySession';
+import type { WsSession } from '../../../realtime/gameSession';
 import {
   useColyseusRoom,
   type ActivityMessage,
-} from '../../shared/useColyseusRoom';
+} from '../../../realtime/useColyseusRoom';
 import { KB_LETTERS, MIN_KEY_PRESS_MS } from '../constants';
 
 interface WordleBoardOptions {

@@ -1,14 +1,14 @@
 import type { Room } from '@colyseus/sdk';
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { devwarn } from '../../lib/devlog';
-import type { WsSession } from './activitySession';
+import { devwarn } from '../lib/devlog';
 import {
   connectToRoom,
   wireRoomLifecycle,
   type ActivityMessage,
   type ColyseusConnectionState,
 } from './colyseusConnection';
+import type { WsSession } from './gameSession';
 import { useRoomConnectionContext } from './RoomConnectionProvider';
 
 // Re-exported for existing call sites/tests that import these from this

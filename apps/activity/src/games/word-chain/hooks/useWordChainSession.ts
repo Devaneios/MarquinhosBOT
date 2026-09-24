@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import type { DiscordIdentity } from '../../../discordAuth.ts';
+import type { DiscordIdentity } from '../../../discord/auth.ts';
 import { errorMessage, isAuthError } from '../../../lib/http';
 import {
   fetchWsSessionToken,
   type WsSession,
-} from '../../shared/activitySession';
+} from '../../../realtime/gameSession';
 
 type WordChainSessionState =
   | { status: 'selecting-mode' }

@@ -7,7 +7,7 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
-import '../../../i18n';
+import '../../../i18n/index';
 import { WordleSettingsScreen } from './WordleSettingsScreen';
 
 describe('WordleSettingsScreen', () => {

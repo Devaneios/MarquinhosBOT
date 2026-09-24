@@ -1,8 +1,8 @@
 import { Route, useNavigate } from 'react-router-dom';
-import { GameMenu } from '../../components/game-shell';
-import type { DiscordIdentity } from '../../discordAuth.ts';
+import { GameMenu } from '../../components/game-shell/index';
+import type { DiscordIdentity } from '../../discord/auth.ts';
 import { CheckersGame } from './CheckersGame';
-import { HowToPlay } from './components';
+import { HowToPlay } from './components/index';
 import {
   CheckersMenuFlow,
   useCheckersMenuContext,

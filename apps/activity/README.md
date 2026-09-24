@@ -21,31 +21,12 @@ itself never branches on which game it is showing.
 
 ## Architecture
 
-- `src/discordSdk.ts` — the `DiscordSDK` instance, constructed from
-  `VITE_DISCORD_CLIENT_ID`.
-- `src/hooks/useDiscordIdentity.ts` — runs the auth sequence on mount:
-  `discordSdk.ready()` → `commands.authorize()` → exchange the code for an
-  access token via `marquinhos-api`'s `POST /api/activities/token` →
-  `commands.authenticate()`.
-- `src/games/shared/activitySession.ts` — mints a game-scoped WS session
-  token (`POST /activities/ws-session`) and its matching Colyseus room key;
-  called per-game (e.g. from `usePongSession`/`useWordleSession`) rather
-  than once at the top of the identity hook.
-- `src/games/shared/useColyseusRoom.ts` — connects to the game's Colyseus
-  room with `@colyseus/sdk`, forwards every room message to the caller, and
-  tracks connection state (`connecting`/`connected`/`disconnected`/`error`)
-  so a game can surface a "connection lost" indicator if the socket drops
-  mid-session. Used by every game with realtime state (Pong, Wordle).
-- `src/lib/apiBase.ts` — resolves REST/Colyseus URLs depending on whether
-  the app is running inside Discord's Activity proxy (`*.discordsays.com`,
-  requires the `/.proxy/` prefix) or in a plain browser tab during local
-  iteration. `colyseusUrl()` gives the single base URL `@colyseus/sdk`'s
-  `Client` needs (it does its own matchmaking/room routing from there).
-- `src/games/pong/` — canvas rendering (Pixi.js) + keyboard input, driven
-  entirely by state broadcasts from the server (the client holds no
-  authoritative game state).
-- `src/games/wordle/` — a solo realtime puzzle against the guild's daily
-  word.
+- `src/discord/` owns Discord SDK access, authentication, participant lookup, and Activity-specific hooks. `index.html` loads `src/discord/auth.ts` before the React entrypoint so the Discord handshake can start independently of React mounting.
+- `src/rooms/` owns the room lobby, in-room header and view, room HTTP calls, and queue eligibility.
+- `src/realtime/` owns game-scoped WebSocket sessions, Colyseus connection lifecycle, and the shared connection used by room-based multiplayer.
+- `src/navigation/` owns deep-link intent claiming and navigation.
+- `src/games/registry.ts` collects the game descriptors. Each `src/games/<game>/index.ts` is the descriptor entry point, with that game's routes, screens, hooks, and rendering code kept in its folder.
+- `src/lib/` contains shared HTTP, URL, logging, and styling helpers. `src/i18n/` contains translation setup and locale resources.
 
 ## Local development
 

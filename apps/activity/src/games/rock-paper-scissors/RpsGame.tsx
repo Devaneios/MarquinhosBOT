@@ -4,9 +4,9 @@ import {
   ConnectingScreen,
   ErrorScreen,
   GameMenu,
-} from '../../components/game-shell';
-import type { DiscordIdentity } from '../../discordAuth.ts';
-import { RpsBoard } from './components';
+} from '../../components/game-shell/index';
+import type { DiscordIdentity } from '../../discord/auth.ts';
+import { RpsBoard } from './components/index';
 import { useRpsSession } from './hooks/useRpsSession';
 
 export function RpsGame({

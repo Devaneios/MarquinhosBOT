@@ -21,14 +21,14 @@ import {
   ErrorScreen,
   menuButtonPrimary,
   menuButtonSecondary,
-} from '../../../components/game-shell';
-import type { DiscordIdentity } from '../../../discordAuth.ts';
+} from '../../../components/game-shell/index';
+import type { DiscordIdentity } from '../../../discord/auth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
-import type { WsSession } from '../../shared/activitySession';
+import type { WsSession } from '../../../realtime/gameSession';
 import {
   useColyseusRoom,
   type ActivityMessage,
-} from '../../shared/useColyseusRoom';
+} from '../../../realtime/useColyseusRoom';
 import { useCardTableSession } from '../hooks/useCardTableSession';
 import {
   moveLabel,

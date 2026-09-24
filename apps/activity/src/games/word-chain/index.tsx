@@ -1,5 +1,5 @@
-import type { GameDescriptor } from '../registry';
-import { WordChainRoomBoard } from './components';
+import type { GameDescriptor } from '../GameDescriptor';
+import { WordChainRoomBoard } from './components/index';
 import { wordChainRoutes } from './wordChainRoutes';
 
 export const gameDescriptor: GameDescriptor = {

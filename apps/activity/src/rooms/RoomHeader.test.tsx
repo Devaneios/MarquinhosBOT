@@ -8,10 +8,10 @@ import {
 } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
 import React, { type ReactNode } from 'react';
-import { RoomConnectionContext } from '../../games/shared/RoomConnectionProvider';
+import { RoomConnectionContext } from '../realtime/RoomConnectionProvider';
 import { RoomHeader } from './RoomHeader';
 
-mock.module('../../lib/discordParticipants', () => ({
+mock.module('../discord/participants', () => ({
   getParticipantDisplayNames: async () => ({}),
 }));
 

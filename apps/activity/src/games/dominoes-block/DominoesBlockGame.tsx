@@ -4,9 +4,9 @@ import {
   ConnectingScreen,
   ErrorScreen,
   GameMenu,
-} from '../../components/game-shell';
-import type { DiscordIdentity } from '../../discordAuth.ts';
-import { DominoesBlockBoard } from './components';
+} from '../../components/game-shell/index';
+import type { DiscordIdentity } from '../../discord/auth.ts';
+import { DominoesBlockBoard } from './components/index';
 import { useDominoesSession } from './hooks/useDominoesSession';
 
 export function DominoesBlockGame({

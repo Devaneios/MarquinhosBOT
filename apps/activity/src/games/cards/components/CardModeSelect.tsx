@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { GameMenu } from '../../../components/game-shell';
+import { GameMenu } from '../../../components/game-shell/index';
 
 export function CardModeSelect() {
   const navigate = useNavigate();

@@ -4,9 +4,9 @@ import {
   ConnectingScreen,
   ErrorScreen,
   GameMenu,
-} from '../../components/game-shell';
-import type { DiscordIdentity } from '../../discordAuth.ts';
-import { TowerCanvas } from './components';
+} from '../../components/game-shell/index';
+import type { DiscordIdentity } from '../../discord/auth.ts';
+import { TowerCanvas } from './components/index';
 import { useTowerSession } from './hooks/useTowerSession';
 
 export function TowerGame({

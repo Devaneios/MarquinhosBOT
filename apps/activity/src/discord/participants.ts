@@ -1,5 +1,5 @@
-import { discordSdk } from '../discordSdk';
-import { devwarn } from './devlog';
+import { devwarn } from '../lib/devlog';
+import { discordSdk } from './sdk';
 
 // Best-effort map of userId -> display name for everyone currently connected
 // to this Discord Activity instance. May be missing entries (a participant

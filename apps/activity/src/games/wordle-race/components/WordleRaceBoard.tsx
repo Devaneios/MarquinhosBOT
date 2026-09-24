@@ -17,14 +17,17 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { ConnectingScreen, GameHeader } from '../../../components/game-shell';
+import {
+  ConnectingScreen,
+  GameHeader,
+} from '../../../components/game-shell/index';
 import { colyseusUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
-import type { WsSession } from '../../shared/activitySession';
+import type { WsSession } from '../../../realtime/gameSession';
 import {
   useColyseusRoom,
   type ActivityMessage,
-} from '../../shared/useColyseusRoom';
+} from '../../../realtime/useColyseusRoom';
 import { FEEDBACK_COLORS, KB_LETTERS, KB_ROWS } from '../constants';
 import {
   applyWordleRaceMessage,

@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
-import './i18n';
+import './i18n/index';
 import './index.css';
 
 const root = createRoot(document.getElementById('root')!);

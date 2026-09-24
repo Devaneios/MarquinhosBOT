@@ -5,7 +5,7 @@ import {
   MenuAction,
   MenuPanel,
   MenuScreen as MenuShell,
-} from '../../../components/game-shell';
+} from '../../../components/game-shell/index';
 
 interface MenuScreenProps {
   playerCount: number;

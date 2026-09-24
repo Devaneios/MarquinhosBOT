@@ -6,13 +6,13 @@ import type {
   WinScore,
 } from '@marquinhos/contracts/activity/pong/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { DiscordIdentity } from '../../../discordAuth.ts';
+import type { DiscordIdentity } from '../../../discord/auth.ts';
 import { devinfo, devlog, devwarn } from '../../../lib/devlog';
 import { errorMessage, isAuthError } from '../../../lib/http';
 import {
   fetchWsSessionToken,
   type WsSession,
-} from '../../shared/activitySession';
+} from '../../../realtime/gameSession';
 
 export type PongSessionState =
   | { status: 'selecting-mode' }

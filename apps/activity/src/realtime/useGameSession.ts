@@ -1,8 +1,8 @@
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { useEffect, useState } from 'react';
-import type { DiscordIdentity } from '../../discordAuth.ts';
-import { errorMessage, isAuthError } from '../../lib/http';
-import { fetchWsSessionToken, type WsSession } from './activitySession';
+import type { DiscordIdentity } from '../discord/auth.ts';
+import { errorMessage, isAuthError } from '../lib/http';
+import { fetchWsSessionToken, type WsSession } from './gameSession';
 
 export type GameSessionState =
   | { status: 'selecting-mode' }

@@ -1,6 +1,6 @@
-import type { GameDescriptor } from '../registry';
+import type { GameDescriptor } from '../GameDescriptor';
 import { bingoSpeedRoutes } from './bingoSpeedRoutes';
-import { BingoSpeedRoomBoard } from './components';
+import { BingoSpeedRoomBoard } from './components/index';
 
 export const gameDescriptor: GameDescriptor = {
   id: 'bingo-speed',

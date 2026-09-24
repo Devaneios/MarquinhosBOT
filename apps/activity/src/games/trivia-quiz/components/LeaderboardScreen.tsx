@@ -2,7 +2,7 @@ import type { PlayerScore } from '@marquinhos/contracts/activity/games/triviaQui
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { MenuAction, MenuPanel } from '../../../components/game-shell';
+import { MenuAction, MenuPanel } from '../../../components/game-shell/index';
 
 interface LeaderboardScreenProps {
   leaderboard: PlayerScore[];

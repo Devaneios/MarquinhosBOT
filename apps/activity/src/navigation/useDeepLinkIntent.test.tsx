@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'bun:test';
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import type { DiscordIdentity } from '../discordAuth.ts';
+import type { DiscordIdentity } from '../discord/auth.ts';
 import { useDeepLinkIntent } from './useDeepLinkIntent';
 
 const identity: DiscordIdentity = {
