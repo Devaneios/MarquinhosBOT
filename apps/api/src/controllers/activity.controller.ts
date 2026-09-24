@@ -372,7 +372,8 @@ class ActivityController {
       if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
-      const { accessToken, instanceId, guildId, game } = input.body;
+      const { accessToken, instanceId, guildId, game, queueEnabled } =
+        input.body;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
@@ -391,6 +392,7 @@ class ActivityController {
         mode: 'multi',
         game,
         roomId,
+        queueEnabled,
       });
       const key = roomKey({
         instanceId,

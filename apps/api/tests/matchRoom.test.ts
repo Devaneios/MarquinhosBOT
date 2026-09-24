@@ -630,6 +630,22 @@ describe('MatchRoom', () => {
     });
   });
 
+  it("starts with the queue the creator's token asked for", async () => {
+    const { key } = ticTacToeCreds('user-a', 'ROOM62');
+    const token = mintWsSessionToken({
+      userId: 'user-a',
+      instanceId: 'inst-1',
+      guildId: 'guild-1',
+      mode: 'multi',
+      game: 'tic-tac-toe',
+      roomId: 'ROOM62',
+      queueEnabled: true,
+    });
+    const room = await colyseus.createRoom('match', { roomKey: key, token });
+
+    expect(room.metadata?.queueEnabled).toBe(true);
+  });
+
   describe('toggle_queue', () => {
     it('flips queueEnabled and updates room metadata when the host toggles it', async () => {
       const { key, token } = ticTacToeCreds('user-a', 'ROOM34');

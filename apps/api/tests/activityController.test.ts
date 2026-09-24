@@ -566,4 +566,25 @@ describe('ActivityController.createRoom', () => {
       `inst-1:${payload.data.roomId}:tic-tac-toe:multi`,
     );
   });
+  it("carries the creator's queue choice in the room's token", async () => {
+    const fakeService = {
+      getDiscordUser: async () => ({ id: 'user-1' }),
+    } as unknown as DiscordService;
+    const controller = new ActivityController(fakeService);
+    const res = makeRes();
+
+    await controller.createRoom(
+      makeReq({
+        accessToken: 'token',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        game: 'tic-tac-toe',
+        queueEnabled: true,
+      }),
+      res as any,
+    );
+
+    const payload = res.getPayload() as { data: { token: string } };
+    expect(verifyWsSessionToken(payload.data.token)?.queueEnabled).toBe(true);
+  });
 });

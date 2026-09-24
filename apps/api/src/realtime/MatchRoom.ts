@@ -157,7 +157,9 @@ export class MatchRoom extends Room<{
 
     this.mode = initialSession?.mode ?? 'multi';
     this.queueEnabled =
-      this.mode === 'multi' ? Boolean(options.queueEnabled) : false;
+      this.mode === 'multi'
+        ? Boolean(initialSession?.queueEnabled ?? options.queueEnabled)
+        : false;
     this.roomIdValue = options.roomId ?? initialSession?.roomId ?? '';
     this.game = game;
     this.identity = {
