@@ -25,10 +25,13 @@ export const grepSearchTool: AgentTool = {
     if (!isPathAllowed(path)) {
       return `Erro: caminho "${path}" não é permitido. Use apenas caminhos dentro de /repo ou /tmp.`;
     }
+    // `-e` and `--` keep a model-written pattern from being read as flags.
     const result = await ctx.exec(ctx.containerId, [
       'grep',
       '-rn',
+      '-e',
       pattern,
+      '--',
       path,
     ]);
     if (result.exitCode !== 0 && result.exitCode !== 1) {
