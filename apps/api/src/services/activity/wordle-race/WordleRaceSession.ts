@@ -6,8 +6,9 @@ import type {
 import { WordleRaceEngine } from '@marquinhos/domain/games/wordle/race/WordleRaceEngine';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
-import { resolveCanonical } from 'services/wordle';
+import { pickRaceWord, resolveCanonical } from 'services/wordle';
 
 interface WordleRaceSessionIdentity {
   sessionKey: string;
@@ -45,66 +46,12 @@ export class WordleRaceSession {
     this.gamification = gamification;
     this.onSessionEnded = options.onSessionEnded;
 
-    const targetWord = this.pickRandomWord();
+    const targetWord = pickRaceWord();
     this.engine = new WordleRaceEngine(
       targetWord,
       resolveCanonical,
       Date.now(),
     );
-  }
-
-  private pickRandomWord(): string {
-    const wordlist = [
-      'abrir',
-      'acaso',
-      'aceno',
-      'aceso',
-      'aceto',
-      'achar',
-      'acima',
-      'acaba',
-      'acabo',
-      'acaju',
-      'acari',
-      'adaga',
-      'adega',
-      'adeus',
-      'adiar',
-      'adobe',
-      'adubo',
-      'afago',
-      'afeto',
-      'afiar',
-      'agave',
-      'agora',
-      'aguar',
-      'agudo',
-      'ainda',
-      'ajuda',
-      'alado',
-      'alama',
-      'alano',
-      'alces',
-      'alelo',
-      'aleta',
-      'alfas',
-      'algar',
-      'algoz',
-      'alias',
-      'alibe',
-      'alice',
-      'aliei',
-      'aliem',
-      'alier',
-      'alies',
-      'alifs',
-      'alijo',
-      'alila',
-      'alima',
-      'alimo',
-      'aline',
-    ];
-    return wordlist[Math.floor(Math.random() * wordlist.length)]!;
   }
 
   get playerCount(): number {
@@ -253,19 +200,14 @@ export class WordleRaceSession {
       },
     });
 
-    try {
-      this.gamification.recordGameResult({
-        sessionId: this.identity.instanceId,
-        guildId: this.identity.guildId,
-        gameType: 'wordle-race',
-        results: results.map((r) => ({
-          userId: r.userId,
-          position: r.position,
-        })),
-      });
-    } catch (err) {
-      console.error('Failed to record game result:', err);
-    }
+    recordMatchResult(this.gamification, {
+      guildId: this.identity.guildId,
+      gameType: 'wordle-race',
+      results: results.map((r) => ({
+        userId: r.userId,
+        position: r.position,
+      })),
+    });
 
     if (this.onSessionEnded) {
       this.endGameTimer = setTimeout(() => this.onSessionEnded?.(), 3000);

@@ -1,4 +1,5 @@
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
+import { isQueueEligible } from '@marquinhos/contracts/activity/room';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GameEmblem } from '../components/game-shell/GameEmblem';
@@ -8,8 +9,8 @@ import { MenuScreen } from '../components/game-shell/MenuScreen';
 import type { DiscordIdentity } from '../discord/auth.ts';
 import { getParticipantDisplayNames } from '../discord/participants';
 import { GAME_REGISTRY } from '../games/registry';
+import { devwarn } from '../lib/devlog';
 import { fetchWsSessionToken } from '../realtime/gameSession';
-import { isQueueEligible } from './queueEligibility';
 import { createRoom, getAvailableRooms, type RoomListing } from './roomApi';
 
 export interface RoomReadyInfo {
@@ -35,6 +36,7 @@ export function RoomLobbyScreen({
 }: RoomLobbyScreenProps) {
   const { t } = useTranslation(['common', 'games', 'rooms']);
   const [rooms, setRooms] = useState<RoomListing[] | null>(null);
+  const [roomsFailed, setRoomsFailed] = useState(false);
   const [names, setNames] = useState<Record<string, string>>({});
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState<GameId | null>(
@@ -46,14 +48,17 @@ export function RoomLobbyScreen({
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      getAvailableRooms(identity),
-      getParticipantDisplayNames(),
-    ]).then(([roomList, participantNames]) => {
-      if (cancelled) return;
-      setRooms(roomList);
-      setNames(participantNames);
-    });
+    Promise.all([getAvailableRooms(identity), getParticipantDisplayNames()])
+      .then(([roomList, participantNames]) => {
+        if (cancelled) return;
+        setRooms(roomList);
+        setNames(participantNames);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        devwarn('[rooms] listing failed', error);
+        setRoomsFailed(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -135,6 +140,11 @@ export function RoomLobbyScreen({
           </div>
 
           <div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
+            {roomsFailed && (
+              <p className="text-sm leading-6 text-marquinhos-text-dim">
+                {t('rooms:roomsUnavailable')}
+              </p>
+            )}
             {rooms && rooms.length === 0 && (
               <p className="text-sm leading-6 text-marquinhos-text-dim">
                 {t('rooms:noRoomsOpen')}

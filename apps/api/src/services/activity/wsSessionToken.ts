@@ -28,6 +28,8 @@ const wsSessionPayloadSchema = z
     // layer only needs to know "is this a known ruleset id."
     ruleset: z.string().optional(),
     options: z.record(z.string(), z.unknown()).optional(),
+    // Set only on a room creator's token; read once when the room is made.
+    queueEnabled: z.boolean().optional(),
   })
   .refine((payload) => payload.mode !== 'multi' || payload.roomId)
   .refine((payload) => {

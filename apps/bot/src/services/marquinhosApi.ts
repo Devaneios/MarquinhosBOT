@@ -33,9 +33,21 @@ function extractErrorMessage(data: unknown, fallback: string): unknown {
   return data ?? fallback;
 }
 
+// Statuses the API answers for ordinary refusals (an invalid or repeated
+// guess, something not found): the caller shows them to the user, and
+// reporting them would flood the admin's error DMs and history.
+const EXPECTED_REFUSAL_STATUSES: ReadonlySet<number> = new Set([
+  400, 404, 409, 422,
+]);
+
 export function handleApiResponseError(error: unknown): never {
   if (error instanceof HttpError) {
     const errorMsg = extractErrorMessage(error.response?.data, error.message);
+    const status = error.response?.status;
+    if (status !== undefined && EXPECTED_REFUSAL_STATUSES.has(status)) {
+      logger.info(`API refused ${error.config?.url} (${status}): ${errorMsg}`);
+      throw error;
+    }
     logger.error(`API Error on ${error.config?.url}: ${errorMsg}`);
     reportError(error, {
       origin: `API:${error.config?.url ?? 'unknown'}`,
@@ -47,6 +59,9 @@ export function handleApiResponseError(error: unknown): never {
   reportError(error, { origin: 'API:unknown', logLevel: 'warn' });
   throw error;
 }
+
+const API_RETRIES = 3;
+const AUTOCOMPLETE_TIMEOUT_MS = 2000;
 
 export class MarquinhosApiService {
   private static instance: MarquinhosApiService;
@@ -60,7 +75,7 @@ export class MarquinhosApiService {
         'Content-Type': 'application/json',
       },
       timeout: 15000,
-      retries: 3,
+      retries: API_RETRIES,
       onRetry: (message) => logger.warn(message),
     });
 
@@ -129,9 +144,13 @@ export class MarquinhosApiService {
   async startResearch(
     body: ContractRequest<typeof aiChat.startResearch>['body'],
   ) {
-    const data = await callContract(this.client, aiChat.startResearch, {
-      body,
-    });
+    // Safe to repeat: the API dedupes on the body's idempotencyKey.
+    const data = await callContract(
+      this.client,
+      aiChat.startResearch,
+      { body },
+      { retries: API_RETRIES },
+    );
     logger.info(
       `[ai-chat] startResearch thread=${body.threadId} status=${data.data.status} job=${data.data.status === 'accepted' ? data.data.jobId : '-'}`,
     );
@@ -286,11 +305,15 @@ export class MarquinhosApiService {
     });
   }
 
+  // Only autocomplete uses this, and it must answer within Discord's 3
+  // seconds, so a slow API gets no second try.
   async validateWordleGuess(guildId: string, guess: string) {
-    return callContract(this.client, wordle.validateGuess, {
-      params: { guildId },
-      query: { guess },
-    });
+    return callContract(
+      this.client,
+      wordle.validateGuess,
+      { params: { guildId }, query: { guess } },
+      { timeout: AUTOCOMPLETE_TIMEOUT_MS, retries: 0 },
+    );
   }
 
   async getWordlistPoolStats() {
@@ -300,6 +323,7 @@ export class MarquinhosApiService {
   async getWordleLeaderboard(
     guildId: string,
     period: 'daily',
+    date?: string,
   ): Promise<{ data: DailyLeaderboardEntry[]; groupStreak: number }>;
   async getWordleLeaderboard(
     guildId: string,
@@ -308,13 +332,14 @@ export class MarquinhosApiService {
   async getWordleLeaderboard(
     guildId: string,
     period: WordleLeaderboardPeriod,
+    date?: string,
   ): Promise<{
     data: DailyLeaderboardEntry[] | RankedLeaderboardEntry[];
     groupStreak: number;
   }> {
     const result = await callContract(this.client, wordle.getLeaderboard, {
       params: { guildId },
-      query: { period },
+      query: date ? { period, date } : { period },
     });
     const entries =
       period === 'daily'

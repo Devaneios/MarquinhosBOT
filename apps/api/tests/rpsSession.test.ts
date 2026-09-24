@@ -44,13 +44,34 @@ describe('RpsSession.substitutePlayer', () => {
     session.submitPick('user-a', 'rock');
     session.submitPick('user-b', 'scissors'); // user-a wins, match ends
 
-    const ok = session.substitutePlayer('user-b', 'user-c', {});
-    expect(ok).toBe(true);
+    const seat = session.substitutePlayer('user-b', 'user-c', {});
+    expect(seat).toBe('player2');
     expect(session.getWinnerUserId()).toBe(null); // round reset, no winner yet
 
     session.submitPick('user-a', 'rock');
     const accepted = session.submitPick('user-c', 'scissors');
     expect(accepted).toBe(true);
     expect(session.getWinnerUserId()).toBe('user-a');
+  });
+});
+
+describe('RpsSession.substitutePlayer broadcasts', () => {
+  it('starts the next match so clients leave match_end', () => {
+    const sent: string[] = [];
+    const session = new RpsSession(
+      { sessionKey: 'k', instanceId: 'i', guildId: 'g', mode: 'multi' },
+      { broadcast: (_key, message) => sent.push(message.type) },
+      undefined,
+      { bestOf: 1 },
+    );
+    session.addPlayer('user-a', {});
+    session.addPlayer('user-b', {});
+    session.submitPick('user-a', 'rock');
+    session.submitPick('user-b', 'scissors');
+    sent.length = 0;
+
+    session.substitutePlayer('user-b', 'user-c', {});
+
+    expect(sent).toEqual(['game_start', 'round_state']);
   });
 });

@@ -2,6 +2,7 @@ import * as contract from '@marquinhos/contracts/http/routes/scrobble';
 import type { Request, Response } from 'express';
 import { ScrobblerService } from 'services/scrobbler';
 import { parseRequest, sendContract } from 'utils/contract';
+import { logger } from 'utils/logger';
 
 class ScrobbleController {
   scrobblerService: ScrobblerService;
@@ -24,7 +25,9 @@ class ScrobbleController {
         message: 'Scrobble added to queue',
       });
     } catch (error: unknown) {
-      console.error(error);
+      logger.error('scrobble.controller.add_scrobble_to_queue_failed', {
+        error,
+      });
       return res.status(500).json({ message: 'Unknown Error' });
     }
   }
@@ -41,7 +44,7 @@ class ScrobbleController {
         message: 'Scrobbled',
       });
     } catch (error: unknown) {
-      console.error(error);
+      logger.error('scrobble.controller.dispatch_scrobble_failed', { error });
       return res.status(500).json({ message: 'Unknown Error' });
     }
   }
@@ -63,7 +66,9 @@ class ScrobbleController {
         message: 'User removed',
       });
     } catch (error: unknown) {
-      console.error(error);
+      logger.error('scrobble.controller.remove_user_from_scrobble_failed', {
+        error,
+      });
       return res.status(500).json({ message: 'Unknown Error' });
     }
   }
@@ -85,7 +90,9 @@ class ScrobbleController {
         message: 'User added',
       });
     } catch (error: unknown) {
-      console.error(error);
+      logger.error('scrobble.controller.add_user_to_scrobble_failed', {
+        error,
+      });
       return res.status(500).json({ message: 'Unknown Error' });
     }
   }

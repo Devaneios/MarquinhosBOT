@@ -88,6 +88,15 @@ describe('wordle contracts', () => {
     expect(Array.isArray(allTime.data)).toBe(true);
   });
 
+  it('ranks an earlier day when the daily leaderboard gets a date', async () => {
+    const earlier = await callContract(server.http, wordle.getLeaderboard, {
+      params: { guildId },
+      query: { period: 'daily', date: '2020-01-01' },
+    });
+
+    expect(earlier.data).toEqual([]);
+  });
+
   it('stores and reads the channel config', async () => {
     const saved = await callContract(server.http, wordle.setConfig, {
       body: { guildId, channelId: 'channel-1' },

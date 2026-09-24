@@ -1,13 +1,8 @@
 import { timingSafeEqual } from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
-import { verifyDiscordToken } from 'middlewares/userAuth';
 
 export function checkToken(req: Request, res: Response, next: NextFunction) {
   const authorization = req.headers.authorization;
-  const isWebRequest = req.headers['marquinhos-agent'] === 'web';
-  if (isWebRequest) {
-    return verifyDiscordToken(req, res, next);
-  }
   const token = authorization && authorization.split(' ')[1];
   if (!token) {
     return res.status(401).json({ message: 'Token not provided' });

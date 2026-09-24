@@ -2,10 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { DiscordService } from 'services/discord';
 import { UserService } from 'services/user';
 import { decryptTokenFull } from 'utils/crypto';
-
-const logger = {
-  error: (...args: unknown[]) => console.error('[userAuth]', ...args),
-};
+import { logger } from 'utils/logger';
 
 const discordService = new DiscordService();
 const userService = new UserService();
@@ -36,7 +33,7 @@ export function createActivityDiscordTokenVerifier(
       Object.defineProperty(req, 'user', { value: discordUser });
       next();
     } catch (error) {
-      logger.error('Activity Discord token verification failed:', error);
+      logger.error('user_auth.activity_token_verification_failed', { error });
       return res.status(500).json({ message: 'Internal Server Error' });
     }
   };
@@ -94,7 +91,7 @@ export async function verifyDiscordToken(
     });
     next();
   } catch (error) {
-    logger.error('Discord token verification failed:', error);
+    logger.error('user_auth.token_verification_failed', { error });
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 }

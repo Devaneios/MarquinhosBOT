@@ -35,12 +35,17 @@ import crypto from 'crypto';
 import { getUnixTime, parseISO } from 'date-fns';
 import type { LastfmSessionResponse } from 'types';
 import { URLSearchParams } from 'url';
+import { log } from 'utils/logger';
 import { z } from 'zod';
 // URLSearchParams is available globally in Node.js >= 15 but we import for clarity
 
+// Request errors carry the signed URL (session key) in their config, so
+// they go through the structured logger, which keeps only message and stack.
 const logger = {
-  error: (...args: unknown[]) => console.error('[lastfm]', ...args),
-  warn: (...args: unknown[]) => console.warn('[lastfm]', ...args),
+  error: (message: string, error?: unknown) =>
+    log('error', `lastfm: ${message}`, { error }),
+  warn: (message: string, error?: unknown) =>
+    log('warn', `lastfm: ${message}`, { error }),
 };
 
 const lastfmErrorBodySchema = z.object({ error: z.number() });

@@ -105,10 +105,16 @@ export const battleshipAdapter: GameRoomAdapter<BattleshipSession> = {
     return session.getWinnerUserId();
   },
   substitutePlayer(session, outgoingUserId, incomingUserId, incomingClient) {
-    return session.substitutePlayer(
+    const side = session.substitutePlayer(
       outgoingUserId,
       incomingUserId,
       incomingClient,
     );
+    if (!side) return false;
+    sendMessage<BattleshipServerMessage>(incomingClient, {
+      type: 'init',
+      payload: { side },
+    });
+    return true;
   },
 };

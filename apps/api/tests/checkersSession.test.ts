@@ -82,8 +82,8 @@ describe('CheckersSession.substitutePlayer', () => {
     session.addPlayer('user-black', {}); // black
     session.addPlayer('user-red', {}); // red
 
-    const ok = session.substitutePlayer('user-red', 'user-new', {});
-    expect(ok).toBe(true);
+    const seat = session.substitutePlayer('user-red', 'user-new', {});
+    expect(seat).toBe('red');
 
     const blackMove = session.requestMove(
       'user-black',
@@ -112,6 +112,6 @@ describe('CheckersSession.substitutePlayer', () => {
   it('returns false when the outgoing userId is not seated', () => {
     const session = new CheckersSession(identity(), fakeBroadcaster());
     session.addPlayer('user-black', {});
-    expect(session.substitutePlayer('nobody', 'user-new', {})).toBe(false);
+    expect(session.substitutePlayer('nobody', 'user-new', {})).toBeNull();
   });
 });

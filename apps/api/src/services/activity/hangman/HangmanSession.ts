@@ -6,6 +6,7 @@ import type {
 import { HangmanEngine } from '@marquinhos/domain/games/hangman/HangmanEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 
 interface HangmanPlayer {
@@ -131,8 +132,7 @@ export class HangmanSession {
       won,
     }));
 
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'hangman',
       results: players.map((p) => ({

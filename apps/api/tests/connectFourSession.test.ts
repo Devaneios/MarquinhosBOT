@@ -178,8 +178,8 @@ describe('ConnectFourSession.substitutePlayer', () => {
     session.addPlayer('user-p1', {}); // p1
     session.addPlayer('user-p2', {}); // p2
 
-    const ok = session.substitutePlayer('user-p2', 'user-new', {});
-    expect(ok).toBe(true);
+    const seat = session.substitutePlayer('user-p2', 'user-new', {});
+    expect(seat).toBe('p2');
 
     // 'user-new' now owns p2's seat: a move from 'user-p2' is no longer valid...
     session.dropDisc('user-p1', 0);
@@ -194,6 +194,6 @@ describe('ConnectFourSession.substitutePlayer', () => {
     const broadcaster = fakeBroadcaster();
     const session = new ConnectFourSession(identity(), broadcaster);
     session.addPlayer('user-p1', {});
-    expect(session.substitutePlayer('nobody', 'user-new', {})).toBe(false);
+    expect(session.substitutePlayer('nobody', 'user-new', {})).toBeNull();
   });
 });

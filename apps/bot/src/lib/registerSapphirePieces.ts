@@ -31,6 +31,7 @@ import { GameButtonsHandler } from '@marquinhos/interaction-handlers/gameButtons
 import { GameModalsHandler } from '@marquinhos/interaction-handlers/gameModals';
 import { TermoButtonsHandler } from '@marquinhos/interaction-handlers/termoButtons';
 import { WordlistReviewButtonsHandler } from '@marquinhos/interaction-handlers/wordlistReviewButtons';
+import { ChatInputCommandDeniedListener } from '@marquinhos/listeners/commandDenied';
 import {
   AutocompleteInteractionErrorListener,
   ChatInputCommandErrorListener,
@@ -86,6 +87,7 @@ const interactionHandlers = [
 ] as const;
 
 const listeners = [
+  ['chatInputCommandDenied', ChatInputCommandDeniedListener],
   ['chatInputCommandError', ChatInputCommandErrorListener],
   ['autocompleteInteractionError', AutocompleteInteractionErrorListener],
   ['guildMemberAdd', GuildMemberAddListener],

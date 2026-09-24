@@ -86,7 +86,7 @@ export class DiscordService {
   isGuildMember = async (token: string, guildId: string): Promise<boolean> => {
     try {
       const response = await fetch(
-        `https://discord.com/api/users/@me/guilds/${guildId}/member`,
+        `https://discord.com/api/users/@me/guilds/${encodeURIComponent(guildId)}/member`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },

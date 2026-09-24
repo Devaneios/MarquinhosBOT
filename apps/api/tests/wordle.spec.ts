@@ -192,6 +192,17 @@ describe('WordleService.getLeaderboard with period', () => {
     expect(entries[2].userId).toBe('user3');
   });
 
+  it('daily: returns the given day when a date is passed', () => {
+    seedSession('g1', 'user1', getRecifeDate(), 3, true);
+    seedSession('g1', 'user2', daysAgo(1), 2, true);
+
+    const entries = service.getLeaderboard('g1', 10, 'daily', daysAgo(1)) as {
+      userId: string;
+    }[];
+
+    expect(entries.map((e) => e.userId)).toEqual(['user2']);
+  });
+
   it('all-time: default behavior unchanged', () => {
     seedSession('g1', 'user1', '2026-01-01', 3, true);
     seedSession('g1', 'user1', '2026-01-02', 2, true);

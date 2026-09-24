@@ -40,6 +40,29 @@ describe('handleApiResponseError', () => {
     });
   });
 
+  it('does not report a refusal the caller expects, such as an invalid guess', () => {
+    const error = new HttpError('Request failed with status 400', {
+      response: {
+        status: 400,
+        data: { message: 'Você já tentou essa palavra' },
+      },
+      config: { url: '/api/wordle/guess' },
+    });
+
+    expect(() => handleApiResponseError(error)).toThrow();
+    expect(reportErrorSpy).not.toHaveBeenCalled();
+  });
+
+  it('reports a server error', () => {
+    const error = new HttpError('Request failed with status 500', {
+      response: { status: 500 },
+      config: { url: '/api/wordle/guess' },
+    });
+
+    expect(() => handleApiResponseError(error)).toThrow();
+    expect(reportErrorSpy).toHaveBeenCalledTimes(1);
+  });
+
   it('falls back to "unknown" origin when the request URL is missing', () => {
     const error = new HttpError('mystery failure');
 
@@ -113,4 +136,38 @@ describe('MarquinhosApiService.respondToTag', () => {
       postSpy.mockRestore();
     },
   );
+});
+
+describe('MarquinhosApiService.getWordleLeaderboard', () => {
+  it('asks for a given day when the daily ranking has a date', async () => {
+    const requestSpy = spyOn(HttpClient.prototype, 'request').mockResolvedValue(
+      { data: [], groupStreak: 0 },
+    );
+
+    await MarquinhosApiService.getInstance().getWordleLeaderboard(
+      'g1',
+      'daily',
+      '2026-09-23',
+    );
+
+    expect(String(requestSpy.mock.calls[0]![0])).toContain('date=2026-09-23');
+    requestSpy.mockRestore();
+  });
+});
+
+describe('MarquinhosApiService.validateWordleGuess', () => {
+  // Autocomplete has to answer within Discord's 3 seconds.
+  it('gives up quickly instead of retrying', async () => {
+    const requestSpy = spyOn(HttpClient.prototype, 'request').mockResolvedValue(
+      { data: { valid: true, wordLength: 5, message: 'ok' } },
+    );
+
+    await MarquinhosApiService.getInstance().validateWordleGuess('g1', 'termo');
+
+    expect(requestSpy).toHaveBeenCalledWith(
+      expect.stringContaining('/api/wordle/validate/g1'),
+      expect.objectContaining({ timeout: 2000, retries: 0 }),
+    );
+    requestSpy.mockRestore();
+  });
 });

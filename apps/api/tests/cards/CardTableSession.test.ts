@@ -292,7 +292,7 @@ describe('CardTableSession match end', () => {
 
     expect(recordGameResult).toHaveBeenCalledTimes(1);
     expect(recordGameResult).toHaveBeenCalledWith({
-      sessionId: 'inst-1',
+      sessionId: expect.any(String),
       guildId: 'guild-1',
       gameType: 'stub-game',
       results: [

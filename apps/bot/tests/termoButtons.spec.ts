@@ -35,6 +35,17 @@ describe('handleTermoPlayButton', () => {
     expect(btn.launchActivity).toHaveBeenCalledTimes(1);
   });
 
+  // The launch is the interaction's first response and must come within
+  // Discord's 3 seconds, however slow the API is.
+  it('launches the activity even when recording the intent hangs', async () => {
+    const btn = makeBtn();
+    const recordActivityDeepLink = mock(() => new Promise<never>(() => {}));
+
+    await handleTermoPlayButton(btn as any, { recordActivityDeepLink } as any);
+
+    expect(btn.launchActivity).toHaveBeenCalledTimes(1);
+  });
+
   it('does nothing when the interaction has no guildId', async () => {
     const btn = makeBtn({ guildId: null });
     const recordActivityDeepLink = mock(async () => ({ data: { ok: true } }));

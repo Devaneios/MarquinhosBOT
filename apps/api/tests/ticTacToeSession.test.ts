@@ -41,8 +41,8 @@ describe('TicTacToeSession.substitutePlayer', () => {
     session.addPlayer('user-x', {}); // X
     session.addPlayer('user-o', {}); // O
 
-    const ok = session.substitutePlayer('user-o', 'user-new', {});
-    expect(ok).toBe(true);
+    const seat = session.substitutePlayer('user-o', 'user-new', {});
+    expect(seat).toBe('O');
 
     // 'user-new' now owns O's seat: a move from 'user-o' is no longer valid...
     const rejected = session.handleMove('user-o', 1, 1);
@@ -59,6 +59,68 @@ describe('TicTacToeSession.substitutePlayer', () => {
       noopBroadcaster(),
     );
     session.addPlayer('user-x', {});
-    expect(session.substitutePlayer('nobody', 'user-new', {})).toBe(false);
+    expect(session.substitutePlayer('nobody', 'user-new', {})).toBeNull();
+  });
+});
+
+describe('TicTacToeSession results', () => {
+  it('records every match played in the same Activity instance', async () => {
+    const { db } = await import('@marquinhos/database/sqlite');
+    const { GamificationService } = await import('services/gamification');
+    const session = new TicTacToeSession(
+      {
+        sessionKey: 'k',
+        instanceId: 'inst-rematch',
+        guildId: 'guild-rematch',
+        mode: 'multi',
+      },
+      noopBroadcaster(),
+      new GamificationService(),
+    );
+    session.addPlayer('rematch-x', {});
+    session.addPlayer('rematch-o', {});
+    const xWinsTopRow = () => {
+      session.handleMove('rematch-x', 0, 0);
+      session.handleMove('rematch-o', 1, 0);
+      session.handleMove('rematch-x', 0, 1);
+      session.handleMove('rematch-o', 1, 1);
+      session.handleMove('rematch-x', 0, 2);
+    };
+
+    xWinsTopRow();
+    session.requestRestart('rematch-x');
+    session.requestRestart('rematch-o');
+    xWinsTopRow();
+
+    const { matches } = db
+      .query<{ matches: number }, [string]>(
+        'SELECT COUNT(*) AS matches FROM user_game_results WHERE user_id = ?',
+      )
+      .get('rematch-x')!;
+    expect(matches).toBe(2);
+  });
+
+  // Results are often recorded from timers (bot moves, disconnect
+  // forfeits), where a throw would take down the whole process.
+  it('keeps the match going when recording its result fails', () => {
+    const failing = {
+      recordGameResult: () => {
+        throw new Error('database is locked');
+      },
+    };
+    const session = new TicTacToeSession(
+      { sessionKey: 'k', instanceId: 'i', guildId: 'g', mode: 'multi' },
+      noopBroadcaster(),
+      failing as never,
+    );
+    session.addPlayer('user-x', {});
+    session.addPlayer('user-o', {});
+    session.handleMove('user-x', 0, 0);
+    session.handleMove('user-o', 1, 0);
+    session.handleMove('user-x', 0, 1);
+    session.handleMove('user-o', 1, 1);
+
+    expect(() => session.handleMove('user-x', 0, 2)).not.toThrow();
+    expect(session.getWinnerUserId()).toBe('user-x');
   });
 });

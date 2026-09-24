@@ -1,7 +1,25 @@
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { baseEmbed } from '@marquinhos/utils/discord';
 import { Command } from '@sapphire/framework';
-import { ChannelType, PermissionsBitField } from 'discord.js';
+import {
+  ChannelType,
+  PermissionsBitField,
+  type GuildTextBasedChannel,
+  type User,
+} from 'discord.js';
+
+const EMBED_DESCRIPTION_MAX_LENGTH = 4096;
+
+function canSendIn(channel: GuildTextBasedChannel, user: User): boolean {
+  return (
+    channel
+      .permissionsFor(user)
+      ?.has([
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.SendMessages,
+      ]) ?? false
+  );
+}
 
 export class AnomCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
@@ -26,7 +44,8 @@ export class AnomCommand extends MarquinhosCommand {
           option
             .setName('mensagem')
             .setDescription('O que você quer que eu envie')
-            .setRequired(true),
+            .setRequired(true)
+            .setMaxLength(EMBED_DESCRIPTION_MAX_LENGTH),
         ),
     );
   }
@@ -38,6 +57,16 @@ export class AnomCommand extends MarquinhosCommand {
       ChannelType.GuildText,
     ]);
     const message = interaction.options.getString('mensagem', true);
+
+    // The bot posts on the member's behalf, so it must not reach channels
+    // the member could not post in themselves (announcements, rules).
+    if (!canSendIn(channel, interaction.user)) {
+      await interaction.reply({
+        content: 'Você não pode enviar mensagens nesse canal.',
+        ephemeral: true,
+      });
+      return;
+    }
 
     const botMember = interaction.guild?.members.me;
     if (

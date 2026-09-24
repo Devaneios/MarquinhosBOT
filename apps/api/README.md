@@ -55,14 +55,6 @@ curl -X POST http://localhost:3000/api/gamification/xp \
   -d '{"userId": "123", "guildId": "456", "eventType": "command"}'
 ```
 
-Web-authenticated request (from the Angular frontend, Discord token instead of the API key):
-
-```bash
-curl http://localhost:3000/api/gamification/level/123/456 \
-  -H "Authorization: Bearer <discord-access-token>" \
-  -H "marquinhos-agent: web"
-```
-
 ### Route map
 
 | Mount                         | Router                           | Notes                                                  |
@@ -91,9 +83,7 @@ curl http://localhost:3000/api/gamification/level/123/456 \
 ## Architecture / How it Works
 
 - **Runtime**: Express app on Bun, entry point `src/index.ts`.
-- **Auth**: two paths through the same middleware chain (`middlewares/botAuth.ts`):
-  - Requests with header `marquinhos-agent: web` are routed to `verifyDiscordToken` (`middlewares/userAuth.ts`), which decrypts the token, checks expiry, and fetches the user's Discord identity + guild role.
-  - All other requests are checked against `MARQUINHOS_API_KEY` using a timing-safe buffer comparison.
+- **Auth**: bot routes (`middlewares/botAuth.ts`) accept only `MARQUINHOS_API_KEY`, checked with a timing-safe buffer comparison. User routes use `verifyDiscordToken` (`middlewares/userAuth.ts`), which decrypts the token, checks expiry, and fetches the user's Discord identity + guild role.
 - **Persistence**: `bun:sqlite`, single file DB at `SQLITE_PATH`. Schema is created idempotently in `packages/database/src/sqlite.ts` (`CREATE TABLE IF NOT EXISTS`), with incremental changes applied via numbered SQL files in `packages/database/src/migrations/` and run through `packages/database/src/migrate.ts` at boot.
 - **Gamification**: `services/gamification.ts` handles XP awards, level-up detection, and cooldowns; `services/evolutiveAchievements.ts` tracks per-user stat counters and auto-evolves tiered achievements when thresholds are crossed. Both are wired into the same `addXP` call path.
 - **Wordle**: valid-guess word list is pre-generated at Docker build time (`scripts/build-valid-guesses.ts`) from `wordlist.txt` + an external word frequency list, then loaded into memory once on boot (`getValidationSet()`) to avoid disk I/O per request.

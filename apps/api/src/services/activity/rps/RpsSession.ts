@@ -9,6 +9,7 @@ import {
 } from '@marquinhos/domain/games/rock-paper-scissors/room/RpsEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 
 const BOT_PICKS: RpsPick[] = ['rock', 'paper', 'scissors'];
@@ -184,8 +185,7 @@ export class RpsSession {
     });
 
     if (this.players.length === 2) {
-      this.gamification.recordGameResult({
-        sessionId: this.identity.instanceId,
+      recordMatchResult(this.gamification, {
         guildId: this.identity.guildId,
         gameType: 'rock-paper-scissors',
         results: this.players.map((p) => ({
@@ -274,13 +274,15 @@ export class RpsSession {
   // all — without resetting the round here, a room would be permanently
   // stuck in "match ended" after the very first round, since nothing else
   // can ever start a new one.
+  // Returns the seat the incoming player took over, or null when the
+  // outgoing player isn't seated.
   substitutePlayer(
     outgoingUserId: string,
     incomingUserId: string,
     connection: unknown,
-  ): boolean {
+  ): 'player1' | 'player2' | null {
     const outgoing = this.players.find((p) => p.userId === outgoingUserId);
-    if (!outgoing) return false;
+    if (!outgoing) return null;
 
     this.players = this.players.filter((p) => p.userId !== outgoingUserId);
     this.players.push({
@@ -293,8 +295,14 @@ export class RpsSession {
     this.engine = new RpsEngine({ bestOf: this.engine.getRoundState().bestOf });
     this.resultRecorded = false;
     this.lastWinnerUserId = null;
+    // RPS has no rematch vote: a substitution is what starts the next match,
+    // so clients still showing match_end need game_start to play again.
+    this.broadcaster.broadcast(this.roomKey, {
+      type: 'game_start',
+      payload: {},
+    });
     this.broadcastState();
-    return true;
+    return outgoing.playerId;
   }
 
   // MANDATORY per §6.2: clears disconnect grace so it can't outlive a

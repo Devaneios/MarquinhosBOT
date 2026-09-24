@@ -3,6 +3,7 @@ import type { GameDefinition } from '@marquinhos/domain/games/cards/core/GameDef
 import { SeededRng } from '@marquinhos/domain/shared/random/SeededRng';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { logger } from 'utils/logger';
 
 export interface CardTableIdentity {
@@ -373,8 +374,7 @@ export class CardTableSession<TState> {
 
   private recordResult(): void {
     if (!this.state) return;
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: this.definition.id,
       results: this.definition.scoreboard(this.state),

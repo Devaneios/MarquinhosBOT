@@ -112,10 +112,16 @@ export const ticTacToeAdapter: GameRoomAdapter<TicTacToeSession> = {
     return session.getWinnerUserId();
   },
   substitutePlayer(session, outgoingUserId, incomingUserId, incomingClient) {
-    return session.substitutePlayer(
+    const player = session.substitutePlayer(
       outgoingUserId,
       incomingUserId,
       incomingClient,
     );
+    if (!player) return false;
+    sendMessage<TicTacToeServerMessage>(incomingClient, {
+      type: 'init',
+      payload: { player, state: session.getPublicState() },
+    });
+    return true;
   },
 };

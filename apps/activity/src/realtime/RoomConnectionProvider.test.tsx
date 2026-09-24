@@ -1,6 +1,7 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, render, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
+import type { ActivityMessage } from './colyseusConnection';
 import { fakeRoom } from './useColyseusRoom.test';
 // Static import, deliberately NOT cache-busted with a random query string:
 // useColyseusRoom.ts itself statically imports RoomConnectionProvider (no
@@ -9,7 +10,10 @@ import { fakeRoom } from './useColyseusRoom.test';
 // createContext() call producing a context object useColyseusRoom's
 // useContext() call could never see a value from. Importing it exactly the
 // way useColyseusRoom.ts does keeps both resolving to the same instance.
-import { RoomConnectionProvider } from './RoomConnectionProvider';
+import {
+  RoomConnectionProvider,
+  useRoomConnectionContext,
+} from './RoomConnectionProvider';
 
 async function freshUseColyseusRoom(room: ReturnType<typeof fakeRoom>) {
   const joinOrCreate = mock(
@@ -163,5 +167,159 @@ describe('RoomConnectionProvider + useColyseusRoom', () => {
     );
     expect(result.current.role).toBe(null);
     expect(joinOrCreate).toHaveBeenCalledTimes(1);
+  });
+});
+
+// Mirrors RoomView: a board mounts only once room_state names its game, and
+// a different game remounts it.
+function LateBoards({
+  received,
+}: {
+  received: Map<string, ActivityMessage[]>;
+}) {
+  const ctx = useRoomConnectionContext();
+  if (ctx?.connectionState !== 'connected' || !ctx.roomState) return null;
+  const game = ctx.roomState.game;
+  return <Board key={game} game={game} received={received} />;
+}
+
+function Board({
+  game,
+  received,
+}: {
+  game: string;
+  received: Map<string, ActivityMessage[]>;
+}) {
+  const ctx = useRoomConnectionContext();
+  useEffect(() => {
+    if (!ctx) return;
+    return ctx.subscribe((message) => {
+      received.set(game, [...(received.get(game) ?? []), message]);
+    });
+  }, [ctx, game, received]);
+  return null;
+}
+
+function roomState(game: string) {
+  return {
+    game,
+    hostUserId: 'user-a',
+    queueEnabled: false,
+    matchInProgress: false,
+    members: [{ userId: 'user-a', role: 'player' }],
+  };
+}
+
+describe('RoomConnectionProvider message backlog', () => {
+  async function renderRoom(roomId: string) {
+    const room = fakeRoom();
+    await freshUseColyseusRoom(room);
+    const received = new Map<string, ActivityMessage[]>();
+    render(
+      <RoomConnectionProvider
+        roomId={roomId}
+        session={session}
+        game="tic-tac-toe"
+        queueEnabled={false}
+        identity={identity}
+      >
+        <LateBoards received={received} />
+      </RoomConnectionProvider>,
+    );
+    await waitFor(() => expect(room.onLeave).toHaveBeenCalled());
+    return { room, received };
+  }
+
+  it('hands a board the messages that arrived before it mounted', async () => {
+    const { room, received } = await renderRoom('ROOM10');
+
+    act(() => {
+      room.emit('room_state', roomState('tic-tac-toe'));
+      room.emit('init', { player: 'X' });
+    });
+
+    await waitFor(() =>
+      expect(received.get('tic-tac-toe')).toEqual([
+        { type: 'init', payload: { player: 'X' } },
+      ]),
+    );
+  });
+
+  it('delivers each message once, even when the board resubscribes', async () => {
+    const { room, received } = await renderRoom('ROOM11');
+    act(() => {
+      room.emit('room_state', roomState('tic-tac-toe'));
+      room.emit('init', { player: 'X' });
+    });
+    await waitFor(() => expect(received.get('tic-tac-toe')).toHaveLength(1));
+
+    act(() => {
+      room.emit('room_state', {
+        ...roomState('tic-tac-toe'),
+        queueEnabled: true,
+      });
+      room.emit('state', { turn: 'O' });
+    });
+
+    await waitFor(() =>
+      expect(received.get('tic-tac-toe')).toEqual([
+        { type: 'init', payload: { player: 'X' } },
+        { type: 'state', payload: { turn: 'O' } },
+      ]),
+    );
+  });
+
+  it("hands the new game's board its init after switch_game", async () => {
+    const { room, received } = await renderRoom('ROOM12');
+    act(() => {
+      room.emit('room_state', roomState('tic-tac-toe'));
+      room.emit('init', { player: 'X' });
+    });
+    await waitFor(() => expect(received.get('tic-tac-toe')).toHaveLength(1));
+
+    act(() => {
+      room.emit('room_state', roomState('connect-four'));
+      room.emit('init', { disc: 'p1' });
+    });
+
+    await waitFor(() =>
+      expect(received.get('connect-four')).toEqual([
+        { type: 'init', payload: { disc: 'p1' } },
+      ]),
+    );
+  });
+
+  it('leaves a room whose join resolves after the provider unmounted', async () => {
+    const room = fakeRoom();
+    let resolveJoin: (value: typeof room) => void = () => {};
+    mock.module('@colyseus/sdk', () => ({
+      Client: class {
+        joinOrCreate = () =>
+          new Promise<typeof room>((resolve) => {
+            resolveJoin = resolve;
+          });
+      },
+    }));
+    mock.module('../../lib/apiBase', () => ({
+      apiBase: () => 'http://fake.test/api',
+      apiUrl: (path: string) => `http://fake.test/api${path}`,
+      colyseusUrl: () => 'ws://fake.test',
+    }));
+
+    const { unmount } = render(
+      <RoomConnectionProvider
+        roomId="ROOM13"
+        session={session}
+        game="tic-tac-toe"
+        queueEnabled={false}
+        identity={identity}
+      >
+        {null}
+      </RoomConnectionProvider>,
+    );
+    unmount();
+    await act(async () => resolveJoin(room));
+
+    expect(room.leave).toHaveBeenCalled();
   });
 });

@@ -133,4 +133,93 @@ describe('reportError', () => {
 
     expect(send).toHaveBeenCalledTimes(2);
   });
+
+  // Discord rejects a message with more than 10 embeds or 6000 characters
+  // across them, and a rejected batch would be retried forever.
+  function sentEmbeds(send: ReturnType<typeof fakeClient>['send']) {
+    const [message] = send.mock.calls.at(-1) as unknown as [
+      {
+        embeds: {
+          title: string;
+          description: string;
+          fields: { name: string; value: string }[];
+        }[];
+      },
+    ];
+    return message.embeds;
+  }
+
+  function embedChars(embeds: ReturnType<typeof sentEmbeds>): number {
+    return embeds.reduce(
+      (total, embed) =>
+        total +
+        embed.title.length +
+        embed.description.length +
+        embed.fields.reduce(
+          (sum, f) => sum + f.name.length + f.value.length,
+          0,
+        ),
+      0,
+    );
+  }
+
+  it('sends at most 10 embeds and summarizes the rest', async () => {
+    const { client, send } = fakeClient(async () => undefined);
+    setDiscordClient(client);
+
+    for (let i = 0; i < 15; i++) {
+      reportError(new Error(`boom ${i}`), { origin: 'test-origin' });
+    }
+    await flushPendingErrors();
+
+    const embeds = sentEmbeds(send);
+    expect(embeds.length).toBeLessThanOrEqual(10);
+    expect(embeds.at(-1)?.title).toContain('more');
+  });
+
+  it('keeps a batch of long errors within 6000 characters', async () => {
+    const { client, send } = fakeClient(async () => undefined);
+    setDiscordClient(client);
+
+    for (let i = 0; i < 10; i++) {
+      const error = new Error('x'.repeat(300));
+      error.stack = 'y'.repeat(2000);
+      reportError(error, { origin: 'test-origin' });
+    }
+    await flushPendingErrors();
+
+    expect(embedChars(sentEmbeds(send))).toBeLessThanOrEqual(6000);
+  });
+
+  it('keeps errors reported while a batch is being sent', async () => {
+    const { client, send } = fakeClient(async () => {
+      if (send.mock.calls.length === 1) {
+        reportError(new Error('during send'), { origin: 'test-origin' });
+      }
+      return undefined;
+    });
+    setDiscordClient(client);
+
+    reportError(new Error('first'), { origin: 'test-origin' });
+    await flushPendingErrors();
+    await flushPendingErrors();
+
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(sentEmbeds(send)[0]?.title).toBe('during send');
+  });
+
+  it('keeps only the newest 100 errors while DMs cannot be delivered', async () => {
+    for (let i = 0; i < 150; i++) {
+      reportError(new Error(`boom ${i}`), { origin: 'test-origin' });
+    }
+    const { client, send } = fakeClient(async () => undefined);
+    setDiscordClient(client);
+    await flushPendingErrors();
+
+    const embeds = sentEmbeds(send);
+    expect(embeds[0]?.title).toBe('boom 50');
+    expect(embeds.at(-1)?.title).toBe(
+      `... and ${100 - (embeds.length - 1)} more errors`,
+    );
+  });
 });

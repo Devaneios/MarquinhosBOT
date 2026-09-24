@@ -7,6 +7,7 @@ import {
   type MinesweeperEngineConfig,
 } from '@marquinhos/domain/games/minesweeper-versus/MinesweeperEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 
 interface MinesweeperPlayer {
@@ -162,8 +163,7 @@ export class MinesweeperSession {
       return { userId: entry.userId, position };
     });
 
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'minesweeper-versus',
       results,

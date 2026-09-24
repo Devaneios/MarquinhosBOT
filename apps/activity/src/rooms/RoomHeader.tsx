@@ -3,6 +3,7 @@ import {
   parseMessage,
 } from '@marquinhos/contracts/activity/protocol';
 import {
+  isQueueEligible,
   roomServerMessageSchema,
   type RoomClientMessage,
 } from '@marquinhos/contracts/activity/room';
@@ -11,7 +12,6 @@ import { useTranslation } from 'react-i18next';
 import { getParticipantDisplayNames } from '../discord/participants';
 import { GAME_REGISTRY } from '../games/registry';
 import { useRoomConnectionContext } from '../realtime/RoomConnectionProvider';
-import { isQueueEligible } from './queueEligibility';
 
 export interface RoomHeaderProps {
   onLeave: () => void;

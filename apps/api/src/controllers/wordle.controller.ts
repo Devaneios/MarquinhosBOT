@@ -154,10 +154,10 @@ export default class WordleController {
       return;
     }
     const { guildId } = input.params;
-    const { period } = input.query;
+    const { period, date } = input.query;
 
     try {
-      const data = service.getLeaderboard(guildId, 10, period);
+      const data = service.getLeaderboard(guildId, 10, period, date);
       const groupStreak = service.getGroupStreak(guildId);
       sendContract(res, contract.getLeaderboard, { data, groupStreak });
     } catch (err) {

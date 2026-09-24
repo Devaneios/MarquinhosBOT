@@ -23,6 +23,7 @@ import type { PongInputState } from '@marquinhos/domain/games/pong/PongTypes';
 import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
 import type { BinaryActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 
 interface PongPlayer {
@@ -659,8 +660,7 @@ export class PongSession {
       position:
         state.placements[player.slot] || (player.team === winnerTeam ? 1 : 2),
     }));
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'pong',
       results,

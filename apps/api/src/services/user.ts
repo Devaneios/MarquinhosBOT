@@ -16,6 +16,30 @@ type UserRow = {
   scrobbles_on: number | null;
 };
 
+// Everything the privacy policy's "delete all your data" covers. Left out
+// on purpose: AI usage counters (deleting them would reset quotas), sandbox
+// sessions (the sweep needs the row to stop the container), and Pong
+// tournaments and ranked matches, which other players' results depend on.
+const USER_OWNED_TABLES: readonly (readonly [table: string, column: string])[] =
+  [
+    ['ai_traces', 'user_id'],
+    ['ai_thread_sessions', 'owner_user_id'],
+    ['ai_research_jobs', 'user_id'],
+    ['user_levels', 'user_id'],
+    ['user_achievements', 'user_id'],
+    ['user_stats', 'user_id'],
+    ['xp_cooldowns', 'user_id'],
+    ['user_game_results', 'user_id'],
+    ['evolutive_achievements', 'user_id'],
+    ['maze_sessions', 'user_id'],
+    ['activity_deep_links', 'user_id'],
+    ['wordle_sessions', 'user_id'],
+    ['wordle_streaks', 'user_id'],
+    ['wordle_user_config', 'user_id'],
+    ['pong_ratings', 'user_id'],
+    ['users', 'id'],
+  ];
+
 export class UserService {
   discordService: DiscordService;
   lastfmService: LastfmService;
@@ -73,7 +97,20 @@ export class UserService {
   }
 
   async deleteAllData(id: string) {
-    db.prepare('DELETE FROM users WHERE id = ?').run(id);
+    db.transaction(() => {
+      db.prepare(
+        'DELETE FROM ai_trace_events WHERE trace_id IN (SELECT trace_id FROM ai_traces WHERE user_id = ?)',
+      ).run(id);
+      db.prepare(
+        'DELETE FROM ai_thread_items WHERE thread_id IN (SELECT thread_id FROM ai_thread_sessions WHERE owner_user_id = ?)',
+      ).run(id);
+      db.prepare(
+        'DELETE FROM ai_research_events WHERE job_id IN (SELECT job_id FROM ai_research_jobs WHERE user_id = ?)',
+      ).run(id);
+      for (const [table, column] of USER_OWNED_TABLES) {
+        db.prepare(`DELETE FROM ${table} WHERE ${column} = ?`).run(id);
+      }
+    })();
   }
 
   async toggleScrobbles(id: string) {

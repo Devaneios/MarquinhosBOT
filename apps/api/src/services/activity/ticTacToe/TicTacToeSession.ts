@@ -8,6 +8,7 @@ import { TicTacToeEngine } from '@marquinhos/domain/games/tic-tac-toe/room/TicTa
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 
 interface TicTacToePlayer {
@@ -231,13 +232,15 @@ export class TicTacToeSession {
   // addPlayer() can't be reused here: it assigns markers by array length
   // (`players.length === 0 ? 'X' : 'O'`), which collides with the remaining
   // player's marker once one seat is vacated and refilled.
+  // Returns the seat the incoming player took over, or null when the
+  // outgoing player isn't seated.
   substitutePlayer(
     outgoingUserId: string,
     incomingUserId: string,
     connection: unknown,
-  ): boolean {
+  ): Player | null {
     const outgoing = this.players.find((p) => p.userId === outgoingUserId);
-    if (!outgoing) return false;
+    if (!outgoing) return null;
 
     this.players = this.players.filter((p) => p.userId !== outgoingUserId);
     this.restartVotes.delete(outgoingUserId);
@@ -247,7 +250,7 @@ export class TicTacToeSession {
       connected: true,
       connections: new Set([connection]),
     });
-    return true;
+    return outgoing.player;
   }
 
   // Returns the outcome instead of broadcasting a rejection — a rejected
@@ -330,8 +333,7 @@ export class TicTacToeSession {
 
   private recordResult(winner: Player) {
     if (this.players.length < 2) return;
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'tic-tac-toe',
       results: this.players.map((player) => ({

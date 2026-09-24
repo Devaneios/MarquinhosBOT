@@ -59,6 +59,8 @@ export interface GameRoomAdapter<TSession> {
 
   // Required only for the 6 queue-eligible games (supportsQueue: true).
   getWinnerUserId?(session: TSession): string | null;
+  // Must send the incoming client its `init`: it joined as queued with a
+  // null seat, and `init` is the only message that tells a client its side.
   substitutePlayer?(
     session: TSession,
     outgoingUserId: string,

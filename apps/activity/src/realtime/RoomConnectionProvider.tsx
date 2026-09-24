@@ -26,6 +26,52 @@ import {
 } from './colyseusConnection';
 import type { WsSession } from './gameSession';
 
+type Listener = (message: ActivityMessage) => void;
+
+// Generous for the few frames between room_state and the board's subscribe;
+// only a game without a room board could ever fill it.
+const MAX_BACKLOG = 256;
+
+interface Backlog {
+  game: GameId | null;
+  // null once handed over: later messages reach the board live.
+  messages: ActivityMessage[] | null;
+  lateListeners: Set<Listener>;
+  flushScheduled: boolean;
+}
+
+function openBacklog(): Backlog {
+  return {
+    game: null,
+    messages: [],
+    lateListeners: new Set(),
+    flushScheduled: false,
+  };
+}
+
+// The first room_state only names the game: messages already held belong to
+// it. A later one naming another game (switch_game) starts a fresh backlog
+// for the board that game will mount.
+function reopenBacklogOnGameChange(backlog: Backlog, game: GameId) {
+  if (backlog.game === game) return;
+  if (backlog.game !== null) {
+    backlog.messages = [];
+    backlog.lateListeners.clear();
+    backlog.flushScheduled = false;
+  }
+  backlog.game = game;
+}
+
+function flushBacklog(backlog: Backlog, listeners: ReadonlySet<Listener>) {
+  const messages = backlog.messages ?? [];
+  backlog.messages = null;
+  for (const listener of backlog.lateListeners) {
+    if (!listeners.has(listener)) continue;
+    for (const message of messages) listener(message);
+  }
+  backlog.lateListeners.clear();
+}
+
 interface RoomConnectionContextValue {
   send: (message: ActivityMessage) => void;
   connectionState: ColyseusConnectionState;
@@ -60,26 +106,40 @@ export function RoomConnectionProvider({
   children: ReactNode;
 }) {
   const roomRef = useRef<Room | null>(null);
-  const listenersRef = useRef(new Set<(message: ActivityMessage) => void>());
+  const listenersRef = useRef(new Set<Listener>());
+  // A game's board mounts only once room_state naming that game has
+  // rendered, so its `init` usually arrives before anyone listens for it.
+  // Game messages are held here from that room_state until the board's
+  // render subscribes, then handed to the listeners that joined since.
+  const backlogRef = useRef<Backlog>(openBacklog());
   const [connectionState, setConnectionState] =
     useState<ColyseusConnectionState>('connecting');
   const [roomState, setRoomState] = useState<RoomState | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    backlogRef.current = openBacklog();
     setConnectionState('connecting');
 
     connectToRoom(game, session, colyseusUrl(), (message) => {
       if (message.type === ROOM_STATE) {
         const parsed = parseMessage(roomServerMessageSchema, message);
-        if (parsed?.type === ROOM_STATE) setRoomState(parsed.payload);
-        else devwarn('[room] ignoring malformed room state', message.payload);
+        if (parsed?.type === ROOM_STATE) {
+          reopenBacklogOnGameChange(backlogRef.current, parsed.payload.game);
+          setRoomState(parsed.payload);
+        } else devwarn('[room] ignoring malformed room state', message.payload);
         return;
       }
       listenersRef.current.forEach((listener) => listener(message));
+      const backlog = backlogRef.current;
+      if (backlog.messages && backlog.messages.length < MAX_BACKLOG)
+        backlog.messages.push(message);
     })
       .then((room) => {
-        if (cancelled) return;
+        if (cancelled) {
+          room.leave(true).catch(() => undefined);
+          return;
+        }
         roomRef.current = room;
         setConnectionState('connected');
         wireRoomLifecycle(room, game, (state) => {
@@ -110,8 +170,21 @@ export function RoomConnectionProvider({
     roomRef.current?.send(message.type, message.payload);
   };
 
-  const subscribe = (onMessage: (message: ActivityMessage) => void) => {
+  const subscribe = (onMessage: Listener) => {
     listenersRef.current.add(onMessage);
+    const backlog = backlogRef.current;
+    if (backlog.messages) {
+      backlog.lateListeners.add(onMessage);
+      // Subscribing from a render that shows the backlog's game means that
+      // game's board is mounted; every listener joining in this same effect
+      // flush gets the backlog, then it closes.
+      const boardMounted =
+        connectionState === 'connected' && roomState?.game === backlog.game;
+      if (boardMounted && !backlog.flushScheduled) {
+        backlog.flushScheduled = true;
+        queueMicrotask(() => flushBacklog(backlog, listenersRef.current));
+      }
+    }
     return () => {
       listenersRef.current.delete(onMessage);
     };

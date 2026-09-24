@@ -10,6 +10,7 @@ import {
 import { getBoggleWordSet } from 'services/activity/boggle/boggleWords';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 
 interface BogglePlayer {
@@ -156,8 +157,7 @@ export class BoggleSession {
       return { userId: r.userId, position };
     });
 
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'boggle-word-race',
       results,

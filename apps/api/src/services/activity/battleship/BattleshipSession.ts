@@ -12,6 +12,7 @@ import {
 } from '@marquinhos/domain/games/battleship/masking';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { GamificationService } from 'services/gamification';
 
 export interface BattleshipSessionIdentity {
@@ -353,8 +354,7 @@ export class BattleshipSession {
 
   private recordResult(winner: BattleshipSide) {
     if (this.players.length < 2) return;
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'battleship',
       results: this.players.map((player) => ({
@@ -382,13 +382,15 @@ export class BattleshipSession {
   // No restart flow exists for Battleship (like RPS) — reset the engine so
   // the newly-paired players go straight back into ship placement instead
   // of leaving the room permanently stuck in the 'ended' phase.
+  // Returns the seat the incoming player took over, or null when the
+  // outgoing player isn't seated.
   substitutePlayer(
     outgoingUserId: string,
     incomingUserId: string,
     connection: unknown,
-  ): boolean {
+  ): BattleshipSide | null {
     const outgoing = this.players.find((p) => p.userId === outgoingUserId);
-    if (!outgoing) return false;
+    if (!outgoing) return null;
 
     this.players = this.players.filter((p) => p.userId !== outgoingUserId);
     this.players.push({
@@ -402,6 +404,6 @@ export class BattleshipSession {
     this.resultRecorded = false;
     this.lastWinnerSide = null;
     this.broadcastState();
-    return true;
+    return outgoing.side;
   }
 }

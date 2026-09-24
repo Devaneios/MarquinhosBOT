@@ -17,6 +17,7 @@ import {
 } from '@marquinhos/domain/games/snake-game/SnakeEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
+import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 
 interface SnakePlayer {
   userId: string;
@@ -276,8 +277,7 @@ export class SnakeSession {
       position: player.playerId === winnerId ? 1 : 2,
     }));
 
-    this.gamification.recordGameResult({
-      sessionId: this.identity.instanceId,
+    recordMatchResult(this.gamification, {
       guildId: this.identity.guildId,
       gameType: 'snake-game',
       results,

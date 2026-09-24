@@ -540,6 +540,7 @@ describe('ActivityController.createRoom', () => {
   it('mints a roomId and a multi-mode token/roomKey', async () => {
     const fakeService = {
       getDiscordUser: async () => ({ id: 'user-1' }),
+      isGuildMember: async () => true,
     } as unknown as DiscordService;
     const controller = new ActivityController(fakeService);
 
@@ -565,5 +566,49 @@ describe('ActivityController.createRoom', () => {
     expect(payload.data.roomKey).toBe(
       `inst-1:${payload.data.roomId}:tic-tac-toe:multi`,
     );
+  });
+  it('refuses to create a room in a guild the user is not in', async () => {
+    const fakeService = {
+      getDiscordUser: async () => ({ id: 'user-1' }),
+      isGuildMember: async () => false,
+    } as unknown as DiscordService;
+    const controller = new ActivityController(fakeService);
+    const res = makeRes();
+
+    await controller.createRoom(
+      makeReq({
+        accessToken: 'token',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        game: 'tic-tac-toe',
+        queueEnabled: false,
+      }),
+      res as any,
+    );
+
+    expect(res.getStatus()).toBe(403);
+  });
+
+  it("carries the creator's queue choice in the room's token", async () => {
+    const fakeService = {
+      getDiscordUser: async () => ({ id: 'user-1' }),
+      isGuildMember: async () => true,
+    } as unknown as DiscordService;
+    const controller = new ActivityController(fakeService);
+    const res = makeRes();
+
+    await controller.createRoom(
+      makeReq({
+        accessToken: 'token',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        game: 'tic-tac-toe',
+        queueEnabled: true,
+      }),
+      res as any,
+    );
+
+    const payload = res.getPayload() as { data: { token: string } };
+    expect(verifyWsSessionToken(payload.data.token)?.queueEnabled).toBe(true);
   });
 });

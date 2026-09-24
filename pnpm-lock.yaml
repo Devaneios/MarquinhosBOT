@@ -416,9 +416,15 @@ importers:
         specifier: ^4.4.3
         version: 4.6.5
     devDependencies:
+      '@marquinhos/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@types/bun':
         specifier: ^1.3.14
         version: 1.4.2
+      eslint:
+        specifier: ^10.6.0
+        version: 10.11.0(jiti@2.7.0)
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -429,18 +435,30 @@ importers:
         specifier: ^4.4.3
         version: 4.6.5
     devDependencies:
+      '@marquinhos/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@types/bun':
         specifier: ^1.3.14
         version: 1.4.2
+      eslint:
+        specifier: ^10.6.0
+        version: 10.11.0(jiti@2.7.0)
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
 
   packages/database:
     devDependencies:
+      '@marquinhos/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@types/bun':
         specifier: ^1.3.14
         version: 1.4.2
+      eslint:
+        specifier: ^10.6.0
+        version: 10.11.0(jiti@2.7.0)
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -454,14 +472,30 @@ importers:
         specifier: ^4.4.3
         version: 4.6.5
     devDependencies:
+      '@marquinhos/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@types/bun':
         specifier: ^1.3.14
         version: 1.4.2
+      eslint:
+        specifier: ^10.6.0
+        version: 10.11.0(jiti@2.7.0)
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
 
-  packages/eslint-config: {}
+  packages/eslint-config:
+    dependencies:
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^8.63.0
+        version: 8.70.1(@typescript-eslint/parser@8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      '@typescript-eslint/parser':
+        specifier: ^8.63.0
+        version: 8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3)
+      eslint-plugin-import:
+        specifier: ^2.32.0
+        version: 2.32.0(@typescript-eslint/parser@8.70.1(eslint@10.11.0(jiti@2.7.0))(typescript@6.0.3))(eslint-import-resolver-typescript@4.4.5)(eslint@10.11.0(jiti@2.7.0))
 
   packages/tsconfig: {}
 

@@ -53,6 +53,26 @@ describe('buildDailyLeaderboardAttachment', () => {
     getLeaderboardSpy.mockRestore();
   });
 
+  it('ranks the given word date', async () => {
+    const getLeaderboardSpy = spyOn(
+      MarquinhosApiService.prototype,
+      'getWordleLeaderboard',
+    ).mockResolvedValue({ data: [], groupStreak: 0 } as any);
+
+    await buildDailyLeaderboardAttachment(
+      fakeClient('guild-1', fakeGuild([])),
+      'guild-1',
+      '2026-09-23',
+    );
+
+    expect(getLeaderboardSpy).toHaveBeenCalledWith(
+      'guild-1',
+      'daily',
+      '2026-09-23',
+    );
+    getLeaderboardSpy.mockRestore();
+  });
+
   it('returns null when the guild cannot be resolved', async () => {
     const getLeaderboardSpy = spyOn(
       MarquinhosApiService.prototype,

@@ -16,10 +16,29 @@ describe('grepSearchTool', () => {
     expect(exec).toHaveBeenCalledWith('c1', [
       'grep',
       '-rn',
+      '-e',
       'RateLimitService',
+      '--',
       '/repo/src',
     ]);
     expect(result).toContain('match');
+  });
+
+  it('passes a pattern that starts with a dash as a pattern, not a flag', async () => {
+    const exec = mock(async () => ({ stdout: '', stderr: '', exitCode: 1 }));
+    await grepSearchTool.execute(
+      { pattern: '--include=*.env', path: '/repo' },
+      { containerId: 'c1', exec },
+    );
+
+    expect(exec).toHaveBeenCalledWith('c1', [
+      'grep',
+      '-rn',
+      '-e',
+      '--include=*.env',
+      '--',
+      '/repo',
+    ]);
   });
 
   it('defaults to /repo when no path is given', async () => {
@@ -33,7 +52,14 @@ describe('grepSearchTool', () => {
       { containerId: 'c1', exec },
     );
 
-    expect(exec).toHaveBeenCalledWith('c1', ['grep', '-rn', 'foo', '/repo']);
+    expect(exec).toHaveBeenCalledWith('c1', [
+      'grep',
+      '-rn',
+      '-e',
+      'foo',
+      '--',
+      '/repo',
+    ]);
   });
 
   it('treats grep exit code 1 (no matches) as a normal empty result, not an error', async () => {

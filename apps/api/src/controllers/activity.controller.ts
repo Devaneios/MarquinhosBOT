@@ -372,10 +372,16 @@ class ActivityController {
       if (!input) {
         return res.status(400).json({ message: 'Validation failed' });
       }
-      const { accessToken, instanceId, guildId, game } = input.body;
+      const { accessToken, instanceId, guildId, game, queueEnabled } =
+        input.body;
       const user = await this.discordService.getDiscordUser(accessToken);
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
+      }
+      if (!(await this.discordService.isGuildMember(accessToken, guildId))) {
+        return res
+          .status(403)
+          .json({ message: 'Not a member of the specified guild' });
       }
 
       const roomId = generateRoomId();
@@ -391,6 +397,7 @@ class ActivityController {
         mode: 'multi',
         game,
         roomId,
+        queueEnabled,
       });
       const key = roomKey({
         instanceId,
@@ -404,6 +411,11 @@ class ActivityController {
       });
     } catch (error) {
       logger.error('activity.controller.create_room_failed', { error });
+      if (error instanceof DiscordGuildMembershipError) {
+        return res
+          .status(503)
+          .json({ message: 'Discord membership service unavailable' });
+      }
       return res.status(500).json({ message: 'Unknown Error' });
     }
   };

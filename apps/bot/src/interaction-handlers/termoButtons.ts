@@ -16,18 +16,28 @@ import { ButtonInteraction, MessageFlags } from 'discord.js';
 
 const api = MarquinhosApiService.getInstance();
 
+// The launch is the interaction's first response, due within Discord's 3
+// seconds, so a slow API only gets this long to record the intent first.
+const RECORD_INTENT_DEADLINE_MS = 2000;
+
 export async function handleTermoPlayButton(
   btn: Pick<ButtonInteraction, 'user' | 'guildId' | 'launchActivity'>,
   apiService: Pick<MarquinhosApiService, 'recordActivityDeepLink'> = api,
 ) {
   if (!btn.guildId) return;
-  try {
-    await apiService.recordActivityDeepLink(btn.user.id, btn.guildId, 'wordle');
-  } catch (err) {
-    // Non-fatal: worst case the Activity opens on the Hub instead of
-    // jumping straight into Wordle.
-    logger.warn('Failed to record activity deep link:', err);
-  }
+  // Non-fatal either way: worst case the Activity opens on the Hub instead
+  // of jumping straight into Wordle.
+  const recorded = apiService
+    .recordActivityDeepLink(btn.user.id, btn.guildId, 'wordle')
+    .catch((err) => logger.warn('Failed to record activity deep link:', err));
+  let deadline: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([
+    recorded,
+    new Promise((resolve) => {
+      deadline = setTimeout(resolve, RECORD_INTENT_DEADLINE_MS);
+    }),
+  ]);
+  clearTimeout(deadline);
   await btn.launchActivity();
 }
 

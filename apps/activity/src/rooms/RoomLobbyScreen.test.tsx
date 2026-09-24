@@ -161,4 +161,28 @@ describe('RoomLobbyScreen', () => {
 
     expect(onBack).toHaveBeenCalled();
   });
+
+  it('says the room list is unavailable when it fails to load', async () => {
+    mockDeps([]);
+    globalThis.fetch = Object.assign(
+      async () => new Response('', { status: 500 }),
+      { preconnect: originalFetch.preconnect },
+    );
+    const { RoomLobbyScreen } = await import(
+      `./RoomLobbyScreen.tsx?${Math.random()}`
+    );
+
+    render(
+      <RoomLobbyScreen
+        identity={identity}
+        onRoomReady={() => {}}
+        onBack={() => {}}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText(/não foi possível carregar/i)).toBeTruthy(),
+    );
+    expect(screen.queryByText(/nenhuma sala/i)).toBeNull();
+  });
 });
