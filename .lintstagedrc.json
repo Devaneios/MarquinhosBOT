@@ -12,6 +12,21 @@
     "pnpm --dir apps/activity exec oxlint --fix"
   ],
   "apps/*/tests/**/*.{ts,tsx}": ["prettier --write"],
-  "packages/*/src/**/*.ts": ["prettier --write"],
+  "packages/api-client/src/**/*.ts": [
+    "prettier --write",
+    "pnpm --dir packages/api-client exec eslint --fix"
+  ],
+  "packages/contracts/src/**/*.ts": [
+    "prettier --write",
+    "pnpm --dir packages/contracts exec eslint --fix"
+  ],
+  "packages/database/src/**/*.ts": [
+    "prettier --write",
+    "pnpm --dir packages/database exec eslint --fix"
+  ],
+  "packages/domain/src/**/*.ts": [
+    "prettier --write",
+    "pnpm --dir packages/domain exec eslint --fix"
+  ],
   "dev/**/*.ts": ["prettier --write"]
 }
