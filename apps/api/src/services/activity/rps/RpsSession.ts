@@ -6,7 +6,7 @@ import type {
 import {
   RpsEngine,
   type RpsEngineConfig,
-} from '@marquinhos/domain/activity/rps/RpsEngine';
+} from '@marquinhos/domain/games/rock-paper-scissors/room/RpsEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';

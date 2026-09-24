@@ -6,7 +6,7 @@ import {
   GAME_DURATION_MS,
   type BoggleEngineOptions,
   type SubmitResult,
-} from '@marquinhos/domain/activity/boggle/BoggleEngine';
+} from '@marquinhos/domain/games/boggle-word-race/BoggleEngine';
 import { getBoggleWordSet } from 'services/activity/boggle/boggleWords';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';

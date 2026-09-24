@@ -1,4 +1,4 @@
-import { WordSearchRaceEngine } from '@marquinhos/domain/activity/word-search-race/WordSearchRaceEngine';
+import { WordSearchRaceEngine } from '@marquinhos/domain/games/word-search-race/WordSearchRaceEngine';
 import { describe, expect, it } from 'bun:test';
 
 const TEST_WORDS = ['ROBO', 'PIXEL', 'ARCADE', 'CODIGO'];

@@ -3,7 +3,7 @@ import type {
   WordleRaceServerMessage,
   WordleRaceState,
 } from '@marquinhos/contracts/activity/games/wordleRace';
-import { WordleRaceEngine } from '@marquinhos/domain/activity/wordle-race/WordleRaceEngine';
+import { WordleRaceEngine } from '@marquinhos/domain/games/wordle/race/WordleRaceEngine';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { GamificationService } from 'services/gamification';

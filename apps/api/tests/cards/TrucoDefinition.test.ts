@@ -1,14 +1,14 @@
-import type { Card } from '@marquinhos/domain/activity/cards/core/card';
-import { isHidden } from '@marquinhos/domain/activity/cards/core/masking';
-import type { Seat } from '@marquinhos/domain/activity/cards/core/seating';
-import { TurnOrder } from '@marquinhos/domain/activity/cards/core/seating';
-import { Visibility } from '@marquinhos/domain/activity/cards/core/zone';
-import { ZoneSet } from '@marquinhos/domain/activity/cards/core/zoneSet';
+import type { Card } from '@marquinhos/domain/games/cards/core/card';
+import { isHidden } from '@marquinhos/domain/games/cards/core/masking';
+import type { Seat } from '@marquinhos/domain/games/cards/core/seating';
+import { TurnOrder } from '@marquinhos/domain/games/cards/core/seating';
+import { Visibility } from '@marquinhos/domain/games/cards/core/zone';
+import { ZoneSet } from '@marquinhos/domain/games/cards/core/zoneSet';
 import {
   truco1v1Definition,
   trucoDefinition,
   type TrucoState,
-} from '@marquinhos/domain/activity/cards/rulesets/truco/TrucoDefinition';
+} from '@marquinhos/domain/games/cards/rulesets/truco/TrucoDefinition';
 import { describe, expect, it } from 'bun:test';
 
 const PLAYERS = [

@@ -2,8 +2,8 @@ import {
   activityModeSchema,
   gameIdSchema,
 } from '@marquinhos/contracts/activity/gameId';
-import { cardGameRegistry } from '@marquinhos/domain/activity/cards/registry';
-import { isPongRulesetId } from '@marquinhos/domain/activity/pong/PongRulesetRegistry';
+import { isPongRulesetId } from '@marquinhos/domain/games/pong/PongRulesetRegistry';
+import { cardGameRegistry } from 'services/activity/cards/cardGameRegistry';
 import { decryptTokenFull, encryptToken } from 'utils/crypto';
 import { z } from 'zod';
 

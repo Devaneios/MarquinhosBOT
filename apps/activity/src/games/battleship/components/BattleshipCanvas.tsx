@@ -5,7 +5,7 @@ import type {
 import {
   BOARD_SIZE,
   SHIP_SIZES,
-} from '@marquinhos/domain/activity/battleship/BattleshipEngine';
+} from '@marquinhos/domain/games/battleship/BattleshipEngine';
 import { Application, Container, Graphics } from 'pixi.js';
 import { useEffect, useRef } from 'react';
 

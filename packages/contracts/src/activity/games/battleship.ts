@@ -82,8 +82,8 @@ export const placeShipsPayloadSchema = z.object({
 });
 
 export const firePayloadSchema = z.object({
-  x: z.number().int(),
-  y: z.number().int(),
+  x: z.number(),
+  y: z.number(),
 });
 
 export const clientMessageSchema = z.discriminatedUnion('type', [

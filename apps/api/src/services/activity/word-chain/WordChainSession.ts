@@ -6,11 +6,11 @@ import type {
 import {
   WORD_CHAIN_BOT_USER_ID,
   WordChainBot,
-} from '@marquinhos/domain/activity/word-chain/WordChainBot';
+} from '@marquinhos/domain/games/word-chain/WordChainBot';
 import {
   WordChainEngine,
   type WordChainState,
-} from '@marquinhos/domain/activity/word-chain/WordChainEngine';
+} from '@marquinhos/domain/games/word-chain/WordChainEngine';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';

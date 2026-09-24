@@ -1,4 +1,4 @@
-import { HangmanEngine } from '@marquinhos/domain/activity/hangman/HangmanEngine';
+import { HangmanEngine } from '@marquinhos/domain/games/hangman/HangmanEngine';
 import { describe, expect, it } from 'bun:test';
 
 describe('HangmanEngine', () => {

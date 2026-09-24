@@ -2,7 +2,7 @@ import {
   calculateTotal,
   determineWinner,
   type Card,
-} from '@marquinhos/domain/bot/casino/blackjack';
+} from '@marquinhos/domain/games/casino/blackjack';
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import { z } from 'zod';
 import {

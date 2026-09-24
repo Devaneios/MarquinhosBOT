@@ -5,7 +5,7 @@ const { bootColyseusTestServer, nextMessage, unparsedMessages } =
   await import('../helpers/colyseusTestServer');
 const { mintWsSessionToken } =
   await import('../../src/services/activity/wsSessionToken');
-const { roomKey } = await import('@marquinhos/domain/activity/roomKey');
+const { roomKey } = await import('services/activity/roomKey');
 const rps =
   await import('@marquinhos/contracts/activity/games/rockPaperScissors');
 

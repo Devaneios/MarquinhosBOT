@@ -4,10 +4,10 @@ import type {
   TriviaQuestionState,
   TriviaQuizServerMessage,
 } from '@marquinhos/contracts/activity/games/triviaQuiz';
-import { getQuestions } from '@marquinhos/domain/activity/trivia-quiz/questions';
-import { TriviaQuizEngine } from '@marquinhos/domain/activity/trivia-quiz/TriviaQuizEngine';
-import type { TriviaQuizState } from '@marquinhos/domain/activity/trivia-quiz/types';
+import { TriviaQuizEngine } from '@marquinhos/domain/games/trivia-quiz/TriviaQuizEngine';
+import type { TriviaQuizState } from '@marquinhos/domain/games/trivia-quiz/types';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
+import { getQuestions } from 'services/activity/trivia-quiz/questions';
 import { GamificationService } from 'services/gamification';
 
 export interface TriviaQuizSessionIdentity {

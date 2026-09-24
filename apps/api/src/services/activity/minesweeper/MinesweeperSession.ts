@@ -5,7 +5,7 @@ import type {
 import {
   MinesweeperEngine,
   type MinesweeperEngineConfig,
-} from '@marquinhos/domain/activity/minesweeper/MinesweeperEngine';
+} from '@marquinhos/domain/games/minesweeper-versus/MinesweeperEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { GamificationService } from 'services/gamification';
 

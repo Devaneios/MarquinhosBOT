@@ -8,17 +8,15 @@ import type {
 } from '@marquinhos/contracts/http/routes/wordle';
 import type { GuessRow } from '@marquinhos/contracts/wordle';
 import { db } from '@marquinhos/database/sqlite';
-import {
-  buildUniqueDayGuesses,
-  type WordleSessionGuessesRow,
-} from '@marquinhos/domain/wordle/dayGuesses';
-import {
-  computeFeedback,
-  stripDiacritics,
-} from '@marquinhos/domain/wordle/feedback';
+import { computeFeedback } from '@marquinhos/domain/games/wordle/feedback';
+import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 import { randomUUID } from 'crypto';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import {
+  buildUniqueDayGuesses,
+  type WordleSessionGuessesRow,
+} from 'services/wordle/dayGuesses';
 import type { z } from 'zod';
 
 const logger = {

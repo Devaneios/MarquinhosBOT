@@ -1,4 +1,4 @@
-import { checkBet, type DiceBet } from '@marquinhos/domain/bot/casino/dice';
+import { checkBet, type DiceBet } from '@marquinhos/domain/games/casino/dice';
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import { z } from 'zod';
 import {

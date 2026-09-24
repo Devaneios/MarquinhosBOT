@@ -4,12 +4,12 @@ import type {
   BattleshipSide,
   ShipPlacement,
 } from '@marquinhos/contracts/activity/games/battleship';
-import { BattleshipBot } from '@marquinhos/domain/activity/battleship/BattleshipBot';
-import { BattleshipEngine } from '@marquinhos/domain/activity/battleship/BattleshipEngine';
+import { BattleshipBot } from '@marquinhos/domain/games/battleship/BattleshipBot';
+import { BattleshipEngine } from '@marquinhos/domain/games/battleship/BattleshipEngine';
 import {
   spectatorViewFor,
   viewFor,
-} from '@marquinhos/domain/activity/battleship/masking';
+} from '@marquinhos/domain/games/battleship/masking';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';

@@ -1,4 +1,4 @@
-import { calculatePayout } from '@marquinhos/domain/bot/casino/slots';
+import { calculatePayout } from '@marquinhos/domain/games/casino/slots';
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import { z } from 'zod';
 import {

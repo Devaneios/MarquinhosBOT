@@ -5,7 +5,7 @@ import type {
   WordSearchRaceServerMessage,
   WordSearchRaceState,
 } from '@marquinhos/contracts/activity/games/wordSearchRace';
-import { WordSearchRaceEngine } from '@marquinhos/domain/activity/word-search-race/WordSearchRaceEngine';
+import { WordSearchRaceEngine } from '@marquinhos/domain/games/word-search-race/WordSearchRaceEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { GamificationService } from 'services/gamification';
 

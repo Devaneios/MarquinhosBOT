@@ -2,7 +2,7 @@ import {
   BLOCKS_PER_LEVEL,
   TOWER_LEVELS,
   TowerEngine,
-} from '@marquinhos/domain/activity/towerUnstable/TowerEngine';
+} from '@marquinhos/domain/games/tower-unstable/TowerEngine';
 import { beforeEach, describe, expect, it } from 'bun:test';
 
 // Seed 42 through SeededRng.next() yields, in order:

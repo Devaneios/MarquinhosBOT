@@ -1,4 +1,4 @@
-import { BingoSpeedEngine } from '@marquinhos/domain/activity/bingoSpeed/BingoSpeedEngine';
+import { BingoSpeedEngine } from '@marquinhos/domain/games/bingo-speed/BingoSpeedEngine';
 import { describe, expect, it } from 'bun:test';
 
 describe('BingoSpeedEngine', () => {

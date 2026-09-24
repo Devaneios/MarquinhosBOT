@@ -1,6 +1,6 @@
-import type { Card } from '@marquinhos/domain/activity/cards/core/card';
-import { Deck } from '@marquinhos/domain/activity/cards/core/deck';
-import { SeededRng } from '@marquinhos/domain/activity/cards/core/rng';
+import type { Card } from '@marquinhos/domain/games/cards/core/card';
+import { Deck } from '@marquinhos/domain/games/cards/core/deck';
+import { SeededRng } from '@marquinhos/domain/shared/random/SeededRng';
 import { describe, expect, it } from 'bun:test';
 
 function cards(...ids: string[]): Card[] {

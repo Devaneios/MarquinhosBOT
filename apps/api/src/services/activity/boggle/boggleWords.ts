@@ -1,6 +1,6 @@
-import { buildBoggleWordSet } from '@marquinhos/domain/activity/boggle/dictionary';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { buildBoggleWordSet } from 'services/activity/boggle/dictionary';
 
 const WORDLIST_PATH = join(__dirname, '../../../../wordlist.txt');
 let cache: Set<string> | null = null;

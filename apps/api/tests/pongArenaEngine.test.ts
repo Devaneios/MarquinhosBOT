@@ -1,6 +1,6 @@
 import type { PongRulesetId } from '@marquinhos/contracts/activity/pong/types';
-import { PongArenaEngine } from '@marquinhos/domain/activity/pong/PongArenaEngine';
-import { PONG_RULESETS } from '@marquinhos/domain/activity/pong/PongRulesetRegistry';
+import { PongArenaEngine } from '@marquinhos/domain/games/pong/PongArenaEngine';
+import { PONG_RULESETS } from '@marquinhos/domain/games/pong/PongRulesetRegistry';
 import { describe, expect, it } from 'bun:test';
 
 function engine(ruleset: PongRulesetId) {

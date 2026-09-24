@@ -1,7 +1,7 @@
 import {
   decisiveWinner,
   resolveHandWinner,
-} from '@marquinhos/domain/activity/cards/rulesets/truco/handResolution';
+} from '@marquinhos/domain/games/cards/rulesets/truco/handResolution';
 import { describe, expect, it } from 'bun:test';
 
 describe('decisiveWinner', () => {

@@ -4,7 +4,7 @@ import {
   type ShipPlacement,
   type ShipType,
 } from '@marquinhos/contracts/activity/games/battleship';
-import { SHIP_SIZES } from '@marquinhos/domain/activity/battleship/BattleshipEngine';
+import { SHIP_SIZES } from '@marquinhos/domain/games/battleship/BattleshipEngine';
 import { useTranslation } from 'react-i18next';
 
 export function PlacementPanel({

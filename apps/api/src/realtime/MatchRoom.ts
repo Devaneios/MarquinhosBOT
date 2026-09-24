@@ -4,9 +4,9 @@ import {
   type GameId,
 } from '@marquinhos/contracts/activity/gameId';
 import { ACTION_REJECTED } from '@marquinhos/contracts/activity/protocol';
-import { roomKey } from '@marquinhos/domain/activity/roomKey';
 import { Room } from 'colyseus';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
+import { roomKey } from 'services/activity/roomKey';
 import type { MatchRoomMetadata } from 'services/activity/roomListing';
 import { RateLimiter } from 'services/activity/shared/RateLimiter';
 import {

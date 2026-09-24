@@ -11,9 +11,9 @@ import type {
 import {
   PongArenaEngine,
   type PongArenaEngineConfig,
-} from '@marquinhos/domain/activity/pong/PongArenaEngine';
-import { getPongRuleset } from '@marquinhos/domain/activity/pong/PongRulesetRegistry';
-import type { PongInputState } from '@marquinhos/domain/activity/pong/PongTypes';
+} from '@marquinhos/domain/games/pong/PongArenaEngine';
+import { getPongRuleset } from '@marquinhos/domain/games/pong/PongRulesetRegistry';
+import type { PongInputState } from '@marquinhos/domain/games/pong/PongTypes';
 import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
 import type { BinaryActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';

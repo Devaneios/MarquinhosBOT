@@ -1,4 +1,4 @@
-import { determineRoundWinners } from '@marquinhos/domain/bot/rockPaperScissors';
+import { determineRoundWinners } from '@marquinhos/domain/games/rock-paper-scissors/bot/rockPaperScissors';
 import { describe, expect, it } from 'bun:test';
 
 describe('determineRoundWinners', () => {

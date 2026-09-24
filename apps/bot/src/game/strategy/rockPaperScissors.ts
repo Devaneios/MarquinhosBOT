@@ -1,4 +1,4 @@
-import { determineRoundWinners } from '@marquinhos/domain/bot/rockPaperScissors';
+import { determineRoundWinners } from '@marquinhos/domain/games/rock-paper-scissors/bot/rockPaperScissors';
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import { z } from 'zod';
 import {

@@ -7,7 +7,7 @@ import {
   getRouletteScores,
   ROULETTE_CHAMBER_COUNT,
   type RouletteState,
-} from '@marquinhos/domain/bot/roulette';
+} from '@marquinhos/domain/games/casino/roulette';
 import { ButtonStyle, EmbedBuilder } from 'discord.js';
 import { z } from 'zod';
 import {

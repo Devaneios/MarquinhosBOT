@@ -5,7 +5,7 @@ import {
   generateGrid,
   isValidPath,
   scoreForLength,
-} from '@marquinhos/domain/activity/boggle/BoggleEngine';
+} from '@marquinhos/domain/games/boggle-word-race/BoggleEngine';
 import { describe, expect, it } from 'bun:test';
 
 const GRID = [

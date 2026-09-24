@@ -5,7 +5,7 @@ import {
   type Tile,
 } from '@marquinhos/contracts/activity/games/dominoesBlock';
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
-import { legalEndsFor } from '@marquinhos/domain/activity/dominoesBlock/legality';
+import { legalEndsFor } from '@marquinhos/domain/games/dominoes-block/legality';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';

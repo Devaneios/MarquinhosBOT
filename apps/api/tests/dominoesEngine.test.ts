@@ -2,7 +2,7 @@ import type { Tile } from '@marquinhos/contracts/activity/games/dominoesBlock';
 import {
   DominoesEngine,
   type DominoesState,
-} from '@marquinhos/domain/activity/dominoesBlock/DominoesEngine';
+} from '@marquinhos/domain/games/dominoes-block/DominoesEngine';
 import { describe, expect, it } from 'bun:test';
 
 // Deterministic "shuffle": returns items already in the (reverse) order the

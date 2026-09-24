@@ -1,7 +1,7 @@
 import {
   isSeatActive,
   TurnOrder,
-} from '@marquinhos/domain/activity/cards/core/seating';
+} from '@marquinhos/domain/games/cards/core/seating';
 import { describe, expect, it } from 'bun:test';
 
 function seats() {

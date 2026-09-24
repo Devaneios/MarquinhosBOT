@@ -3,12 +3,12 @@ import type {
   TowerServerMessage,
   TowerState,
 } from '@marquinhos/contracts/activity/games/towerUnstable';
-import { SeededRng } from '@marquinhos/domain/activity/cards/core/rng';
 import {
   TOWER_BOT_USER_ID,
   TowerBot,
-} from '@marquinhos/domain/activity/towerUnstable/TowerBot';
-import { TowerEngine } from '@marquinhos/domain/activity/towerUnstable/TowerEngine';
+} from '@marquinhos/domain/games/tower-unstable/TowerBot';
+import { TowerEngine } from '@marquinhos/domain/games/tower-unstable/TowerEngine';
+import { SeededRng } from '@marquinhos/domain/shared/random/SeededRng';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';

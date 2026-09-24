@@ -10,7 +10,7 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import {
   cellsFor,
   isValidPlacement,
-} from '@marquinhos/domain/activity/battleship/placement';
+} from '@marquinhos/domain/games/battleship/placement';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';

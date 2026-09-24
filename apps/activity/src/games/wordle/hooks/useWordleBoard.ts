@@ -7,7 +7,7 @@ import { type GuessRow } from '@marquinhos/contracts/wordle';
 import {
   buildLetterStates,
   normalizeKey,
-} from '@marquinhos/domain/wordle/keyboardState';
+} from '@marquinhos/domain/games/wordle/keyboardState';
 import React, {
   useCallback,
   useEffect,

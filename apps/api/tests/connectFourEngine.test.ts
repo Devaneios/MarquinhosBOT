@@ -3,7 +3,7 @@ import {
   COLS,
   ConnectFourEngine,
   ROWS,
-} from '@marquinhos/domain/activity/connectFour/ConnectFourEngine';
+} from '@marquinhos/domain/games/connect-four/ConnectFourEngine';
 import { describe, expect, it } from 'bun:test';
 
 describe('ConnectFourEngine', () => {

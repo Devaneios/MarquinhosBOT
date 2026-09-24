@@ -1,7 +1,7 @@
 import {
   cardStrength,
   manilhaRank,
-} from '@marquinhos/domain/activity/cards/rulesets/truco/ranking';
+} from '@marquinhos/domain/games/cards/rulesets/truco/ranking';
 import { describe, expect, it } from 'bun:test';
 
 describe('manilhaRank', () => {

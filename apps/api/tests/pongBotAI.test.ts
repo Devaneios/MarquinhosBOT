@@ -1,12 +1,12 @@
 import type {
   PongEngineConfig,
   PongState,
-} from '@marquinhos/domain/activity/pong/PongBotAI';
+} from '@marquinhos/domain/games/pong/PongBotAI';
 import {
   BOT_TUNING,
   PongBot,
   predictImpactY,
-} from '@marquinhos/domain/activity/pong/PongBotAI';
+} from '@marquinhos/domain/games/pong/PongBotAI';
 import { describe, expect, it } from 'bun:test';
 
 const CONFIG: Required<PongEngineConfig> = {

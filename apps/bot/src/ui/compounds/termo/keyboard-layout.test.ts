@@ -1,5 +1,5 @@
 import type { GuessRow } from '@marquinhos/contracts/wordle';
-import { buildLetterStates as buildStates } from '@marquinhos/domain/wordle/keyboardState';
+import { buildLetterStates as buildStates } from '@marquinhos/domain/games/wordle/keyboardState';
 import { describe, expect, test } from 'bun:test';
 import { TERMO_KB_LETTERS } from './keyboard-layout';
 

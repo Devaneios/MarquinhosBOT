@@ -2,7 +2,7 @@ import type {
   SnakeDirection,
   SnakeGameState,
 } from '@marquinhos/contracts/activity/games/snakeGame';
-import { SnakeEngine } from '@marquinhos/domain/activity/snake-game/SnakeEngine';
+import { SnakeEngine } from '@marquinhos/domain/games/snake-game/SnakeEngine';
 import { describe, expect, it } from 'bun:test';
 
 function getMutableState(engine: SnakeEngine): SnakeGameState {

@@ -1,4 +1,4 @@
-import { RpsEngine } from '@marquinhos/domain/activity/rps/RpsEngine';
+import { RpsEngine } from '@marquinhos/domain/games/rock-paper-scissors/room/RpsEngine';
 import { describe, expect, it } from 'bun:test';
 
 describe('RpsEngine', () => {

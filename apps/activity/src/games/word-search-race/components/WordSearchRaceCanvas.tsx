@@ -2,9 +2,9 @@ import type {
   Cell,
   FoundWord,
 } from '@marquinhos/contracts/activity/games/wordSearchRace';
-import { snapToLine } from '@marquinhos/domain/activity/word-search-race/selection';
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { useEffect, useRef } from 'react';
+import { snapToLine } from '../selection';
 
 const CELL_SIZE = 32;
 const GRID_BG = '#17181a';

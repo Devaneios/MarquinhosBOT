@@ -2,7 +2,7 @@ import {
   customDeck,
   spanishSuitedDeck,
   standardFrenchDeck,
-} from '@marquinhos/domain/activity/cards/core/deckFactory';
+} from '@marquinhos/domain/games/cards/core/deckFactory';
 import { describe, expect, it } from 'bun:test';
 
 describe('standardFrenchDeck', () => {

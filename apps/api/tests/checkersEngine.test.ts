@@ -1,5 +1,5 @@
 import type { Piece } from '@marquinhos/contracts/activity/games/checkers';
-import { CheckersEngine } from '@marquinhos/domain/activity/checkers/CheckersEngine';
+import { CheckersEngine } from '@marquinhos/domain/games/checkers/CheckersEngine';
 import { describe, expect, it } from 'bun:test';
 
 function emptyBoard() {

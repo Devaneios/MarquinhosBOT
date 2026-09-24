@@ -1,5 +1,5 @@
-import type { GameDefinition } from '@marquinhos/domain/activity/cards/core/GameDefinition';
-import { GameDefinitionRegistry } from '@marquinhos/domain/activity/cards/core/GameDefinitionRegistry';
+import type { GameDefinition } from '@marquinhos/domain/games/cards/core/GameDefinition';
+import { GameDefinitionRegistry } from '@marquinhos/domain/games/cards/core/GameDefinitionRegistry';
 import { describe, expect, it } from 'bun:test';
 
 function stubDefinition(id: string): GameDefinition<unknown> {

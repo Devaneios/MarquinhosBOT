@@ -1,4 +1,4 @@
-import { cardGameRegistry } from '@marquinhos/domain/activity/cards/registry';
+import { cardGameRegistry } from 'services/activity/cards/cardGameRegistry';
 import { CardTableSession } from 'services/activity/cards/CardTableSession';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
 import { GamificationService } from 'services/gamification/GamificationService';

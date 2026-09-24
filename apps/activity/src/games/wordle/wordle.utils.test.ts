@@ -1,7 +1,7 @@
 import {
   buildLetterStates,
   normalizeKey,
-} from '@marquinhos/domain/wordle/keyboardState';
+} from '@marquinhos/domain/games/wordle/keyboardState';
 import { describe, expect, it } from 'bun:test';
 import { KB_LETTERS } from './constants';
 

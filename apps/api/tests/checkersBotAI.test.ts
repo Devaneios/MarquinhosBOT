@@ -1,6 +1,6 @@
 import type { Piece } from '@marquinhos/contracts/activity/games/checkers';
-import { chooseCheckersMove } from '@marquinhos/domain/activity/checkers/CheckersBotAI';
-import { CheckersEngine } from '@marquinhos/domain/activity/checkers/CheckersEngine';
+import { chooseCheckersMove } from '@marquinhos/domain/games/checkers/CheckersBotAI';
+import { CheckersEngine } from '@marquinhos/domain/games/checkers/CheckersEngine';
 import { describe, expect, it } from 'bun:test';
 
 function emptyBoard() {

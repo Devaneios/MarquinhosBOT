@@ -1,5 +1,5 @@
 import type { SnakeGameState } from '@marquinhos/contracts/activity/games/snakeGame';
-import { SnakeBot } from '@marquinhos/domain/activity/snake-game/SnakeBotAI';
+import { SnakeBot } from '@marquinhos/domain/games/snake-game/SnakeBotAI';
 import { describe, expect, it } from 'bun:test';
 
 function makeState(overrides: Partial<SnakeGameState> = {}): SnakeGameState {

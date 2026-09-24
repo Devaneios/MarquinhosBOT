@@ -1,5 +1,5 @@
-import { ConnectFourBot } from '@marquinhos/domain/activity/connectFour/ConnectFourBot';
-import { ConnectFourEngine } from '@marquinhos/domain/activity/connectFour/ConnectFourEngine';
+import { ConnectFourBot } from '@marquinhos/domain/games/connect-four/ConnectFourBot';
+import { ConnectFourEngine } from '@marquinhos/domain/games/connect-four/ConnectFourEngine';
 import { describe, expect, it } from 'bun:test';
 
 describe('ConnectFourBot', () => {

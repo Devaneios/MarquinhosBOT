@@ -6,7 +6,7 @@ import {
 import { buildTermoWinActionRow } from '@marquinhos/commands/games/termoResponse';
 import { env } from '@marquinhos/config/environment';
 import { GuildConfig } from '@marquinhos/config/guild';
-import { getBicho } from '@marquinhos/domain/bot/bichoGame';
+import { getBicho } from '@marquinhos/lib/bichoStatus';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
   buildCrosswordImage,

@@ -1,4 +1,4 @@
-import { SeededRng } from '@marquinhos/domain/activity/cards/core/rng';
+import { SeededRng } from '@marquinhos/domain/shared/random/SeededRng';
 import { describe, expect, it } from 'bun:test';
 
 describe('SeededRng', () => {

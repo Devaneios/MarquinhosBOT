@@ -1,4 +1,4 @@
-import { generateMaze } from '@marquinhos/domain/maze/botGenerator';
+import { generateMaze } from '@marquinhos/domain/games/maze/botGenerator';
 import {
   ActionRowBuilder,
   ButtonBuilder,

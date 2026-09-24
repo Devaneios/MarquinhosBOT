@@ -3,7 +3,7 @@ import {
   roundRobin,
   swissRound,
   topFourPlayoff,
-} from '@marquinhos/domain/activity/pong/PongTournamentFormats';
+} from '@marquinhos/domain/games/pong/PongTournamentFormats';
 import { describe, expect, it } from 'bun:test';
 
 const players = ['a', 'b', 'c', 'd'].map((userId, index) => ({

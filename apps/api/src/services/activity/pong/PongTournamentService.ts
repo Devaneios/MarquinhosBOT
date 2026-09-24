@@ -11,7 +11,7 @@ import {
   topFourPlayoff,
   type PongTournamentPairing,
   type PongTournamentPlayer,
-} from '@marquinhos/domain/activity/pong/PongTournamentFormats';
+} from '@marquinhos/domain/games/pong/PongTournamentFormats';
 import type { Database } from 'bun:sqlite';
 import { nanoid } from 'nanoid';
 import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';

@@ -1,9 +1,9 @@
 import type { ShipPlacement } from '@marquinhos/contracts/activity/games/battleship';
-import { BattleshipEngine } from '@marquinhos/domain/activity/battleship/BattleshipEngine';
+import { BattleshipEngine } from '@marquinhos/domain/games/battleship/BattleshipEngine';
 import {
   maskBoard,
   viewFor,
-} from '@marquinhos/domain/activity/battleship/masking';
+} from '@marquinhos/domain/games/battleship/masking';
 import { describe, expect, it } from 'bun:test';
 
 const VALID_FLEET: ShipPlacement[] = [

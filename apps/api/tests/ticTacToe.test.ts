@@ -1,4 +1,4 @@
-import { TicTacToeEngine } from '@marquinhos/domain/activity/ticTacToe/TicTacToeEngine';
+import { TicTacToeEngine } from '@marquinhos/domain/games/tic-tac-toe/room/TicTacToeEngine';
 import { beforeEach, describe, expect, it } from 'bun:test';
 
 describe('TicTacToeEngine', () => {

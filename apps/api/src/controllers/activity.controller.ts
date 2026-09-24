@@ -3,13 +3,13 @@ import { roomListingSchema } from '@marquinhos/contracts/http/routes/activity';
 import {
   isPongRulesetId,
   normalizePongMatchConfig,
-} from '@marquinhos/domain/activity/pong/PongRulesetRegistry';
-import { roomKey } from '@marquinhos/domain/activity/roomKey';
+} from '@marquinhos/domain/games/pong/PongRulesetRegistry';
 import { matchMaker } from 'colyseus';
 import type { Request, Response } from 'express';
 import { customAlphabet } from 'nanoid';
 import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
 import { PongTournamentService } from 'services/activity/pong/PongTournamentService';
+import { roomKey } from 'services/activity/roomKey';
 import { mintWsSessionToken } from 'services/activity/wsSessionToken';
 import { claimDeepLink, recordDeepLink } from 'services/activityDeepLink';
 import { DiscordGuildMembershipError, DiscordService } from 'services/discord';

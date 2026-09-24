@@ -6,7 +6,7 @@ import { db as defaultDb } from '@marquinhos/database/sqlite';
 import {
   calculateGlicko2,
   type PongRankedResult,
-} from '@marquinhos/domain/activity/pong/rating';
+} from '@marquinhos/domain/games/pong/rating';
 import type { Database } from 'bun:sqlite';
 import { nanoid } from 'nanoid';
 

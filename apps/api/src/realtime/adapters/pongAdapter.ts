@@ -1,9 +1,9 @@
 import type { PongRulesetId } from '@marquinhos/contracts/activity/pong/types';
-import type { PongArenaEngineConfig } from '@marquinhos/domain/activity/pong/PongArenaEngine';
+import type { PongArenaEngineConfig } from '@marquinhos/domain/games/pong/PongArenaEngine';
 import {
   getPongRuleset,
   isPongRulesetId,
-} from '@marquinhos/domain/activity/pong/PongRulesetRegistry';
+} from '@marquinhos/domain/games/pong/PongRulesetRegistry';
 import { PongSession } from 'services/activity/pong/PongSession';
 import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';

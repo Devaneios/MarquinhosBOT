@@ -4,8 +4,8 @@ import type {
   ConnectFourState,
   Disc,
 } from '@marquinhos/contracts/activity/games/connectFour';
-import { ConnectFourBot } from '@marquinhos/domain/activity/connectFour/ConnectFourBot';
-import { ConnectFourEngine } from '@marquinhos/domain/activity/connectFour/ConnectFourEngine';
+import { ConnectFourBot } from '@marquinhos/domain/games/connect-four/ConnectFourBot';
+import { ConnectFourEngine } from '@marquinhos/domain/games/connect-four/ConnectFourEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';

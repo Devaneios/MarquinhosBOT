@@ -1,6 +1,6 @@
 import type { mazeViewportStateSchema } from '@marquinhos/contracts/http/routes/maze';
 import { db } from '@marquinhos/database/sqlite';
-import { generateMaze } from '@marquinhos/domain/maze/generator';
+import { generateMaze } from '@marquinhos/domain/games/maze/generator';
 import crypto from 'crypto';
 import type { z } from 'zod';
 

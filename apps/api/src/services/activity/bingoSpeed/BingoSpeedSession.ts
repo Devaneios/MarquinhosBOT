@@ -5,7 +5,7 @@ import type {
   BingoSpeedServerMessage,
   BingoSpeedState,
 } from '@marquinhos/contracts/activity/games/bingoSpeed';
-import { BingoSpeedEngine } from '@marquinhos/domain/activity/bingoSpeed/BingoSpeedEngine';
+import { BingoSpeedEngine } from '@marquinhos/domain/games/bingo-speed/BingoSpeedEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';

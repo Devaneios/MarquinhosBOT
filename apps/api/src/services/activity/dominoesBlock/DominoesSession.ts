@@ -7,11 +7,11 @@ import type {
 import {
   DOMINOES_BOT_USER_ID,
   DominoesBot,
-} from '@marquinhos/domain/activity/dominoesBlock/DominoesBot';
+} from '@marquinhos/domain/games/dominoes-block/DominoesBot';
 import {
   DominoesEngine,
   type DominoesState,
-} from '@marquinhos/domain/activity/dominoesBlock/DominoesEngine';
+} from '@marquinhos/domain/games/dominoes-block/DominoesEngine';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';

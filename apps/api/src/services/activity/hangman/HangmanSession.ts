@@ -3,7 +3,7 @@ import type {
   HangmanServerMessage,
   HangmanState,
 } from '@marquinhos/contracts/activity/games/hangman';
-import { HangmanEngine } from '@marquinhos/domain/activity/hangman/HangmanEngine';
+import { HangmanEngine } from '@marquinhos/domain/games/hangman/HangmanEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';

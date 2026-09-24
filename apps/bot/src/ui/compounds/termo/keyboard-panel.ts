@@ -1,5 +1,5 @@
 import type { GuessRow } from '@marquinhos/contracts/wordle';
-import { buildLetterStates } from '@marquinhos/domain/wordle/keyboardState';
+import { buildLetterStates } from '@marquinhos/domain/games/wordle/keyboardState';
 import { panel } from '../../primitives';
 import { defaultTheme, type Theme } from '../../theme';
 import type { CanvasNode } from '../../types';

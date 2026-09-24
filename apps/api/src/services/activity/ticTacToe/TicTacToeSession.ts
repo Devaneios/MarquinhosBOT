@@ -3,8 +3,8 @@ import type {
   Player,
   TicTacToeServerMessage,
 } from '@marquinhos/contracts/activity/games/ticTacToe';
-import { TicTacToeBot } from '@marquinhos/domain/activity/ticTacToe/TicTacToeBot';
-import { TicTacToeEngine } from '@marquinhos/domain/activity/ticTacToe/TicTacToeEngine';
+import { TicTacToeBot } from '@marquinhos/domain/games/tic-tac-toe/room/TicTacToeBot';
+import { TicTacToeEngine } from '@marquinhos/domain/games/tic-tac-toe/room/TicTacToeEngine';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';

@@ -5,7 +5,7 @@ import {
   getTicTacToeRewardBonuses,
   getTicTacToeScores,
   type TicTacToeState,
-} from '@marquinhos/domain/bot/ticTacToe';
+} from '@marquinhos/domain/games/tic-tac-toe/bot/ticTacToe';
 import { updateSessionMessage } from '@marquinhos/lib/gameLifecycle';
 import { logger } from '@marquinhos/utils/logger';
 import { ButtonStyle, EmbedBuilder } from 'discord.js';

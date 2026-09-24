@@ -5,7 +5,7 @@ import {
 import {
   legalEndsFor,
   tileMatches,
-} from '@marquinhos/domain/activity/dominoesBlock/legality';
+} from '@marquinhos/domain/games/dominoes-block/legality';
 import { Application, Container, Graphics } from 'pixi.js';
 import { useEffect, useRef } from 'react';
 

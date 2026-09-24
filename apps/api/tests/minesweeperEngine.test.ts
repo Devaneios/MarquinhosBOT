@@ -1,4 +1,4 @@
-import { MinesweeperEngine } from '@marquinhos/domain/activity/minesweeper/MinesweeperEngine';
+import { MinesweeperEngine } from '@marquinhos/domain/games/minesweeper-versus/MinesweeperEngine';
 import { describe, expect, it } from 'bun:test';
 
 // A hand-laid 4x4 board with a single mine at (3,0) lets every test assert

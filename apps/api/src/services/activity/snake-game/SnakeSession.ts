@@ -10,11 +10,11 @@ import { GamificationService } from 'services/gamification';
 // goes out over the JSON `broadcast` path; previously the JSON payload was
 // smuggled through `broadcastBinary` via an `as any` cast (AP-3), which is
 // what this fixed.
-import { SnakeBot } from '@marquinhos/domain/activity/snake-game/SnakeBotAI';
+import { SnakeBot } from '@marquinhos/domain/games/snake-game/SnakeBotAI';
 import {
   SnakeEngine,
   type SnakeEngineConfig,
-} from '@marquinhos/domain/activity/snake-game/SnakeEngine';
+} from '@marquinhos/domain/games/snake-game/SnakeEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 

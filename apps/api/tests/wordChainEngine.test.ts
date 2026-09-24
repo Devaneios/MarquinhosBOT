@@ -1,4 +1,4 @@
-import { WordChainEngine } from '@marquinhos/domain/activity/word-chain/WordChainEngine';
+import { WordChainEngine } from '@marquinhos/domain/games/word-chain/WordChainEngine';
 import { describe, expect, it } from 'bun:test';
 import { loadWordChainWords } from 'services/activity/word-chain/wordList';
 
