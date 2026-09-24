@@ -4,6 +4,7 @@
   "createRoom": "Criar sala",
   "joinRoom": "Entrar",
   "noRoomsOpen": "Nenhuma sala aberta no momento",
+  "roomsUnavailable": "Não foi possível carregar as salas",
   "selectGame": "Escolher jogo",
   "enableQueue": "Ativar fila de espera",
   "hostBadge": "Anfitrião",

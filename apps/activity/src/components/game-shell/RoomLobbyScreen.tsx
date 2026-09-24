@@ -10,6 +10,7 @@ import {
   getAvailableRooms,
   type RoomListing,
 } from '../../games/shared/activitySession';
+import { devwarn } from '../../lib/devlog';
 import { getParticipantDisplayNames } from '../../lib/discordParticipants';
 import { GameEmblem } from './GameEmblem';
 import { MenuAction } from './MenuAction';
@@ -39,6 +40,7 @@ export function RoomLobbyScreen({
 }: RoomLobbyScreenProps) {
   const { t } = useTranslation(['common', 'games', 'rooms']);
   const [rooms, setRooms] = useState<RoomListing[] | null>(null);
+  const [roomsFailed, setRoomsFailed] = useState(false);
   const [names, setNames] = useState<Record<string, string>>({});
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState<GameId | null>(
@@ -50,14 +52,17 @@ export function RoomLobbyScreen({
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      getAvailableRooms(identity),
-      getParticipantDisplayNames(),
-    ]).then(([roomList, participantNames]) => {
-      if (cancelled) return;
-      setRooms(roomList);
-      setNames(participantNames);
-    });
+    Promise.all([getAvailableRooms(identity), getParticipantDisplayNames()])
+      .then(([roomList, participantNames]) => {
+        if (cancelled) return;
+        setRooms(roomList);
+        setNames(participantNames);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        devwarn('[rooms] listing failed', error);
+        setRoomsFailed(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -139,6 +144,11 @@ export function RoomLobbyScreen({
           </div>
 
           <div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
+            {roomsFailed && (
+              <p className="text-sm leading-6 text-marquinhos-text-dim">
+                {t('rooms:roomsUnavailable')}
+              </p>
+            )}
             {rooms && rooms.length === 0 && (
               <p className="text-sm leading-6 text-marquinhos-text-dim">
                 {t('rooms:noRoomsOpen')}
