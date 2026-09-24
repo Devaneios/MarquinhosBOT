@@ -47,6 +47,13 @@ describe('pong protocol', () => {
     const clientB = await colyseus.connectTo(room, creds('user-b'));
     await nextMessage(clientB, 'init');
 
+    clientB.send('sync');
+    const synced = await nextMessage(clientB, 'init');
+    expect(synced).toMatchObject({
+      selfUserId: 'user-b',
+      assignment: { slot: 1 },
+    });
+
     clientA.send('lobby_config', { targetScore: 7, ruleset: 'nonsense' });
     const lobby = await nextMessage(
       clientB,

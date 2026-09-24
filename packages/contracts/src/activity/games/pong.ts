@@ -82,6 +82,7 @@ export const clientMessageSchema = z.discriminatedUnion('type', [
     type: z.literal('lobby_config'),
     payload: lobbyConfigPayloadSchema,
   }),
+  z.object({ type: z.literal('sync') }),
   restartMessageSchema,
   leaveMessageSchema,
 ]);

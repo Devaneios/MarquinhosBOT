@@ -30,6 +30,24 @@ function pongConfig(ctx: AdapterContext): Partial<PongArenaEngineConfig> {
   };
 }
 
+function sendInit(
+  session: PongSession,
+  userId: string,
+  client: Parameters<typeof sendMessage>[0],
+) {
+  const assignment = session.getAssignment(userId);
+  sendMessage<PongServerMessage>(client, {
+    type: 'init',
+    payload: {
+      selfUserId: userId,
+      side: assignment?.side ?? null,
+      assignment,
+      config: session.getPublicConfig(),
+      lobby: session.getLobbyState(),
+    },
+  });
+}
+
 export const pongAdapter: GameRoomAdapter<PongSession> = {
   maxPlayers: 4,
   supportsBot: true,
@@ -87,6 +105,9 @@ export const pongAdapter: GameRoomAdapter<PongSession> = {
             session.setReady(auth.userId, parsed.success && parsed.data.ready);
           },
         },
+        sync: {
+          handle: (auth, client) => sendInit(session, auth.userId, client),
+        },
         lobby_config: {
           handle: (auth, _client, rawPayload) => {
             const parsed = lobbyConfigPayloadSchema.safeParse(rawPayload);
@@ -112,16 +133,7 @@ export const pongAdapter: GameRoomAdapter<PongSession> = {
 
   onJoin(session, auth, client, seat, _ctx) {
     if (seat !== 'player') {
-      sendMessage<PongServerMessage>(client, {
-        type: 'init',
-        payload: {
-          selfUserId: auth.userId,
-          side: null,
-          assignment: null,
-          config: session.getPublicConfig(),
-          lobby: session.getLobbyState(),
-        },
-      });
+      sendInit(session, auth.userId, client);
       return;
     }
 
@@ -144,16 +156,7 @@ export const pongAdapter: GameRoomAdapter<PongSession> = {
     }
 
     setTimeout(() => {
-      sendMessage<PongServerMessage>(client, {
-        type: 'init',
-        payload: {
-          selfUserId: auth.userId,
-          side,
-          assignment,
-          config: session.getPublicConfig(),
-          lobby: session.getLobbyState(),
-        },
-      });
+      sendInit(session, auth.userId, client);
       session.publishLobby();
     }, 0);
   },
