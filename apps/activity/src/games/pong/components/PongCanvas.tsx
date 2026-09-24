@@ -1,18 +1,27 @@
 import type { Room } from '@colyseus/sdk';
 import {
+  serverMessageSchema,
+  type PongClientMessage,
+  type PongLobbyState,
+  type PongPublicConfig,
+  type PongServerMessage,
+} from '@marquinhos/contracts/activity/games/pong';
+import {
   decodeStateSnapshot,
   withClassicView,
   type DecodedSnapshot,
 } from '@marquinhos/contracts/activity/pong/codec';
 import {
-  pongSideSchema,
+  bestOfSchema,
+  PONG_RULESETS,
+  pongRulesetIdSchema,
   type GameMode,
   type PongSide,
 } from '@marquinhos/contracts/activity/pong/types';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { Application, BlurFilter, Graphics } from 'pixi.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { z } from 'zod';
 import {
   menuButtonPrimary,
   menuButtonSecondary,
@@ -22,10 +31,6 @@ import { cn } from '../../../lib/cn';
 import { devinfo, devlog, devwarn } from '../../../lib/devlog';
 import type { WsSession } from '../../shared/activitySession';
 import {
-  parsePayload,
-  restartStatusPayloadSchema,
-} from '../../shared/colyseusConnection';
-import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
@@ -34,79 +39,21 @@ import { PongSfx } from './sfx';
 
 type Side = 'left' | 'right';
 
-const pongLobbyStateSchema = z.object({
-  hostUserId: z.string().nullable(),
-  started: z.boolean(),
-  config: z.object({
-    ruleset: z.string(),
-    targetScore: z.number(),
-    bestOf: z.number(),
-    ranked: z.boolean(),
-  }),
-  players: z.array(
-    z.object({
-      userId: z.string(),
-      displayName: z.string(),
-      slot: z.number(),
-      side: pongSideSchema,
-      team: z.number(),
-      connected: z.boolean(),
-      ready: z.boolean(),
-    }),
-  ),
-  spectators: z.array(z.string()),
-});
-
-type PongLobbyState = z.infer<typeof pongLobbyStateSchema>;
-
-const LOBBY_RULESETS = [
-  'classic-1v1',
-  'doubles-2v2',
-  'quad-elimination',
-  'superpong',
-  'rebound',
-  'breakout',
-  'brick-battle',
-  'multiball',
-  'powerup-battle',
-  'radial-solo',
-  'radial-duel',
-  'pong-tennis',
-  'air-hockey',
-  'coop-keep-alive',
-] as const;
-
 const COURT_BG = '#17181a';
 const COURT_LINE = '#34363a';
 const LEFT_COLOR = '#ffb000';
 const RIGHT_COLOR = '#5fbf77';
 
-const pongConfigSchema = z.object({
-  width: z.number(),
-  height: z.number(),
-  paddleWidth: z.number(),
-  paddleHeight: z.number(),
-  paddleSpeed: z.number(),
-  ballRadius: z.number(),
-  cornerGap: z.number().optional(),
-});
-
-type PongConfig = z.infer<typeof pongConfigSchema>;
-
-const initPayloadSchema = z.object({
-  side: pongSideSchema.nullable(),
-  selfUserId: z.string(),
-  assignment: z
-    .object({ slot: z.number(), side: pongSideSchema, team: z.number() })
-    .nullable(),
-  config: pongConfigSchema,
-  lobby: pongLobbyStateSchema,
-});
-
-const playerDisconnectedPayloadSchema = z.object({
-  side: pongSideSchema,
-  timeoutMs: z.number(),
-});
+type PongConfig = Pick<
+  PongPublicConfig,
+  | 'width'
+  | 'height'
+  | 'paddleWidth'
+  | 'paddleHeight'
+  | 'paddleSpeed'
+  | 'ballRadius'
+  | 'cornerGap'
+>;
 
 const PADDLE_WIDTH = 12;
 const PADDLE_HEIGHT = 80;
@@ -174,6 +121,7 @@ const DEFAULT_CONFIG: PongConfig = {
   paddleHeight: PADDLE_HEIGHT,
   paddleSpeed: DEFAULT_PADDLE_SPEED,
   ballRadius: BALL_RADIUS,
+  cornerGap: 0,
 };
 
 interface Snapshot {
@@ -361,9 +309,10 @@ export function PongCanvas({
     required: number;
   } | null>(null);
   const [requested, setRequested] = useState(false);
-  const [pausedOpponent, setPausedOpponent] = useState<z.infer<
-    typeof playerDisconnectedPayloadSchema
-  > | null>(null);
+  const [pausedOpponent, setPausedOpponent] = useState<
+    | Extract<PongServerMessage, { type: 'player_disconnected' }>['payload']
+    | null
+  >(null);
   const [spectating, setSpectating] = useState(false);
   const [lobby, setLobby] = useState<PongLobbyState | null>(null);
   const [selfUserId, setSelfUserId] = useState<string | null>(null);
@@ -425,8 +374,8 @@ export function PongCanvas({
     function predictorFor(side: Side) {
       const config = configRef.current;
       predictors[side] ??= new LocalPaddlePredictor({
-        min: config.cornerGap ?? 0,
-        max: config.height - config.paddleHeight - (config.cornerGap ?? 0),
+        min: config.cornerGap,
+        max: config.height - config.paddleHeight - config.cornerGap,
         speed: config.paddleSpeed,
       });
       return predictors[side]!;
@@ -436,52 +385,53 @@ export function PongCanvas({
       ((side: Side, x: number, y: number, ballSpeed: number) => void) | null =
       null;
 
-    function handleJsonMessage(message: ActivityMessage) {
-      if (message.type === 'init') {
-        const payload = parsePayload(initPayloadSchema, message);
-        if (!payload) return;
-        // A null side means the match already has both players: we watch it
-        // rather than drive a paddle in it.
-        devinfo('[pong-canvas] assigned side', payload.side);
-        assignmentRef.current = payload.assignment;
-        setSelfUserId(payload.selfUserId);
-        sideRef.current =
-          payload.side === 'left' || payload.side === 'right'
-            ? payload.side
-            : null;
-        configRef.current = payload.config;
-        spectatingRef.current = payload.assignment === null;
-        setSpectating(payload.assignment === null);
-        setLobby(payload.lobby);
-        const own = payload.lobby.players.find(
-          (player) => player.slot === payload.assignment?.slot,
-        );
-        setReady(own?.ready ?? false);
-      } else if (message.type === 'lobby_state') {
-        const payload = parsePayload(pongLobbyStateSchema, message);
-        if (!payload) return;
-        setLobby(payload);
-        const own = payload.players.find(
-          (player) => player.slot === assignmentRef.current?.slot,
-        );
-        setReady(own?.ready ?? false);
-      } else if (message.type === 'restart_status') {
-        devlog('[pong-canvas] restart status', message.payload);
-        const payload = parsePayload(restartStatusPayloadSchema, message);
-        if (payload) setRestartStatus(payload);
-      } else if (
-        message.type === 'opponent_disconnected' ||
-        message.type === 'player_disconnected'
-      ) {
-        devwarn('[pong-canvas] opponent disconnected', message.payload);
-        const payload = parsePayload(playerDisconnectedPayloadSchema, message);
-        if (payload) setPausedOpponent(payload);
-      } else if (
-        message.type === 'opponent_reconnected' ||
-        message.type === 'player_reconnected'
-      ) {
-        devinfo('[pong-canvas] opponent reconnected');
-        setPausedOpponent(null);
+    function handleJsonMessage(raw: ActivityMessage) {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (!message) return;
+      switch (message.type) {
+        case 'init': {
+          const payload = message.payload;
+          // A null side means the match already has both players: we watch it
+          // rather than drive a paddle in it.
+          devinfo('[pong-canvas] assigned side', payload.side);
+          assignmentRef.current = payload.assignment;
+          setSelfUserId(payload.selfUserId);
+          sideRef.current =
+            payload.side === 'left' || payload.side === 'right'
+              ? payload.side
+              : null;
+          configRef.current = payload.config;
+          spectatingRef.current = payload.assignment === null;
+          setSpectating(payload.assignment === null);
+          setLobby(payload.lobby);
+          const own = payload.lobby.players.find(
+            (player) => player.slot === payload.assignment?.slot,
+          );
+          setReady(own?.ready ?? false);
+          return;
+        }
+        case 'lobby_state': {
+          setLobby(message.payload);
+          const own = message.payload.players.find(
+            (player) => player.slot === assignmentRef.current?.slot,
+          );
+          setReady(own?.ready ?? false);
+          return;
+        }
+        case 'restart_status':
+          devlog('[pong-canvas] restart status', message.payload);
+          setRestartStatus(message.payload);
+          return;
+        case 'player_disconnected':
+          devwarn('[pong-canvas] opponent disconnected', message.payload);
+          setPausedOpponent(message.payload);
+          return;
+        case 'player_reconnected':
+          devinfo('[pong-canvas] opponent reconnected');
+          setPausedOpponent(null);
+          return;
+        case 'state':
+          return;
       }
     }
 
@@ -621,8 +571,10 @@ export function PongCanvas({
       }
     }
 
-    function send(type: string, payload?: unknown) {
-      roomSend({ type, payload });
+    function sendInput(
+      payload: Extract<PongClientMessage, { type: 'input' }>['payload'],
+    ) {
+      roomSend({ type: 'input', payload } satisfies PongClientMessage);
     }
 
     // 'state' snapshots arrive as raw bytes on their own message type;
@@ -668,8 +620,7 @@ export function PongCanvas({
         sentAt: performance.now(),
         axis: direction,
       });
-      send(
-        'input',
+      sendInput(
         mode === 'local'
           ? { direction, seq: nextSeq, side }
           : { direction, seq: nextSeq },
@@ -690,7 +641,7 @@ export function PongCanvas({
             : 0;
         const seq = (seqBySlot[assigned.slot] ?? 0) + 1;
         seqBySlot[assigned.slot] = seq;
-        send('input', { direction, seq });
+        sendInput({ direction, seq });
         return;
       }
       const direction: -1 | 0 | 1 = arrowKeysDown.has('ArrowUp')
@@ -723,7 +674,7 @@ export function PongCanvas({
       if (mode === 'local') {
         for (const side of ['left', 'right'] as const) {
           seqBySide[side] += 1;
-          send('input', {
+          sendInput({
             direction: 0,
             seq: seqBySide[side],
             side,
@@ -742,7 +693,7 @@ export function PongCanvas({
         ? (seqBySide[classicSide] += 1)
         : (seqBySlot[assigned.slot] ?? 0) + 1;
       if (!classicSide) seqBySlot[assigned.slot] = seq;
-      send('input', { direction: 0, seq, action: 'release' });
+      sendInput({ direction: 0, seq, action: 'release' });
     }
 
     function onKeyDown(event: KeyboardEvent) {
@@ -810,7 +761,7 @@ export function PongCanvas({
         const slot = assignmentRef.current?.slot ?? 0;
         const seq = (seqBySlot[slot] ?? 0) + 1;
         seqBySlot[slot] = seq;
-        send('input', { target, seq });
+        sendInput({ target, seq });
         return;
       }
       const side: Side =
@@ -826,8 +777,7 @@ export function PongCanvas({
         target,
       });
       localDirectionRef.current[side] = 0;
-      send(
-        'input',
+      sendInput(
         mode === 'local'
           ? { target, seq: seqBySide[side], side }
           : { target, seq: seqBySide[side] },
@@ -860,7 +810,7 @@ export function PongCanvas({
         const side: Side =
           event.clientX < rect.left + rect.width / 2 ? 'left' : 'right';
         seqBySide[side] += 1;
-        send('input', {
+        sendInput({
           direction: 0,
           seq: seqBySide[side],
           side,
@@ -875,7 +825,7 @@ export function PongCanvas({
           ? (seqBySide[classicSide] += 1)
           : (seqBySlot[assigned.slot] ?? 0) + 1;
         if (!classicSide) seqBySlot[assigned.slot] = seq;
-        send('input', { direction: 0, seq, action: 'release' });
+        sendInput({ direction: 0, seq, action: 'release' });
       }
     }
 
@@ -1617,15 +1567,19 @@ export function PongCanvas({
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <select
                     value={lobby.config.ruleset}
-                    onChange={(event) =>
-                      roomSend({
-                        type: 'lobby_config',
-                        payload: { ruleset: event.target.value },
-                      })
-                    }
+                    onChange={(event) => {
+                      const ruleset = pongRulesetIdSchema.safeParse(
+                        event.target.value,
+                      );
+                      if (ruleset.success)
+                        roomSend({
+                          type: 'lobby_config',
+                          payload: { ruleset: ruleset.data },
+                        } satisfies PongClientMessage);
+                    }}
                     className="col-span-2 min-w-0 border border-marquinhos-border bg-marquinhos-bg px-2 py-2 font-mono text-xs text-marquinhos-text"
                   >
-                    {LOBBY_RULESETS.map((ruleset) => (
+                    {PONG_RULESETS.map((ruleset) => (
                       <option key={ruleset} value={ruleset}>
                         {t(`pong:rulesets.${ruleset}`)}
                       </option>
@@ -1637,7 +1591,7 @@ export function PongCanvas({
                       roomSend({
                         type: 'lobby_config',
                         payload: { targetScore: Number(event.target.value) },
-                      })
+                      } satisfies PongClientMessage)
                     }
                     className="border border-marquinhos-border bg-marquinhos-bg px-2 py-2 font-pixel text-[10px] text-marquinhos-text"
                     aria-label={t('pong:winScoreLabel')}
@@ -1650,12 +1604,16 @@ export function PongCanvas({
                   </select>
                   <select
                     value={lobby.config.bestOf}
-                    onChange={(event) =>
-                      roomSend({
-                        type: 'lobby_config',
-                        payload: { bestOf: Number(event.target.value) },
-                      })
-                    }
+                    onChange={(event) => {
+                      const bestOf = bestOfSchema.safeParse(
+                        Number(event.target.value),
+                      );
+                      if (bestOf.success)
+                        roomSend({
+                          type: 'lobby_config',
+                          payload: { bestOf: bestOf.data },
+                        } satisfies PongClientMessage);
+                    }}
                     className="border border-marquinhos-border bg-marquinhos-bg px-2 py-2 font-pixel text-[10px] text-marquinhos-text"
                     aria-label={t('pong:bestOfLabel')}
                   >
@@ -1675,7 +1633,7 @@ export function PongCanvas({
                       roomSend({
                         type: 'lobby_config',
                         payload: { ranked: !lobby.config.ranked },
-                      })
+                      } satisfies PongClientMessage)
                     }
                     className={cn(
                       'col-span-2 border px-2 py-2 font-pixel text-[10px] disabled:opacity-40',
@@ -1715,7 +1673,10 @@ export function PongCanvas({
                   type="button"
                   className="notch-6 mt-4 w-full border border-marquinhos-accent bg-marquinhos-accent px-4 py-3 font-pixel text-[11px] text-marquinhos-bg"
                   onClick={() =>
-                    roomSend({ type: 'ready', payload: { ready: !ready } })
+                    roomSend({
+                      type: 'ready',
+                      payload: { ready: !ready },
+                    } satisfies PongClientMessage)
                   }
                 >
                   {ready ? t('pong:notReady') : t('pong:ready')}
@@ -1784,7 +1745,7 @@ export function PongCanvas({
                   disabled={requested}
                   onClick={() => {
                     devlog('[pong-canvas] requesting rematch');
-                    roomSend({ type: 'restart' });
+                    roomSend({ type: 'restart' } satisfies PongClientMessage);
                     setRequested(true);
                   }}
                 >

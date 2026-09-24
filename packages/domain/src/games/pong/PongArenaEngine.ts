@@ -11,7 +11,6 @@ import {
   normalizePongMatchConfig,
 } from '@marquinhos/domain/games/pong/PongRulesetRegistry';
 import type {
-  PongEngineEvent,
   PongEngineState,
   PongInputState,
   PongMatchConfig,
@@ -81,7 +80,6 @@ export class PongArenaEngine {
   private readonly rng: () => number;
   private state: PongEngineState;
   private inputs = new Map<number, PongInputState>();
-  private events: PongEngineEvent[] = [];
   private effects: ActiveEffect[] = [];
   private nextPowerUpAtMs = 8000;
   private nextEntityId = 1000;
@@ -138,12 +136,6 @@ export class PongArenaEngine {
     };
   }
 
-  consumeEvents(): PongEngineEvent[] {
-    const events = this.events;
-    this.events = [];
-    return events;
-  }
-
   setInput(slot: number, input: PongInputState): void {
     if (!Number.isInteger(slot) || slot < 0 || slot > 3) return;
     this.inputs.set(slot, {
@@ -163,7 +155,7 @@ export class PongArenaEngine {
       this.state.paddles.find((paddle) => paddle.slot === slot)?.team ?? null;
     this.state.phase = 'series-over';
     this.state.phaseRemainingMs = 0;
-    this.emit('series-won', slot, null, null);
+    this.recordEvent();
   }
 
   setSlotActive(slot: number, active: boolean): void {
@@ -180,7 +172,6 @@ export class PongArenaEngine {
 
   reset(): void {
     this.inputs.clear();
-    this.events = [];
     this.effects = [];
     this.nextPowerUpAtMs = 8000;
     this.nextEntityId = 1000;
@@ -527,7 +518,7 @@ export class PongArenaEngine {
       }
       this.state.rallyHits += 1;
       ball.lastTouchSlot = paddle.slot;
-      this.emit('paddle-hit', paddle.slot, paddle.id, ball.id);
+      this.recordEvent();
       break;
     }
   }
@@ -591,7 +582,7 @@ export class PongArenaEngine {
     ball.y = cy + ny * (radius - ball.radius);
     ball.lastTouchSlot = paddle.slot;
     this.state.rallyHits += 1;
-    this.emit('paddle-hit', paddle.slot, paddle.id, ball.id);
+    this.recordEvent();
   }
 
   private handleBricks(ball: PongBallState): void {
@@ -600,7 +591,7 @@ export class PongArenaEngine {
       brick.hp -= 1;
       if (brick.hp <= 0) {
         brick.active = false;
-        this.emit('brick-destroyed', ball.lastTouchSlot, brick.id, null);
+        this.recordEvent();
       }
       const centerX = brick.x + brick.width / 2;
       const centerY = brick.y + brick.height / 2;
@@ -635,7 +626,7 @@ export class PongArenaEngine {
         this.state.paddles.find((item) => item.slot === ball.lastTouchSlot) ??
         this.state.paddles[0];
       if (paddle) this.applyPowerUp(powerUp.kind, paddle);
-      this.emit('powerup-collected', paddle?.slot ?? null, powerUp.id, null);
+      this.recordEvent();
     }
   }
 
@@ -659,11 +650,11 @@ export class PongArenaEngine {
     if (ball.y - ball.radius <= 0) {
       ball.y = ball.radius;
       ball.vy = Math.abs(ball.vy);
-      this.emit('wall-hit', null, ball.id, null);
+      this.recordEvent();
     } else if (ball.y + ball.radius >= this.height) {
       ball.y = this.height - ball.radius;
       ball.vy = -Math.abs(ball.vy);
-      this.emit('wall-hit', null, ball.id, null);
+      this.recordEvent();
     }
     if (ball.x < -ball.radius) this.concedeSide('left', ball);
     else if (ball.x > this.width + ball.radius) this.concedeSide('right', ball);
@@ -720,7 +711,7 @@ export class PongArenaEngine {
           : net.x + net.width + ball.radius;
     }
     if (ball.y > this.height + ball.radius) {
-      this.scoreTeam(ball.x < this.width / 2 ? 1 : 0, ball);
+      this.scoreTeam(ball.x < this.width / 2 ? 1 : 0);
     }
   }
 
@@ -752,7 +743,7 @@ export class PongArenaEngine {
     }
     const angle = Math.atan2(dy, dx);
     const losingSlot = Math.cos(angle) >= 0 ? 1 : 0;
-    this.scoreTeam(losingSlot === 0 ? 1 : 0, ball);
+    this.scoreTeam(losingSlot === 0 ? 1 : 0);
   }
 
   private concedeSide(side: PongSide, ball: PongBallState): void {
@@ -773,12 +764,12 @@ export class PongArenaEngine {
       return;
     }
     if (this.matchConfig.ruleset === 'quad-elimination') {
-      if (paddle) this.loseLife(paddle.slot, ball);
+      if (paddle) this.loseLife(paddle.slot);
       return;
     }
     if (this.matchConfig.ruleset === 'air-hockey') {
       const team = paddle ? (paddle.team + 1) % 4 : 0;
-      this.scoreTeam(team, ball);
+      this.scoreTeam(team);
       return;
     }
     const team = side === 'left' ? 1 : 0;
@@ -790,12 +781,12 @@ export class PongArenaEngine {
       ball.x = clamp(ball.x, ball.radius, this.width - ball.radius);
       return;
     }
-    this.scoreTeam(team, ball);
+    this.scoreTeam(team);
   }
 
-  private scoreTeam(team: number, ball: PongBallState): void {
+  private scoreTeam(team: number): void {
     this.state.score[team] = (this.state.score[team] ?? 0) + 1;
-    this.emit('point-scored', null, ball.id, team);
+    this.recordEvent();
     if ((this.state.score[team] ?? 0) >= this.matchConfig.targetScore) {
       this.state.gamesWon[team] = (this.state.gamesWon[team] ?? 0) + 1;
       const needed = Math.ceil(this.matchConfig.bestOf / 2);
@@ -805,11 +796,11 @@ export class PongArenaEngine {
           this.state.paddles.find((paddle) => paddle.team === team)?.slot ??
           team;
         this.state.phase = 'series-over';
-        this.emit('series-won', this.state.winnerSlot, null, team);
+        this.recordEvent();
       } else {
         this.state.phase = 'game-over';
         this.state.phaseRemainingMs = 1200;
-        this.emit('game-won', null, null, team);
+        this.recordEvent();
       }
     } else {
       this.state.phase = 'point-scored';
@@ -818,7 +809,7 @@ export class PongArenaEngine {
     this.centerBalls();
   }
 
-  private loseLife(slot: number, ball: PongBallState): void {
+  private loseLife(slot: number): void {
     const paddle = this.state.paddles.find((item) => item.slot === slot);
     if (paddle?.shield) {
       paddle.shield -= 1;
@@ -836,7 +827,7 @@ export class PongArenaEngine {
           .map((item) => item.slot),
       );
       this.state.placements[slot] = remaining.size + 1;
-      this.emit('player-eliminated', slot, null, null);
+      this.recordEvent();
       if (remaining.size === 1) {
         const winner = [...remaining][0]!;
         this.state.placements[winner] = 1;
@@ -847,13 +838,13 @@ export class PongArenaEngine {
     this.state.phase = 'point-scored';
     this.state.phaseRemainingMs = 700;
     this.centerBalls();
-    this.emit('point-scored', slot, ball.id, this.state.lives[slot] ?? 0);
+    this.recordEvent();
   }
 
   private endCooperativeRound(ball: PongBallState): void {
     ball.active = false;
     this.state.phase = 'series-over';
-    this.emit('rally-ended', ball.lastTouchSlot, ball.id, this.state.rallyHits);
+    this.recordEvent();
   }
 
   private centerBalls(): void {
@@ -897,7 +888,7 @@ export class PongArenaEngine {
     if (this.state.phase === 'serving') {
       this.state.balls = this.createBalls();
       this.state.phase = 'rally';
-      this.emit('serve', null, this.state.balls[0]?.id ?? null, null);
+      this.recordEvent();
     }
   }
 
@@ -1016,19 +1007,7 @@ export class PongArenaEngine {
     return Math.atan2(Math.sin(a - b), Math.cos(a - b));
   }
 
-  private emit(
-    type: PongEngineEvent['type'],
-    slot: number | null,
-    entityId: number | null,
-    value: number | null,
-  ): void {
+  private recordEvent(): void {
     this.state.lastEventSeq += 1;
-    this.events.push({
-      seq: this.state.lastEventSeq,
-      type,
-      slot,
-      entityId,
-      value,
-    });
   }
 }

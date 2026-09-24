@@ -1,4 +1,10 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import type {
+  PongAssignment,
+  PongJsonServerMessage,
+  PongLobbyState,
+  PongPublicConfig,
+} from '@marquinhos/contracts/activity/games/pong';
 import {
   encodeStateSnapshot,
   PONG_PROTOCOL_VERSION,
@@ -18,8 +24,6 @@ import { PongCompetitionService } from 'services/activity/pong/PongCompetitionSe
 import type { BinaryActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';
-
-export type ActivityBroadcaster = BinaryActivityBroadcaster;
 
 interface PongPlayer {
   userId: string;
@@ -86,7 +90,7 @@ export class PongSession {
 
   constructor(
     private identity: PongSessionIdentity,
-    private broadcaster: ActivityBroadcaster,
+    private broadcaster: BinaryActivityBroadcaster<PongJsonServerMessage>,
     private gamification: GamificationService = new GamificationService(),
     config: PongSessionEngineConfig = {},
     options: PongSessionOptions = {},
@@ -158,7 +162,7 @@ export class PongSession {
     this.broadcastLobby();
   }
 
-  getAssignment(userId: string) {
+  getAssignment(userId: string): PongAssignment | null {
     const player = this.players.find(
       (candidate) => candidate.userId === userId,
     );
@@ -213,11 +217,17 @@ export class PongSession {
     this.broadcastLobby();
   }
 
-  getLobbyState() {
+  getLobbyState(): PongLobbyState {
+    const config = this.engine.getConfig();
     return {
       hostUserId: this.hostUserId,
       started: this.started,
-      config: this.engine.getConfig(),
+      config: {
+        ruleset: config.ruleset,
+        targetScore: config.targetScore,
+        bestOf: config.bestOf,
+        ranked: config.ranked,
+      },
       players: this.players.map((player) => ({
         userId: player.userId,
         displayName: player.displayName,
@@ -448,7 +458,7 @@ export class PongSession {
     }
   }
 
-  getPublicConfig() {
+  getPublicConfig(): PongPublicConfig {
     const config = this.engine.getConfig();
     return {
       width: config.width,
@@ -544,12 +554,6 @@ export class PongSession {
     this.updateBots();
     this.engine.tick(FIXED_DT_MS);
     this.simulationTimeMs += FIXED_DT_MS;
-    for (const event of this.engine.consumeEvents()) {
-      this.broadcaster.broadcast(this.roomKey, {
-        type: event.type.replaceAll('-', '_'),
-        payload: event,
-      });
-    }
     const state = this.engine.getState();
     if (state.phase === 'series-over' && !this.resultRecorded) {
       this.resultRecorded = true;

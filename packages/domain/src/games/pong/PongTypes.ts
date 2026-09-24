@@ -34,24 +34,6 @@ export interface PongRulesetDefinition {
   defaultConfig: PongMatchConfig;
 }
 
-export interface PongEngineEvent {
-  seq: number;
-  type:
-    | 'serve'
-    | 'paddle-hit'
-    | 'wall-hit'
-    | 'point-scored'
-    | 'game-won'
-    | 'series-won'
-    | 'brick-destroyed'
-    | 'powerup-collected'
-    | 'player-eliminated'
-    | 'rally-ended';
-  slot: number | null;
-  entityId: number | null;
-  value: number | null;
-}
-
 export interface PongEngineState {
   width: number;
   height: number;

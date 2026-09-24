@@ -1,12 +1,17 @@
-import type { PongRulesetId } from '@marquinhos/contracts/activity/pong/types';
+import {
+  inputPayloadSchema,
+  lobbyConfigPayloadSchema,
+  readyPayloadSchema,
+  type PongServerMessage,
+} from '@marquinhos/contracts/activity/games/pong';
 import type { PongArenaEngineConfig } from '@marquinhos/domain/games/pong/PongArenaEngine';
 import {
   getPongRuleset,
   isPongRulesetId,
 } from '@marquinhos/domain/games/pong/PongRulesetRegistry';
 import { PongSession } from 'services/activity/pong/PongSession';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { sendMessage } from '../sendMessage';
 
 const INPUT_RATE_LIMIT_WINDOW_MS = 1000;
 const INPUT_RATE_LIMIT_MAX = 120;
@@ -24,26 +29,6 @@ function pongConfig(ctx: AdapterContext): Partial<PongArenaEngineConfig> {
     ...(typeof options.ranked === 'boolean' ? { ranked: options.ranked } : {}),
   };
 }
-
-const inputPayloadSchema = z.object({
-  seq: z.number().int().min(0),
-  direction: z.union([z.literal(-1), z.literal(0), z.literal(1)]).optional(),
-  side: z.enum(['left', 'right', 'top', 'bottom']).optional(),
-  target: z.number().optional(),
-  action: z.unknown().optional(),
-});
-
-const readyPayloadSchema = z.object({ ready: z.literal(true) });
-
-const lobbyConfigPayloadSchema = z.object({
-  ruleset: z.custom<PongRulesetId>(isPongRulesetId).optional().catch(undefined),
-  targetScore: z.number().int().min(1).max(99).optional().catch(undefined),
-  bestOf: z
-    .union([z.literal(1), z.literal(3), z.literal(5)])
-    .optional()
-    .catch(undefined),
-  ranked: z.boolean().optional().catch(undefined),
-});
 
 export const pongAdapter: GameRoomAdapter<PongSession> = {
   maxPlayers: 4,
@@ -98,22 +83,8 @@ export const pongAdapter: GameRoomAdapter<PongSession> = {
         },
         ready: {
           handle: (auth, _client, rawPayload) => {
-            session.setReady(
-              auth.userId,
-              readyPayloadSchema.safeParse(rawPayload).success,
-            );
-          },
-        },
-        sync: {
-          handle: (auth, client) => {
-            const assignment = session.getAssignment(auth.userId);
-            client.send('init', {
-              selfUserId: auth.userId,
-              side: assignment?.side ?? null,
-              assignment,
-              config: session.getPublicConfig(),
-              lobby: session.getLobbyState(),
-            });
+            const parsed = readyPayloadSchema.safeParse(rawPayload);
+            session.setReady(auth.userId, parsed.success && parsed.data.ready);
           },
         },
         lobby_config: {
@@ -141,12 +112,15 @@ export const pongAdapter: GameRoomAdapter<PongSession> = {
 
   onJoin(session, auth, client, seat, _ctx) {
     if (seat !== 'player') {
-      client.send('init', {
-        selfUserId: auth.userId,
-        side: null,
-        assignment: null,
-        config: session.getPublicConfig(),
-        lobby: session.getLobbyState(),
+      sendMessage<PongServerMessage>(client, {
+        type: 'init',
+        payload: {
+          selfUserId: auth.userId,
+          side: null,
+          assignment: null,
+          config: session.getPublicConfig(),
+          lobby: session.getLobbyState(),
+        },
       });
       return;
     }
@@ -170,12 +144,15 @@ export const pongAdapter: GameRoomAdapter<PongSession> = {
     }
 
     setTimeout(() => {
-      client.send('init', {
-        selfUserId: auth.userId,
-        side,
-        assignment,
-        config: session.getPublicConfig(),
-        lobby: session.getLobbyState(),
+      sendMessage<PongServerMessage>(client, {
+        type: 'init',
+        payload: {
+          selfUserId: auth.userId,
+          side,
+          assignment,
+          config: session.getPublicConfig(),
+          lobby: session.getLobbyState(),
+        },
       });
       session.publishLobby();
     }, 0);

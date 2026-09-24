@@ -11,6 +11,8 @@ export interface ActivityBroadcaster<M extends WireMessage = WireMessage> {
 
 // Real-time games broadcasting a binary snapshot (§7.2) take this instead.
 // Only Pong currently implements it for real.
-export interface BinaryActivityBroadcaster extends ActivityBroadcaster {
+export interface BinaryActivityBroadcaster<
+  M extends WireMessage = WireMessage,
+> extends ActivityBroadcaster<M> {
   broadcastBinary(key: string, data: ArrayBuffer): void;
 }
