@@ -1,4 +1,9 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import type {
+  PlayerScore,
+  TriviaQuestionState,
+  TriviaQuizServerMessage,
+} from '@marquinhos/contracts/activity/games/triviaQuiz';
 import { getQuestions } from '@marquinhos/domain/activity/trivia-quiz/questions';
 import { TriviaQuizEngine } from '@marquinhos/domain/activity/trivia-quiz/TriviaQuizEngine';
 import type { TriviaQuizState } from '@marquinhos/domain/activity/trivia-quiz/types';
@@ -23,10 +28,11 @@ export class TriviaQuizSession {
   private players: TriviaQuizPlayer[] = [];
   private interval: ReturnType<typeof setInterval> | null = null;
   private resultRecorded = false;
+  private started = false;
 
   constructor(
     private identity: TriviaQuizSessionIdentity,
-    private broadcaster: ActivityBroadcaster,
+    private broadcaster: ActivityBroadcaster<TriviaQuizServerMessage>,
     private gamification: GamificationService = new GamificationService(),
   ) {
     this.engine = new TriviaQuizEngine(getQuestions());
@@ -135,7 +141,10 @@ export class TriviaQuizSession {
     this.resultRecorded = true;
 
     const leaderboard = this.engine.getLeaderboard();
-    this.broadcast('game_end', { leaderboard });
+    this.broadcaster.broadcast('trivia-quiz', {
+      type: 'game_end',
+      payload: { leaderboard },
+    });
 
     const results = leaderboard.map((entry, index) => ({
       userId: entry.userId,
@@ -153,33 +162,17 @@ export class TriviaQuizSession {
   }
 
   private broadcastState(): void {
-    const state = this.engine.getState();
-    const question = state.questions[state.currentQuestionIndex];
-
-    if (!question) return;
-
-    this.broadcast('state_update', {
-      currentQuestionIndex: state.currentQuestionIndex,
-      questionText: question.text,
-      options: question.options,
-      questionStartedAtMs: state.questionStartedAtMs,
-      questionTimerMs: state.questionTimerMs,
-      playerScores: Array.from(state.players.entries()).map(([, p]) => ({
-        userId: p.userId,
-        score: p.totalScore,
-      })),
-      finished: state.finished,
-    });
-  }
-
-  private broadcast(type: string, payload: unknown): void {
+    const payload = this.getPublicState();
+    if (!payload) return;
     this.broadcaster.broadcast('trivia-quiz', {
-      type,
+      type: 'state_update',
       payload,
     });
   }
 
   start(): void {
+    if (this.started) return;
+    this.started = true;
     this.engine.startGame();
     this.broadcastState();
 
@@ -196,13 +189,28 @@ export class TriviaQuizSession {
   // which serializes to `{}` over Colyseus's `client.send` (JSON has no Map
   // support), so the room's `init` payload must use this instead of the
   // raw state (§ the client showed "Players: 0/8" forever before this).
-  getPublicPlayerScores(): { userId: string; score: number }[] {
+  getPublicState(): TriviaQuestionState | null {
+    const state = this.engine.getState();
+    const question = state.questions[state.currentQuestionIndex];
+    if (!question) return null;
+    return {
+      currentQuestionIndex: state.currentQuestionIndex,
+      questionText: question.text,
+      options: question.options,
+      questionStartedAtMs: state.questionStartedAtMs,
+      questionTimerMs: state.questionTimerMs,
+      playerScores: this.getPublicPlayerScores(),
+      finished: state.finished,
+    };
+  }
+
+  getPublicPlayerScores(): PlayerScore[] {
     return Array.from(this.engine.getState().players.entries()).map(
       ([, p]) => ({ userId: p.userId, score: p.totalScore }),
     );
   }
 
-  getLeaderboard(): { userId: string; score: number }[] {
+  getLeaderboard(): PlayerScore[] {
     return this.engine.getLeaderboard();
   }
 

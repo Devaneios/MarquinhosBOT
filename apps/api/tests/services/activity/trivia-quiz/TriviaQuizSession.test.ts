@@ -70,3 +70,44 @@ describe('TriviaQuizSession', () => {
     expect(state.players.size).toBe(1);
   });
 });
+
+describe('TriviaQuizSession start', () => {
+  function createSession() {
+    const broadcast = mock(() => {});
+    const session = new TriviaQuizSession(
+      {
+        sessionKey: 'key1',
+        instanceId: 'inst1',
+        guildId: 'guild1',
+        mode: 'multi',
+      },
+      { broadcast },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { recordGameResult: () => {} } as any,
+    );
+    return { session, broadcast };
+  }
+
+  it('has no public question before the game starts', () => {
+    const { session } = createSession();
+    session.addPlayer('user1', {});
+    session.addPlayer('user2', {});
+
+    expect(session.getPublicState()).toBeNull();
+    session.dispose();
+  });
+
+  it('ignores a second start so a rejoining player cannot reset the quiz', () => {
+    const { session } = createSession();
+    session.addPlayer('user1', {});
+    session.addPlayer('user2', {});
+    session.start();
+    session.handleAnswer('user1', 0, Date.now());
+
+    session.start();
+
+    expect(session.getPublicState()?.currentQuestionIndex).toBe(0);
+    expect(session.getState().playerAnswers.has('user1')).toBe(true);
+    session.dispose();
+  });
+});

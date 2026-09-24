@@ -1,8 +1,8 @@
+import type { PlayerScore } from '@marquinhos/contracts/activity/games/triviaQuiz';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { MenuAction, MenuPanel } from '../../../components/game-shell';
-import type { PlayerScore } from '../types';
 
 interface LeaderboardScreenProps {
   leaderboard: PlayerScore[];

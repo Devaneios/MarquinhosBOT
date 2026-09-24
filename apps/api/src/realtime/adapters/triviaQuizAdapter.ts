@@ -1,12 +1,14 @@
+import {
+  answerPayloadSchema,
+  type TriviaQuizServerMessage,
+} from '@marquinhos/contracts/activity/games/triviaQuiz';
 import { TriviaQuizSession } from 'services/activity/trivia-quiz/TriviaQuizSession';
 import { GamificationService } from 'services/gamification/GamificationService';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { sendMessage } from '../sendMessage';
 
 const ANSWER_RATE_LIMIT_WINDOW_MS = 1000;
 const ANSWER_RATE_LIMIT_MAX = 1;
-
-const answerPayloadSchema = z.object({ answerIndex: z.number().min(0) });
 
 export const triviaQuizAdapter: GameRoomAdapter<TriviaQuizSession> = {
   maxPlayers: 2,
@@ -52,24 +54,30 @@ export const triviaQuizAdapter: GameRoomAdapter<TriviaQuizSession> = {
   },
 
   onJoin(session, auth, client, seat) {
-    if (seat !== 'player') {
-      client.send('init', {
-        playerScores: session.getPublicPlayerScores(),
-        leaderboard: session.getLeaderboard(),
+    if (seat === 'player' && !session.addPlayer(auth.userId, client)) {
+      sendMessage<TriviaQuizServerMessage>(client, {
+        type: 'error',
+        payload: { message: 'Game is full' },
       });
-      return;
-    }
-    const joined = session.addPlayer(auth.userId, client);
-    if (!joined) {
-      client.send('error', { message: 'Game is full' });
       client.leave();
       return;
     }
-    client.send('init', {
-      playerScores: session.getPublicPlayerScores(),
-      leaderboard: session.getLeaderboard(),
+    sendMessage<TriviaQuizServerMessage>(client, {
+      type: 'init',
+      payload: {
+        playerScores: session.getPublicPlayerScores(),
+        leaderboard: session.getLeaderboard(),
+      },
     });
-    if (session.getState().players.size === 2) session.start();
+    const question = session.getPublicState();
+    if (question) {
+      sendMessage<TriviaQuizServerMessage>(client, {
+        type: 'state_update',
+        payload: question,
+      });
+    } else if (seat === 'player' && session.getState().players.size === 2) {
+      session.start();
+    }
   },
   onLeave(session, auth, client) {
     session.pauseForDisconnect(auth.userId, client);
