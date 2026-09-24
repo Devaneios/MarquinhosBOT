@@ -1,7 +1,7 @@
 import type {
   DominoesClientState,
   Tile,
-} from '@marquinhos/contracts/activity/dominoesProtocol';
+} from '@marquinhos/contracts/activity/games/dominoesBlock';
 import { act, render } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
 

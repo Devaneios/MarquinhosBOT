@@ -1,17 +1,17 @@
 import {
-  chainEndSchema,
-  dominoTileSchema,
-} from '@marquinhos/contracts/activity/payloadSchemas';
+  playPayloadSchema,
+  type DominoesServerMessage,
+} from '@marquinhos/contracts/activity/games/dominoesBlock';
 import { DominoesSession } from 'services/activity/dominoesBlock/DominoesSession';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { sendMessage } from '../sendMessage';
 
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
 const MOVE_RATE_LIMIT_MAX = 10;
 
-export const tilePayloadSchema = z.object({ tile: dominoTileSchema });
+const tilePayloadSchema = playPayloadSchema.pick({ tile: true });
 
-export const endPayloadSchema = z.object({ end: chainEndSchema.optional() });
+const endPayloadSchema = playPayloadSchema.pick({ end: true });
 
 export const dominoesAdapter: GameRoomAdapter<DominoesSession> = {
   maxPlayers: 2,
@@ -51,12 +51,18 @@ export const dominoesAdapter: GameRoomAdapter<DominoesSession> = {
           handle: (auth, client, payload: unknown) => {
             const tile = tilePayloadSchema.safeParse(payload);
             if (!tile.success) {
-              client.send('move_rejected', { reason: 'Malformed tile' });
+              sendMessage<DominoesServerMessage>(client, {
+                type: 'move_rejected',
+                payload: { reason: 'Malformed tile' },
+              });
               return;
             }
             const end = endPayloadSchema.safeParse(payload);
             if (!end.success) {
-              client.send('move_rejected', { reason: 'Malformed end' });
+              sendMessage<DominoesServerMessage>(client, {
+                type: 'move_rejected',
+                payload: { reason: 'Malformed end' },
+              });
               return;
             }
             session.playTile(auth.userId, tile.data.tile, end.data.end);

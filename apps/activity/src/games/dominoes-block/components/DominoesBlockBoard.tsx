@@ -1,11 +1,10 @@
 import {
-  dominoesClientStateSchema,
-  moveRejectedPayloadSchema,
-  opponentDisconnectedPayloadSchema,
+  serverMessageSchema,
   type ChainEnd,
-  type DominoesClientState,
+  type DominoesClientMessage,
   type Tile,
-} from '@marquinhos/contracts/activity/dominoesProtocol';
+} from '@marquinhos/contracts/activity/games/dominoesBlock';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { legalEndsFor } from '@marquinhos/domain/activity/dominoesBlock/legality';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,13 +14,14 @@ import { colyseusUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
 import type { WsSession } from '../../shared/activitySession';
 import {
-  parsePayload,
-  restartStatusPayloadSchema,
-} from '../../shared/colyseusConnection';
-import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
+import {
+  applyDominoesMessage,
+  initialDominoesView,
+  isMatchOver,
+} from '../dominoesMessages';
 import { DominoesBlockCanvas } from './DominoesBlockCanvas';
 
 export function DominoesBlockBoard({
@@ -33,55 +33,33 @@ export function DominoesBlockBoard({
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation(['dominoes-block', 'common']);
-  const [state, setState] = useState<DominoesClientState | null>(null);
+  const [view, setView] = useState(initialDominoesView);
+  const {
+    state,
+    rejection,
+    restartStatus,
+    restartRequested,
+    disconnectedOpponent,
+  } = view;
   const [selectedTile, setSelectedTile] = useState<Tile | null>(null);
   const [pendingEnds, setPendingEnds] = useState<ChainEnd[] | null>(null);
-  const [rejection, setRejection] = useState<string | null>(null);
-  const [restartStatus, setRestartStatus] = useState<{
-    votes: number;
-    required: number;
-  } | null>(null);
-  const [restartRequested, setRestartRequested] = useState(false);
-  const [disconnectedOpponent, setDisconnectedOpponent] = useState<{
-    userId: string;
-    timeoutMs: number;
-  } | null>(null);
 
   const { send: roomSend, connectionState } = useColyseusRoom(
     'dominoes-block',
     session,
     colyseusUrl(),
-    (message: ActivityMessage) => {
-      if (message.type === 'state') {
-        const payload = parsePayload(dominoesClientStateSchema, message);
-        if (!payload) return;
-        setState(payload);
-        setRejection(null);
-        if (payload.winner || payload.blocked) {
-          setRestartStatus(null);
-          setRestartRequested(false);
-        }
-      } else if (message.type === 'move_rejected') {
-        const payload = parsePayload(moveRejectedPayloadSchema, message);
-        if (payload) setRejection(payload.reason);
-      } else if (message.type === 'restart_status') {
-        const payload = parsePayload(restartStatusPayloadSchema, message);
-        if (payload) setRestartStatus(payload);
-      } else if (message.type === 'opponent_disconnected') {
-        const payload = parsePayload(
-          opponentDisconnectedPayloadSchema,
-          message,
-        );
-        if (payload) setDisconnectedOpponent(payload);
-      } else if (message.type === 'opponent_reconnected') {
-        setDisconnectedOpponent(null);
-      }
+    (raw: ActivityMessage) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (message) setView((current) => applyDominoesMessage(current, message));
     },
   );
 
   const sendPlay = useCallback(
     (tile: Tile, end?: ChainEnd) => {
-      roomSend({ type: 'play', payload: end ? { tile, end } : { tile } });
+      roomSend({
+        type: 'play',
+        payload: end ? { tile, end } : { tile },
+      } satisfies DominoesClientMessage);
       setSelectedTile(null);
       setPendingEnds(null);
     },
@@ -109,7 +87,7 @@ export function DominoesBlockBoard({
 
   const isMyTurn = state?.currentPlayer === selfId;
   const winners = state?.winners;
-  const matchOver = Boolean(state && (state.winner || state.blocked));
+  const matchOver = isMatchOver(state);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-marquinhos-bg">
@@ -117,7 +95,7 @@ export function DominoesBlockBoard({
         titleKey="dominoes-block.name"
         titleNs="games"
         onBack={() => {
-          roomSend({ type: 'leave' });
+          roomSend({ type: 'leave' } satisfies DominoesClientMessage);
           navigate('/');
         }}
       />
@@ -204,12 +182,17 @@ export function DominoesBlockBoard({
                   restartRequested
                     ? undefined
                     : () => {
-                        roomSend({ type: 'restart' });
-                        setRestartRequested(true);
+                        roomSend({
+                          type: 'restart',
+                        } satisfies DominoesClientMessage);
+                        setView((current) => ({
+                          ...current,
+                          restartRequested: true,
+                        }));
                       }
                 }
                 onBackToHub={() => {
-                  roomSend({ type: 'leave' });
+                  roomSend({ type: 'leave' } satisfies DominoesClientMessage);
                   navigate('/');
                 }}
               />
@@ -224,7 +207,9 @@ export function DominoesBlockBoard({
                 type="button"
                 disabled={!isMyTurn}
                 className="notch-6 border border-marquinhos-border bg-marquinhos-panel px-5 py-2.5 text-xs uppercase tracking-[0.2em] text-marquinhos-text transition hover:border-marquinhos-border-hover disabled:cursor-not-allowed disabled:opacity-40"
-                onClick={() => roomSend({ type: 'pass' })}
+                onClick={() =>
+                  roomSend({ type: 'pass' } satisfies DominoesClientMessage)
+                }
               >
                 {t('pass')}
               </button>

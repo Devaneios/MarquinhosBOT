@@ -1,9 +1,7 @@
-export interface Tile {
-  a: number;
-  b: number;
-}
-
-export type ChainEnd = 'left' | 'right';
+import type {
+  ChainEnd,
+  Tile,
+} from '@marquinhos/contracts/activity/games/dominoesBlock';
 
 export interface DominoesState {
   players: string[];

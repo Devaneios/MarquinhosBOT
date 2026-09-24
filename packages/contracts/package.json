@@ -3,7 +3,6 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./activity/dominoesProtocol": "./src/activity/dominoesProtocol.ts",
     "./activity/gameId": "./src/activity/gameId.ts",
     "./activity/games/*": "./src/activity/games/*.ts",
     "./activity/payloadSchemas": "./src/activity/payloadSchemas.ts",

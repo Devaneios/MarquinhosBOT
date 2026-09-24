@@ -1,7 +1,7 @@
+import type { Tile } from '@marquinhos/contracts/activity/games/dominoesBlock';
 import {
   DominoesEngine,
   type DominoesState,
-  type Tile,
 } from '@marquinhos/domain/activity/dominoesBlock/DominoesEngine';
 import { describe, expect, it } from 'bun:test';
 

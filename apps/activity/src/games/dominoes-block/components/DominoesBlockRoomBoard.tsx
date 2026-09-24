@@ -1,15 +1,15 @@
 import {
-  dominoesClientStateSchema,
-  moveRejectedPayloadSchema,
+  serverMessageSchema,
   type ChainEnd,
-  type DominoesClientState,
+  type DominoesClientMessage,
   type Tile,
-} from '@marquinhos/contracts/activity/dominoesProtocol';
+} from '@marquinhos/contracts/activity/games/dominoesBlock';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { legalEndsFor } from '@marquinhos/domain/activity/dominoesBlock/legality';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { parsePayload } from '../../shared/colyseusConnection';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
+import { applyDominoesMessage, initialDominoesView } from '../dominoesMessages';
 import { DominoesBlockCanvas } from './DominoesBlockCanvas';
 
 // Renders Dominoes inside a multiplayer Room view — driven by
@@ -18,30 +18,26 @@ import { DominoesBlockCanvas } from './DominoesBlockCanvas';
 export function DominoesBlockRoomBoard() {
   const ctx = useRoomConnectionContext();
   const { t } = useTranslation(['dominoes-block', 'common']);
-  const [state, setState] = useState<DominoesClientState | null>(null);
+  const [view, setView] = useState(initialDominoesView);
+  const { state, rejection } = view;
   const [selectedTile, setSelectedTile] = useState<Tile | null>(null);
   const [pendingEnds, setPendingEnds] = useState<ChainEnd[] | null>(null);
-  const [rejection, setRejection] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ctx) return;
-    return ctx.subscribe((message) => {
-      if (message.type === 'state') {
-        const payload = parsePayload(dominoesClientStateSchema, message);
-        if (!payload) return;
-        setState(payload);
-        setRejection(null);
-      } else if (message.type === 'move_rejected') {
-        const payload = parsePayload(moveRejectedPayloadSchema, message);
-        if (payload) setRejection(payload.reason);
-      }
+    return ctx.subscribe((raw) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (message) setView((current) => applyDominoesMessage(current, message));
     });
   }, [ctx]);
 
   const selfId = ctx?.currentUserId ?? '';
 
   function sendPlay(tile: Tile, end?: ChainEnd) {
-    ctx?.send({ type: 'play', payload: end ? { tile, end } : { tile } });
+    ctx?.send({
+      type: 'play',
+      payload: end ? { tile, end } : { tile },
+    } satisfies DominoesClientMessage);
     setSelectedTile(null);
     setPendingEnds(null);
   }

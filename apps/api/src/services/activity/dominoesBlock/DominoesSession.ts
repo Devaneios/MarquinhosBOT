@@ -1,12 +1,16 @@
+import type {
+  ChainEnd,
+  DominoesClientState,
+  DominoesServerMessage,
+  Tile,
+} from '@marquinhos/contracts/activity/games/dominoesBlock';
 import {
   DOMINOES_BOT_USER_ID,
   DominoesBot,
 } from '@marquinhos/domain/activity/dominoesBlock/DominoesBot';
 import {
   DominoesEngine,
-  type ChainEnd,
   type DominoesState,
-  type Tile,
 } from '@marquinhos/domain/activity/dominoesBlock/DominoesEngine';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';
@@ -16,11 +20,8 @@ import { logger } from 'utils/logger';
 // player's view hides everyone else's hand, so a single public broadcast
 // would leak opponents' tiles.
 export interface DominoesBroadcaster {
-  sendToPlayer(
-    userId: string,
-    message: { type: string; payload?: unknown },
-  ): void;
-  broadcastPublic(message: { type: string; payload?: unknown }): void;
+  sendToPlayer(userId: string, message: DominoesServerMessage): void;
+  broadcastPublic(message: DominoesServerMessage): void;
 }
 
 export interface GamificationLike {
@@ -58,23 +59,6 @@ interface DominoesPlayer {
 const DEFAULT_DISCONNECT_GRACE_MS = 30_000;
 const DEFAULT_MIN_PLAYERS = 2;
 const DEFAULT_MAX_PLAYERS = 4;
-
-// The publicly visible shape of a state broadcast: everyone's hand is
-// reduced to a count except the recipient's own, which is left intact.
-export interface DominoesClientState {
-  players: string[];
-  handCounts: Record<string, number>;
-  hand: Tile[] | null;
-  boneyard: number;
-  chain: Tile[];
-  leftEnd: number | null;
-  rightEnd: number | null;
-  currentPlayer: string | null;
-  winner: string | null;
-  winners: string[] | null;
-  blocked: boolean;
-  pipTotals: Record<string, number> | null;
-}
 
 function maskState(
   state: DominoesState,

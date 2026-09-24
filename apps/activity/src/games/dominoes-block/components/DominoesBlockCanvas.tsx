@@ -1,7 +1,7 @@
 import {
   type DominoesClientState,
   type Tile,
-} from '@marquinhos/contracts/activity/dominoesProtocol';
+} from '@marquinhos/contracts/activity/games/dominoesBlock';
 import {
   legalEndsFor,
   tileMatches,
