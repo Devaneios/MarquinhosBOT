@@ -26,15 +26,11 @@
 //
 // Getting this wrong fails silently rather than loudly, which is why it is
 // spelled out here and why every primitive that holds cards has a clone().
-import type { LegalMove } from '@marquinhos/domain/games/cards/core/legalMove';
-
-export type { LegalMove };
-
-export interface ScoreboardEntry {
-  userId: string;
-  position: number;
-  points?: number;
-}
+import type {
+  LegalMove,
+  ScoreboardEntry,
+  TableView,
+} from '@marquinhos/contracts/activity/games/cards';
 
 // A discriminated result rather than `true | { reason }`: rulesets touch this on
 // every move, and `if (result !== true)` reads like a mistake even when it isn't.
@@ -74,7 +70,7 @@ export interface SetupContext {
   seed: number;
 }
 
-export interface GameDefinition<TState, TView = unknown> {
+export interface GameDefinition<TState, TView extends TableView = TableView> {
   id: string;
   minPlayers: number;
   maxPlayers: number;

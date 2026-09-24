@@ -1,3 +1,14 @@
+import {
+  isHiddenCard,
+  serverMessageSchema,
+  type CardsClientMessage,
+  type DisconnectNotice,
+  type LegalMove,
+  type MaskedCard,
+  type ScoreboardEntry,
+  type TableView,
+} from '@marquinhos/contracts/activity/games/cards';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -11,29 +22,11 @@ import {
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
-import {
-  parsePayload,
-  restartStatusPayloadSchema,
-  type RestartStatus,
-} from '../../shared/colyseusConnection';
+import type { RestartStatus } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import {
-  disconnectNoticeSchema,
-  initPayloadSchema,
-  isHiddenCard,
-  matchOverPayloadSchema,
-  moveRejectedPayloadSchema,
-  tableViewSchema,
-  turnTimeoutPayloadSchema,
-  type DisconnectNotice,
-  type LegalMove,
-  type MaskedCard,
-  type ScoreboardEntry,
-  type TableView,
-} from '../core/types';
 import { useCardTableSession } from '../hooks/useCardTableSession';
 import {
   moveLabel,
@@ -78,16 +71,15 @@ function CardTableBoard({
     'cards',
     session,
     colyseusUrl(),
-    (message: ActivityMessage) => {
+    (raw: ActivityMessage) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (!message) return;
       switch (message.type) {
-        case 'init': {
-          const payload = parsePayload(initPayloadSchema, message);
-          if (payload) setMySeatIndex(payload.seatIndex);
+        case 'init':
+          setMySeatIndex(message.payload.seatIndex);
           break;
-        }
         case 'state': {
-          const next = parsePayload(tableViewSchema.loose(), message);
-          if (!next) break;
+          const next = message.payload;
           setView(next);
           setRejection(null);
           setTimedOut(null);
@@ -100,47 +92,39 @@ function CardTableBoard({
           break;
         }
         case 'move_rejected':
-          setRejection(
-            parsePayload(moveRejectedPayloadSchema, message)?.reason ??
-              t('cards:invalidMove'),
-          );
+          setRejection(message.payload.reason);
           break;
-        case 'match_over': {
-          const payload = parsePayload(matchOverPayloadSchema, message);
-          if (payload) setScoreboard(payload.scoreboard);
+        case 'match_over':
+          setScoreboard(message.payload.scoreboard);
           break;
-        }
-        case 'restart_status': {
-          const payload = parsePayload(restartStatusPayloadSchema, message);
-          if (payload) setRestartStatus(payload);
+        case 'restart_status':
+          setRestartStatus(message.payload);
           break;
-        }
-        case 'opponent_disconnected': {
-          const payload = parsePayload(disconnectNoticeSchema, message);
-          if (payload) setDisconnected(payload);
+        case 'opponent_disconnected':
+          setDisconnected(message.payload);
           break;
-        }
         case 'opponent_reconnected':
           setDisconnected(null);
           break;
-        case 'turn_timeout': {
-          const payload = parsePayload(turnTimeoutPayloadSchema, message);
-          if (payload) setTimedOut(payload.userId);
+        case 'turn_timeout':
+          setTimedOut(message.payload.userId);
           break;
-        }
-        default:
+        case 'round_over':
           break;
       }
     },
   );
 
   function sendMove(move: string, args?: unknown) {
-    send({ type: 'move', payload: { move, args } });
+    send({
+      type: 'move',
+      payload: { move, args },
+    } satisfies CardsClientMessage);
   }
 
   function requestRestart() {
     setRestartRequested(true);
-    send({ type: 'restart' });
+    send({ type: 'restart' } satisfies CardsClientMessage);
   }
 
   if (!view) {

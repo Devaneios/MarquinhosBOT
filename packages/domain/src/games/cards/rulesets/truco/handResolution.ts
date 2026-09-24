@@ -1,5 +1,7 @@
-export type TrickResult = 'A' | 'B' | 'tie';
-export type Team = 'A' | 'B';
+import type {
+  Team,
+  TrickResult,
+} from '@marquinhos/contracts/activity/games/cards';
 
 // A team that has already won 2 of the (up to 3) tricks outright has won
 // the hand — no need to play the third trick.

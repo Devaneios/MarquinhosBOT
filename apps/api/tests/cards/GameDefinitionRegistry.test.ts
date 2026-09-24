@@ -13,7 +13,14 @@ function stubDefinition(id: string): GameDefinition<unknown> {
     isRoundOver: () => false,
     isMatchOver: () => false,
     scoreboard: () => [],
-    maskStateFor: () => ({}),
+    maskStateFor: () => ({
+      seats: [],
+      hands: {},
+      table: [],
+      currentSeat: 0,
+      legalMoves: [],
+      handOver: false,
+    }),
   };
 }
 

@@ -38,7 +38,6 @@
   "noCards": "Sem cartas.",
   "playSelectedCard": "Jogar carta selecionada",
   "waitingOthers": "Aguardando os outros jogadores…",
-  "invalidMove": "Jogada inválida",
   "cardCount_one": "{{count}} carta",
   "cardCount_other": "{{count}} cartas",
   "matchOverTitle": "FIM DA PARTIDA",

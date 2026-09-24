@@ -1,9 +1,14 @@
+import {
+  movePayloadSchema,
+  type CardsServerMessage,
+} from '@marquinhos/contracts/activity/games/cards';
+import type { WireMessage } from '@marquinhos/contracts/activity/protocol';
 import { cardGameRegistry } from 'services/activity/cards/cardGameRegistry';
 import { CardTableSession } from 'services/activity/cards/CardTableSession';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
 import { GamificationService } from 'services/gamification/GamificationService';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { sendMessage } from '../sendMessage';
 
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
 const MOVE_RATE_LIMIT_MAX = 20;
@@ -13,10 +18,6 @@ const MOVE_RATE_LIMIT_MAX = 20;
 // room inside setup() from the resolved GameDefinition and returned
 // alongside session/messageHandlers — see GameRoomAdapter's `maxPlayers?`
 // setup() return field, which MatchRoom prefers over this static value.
-const movePayloadSchema = z.object({
-  move: z.string().min(1),
-  args: z.unknown().optional(),
-});
 
 export const cardTableAdapter: GameRoomAdapter<CardTableSession<unknown>> = {
   maxPlayers: 4,
@@ -28,10 +29,10 @@ export const cardTableAdapter: GameRoomAdapter<CardTableSession<unknown>> = {
     const definition = cardGameRegistry.get(ctx.ruleset);
     if (!definition) throw new Error(`Unknown card ruleset: ${ctx.ruleset}`);
 
-    const broadcaster: PerClientBroadcaster = {
-      sendToPlayer: (userId, message) =>
+    const broadcaster: PerClientBroadcaster<CardsServerMessage> = {
+      sendToPlayer: (userId, message: WireMessage) =>
         ctx.sendToPlayer(userId, message.type, message.payload),
-      broadcastPublic: (message) =>
+      broadcastPublic: (message: WireMessage) =>
         ctx.broadcast(message.type, message.payload),
     };
 
@@ -70,7 +71,10 @@ export const cardTableAdapter: GameRoomAdapter<CardTableSession<unknown>> = {
 
   onJoin(session, auth, client, seat) {
     if (seat !== 'player') {
-      client.send('init', { seatIndex: null });
+      sendMessage<CardsServerMessage>(client, {
+        type: 'init',
+        payload: { seatIndex: null },
+      });
       // Still routes through addPlayer: CardTableSession itself resolves
       // seatIndexFor() -> null for a non-seated joiner and internally hands
       // them to addSpectator(), which is what actually gets them the
@@ -81,7 +85,10 @@ export const cardTableAdapter: GameRoomAdapter<CardTableSession<unknown>> = {
       return;
     }
     const seatIndex = session.seatIndexFor(auth.userId);
-    client.send('init', { seatIndex });
+    sendMessage<CardsServerMessage>(client, {
+      type: 'init',
+      payload: { seatIndex },
+    });
     session.addPlayer(auth.userId, client);
   },
   onLeave(session, auth, client) {

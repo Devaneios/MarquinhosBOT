@@ -1,6 +1,6 @@
+import type { Seat } from '@marquinhos/contracts/activity/games/cards';
 import type { Card } from '@marquinhos/domain/games/cards/core/card';
 import { Deck } from '@marquinhos/domain/games/cards/core/deck';
-import type { Seat } from '@marquinhos/domain/games/cards/core/seating';
 import type { SeededRng } from '@marquinhos/domain/shared/random/SeededRng';
 
 // How much of a zone a given viewer may see. Deliberately not "boolean

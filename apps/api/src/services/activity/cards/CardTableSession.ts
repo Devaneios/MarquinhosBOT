@@ -1,3 +1,4 @@
+import type { CardsServerMessage } from '@marquinhos/contracts/activity/games/cards';
 import type { GameDefinition } from '@marquinhos/domain/games/cards/core/GameDefinition';
 import { SeededRng } from '@marquinhos/domain/shared/random/SeededRng';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
@@ -60,7 +61,7 @@ export class CardTableSession<TState> {
 
   constructor(
     private identity: CardTableIdentity,
-    private broadcaster: PerClientBroadcaster,
+    private broadcaster: PerClientBroadcaster<CardsServerMessage>,
     private definition: GameDefinition<TState>,
     private gamification: GamificationLike,
     private options: CardTableSessionOptions = {},

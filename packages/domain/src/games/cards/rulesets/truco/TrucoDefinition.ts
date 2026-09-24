@@ -1,11 +1,17 @@
+import type {
+  LegalMove,
+  ScoreboardEntry,
+  Seat,
+  Team,
+  TrickResult,
+  TrucoView,
+} from '@marquinhos/contracts/activity/games/cards';
 import type { Card } from '@marquinhos/domain/games/cards/core/card';
 import { spanishSuitedDeck } from '@marquinhos/domain/games/cards/core/deckFactory';
 import {
   MOVE_OK,
   moveRejected,
   type GameDefinition,
-  type LegalMove,
-  type ScoreboardEntry,
 } from '@marquinhos/domain/games/cards/core/GameDefinition';
 import {
   maskZones,
@@ -19,15 +25,12 @@ import {
 import {
   isSeatActive,
   TurnOrder,
-  type Seat,
 } from '@marquinhos/domain/games/cards/core/seating';
 import { Visibility } from '@marquinhos/domain/games/cards/core/zone';
 import { ZoneSet } from '@marquinhos/domain/games/cards/core/zoneSet';
 import {
   decisiveWinner,
   resolveHandWinner,
-  type Team,
-  type TrickResult,
 } from '@marquinhos/domain/games/cards/rulesets/truco/handResolution';
 import {
   cardStrength,
@@ -330,24 +333,6 @@ function respondentGuard(state: TrucoState, playerId: string) {
     return moveRejected('Só quem recebeu o pedido pode responder');
   }
   return MOVE_OK;
-}
-
-export interface TrucoView {
-  seats: Seat[];
-  hands: Record<number, ZoneView>;
-  table: { seatIndex: number; card: Card }[];
-  vira: Card | null;
-  discardCount: number;
-  trickResults: TrickResult[];
-  currentSeat: number;
-  currentStake: number;
-  pendingCallLevel: number | null;
-  callingTeam: Team | null;
-  matchScore: Record<Team, number>;
-  handOver: boolean;
-  forfeitedTeam: Team | null;
-  winningScore: number;
-  legalMoves: LegalMove[];
 }
 
 // Builds a Truco GameDefinition for a given seat count. The rules — team

@@ -1,5 +1,8 @@
+import type {
+  HiddenCard,
+  Seat,
+} from '@marquinhos/contracts/activity/games/cards';
 import type { Card } from '@marquinhos/domain/games/cards/core/card';
-import type { Seat } from '@marquinhos/domain/games/cards/core/seating';
 import type {
   VisibilityLevel,
   Zone,
@@ -10,9 +13,6 @@ import type { ZoneSet } from '@marquinhos/domain/games/cards/core/zoneSet';
 // zone — a masked view is the same length and order as the real zone — because
 // position is public information and often load-bearing (which seat played
 // where in a trick, where in a tableau a face-down card sits).
-export interface HiddenCard {
-  hidden: true;
-}
 
 export type MaskedCard<TProps = Record<string, unknown>> =
   Card<TProps> | HiddenCard;

@@ -1,3 +1,4 @@
+import type { TableView } from '@marquinhos/contracts/activity/games/cards';
 import {
   MOVE_OK,
   moveRejected,
@@ -14,6 +15,17 @@ interface StubState {
   forfeitedBy: string | null;
 }
 
+type StubView = TableView & StubState & { viewer: string | null };
+
+const emptyTable: TableView = {
+  seats: [],
+  hands: {},
+  table: [],
+  currentSeat: 0,
+  legalMoves: [],
+  handOver: false,
+};
+
 interface AddArgs {
   amount: number;
 }
@@ -21,8 +33,8 @@ interface AddArgs {
 // A deliberately minimal ruleset: the session has to drive seating, gating,
 // forfeits and the turn clock without knowing anything about the game.
 function stubDefinition(
-  overrides: Partial<GameDefinition<StubState>> = {},
-): GameDefinition<StubState> {
+  overrides: Partial<GameDefinition<StubState, StubView>> = {},
+): GameDefinition<StubState, StubView> {
   return {
     id: 'stub-game',
     minPlayers: 2,
@@ -55,7 +67,11 @@ function stubDefinition(
         userId,
         position: userId === state.forfeitedBy ? 2 : 1,
       })),
-    maskStateFor: (state, playerId) => ({ ...state, viewer: playerId }),
+    maskStateFor: (state, playerId) => ({
+      ...emptyTable,
+      ...state,
+      viewer: playerId,
+    }),
     ...overrides,
   };
 }

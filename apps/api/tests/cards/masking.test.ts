@@ -1,9 +1,9 @@
+import type { Seat } from '@marquinhos/contracts/activity/games/cards';
 import type { Card } from '@marquinhos/domain/games/cards/core/card';
 import {
   isHidden,
   maskZones,
 } from '@marquinhos/domain/games/cards/core/masking';
-import type { Seat } from '@marquinhos/domain/games/cards/core/seating';
 import { Visibility } from '@marquinhos/domain/games/cards/core/zone';
 import { ZoneSet } from '@marquinhos/domain/games/cards/core/zoneSet';
 import { describe, expect, it } from 'bun:test';

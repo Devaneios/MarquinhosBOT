@@ -1,3 +1,5 @@
+import type { Seat } from '@marquinhos/contracts/activity/games/cards';
+
 // teamId is first-class on Seat (not inferred from seat parity) so a
 // GameDefinition (Truco 2v2, Bridge/Hearts partnerships) can group scoring by
 // team without the core engine special-casing "even/odd seats partner."
@@ -7,13 +9,6 @@
 // out (uno) or walked away must stop receiving turns, and only TurnOrder can
 // enforce that. A seat with `playerId: null` is likewise skipped — an empty
 // chair never gets the turn.
-export interface Seat {
-  seatIndex: number;
-  playerId: string | null;
-  teamId?: string;
-  eliminated?: boolean;
-}
-
 export function isSeatActive(seat: Seat): boolean {
   return seat.playerId !== null && seat.eliminated !== true;
 }

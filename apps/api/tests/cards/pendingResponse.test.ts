@@ -1,10 +1,10 @@
+import type { Seat } from '@marquinhos/contracts/activity/games/cards';
 import {
   allowsMove,
   opposingTeamSeats,
   owesResponse,
   type PendingResponse,
 } from '@marquinhos/domain/games/cards/core/pendingResponse';
-import type { Seat } from '@marquinhos/domain/games/cards/core/seating';
 import { describe, expect, it } from 'bun:test';
 
 const SEATS: Seat[] = [
