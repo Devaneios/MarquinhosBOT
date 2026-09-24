@@ -1,8 +1,11 @@
-export type TicTacToeSymbol = 'X' | 'O';
-export type TicTacToeCell = TicTacToeSymbol | null;
+import type { CellValue } from '@marquinhos/contracts/activity/games/ticTacToe';
+import {
+  emptyBoard,
+  placeMark,
+} from '@marquinhos/domain/games/tic-tac-toe/rules';
 
 export interface TicTacToeState {
-  board: TicTacToeCell[][];
+  board: CellValue[][];
   currentPlayer: 0 | 1;
   gameOver: boolean;
   winnerIndex: 0 | 1 | null;
@@ -13,11 +16,7 @@ export interface TicTacToeState {
 
 export function createTicTacToeState(): TicTacToeState {
   return {
-    board: [
-      [null, null, null],
-      [null, null, null],
-      [null, null, null],
-    ],
+    board: emptyBoard(),
     currentPlayer: 0,
     gameOver: false,
     winnerIndex: null,
@@ -32,45 +31,21 @@ export function applyTicTacToeMove(
   row: number,
   col: number,
 ): TicTacToeState {
-  if (
-    state.gameOver ||
-    !Number.isInteger(row) ||
-    !Number.isInteger(col) ||
-    row < 0 ||
-    row > 2 ||
-    col < 0 ||
-    col > 2 ||
-    state.board[row]?.[col] !== null
-  ) {
-    return state;
+  if (state.gameOver) return state;
+  const placed = placeMark(
+    state.board,
+    row,
+    col,
+    state.currentPlayer === 0 ? 'X' : 'O',
+  );
+  if (!placed.ok) return state;
+
+  const next = { ...state, board: placed.board, moves: state.moves + 1 };
+  if (placed.winner) {
+    return { ...next, gameOver: true, winnerIndex: state.currentPlayer };
   }
-
-  const board = state.board.map((line) => [...line]);
-  const symbol = state.currentPlayer === 0 ? 'X' : 'O';
-  board[row]![col] = symbol;
-  const moves = state.moves + 1;
-  const won = hasTicTacToeLine(board, symbol);
-
-  if (won) {
-    return {
-      ...state,
-      board,
-      moves,
-      gameOver: true,
-      winnerIndex: state.currentPlayer,
-    };
-  }
-
-  if (moves === 9) {
-    return { ...state, board, moves, gameOver: true, isDraw: true };
-  }
-
-  return {
-    ...state,
-    board,
-    moves,
-    currentPlayer: state.currentPlayer === 0 ? 1 : 0,
-  };
+  if (placed.isDraw) return { ...next, gameOver: true, isDraw: true };
+  return { ...next, currentPlayer: state.currentPlayer === 0 ? 1 : 0 };
 }
 
 export function forfeitTicTacToeTurn(
@@ -103,20 +78,4 @@ export function getTicTacToeRewardBonuses(
   }
   if (state.isDraw) return [10, 10];
   return [0, 0];
-}
-
-function hasTicTacToeLine(
-  board: TicTacToeCell[][],
-  symbol: TicTacToeSymbol,
-): boolean {
-  const lines = [
-    ...board,
-    [board[0]?.[0], board[1]?.[0], board[2]?.[0]],
-    [board[0]?.[1], board[1]?.[1], board[2]?.[1]],
-    [board[0]?.[2], board[1]?.[2], board[2]?.[2]],
-    [board[0]?.[0], board[1]?.[1], board[2]?.[2]],
-    [board[0]?.[2], board[1]?.[1], board[2]?.[0]],
-  ];
-
-  return lines.some((line) => line.every((cell) => cell === symbol));
 }

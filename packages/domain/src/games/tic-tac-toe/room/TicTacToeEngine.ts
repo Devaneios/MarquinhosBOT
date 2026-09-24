@@ -2,6 +2,11 @@ import type {
   Player,
   TicTacToeState,
 } from '@marquinhos/contracts/activity/games/ticTacToe';
+import {
+  emptyBoard,
+  opponentOf,
+  placeMark,
+} from '@marquinhos/domain/games/tic-tac-toe/rules';
 
 interface MoveResult {
   success: boolean;
@@ -17,11 +22,7 @@ export class TicTacToeEngine {
 
   private initState(): TicTacToeState {
     return {
-      board: [
-        [null, null, null],
-        [null, null, null],
-        [null, null, null],
-      ],
+      board: emptyBoard(),
       currentPlayer: 'X',
       winner: null,
       isDraw: false,
@@ -44,13 +45,8 @@ export class TicTacToeEngine {
       return { success: false, error: 'Game is already over' };
     }
 
-    if (row < 0 || row > 2 || col < 0 || col > 2) {
-      return { success: false, error: 'Invalid coordinates' };
-    }
-
-    if (this.state.board[row]![col] !== null) {
-      return { success: false, error: 'Cell is occupied' };
-    }
+    const placed = placeMark(this.state.board, row, col, player);
+    if (!placed.ok) return { success: false, error: placed.error };
 
     if (player !== this.state.currentPlayer) {
       return {
@@ -59,51 +55,14 @@ export class TicTacToeEngine {
       };
     }
 
-    this.state.board[row]![col] = player;
+    this.state.board = placed.board;
     this.state.moveCount += 1;
-
-    if (this.checkWin(row, col, player)) {
-      this.state.winner = player;
-      return { success: true };
+    this.state.winner = placed.winner;
+    this.state.isDraw = placed.isDraw;
+    if (!placed.winner && !placed.isDraw) {
+      this.state.currentPlayer = opponentOf(player);
     }
-
-    if (this.state.moveCount === 9) {
-      this.state.isDraw = true;
-      return { success: true };
-    }
-
-    this.state.currentPlayer = player === 'X' ? 'O' : 'X';
     return { success: true };
-  }
-
-  private checkWin(row: number, col: number, player: Player): boolean {
-    return (
-      this.checkRow(row, player) ||
-      this.checkColumn(col, player) ||
-      this.checkDiagonals(player)
-    );
-  }
-
-  private checkRow(row: number, player: Player): boolean {
-    return this.state.board[row]!.every((cell) => cell === player);
-  }
-
-  private checkColumn(col: number, player: Player): boolean {
-    return this.state.board.every((row) => row[col]! === player);
-  }
-
-  private checkDiagonals(player: Player): boolean {
-    const topLeftBottomRight =
-      this.state.board[0]![0] === player &&
-      this.state.board[1]![1] === player &&
-      this.state.board[2]![2] === player;
-
-    const topRightBottomLeft =
-      this.state.board[0]![2] === player &&
-      this.state.board[1]![1] === player &&
-      this.state.board[2]![0] === player;
-
-    return topLeftBottomRight || topRightBottomLeft;
   }
 
   reset(): void {
