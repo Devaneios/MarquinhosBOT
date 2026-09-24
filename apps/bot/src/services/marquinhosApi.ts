@@ -33,9 +33,21 @@ function extractErrorMessage(data: unknown, fallback: string): unknown {
   return data ?? fallback;
 }
 
+// Statuses the API answers for ordinary refusals (an invalid or repeated
+// guess, something not found): the caller shows them to the user, and
+// reporting them would flood the admin's error DMs and history.
+const EXPECTED_REFUSAL_STATUSES: ReadonlySet<number> = new Set([
+  400, 404, 409, 422,
+]);
+
 export function handleApiResponseError(error: unknown): never {
   if (error instanceof HttpError) {
     const errorMsg = extractErrorMessage(error.response?.data, error.message);
+    const status = error.response?.status;
+    if (status !== undefined && EXPECTED_REFUSAL_STATUSES.has(status)) {
+      logger.info(`API refused ${error.config?.url} (${status}): ${errorMsg}`);
+      throw error;
+    }
     logger.error(`API Error on ${error.config?.url}: ${errorMsg}`);
     reportError(error, {
       origin: `API:${error.config?.url ?? 'unknown'}`,

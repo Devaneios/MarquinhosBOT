@@ -40,6 +40,29 @@ describe('handleApiResponseError', () => {
     });
   });
 
+  it('does not report a refusal the caller expects, such as an invalid guess', () => {
+    const error = new HttpError('Request failed with status 400', {
+      response: {
+        status: 400,
+        data: { message: 'Você já tentou essa palavra' },
+      },
+      config: { url: '/api/wordle/guess' },
+    });
+
+    expect(() => handleApiResponseError(error)).toThrow();
+    expect(reportErrorSpy).not.toHaveBeenCalled();
+  });
+
+  it('reports a server error', () => {
+    const error = new HttpError('Request failed with status 500', {
+      response: { status: 500 },
+      config: { url: '/api/wordle/guess' },
+    });
+
+    expect(() => handleApiResponseError(error)).toThrow();
+    expect(reportErrorSpy).toHaveBeenCalledTimes(1);
+  });
+
   it('falls back to "unknown" origin when the request URL is missing', () => {
     const error = new HttpError('mystery failure');
 
