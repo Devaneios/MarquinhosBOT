@@ -3,7 +3,7 @@ import {
   type BingoSpeedClientMessage,
 } from '@marquinhos/contracts/activity/games/bingoSpeed';
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   GameHeader,
@@ -35,36 +35,21 @@ export function BingoSpeedCanvas({
   const { t } = useTranslation(['bingo-speed', 'common']);
   const [view, setView] = useState(initialBingoSpeedView);
   const { card, drawnNumbers, cardLoaded, winner } = view;
-  const messageHandlerRef = useRef<(message: ActivityMessage) => void>(
-    () => {},
-  );
-
   const { send, connectionState } = useColyseusRoom(
     'bingo-speed',
     session,
     colyseusUrl(),
-    (message) => messageHandlerRef.current(message),
+    (raw: ActivityMessage) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (!message) return;
+      devlog('[bingo-speed-canvas]', message.type, message.payload);
+      setView((current) => applyBingoSpeedMessage(current, message));
+    },
   );
 
   const claimBingo = useCallback(() => {
     send({ type: 'claim_bingo' } satisfies BingoSpeedClientMessage);
   }, [send]);
-
-  useEffect(() => {
-    devlog('[bingo-speed-canvas] mounting');
-    setView(initialBingoSpeedView);
-
-    messageHandlerRef.current = (raw) => {
-      const message = parseMessage(serverMessageSchema, raw);
-      if (!message) return;
-      devlog('[bingo-speed-canvas]', message.type, message.payload);
-      setView((current) => applyBingoSpeedMessage(current, message));
-    };
-
-    return () => {
-      messageHandlerRef.current = () => {};
-    };
-  }, []);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[var(--color-marquinhos-bg)]">
