@@ -1,6 +1,10 @@
+import {
+  inputPayloadSchema,
+  type SnakeServerMessage,
+} from '@marquinhos/contracts/activity/games/snakeGame';
 import { SnakeSession } from 'services/activity/snake-game/SnakeSession';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { sendMessage } from '../sendMessage';
 
 const INPUT_RATE_LIMIT_WINDOW_MS = 1000;
 const INPUT_RATE_LIMIT_MAX = 60;
@@ -15,9 +19,6 @@ const INPUT_RATE_LIMIT_MAX = 60;
 // nothing upstream to catch it, crashing the whole process (every
 // concurrent room, not just this one). So malformed input must never reach
 // `session.handleInput` at all — reject it here instead.
-export const snakeInputPayloadSchema = z.object({
-  direction: z.enum(['up', 'down', 'left', 'right']),
-});
 
 export const snakeAdapter: GameRoomAdapter<SnakeSession> = {
   maxPlayers: 2,
@@ -52,9 +53,12 @@ export const snakeAdapter: GameRoomAdapter<SnakeSession> = {
             max: INPUT_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const parsed = snakeInputPayloadSchema.safeParse(payload);
+            const parsed = inputPayloadSchema.safeParse(payload);
             if (!parsed.success) {
-              client.send('input_error', { message: 'Invalid direction' });
+              sendMessage<SnakeServerMessage>(client, {
+                type: 'input_error',
+                payload: { message: 'Invalid direction' },
+              });
               return;
             }
             session.handleInput(auth.userId, parsed.data.direction);
@@ -81,7 +85,10 @@ export const snakeAdapter: GameRoomAdapter<SnakeSession> = {
     // for the live proof.
     const playerId = session.addPlayer(auth.userId, client);
     if (seat === 'player' && auth.mode === 'single') session.enableBot();
-    client.send('init', { playerId, config: session.getPublicConfig() });
+    sendMessage<SnakeServerMessage>(client, {
+      type: 'init',
+      payload: { playerId, config: session.getPublicConfig() },
+    });
   },
   onLeave(session, auth, client) {
     session.pauseForDisconnect(auth.userId, client);

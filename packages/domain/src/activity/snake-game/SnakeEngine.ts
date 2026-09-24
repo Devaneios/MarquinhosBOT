@@ -1,4 +1,9 @@
-export type SnakeDirection = 'up' | 'down' | 'left' | 'right';
+import type {
+  SnakeBody,
+  SnakeDirection,
+  SnakeGameState,
+  SnakeSegment,
+} from '@marquinhos/contracts/activity/games/snakeGame';
 
 export interface SnakeEngineConfig {
   width?: number;
@@ -6,27 +11,6 @@ export interface SnakeEngineConfig {
   initialSnakeLength?: number;
   foodSpawnRate?: number;
   winningScore?: number;
-}
-
-interface SnakeSegment {
-  x: number;
-  y: number;
-}
-
-interface SnakeBody {
-  segments: SnakeSegment[];
-  direction: SnakeDirection;
-  nextDirection: SnakeDirection;
-  alive: boolean;
-}
-
-export interface SnakeGameState {
-  width: number;
-  height: number;
-  snakes: Record<string, SnakeBody>;
-  food: SnakeSegment[];
-  scores: Record<string, number>;
-  winner: string | null;
 }
 
 export class SnakeEngine {

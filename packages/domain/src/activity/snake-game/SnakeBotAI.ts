@@ -1,14 +1,13 @@
-import type {
-  SnakeDirection,
-  SnakeGameState,
-} from '@marquinhos/domain/activity/snake-game/SnakeEngine';
+import {
+  SNAKE_DIRECTIONS,
+  type SnakeDirection,
+  type SnakeGameState,
+} from '@marquinhos/contracts/activity/games/snakeGame';
 
 interface Point {
   x: number;
   y: number;
 }
-
-const DIRECTIONS: SnakeDirection[] = ['up', 'down', 'left', 'right'];
 
 const DELTAS: Record<SnakeDirection, Point> = {
   up: { x: 0, y: -1 },
@@ -45,7 +44,7 @@ export class SnakeBot {
     let best: SnakeDirection | null = null;
     let bestScore = Infinity;
 
-    for (const dir of DIRECTIONS) {
+    for (const dir of SNAKE_DIRECTIONS) {
       if (dir === OPPOSITES[snake.direction]) continue;
       const delta = DELTAS[dir];
       const next = { x: head.x + delta.x, y: head.y + delta.y };

@@ -1,24 +1,20 @@
+import {
+  serverMessageSchema,
+  type SnakeClientMessage,
+  type SnakeDirection,
+  type SnakePublicConfig,
+} from '@marquinhos/contracts/activity/games/snakeGame';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { Application, Graphics } from 'pixi.js';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { devinfo, devlog, devwarn } from '../../../lib/devlog';
-import { parsePayload } from '../../shared/colyseusConnection';
+import { devlog } from '../../../lib/devlog';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
-import type {
-  SnakeDirection,
-  SnakeGameState,
-  SnakePublicConfig,
-} from '../types';
-import {
-  initPayloadSchema,
-  opponentDisconnectedPayloadSchema,
-  statePayloadSchema,
-} from '../types';
+import { applySnakeMessage, initialSnakeView } from '../snakeMessages';
 import {
   BG_COLOR,
   CELL_SIZE,
   clamp,
-  DEFAULT_CONFIG,
   drawEntities,
   drawGrid,
   INTERP_MS,
@@ -39,22 +35,11 @@ export function SnakeRoomBoard() {
   const { t } = useTranslation(['snake-game', 'common']);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
-  const configRef = useRef<SnakePublicConfig>(DEFAULT_CONFIG);
-  const latestStateRef = useRef<{
-    state: SnakeGameState;
-    receivedAt: number;
-  } | null>(null);
-  const prevStateRef = useRef<{
-    state: SnakeGameState;
-    receivedAt: number;
-  } | null>(null);
-  const [playerId, setPlayerId] = useState<string | null>(null);
-  const [scores, setScores] = useState<Record<string, number> | null>(null);
-  const [winner, setWinner] = useState<string | null>(null);
-  const [pausedOpponent, setPausedOpponent] = useState<{
-    playerId: string;
-    timeoutMs: number;
-  } | null>(null);
+  const viewRef = useRef(initialSnakeView);
+  const [view, setView] = useState(initialSnakeView);
+  const { playerId, pausedOpponent } = view;
+  const scores = view.latest?.state.scores ?? null;
+  const winner = view.latest?.state.winner ?? null;
   const roleRef = useRef(ctx?.role ?? null);
   roleRef.current = ctx?.role ?? null;
   const sendRef = useRef(ctx?.send);
@@ -62,48 +47,29 @@ export function SnakeRoomBoard() {
 
   useEffect(() => {
     if (!ctx) return;
-    return ctx.subscribe((message) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(initPayloadSchema, message);
-        if (!payload) return;
-        devlog('[snake-room] assigned player id', payload.playerId);
-        setPlayerId(payload.playerId);
-        if (payload.config) configRef.current = payload.config;
-      } else if (message.type === 'state') {
-        const payload = parsePayload(statePayloadSchema, message);
-        if (!payload) return;
-        prevStateRef.current = latestStateRef.current;
-        latestStateRef.current = {
-          state: payload.state,
-          receivedAt: performance.now(),
-        };
-        setScores(payload.state.scores);
-        setWinner(payload.state.winner);
-      } else if (message.type === 'opponent_disconnected') {
-        devwarn('[snake-room] opponent disconnected', message.payload);
-        const payload = parsePayload(
-          opponentDisconnectedPayloadSchema,
-          message,
-        );
-        if (payload) setPausedOpponent(payload);
-      } else if (message.type === 'opponent_reconnected') {
-        devinfo('[snake-room] opponent reconnected');
-        setPausedOpponent(null);
-      }
+    return ctx.subscribe((raw) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (!message) return;
+      if (message.type !== 'state')
+        devlog('[snake-room]', message.type, message.payload);
+      viewRef.current = applySnakeMessage(
+        viewRef.current,
+        message,
+        performance.now(),
+      );
+      setView(viewRef.current);
     });
   }, [ctx]);
 
   useEffect(() => {
     devlog('[snake-room] mounting');
-    configRef.current = DEFAULT_CONFIG;
-    latestStateRef.current = null;
-    prevStateRef.current = null;
+    viewRef.current = initialSnakeView;
 
     let cancelled = false;
     let initialized = false;
     let gridGfx: Graphics;
     let entitiesGfx: Graphics;
-    let lastConfig: SnakePublicConfig = DEFAULT_CONFIG;
+    let lastConfig = initialSnakeView.config;
 
     function applyConfigChange(config: SnakePublicConfig) {
       lastConfig = config;
@@ -125,7 +91,10 @@ export function SnakeRoomBoard() {
         return;
       if (direction !== lastSentDirection) {
         lastSentDirection = direction;
-        sendRef.current?.({ type: 'input', payload: { direction } });
+        sendRef.current?.({
+          type: 'input',
+          payload: { direction },
+        } satisfies SnakeClientMessage);
       }
     }
     function onKeyUp(event: KeyboardEvent) {
@@ -138,7 +107,7 @@ export function SnakeRoomBoard() {
       if (!initialized) return;
       if (document.hidden) appRef.current?.ticker.stop();
       else {
-        prevStateRef.current = null;
+        viewRef.current = { ...viewRef.current, prev: null };
         appRef.current?.ticker.start();
       }
     }
@@ -158,8 +127,8 @@ export function SnakeRoomBoard() {
 
       await app.init({
         canvas: canvasRef.current!,
-        width: configRef.current.width * CELL_SIZE,
-        height: configRef.current.height * CELL_SIZE,
+        width: viewRef.current.config.width * CELL_SIZE,
+        height: viewRef.current.config.height * CELL_SIZE,
         background: BG_COLOR,
         antialias: true,
         resolution: window.devicePixelRatio,
@@ -173,8 +142,8 @@ export function SnakeRoomBoard() {
 
       gridGfx = new Graphics();
       entitiesGfx = new Graphics();
-      lastConfig = configRef.current;
-      drawGrid(gridGfx, configRef.current);
+      lastConfig = viewRef.current.config;
+      drawGrid(gridGfx, viewRef.current.config);
       app.stage.addChild(gridGfx, entitiesGfx);
 
       onContextLost = (event: Event) => {
@@ -193,13 +162,13 @@ export function SnakeRoomBoard() {
       );
 
       tick = () => {
-        const config = configRef.current;
+        const config = viewRef.current.config;
         if (config !== lastConfig) applyConfigChange(config);
 
-        const latest = latestStateRef.current;
+        const latest = viewRef.current.latest;
         if (!latest) return;
 
-        const prev = prevStateRef.current;
+        const prev = viewRef.current.prev;
         const now = performance.now();
         const tRatio = clamp((now - latest.receivedAt) / INTERP_MS, 0, 1);
         drawEntities(entitiesGfx, latest.state, prev?.state ?? null, tRatio);

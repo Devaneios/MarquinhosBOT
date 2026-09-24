@@ -1,4 +1,9 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import type {
+  SnakeDirection,
+  SnakePublicConfig,
+  SnakeServerMessage,
+} from '@marquinhos/contracts/activity/games/snakeGame';
 import { GamificationService } from 'services/gamification';
 // Snake ticks at ~6.6 Hz (FIXED_DT_MS = 150) — well under the ≥10 Hz
 // threshold that requires a hand-written binary snapshot (§7.2), so state
@@ -8,7 +13,6 @@ import { GamificationService } from 'services/gamification';
 import { SnakeBot } from '@marquinhos/domain/activity/snake-game/SnakeBotAI';
 import {
   SnakeEngine,
-  type SnakeDirection,
   type SnakeEngineConfig,
 } from '@marquinhos/domain/activity/snake-game/SnakeEngine';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
@@ -53,7 +57,7 @@ export class SnakeSession {
 
   constructor(
     private identity: SnakeSessionIdentity,
-    private broadcaster: ActivityBroadcaster,
+    private broadcaster: ActivityBroadcaster<SnakeServerMessage>,
     private gamification: GamificationService = new GamificationService(),
     engineConfig: SnakeEngineConfig = {},
     options: SnakeSessionOptions = {},
@@ -196,7 +200,7 @@ export class SnakeSession {
     this.bot = new SnakeBot(BOT_PLAYER_ID);
   }
 
-  getPublicConfig() {
+  getPublicConfig(): SnakePublicConfig {
     const config = this.engine.getConfig();
     return {
       width: config.width,

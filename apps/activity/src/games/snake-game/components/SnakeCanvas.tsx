@@ -1,4 +1,13 @@
 import type { Room } from '@colyseus/sdk';
+import {
+  serverMessageSchema,
+  type SnakeClientMessage,
+  type SnakeDirection,
+  type SnakeGameState,
+  type SnakePublicConfig,
+  type SnakeSegment,
+} from '@marquinhos/contracts/activity/games/snakeGame';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { Application, Graphics } from 'pixi.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,25 +17,14 @@ import {
 } from '../../../components/game-shell/menuButtons';
 import { colyseusUrl } from '../../../lib/apiBase';
 import { cn } from '../../../lib/cn';
-import { devinfo, devlog, devwarn } from '../../../lib/devlog';
+import { devlog } from '../../../lib/devlog';
 import type { WsSession } from '../../shared/activitySession';
-import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
 import type { SnakeMode } from '../hooks/useSnakeSession';
-import type {
-  SnakeDirection,
-  SnakeGameState,
-  SnakePublicConfig,
-  SnakeSegment,
-} from '../types';
-import {
-  initPayloadSchema,
-  opponentDisconnectedPayloadSchema,
-  statePayloadSchema,
-} from '../types';
+import { applySnakeMessage, initialSnakeView } from '../snakeMessages';
 
 export const CELL_SIZE = 20;
 export const BG_COLOR = '#000000';
@@ -45,13 +43,6 @@ export const INTERP_MS = 120;
 // (or a respawn), not continuous motion — lerping that would draw a snake
 // sliding diagonally across the whole board, so snap instead.
 const MAX_LERP_CELLS = 1;
-
-export const DEFAULT_CONFIG: SnakePublicConfig = {
-  width: 20,
-  height: 20,
-  initialSnakeLength: 3,
-  winningScore: 10,
-};
 
 export const KEY_TO_DIRECTION: Record<string, SnakeDirection> = {
   arrowup: 'up',
@@ -151,25 +142,11 @@ export function SnakeCanvas({
   const { t } = useTranslation(['snake-game', 'common']);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
-  const configRef = useRef<SnakePublicConfig>(DEFAULT_CONFIG);
-  const latestStateRef = useRef<{
-    state: SnakeGameState;
-    receivedAt: number;
-  } | null>(null);
-  const prevStateRef = useRef<{
-    state: SnakeGameState;
-    receivedAt: number;
-  } | null>(null);
-  const [playerId, setPlayerId] = useState<string | null>(null);
-  const [scores, setScores] = useState<Record<string, number> | null>(null);
-  const [winner, setWinner] = useState<string | null>(null);
-  const [pausedOpponent, setPausedOpponent] = useState<{
-    playerId: string;
-    timeoutMs: number;
-  } | null>(null);
-  const messageHandlerRef = useRef<(message: ActivityMessage) => void>(
-    () => {},
-  );
+  const viewRef = useRef(initialSnakeView);
+  const [view, setView] = useState(initialSnakeView);
+  const { playerId, pausedOpponent } = view;
+  const scores = view.latest?.state.scores ?? null;
+  const winner = view.latest?.state.winner ?? null;
 
   // Sending 'leave' before the room disconnects (rather than a bare close)
   // tells the server this is an intentional quit rather than a network drop.
@@ -181,7 +158,18 @@ export function SnakeCanvas({
     'snake-game',
     session,
     colyseusUrl(),
-    (message) => messageHandlerRef.current(message),
+    (raw: ActivityMessage) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (!message) return;
+      if (message.type !== 'state')
+        devlog('[snake-canvas]', message.type, message.payload);
+      viewRef.current = applySnakeMessage(
+        viewRef.current,
+        message,
+        performance.now(),
+      );
+      setView(viewRef.current);
+    },
     sendLeaveOnDisconnect,
   );
 
@@ -190,55 +178,20 @@ export function SnakeCanvas({
   // MUST NOT retrigger this effect.
   useEffect(() => {
     devlog('[snake-canvas] mounting');
-    configRef.current = DEFAULT_CONFIG;
-    latestStateRef.current = null;
-    prevStateRef.current = null;
-    setPlayerId(null);
-    setScores(null);
-    setWinner(null);
-    setPausedOpponent(null);
+    viewRef.current = initialSnakeView;
+    setView(initialSnakeView);
 
     let cancelled = false;
     let initialized = false;
     let gridGfx: Graphics;
     let entitiesGfx: Graphics;
-    let lastConfig: SnakePublicConfig = DEFAULT_CONFIG;
+    let lastConfig = initialSnakeView.config;
 
     function applyConfigChange(config: SnakePublicConfig) {
       lastConfig = config;
       app.renderer.resize(config.width * CELL_SIZE, config.height * CELL_SIZE);
       drawGrid(gridGfx, config);
     }
-
-    messageHandlerRef.current = (message) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(initPayloadSchema, message);
-        if (!payload) return;
-        devlog('[snake-canvas] assigned player id', payload.playerId);
-        setPlayerId(payload.playerId);
-        if (payload.config) {
-          configRef.current = payload.config;
-        }
-      } else if (message.type === 'state') {
-        const payload = parsePayload(statePayloadSchema, message);
-        if (!payload) return;
-        const state = payload.state;
-        prevStateRef.current = latestStateRef.current;
-        latestStateRef.current = { state, receivedAt: performance.now() };
-        setScores(state.scores);
-        setWinner(state.winner);
-      } else if (message.type === 'opponent_disconnected') {
-        devwarn('[snake-canvas] opponent disconnected', message.payload);
-        const payload = parsePayload(
-          opponentDisconnectedPayloadSchema,
-          message,
-        );
-        if (payload) setPausedOpponent(payload);
-      } else if (message.type === 'opponent_reconnected') {
-        devinfo('[snake-canvas] opponent reconnected');
-        setPausedOpponent(null);
-      }
-    };
 
     const heldKeys = new Set<string>();
     let lastSentDirection: SnakeDirection | null = null;
@@ -252,7 +205,10 @@ export function SnakeCanvas({
       heldKeys.add(key);
       if (direction !== lastSentDirection) {
         lastSentDirection = direction;
-        roomSend({ type: 'input', payload: { direction } });
+        roomSend({
+          type: 'input',
+          payload: { direction },
+        } satisfies SnakeClientMessage);
       }
     }
     function onKeyUp(event: KeyboardEvent) {
@@ -266,7 +222,7 @@ export function SnakeCanvas({
       if (document.hidden) {
         appRef.current?.ticker.stop();
       } else {
-        prevStateRef.current = null;
+        viewRef.current = { ...viewRef.current, prev: null };
         appRef.current?.ticker.start();
       }
     }
@@ -292,8 +248,8 @@ export function SnakeCanvas({
 
       await app.init({
         canvas: canvasRef.current!,
-        width: configRef.current.width * CELL_SIZE,
-        height: configRef.current.height * CELL_SIZE,
+        width: viewRef.current.config.width * CELL_SIZE,
+        height: viewRef.current.config.height * CELL_SIZE,
         background: BG_COLOR,
         antialias: true,
         resolution: window.devicePixelRatio,
@@ -307,8 +263,8 @@ export function SnakeCanvas({
 
       gridGfx = new Graphics();
       entitiesGfx = new Graphics();
-      lastConfig = configRef.current;
-      drawGrid(gridGfx, configRef.current);
+      lastConfig = viewRef.current.config;
+      drawGrid(gridGfx, viewRef.current.config);
       app.stage.addChild(gridGfx, entitiesGfx);
 
       onContextLost = (event: Event) => {
@@ -327,13 +283,13 @@ export function SnakeCanvas({
       );
 
       tick = () => {
-        const config = configRef.current;
+        const config = viewRef.current.config;
         if (config !== lastConfig) applyConfigChange(config);
 
-        const latest = latestStateRef.current;
+        const latest = viewRef.current.latest;
         if (!latest) return;
 
-        const prev = prevStateRef.current;
+        const prev = viewRef.current.prev;
         const now = performance.now();
         const t = clamp((now - latest.receivedAt) / INTERP_MS, 0, 1);
         drawEntities(entitiesGfx, latest.state, prev?.state ?? null, t);
@@ -357,7 +313,6 @@ export function SnakeCanvas({
         );
       }
       // The room's own leave is handled by useColyseusRoom's cleanup.
-      messageHandlerRef.current = () => {};
       if (initialized) {
         if (tick) app.ticker.remove(tick);
         app.destroy({ removeView: false });
