@@ -1,3 +1,8 @@
+import type {
+  PublicCell,
+  RevealedTile,
+} from '@marquinhos/contracts/activity/games/minesweeperVersus';
+
 export interface MinesweeperEngineConfig {
   width?: number;
   height?: number;
@@ -9,21 +14,6 @@ interface Cell {
   adjacent: number;
   revealed: boolean;
   revealedBy: string | null;
-}
-
-export interface PublicCell {
-  revealed: boolean;
-  mine?: boolean;
-  adjacent?: number;
-  revealedBy?: string | null;
-}
-
-export interface RevealedTile {
-  x: number;
-  y: number;
-  mine: boolean;
-  adjacent: number;
-  revealedBy: string;
 }
 
 export type RevealResult =

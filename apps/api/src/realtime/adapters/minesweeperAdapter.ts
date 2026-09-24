@@ -1,14 +1,13 @@
+import {
+  revealRequestSchema,
+  type MinesweeperServerMessage,
+} from '@marquinhos/contracts/activity/games/minesweeperVersus';
 import { MinesweeperSession } from 'services/activity/minesweeper/MinesweeperSession';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { sendMessage } from '../sendMessage';
 
 const REVEAL_RATE_LIMIT_WINDOW_MS = 1000;
 const REVEAL_RATE_LIMIT_MAX = 20;
-
-const revealPayloadSchema = z.object({
-  x: z.number().int(),
-  y: z.number().int(),
-});
 
 export const minesweeperAdapter: GameRoomAdapter<MinesweeperSession> = {
   maxPlayers: 2,
@@ -40,10 +39,11 @@ export const minesweeperAdapter: GameRoomAdapter<MinesweeperSession> = {
             max: REVEAL_RATE_LIMIT_MAX,
           },
           handle: (auth, client, payload: unknown) => {
-            const parsed = revealPayloadSchema.safeParse(payload);
+            const parsed = revealRequestSchema.safeParse(payload);
             if (!parsed.success) {
-              client.send('reveal_error', {
-                message: 'Invalid tile coordinates',
+              sendMessage<MinesweeperServerMessage>(client, {
+                type: 'reveal_error',
+                payload: { message: 'Invalid tile coordinates' },
               });
               return;
             }
@@ -53,7 +53,10 @@ export const minesweeperAdapter: GameRoomAdapter<MinesweeperSession> = {
               parsed.data.y,
             );
             if ('error' in result)
-              client.send('reveal_error', { message: result.error });
+              sendMessage<MinesweeperServerMessage>(client, {
+                type: 'reveal_error',
+                payload: { message: result.error },
+              });
           },
         },
       },
@@ -69,12 +72,11 @@ export const minesweeperAdapter: GameRoomAdapter<MinesweeperSession> = {
     // non-player seat would silently let a spectator reveal tiles and be
     // scored as if they were a real participant, so a non-player only gets
     // the one-time board snapshot as a minimal ack, never addPlayer().
-    if (seat !== 'player') {
-      client.send('init', session.getBoardSnapshot());
-      return;
-    }
-    session.addPlayer(auth.userId, client);
-    client.send('init', session.getBoardSnapshot());
+    if (seat === 'player') session.addPlayer(auth.userId, client);
+    sendMessage<MinesweeperServerMessage>(client, {
+      type: 'init',
+      payload: session.getBoardSnapshot(),
+    });
   },
   onLeave(session, auth, client) {
     session.removeConnection(auth.userId, client);

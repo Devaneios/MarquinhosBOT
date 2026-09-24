@@ -1,7 +1,7 @@
 import type {
   BoardSnapshot,
   PublicCell,
-} from '@marquinhos/contracts/activity/minesweeperProtocol';
+} from '@marquinhos/contracts/activity/games/minesweeperVersus';
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { useEffect, useRef } from 'react';
 

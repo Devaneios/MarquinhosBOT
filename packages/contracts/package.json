@@ -6,7 +6,6 @@
     "./activity/dominoesProtocol": "./src/activity/dominoesProtocol.ts",
     "./activity/gameId": "./src/activity/gameId.ts",
     "./activity/games/*": "./src/activity/games/*.ts",
-    "./activity/minesweeperProtocol": "./src/activity/minesweeperProtocol.ts",
     "./activity/payloadSchemas": "./src/activity/payloadSchemas.ts",
     "./activity/pong/codec": "./src/activity/pong/codec.ts",
     "./activity/pong/types": "./src/activity/pong/types.ts",

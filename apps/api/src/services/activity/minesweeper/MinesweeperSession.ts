@@ -1,3 +1,7 @@
+import type {
+  BoardSnapshot,
+  MinesweeperServerMessage,
+} from '@marquinhos/contracts/activity/games/minesweeperVersus';
 import {
   MinesweeperEngine,
   type MinesweeperEngineConfig,
@@ -42,7 +46,7 @@ export class MinesweeperSession {
 
   constructor(
     private identity: MinesweeperSessionIdentity,
-    private broadcaster: ActivityBroadcaster,
+    private broadcaster: ActivityBroadcaster<MinesweeperServerMessage>,
     private gamification: GamificationService = new GamificationService(),
     engineConfig: MinesweeperEngineConfig = {},
     options: MinesweeperSessionOptions = {},
@@ -96,7 +100,7 @@ export class MinesweeperSession {
     }
   }
 
-  getBoardSnapshot() {
+  getBoardSnapshot(): BoardSnapshot {
     return {
       width: this.engine.getWidth(),
       height: this.engine.getHeight(),

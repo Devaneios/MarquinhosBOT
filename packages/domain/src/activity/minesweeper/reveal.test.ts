@@ -1,7 +1,7 @@
 import {
   boardSnapshotSchema,
   revealPayloadSchema,
-} from '@marquinhos/contracts/activity/minesweeperProtocol';
+} from '@marquinhos/contracts/activity/games/minesweeperVersus';
 import { describe, expect, it } from 'bun:test';
 import { applyRevealToBoard } from './reveal';
 

@@ -1,11 +1,8 @@
 import {
-  boardSnapshotSchema,
-  gameOverPayloadSchema,
-  revealErrorPayloadSchema,
-  revealPayloadSchema,
-  type BoardSnapshot,
-} from '@marquinhos/contracts/activity/minesweeperProtocol';
-import { applyRevealToBoard } from '@marquinhos/domain/activity/minesweeper/reveal';
+  serverMessageSchema,
+  type MinesweeperClientMessage,
+} from '@marquinhos/contracts/activity/games/minesweeperVersus';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate } from 'react-router-dom';
@@ -13,48 +10,38 @@ import { EndScreen, GameHeader } from '../../../components/game-shell';
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
-import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
+import {
+  applyMinesweeperMessage,
+  initialMinesweeperView,
+} from '../minesweeperMessages';
 import { MinesweeperCanvas } from './MinesweeperCanvas';
 
 export function MinesweeperBoard({ session }: { session: WsSession }) {
   const navigate = useNavigate();
   const { t } = useTranslation('common');
-  const [board, setBoard] = useState<BoardSnapshot | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [view, setView] = useState(initialMinesweeperView);
+  const { board, errorMsg } = view;
 
   const { send, connectionState } = useColyseusRoom(
     'minesweeper-versus',
     session,
     colyseusUrl(),
-    (message: ActivityMessage) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(boardSnapshotSchema, message);
-        if (!payload) return;
-        setBoard(payload);
-        setErrorMsg(null);
-      } else if (message.type === 'reveal') {
-        const payload = parsePayload(revealPayloadSchema, message);
-        if (!payload) return;
-        setBoard((prev) => (prev ? applyRevealToBoard(prev, payload) : prev));
-      } else if (message.type === 'game_over') {
-        const payload = parsePayload(gameOverPayloadSchema, message);
-        if (!payload) return;
-        setBoard((prev) =>
-          prev ? { ...prev, scores: payload.scores, gameOver: true } : prev,
-        );
-      } else if (message.type === 'reveal_error') {
-        const payload = parsePayload(revealErrorPayloadSchema, message);
-        if (payload) setErrorMsg(payload.message);
-      }
+    (raw: ActivityMessage) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (message)
+        setView((current) => applyMinesweeperMessage(current, message));
     },
   );
 
   function revealTile(x: number, y: number) {
-    send({ type: 'reveal', payload: { x, y } });
+    send({
+      type: 'reveal',
+      payload: { x, y },
+    } satisfies MinesweeperClientMessage);
   }
 
   const scoreEntries = board ? Object.entries(board.scores) : [];

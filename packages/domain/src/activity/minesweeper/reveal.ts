@@ -1,7 +1,7 @@
 import type {
   BoardSnapshot,
   RevealPayload,
-} from '@marquinhos/contracts/activity/minesweeperProtocol';
+} from '@marquinhos/contracts/activity/games/minesweeperVersus';
 
 export function applyRevealToBoard(
   board: BoardSnapshot,
