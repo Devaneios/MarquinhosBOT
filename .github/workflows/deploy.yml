@@ -102,6 +102,22 @@ jobs:
     if: needs.changes.outputs.component != 'none'
     runs-on: ${{ needs.changes.outputs.environment == 'production' && 'hostinger-runner' || 'devaneios-runner' }}
 
+    # Throwaway Postgres for the database tests. The host port is picked by
+    # Docker so it never collides with anything already running on the runner.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_INITDB_ARGS: --locale-provider=builtin --builtin-locale=C.UTF-8
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+
     steps:
       - uses: actions/checkout@v4
 
@@ -119,6 +135,9 @@ jobs:
       - run: pnpm run typecheck
       - run: pnpm run lint
       - run: pnpm run test
+        env:
+          # The job context (mapped port) is only readable at step level.
+          TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/postgres
       - run: pnpm run test:dev
       - run: pnpm run build
 
