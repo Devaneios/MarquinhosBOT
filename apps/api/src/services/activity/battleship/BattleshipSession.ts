@@ -1,10 +1,11 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
+import type {
+  BattleshipServerMessage,
+  BattleshipSide,
+  ShipPlacement,
+} from '@marquinhos/contracts/activity/games/battleship';
 import { BattleshipBot } from '@marquinhos/domain/activity/battleship/BattleshipBot';
-import {
-  BattleshipEngine,
-  type BattleshipSide,
-  type ShipPlacement,
-} from '@marquinhos/domain/activity/battleship/BattleshipEngine';
+import { BattleshipEngine } from '@marquinhos/domain/activity/battleship/BattleshipEngine';
 import {
   spectatorViewFor,
   viewFor,
@@ -67,7 +68,7 @@ export class BattleshipSession {
 
   constructor(
     private identity: BattleshipSessionIdentity,
-    private broadcaster: PerClientBroadcaster,
+    private broadcaster: PerClientBroadcaster<BattleshipServerMessage>,
     private gamification: GamificationService = new GamificationService(),
     options: BattleshipSessionOptions = {},
   ) {

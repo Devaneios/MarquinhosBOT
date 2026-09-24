@@ -12,17 +12,10 @@ import {
   DominoesEngine,
   type DominoesState,
 } from '@marquinhos/domain/activity/dominoesBlock/DominoesEngine';
+import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { GamificationService } from 'services/gamification';
 import { logger } from 'utils/logger';
-
-// Per-player addressing, same rationale as cards' PerClientBroadcaster: each
-// player's view hides everyone else's hand, so a single public broadcast
-// would leak opponents' tiles.
-export interface DominoesBroadcaster {
-  sendToPlayer(userId: string, message: DominoesServerMessage): void;
-  broadcastPublic(message: DominoesServerMessage): void;
-}
 
 export interface GamificationLike {
   recordGameResult(input: {
@@ -106,7 +99,7 @@ export class DominoesSession {
 
   constructor(
     private identity: DominoesSessionIdentity,
-    private broadcaster: DominoesBroadcaster,
+    private broadcaster: PerClientBroadcaster<DominoesServerMessage>,
     private gamification: GamificationLike = new GamificationService(),
     private options: DominoesSessionOptions = {},
   ) {

@@ -1,31 +1,17 @@
+import {
+  firePayloadSchema,
+  placeShipsPayloadSchema,
+  type BattleshipServerMessage,
+} from '@marquinhos/contracts/activity/games/battleship';
 import { BattleshipSession } from 'services/activity/battleship/BattleshipSession';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
-import { z } from 'zod';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import { sendMessage } from '../sendMessage';
 
 const FIRE_RATE_LIMIT_WINDOW_MS = 1000;
 const FIRE_RATE_LIMIT_MAX = 5;
 const PLACE_RATE_LIMIT_WINDOW_MS = 1000;
 const PLACE_RATE_LIMIT_MAX = 3;
-
-const placeShipsPayloadSchema = z.object({
-  placements: z.array(
-    z.object({
-      type: z.enum([
-        'carrier',
-        'battleship',
-        'cruiser',
-        'submarine',
-        'destroyer',
-      ]),
-      x: z.number().int(),
-      y: z.number().int(),
-      orientation: z.enum(['horizontal', 'vertical']),
-    }),
-  ),
-});
-
-const firePayloadSchema = z.object({ x: z.number(), y: z.number() });
 
 export const battleshipAdapter: GameRoomAdapter<BattleshipSession> = {
   maxPlayers: 2,
@@ -33,7 +19,7 @@ export const battleshipAdapter: GameRoomAdapter<BattleshipSession> = {
   supportsQueue: true,
 
   setup(ctx: AdapterContext) {
-    const broadcaster: PerClientBroadcaster = {
+    const broadcaster: PerClientBroadcaster<BattleshipServerMessage> = {
       sendToPlayer: (userId, message) =>
         ctx.sendToPlayer(userId, message.type, message.payload),
       broadcastPublic: (message) =>
@@ -63,8 +49,9 @@ export const battleshipAdapter: GameRoomAdapter<BattleshipSession> = {
           handle: (auth, client, payload: unknown) => {
             const parsed = placeShipsPayloadSchema.safeParse(payload);
             if (!parsed.success) {
-              client.send('placement_error', {
-                message: 'Invalid ship placements',
+              sendMessage<BattleshipServerMessage>(client, {
+                type: 'placement_error',
+                payload: { message: 'Invalid ship placements' },
               });
               return;
             }
@@ -91,7 +78,10 @@ export const battleshipAdapter: GameRoomAdapter<BattleshipSession> = {
 
   onJoin(session, auth, client, seat) {
     if (seat !== 'player') {
-      client.send('init', { side: null });
+      sendMessage<BattleshipServerMessage>(client, {
+        type: 'init',
+        payload: { side: null },
+      });
       // Registers the connection for the masked spectator broadcast (Task
       // 14) — without this call the client is acked but never tracked, so
       // it never receives a 'state' message on any future move.
@@ -99,7 +89,10 @@ export const battleshipAdapter: GameRoomAdapter<BattleshipSession> = {
       return;
     }
     const side = session.addPlayer(auth.userId, client);
-    client.send('init', { side });
+    sendMessage<BattleshipServerMessage>(client, {
+      type: 'init',
+      payload: { side },
+    });
     if (side && auth.mode === 'single') session.enableBot(side);
   },
   onLeave(session, auth, client) {

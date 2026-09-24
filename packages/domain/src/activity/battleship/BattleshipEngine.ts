@@ -1,7 +1,11 @@
-export type BattleshipSide = 'p1' | 'p2';
-export type ShipType =
-  'carrier' | 'battleship' | 'cruiser' | 'submarine' | 'destroyer';
-export type Orientation = 'horizontal' | 'vertical';
+import {
+  SHIP_TYPES,
+  type BattleshipSide,
+  type Coordinate,
+  type Phase,
+  type ShipPlacement,
+  type ShipType,
+} from '@marquinhos/contracts/activity/games/battleship';
 
 export const BOARD_SIZE = 10;
 
@@ -12,20 +16,6 @@ export const SHIP_SIZES: Record<ShipType, number> = {
   submarine: 3,
   destroyer: 2,
 };
-
-const SHIP_TYPES = Object.keys(SHIP_SIZES) as ShipType[];
-
-export interface Coordinate {
-  x: number;
-  y: number;
-}
-
-export interface ShipPlacement {
-  type: ShipType;
-  x: number;
-  y: number;
-  orientation: Orientation;
-}
 
 export interface Ship {
   type: ShipType;
@@ -46,20 +36,11 @@ export interface PlayerBoard {
   placed: boolean;
 }
 
-export type Phase = 'placement' | 'battle' | 'ended';
+export type PlaceShipsResult = { ok: true } | { ok: false; error: string };
 
-export interface PlaceShipsResult {
-  ok: boolean;
-  error?: string;
-}
-
-export interface FireResult {
-  ok: boolean;
-  error?: string;
-  hit?: boolean;
-  sunk?: ShipType;
-  winner?: BattleshipSide;
-}
+export type FireResult =
+  | { ok: true; hit: boolean; sunk?: ShipType; winner?: BattleshipSide }
+  | { ok: false; error: string };
 
 function cellKey(x: number, y: number): string {
   return `${x},${y}`;

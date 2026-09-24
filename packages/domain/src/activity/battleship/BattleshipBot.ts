@@ -1,13 +1,13 @@
 import {
-  BOARD_SIZE,
-  SHIP_SIZES,
+  SHIP_TYPES,
   type Coordinate,
   type Orientation,
   type ShipPlacement,
-  type ShipType,
+} from '@marquinhos/contracts/activity/games/battleship';
+import {
+  BOARD_SIZE,
+  SHIP_SIZES,
 } from '@marquinhos/domain/activity/battleship/BattleshipEngine';
-
-const SHIP_TYPES = Object.keys(SHIP_SIZES) as ShipType[];
 
 function cellKey(x: number, y: number): string {
   return `${x},${y}`;

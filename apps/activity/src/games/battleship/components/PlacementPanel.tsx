@@ -1,11 +1,11 @@
-import { useTranslation } from 'react-i18next';
 import {
-  SHIP_ORDER,
-  SHIP_SIZES,
+  SHIP_TYPES,
   type Orientation,
-  type PendingShip,
+  type ShipPlacement,
   type ShipType,
-} from '../types';
+} from '@marquinhos/contracts/activity/games/battleship';
+import { SHIP_SIZES } from '@marquinhos/domain/activity/battleship/BattleshipEngine';
+import { useTranslation } from 'react-i18next';
 
 export function PlacementPanel({
   pendingShips,
@@ -17,7 +17,7 @@ export function PlacementPanel({
   onReset,
   error,
 }: {
-  pendingShips: PendingShip[];
+  pendingShips: ShipPlacement[];
   selectedType: ShipType | null;
   orientation: Orientation;
   onSelectType: (type: ShipType) => void;
@@ -28,7 +28,7 @@ export function PlacementPanel({
 }) {
   const { t } = useTranslation('battleship');
   const placedTypes = new Set(pendingShips.map((ship) => ship.type));
-  const allPlaced = placedTypes.size === SHIP_ORDER.length;
+  const allPlaced = placedTypes.size === SHIP_TYPES.length;
   const shipLabelKey: Record<ShipType, string> = {
     carrier: 'shipCarrier',
     battleship: 'shipBattleship',
@@ -43,7 +43,7 @@ export function PlacementPanel({
         {t('placeFleet')}
       </div>
       <div className="flex flex-wrap gap-2">
-        {SHIP_ORDER.map((type) => (
+        {SHIP_TYPES.map((type) => (
           <button
             key={type}
             type="button"

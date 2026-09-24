@@ -1,7 +1,5 @@
-import {
-  BattleshipEngine,
-  type ShipPlacement,
-} from '@marquinhos/domain/activity/battleship/BattleshipEngine';
+import type { ShipPlacement } from '@marquinhos/contracts/activity/games/battleship';
+import { BattleshipEngine } from '@marquinhos/domain/activity/battleship/BattleshipEngine';
 import {
   maskBoard,
   viewFor,
@@ -117,16 +115,14 @@ describe('BattleshipEngine firing', () => {
     const engine = readyEngine();
     expect(engine.getTurn()).toBe('p1');
     const result = engine.fire('p1', 5, 0);
-    expect(result.ok).toBe(true);
-    expect(result.hit).toBe(true);
+    expect(result).toMatchObject({ ok: true, hit: true });
     expect(engine.getTurn()).toBe('p2');
   });
 
   it('alternates turn on a miss too', () => {
     const engine = readyEngine();
     const result = engine.fire('p1', 0, 0);
-    expect(result.ok).toBe(true);
-    expect(result.hit).toBe(false);
+    expect(result).toMatchObject({ ok: true, hit: false });
     expect(engine.getTurn()).toBe('p2');
   });
 
@@ -155,9 +151,7 @@ describe('BattleshipEngine firing', () => {
     engine.fire('p1', 9, 0); // hit destroyer p2 cell 1
     engine.fire('p2', 0, 0);
     const result = engine.fire('p1', 9, 1); // destroyer's second/last cell
-    expect(result.ok).toBe(true);
-    expect(result.hit).toBe(true);
-    expect(result.sunk).toBe('destroyer');
+    expect(result).toMatchObject({ ok: true, hit: true, sunk: 'destroyer' });
   });
 
   it('declares a winner once all opponent ships are sunk', () => {
@@ -183,9 +177,7 @@ describe('BattleshipEngine firing', () => {
     engine.fire('p1', 0, 0);
     engine.fire('p2', 5, 5);
     const result = engine.fire('p1', 1, 0);
-    expect(result.ok).toBe(true);
-    expect(result.sunk).toBe('destroyer');
-    expect(result.winner).toBeUndefined();
+    expect(result).toEqual({ ok: true, hit: true, sunk: 'destroyer' });
     expect(engine.getPhase()).toBe('battle');
   });
 
@@ -234,7 +226,7 @@ describe('BattleshipEngine firing', () => {
       }
     }
 
-    expect(last!.winner).toBe('p1');
+    expect(last!).toMatchObject({ ok: true, winner: 'p1' });
     expect(engine.getPhase()).toBe('ended');
   });
 

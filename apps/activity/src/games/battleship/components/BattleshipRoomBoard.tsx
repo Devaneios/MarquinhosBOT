@@ -1,24 +1,24 @@
 import {
+  SHIP_TYPES,
+  serverMessageSchema,
+  type BattleshipClientMessage,
+  type BattleshipSpectatorStateView,
+  type Orientation,
+  type ShipPlacement,
+  type ShipType,
+} from '@marquinhos/contracts/activity/games/battleship';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
+import {
   cellsFor,
   isValidPlacement,
 } from '@marquinhos/domain/activity/battleship/placement';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { parsePayload } from '../../shared/colyseusConnection';
 import { useRoomConnectionContext } from '../../shared/RoomConnectionProvider';
 import {
-  SHIP_ORDER,
-  battleshipSpectatorStateViewSchema,
-  battleshipStateViewSchema,
-  errorPayloadSchema,
-  initPayloadSchema,
-  type BattleshipSide,
-  type BattleshipSpectatorStateView,
-  type BattleshipStateView,
-  type Orientation,
-  type PendingShip,
-  type ShipType,
-} from '../types';
+  applyBattleshipMessage,
+  initialBattleshipView,
+} from '../battleshipMessages';
 import { BattleshipCanvas } from './BattleshipCanvas';
 import { PlacementPanel } from './PlacementPanel';
 
@@ -40,38 +40,23 @@ export function BattleshipRoomBoard() {
 function BattleshipPlayerView() {
   const ctx = useRoomConnectionContext();
   const { t } = useTranslation(['battleship', 'common']);
-  const [side, setSide] = useState<BattleshipSide | null>(null);
-  const [state, setState] = useState<BattleshipStateView | null>(null);
-  const [pendingShips, setPendingShips] = useState<PendingShip[]>([]);
+  const [view, setView] = useState(initialBattleshipView);
+  const { side, state, placementError, fireError } = view;
+  const [pendingShips, setPendingShips] = useState<ShipPlacement[]>([]);
   const [selectedType, setSelectedType] = useState<ShipType | null>(
-    SHIP_ORDER[0] ?? null,
+    SHIP_TYPES[0] ?? null,
   );
   const [orientation, setOrientation] = useState<Orientation>('horizontal');
   const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(
     null,
   );
-  const [placementError, setPlacementError] = useState<string | null>(null);
-  const [fireError, setFireError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ctx) return;
-    return ctx.subscribe((message) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(initPayloadSchema, message);
-        if (payload) setSide(payload.side);
-      } else if (message.type === 'state') {
-        const payload = parsePayload(battleshipStateViewSchema, message);
-        if (!payload) return;
-        setState(payload);
-        setPlacementError(null);
-        setFireError(null);
-      } else if (message.type === 'placement_error') {
-        const payload = parsePayload(errorPayloadSchema, message);
-        if (payload) setPlacementError(payload.message);
-      } else if (message.type === 'fire_error') {
-        const payload = parsePayload(errorPayloadSchema, message);
-        if (payload) setFireError(payload.message);
-      }
+    return ctx.subscribe((raw) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (message)
+        setView((current) => applyBattleshipMessage(current, message));
     });
   }, [ctx]);
 
@@ -90,11 +75,11 @@ function BattleshipPlayerView() {
 
   function placeSelectedAt(cell: { x: number; y: number }) {
     if (!selectedType) return;
-    const ship: PendingShip = { type: selectedType, orientation, ...cell };
+    const ship: ShipPlacement = { type: selectedType, orientation, ...cell };
     if (!isValidPlacement(ship, pendingShips)) return;
     const next = [...pendingShips, ship];
     setPendingShips(next);
-    const nextType = SHIP_ORDER.find(
+    const nextType = SHIP_TYPES.find(
       (type) => !next.some((s) => s.type === type),
     );
     setSelectedType(nextType ?? null);
@@ -111,7 +96,7 @@ function BattleshipPlayerView() {
           orientation: s.orientation,
         })),
       },
-    });
+    } satisfies BattleshipClientMessage);
   }
 
   const phase = state?.phase ?? 'placement';
@@ -150,7 +135,7 @@ function BattleshipPlayerView() {
             onSubmit={submitFleet}
             onReset={() => {
               setPendingShips([]);
-              setSelectedType(SHIP_ORDER[0] ?? null);
+              setSelectedType(SHIP_TYPES[0] ?? null);
             }}
             error={placementError}
           />
@@ -180,7 +165,10 @@ function BattleshipPlayerView() {
             opponentBoard={state.opponent}
             canFire={phase === 'battle' && myTurn}
             onClickOpponentCell={(cell) =>
-              ctx?.send({ type: 'fire', payload: cell })
+              ctx?.send({
+                type: 'fire',
+                payload: cell,
+              } satisfies BattleshipClientMessage)
             }
           />
           {fireError && (
@@ -199,14 +187,10 @@ function BattleshipSpectatorView() {
 
   useEffect(() => {
     if (!ctx) return;
-    return ctx.subscribe((message) => {
-      if (message.type === 'state') {
-        const payload = parsePayload(
-          battleshipSpectatorStateViewSchema,
-          message,
-        );
-        if (payload) setState(payload);
-      }
+    return ctx.subscribe((raw) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (message?.type === 'state' && 'p1' in message.payload)
+        setState(message.payload);
     });
   }, [ctx]);
 

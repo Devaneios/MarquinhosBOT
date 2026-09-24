@@ -1,11 +1,13 @@
-import { Application, Container, Graphics } from 'pixi.js';
-import { useEffect, useRef } from 'react';
+import type {
+  BoardView,
+  ShipPlacement,
+} from '@marquinhos/contracts/activity/games/battleship';
 import {
   BOARD_SIZE,
   SHIP_SIZES,
-  type BoardView,
-  type PendingShip,
-} from '../types';
+} from '@marquinhos/domain/activity/battleship/BattleshipEngine';
+import { Application, Container, Graphics } from 'pixi.js';
+import { useEffect, useRef } from 'react';
 
 const CELL = 30;
 const BOARD_PX = CELL * BOARD_SIZE;
@@ -24,7 +26,7 @@ export interface BattleshipCanvasProps {
   mode: 'placement' | 'battle';
   ownBoard: BoardView;
   opponentBoard?: BoardView;
-  pendingShips?: PendingShip[];
+  pendingShips?: ShipPlacement[];
   previewCells?: { x: number; y: number }[];
   previewValid?: boolean;
   canFire?: boolean;
@@ -89,7 +91,7 @@ function paintBoard(
   }
 }
 
-function paintPending(layer: Container, pendingShips: PendingShip[]) {
+function paintPending(layer: Container, pendingShips: ShipPlacement[]) {
   layer.removeChildren();
   for (const ship of pendingShips) {
     const size = SHIP_SIZES[ship.type];

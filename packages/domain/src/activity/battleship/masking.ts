@@ -1,29 +1,13 @@
 import type {
   BattleshipSide,
-  Coordinate,
+  BattleshipSpectatorStateView,
+  BattleshipStateView,
+  BoardView,
+} from '@marquinhos/contracts/activity/games/battleship';
+import type {
   PlayerBoard,
   Ship,
-  ShipType,
 } from '@marquinhos/domain/activity/battleship/BattleshipEngine';
-
-export interface ShipView {
-  type: ShipType;
-  cells: Coordinate[];
-  sunk: boolean;
-}
-
-export interface ShotView {
-  x: number;
-  y: number;
-  hit: boolean;
-  shipType?: ShipType;
-  sunk?: boolean;
-}
-
-export interface BoardView {
-  ships: ShipView[];
-  shots: ShotView[];
-}
 
 function shipSunk(ship: Ship): boolean {
   return ship.hitCells.size === ship.cells.length;
@@ -61,24 +45,6 @@ export function maskBoard(
       };
     }),
   };
-}
-
-export interface BattleshipStateView {
-  phase: 'placement' | 'battle' | 'ended';
-  turn: BattleshipSide | null;
-  winner: BattleshipSide | null;
-  own: BoardView;
-  opponent: BoardView;
-  placementReady: Record<BattleshipSide, boolean>;
-}
-
-export interface BattleshipSpectatorStateView {
-  phase: 'placement' | 'battle' | 'ended';
-  turn: BattleshipSide | null;
-  winner: BattleshipSide | null;
-  p1: BoardView;
-  p2: BoardView;
-  placementReady: Record<BattleshipSide, boolean>;
 }
 
 function otherSide(side: BattleshipSide): BattleshipSide {

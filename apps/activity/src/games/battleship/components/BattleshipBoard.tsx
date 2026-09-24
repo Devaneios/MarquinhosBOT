@@ -1,4 +1,13 @@
 import {
+  SHIP_TYPES,
+  serverMessageSchema,
+  type BattleshipClientMessage,
+  type Orientation,
+  type ShipPlacement,
+  type ShipType,
+} from '@marquinhos/contracts/activity/games/battleship';
+import { parseMessage } from '@marquinhos/contracts/activity/protocol';
+import {
   cellsFor,
   isValidPlacement,
 } from '@marquinhos/domain/activity/battleship/placement';
@@ -14,23 +23,15 @@ import {
 import type { DiscordIdentity } from '../../../discordAuth.ts';
 import { colyseusUrl } from '../../../lib/apiBase';
 import type { WsSession } from '../../shared/activitySession';
-import { parsePayload } from '../../shared/colyseusConnection';
 import {
   useColyseusRoom,
   type ActivityMessage,
 } from '../../shared/useColyseusRoom';
-import { useBattleshipSession } from '../hooks/useBattleshipSession';
 import {
-  SHIP_ORDER,
-  battleshipStateViewSchema,
-  errorPayloadSchema,
-  initPayloadSchema,
-  type BattleshipSide,
-  type BattleshipStateView,
-  type Orientation,
-  type PendingShip,
-  type ShipType,
-} from '../types';
+  applyBattleshipMessage,
+  initialBattleshipView,
+} from '../battleshipMessages';
+import { useBattleshipSession } from '../hooks/useBattleshipSession';
 import { BattleshipCanvas } from './BattleshipCanvas';
 import { PlacementPanel } from './PlacementPanel';
 
@@ -39,40 +40,25 @@ const GAME_ID = 'battleship';
 export function BattleshipBoard({ session }: { session: WsSession }) {
   const navigate = useNavigate();
   const { t } = useTranslation(['battleship', 'common']);
-  const [side, setSide] = useState<BattleshipSide | null>(null);
-  const [state, setState] = useState<BattleshipStateView | null>(null);
-  const [pendingShips, setPendingShips] = useState<PendingShip[]>([]);
+  const [view, setView] = useState(initialBattleshipView);
+  const { side, state, placementError, fireError } = view;
+  const [pendingShips, setPendingShips] = useState<ShipPlacement[]>([]);
   const [selectedType, setSelectedType] = useState<ShipType | null>(
-    SHIP_ORDER[0] ?? null,
+    SHIP_TYPES[0] ?? null,
   );
   const [orientation, setOrientation] = useState<Orientation>('horizontal');
   const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(
     null,
   );
-  const [placementError, setPlacementError] = useState<string | null>(null);
-  const [fireError, setFireError] = useState<string | null>(null);
 
   const { send, connectionState } = useColyseusRoom(
     GAME_ID,
     session,
     colyseusUrl(),
-    (message: ActivityMessage) => {
-      if (message.type === 'init') {
-        const payload = parsePayload(initPayloadSchema, message);
-        if (payload) setSide(payload.side);
-      } else if (message.type === 'state') {
-        const payload = parsePayload(battleshipStateViewSchema, message);
-        if (!payload) return;
-        setState(payload);
-        setPlacementError(null);
-        setFireError(null);
-      } else if (message.type === 'placement_error') {
-        const payload = parsePayload(errorPayloadSchema, message);
-        if (payload) setPlacementError(payload.message);
-      } else if (message.type === 'fire_error') {
-        const payload = parsePayload(errorPayloadSchema, message);
-        if (payload) setFireError(payload.message);
-      }
+    (raw: ActivityMessage) => {
+      const message = parseMessage(serverMessageSchema, raw);
+      if (message)
+        setView((current) => applyBattleshipMessage(current, message));
     },
   );
 
@@ -91,11 +77,11 @@ export function BattleshipBoard({ session }: { session: WsSession }) {
 
   function placeSelectedAt(cell: { x: number; y: number }) {
     if (!selectedType) return;
-    const ship: PendingShip = { type: selectedType, orientation, ...cell };
+    const ship: ShipPlacement = { type: selectedType, orientation, ...cell };
     if (!isValidPlacement(ship, pendingShips)) return;
     const next = [...pendingShips, ship];
     setPendingShips(next);
-    const nextType = SHIP_ORDER.find((t) => !next.some((s) => s.type === t));
+    const nextType = SHIP_TYPES.find((t) => !next.some((s) => s.type === t));
     setSelectedType(nextType ?? null);
   }
 
@@ -110,7 +96,7 @@ export function BattleshipBoard({ session }: { session: WsSession }) {
           orientation: s.orientation,
         })),
       },
-    });
+    } satisfies BattleshipClientMessage);
   }
 
   const phase = state?.phase ?? 'placement';
@@ -156,7 +142,7 @@ export function BattleshipBoard({ session }: { session: WsSession }) {
               onSubmit={submitFleet}
               onReset={() => {
                 setPendingShips([]);
-                setSelectedType(SHIP_ORDER[0] ?? null);
+                setSelectedType(SHIP_TYPES[0] ?? null);
               }}
               error={placementError}
             />
@@ -186,7 +172,10 @@ export function BattleshipBoard({ session }: { session: WsSession }) {
               opponentBoard={state.opponent}
               canFire={phase === 'battle' && myTurn}
               onClickOpponentCell={(cell) =>
-                send({ type: 'fire', payload: cell })
+                send({
+                  type: 'fire',
+                  payload: cell,
+                } satisfies BattleshipClientMessage)
               }
             />
             {fireError && (

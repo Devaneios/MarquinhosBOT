@@ -1,5 +1,5 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
-import type { ShipPlacement } from '@marquinhos/domain/activity/battleship/BattleshipEngine';
+import type { ShipPlacement } from '@marquinhos/contracts/activity/games/battleship';
 import { describe, expect, it } from 'bun:test';
 import {
   BattleshipSession,

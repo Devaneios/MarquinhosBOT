@@ -1,4 +1,5 @@
-import { BOARD_SIZE, SHIP_SIZES, type ShipPlacement } from './BattleshipEngine';
+import type { ShipPlacement } from '@marquinhos/contracts/activity/games/battleship';
+import { BOARD_SIZE, SHIP_SIZES } from './BattleshipEngine';
 
 export function cellsFor(ship: ShipPlacement): { x: number; y: number }[] {
   const size = SHIP_SIZES[ship.type];
