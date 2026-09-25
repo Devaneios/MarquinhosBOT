@@ -1,6 +1,12 @@
 import type { Room } from '@colyseus/sdk';
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from 'react';
 import { devwarn } from '../lib/devlog';
 import {
   connectToRoom,
@@ -9,7 +15,7 @@ import {
   type ColyseusConnectionState,
 } from './colyseusConnection';
 import type { WsSession } from './gameSession';
-import { useRoomConnectionContext } from './RoomConnectionProvider';
+import { useRoomConnectionContext } from './RoomConnectionContext';
 
 // Re-exported for existing call sites/tests that import these from this
 // file — the implementations now live in colyseusConnection.ts, shared with
@@ -84,50 +90,56 @@ export function useColyseusRoom(
   // board tearing down and reconnecting. Outside one (single/local mode):
   // unchanged behavior below, this hook owns its own connection as before.
   const roomContext = useRoomConnectionContext();
-  const onMessageRef = useRef(onMessage);
-  onMessageRef.current = onMessage;
+  const handleMessage = useEffectEvent(onMessage);
 
   useEffect(() => {
     if (!roomContext) return;
-    return roomContext.subscribe((message) => onMessageRef.current(message));
+    return roomContext.subscribe((message) => handleMessage(message));
   }, [roomContext]);
 
   const roomRef = useRef<Room | null>(null);
-  const onBeforeLeaveRef = useRef(onBeforeLeave);
-  onBeforeLeaveRef.current = onBeforeLeave;
-  const [connectionState, setConnectionState] =
-    useState<ColyseusConnectionState>('connecting');
+  const beforeLeave = useEffectEvent((room: Room) => onBeforeLeave?.(room));
+  const [connection, setConnection] = useState<{
+    game: GameId;
+    session: WsSession | null;
+    endpoint: string;
+    state: ColyseusConnectionState;
+  }>({
+    game,
+    session,
+    endpoint,
+    state: 'connecting',
+  });
 
   useEffect(() => {
     if (roomContext) return; // shared-connection path handled above
     if (!session) return;
     let cancelled = false;
-    setConnectionState('connecting');
 
     const poolKey = `${endpoint}:${game}:${session.roomKey}:${session.token}`;
     const pooled = acquireRoom(poolKey, () =>
       connectToRoom(game, session, endpoint, (message) =>
-        onMessageRef.current(message),
+        handleMessage(message),
       ),
     );
     pooled.promise
       .then((room) => {
         if (cancelled) return;
         roomRef.current = room;
-        setConnectionState('connected');
+        setConnection({ game, session, endpoint, state: 'connected' });
         wireRoomLifecycle(room, game, (state) => {
-          if (!cancelled) setConnectionState(state);
+          if (!cancelled) setConnection({ game, session, endpoint, state });
         });
       })
       .catch((err) => {
         if (cancelled) return;
         devwarn('[colyseus] join failed', err);
-        setConnectionState('error');
+        setConnection({ game, session, endpoint, state: 'error' });
       });
 
     return () => {
       cancelled = true;
-      releaseRoom(poolKey, onBeforeLeaveRef.current);
+      releaseRoom(poolKey, beforeLeave);
       roomRef.current = null;
     };
   }, [game, session, endpoint, roomContext]);
@@ -147,7 +159,11 @@ export function useColyseusRoom(
     send,
     connectionState: roomContext
       ? roomContext.connectionState
-      : connectionState,
+      : connection.game === game &&
+          connection.session === session &&
+          connection.endpoint === endpoint
+        ? connection.state
+        : 'connecting',
     role: roomContext ? roomContext.role : null,
   };
 }

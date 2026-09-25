@@ -1,5 +1,5 @@
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import type { DiscordIdentity } from '../discord/auth.ts';
 import { errorMessage, isAuthError } from '../lib/http';
 import { fetchWsSessionToken, type WsSession } from './gameSession';
@@ -28,34 +28,56 @@ export function useGameSession(
   mode: 'single' | 'multi' | 'local' | null,
   onAuthInvalid: () => void,
 ): GameSessionState {
-  const [state, setState] = useState<GameSessionState>({
-    status: 'connecting',
+  const [result, setResult] = useState<{
+    game: GameId;
+    identity: DiscordIdentity;
+    mode: 'single' | 'multi' | 'local' | null;
+    state: GameSessionState;
+  }>({
+    game,
+    identity,
+    mode,
+    state: { status: mode === null ? 'selecting-mode' : 'connecting' },
   });
 
+  const notifyAuthInvalid = useEffectEvent(onAuthInvalid);
+
   useEffect(() => {
-    if (mode === null) {
-      setState({ status: 'selecting-mode' });
-      return;
-    }
+    if (mode === null) return;
 
     let cancelled = false;
-    setState({ status: 'connecting' });
     fetchWsSessionToken({ game, mode, identity })
       .then((session) => {
-        if (!cancelled) setState({ status: 'ready', session });
+        if (!cancelled)
+          setResult({
+            game,
+            identity,
+            mode,
+            state: { status: 'ready', session },
+          });
       })
       .catch((err) => {
         if (cancelled) return;
         if (isAuthError(err)) {
-          onAuthInvalid();
+          notifyAuthInvalid();
           return;
         }
-        setState({ status: 'error', error: errorMessage(err) });
+        setResult({
+          game,
+          identity,
+          mode,
+          state: { status: 'error', error: errorMessage(err) },
+        });
       });
     return () => {
       cancelled = true;
     };
-  }, [game, identity, mode, onAuthInvalid]);
+  }, [game, identity, mode]);
 
-  return state;
+  if (mode === null) return { status: 'selecting-mode' };
+  return result.game === game &&
+    result.identity === identity &&
+    result.mode === mode
+    ? result.state
+    : { status: 'connecting' };
 }

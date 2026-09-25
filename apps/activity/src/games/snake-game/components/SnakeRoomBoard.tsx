@@ -6,10 +6,10 @@ import {
 } from '@marquinhos/contracts/activity/games/snakeGame';
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { Application, Graphics } from 'pixi.js';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { devlog } from '../../../lib/devlog';
-import { useRoomConnectionContext } from '../../../realtime/RoomConnectionProvider';
+import { useRoomConnectionContext } from '../../../realtime/RoomConnectionContext';
 import { applySnakeMessage, initialSnakeView } from '../snakeMessages';
 import {
   BG_COLOR,
@@ -19,7 +19,7 @@ import {
   drawGrid,
   INTERP_MS,
   KEY_TO_DIRECTION,
-} from './SnakeCanvas';
+} from './snakeRendering';
 
 // Renders Snake inside a multiplayer Room view — driven by
 // RoomConnectionContext instead of SnakeCanvas's own useColyseusRoom call.
@@ -40,10 +40,10 @@ export function SnakeRoomBoard() {
   const { playerId, pausedOpponent } = view;
   const scores = view.latest?.state.scores ?? null;
   const winner = view.latest?.state.winner ?? null;
-  const roleRef = useRef(ctx?.role ?? null);
-  roleRef.current = ctx?.role ?? null;
-  const sendRef = useRef(ctx?.send);
-  sendRef.current = ctx?.send;
+  const getRole = useEffectEvent(() => ctx?.role ?? null);
+  const send = useEffectEvent((message: SnakeClientMessage) =>
+    ctx?.send(message),
+  );
 
   useEffect(() => {
     if (!ctx) return;
@@ -87,11 +87,10 @@ export function SnakeRoomBoard() {
       event.preventDefault();
       if (heldKeys.has(key)) return;
       heldKeys.add(key);
-      if (roleRef.current === 'spectator' || roleRef.current === 'queued')
-        return;
+      if (getRole() === 'spectator' || getRole() === 'queued') return;
       if (direction !== lastSentDirection) {
         lastSentDirection = direction;
-        sendRef.current?.({
+        send({
           type: 'input',
           payload: { direction },
         } satisfies SnakeClientMessage);

@@ -43,14 +43,18 @@ export function CompetitiveScreen({
   const [selected, setSelected] = useState<string[]>([identity.userId]);
   const [name, setName] = useState('Pong Night');
   const [format, setFormat] = useState<PongTournamentFormat>('round-robin');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const requestKey = JSON.stringify([
+    identity.accessToken,
+    identity.guildId,
+    pool,
+  ]);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [ratings, events] = await Promise.all([
+  const fetchData = useCallback(
+    () =>
+      Promise.all([
         fetchContract(apiBase(), activityApi.pongLeaderboard, {
           body: {
             accessToken: identity.accessToken,
@@ -65,19 +69,41 @@ export function CompetitiveScreen({
             guildId: identity.guildId,
           },
         }),
-      ]);
+      ]),
+    [identity.accessToken, identity.guildId, pool],
+  );
+
+  const load = useCallback(async () => {
+    try {
+      const [ratings, events] = await fetchData();
       setLeaderboard(ratings.data);
       setTournaments(events.data);
     } catch (reason) {
       setError(errorMessage(reason));
     } finally {
+      setLoadedKey(requestKey);
       setLoading(false);
     }
-  }, [identity.accessToken, identity.guildId, pool]);
+  }, [fetchData, requestKey]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let cancelled = false;
+    fetchData()
+      .then(([ratings, events]) => {
+        if (cancelled) return;
+        setLeaderboard(ratings.data);
+        setTournaments(events.data);
+      })
+      .catch((reason) => {
+        if (!cancelled) setError(errorMessage(reason));
+      })
+      .finally(() => {
+        if (!cancelled) setLoadedKey(requestKey);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchData, requestKey]);
 
   async function createTournament() {
     setError(null);
@@ -92,6 +118,7 @@ export function CompetitiveScreen({
           playerIds: selected,
         },
       });
+      setLoading(true);
       await load();
     } catch (reason) {
       setError(errorMessage(reason));
@@ -104,6 +131,7 @@ export function CompetitiveScreen({
       await fetchContract(apiBase(), activityApi.reportPongTournamentMatch, {
         body: { accessToken: identity.accessToken, matchId, winnerId },
       });
+      setLoading(true);
       await load();
     } catch (reason) {
       setError(errorMessage(reason));
@@ -157,7 +185,10 @@ export function CompetitiveScreen({
           value={pool}
           onChange={(event) => {
             const next = pongRatingPoolSchema.safeParse(event.target.value);
-            if (next.success) setPool(next.data);
+            if (next.success) {
+              setError(null);
+              setPool(next.data);
+            }
           }}
           className={cn(selectClass, 'ml-auto')}
         >
@@ -172,7 +203,7 @@ export function CompetitiveScreen({
         </p>
       )}
 
-      {loading ? (
+      {loading || loadedKey !== requestKey ? (
         <MenuPanel className="px-6 py-10 text-center">
           <span className="font-pixel animate-pong-blink text-sm tracking-[0.28em] text-marquinhos-accent">
             {t('common:loading')}

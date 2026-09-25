@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { formatArgs, safeStringify } from './DevConsole';
+import { formatArgs, safeStringify } from './devConsoleFormat';
 
 describe('safeStringify', () => {
   it('returns strings as-is', () => {

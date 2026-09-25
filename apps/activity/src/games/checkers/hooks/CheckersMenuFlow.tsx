@@ -6,10 +6,6 @@ export interface CheckersMenuOutletContext {
   onExitToHub: () => void;
 }
 
-export function useCheckersMenuContext() {
-  return useOutletContext<CheckersMenuOutletContext>();
-}
-
 export function CheckersMenuFlow() {
   const context = useOutletContext<CheckersMenuOutletContext>();
   return <Outlet context={context} />;

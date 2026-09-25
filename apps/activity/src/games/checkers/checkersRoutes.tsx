@@ -1,73 +1,12 @@
-import { Route, useNavigate } from 'react-router-dom';
-import { GameMenu } from '../../components/game-shell/index';
+import { Route } from 'react-router-dom';
 import type { DiscordIdentity } from '../../discord/auth.ts';
 import { CheckersGame } from './CheckersGame';
-import { HowToPlay } from './components/index';
 import {
-  CheckersMenuFlow,
-  useCheckersMenuContext,
-} from './hooks/CheckersMenuFlow';
-
-function MainMenuRoute() {
-  const navigate = useNavigate();
-  const { onExitToHub } = useCheckersMenuContext();
-  return (
-    <GameMenu
-      gameId="checkers"
-      headingKey="mainMenu"
-      onBack={onExitToHub}
-      actions={[
-        {
-          key: 'play',
-          labelKey: 'play',
-          labelNs: 'common',
-          descriptionKey: 'playDescription',
-          onSelect: () => navigate('mode'),
-        },
-        {
-          key: 'how-to',
-          labelKey: 'howToPlay',
-          labelNs: 'common',
-          descriptionKey: 'howToPlayDescription',
-          onSelect: () => navigate('how-to'),
-        },
-      ]}
-    />
-  );
-}
-
-function ModeMenuRoute() {
-  const navigate = useNavigate();
-  const { onSelectMode } = useCheckersMenuContext();
-  return (
-    <GameMenu
-      gameId="checkers"
-      onBack={() => navigate('..')}
-      backLabelKey="back"
-      actions={[
-        {
-          key: 'single',
-          labelKey: 'vsBot',
-          labelNs: 'common',
-          descriptionKey: 'vsBotDescription',
-          onSelect: () => onSelectMode('single'),
-        },
-        {
-          key: 'multi',
-          labelKey: 'vsPlayer',
-          labelNs: 'common',
-          descriptionKey: 'vsPlayerDescription',
-          onSelect: () => navigate('/rooms?create=checkers'),
-        },
-      ]}
-    />
-  );
-}
-
-function HowToPlayRoute() {
-  const navigate = useNavigate();
-  return <HowToPlay onBack={() => navigate('..')} />;
-}
+  HowToPlayRoute,
+  MainMenuRoute,
+  ModeMenuRoute,
+} from './checkersRouteViews';
+import { CheckersMenuFlow } from './hooks/CheckersMenuFlow';
 
 export function checkersRoutes(
   identity: DiscordIdentity,

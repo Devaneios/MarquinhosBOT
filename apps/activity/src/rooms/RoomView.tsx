@@ -3,10 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { ConnectingScreen, ErrorScreen } from '../components/game-shell';
 import type { DiscordIdentity } from '../discord/auth.ts';
 import { GAME_REGISTRY } from '../games/registry';
-import {
-  RoomConnectionProvider,
-  useRoomConnectionContext,
-} from '../realtime/RoomConnectionProvider';
+import { useRoomConnectionContext } from '../realtime/RoomConnectionContext';
+import { RoomConnectionProvider } from '../realtime/RoomConnectionProvider';
 import { RoomHeader } from './RoomHeader';
 
 function RoomBoard({ identity }: { identity: DiscordIdentity }) {

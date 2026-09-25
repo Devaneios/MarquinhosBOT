@@ -3,7 +3,7 @@ import type {
   Disc,
 } from '@marquinhos/contracts/activity/games/connectFour';
 import { Application, Graphics } from 'pixi.js';
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 
 const COLS = 7;
 const ROWS = 6;
@@ -43,12 +43,9 @@ export function ConnectFourCanvas({
   const discsRef = useRef<Graphics | null>(null);
   const hoverRef = useRef<Graphics | null>(null);
   const redrawRef = useRef<(() => void) | null>(null);
-  const onDropRef = useRef(onDrop);
-  onDropRef.current = onDrop;
-  const stateRef = useRef(state);
-  stateRef.current = state;
-  const interactiveRef = useRef(interactive);
-  interactiveRef.current = interactive;
+  const drop = useEffectEvent(onDrop);
+  const getState = useEffectEvent(() => state);
+  const isInteractive = useEffectEvent(() => interactive);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,8 +69,8 @@ export function ConnectFourCanvas({
       const hover = hoverRef.current;
       if (!hover) return;
       hover.clear();
-      if (col === null || !interactiveRef.current) return;
-      const s = stateRef.current;
+      if (col === null || !isInteractive()) return;
+      const s = getState();
       if (!s || s.winner || s.isDraw) return;
       if (s.grid[0]![col] !== null) return;
       const { x } = cellCenter(0, col);
@@ -84,7 +81,7 @@ export function ConnectFourCanvas({
 
     function redraw() {
       const discs = discsRef.current;
-      const s = stateRef.current;
+      const s = getState();
       if (!discs || !s) return;
       discs.clear();
       const winningCells = new Set(
@@ -180,9 +177,9 @@ export function ConnectFourCanvas({
       };
       onPointerLeave = () => drawHover(null);
       onClick = (e: MouseEvent) => {
-        if (!interactiveRef.current) return;
+        if (!isInteractive()) return;
         const col = columnFromX(e.clientX);
-        if (col !== null) onDropRef.current(col);
+        if (col !== null) drop(col);
       };
 
       canvasEl?.addEventListener('pointermove', onPointerMove);

@@ -1,5 +1,5 @@
 import { Application, Graphics } from 'pixi.js';
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 
 interface HangmanCanvasProps {
   revealedWord: string;
@@ -85,8 +85,7 @@ export function HangmanCanvas({
   const appRef = useRef<Application | null>(null);
   const gallowsRef = useRef<Graphics | null>(null);
   const redrawRef = useRef<(() => void) | null>(null);
-  const strikesRef = useRef(strikes);
-  strikesRef.current = strikes;
+  const getStrikes = useEffectEvent(() => strikes);
 
   useEffect(() => {
     let cancelled = false;
@@ -133,7 +132,7 @@ export function HangmanCanvas({
       gallowsRef.current = gallows;
       app.stage.addChild(gallows);
 
-      const redraw = () => drawGallows(gallows, strikesRef.current);
+      const redraw = () => drawGallows(gallows, getStrikes());
       redrawRef.current = redraw;
       redraw();
 

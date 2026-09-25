@@ -5,7 +5,7 @@ import {
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRoomConnectionContext } from '../../../realtime/RoomConnectionProvider';
+import { useRoomConnectionContext } from '../../../realtime/RoomConnectionContext';
 import { applyTowerMessage, initialTowerView } from '../towerMessages';
 import { TowerBoardCanvas } from './TowerBoardCanvas';
 

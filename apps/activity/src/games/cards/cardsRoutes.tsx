@@ -1,25 +1,7 @@
-import { Route, useParams } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 import type { DiscordIdentity } from '../../discord/auth.ts';
-import { CardModeSelect, CardTable } from './components/index';
-
-function CardTableRoute({
-  identity,
-  onAuthInvalid,
-}: {
-  identity: DiscordIdentity;
-  onAuthInvalid: () => void;
-}) {
-  // Always present: the only route that renders this is `cards/:ruleset`,
-  // reached via CardModeSelect's explicit links.
-  const { ruleset } = useParams<{ ruleset: string }>();
-  return (
-    <CardTable
-      identity={identity}
-      onAuthInvalid={onAuthInvalid}
-      ruleset={ruleset!}
-    />
-  );
-}
+import { CardTableRoute } from './components/CardTableRoute';
+import { CardModeSelect } from './components/index';
 
 export function cardsRoutes(
   identity: DiscordIdentity,

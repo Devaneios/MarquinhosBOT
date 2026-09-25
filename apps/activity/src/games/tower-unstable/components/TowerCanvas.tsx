@@ -3,7 +3,7 @@ import {
   type TowerClientMessage,
 } from '@marquinhos/contracts/activity/games/towerUnstable';
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   GameHeader,
@@ -18,6 +18,10 @@ import {
 } from '../../../realtime/useColyseusRoom';
 import { applyTowerMessage, initialTowerView } from '../towerMessages';
 import { TowerBoardCanvas } from './TowerBoardCanvas';
+
+function sendLeaveOnDisconnect(room: { send: (type: string) => void }) {
+  room.send('leave');
+}
 
 interface Props {
   session: WsSession;
@@ -36,12 +40,6 @@ export function TowerCanvas({ session, userId, onMainMenu }: Props) {
     restartStatus,
     restartRequested,
   } = view;
-
-  const sendLeaveOnDisconnect = useRef(
-    (room: { send: (t: string) => void }) => {
-      room.send('leave');
-    },
-  ).current;
 
   const { send: roomSend, connectionState } = useColyseusRoom(
     'tower-unstable',

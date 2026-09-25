@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
-import { RoomConnectionContext } from '../../../realtime/RoomConnectionProvider';
+import { RoomConnectionContext } from '../../../realtime/RoomConnectionContext';
 
 mock.module('./BingoSpeedBoardCanvas', () => ({
   BingoSpeedBoardCanvas: () => null,

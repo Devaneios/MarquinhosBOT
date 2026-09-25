@@ -60,7 +60,7 @@ export interface PongMenuOutletContext {
   onExitToHub: () => void;
 }
 
-interface PongMenuScreenContext extends PongMenuOutletContext {
+export interface PongMenuScreenContext extends PongMenuOutletContext {
   difficulty: BotDifficulty;
   setDifficulty: (difficulty: BotDifficulty) => void;
   winScore: WinScore;
@@ -73,10 +73,6 @@ interface PongMenuScreenContext extends PongMenuOutletContext {
   setBestOf: (bestOf: BestOf) => void;
   ranked: boolean;
   setRanked: (ranked: boolean) => void;
-}
-
-export function usePongMenuContext() {
-  return useOutletContext<PongMenuScreenContext>();
 }
 
 export function PongMenuFlow() {

@@ -8,7 +8,7 @@ export function CurrentRow({
   wordLength,
   shake,
   disabled,
-  inputRefs,
+  registerInput,
   onFocusCell,
   onKeyDownCell,
 }: CurrentRowProps) {
@@ -21,7 +21,7 @@ export function CurrentRow({
         <input
           key={index}
           ref={(element) => {
-            inputRefs.current[index] = element;
+            registerInput(index, element);
           }}
           value={(letters[index] ?? '').toUpperCase()}
           readOnly

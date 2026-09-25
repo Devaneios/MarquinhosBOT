@@ -4,7 +4,7 @@ import {
 } from '@marquinhos/contracts/activity/games/checkers';
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useState } from 'react';
-import { useRoomConnectionContext } from '../../../realtime/RoomConnectionProvider';
+import { useRoomConnectionContext } from '../../../realtime/RoomConnectionContext';
 import { applyCheckersMessage, initialCheckersView } from '../checkersMessages';
 import { CheckersCanvas } from './CheckersCanvas';
 

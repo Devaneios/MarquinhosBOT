@@ -113,6 +113,17 @@ export function useWordleBoard(
     };
   }, []);
 
+  const registerGrid = useCallback((element: HTMLDivElement | null) => {
+    gridRef.current = element;
+  }, []);
+
+  const registerInput = useCallback(
+    (index: number, element: HTMLInputElement | null) => {
+      inputRefs.current[index] = element;
+    },
+    [],
+  );
+
   function typeLetter(letter: string) {
     if (!enabled || solved || wordLength === null) return;
     window.clearTimeout(errorTimeout.current);
@@ -306,9 +317,9 @@ export function useWordleBoard(
     error,
     currentLetters,
     activeIndex,
-    inputRefs,
+    registerInput,
     shake,
-    gridRef,
+    registerGrid,
     pressedKeys,
     letterStates,
     connectionState,

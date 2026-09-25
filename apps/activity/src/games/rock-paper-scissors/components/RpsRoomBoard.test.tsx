@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
 import '../../../i18n/index';
-import { RoomConnectionContext } from '../../../realtime/RoomConnectionProvider';
+import { RoomConnectionContext } from '../../../realtime/RoomConnectionContext';
 import { RpsRoomBoard } from './RpsRoomBoard';
 
 function baseValue(

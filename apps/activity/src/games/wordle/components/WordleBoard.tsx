@@ -30,7 +30,27 @@ export function WordleBoard({
   const navigate = useNavigate();
   const { t } = useTranslation(['wordle', 'common']);
   const [showSettings, setShowSettings] = useState(false);
-  const board = useWordleBoard(session, {
+  const {
+    activeIndex,
+    backspace,
+    connectionState,
+    currentLetters,
+    error,
+    guesses,
+    letterStates,
+    moveFocus,
+    onKeyDownCell,
+    pressedKeys,
+    registerGrid,
+    registerInput,
+    setActiveIndex,
+    shake,
+    solved,
+    submitGuess,
+    suspendInput,
+    typeLetter,
+    wordLength,
+  } = useWordleBoard(session, {
     enabled: !showSettings,
     enableSpaceKey: config.enableSpaceKey,
     enableArrowKeys: config.enableArrowKeys,
@@ -40,14 +60,12 @@ export function WordleBoard({
       buildKeyboardRows(config).map((row) =>
         row.map((key) => ({
           ...key,
-          style:
-            key.style ??
-            FEEDBACK_COLORS[board.letterStates[key.id] ?? 'unused'],
+          style: key.style ?? FEEDBACK_COLORS[letterStates[key.id] ?? 'unused'],
         })),
       ),
-    [board.letterStates, config],
+    [letterStates, config],
   );
-  const attemptNumber = board.guesses.length + (board.solved ? 0 : 1);
+  const attemptNumber = guesses.length + (solved ? 0 : 1);
 
   if (showSettings) {
     return (
@@ -62,25 +80,25 @@ export function WordleBoard({
   const keyboard = (
     <Keyboard
       rows={keyboardRows}
-      pressedKeys={board.pressedKeys}
-      disabled={board.solved || board.wordLength === null}
+      pressedKeys={pressedKeys}
+      disabled={solved || wordLength === null}
       onKey={(key) => {
         if (key === 'Enter') {
-          board.submitGuess();
+          submitGuess();
         } else if (key === 'Backspace') {
-          board.backspace();
+          backspace();
         } else if (key === WORDLE_FOCUS_KEYS.first) {
-          board.moveFocus('first');
+          moveFocus('first');
         } else if (key === WORDLE_FOCUS_KEYS.left) {
-          board.moveFocus('left');
+          moveFocus('left');
         } else if (key === WORDLE_FOCUS_KEYS.space) {
-          board.moveFocus('space');
+          moveFocus('space');
         } else if (key === WORDLE_FOCUS_KEYS.right) {
-          board.moveFocus('right');
+          moveFocus('right');
         } else if (key === WORDLE_FOCUS_KEYS.last) {
-          board.moveFocus('last');
+          moveFocus('last');
         } else {
-          board.typeLetter(key);
+          typeLetter(key);
         }
       }}
     />
@@ -99,7 +117,7 @@ export function WordleBoard({
             aria-label={t('wordle:settingsAriaLabel')}
             title={t('wordle:settingsAriaLabel')}
             onClick={() => {
-              board.suspendInput();
+              suspendInput();
               setShowSettings(true);
             }}
           >
@@ -114,20 +132,20 @@ export function WordleBoard({
         }
       />
 
-      {board.error && (
+      {error && (
         <div className="pointer-events-none absolute inset-x-0 top-20 z-20 flex justify-center px-4">
           <div className="notch-6 pointer-events-auto animate-termo-toast-in border border-marquinhos-danger/40 bg-[#1c1b1c] px-4 py-2 text-center text-sm text-marquinhos-danger shadow-[0_10px_30px_rgba(0,0,0,0.4)]">
-            {board.error}
+            {error}
           </div>
         </div>
       )}
 
       <main className="flex min-h-0 flex-1 items-stretch justify-center overflow-hidden p-2 sm:items-center sm:overflow-y-auto sm:p-6">
         <div className="notch-8 flex w-full flex-1 flex-col gap-3 border border-marquinhos-border bg-[#1c1b1c] px-2 py-3 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:w-fit sm:min-w-135 sm:flex-none sm:gap-4 sm:px-6 sm:py-6">
-          {board.solved && (
+          {solved && (
             <div className="notch-6 flex items-center justify-between gap-3 border border-marquinhos-border bg-black/25 px-4 py-3">
               <div className="text-sm font-semibold text-marquinhos-text">
-                {t('wordle:solved', { count: board.guesses.length })}
+                {t('wordle:solved', { count: guesses.length })}
               </div>
               <div
                 className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em]"
@@ -144,30 +162,30 @@ export function WordleBoard({
 
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 sm:flex-none">
             <div
-              ref={board.gridRef}
+              ref={registerGrid}
               className="scrollbar-hide flex min-h-0 flex-initial flex-col gap-1.5 overflow-x-hidden overflow-y-auto px-1.5 py-1 sm:max-h-[42vh] sm:flex-none sm:gap-2"
             >
-              {board.guesses.map((row, index) => (
+              {guesses.map((row, index) => (
                 <GuessRow key={index} row={row} />
               ))}
-              {!board.solved && board.wordLength !== null && (
+              {!solved && wordLength !== null && (
                 <CurrentRow
-                  letters={board.currentLetters}
-                  activeIndex={board.activeIndex}
-                  wordLength={board.wordLength}
-                  shake={board.shake}
-                  disabled={board.solved || board.wordLength === null}
-                  inputRefs={board.inputRefs}
-                  onFocusCell={board.setActiveIndex}
-                  onKeyDownCell={board.onKeyDownCell}
+                  letters={currentLetters}
+                  activeIndex={activeIndex}
+                  wordLength={wordLength}
+                  shake={shake}
+                  disabled={solved || wordLength === null}
+                  registerInput={registerInput}
+                  onFocusCell={setActiveIndex}
+                  onKeyDownCell={onKeyDownCell}
                 />
               )}
             </div>
 
-            {board.wordLength !== null && (
+            {wordLength !== null && (
               <div className="notch-4 border border-marquinhos-border bg-black/20 px-3 py-1.5 text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
                 {t('wordle:progress', {
-                  letters: board.wordLength,
+                  letters: wordLength,
                   attempt: attemptNumber,
                 })}
               </div>
@@ -176,8 +194,8 @@ export function WordleBoard({
 
           <div className="hidden sm:contents">{keyboard}</div>
 
-          {(board.connectionState === 'disconnected' ||
-            board.connectionState === 'error') && (
+          {(connectionState === 'disconnected' ||
+            connectionState === 'error') && (
             <div className="notch-6 border border-marquinhos-danger/40 bg-marquinhos-danger/10 p-3 text-center text-sm text-marquinhos-danger">
               {t('common:connectionLost')}
             </div>

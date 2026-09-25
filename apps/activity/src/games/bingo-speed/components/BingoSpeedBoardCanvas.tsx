@@ -1,6 +1,6 @@
 import type { BingoCard } from '@marquinhos/contracts/activity/games/bingoSpeed';
 import { Application, Container, Graphics, Text } from 'pixi.js';
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 import { tImperative } from '../../../i18n/i18nImperative';
 
 const GRID_SIZE = 5;
@@ -29,10 +29,7 @@ export function BingoSpeedBoardCanvas({
 }: BingoSpeedBoardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
-  const cardRef = useRef(card);
-  cardRef.current = card;
-  const drawnRef = useRef(drawnNumbers);
-  drawnRef.current = drawnNumbers;
+  const getBoard = useEffectEvent(() => ({ card, drawnNumbers }));
   const redrawRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -91,8 +88,7 @@ export function BingoSpeedBoardCanvas({
     }
 
     function redraw() {
-      const card = cardRef.current;
-      const drawn = drawnRef.current;
+      const { card, drawnNumbers: drawn } = getBoard();
       for (let row = 0; row < GRID_SIZE; row++) {
         for (let col = 0; col < GRID_SIZE; col++) {
           const cellBg = cellBgs[row][col];

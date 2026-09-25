@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import type { DiscordIdentity } from '../../../discord/auth.ts';
 import { errorMessage, isAuthError } from '../../../lib/http';
 import {
@@ -17,18 +17,22 @@ export function useRpsSession(
   mode: 'single' | 'multi' | null,
   onAuthInvalid: () => void,
 ): RpsSessionState {
-  const [state, setState] = useState<RpsSessionState>({
-    status: mode ? 'connecting' : 'selecting-mode',
+  const [result, setResult] = useState<{
+    identity: DiscordIdentity;
+    mode: 'single' | 'multi' | null;
+    state: RpsSessionState;
+  }>({
+    identity,
+    mode,
+    state: { status: mode ? 'connecting' : 'selecting-mode' },
   });
 
+  const notifyAuthInvalid = useEffectEvent(onAuthInvalid);
+
   useEffect(() => {
-    if (!mode) {
-      setState({ status: 'selecting-mode' });
-      return;
-    }
+    if (!mode) return;
 
     let cancelled = false;
-    setState({ status: 'connecting' });
     fetchWsSessionToken({
       game: 'rock-paper-scissors',
       mode,
@@ -36,20 +40,27 @@ export function useRpsSession(
     })
       .then((session) => {
         if (cancelled) return;
-        setState({ status: 'ready', session });
+        setResult({ identity, mode, state: { status: 'ready', session } });
       })
       .catch((err) => {
         if (cancelled) return;
         if (isAuthError(err)) {
-          onAuthInvalid();
+          notifyAuthInvalid();
           return;
         }
-        setState({ status: 'error', error: errorMessage(err) });
+        setResult({
+          identity,
+          mode,
+          state: { status: 'error', error: errorMessage(err) },
+        });
       });
     return () => {
       cancelled = true;
     };
-  }, [identity, mode, onAuthInvalid]);
+  }, [identity, mode]);
 
-  return state;
+  if (!mode) return { status: 'selecting-mode' };
+  return result.identity === identity && result.mode === mode
+    ? result.state
+    : { status: 'connecting' };
 }

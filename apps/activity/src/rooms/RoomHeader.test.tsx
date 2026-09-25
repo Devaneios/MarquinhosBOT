@@ -8,7 +8,7 @@ import {
 } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
 import React, { type ReactNode } from 'react';
-import { RoomConnectionContext } from '../realtime/RoomConnectionProvider';
+import { RoomConnectionContext } from '../realtime/RoomConnectionContext';
 import { RoomHeader } from './RoomHeader';
 
 mock.module('../discord/participants', () => ({

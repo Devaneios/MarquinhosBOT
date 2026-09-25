@@ -1,5 +1,5 @@
 import type { LetterFeedback } from '@marquinhos/contracts/wordle';
-import type { KeyboardEvent, RefObject } from 'react';
+import type { KeyboardEvent } from 'react';
 import type { WsSession } from '../../realtime/gameSession';
 
 export type KeyState = LetterFeedback | 'unused';
@@ -15,7 +15,7 @@ export interface CurrentRowProps {
   wordLength: number;
   shake: boolean;
   disabled: boolean;
-  inputRefs: RefObject<(HTMLInputElement | null)[]>;
+  registerInput: (index: number, element: HTMLInputElement | null) => void;
   onFocusCell: (index: number) => void;
   onKeyDownCell: (
     index: number,

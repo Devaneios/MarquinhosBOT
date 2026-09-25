@@ -10,10 +10,8 @@ import { fakeRoom } from './useColyseusRoom.test';
 // createContext() call producing a context object useColyseusRoom's
 // useContext() call could never see a value from. Importing it exactly the
 // way useColyseusRoom.ts does keeps both resolving to the same instance.
-import {
-  RoomConnectionProvider,
-  useRoomConnectionContext,
-} from './RoomConnectionProvider';
+import { useRoomConnectionContext } from './RoomConnectionContext';
+import { RoomConnectionProvider } from './RoomConnectionProvider';
 
 async function freshUseColyseusRoom(room: ReturnType<typeof fakeRoom>) {
   const joinOrCreate = mock(

@@ -7,7 +7,7 @@ import {
   tileMatches,
 } from '@marquinhos/domain/games/dominoes-block/legality';
 import { Application, Container, Graphics } from 'pixi.js';
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 
 const TILE_W = 44;
 const TILE_H = 72;
@@ -127,16 +127,11 @@ export function DominoesBlockCanvas({
 }: DominoesBlockCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
-  const stateRef = useRef<DominoesClientState | null>(state);
-  stateRef.current = state;
-  const selfIdRef = useRef(selfId);
-  selfIdRef.current = selfId;
-  const selectedTileRef = useRef(selectedTile);
-  selectedTileRef.current = selectedTile;
-  const roleRef = useRef(role);
-  roleRef.current = role;
-  const onTileClickRef = useRef(onTileClick);
-  onTileClickRef.current = onTileClick;
+  const getState = useEffectEvent(() => state);
+  const getSelfId = useEffectEvent(() => selfId);
+  const getSelectedTile = useEffectEvent(() => selectedTile);
+  const getRole = useEffectEvent(() => role);
+  const tileClick = useEffectEvent(onTileClick);
   const renderRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -227,9 +222,8 @@ export function DominoesBlockCanvas({
           entry = { container, gfx, divider, tile: null };
           const currentEntry = entry;
           container.on('pointertap', () => {
-            if (roleRef.current === 'spectator' || roleRef.current === 'queued')
-              return;
-            if (currentEntry.tile) onTileClickRef.current(currentEntry.tile);
+            if (getRole() === 'spectator' || getRole() === 'queued') return;
+            if (currentEntry.tile) tileClick(currentEntry.tile);
           });
           handPool[index] = entry;
           handContainer!.addChild(container);
@@ -238,7 +232,7 @@ export function DominoesBlockCanvas({
       }
 
       function render() {
-        const current = stateRef.current;
+        const current = getState();
         if (!chainContainer || !handContainer) return;
         if (!current) {
           for (const entry of chainPool) entry.container.visible = false;
@@ -278,17 +272,16 @@ export function DominoesBlockCanvas({
         let hx = (CANVAS_WIDTH - handWidth) / 2;
         const hy = 220;
         const isMyTurn =
-          current.currentPlayer === selfIdRef.current &&
-          roleRef.current !== 'spectator' &&
-          roleRef.current !== 'queued';
+          current.currentPlayer === getSelfId() &&
+          getRole() !== 'spectator' &&
+          getRole() !== 'queued';
         hand.forEach((tile, index) => {
           const entry = getHandEntry(index);
           entry.tile = tile;
           const ends = legalEndsFor(tile, current.leftEnd, current.rightEnd);
           const playable = current.chain.length === 0 || ends.length > 0;
-          const isSelected =
-            selectedTileRef.current !== null &&
-            tileMatches(selectedTileRef.current, tile);
+          const selected = getSelectedTile();
+          const isSelected = selected !== null && tileMatches(selected, tile);
           const fill = isSelected
             ? TILE_SELECTED_COLOR
             : isMyTurn && playable

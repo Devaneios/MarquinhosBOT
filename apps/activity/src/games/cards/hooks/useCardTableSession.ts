@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import type { DiscordIdentity } from '../../../discord/auth.ts';
 import { errorMessage, isAuthError } from '../../../lib/http';
 import {
@@ -19,13 +19,20 @@ export function useCardTableSession(
   ruleset: string,
   onAuthInvalid: () => void,
 ): CardTableSessionState {
-  const [state, setState] = useState<CardTableSessionState>({
-    status: 'connecting',
+  const [result, setResult] = useState<{
+    identity: DiscordIdentity;
+    ruleset: string;
+    state: CardTableSessionState;
+  }>({
+    identity,
+    ruleset,
+    state: { status: 'connecting' },
   });
+
+  const notifyAuthInvalid = useEffectEvent(onAuthInvalid);
 
   useEffect(() => {
     let cancelled = false;
-    setState({ status: 'connecting' });
     fetchWsSessionToken({
       game: 'cards',
       mode: 'multi',
@@ -34,20 +41,26 @@ export function useCardTableSession(
     })
       .then((session) => {
         if (cancelled) return;
-        setState({ status: 'ready', session });
+        setResult({ identity, ruleset, state: { status: 'ready', session } });
       })
       .catch((err) => {
         if (cancelled) return;
         if (isAuthError(err)) {
-          onAuthInvalid();
+          notifyAuthInvalid();
           return;
         }
-        setState({ status: 'error', error: errorMessage(err) });
+        setResult({
+          identity,
+          ruleset,
+          state: { status: 'error', error: errorMessage(err) },
+        });
       });
     return () => {
       cancelled = true;
     };
-  }, [identity, ruleset, onAuthInvalid]);
+  }, [identity, ruleset]);
 
-  return state;
+  return result.identity === identity && result.ruleset === ruleset
+    ? result.state
+    : { status: 'connecting' };
 }

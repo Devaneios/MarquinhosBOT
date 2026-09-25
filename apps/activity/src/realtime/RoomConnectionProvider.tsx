@@ -4,17 +4,9 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import {
   ROOM_STATE,
   roomServerMessageSchema,
-  type RoomMemberRole,
   type RoomState,
 } from '@marquinhos/contracts/activity/room';
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { DiscordIdentity } from '../discord/auth.ts';
 import { colyseusUrl } from '../lib/apiBase';
 import { devwarn } from '../lib/devlog';
@@ -25,6 +17,7 @@ import {
   type ColyseusConnectionState,
 } from './colyseusConnection';
 import type { WsSession } from './gameSession';
+import { RoomConnectionContext } from './RoomConnectionContext';
 
 type Listener = (message: ActivityMessage) => void;
 
@@ -70,25 +63,6 @@ function flushBacklog(backlog: Backlog, listeners: ReadonlySet<Listener>) {
     for (const message of messages) listener(message);
   }
   backlog.lateListeners.clear();
-}
-
-interface RoomConnectionContextValue {
-  send: (message: ActivityMessage) => void;
-  connectionState: ColyseusConnectionState;
-  roomState: RoomState | null;
-  role: RoomMemberRole | null;
-  currentUserId: string;
-  isHost: boolean;
-  subscribe: (onMessage: (message: ActivityMessage) => void) => () => void;
-}
-
-// Exported (not just the hook below) so tests can wrap components directly
-// with a fixed context value, without spinning up a real provider/connection.
-export const RoomConnectionContext =
-  createContext<RoomConnectionContextValue | null>(null);
-
-export function useRoomConnectionContext(): RoomConnectionContextValue | null {
-  return useContext(RoomConnectionContext);
 }
 
 export function RoomConnectionProvider({

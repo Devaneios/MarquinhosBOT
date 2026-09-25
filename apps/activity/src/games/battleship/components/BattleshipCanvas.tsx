@@ -3,7 +3,7 @@ import type {
   ShipPlacement,
 } from '@marquinhos/contracts/activity/games/battleship';
 import { Application } from 'pixi.js';
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 import {
   BattleshipScene,
   boardCountFor,
@@ -77,8 +77,7 @@ function motionPreference(): MotionPreference {
 export function BattleshipCanvas(props: BattleshipCanvasProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const propsRef = useRef(props);
-  propsRef.current = props;
+  const getProps = useEffectEvent(() => props);
   const syncRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -100,7 +99,7 @@ export function BattleshipCanvas(props: BattleshipCanvasProps) {
 
     function sync() {
       if (!scene || !wrapperRef.current) return;
-      const current = propsRef.current;
+      const current = getProps();
       const slots = slotsFor(current.mode);
       const layout = computeLayout(
         wrapperRef.current.clientWidth,
@@ -155,13 +154,13 @@ export function BattleshipCanvas(props: BattleshipCanvasProps) {
         app.stage,
         {
           own: {
-            onHover: (cell) => propsRef.current.onHoverOwnCell?.(cell),
-            onTap: (cell) => propsRef.current.onClickOwnCell?.(cell),
+            onHover: (cell) => getProps().onHoverOwnCell?.(cell),
+            onTap: (cell) => getProps().onClickOwnCell?.(cell),
           },
           opponent: {
             onTap: (cell) => {
-              if (!propsRef.current.canFire) return;
-              propsRef.current.onClickOpponentCell?.(cell);
+              if (!getProps().canFire) return;
+              getProps().onClickOpponentCell?.(cell);
             },
           },
         },

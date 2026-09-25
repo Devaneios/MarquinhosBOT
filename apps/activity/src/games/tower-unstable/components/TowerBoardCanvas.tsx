@@ -1,6 +1,6 @@
 import type { TowerState } from '@marquinhos/contracts/activity/games/towerUnstable';
 import { Application, Graphics } from 'pixi.js';
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 
 const BLOCK_WIDTH = 46;
 const BLOCK_HEIGHT = 16;
@@ -33,15 +33,11 @@ export function TowerBoardCanvas({
 }: TowerBoardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
-  const stateRef = useRef<TowerState | null>(state);
-  stateRef.current = state;
+  const getState = useEffectEvent(() => state);
   const shakeStartRef = useRef(-Infinity);
-  const userIdRef = useRef(userId);
-  userIdRef.current = userId;
-  const roleRef = useRef(role);
-  roleRef.current = role;
-  const onPullRef = useRef(onPull);
-  onPullRef.current = onPull;
+  const getUserId = useEffectEvent(() => userId);
+  const getRole = useEffectEvent(() => role);
+  const pull = useEffectEvent(onPull);
 
   useEffect(() => {
     if (state?.lastPull?.toppled) shakeStartRef.current = performance.now();
@@ -101,7 +97,7 @@ export function TowerBoardCanvas({
       );
 
       function render() {
-        const current = stateRef.current;
+        const current = getState();
         app.stage.removeChildren();
         if (!current) return;
 
@@ -122,9 +118,9 @@ export function TowerBoardCanvas({
         const startLevel = Math.max(0, totalLevels - VISIBLE_LEVELS);
         const isMyTurn =
           current.status === 'playing' &&
-          current.currentPlayer === userIdRef.current &&
-          roleRef.current !== 'spectator' &&
-          roleRef.current !== 'queued';
+          current.currentPlayer === getUserId() &&
+          getRole() !== 'spectator' &&
+          getRole() !== 'queued';
 
         for (let i = startLevel; i < totalLevels; i++) {
           const level = levels[i]!;
@@ -156,7 +152,7 @@ export function TowerBoardCanvas({
               gfx.eventMode = 'static';
               gfx.cursor = 'pointer';
               gfx.on('pointerdown', () => {
-                onPullRef.current(i, pos);
+                pull(i, pos);
               });
             }
 
