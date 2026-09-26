@@ -1,6 +1,6 @@
+import type { DiscordIdentity } from '@/discord/auth';
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import type { JSX } from 'react';
-import type { DiscordIdentity } from '../discord/auth.ts';
 
 export interface GameDescriptor {
   id: GameId;

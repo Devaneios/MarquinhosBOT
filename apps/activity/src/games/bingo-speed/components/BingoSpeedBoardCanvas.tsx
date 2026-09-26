@@ -1,7 +1,7 @@
+import { tImperative } from '@/i18n/i18nImperative';
 import type { BingoCard } from '@marquinhos/contracts/activity/games/bingoSpeed';
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { useEffect, useEffectEvent, useRef } from 'react';
-import { tImperative } from '../../../i18n/i18nImperative';
 
 const GRID_SIZE = 5;
 const CELL_SIZE = 96;

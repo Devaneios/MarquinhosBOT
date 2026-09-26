@@ -1,15 +1,15 @@
+import '@/i18n';
+import type { ActivityMessage } from '@/realtime/useColyseusRoom';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
 import { MemoryRouter } from 'react-router-dom';
-import '../../../i18n/index';
-import type { ActivityMessage } from '../../../realtime/useColyseusRoom';
 
 let deliverMessage: (message: ActivityMessage) => void = () => {
   throw new Error('Wordle room is not connected');
 };
 
-mock.module('../../../realtime/useColyseusRoom', () => ({
+mock.module('@/realtime/useColyseusRoom', () => ({
   useColyseusRoom(
     _game: string,
     _session: unknown,

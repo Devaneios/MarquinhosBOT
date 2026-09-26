@@ -1,9 +1,6 @@
+import { ConnectingScreen, ErrorScreen } from '@/components/game-shell';
+import type { DiscordIdentity } from '@/discord/auth';
 import { Outlet, useNavigate } from 'react-router-dom';
-import {
-  ConnectingScreen,
-  ErrorScreen,
-} from '../../components/game-shell/index';
-import type { DiscordIdentity } from '../../discord/auth.ts';
 import { PongCanvas } from './components/index';
 import type { PongMenuOutletContext } from './hooks/PongMenuFlow';
 import { usePongSession } from './hooks/usePongSession';

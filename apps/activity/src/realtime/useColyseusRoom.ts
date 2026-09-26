@@ -1,3 +1,4 @@
+import { devwarn } from '@/lib/devlog';
 import type { Room } from '@colyseus/sdk';
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import {
@@ -7,7 +8,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { devwarn } from '../lib/devlog';
 import {
   connectToRoom,
   wireRoomLifecycle,

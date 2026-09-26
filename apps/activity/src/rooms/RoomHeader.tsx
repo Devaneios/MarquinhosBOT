@@ -1,3 +1,6 @@
+import { getParticipantDisplayNames } from '@/discord/participants';
+import { GAME_REGISTRY } from '@/games/registry';
+import { useRoomConnectionContext } from '@/realtime/RoomConnectionContext';
 import {
   ACTION_REJECTED,
   parseMessage,
@@ -9,9 +12,6 @@ import {
 } from '@marquinhos/contracts/activity/room';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getParticipantDisplayNames } from '../discord/participants';
-import { GAME_REGISTRY } from '../games/registry';
-import { useRoomConnectionContext } from '../realtime/RoomConnectionContext';
 
 export interface RoomHeaderProps {
   onLeave: () => void;

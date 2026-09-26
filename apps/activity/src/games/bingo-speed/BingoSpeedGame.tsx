@@ -1,10 +1,10 @@
-import { useNavigate } from 'react-router-dom';
 import {
   ConnectingScreen,
   ErrorScreen,
   GameMenu,
-} from '../../components/game-shell/index';
-import type { DiscordIdentity } from '../../discord/auth.ts';
+} from '@/components/game-shell';
+import type { DiscordIdentity } from '@/discord/auth';
+import { useNavigate } from 'react-router-dom';
 import { BingoSpeedCanvas } from './components/index';
 import { useBingoSpeedSession } from './hooks/useBingoSpeedSession';
 

@@ -1,3 +1,11 @@
+import { EndScreen, GameHeader } from '@/components/game-shell';
+import type { DiscordIdentity } from '@/discord/auth';
+import { colyseusUrl } from '@/lib/apiBase';
+import type { WsSession } from '@/realtime/gameSession';
+import {
+  useColyseusRoom,
+  type ActivityMessage,
+} from '@/realtime/useColyseusRoom';
 import {
   serverMessageSchema,
   type MinesweeperClientMessage,
@@ -6,14 +14,6 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { EndScreen, GameHeader } from '../../../components/game-shell/index';
-import type { DiscordIdentity } from '../../../discord/auth.ts';
-import { colyseusUrl } from '../../../lib/apiBase';
-import type { WsSession } from '../../../realtime/gameSession';
-import {
-  useColyseusRoom,
-  type ActivityMessage,
-} from '../../../realtime/useColyseusRoom';
 import {
   applyMinesweeperMessage,
   initialMinesweeperView,

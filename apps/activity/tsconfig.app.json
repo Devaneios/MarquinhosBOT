@@ -23,6 +23,9 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "noFallthroughCasesInSwitch": true
   },
   "include": [

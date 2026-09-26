@@ -1,4 +1,4 @@
-import { GameMenu } from '../../../components/game-shell/index';
+import { GameMenu } from '@/components/game-shell';
 import type { GameMode } from '../types';
 
 export function ConnectFourModeMenu({

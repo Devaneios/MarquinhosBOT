@@ -1,8 +1,8 @@
+import { GAME_REGISTRY } from '@/games/registry';
+import '@/i18n';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'bun:test';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { GAME_REGISTRY } from '../games/registry';
-import '../i18n/index';
 import { Hub } from './Hub';
 import { HUB_GAME_IDS } from './hubGames';
 

@@ -1,4 +1,18 @@
 import {
+  backChipClass,
+  ConnectingScreen,
+  ErrorScreen,
+  GameHeader,
+  menuButtonPrimary,
+  menuButtonSecondary,
+} from '@/components/game-shell';
+import type { DiscordIdentity } from '@/discord/auth';
+import { colyseusUrl } from '@/lib/apiBase';
+import {
+  useColyseusRoom,
+  type ActivityMessage,
+} from '@/realtime/useColyseusRoom';
+import {
   serverMessageSchema,
   type ConnectFourClientMessage,
 } from '@marquinhos/contracts/activity/games/connectFour';
@@ -6,20 +20,6 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import {
-  backChipClass,
-  ConnectingScreen,
-  ErrorScreen,
-  GameHeader,
-  menuButtonPrimary,
-  menuButtonSecondary,
-} from '../../../components/game-shell/index';
-import type { DiscordIdentity } from '../../../discord/auth.ts';
-import { colyseusUrl } from '../../../lib/apiBase';
-import {
-  useColyseusRoom,
-  type ActivityMessage,
-} from '../../../realtime/useColyseusRoom';
 import {
   applyConnectFourMessage,
   initialConnectFourView,
@@ -35,7 +35,7 @@ export function ConnectFourBoard({
   mode,
   onBackToMenu,
 }: {
-  session: import('../../../realtime/gameSession').WsSession;
+  session: import('@/realtime/gameSession').WsSession;
   mode: 'single' | 'multi';
   onBackToMenu: () => void;
 }) {

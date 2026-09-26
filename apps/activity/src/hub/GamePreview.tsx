@@ -1,7 +1,7 @@
+import { FEEDBACK_COLORS } from '@/games/wordle/constants';
+import { cn } from '@/lib/cn';
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { useTranslation } from 'react-i18next';
-import { FEEDBACK_COLORS } from '../games/wordle/constants';
-import { cn } from '../lib/cn';
 
 const WORDLE_PREVIEW = [
   {

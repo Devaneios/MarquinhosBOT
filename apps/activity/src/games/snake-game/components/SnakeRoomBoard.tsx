@@ -1,3 +1,5 @@
+import { devlog } from '@/lib/devlog';
+import { useRoomConnectionContext } from '@/realtime/RoomConnectionContext';
 import {
   serverMessageSchema,
   type SnakeClientMessage,
@@ -8,8 +10,6 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { Application, Graphics } from 'pixi.js';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { devlog } from '../../../lib/devlog';
-import { useRoomConnectionContext } from '../../../realtime/RoomConnectionContext';
 import { applySnakeMessage, initialSnakeView } from '../snakeMessages';
 import {
   BG_COLOR,

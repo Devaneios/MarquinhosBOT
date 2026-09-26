@@ -1,4 +1,16 @@
 import {
+  ConnectingScreen,
+  ErrorScreen,
+  GameHeader,
+  GameMenu,
+} from '@/components/game-shell';
+import type { DiscordIdentity } from '@/discord/auth';
+import { colyseusUrl } from '@/lib/apiBase';
+import {
+  useColyseusRoom,
+  type ActivityMessage,
+} from '@/realtime/useColyseusRoom';
+import {
   serverMessageSchema,
   type TicTacToeClientMessage,
 } from '@marquinhos/contracts/activity/games/ticTacToe';
@@ -6,18 +18,6 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import {
-  ConnectingScreen,
-  ErrorScreen,
-  GameHeader,
-  GameMenu,
-} from '../../components/game-shell/index';
-import type { DiscordIdentity } from '../../discord/auth.ts';
-import { colyseusUrl } from '../../lib/apiBase';
-import {
-  useColyseusRoom,
-  type ActivityMessage,
-} from '../../realtime/useColyseusRoom';
 import { TicTacToeCanvas } from './components/index';
 import { useTicTacToeSession } from './hooks/useTicTacToeSession';
 import {

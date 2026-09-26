@@ -1,4 +1,18 @@
 import {
+  ConnectingScreen,
+  ErrorScreen,
+  GameHeader,
+  GameMenu,
+  menuButtonPrimary,
+} from '@/components/game-shell';
+import type { DiscordIdentity } from '@/discord/auth';
+import { colyseusUrl } from '@/lib/apiBase';
+import { cn } from '@/lib/cn';
+import {
+  useColyseusRoom,
+  type ActivityMessage,
+} from '@/realtime/useColyseusRoom';
+import {
   serverMessageSchema,
   type WordChainClientMessage,
 } from '@marquinhos/contracts/activity/games/wordChain';
@@ -9,20 +23,6 @@ import {
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import {
-  ConnectingScreen,
-  ErrorScreen,
-  GameHeader,
-  GameMenu,
-  menuButtonPrimary,
-} from '../../components/game-shell/index';
-import type { DiscordIdentity } from '../../discord/auth.ts';
-import { colyseusUrl } from '../../lib/apiBase';
-import { cn } from '../../lib/cn';
-import {
-  useColyseusRoom,
-  type ActivityMessage,
-} from '../../realtime/useColyseusRoom';
 import { WordChainBoard } from './components/index';
 import { useWordChainSession } from './hooks/useWordChainSession';
 import {

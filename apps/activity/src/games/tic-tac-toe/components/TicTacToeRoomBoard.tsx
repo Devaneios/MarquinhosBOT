@@ -1,10 +1,10 @@
+import { useRoomConnectionContext } from '@/realtime/RoomConnectionContext';
 import {
   serverMessageSchema,
   type TicTacToeClientMessage,
 } from '@marquinhos/contracts/activity/games/ticTacToe';
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useState } from 'react';
-import { useRoomConnectionContext } from '../../../realtime/RoomConnectionContext';
 import {
   applyTicTacToeMessage,
   initialTicTacToeView,

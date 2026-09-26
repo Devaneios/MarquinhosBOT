@@ -1,5 +1,5 @@
+import type { DiscordIdentity } from '@/discord/auth';
 import { Route } from 'react-router-dom';
-import type { DiscordIdentity } from '../../discord/auth.ts';
 import { TicTacToeGame } from './TicTacToeGame';
 
 export function ticTacToeRoutes(

@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   ConnectingScreen,
   ErrorScreen,
   GameMenu,
-} from '../../components/game-shell/index';
-import type { DiscordIdentity } from '../../discord/auth.ts';
+} from '@/components/game-shell';
+import type { DiscordIdentity } from '@/discord/auth';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { TowerCanvas } from './components/index';
 import { useTowerSession } from './hooks/useTowerSession';
 

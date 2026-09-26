@@ -1,16 +1,16 @@
+import { GameEmblem } from '@/components/game-shell/GameEmblem';
+import { MenuAction } from '@/components/game-shell/MenuAction';
+import { MenuPanel } from '@/components/game-shell/MenuPanel';
+import { MenuScreen } from '@/components/game-shell/MenuScreen';
+import type { DiscordIdentity } from '@/discord/auth';
+import { getParticipantDisplayNames } from '@/discord/participants';
+import { GAME_REGISTRY } from '@/games/registry';
+import { devwarn } from '@/lib/devlog';
+import { fetchWsSessionToken } from '@/realtime/gameSession';
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { isQueueEligible } from '@marquinhos/contracts/activity/room';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GameEmblem } from '../components/game-shell/GameEmblem';
-import { MenuAction } from '../components/game-shell/MenuAction';
-import { MenuPanel } from '../components/game-shell/MenuPanel';
-import { MenuScreen } from '../components/game-shell/MenuScreen';
-import type { DiscordIdentity } from '../discord/auth.ts';
-import { getParticipantDisplayNames } from '../discord/participants';
-import { GAME_REGISTRY } from '../games/registry';
-import { devwarn } from '../lib/devlog';
-import { fetchWsSessionToken } from '../realtime/gameSession';
 import { createRoom, getAvailableRooms, type RoomListing } from './roomApi';
 
 export interface RoomReadyInfo {

@@ -1,3 +1,6 @@
+import type { DiscordIdentity } from '@/discord/auth';
+import { colyseusUrl } from '@/lib/apiBase';
+import { devwarn } from '@/lib/devlog';
 import type { Room } from '@colyseus/sdk';
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
@@ -7,9 +10,6 @@ import {
   type RoomState,
 } from '@marquinhos/contracts/activity/room';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import type { DiscordIdentity } from '../discord/auth.ts';
-import { colyseusUrl } from '../lib/apiBase';
-import { devwarn } from '../lib/devlog';
 import {
   connectToRoom,
   wireRoomLifecycle,

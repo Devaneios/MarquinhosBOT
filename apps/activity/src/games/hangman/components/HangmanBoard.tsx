@@ -1,3 +1,10 @@
+import { GameHeader } from '@/components/game-shell';
+import { colyseusUrl } from '@/lib/apiBase';
+import type { WsSession } from '@/realtime/gameSession';
+import {
+  useColyseusRoom,
+  type ActivityMessage,
+} from '@/realtime/useColyseusRoom';
 import {
   serverMessageSchema,
   type HangmanClientMessage,
@@ -7,13 +14,6 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { GameHeader } from '../../../components/game-shell/index';
-import { colyseusUrl } from '../../../lib/apiBase';
-import type { WsSession } from '../../../realtime/gameSession';
-import {
-  useColyseusRoom,
-  type ActivityMessage,
-} from '../../../realtime/useColyseusRoom';
 import { HangmanCanvas } from './HangmanCanvas';
 
 export function HangmanBoard({ session }: { session: WsSession }) {

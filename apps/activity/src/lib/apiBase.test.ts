@@ -20,7 +20,7 @@ describe('colyseusUrl', () => {
 
   it('returns the Discord proxy endpoint when inside the proxy', async () => {
     setLocation('abc123.discordsays.com');
-    const { colyseusUrl } = await import(`./apiBase?discord-${Date.now()}`);
+    const { colyseusUrl } = await import(`./apiBase.ts?discord-${Date.now()}`);
 
     expect(colyseusUrl()).toBe('wss://abc123.discordsays.com/.proxy/colyseus');
   });
@@ -28,7 +28,7 @@ describe('colyseusUrl', () => {
   it('returns the local API origin (ws-swapped) outside the proxy', async () => {
     setLocation('localhost');
     const { colyseusUrl, apiUrl } = await import(
-      `./apiBase?local-${Date.now()}`
+      `./apiBase.ts?local-${Date.now()}`
     );
 
     // apiUrl() already proves what apiOrigin() resolves to in this env

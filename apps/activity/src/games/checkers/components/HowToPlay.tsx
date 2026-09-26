@@ -1,5 +1,5 @@
+import { HowToPlayScreen } from '@/components/game-shell';
 import { useTranslation } from 'react-i18next';
-import { HowToPlayScreen } from '../../../components/game-shell/index';
 
 export function HowToPlay({ onBack }: { onBack: () => void }) {
   const { t } = useTranslation('checkers');

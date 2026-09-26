@@ -1,5 +1,5 @@
+import i18next from '@/i18n';
 import { describe, expect, it } from 'bun:test';
-import i18next from '../../../i18n/index';
 import { isKnownRuleset, presentationFor, seatLabel } from './presentation';
 
 const t = i18next.t.bind(i18next);

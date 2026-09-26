@@ -1,3 +1,4 @@
+import { cn } from '@/lib/cn';
 import {
   useEffect,
   useRef,
@@ -5,7 +6,6 @@ import {
   type CSSProperties,
   type KeyboardEvent,
 } from 'react';
-import { cn } from '../lib/cn';
 import { formatArgs, safeStringify } from './devConsoleFormat';
 
 const MAX_LOGS = 500;

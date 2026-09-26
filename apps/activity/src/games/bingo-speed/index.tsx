@@ -1,4 +1,4 @@
-import type { GameDescriptor } from '../GameDescriptor';
+import type { GameDescriptor } from '@/games/GameDescriptor';
 import { bingoSpeedRoutes } from './bingoSpeedRoutes';
 import { BingoSpeedRoomBoard } from './components/index';
 

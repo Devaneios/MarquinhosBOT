@@ -1,5 +1,5 @@
+import { cn } from '@/lib/cn';
 import { useTranslation } from 'react-i18next';
-import { cn } from '../../../lib/cn';
 import type { CurrentRowProps } from '../types';
 
 export function CurrentRow({

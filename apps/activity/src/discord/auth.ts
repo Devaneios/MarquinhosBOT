@@ -3,12 +3,12 @@
 // keeps running, independently of whether React's module graph ever finishes
 // evaluating or main.tsx ever manages to mount. React (useDiscordIdentity)
 // only ever reads a snapshot of this; it never triggers or drives it.
+import { tImperative } from '@/i18n/i18nImperative';
+import { apiBase } from '@/lib/apiBase';
+import { devinfo, devlog } from '@/lib/devlog';
+import { errorMessage } from '@/lib/http';
 import { fetchContract } from '@marquinhos/api-client/browser';
 import * as activityApi from '@marquinhos/contracts/http/routes/activity';
-import { tImperative } from '../i18n/i18nImperative';
-import { apiBase } from '../lib/apiBase';
-import { devinfo, devlog } from '../lib/devlog';
-import { errorMessage } from '../lib/http';
 import { discordSdk, isMock, resetDiscordSdk } from './sdk';
 
 export interface DiscordIdentity {

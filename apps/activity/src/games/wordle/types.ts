@@ -1,6 +1,6 @@
+import type { WsSession } from '@/realtime/gameSession';
 import type { LetterFeedback } from '@marquinhos/contracts/wordle';
 import type { KeyboardEvent } from 'react';
-import type { WsSession } from '../../realtime/gameSession';
 
 export type KeyState = LetterFeedback | 'unused';
 

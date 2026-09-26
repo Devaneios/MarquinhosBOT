@@ -1,3 +1,8 @@
+import { MenuAction, MenuPanel, MenuScreen } from '@/components/game-shell';
+import type { DiscordIdentity } from '@/discord/auth';
+import { apiBase } from '@/lib/apiBase';
+import { cn } from '@/lib/cn';
+import { errorMessage } from '@/lib/http';
 import { fetchContract } from '@marquinhos/api-client/browser';
 import * as activityApi from '@marquinhos/contracts/http/routes/activity';
 import {
@@ -10,15 +15,6 @@ import {
 } from '@marquinhos/contracts/http/routes/activity';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  MenuAction,
-  MenuPanel,
-  MenuScreen,
-} from '../../../components/game-shell/index';
-import type { DiscordIdentity } from '../../../discord/auth.ts';
-import { apiBase } from '../../../lib/apiBase';
-import { cn } from '../../../lib/cn';
-import { errorMessage } from '../../../lib/http';
 
 const tabBtnBase =
   'notch-4 cursor-pointer border px-4 py-2 font-pixel text-[10px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marquinhos-accent motion-safe:transition-colors';

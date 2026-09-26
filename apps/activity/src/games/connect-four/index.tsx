@@ -1,4 +1,4 @@
-import type { GameDescriptor } from '../GameDescriptor';
+import type { GameDescriptor } from '@/games/GameDescriptor';
 import { ConnectFourRoomBoard } from './components/index';
 import { connectFourRoutes } from './connectFourRoutes';
 

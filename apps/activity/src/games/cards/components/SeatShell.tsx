@@ -1,6 +1,6 @@
+import { cn } from '@/lib/cn';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { cn } from '../../../lib/cn';
 
 export function SeatShell({
   title,

@@ -1,4 +1,4 @@
-import type { GameDescriptor } from '../GameDescriptor';
+import type { GameDescriptor } from '@/games/GameDescriptor';
 import { RpsRoomBoard } from './components/index';
 import { rpsRoutes } from './rpsRoutes';
 

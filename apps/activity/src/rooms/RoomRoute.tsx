@@ -1,7 +1,7 @@
+import type { DiscordIdentity } from '@/discord/auth';
 import { isGameId } from '@marquinhos/contracts/activity/gameId';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import type { DiscordIdentity } from '../discord/auth.ts';
 import { RoomLobbyScreen, type RoomReadyInfo } from './RoomLobbyScreen';
 import { RoomView } from './RoomView';
 

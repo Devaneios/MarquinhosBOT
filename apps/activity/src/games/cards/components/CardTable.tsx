@@ -1,4 +1,18 @@
 import {
+  backChipClass,
+  ConnectingScreen,
+  ErrorScreen,
+  menuButtonPrimary,
+  menuButtonSecondary,
+} from '@/components/game-shell';
+import type { DiscordIdentity } from '@/discord/auth';
+import { colyseusUrl } from '@/lib/apiBase';
+import type { WsSession } from '@/realtime/gameSession';
+import {
+  useColyseusRoom,
+  type ActivityMessage,
+} from '@/realtime/useColyseusRoom';
+import {
   isHiddenCard,
   serverMessageSchema,
   type CardsClientMessage,
@@ -15,20 +29,6 @@ import {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import {
-  backChipClass,
-  ConnectingScreen,
-  ErrorScreen,
-  menuButtonPrimary,
-  menuButtonSecondary,
-} from '../../../components/game-shell/index';
-import type { DiscordIdentity } from '../../../discord/auth.ts';
-import { colyseusUrl } from '../../../lib/apiBase';
-import type { WsSession } from '../../../realtime/gameSession';
-import {
-  useColyseusRoom,
-  type ActivityMessage,
-} from '../../../realtime/useColyseusRoom';
 import { useCardTableSession } from '../hooks/useCardTableSession';
 import {
   moveLabel,

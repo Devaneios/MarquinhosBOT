@@ -1,4 +1,4 @@
-import type { GameDescriptor } from '../GameDescriptor';
+import type { GameDescriptor } from '@/games/GameDescriptor';
 import { TowerRoomBoard } from './components/index';
 import { towerRoutes } from './towerRoutes';
 

@@ -1,6 +1,6 @@
+import type { GameDescriptor } from '@/games/GameDescriptor';
+import { FEEDBACK_COLORS } from '@/games/wordle/constants';
 import { useTranslation } from 'react-i18next';
-import type { GameDescriptor } from '../games/GameDescriptor';
-import { FEEDBACK_COLORS } from '../games/wordle/constants';
 import { GamePreview } from './GamePreview';
 import { PlayGameLink } from './PlayGameLink';
 

@@ -1,13 +1,13 @@
+import { DevConsole } from '@/components/DevConsole';
+import { ConnectingScreen, ErrorScreen } from '@/components/game-shell';
+import { MinimizedOverlay } from '@/components/MinimizedOverlay';
+import { isMobilePlatform } from '@/discord/sdk';
+import { useDiscordIdentity } from '@/discord/useDiscordIdentity';
+import { useIsActivityMinimized } from '@/discord/useIsActivityMinimized';
+import { devlog } from '@/lib/devlog';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
-import { DevConsole } from './components/DevConsole';
-import { ConnectingScreen, ErrorScreen } from './components/game-shell/index';
-import { MinimizedOverlay } from './components/MinimizedOverlay';
-import { isMobilePlatform } from './discord/sdk';
-import { useDiscordIdentity } from './discord/useDiscordIdentity';
-import { useIsActivityMinimized } from './discord/useIsActivityMinimized';
-import { devlog } from './lib/devlog';
 import { AppRoutes } from './routes';
 
 function App() {

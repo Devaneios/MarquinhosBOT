@@ -1,22 +1,22 @@
 import {
+  GameHeader,
+  menuButtonPrimary,
+  menuButtonSecondary,
+} from '@/components/game-shell';
+import { colyseusUrl } from '@/lib/apiBase';
+import { devlog } from '@/lib/devlog';
+import type { WsSession } from '@/realtime/gameSession';
+import {
+  useColyseusRoom,
+  type ActivityMessage,
+} from '@/realtime/useColyseusRoom';
+import {
   serverMessageSchema,
   type BingoSpeedClientMessage,
 } from '@marquinhos/contracts/activity/games/bingoSpeed';
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  GameHeader,
-  menuButtonPrimary,
-  menuButtonSecondary,
-} from '../../../components/game-shell/index';
-import { colyseusUrl } from '../../../lib/apiBase';
-import { devlog } from '../../../lib/devlog';
-import type { WsSession } from '../../../realtime/gameSession';
-import {
-  useColyseusRoom,
-  type ActivityMessage,
-} from '../../../realtime/useColyseusRoom';
 import {
   applyBingoSpeedMessage,
   initialBingoSpeedView,

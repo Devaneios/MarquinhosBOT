@@ -1,10 +1,10 @@
+import type { DiscordIdentity } from '@/discord/auth';
+import { GAME_REGISTRY } from '@/games/registry';
+import { Hub } from '@/hub/Hub';
+import { useDeepLinkIntent } from '@/navigation/useDeepLinkIntent';
+import { RoomRoute } from '@/rooms/RoomRoute';
 import { Fragment } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import type { DiscordIdentity } from './discord/auth.ts';
-import { GAME_REGISTRY } from './games/registry';
-import { Hub } from './hub/Hub';
-import { useDeepLinkIntent } from './navigation/useDeepLinkIntent';
-import { RoomRoute } from './rooms/RoomRoute';
 
 export function AppRoutes({
   identity,

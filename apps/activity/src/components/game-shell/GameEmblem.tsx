@@ -1,6 +1,6 @@
+import { cn } from '@/lib/cn';
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { useTranslation } from 'react-i18next';
-import { cn } from '../../lib/cn';
 
 export interface GameEmblemProps {
   gameId: GameId;

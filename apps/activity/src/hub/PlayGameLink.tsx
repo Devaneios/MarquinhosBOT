@@ -1,7 +1,7 @@
+import { cn } from '@/lib/cn';
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { cn } from '../lib/cn';
 
 export function PlayGameLink({
   gameId,

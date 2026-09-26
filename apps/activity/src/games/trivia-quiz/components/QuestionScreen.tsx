@@ -1,6 +1,6 @@
+import { GameHeader } from '@/components/game-shell';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GameHeader } from '../../../components/game-shell/index';
 import type { TriviaQuizSessionState } from '../types';
 
 interface QuestionScreenProps {

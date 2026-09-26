@@ -1,10 +1,7 @@
+import type { DiscordIdentity } from '@/discord/auth';
+import { errorMessage, isAuthError } from '@/lib/http';
+import { fetchWsSessionToken, type WsSession } from '@/realtime/gameSession';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { DiscordIdentity } from '../../../discord/auth.ts';
-import { errorMessage, isAuthError } from '../../../lib/http';
-import {
-  fetchWsSessionToken,
-  type WsSession,
-} from '../../../realtime/gameSession';
 import type { GameMode } from '../types';
 
 const GAME_ID = 'connect-four';

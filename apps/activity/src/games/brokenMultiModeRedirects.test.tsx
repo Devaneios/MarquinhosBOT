@@ -35,7 +35,7 @@ describe('games with no mode selector redirect straight to the Rooms lobby', () 
   it('WordleRaceGame redirects to /rooms?create=wordle-race', async () => {
     captured.to = null;
     const { WordleRaceGame } = await import(
-      `./wordle-race/WordleRaceGame.tsx?${Math.random()}`
+      `@/games/wordle-race/WordleRaceGame.tsx?${Math.random()}`
     );
     render(<WordleRaceGame identity={identity} onAuthInvalid={() => {}} />);
     expect(captured.to as string | null).toBe('/rooms?create=wordle-race');
@@ -44,7 +44,7 @@ describe('games with no mode selector redirect straight to the Rooms lobby', () 
   it('HangmanGame redirects to /rooms?create=hangman', async () => {
     captured.to = null;
     const { HangmanGame } = await import(
-      `./hangman/HangmanGame.tsx?${Math.random()}`
+      `@/games/hangman/HangmanGame.tsx?${Math.random()}`
     );
     render(<HangmanGame identity={identity} onAuthInvalid={() => {}} />);
     expect(captured.to as string | null).toBe('/rooms?create=hangman');
@@ -53,7 +53,7 @@ describe('games with no mode selector redirect straight to the Rooms lobby', () 
   it('MinesweeperVersusGame redirects to /rooms?create=minesweeper-versus', async () => {
     captured.to = null;
     const { MinesweeperVersusGame } = await import(
-      `./minesweeper-versus/components/MinesweeperBoard.tsx?${Math.random()}`
+      `@/games/minesweeper-versus/components/MinesweeperBoard.tsx?${Math.random()}`
     );
     render(
       <MinesweeperVersusGame identity={identity} onAuthInvalid={() => {}} />,
@@ -66,7 +66,7 @@ describe('games with no mode selector redirect straight to the Rooms lobby', () 
   it('WordSearchRaceGame redirects to /rooms?create=word-search-race', async () => {
     captured.to = null;
     const { WordSearchRaceGame } = await import(
-      `./word-search-race/WordSearchRaceGame.tsx?${Math.random()}`
+      `@/games/word-search-race/WordSearchRaceGame.tsx?${Math.random()}`
     );
     render(<WordSearchRaceGame identity={identity} onAuthInvalid={() => {}} />);
     expect(captured.to as string | null).toBe('/rooms?create=word-search-race');
@@ -75,7 +75,7 @@ describe('games with no mode selector redirect straight to the Rooms lobby', () 
   it('BoggleGame redirects to /rooms?create=boggle-word-race', async () => {
     captured.to = null;
     const { BoggleGame } = await import(
-      `./boggle-word-race/BoggleGame.tsx?${Math.random()}`
+      `@/games/boggle-word-race/BoggleGame.tsx?${Math.random()}`
     );
     render(<BoggleGame identity={identity} onAuthInvalid={() => {}} />);
     expect(captured.to as string | null).toBe('/rooms?create=boggle-word-race');
@@ -84,7 +84,7 @@ describe('games with no mode selector redirect straight to the Rooms lobby', () 
   it('TriviaQuizGame redirects to /rooms?create=trivia-quiz', async () => {
     captured.to = null;
     const { TriviaQuizGame } = await import(
-      `./trivia-quiz/TriviaQuizGame.tsx?${Math.random()}`
+      `@/games/trivia-quiz/TriviaQuizGame.tsx?${Math.random()}`
     );
     render(<TriviaQuizGame identity={identity} onAuthInvalid={() => {}} />);
     expect(captured.to as string | null).toBe('/rooms?create=trivia-quiz');

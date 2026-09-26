@@ -1,3 +1,4 @@
+import { useRoomConnectionContext } from '@/realtime/RoomConnectionContext';
 import {
   serverMessageSchema,
   type WordChainClientMessage,
@@ -8,7 +9,6 @@ import {
 } from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRoomConnectionContext } from '../../../realtime/RoomConnectionContext';
 import {
   applyWordChainMessage,
   initialWordChainView,

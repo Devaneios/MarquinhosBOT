@@ -1,6 +1,6 @@
+import { RoomConnectionContext } from '@/realtime/RoomConnectionContext';
 import { act, render } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
-import { RoomConnectionContext } from '../../../realtime/RoomConnectionContext';
 
 type CanvasProps = { interactive: boolean; onDrop: (col: number) => void };
 

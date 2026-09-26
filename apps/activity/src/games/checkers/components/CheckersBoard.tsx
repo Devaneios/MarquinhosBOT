@@ -1,4 +1,16 @@
 import {
+  GameHeader,
+  menuButtonPrimary,
+  menuButtonSecondary,
+} from '@/components/game-shell';
+import { colyseusUrl } from '@/lib/apiBase';
+import { devlog } from '@/lib/devlog';
+import type { WsSession } from '@/realtime/gameSession';
+import {
+  useColyseusRoom,
+  type ActivityMessage,
+} from '@/realtime/useColyseusRoom';
+import {
   serverMessageSchema,
   type CheckersClientMessage,
   type Color,
@@ -6,18 +18,6 @@ import {
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  GameHeader,
-  menuButtonPrimary,
-  menuButtonSecondary,
-} from '../../../components/game-shell/index';
-import { colyseusUrl } from '../../../lib/apiBase';
-import { devlog } from '../../../lib/devlog';
-import type { WsSession } from '../../../realtime/gameSession';
-import {
-  useColyseusRoom,
-  type ActivityMessage,
-} from '../../../realtime/useColyseusRoom';
 import { applyCheckersMessage, initialCheckersView } from '../checkersMessages';
 import type { GameMode } from '../types';
 import { CheckersCanvas } from './CheckersCanvas';

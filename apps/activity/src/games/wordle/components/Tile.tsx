@@ -1,5 +1,5 @@
+import { cn } from '@/lib/cn';
 import type { LetterFeedback } from '@marquinhos/contracts/wordle';
-import { cn } from '../../../lib/cn';
 import { FEEDBACK_COLORS } from '../constants';
 
 export function Tile({

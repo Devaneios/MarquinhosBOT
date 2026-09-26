@@ -1,3 +1,4 @@
+import { RoomConnectionContext } from '@/realtime/RoomConnectionContext';
 import type { RoomState } from '@marquinhos/contracts/activity/room';
 import {
   act,
@@ -8,10 +9,9 @@ import {
 } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
 import React, { type ReactNode } from 'react';
-import { RoomConnectionContext } from '../realtime/RoomConnectionContext';
 import { RoomHeader } from './RoomHeader';
 
-mock.module('../discord/participants', () => ({
+mock.module('@/discord/participants', () => ({
   getParticipantDisplayNames: async () => ({}),
 }));
 

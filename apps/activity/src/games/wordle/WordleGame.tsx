@@ -1,9 +1,6 @@
+import { ConnectingScreen, ErrorScreen } from '@/components/game-shell';
+import type { DiscordIdentity } from '@/discord/auth';
 import { useNavigate } from 'react-router-dom';
-import {
-  ConnectingScreen,
-  ErrorScreen,
-} from '../../components/game-shell/index';
-import type { DiscordIdentity } from '../../discord/auth.ts';
 import { WordleBoard } from './components/index';
 import { useWordleSession } from './hooks/useWordleSession';
 import { useWordleUserConfig } from './hooks/useWordleUserConfig';

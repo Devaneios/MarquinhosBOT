@@ -1,7 +1,7 @@
+import type { DiscordIdentity } from '@/discord/auth';
+import { errorMessage, isAuthError } from '@/lib/http';
+import { fetchWsSessionToken } from '@/realtime/gameSession';
 import { useEffect, useEffectEvent, useState } from 'react';
-import type { DiscordIdentity } from '../../../discord/auth.ts';
-import { errorMessage, isAuthError } from '../../../lib/http';
-import { fetchWsSessionToken } from '../../../realtime/gameSession';
 import type { WordleSessionState } from '../types';
 
 export function useWordleSession(

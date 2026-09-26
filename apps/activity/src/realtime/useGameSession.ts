@@ -1,7 +1,7 @@
+import type { DiscordIdentity } from '@/discord/auth';
+import { errorMessage, isAuthError } from '@/lib/http';
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { useEffect, useEffectEvent, useState } from 'react';
-import type { DiscordIdentity } from '../discord/auth.ts';
-import { errorMessage, isAuthError } from '../lib/http';
 import { fetchWsSessionToken, type WsSession } from './gameSession';
 
 export type GameSessionState =

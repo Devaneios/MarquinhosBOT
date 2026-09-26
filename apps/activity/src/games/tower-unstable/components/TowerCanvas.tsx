@@ -1,21 +1,21 @@
 import {
+  GameHeader,
+  menuButtonPrimary,
+  menuButtonSecondary,
+} from '@/components/game-shell';
+import { colyseusUrl } from '@/lib/apiBase';
+import type { WsSession } from '@/realtime/gameSession';
+import {
+  useColyseusRoom,
+  type ActivityMessage,
+} from '@/realtime/useColyseusRoom';
+import {
   serverMessageSchema,
   type TowerClientMessage,
 } from '@marquinhos/contracts/activity/games/towerUnstable';
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  GameHeader,
-  menuButtonPrimary,
-  menuButtonSecondary,
-} from '../../../components/game-shell/index';
-import { colyseusUrl } from '../../../lib/apiBase';
-import type { WsSession } from '../../../realtime/gameSession';
-import {
-  useColyseusRoom,
-  type ActivityMessage,
-} from '../../../realtime/useColyseusRoom';
 import { applyTowerMessage, initialTowerView } from '../towerMessages';
 import { TowerBoardCanvas } from './TowerBoardCanvas';
 

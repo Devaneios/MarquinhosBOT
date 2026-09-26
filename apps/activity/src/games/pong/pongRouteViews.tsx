@@ -1,6 +1,6 @@
+import { GameMenu } from '@/components/game-shell';
+import type { DiscordIdentity } from '@/discord/auth';
 import { useNavigate } from 'react-router-dom';
-import { GameMenu } from '../../components/game-shell/index';
-import type { DiscordIdentity } from '../../discord/auth.ts';
 import { CompetitiveScreen } from './components/CompetitiveScreen';
 import { HowToPlay, SettingsScreen } from './components/index';
 import { usePongMenuContext } from './hooks/usePongMenuContext';

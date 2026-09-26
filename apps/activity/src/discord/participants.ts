@@ -1,4 +1,4 @@
-import { devwarn } from '../lib/devlog';
+import { devwarn } from '@/lib/devlog';
 import { discordSdk } from './sdk';
 
 // Best-effort map of userId -> display name for everyone currently connected

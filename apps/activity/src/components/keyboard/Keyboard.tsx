@@ -1,6 +1,6 @@
+import { cn } from '@/lib/cn';
 import { useEffect, useMemo, useRef } from 'react';
 import { SimpleKeyboard } from 'simple-keyboard';
-import { cn } from '../../lib/cn';
 import './keycap.css';
 import type { KeyboardKey, KeyboardKeyStyle, KeyboardProps } from './types';
 

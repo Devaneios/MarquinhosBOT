@@ -1,3 +1,5 @@
+import { MenuPanel, MenuScreen, Toggle } from '@/components/game-shell';
+import { cn } from '@/lib/cn';
 import {
   pongRulesetIdSchema,
   type BestOf,
@@ -6,12 +8,6 @@ import {
   type WinScore,
 } from '@marquinhos/contracts/activity/pong/types';
 import { useTranslation } from 'react-i18next';
-import {
-  MenuPanel,
-  MenuScreen,
-  Toggle,
-} from '../../../components/game-shell/index';
-import { cn } from '../../../lib/cn';
 
 const DIFFICULTIES: BotDifficulty[] = ['easy', 'normal', 'hard'];
 const WIN_SCORES: WinScore[] = [7, 10, 11, 15, 21];

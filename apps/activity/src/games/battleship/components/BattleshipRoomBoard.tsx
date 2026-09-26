@@ -1,3 +1,4 @@
+import { useRoomConnectionContext } from '@/realtime/RoomConnectionContext';
 import {
   SHIP_TYPES,
   serverMessageSchema,
@@ -14,7 +15,6 @@ import {
 } from '@marquinhos/domain/games/battleship/placement';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRoomConnectionContext } from '../../../realtime/RoomConnectionContext';
 import {
   applyBattleshipMessage,
   initialBattleshipView,

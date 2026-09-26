@@ -1,3 +1,15 @@
+import {
+  menuButtonPrimary,
+  menuButtonSecondary,
+} from '@/components/game-shell/menuButtons';
+import { colyseusUrl } from '@/lib/apiBase';
+import { cn } from '@/lib/cn';
+import { devinfo, devlog, devwarn } from '@/lib/devlog';
+import type { WsSession } from '@/realtime/gameSession';
+import {
+  useColyseusRoom,
+  type ActivityMessage,
+} from '@/realtime/useColyseusRoom';
 import type { Room } from '@colyseus/sdk';
 import {
   serverMessageSchema,
@@ -20,18 +32,6 @@ import {
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  menuButtonPrimary,
-  menuButtonSecondary,
-} from '../../../components/game-shell/menuButtons';
-import { colyseusUrl } from '../../../lib/apiBase';
-import { cn } from '../../../lib/cn';
-import { devinfo, devlog, devwarn } from '../../../lib/devlog';
-import type { WsSession } from '../../../realtime/gameSession';
-import {
-  useColyseusRoom,
-  type ActivityMessage,
-} from '../../../realtime/useColyseusRoom';
 import { LocalPaddlePredictor, PongSnapshotBuffer } from '../netcode';
 import type { Side } from '../pongTypes';
 import { attachPongInput } from './pongInput';

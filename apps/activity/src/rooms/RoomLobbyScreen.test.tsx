@@ -1,6 +1,6 @@
+import type { DiscordIdentity } from '@/discord/auth';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, mock } from 'bun:test';
-import type { DiscordIdentity } from '../discord/auth.ts';
 import type { RoomListing } from './roomApi';
 
 const identity: DiscordIdentity = {
@@ -44,7 +44,7 @@ function mockDeps(
     },
     { preconnect: originalFetch.preconnect },
   );
-  mock.module('../discord/participants', () => ({
+  mock.module('@/discord/participants', () => ({
     getParticipantDisplayNames: async () => overrides.participants ?? {},
   }));
 }

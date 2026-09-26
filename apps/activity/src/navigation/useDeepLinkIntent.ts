@@ -1,8 +1,8 @@
+import type { DiscordIdentity } from '@/discord/auth';
+import { GAME_REGISTRY } from '@/games/registry';
+import { devlog } from '@/lib/devlog';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { DiscordIdentity } from '../discord/auth.ts';
-import { GAME_REGISTRY } from '../games/registry';
-import { devlog } from '../lib/devlog';
 import { fetchDeepLinkIntent } from './deepLinkIntent';
 
 // Runs once per Activity session, right after Discord auth resolves: asks

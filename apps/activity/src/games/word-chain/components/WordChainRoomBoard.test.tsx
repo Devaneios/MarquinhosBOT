@@ -1,6 +1,6 @@
+import { RoomConnectionContext } from '@/realtime/RoomConnectionContext';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
-import { RoomConnectionContext } from '../../../realtime/RoomConnectionContext';
 import { WordChainRoomBoard } from './WordChainRoomBoard';
 
 function baseValue(

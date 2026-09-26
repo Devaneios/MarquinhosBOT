@@ -1,11 +1,11 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   GameEmblem,
   MenuAction,
   MenuPanel,
   MenuScreen as MenuShell,
-} from '../../../components/game-shell/index';
+} from '@/components/game-shell';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface MenuScreenProps {
   playerCount: number;

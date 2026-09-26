@@ -1,4 +1,4 @@
-import type { GameDescriptor } from '../GameDescriptor';
+import type { GameDescriptor } from '@/games/GameDescriptor';
 import { DominoesBlockRoomBoard } from './components/index';
 import { dominoesBlockRoutes } from './dominoesBlockRoutes';
 

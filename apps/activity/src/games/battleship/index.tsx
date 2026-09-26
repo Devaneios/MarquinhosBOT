@@ -1,4 +1,4 @@
-import type { GameDescriptor } from '../GameDescriptor';
+import type { GameDescriptor } from '@/games/GameDescriptor';
 import { battleshipRoutes } from './battleshipRoutes';
 import { BattleshipRoomBoard } from './components/index';
 

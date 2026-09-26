@@ -1,7 +1,7 @@
+import { apiBase } from '@/lib/apiBase';
 import { fetchContract } from '@marquinhos/api-client/browser';
 import * as wordle from '@marquinhos/contracts/http/routes/wordle';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
-import { apiBase } from '../../lib/apiBase';
 
 export async function getWordleUserConfig(
   accessToken: string,

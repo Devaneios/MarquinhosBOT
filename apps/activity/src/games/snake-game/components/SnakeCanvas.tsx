@@ -1,3 +1,15 @@
+import {
+  backChipClass,
+  menuButtonSecondary,
+} from '@/components/game-shell/menuButtons';
+import { colyseusUrl } from '@/lib/apiBase';
+import { cn } from '@/lib/cn';
+import { devlog } from '@/lib/devlog';
+import type { WsSession } from '@/realtime/gameSession';
+import {
+  useColyseusRoom,
+  type ActivityMessage,
+} from '@/realtime/useColyseusRoom';
 import type { Room } from '@colyseus/sdk';
 import {
   serverMessageSchema,
@@ -9,18 +21,6 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { Application, Graphics } from 'pixi.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  backChipClass,
-  menuButtonSecondary,
-} from '../../../components/game-shell/menuButtons';
-import { colyseusUrl } from '../../../lib/apiBase';
-import { cn } from '../../../lib/cn';
-import { devlog } from '../../../lib/devlog';
-import type { WsSession } from '../../../realtime/gameSession';
-import {
-  useColyseusRoom,
-  type ActivityMessage,
-} from '../../../realtime/useColyseusRoom';
 import type { SnakeMode } from '../hooks/useSnakeSession';
 import { applySnakeMessage, initialSnakeView } from '../snakeMessages';
 import {

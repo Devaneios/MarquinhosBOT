@@ -1,3 +1,5 @@
+import type { DiscordIdentity } from '@/discord/auth';
+import { apiBase } from '@/lib/apiBase';
 import { fetchContract } from '@marquinhos/api-client/browser';
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import type {
@@ -5,8 +7,6 @@ import type {
   RoomListing,
 } from '@marquinhos/contracts/http/routes/activity';
 import * as activityApi from '@marquinhos/contracts/http/routes/activity';
-import type { DiscordIdentity } from '../discord/auth.ts';
-import { apiBase } from '../lib/apiBase';
 
 export type { CreatedRoom, RoomListing };
 

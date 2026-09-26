@@ -1,6 +1,6 @@
+import { cn } from '@/lib/cn';
 import type { Card } from '@marquinhos/contracts/activity/games/cards';
 import { useTranslation } from 'react-i18next';
-import { cn } from '../../../lib/cn';
 
 const RED_SUITS = new Set(['♥', '♦', 'copas', 'ouros']);
 
