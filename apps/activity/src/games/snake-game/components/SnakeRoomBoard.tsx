@@ -1,5 +1,5 @@
-import { devlog } from '@/lib/devlog';
-import { useRoomConnectionContext } from '@/realtime/RoomConnectionContext';
+import { useRoomConnectionContext } from '@/platform/realtime/colyseus/RoomConnectionContext';
+import { devlog } from '@/shared/logging/devlog';
 import {
   serverMessageSchema,
   type SnakeClientMessage,

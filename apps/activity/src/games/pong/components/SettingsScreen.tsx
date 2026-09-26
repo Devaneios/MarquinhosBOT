@@ -1,5 +1,5 @@
-import { MenuPanel, MenuScreen, Toggle } from '@/components/game-shell';
-import { cn } from '@/lib/cn';
+import { MenuPanel, MenuScreen, Toggle } from '@/games/shared/shell';
+import { cn } from '@/shared/utils/cn';
 import {
   pongRulesetIdSchema,
   type BestOf,

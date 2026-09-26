@@ -1,6 +1,6 @@
-import { backChipClass, GameHeader } from '@/components/game-shell';
-import { Keyboard } from '@/components/keyboard';
-import type { WsSession } from '@/realtime/gameSession';
+import { Keyboard } from '@/games/shared/keyboard';
+import type { WsSession } from '@/games/shared/session/gameSession';
+import { backChipClass, GameHeader } from '@/games/shared/shell';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

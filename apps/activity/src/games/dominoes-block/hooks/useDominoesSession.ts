@@ -1,5 +1,5 @@
-import type { DiscordIdentity } from '@/discord/auth';
-import { useGameSession } from '@/realtime/useGameSession';
+import { useGameSession } from '@/games/shared/session/useGameSession';
+import type { DiscordIdentity } from '@/platform/discord/auth';
 
 export function useDominoesSession(
   identity: DiscordIdentity,

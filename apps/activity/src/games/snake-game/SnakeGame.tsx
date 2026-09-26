@@ -1,9 +1,5 @@
-import {
-  ConnectingScreen,
-  ErrorScreen,
-  GameMenu,
-} from '@/components/game-shell';
-import type { DiscordIdentity } from '@/discord/auth';
+import { ConnectingScreen, ErrorScreen, GameMenu } from '@/games/shared/shell';
+import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useNavigate } from 'react-router-dom';
 import { SnakeCanvas } from './components/index';
 import { useSnakeSession } from './hooks/useSnakeSession';

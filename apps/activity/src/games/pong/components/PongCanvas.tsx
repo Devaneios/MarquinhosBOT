@@ -1,15 +1,13 @@
+import type { WsSession } from '@/games/shared/session/gameSession';
 import {
   menuButtonPrimary,
   menuButtonSecondary,
-} from '@/components/game-shell/menuButtons';
-import { colyseusUrl } from '@/lib/apiBase';
-import { cn } from '@/lib/cn';
-import { devinfo, devlog, devwarn } from '@/lib/devlog';
-import type { WsSession } from '@/realtime/gameSession';
-import {
-  useColyseusRoom,
-  type ActivityMessage,
-} from '@/realtime/useColyseusRoom';
+} from '@/games/shared/shell/menu/menuButtons';
+import { colyseusUrl } from '@/platform/api/apiBase';
+import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
+import { useColyseusRoom } from '@/platform/realtime/colyseus/useColyseusRoom';
+import { devinfo, devlog, devwarn } from '@/shared/logging/devlog';
+import { cn } from '@/shared/utils/cn';
 import type { Room } from '@colyseus/sdk';
 import {
   serverMessageSchema,

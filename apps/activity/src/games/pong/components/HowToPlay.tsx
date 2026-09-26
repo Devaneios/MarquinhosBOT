@@ -1,4 +1,4 @@
-import { HowToPlayScreen } from '@/components/game-shell';
+import { HowToPlayScreen } from '@/games/shared/shell';
 import { useTranslation } from 'react-i18next';
 
 const key =

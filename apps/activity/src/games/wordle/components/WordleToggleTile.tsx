@@ -1,4 +1,4 @@
-import { cn } from '@/lib/cn';
+import { cn } from '@/shared/utils/cn';
 import { FEEDBACK_COLORS } from '../constants';
 
 export function WordleToggleTile({

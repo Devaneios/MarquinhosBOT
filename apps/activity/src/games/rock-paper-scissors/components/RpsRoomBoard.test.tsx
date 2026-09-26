@@ -1,5 +1,5 @@
 import '@/i18n';
-import { RoomConnectionContext } from '@/realtime/RoomConnectionContext';
+import { RoomConnectionContext } from '@/platform/realtime/colyseus/RoomConnectionContext';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
 import { RpsRoomBoard } from './RpsRoomBoard';

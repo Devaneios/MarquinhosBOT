@@ -5,13 +5,11 @@ import {
   GameHeader,
   menuButtonPrimary,
   menuButtonSecondary,
-} from '@/components/game-shell';
-import type { DiscordIdentity } from '@/discord/auth';
-import { colyseusUrl } from '@/lib/apiBase';
-import {
-  useColyseusRoom,
-  type ActivityMessage,
-} from '@/realtime/useColyseusRoom';
+} from '@/games/shared/shell';
+import { colyseusUrl } from '@/platform/api/apiBase';
+import type { DiscordIdentity } from '@/platform/discord/auth';
+import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
+import { useColyseusRoom } from '@/platform/realtime/colyseus/useColyseusRoom';
 import {
   serverMessageSchema,
   type ConnectFourClientMessage,
@@ -35,7 +33,7 @@ export function ConnectFourBoard({
   mode,
   onBackToMenu,
 }: {
-  session: import('@/realtime/gameSession').WsSession;
+  session: import('@/games/shared/session/gameSession').WsSession;
   mode: 'single' | 'multi';
   onBackToMenu: () => void;
 }) {

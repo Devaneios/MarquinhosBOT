@@ -1,6 +1,9 @@
-import type { DiscordIdentity } from '@/discord/auth';
-import { errorMessage, isAuthError } from '@/lib/http';
-import { fetchWsSessionToken, type WsSession } from '@/realtime/gameSession';
+import {
+  fetchWsSessionToken,
+  type WsSession,
+} from '@/games/shared/session/gameSession';
+import { errorMessage, isAuthError } from '@/platform/api/http';
+import type { DiscordIdentity } from '@/platform/discord/auth';
 import type { TicTacToeState } from '@marquinhos/contracts/activity/games/ticTacToe';
 import { useState } from 'react';
 import type { GameMode } from '../types';

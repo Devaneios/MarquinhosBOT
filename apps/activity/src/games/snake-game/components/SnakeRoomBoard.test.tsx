@@ -1,4 +1,4 @@
-import { RoomConnectionContext } from '@/realtime/RoomConnectionContext';
+import { RoomConnectionContext } from '@/platform/realtime/colyseus/RoomConnectionContext';
 import { act, render } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
 

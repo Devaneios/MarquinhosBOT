@@ -1,5 +1,5 @@
-import { GameMenu } from '@/components/game-shell';
-import type { DiscordIdentity } from '@/discord/auth';
+import { GameMenu } from '@/games/shared/shell';
+import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useNavigate } from 'react-router-dom';
 import { CompetitiveScreen } from './components/CompetitiveScreen';
 import { HowToPlay, SettingsScreen } from './components/index';

@@ -3,7 +3,7 @@ import {
   MenuAction,
   MenuPanel,
   MenuScreen as MenuShell,
-} from '@/components/game-shell';
+} from '@/games/shared/shell';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 

@@ -1,4 +1,4 @@
-import { cn } from '@/lib/cn';
+import { cn } from '@/shared/utils/cn';
 import { useTranslation } from 'react-i18next';
 
 interface WordChainBoardProps {

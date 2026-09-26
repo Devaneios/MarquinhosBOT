@@ -1,4 +1,4 @@
-import type { KeyboardKey, KeyboardKeyStyle } from '@/components/keyboard';
+import type { KeyboardKey, KeyboardKeyStyle } from '@/games/shared/keyboard';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import type { KeyState } from './types';
 

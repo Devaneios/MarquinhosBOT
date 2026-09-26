@@ -1,7 +1,10 @@
-import type { DiscordIdentity } from '@/discord/auth';
-import { devinfo, devlog, devwarn } from '@/lib/devlog';
-import { errorMessage, isAuthError } from '@/lib/http';
-import { fetchWsSessionToken, type WsSession } from '@/realtime/gameSession';
+import {
+  fetchWsSessionToken,
+  type WsSession,
+} from '@/games/shared/session/gameSession';
+import { errorMessage, isAuthError } from '@/platform/api/http';
+import type { DiscordIdentity } from '@/platform/discord/auth';
+import { devinfo, devlog, devwarn } from '@/shared/logging/devlog';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type SnakeMode = 'single' | 'multi';

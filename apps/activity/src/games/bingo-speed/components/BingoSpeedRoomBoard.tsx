@@ -1,4 +1,4 @@
-import { useRoomConnectionContext } from '@/realtime/RoomConnectionContext';
+import { useRoomConnectionContext } from '@/platform/realtime/colyseus/RoomConnectionContext';
 import {
   serverMessageSchema,
   type BingoSpeedClientMessage,

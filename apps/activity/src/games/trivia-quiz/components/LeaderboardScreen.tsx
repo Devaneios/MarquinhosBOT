@@ -1,4 +1,4 @@
-import { MenuAction, MenuPanel } from '@/components/game-shell';
+import { MenuAction, MenuPanel } from '@/games/shared/shell';
 import type { PlayerScore } from '@marquinhos/contracts/activity/games/triviaQuiz';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,5 +1,5 @@
-import { ConnectingScreen, ErrorScreen } from '@/components/game-shell';
-import type { DiscordIdentity } from '@/discord/auth';
+import { ConnectingScreen, ErrorScreen } from '@/games/shared/shell';
+import type { DiscordIdentity } from '@/platform/discord/auth';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { CheckersBoard } from './components/index';
 import type { CheckersMenuOutletContext } from './hooks/CheckersMenuFlow';

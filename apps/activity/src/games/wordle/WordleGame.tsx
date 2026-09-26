@@ -1,5 +1,5 @@
-import { ConnectingScreen, ErrorScreen } from '@/components/game-shell';
-import type { DiscordIdentity } from '@/discord/auth';
+import { ConnectingScreen, ErrorScreen } from '@/games/shared/shell';
+import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useNavigate } from 'react-router-dom';
 import { WordleBoard } from './components/index';
 import { useWordleSession } from './hooks/useWordleSession';

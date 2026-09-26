@@ -1,8 +1,8 @@
-import { MenuAction, MenuPanel, MenuScreen } from '@/components/game-shell';
-import type { DiscordIdentity } from '@/discord/auth';
-import { apiBase } from '@/lib/apiBase';
-import { cn } from '@/lib/cn';
-import { errorMessage } from '@/lib/http';
+import { MenuAction, MenuPanel, MenuScreen } from '@/games/shared/shell';
+import { apiBase } from '@/platform/api/apiBase';
+import { errorMessage } from '@/platform/api/http';
+import type { DiscordIdentity } from '@/platform/discord/auth';
+import { cn } from '@/shared/utils/cn';
 import { fetchContract } from '@marquinhos/api-client/browser';
 import * as activityApi from '@marquinhos/contracts/http/routes/activity';
 import {

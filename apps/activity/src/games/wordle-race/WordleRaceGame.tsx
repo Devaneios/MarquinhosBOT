@@ -1,4 +1,4 @@
-import type { DiscordIdentity } from '@/discord/auth';
+import type { DiscordIdentity } from '@/platform/discord/auth';
 import { Navigate } from 'react-router-dom';
 
 // This route used to connect directly in 'multi' mode via

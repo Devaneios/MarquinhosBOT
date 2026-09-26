@@ -1,4 +1,4 @@
-import { tImperative } from '@/i18n/i18nImperative';
+import { tImperative } from '@/i18n/imperative';
 import type { BingoCard } from '@marquinhos/contracts/activity/games/bingoSpeed';
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { useEffect, useEffectEvent, useRef } from 'react';

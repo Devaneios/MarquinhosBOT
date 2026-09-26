@@ -1,4 +1,4 @@
-import type { DiscordIdentity } from '@/discord/auth';
+import type { DiscordIdentity } from '@/platform/discord/auth';
 import { Route } from 'react-router-dom';
 import { CheckersGame } from './CheckersGame';
 import {

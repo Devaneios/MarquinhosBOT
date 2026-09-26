@@ -1,4 +1,4 @@
-import { GameMenu } from '@/components/game-shell';
+import { GameMenu } from '@/games/shared/shell';
 import { useNavigate } from 'react-router-dom';
 
 export function CardModeSelect() {

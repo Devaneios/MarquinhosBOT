@@ -1,10 +1,8 @@
-import { EndScreen, GameHeader } from '@/components/game-shell';
-import { colyseusUrl } from '@/lib/apiBase';
-import { cn } from '@/lib/cn';
-import {
-  useColyseusRoom,
-  type ActivityMessage,
-} from '@/realtime/useColyseusRoom';
+import { EndScreen, GameHeader } from '@/games/shared/shell';
+import { colyseusUrl } from '@/platform/api/apiBase';
+import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
+import { useColyseusRoom } from '@/platform/realtime/colyseus/useColyseusRoom';
+import { cn } from '@/shared/utils/cn';
 import {
   serverMessageSchema,
   type RpsClientMessage,

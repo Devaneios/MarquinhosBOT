@@ -1,4 +1,4 @@
-import type { WsSession } from '@/realtime/gameSession';
+import type { WsSession } from '@/games/shared/session/gameSession';
 import type { LetterFeedback } from '@marquinhos/contracts/wordle';
 import type { KeyboardEvent } from 'react';
 

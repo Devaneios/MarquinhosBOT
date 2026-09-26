@@ -1,4 +1,4 @@
-import { errorMessage, isAuthError } from '@/lib/http';
+import { errorMessage, isAuthError } from '@/platform/api/http';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import { useCallback, useEffect, useState } from 'react';
 import {

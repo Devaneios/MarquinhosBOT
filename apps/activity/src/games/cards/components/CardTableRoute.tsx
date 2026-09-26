@@ -1,4 +1,4 @@
-import type { DiscordIdentity } from '@/discord/auth';
+import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useParams } from 'react-router-dom';
 import { CardTable } from './index';
 

@@ -1,8 +1,4 @@
-import {
-  MenuPanel,
-  MenuScreen,
-  menuButtonPrimary,
-} from '@/components/game-shell';
+import { MenuPanel, MenuScreen, menuButtonPrimary } from '@/games/shared/shell';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

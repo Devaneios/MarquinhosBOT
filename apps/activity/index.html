@@ -219,14 +219,14 @@
       document order relative to the others, so these always run first
       regardless of what main.tsx or any bundler import-reordering does.
 
-      discord/auth.ts in particular must not be reached only via main.tsx's
+      platform/discord/auth.ts in particular must not be reached only via main.tsx's
       import graph: if that graph fails to evaluate (a broken module, a bad
       HMR update) the handshake still has to start and keep running on its
       own — React only ever reads its result, never triggers it.
     -->
-    <script type="module" src="/src/errorOverlay.ts"></script>
-    <script type="module" src="/src/discord/auth.ts"></script>
-    <script type="module" src="/src/removeMountOverlay.ts"></script>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/app/boot/errorOverlay.ts"></script>
+    <script type="module" src="/src/platform/discord/auth.ts"></script>
+    <script type="module" src="/src/app/boot/removeMountOverlay.ts"></script>
+    <script type="module" src="/src/app/main.tsx"></script>
   </body>
 </html>

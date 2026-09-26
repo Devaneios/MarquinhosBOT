@@ -1,4 +1,4 @@
-import { apiBase } from '@/lib/apiBase';
+import { apiBase } from '@/platform/api/apiBase';
 import { fetchContract } from '@marquinhos/api-client/browser';
 import * as wordle from '@marquinhos/contracts/http/routes/wordle';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';

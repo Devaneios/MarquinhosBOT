@@ -1,4 +1,4 @@
-import { GameHeader } from '@/components/game-shell';
+import { GameHeader } from '@/games/shared/shell';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TriviaQuizSessionState } from '../types';
