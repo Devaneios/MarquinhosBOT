@@ -16,9 +16,12 @@ import {
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { applyCheckersMessage, initialCheckersView } from '../checkersMessages';
+import { CheckersCanvas } from '../rendering/CheckersCanvas';
+import {
+  applyCheckersMessage,
+  initialCheckersView,
+} from '../session/checkersMessages';
 import type { GameMode } from '../types';
-import { CheckersCanvas } from './CheckersCanvas';
 
 const CHECKERS_GAME_ID = 'checkers';
 

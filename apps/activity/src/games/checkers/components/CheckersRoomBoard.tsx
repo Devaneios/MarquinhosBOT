@@ -5,8 +5,11 @@ import {
 } from '@marquinhos/contracts/activity/games/checkers';
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useState } from 'react';
-import { applyCheckersMessage, initialCheckersView } from '../checkersMessages';
-import { CheckersCanvas } from './CheckersCanvas';
+import { CheckersCanvas } from '../rendering/CheckersCanvas';
+import {
+  applyCheckersMessage,
+  initialCheckersView,
+} from '../session/checkersMessages';
 
 // Renders the Checkers board inside a multiplayer Room view — driven by
 // RoomConnectionContext instead of CheckersBoard's own useColyseusRoom call.

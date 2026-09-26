@@ -3,7 +3,7 @@ import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useNavigate } from 'react-router-dom';
 import { CheckersBoard } from './components/CheckersBoard';
 import { CheckersMenus } from './components/CheckersMenus';
-import { useCheckersSession } from './hooks/useCheckersSession';
+import { useCheckersSession } from './session/useCheckersSession';
 
 export function CheckersGame({
   identity,
