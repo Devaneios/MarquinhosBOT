@@ -1,37 +1,63 @@
 import { GAME_REGISTRY } from '@/games/registry';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import { devlog } from '@/shared/logging/devlog';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { fetchDeepLinkIntent } from './deepLinkIntent';
 
-// Runs once per Activity session, right after Discord auth resolves: asks
-// the API whether the bot recorded a deep-link intent (e.g. the "Jogar na
-// atividade" button on a Wordle win) before launching this Activity, and if
-// so, jumps straight into that game instead of leaving the player on the Hub.
-export function useDeepLinkIntent(identity: DiscordIdentity): void {
-  const navigate = useNavigate();
+const DEEP_LINK_TIMEOUT_MS = 3_000;
+
+// Runs once per auth attempt, right after Discord auth resolves: asks the
+// API whether the bot recorded a deep-link intent (e.g. the "Jogar na
+// atividade" button on a Wordle win) before launching this Activity, and
+// resolves the route the router should first mount on — so the player lands
+// straight in that game instead of flashing the Hub first.
+export function useDeepLinkIntent(
+  identity: DiscordIdentity | null,
+): string | null {
+  const [resolved, setResolved] = useState<{
+    identity: DiscordIdentity;
+    path: string;
+  } | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    if (!identity) return;
+    let settled = false;
+
+    const settle = (path: string) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      setResolved({ identity, path });
+    };
+
+    // Non-fatal: worst case the player lands on the Hub.
+    const timeoutId = setTimeout(() => {
+      devlog('[deep-link] claim timed out');
+      settle('/');
+    }, DEEP_LINK_TIMEOUT_MS);
 
     fetchDeepLinkIntent(identity)
       .then(({ game }) => {
-        if (cancelled || !game) return;
-        if (!GAME_REGISTRY.some((descriptor) => descriptor.id === game)) return;
+        if (
+          !game ||
+          !GAME_REGISTRY.some((descriptor) => descriptor.id === game)
+        ) {
+          settle('/');
+          return;
+        }
         devlog('[deep-link] navigating to', game);
-        navigate(`/games/${game}`, { replace: true });
+        settle(`/games/${game}`);
       })
       .catch((err) => {
-        // Non-fatal: worst case the player stays on the Hub.
         devlog('[deep-link] failed to claim intent', err);
+        settle('/');
       });
 
     return () => {
-      cancelled = true;
+      settled = true;
+      clearTimeout(timeoutId);
     };
-    // Only re-run if the identity's userId/guildId actually changes (i.e. a
-    // reauth), not on every re-render of the consuming component.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [identity.userId, identity.guildId]);
+  }, [identity]);
+
+  return resolved && resolved.identity === identity ? resolved.path : null;
 }

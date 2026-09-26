@@ -1,7 +1,6 @@
 import type { DiscordIdentity } from '@/platform/discord/auth';
-import { render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'bun:test';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, jest } from 'bun:test';
 import { useDeepLinkIntent } from './useDeepLinkIntent';
 
 const identity: DiscordIdentity = {
@@ -11,25 +10,32 @@ const identity: DiscordIdentity = {
   accessToken: 'acc-1',
 };
 
-function Probe() {
-  useDeepLinkIntent(identity);
-  const location = useLocation();
-  return <div data-testid="path">{location.pathname}</div>;
+function Probe({ identity }: { identity: DiscordIdentity | null }) {
+  const path = useDeepLinkIntent(identity);
+  return <div data-testid="path">{String(path)}</div>;
 }
 
-function renderProbe() {
-  return render(
-    <MemoryRouter initialEntries={['/']}>
-      <Probe />
-    </MemoryRouter>,
-  );
+function renderedPath() {
+  return screen.getByTestId('path').textContent;
 }
 
 function mockClaimResponse(body: { game: string | null }) {
-  globalThis.fetch = (async () =>
-    new Response(JSON.stringify({ data: body }), {
-      status: 200,
+  const calls: unknown[] = [];
+  globalThis.fetch = (async (...args: unknown[]) => {
+    calls.push(args);
+    return new Response(JSON.stringify({ data: body }), { status: 200 });
+  }) as unknown as typeof fetch;
+  return calls;
+}
+
+function mockPendingClaim() {
+  let respond: (body: { game: string | null }) => void = () => {};
+  globalThis.fetch = (() =>
+    new Promise<Response>((resolve) => {
+      respond = (body) =>
+        resolve(new Response(JSON.stringify({ data: body }), { status: 200 }));
     })) as unknown as typeof fetch;
+  return { respond: (body: { game: string | null }) => respond(body) };
 }
 
 describe('useDeepLinkIntent', () => {
@@ -37,48 +43,90 @@ describe('useDeepLinkIntent', () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+    jest.useRealTimers();
   });
 
-  it('navigates to the claimed game route', async () => {
-    mockClaimResponse({ game: 'wordle' });
+  it('stays unresolved and skips the claim while there is no identity', async () => {
+    const calls = mockClaimResponse({ game: 'wordle' });
 
-    renderProbe();
-
-    await waitFor(() =>
-      expect(screen.getByTestId('path').textContent).toBe('/games/wordle'),
-    );
-  });
-
-  it('stays on the current route when there is no pending intent', async () => {
-    mockClaimResponse({ game: null });
-
-    renderProbe();
-
-    // Give the effect's promise a tick to resolve before asserting the
-    // negative — there's no visible state change to waitFor here.
+    render(<Probe identity={null} />);
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(screen.getByTestId('path').textContent).toBe('/');
+    expect(renderedPath()).toBe('null');
+    expect(calls).toHaveLength(0);
   });
 
-  it('stays on the current route when the fetch rejects', async () => {
+  it('stays unresolved while the claim is in flight', () => {
+    mockPendingClaim();
+
+    render(<Probe identity={identity} />);
+
+    expect(renderedPath()).toBe('null');
+  });
+
+  it('resolves to the claimed game route', async () => {
+    mockClaimResponse({ game: 'wordle' });
+
+    render(<Probe identity={identity} />);
+
+    await waitFor(() => expect(renderedPath()).toBe('/games/wordle'));
+  });
+
+  it('resolves to the hub when there is no pending intent', async () => {
+    mockClaimResponse({ game: null });
+
+    render(<Probe identity={identity} />);
+
+    await waitFor(() => expect(renderedPath()).toBe('/'));
+  });
+
+  it('resolves to the hub when the fetch rejects', async () => {
     globalThis.fetch = (async () =>
       new Response('', { status: 401 })) as unknown as typeof fetch;
 
-    renderProbe();
+    render(<Probe identity={identity} />);
 
-    await new Promise((resolve) => setTimeout(resolve, 0));
-
-    expect(screen.getByTestId('path').textContent).toBe('/');
+    await waitFor(() => expect(renderedPath()).toBe('/'));
   });
 
-  it('ignores a game id that is not in the game registry', async () => {
+  it('resolves to the hub for a game id that is not in the game registry', async () => {
     mockClaimResponse({ game: 'not-a-real-game' });
 
-    renderProbe();
+    render(<Probe identity={identity} />);
 
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await waitFor(() => expect(renderedPath()).toBe('/'));
+  });
 
-    expect(screen.getByTestId('path').textContent).toBe('/');
+  it('resolves to the hub when the claim times out, ignoring a late answer', async () => {
+    jest.useFakeTimers();
+    const claim = mockPendingClaim();
+
+    render(<Probe identity={identity} />);
+    act(() => {
+      jest.advanceTimersByTime(3_000);
+    });
+    expect(renderedPath()).toBe('/');
+
+    await act(async () => {
+      claim.respond({ game: 'wordle' });
+      await Promise.resolve();
+    });
+    expect(renderedPath()).toBe('/');
+  });
+
+  it('claims once per identity object, and again after a reauth', async () => {
+    const calls = mockClaimResponse({ game: 'wordle' });
+
+    const { rerender } = render(<Probe identity={identity} />);
+    await waitFor(() => expect(renderedPath()).toBe('/games/wordle'));
+
+    rerender(<Probe identity={identity} />);
+    expect(calls).toHaveLength(1);
+
+    mockClaimResponse({ game: null });
+    rerender(<Probe identity={{ ...identity }} />);
+    expect(renderedPath()).toBe('null');
+
+    await waitFor(() => expect(renderedPath()).toBe('/'));
   });
 });

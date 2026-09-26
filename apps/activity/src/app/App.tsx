@@ -8,10 +8,14 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
 import { DevConsole } from './dev/DevConsole';
+import { useDeepLinkIntent } from './navigation/useDeepLinkIntent';
 import { AppRoutes } from './router';
 
 function App() {
   const identity = useDiscordIdentity();
+  const initialPath = useDeepLinkIntent(
+    identity.status === 'ready' ? identity.identity : null,
+  );
   const isMinimized = useIsActivityMinimized();
   const { t } = useTranslation('common');
 
@@ -21,7 +25,8 @@ function App() {
 
   return (
     <div className="app-shell relative flex h-full w-full flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,176,0,0.12),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_20%),var(--color-marquinhos-bg)] text-marquinhos-text">
-      {identity.status === 'loading' && (
+      {(identity.status === 'loading' ||
+        (identity.status === 'ready' && initialPath === null)) && (
         <ConnectingScreen
           subtitleKey="connectingSubtitle"
           subtitleNs="common"
@@ -36,8 +41,8 @@ function App() {
         />
       )}
 
-      {identity.status === 'ready' && (
-        <MemoryRouter>
+      {identity.status === 'ready' && initialPath !== null && (
+        <MemoryRouter initialEntries={[initialPath]}>
           <AppRoutes
             identity={identity.identity}
             onAuthInvalid={identity.reauth}

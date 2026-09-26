@@ -5,7 +5,6 @@ import { ConnectingScreen } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import { Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { useDeepLinkIntent } from './navigation/useDeepLinkIntent';
 
 export function AppRoutes({
   identity,
@@ -14,8 +13,6 @@ export function AppRoutes({
   identity: DiscordIdentity;
   onAuthInvalid: () => void;
 }) {
-  useDeepLinkIntent(identity);
-
   return (
     <Routes>
       <Route index element={<HubScreen />} />
