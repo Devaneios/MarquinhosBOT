@@ -12,7 +12,7 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { HangmanCanvas } from './HangmanCanvas';
+import { HangmanCanvas } from '../rendering/HangmanCanvas';
 
 export function HangmanBoard({ session }: { session: WsSession }) {
   const navigate = useNavigate();

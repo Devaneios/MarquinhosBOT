@@ -27,7 +27,7 @@ import { FEEDBACK_COLORS, KB_LETTERS, KB_ROWS } from '../constants';
 import {
   applyWordleRaceMessage,
   initialWordleRaceView,
-} from '../wordleRaceMessages';
+} from '../session/wordleRaceMessages';
 
 function Tile({
   letter,

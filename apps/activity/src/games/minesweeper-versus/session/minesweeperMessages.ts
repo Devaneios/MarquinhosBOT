@@ -2,7 +2,7 @@ import type {
   BoardSnapshot,
   MinesweeperServerMessage,
 } from '@marquinhos/contracts/activity/games/minesweeperVersus';
-import { applyRevealToBoard } from './reveal';
+import { applyRevealToBoard } from '../reveal';
 
 export interface MinesweeperView {
   board: BoardSnapshot | null;

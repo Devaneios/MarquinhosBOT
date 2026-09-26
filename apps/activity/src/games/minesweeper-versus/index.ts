@@ -4,7 +4,7 @@ export const minesweeperVersusGame = {
   id: 'minesweeper-versus',
   status: 'PLAY',
   Game: lazyGame(
-    () => import('./components/MinesweeperBoard'),
+    () => import('./MinesweeperVersusGame'),
     'MinesweeperVersusGame',
   ),
 } satisfies GameModule;
