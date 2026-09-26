@@ -3,11 +3,12 @@ import { ConnectingScreen, ErrorScreen } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useRoomConnectionContext } from '@/platform/realtime/colyseus/RoomConnectionContext';
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
+import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RoomHeader } from '../components/RoomHeader';
 import { RoomConnectionProvider } from '../connection/RoomConnectionProvider';
 
-function RoomBoard({ identity }: { identity: DiscordIdentity }) {
+function RoomBoard() {
   const ctx = useRoomConnectionContext();
   const { t } = useTranslation('rooms');
 
@@ -27,15 +28,26 @@ function RoomBoard({ identity }: { identity: DiscordIdentity }) {
   }
   if (!ctx.roomState) return null; // connected, first state sync not yet received — one frame, no UI needed
 
-  const descriptor = GAME_REGISTRY.find((g) => g.id === ctx.roomState?.game);
-  if (!descriptor?.renderRoomBoard) {
+  const game = GAME_REGISTRY.find((g) => g.id === ctx.roomState?.game);
+  if (!game?.RoomBoard) {
     return (
       <div className="p-6 text-center text-sm text-marquinhos-text-dim">
         {t('spectatingNoLiveView')}
       </div>
     );
   }
-  return descriptor.renderRoomBoard({ identity });
+  return (
+    <Suspense
+      fallback={
+        <ConnectingScreen
+          subtitleKey="connectingSubtitle"
+          subtitleNs="common"
+        />
+      }
+    >
+      <game.RoomBoard />
+    </Suspense>
+  );
 }
 
 export function RoomView({
@@ -66,7 +78,7 @@ export function RoomView({
       <div className="flex h-full flex-col">
         <RoomHeader onLeave={onLeave} />
         <div className="flex-1 overflow-auto">
-          <RoomBoard identity={identity} />
+          <RoomBoard />
         </div>
       </div>
     </RoomConnectionProvider>

@@ -5,12 +5,10 @@ import {
   winScoreSchema,
   type BestOf,
   type BotDifficulty,
-  type GameMode,
   type PongRulesetId,
   type WinScore,
 } from '@marquinhos/contracts/activity/pong/types';
 import { useState } from 'react';
-import { Outlet, useOutletContext } from 'react-router-dom';
 import { z } from 'zod';
 
 const STORAGE_KEY = 'pong-menu-settings';
@@ -47,20 +45,7 @@ function saveStoredSettings(settings: StoredSettings) {
   }
 }
 
-export interface PongMenuOutletContext {
-  onSelectMode: (
-    mode: GameMode,
-    difficulty: BotDifficulty,
-    winScore: WinScore,
-    sound: boolean,
-    ruleset: PongRulesetId,
-    bestOf: BestOf,
-    ranked: boolean,
-  ) => void;
-  onExitToHub: () => void;
-}
-
-export interface PongMenuScreenContext extends PongMenuOutletContext {
+export interface PongMenuSettings {
   difficulty: BotDifficulty;
   setDifficulty: (difficulty: BotDifficulty) => void;
   winScore: WinScore;
@@ -75,9 +60,7 @@ export interface PongMenuScreenContext extends PongMenuOutletContext {
   setRanked: (ranked: boolean) => void;
 }
 
-export function PongMenuFlow() {
-  const { onSelectMode, onExitToHub } =
-    useOutletContext<PongMenuOutletContext>();
+export function usePongMenuSettings(): PongMenuSettings {
   const [stored] = useState(loadStoredSettings);
   const [difficulty, setDifficultyState] = useState<BotDifficulty>(
     stored.difficulty,
@@ -124,26 +107,18 @@ export function PongMenuFlow() {
     persist({ ranked: value });
   };
 
-  return (
-    <Outlet
-      context={
-        {
-          difficulty,
-          setDifficulty,
-          winScore,
-          setWinScore,
-          sound,
-          setSound,
-          ruleset,
-          setRuleset,
-          bestOf,
-          setBestOf,
-          ranked,
-          setRanked,
-          onSelectMode,
-          onExitToHub,
-        } satisfies PongMenuScreenContext
-      }
-    />
-  );
+  return {
+    difficulty,
+    setDifficulty,
+    winScore,
+    setWinScore,
+    sound,
+    setSound,
+    ruleset,
+    setRuleset,
+    bestOf,
+    setBestOf,
+    ranked,
+    setRanked,
+  };
 }

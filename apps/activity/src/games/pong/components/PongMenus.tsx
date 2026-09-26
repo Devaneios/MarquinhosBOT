@@ -1,13 +1,46 @@
 import { GameMenu } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
-import { useNavigate } from 'react-router-dom';
-import { CompetitiveScreen } from './components/CompetitiveScreen';
-import { HowToPlay, SettingsScreen } from './components/index';
-import { usePongMenuContext } from './hooks/usePongMenuContext';
+import { Route, Routes, useNavigate } from 'react-router-dom';
+import {
+  usePongMenuSettings,
+  type PongMenuSettings,
+} from '../flow/usePongMenuSettings';
+import type { usePongSession } from '../hooks/usePongSession';
+import { CompetitiveScreen } from './CompetitiveScreen';
+import { HowToPlay } from './HowToPlay';
+import { SettingsScreen } from './SettingsScreen';
 
-export function MainMenuRoute() {
+type SelectMode = ReturnType<typeof usePongSession>['selectMode'];
+
+export function PongMenus({
+  identity,
+  onSelectMode,
+  onExitToHub,
+}: {
+  identity: DiscordIdentity;
+  onSelectMode: SelectMode;
+  onExitToHub: () => void;
+}) {
+  const settings = usePongMenuSettings();
+  return (
+    <Routes>
+      <Route index element={<MainMenu onExitToHub={onExitToHub} />} />
+      <Route
+        path="mode"
+        element={<ModeMenu settings={settings} onSelectMode={onSelectMode} />}
+      />
+      <Route path="settings" element={<SettingsMenu settings={settings} />} />
+      <Route path="how-to" element={<HowToPlayMenu />} />
+      <Route
+        path="competitive"
+        element={<CompetitiveMenu identity={identity} />}
+      />
+    </Routes>
+  );
+}
+
+function MainMenu({ onExitToHub }: { onExitToHub: () => void }) {
   const navigate = useNavigate();
-  const { onExitToHub } = usePongMenuContext();
   return (
     <GameMenu
       gameId="pong"
@@ -47,10 +80,15 @@ export function MainMenuRoute() {
   );
 }
 
-export function ModeMenuRoute() {
+function ModeMenu({
+  settings,
+  onSelectMode,
+}: {
+  settings: PongMenuSettings;
+  onSelectMode: SelectMode;
+}) {
   const navigate = useNavigate();
-  const { difficulty, winScore, sound, ruleset, bestOf, ranked, onSelectMode } =
-    usePongMenuContext();
+  const { difficulty, winScore, sound, ruleset, bestOf, ranked } = settings;
   const start = (mode: 'single' | 'multi' | 'local') =>
     onSelectMode(mode, difficulty, winScore, sound, ruleset, bestOf, ranked);
 
@@ -86,7 +124,7 @@ export function ModeMenuRoute() {
   );
 }
 
-export function SettingsScreenRoute() {
+function SettingsMenu({ settings }: { settings: PongMenuSettings }) {
   const navigate = useNavigate();
   const {
     difficulty,
@@ -101,7 +139,7 @@ export function SettingsScreenRoute() {
     setBestOf,
     ranked,
     setRanked,
-  } = usePongMenuContext();
+  } = settings;
   return (
     <SettingsScreen
       difficulty={difficulty}
@@ -121,16 +159,12 @@ export function SettingsScreenRoute() {
   );
 }
 
-export function HowToPlayRoute() {
+function HowToPlayMenu() {
   const navigate = useNavigate();
   return <HowToPlay onBack={() => navigate('..')} />;
 }
 
-export function CompetitiveScreenRoute({
-  identity,
-}: {
-  identity: DiscordIdentity;
-}) {
+function CompetitiveMenu({ identity }: { identity: DiscordIdentity }) {
   const navigate = useNavigate();
   return (
     <CompetitiveScreen identity={identity} onBack={() => navigate('..')} />

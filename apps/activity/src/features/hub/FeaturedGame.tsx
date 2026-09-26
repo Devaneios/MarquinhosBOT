@@ -1,10 +1,10 @@
-import type { GameDescriptor } from '@/games/GameDescriptor';
+import type { GameModule } from '@/games/GameModule';
 import { FEEDBACK_COLORS } from '@/games/wordle/constants';
 import { useTranslation } from 'react-i18next';
 import { GamePreview } from './GamePreview';
 import { PlayGameLink } from './PlayGameLink';
 
-export function FeaturedGame({ game }: { game: GameDescriptor }) {
+export function FeaturedGame({ game }: { game: GameModule }) {
   const { t } = useTranslation(['common', 'games']);
 
   return (

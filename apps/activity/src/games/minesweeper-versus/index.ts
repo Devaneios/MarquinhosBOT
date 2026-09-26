@@ -1,8 +1,10 @@
-import type { GameDescriptor } from '@/games/GameDescriptor';
-import { minesweeperVersusRoutes } from './minesweeperVersusRoutes';
+import { lazyGame, type GameModule } from '@/games/GameModule';
 
-export const gameDescriptor: GameDescriptor = {
+export const minesweeperVersusGame = {
   id: 'minesweeper-versus',
   status: 'PLAY',
-  routes: minesweeperVersusRoutes,
-};
+  Game: lazyGame(
+    () => import('./components/MinesweeperBoard'),
+    'MinesweeperVersusGame',
+  ),
+} satisfies GameModule;

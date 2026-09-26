@@ -1,9 +1,9 @@
-import type { GameDescriptor } from '@/games/GameDescriptor';
+import type { GameModule } from '@/games/GameModule';
 import { useTranslation } from 'react-i18next';
 import { GamePreview } from './GamePreview';
 import { PlayGameLink } from './PlayGameLink';
 
-export function GameCard({ game }: { game: GameDescriptor }) {
+export function GameCard({ game }: { game: GameModule }) {
   const { t } = useTranslation('games');
 
   return (

@@ -1,8 +1,8 @@
 import { ConnectingScreen, ErrorScreen } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { PongCanvas } from './components/index';
-import type { PongMenuOutletContext } from './hooks/PongMenuFlow';
+import { PongMenus } from './components/PongMenus';
 import { usePongSession } from './hooks/usePongSession';
 
 export function PongGame({
@@ -25,13 +25,10 @@ export function PongGame({
 
   if (session.status === 'selecting-mode') {
     return (
-      <Outlet
-        context={
-          {
-            onSelectMode: selectMode,
-            onExitToHub: () => navigate('/'),
-          } satisfies PongMenuOutletContext
-        }
+      <PongMenus
+        identity={identity}
+        onSelectMode={selectMode}
+        onExitToHub={() => navigate('/')}
       />
     );
   }

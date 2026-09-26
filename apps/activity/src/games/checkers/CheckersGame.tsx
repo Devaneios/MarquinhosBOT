@@ -1,8 +1,8 @@
 import { ConnectingScreen, ErrorScreen } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { CheckersMenus } from './components/CheckersMenus';
 import { CheckersBoard } from './components/index';
-import type { CheckersMenuOutletContext } from './hooks/CheckersMenuFlow';
 import { useCheckersSession } from './hooks/useCheckersSession';
 
 export function CheckersGame({
@@ -25,13 +25,9 @@ export function CheckersGame({
 
   if (session.status === 'selecting-mode') {
     return (
-      <Outlet
-        context={
-          {
-            onSelectMode: selectMode,
-            onExitToHub: () => navigate('/'),
-          } satisfies CheckersMenuOutletContext
-        }
+      <CheckersMenus
+        onSelectMode={selectMode}
+        onExitToHub={() => navigate('/')}
       />
     );
   }

@@ -1,11 +1,26 @@
 import { GameMenu } from '@/games/shared/shell';
-import { useNavigate } from 'react-router-dom';
-import { HowToPlay } from './components/index';
-import { useCheckersMenuContext } from './hooks/useCheckersMenuContext';
+import { Route, Routes, useNavigate } from 'react-router-dom';
+import type { GameMode } from '../types';
+import { HowToPlay } from './HowToPlay';
 
-export function MainMenuRoute() {
+export function CheckersMenus({
+  onSelectMode,
+  onExitToHub,
+}: {
+  onSelectMode: (mode: GameMode) => void;
+  onExitToHub: () => void;
+}) {
+  return (
+    <Routes>
+      <Route index element={<MainMenu onExitToHub={onExitToHub} />} />
+      <Route path="mode" element={<ModeMenu onSelectMode={onSelectMode} />} />
+      <Route path="how-to" element={<HowToPlayMenu />} />
+    </Routes>
+  );
+}
+
+function MainMenu({ onExitToHub }: { onExitToHub: () => void }) {
   const navigate = useNavigate();
-  const { onExitToHub } = useCheckersMenuContext();
   return (
     <GameMenu
       gameId="checkers"
@@ -31,9 +46,12 @@ export function MainMenuRoute() {
   );
 }
 
-export function ModeMenuRoute() {
+function ModeMenu({
+  onSelectMode,
+}: {
+  onSelectMode: (mode: GameMode) => void;
+}) {
   const navigate = useNavigate();
-  const { onSelectMode } = useCheckersMenuContext();
   return (
     <GameMenu
       gameId="checkers"
@@ -59,7 +77,7 @@ export function ModeMenuRoute() {
   );
 }
 
-export function HowToPlayRoute() {
+function HowToPlayMenu() {
   const navigate = useNavigate();
   return <HowToPlay onBack={() => navigate('..')} />;
 }

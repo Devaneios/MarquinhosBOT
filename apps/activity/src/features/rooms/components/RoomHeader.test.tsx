@@ -1,3 +1,4 @@
+import '@/i18n';
 import { RoomConnectionContext } from '@/platform/realtime/colyseus/RoomConnectionContext';
 import type { RoomState } from '@marquinhos/contracts/activity/room';
 import {

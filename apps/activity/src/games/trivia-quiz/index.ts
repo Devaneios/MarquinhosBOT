@@ -1,8 +1,7 @@
-import type { GameDescriptor } from '@/games/GameDescriptor';
-import { triviaQuizRoutes } from './triviaQuizRoutes';
+import { lazyGame, type GameModule } from '@/games/GameModule';
 
-export const gameDescriptor: GameDescriptor = {
+export const triviaQuizGame = {
   id: 'trivia-quiz',
   status: 'PLAY',
-  routes: triviaQuizRoutes,
-};
+  Game: lazyGame(() => import('./TriviaQuizGame'), 'TriviaQuizGame'),
+} satisfies GameModule;
