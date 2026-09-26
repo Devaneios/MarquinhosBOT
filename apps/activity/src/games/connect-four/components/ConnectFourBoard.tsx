@@ -1,13 +1,10 @@
 import {
   backChipClass,
-  ConnectingScreen,
-  ErrorScreen,
   GameHeader,
   menuButtonPrimary,
   menuButtonSecondary,
 } from '@/games/shared/shell';
 import { colyseusUrl } from '@/platform/api/apiBase';
-import type { DiscordIdentity } from '@/platform/discord/auth';
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
 import { useColyseusRoom } from '@/platform/realtime/colyseus/useColyseusRoom';
 import {
@@ -18,13 +15,11 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { ConnectFourCanvas } from '../rendering/ConnectFourCanvas';
 import {
   applyConnectFourMessage,
   initialConnectFourView,
-} from '../connectFourMessages';
-import { useConnectFourSession } from '../hooks/useConnectFourSession';
-import { ConnectFourCanvas } from './ConnectFourCanvas';
-import { ConnectFourModeMenu } from './ConnectFourModeMenu';
+} from '../session/connectFourMessages';
 
 const GAME_ID = 'connect-four';
 
@@ -177,61 +172,5 @@ export function ConnectFourBoard({
         )}
       </div>
     </div>
-  );
-}
-
-export function ConnectFourGame({
-  identity,
-  onAuthInvalid,
-}: {
-  identity: DiscordIdentity;
-  onAuthInvalid: () => void;
-}) {
-  const navigate = useNavigate();
-  const { session, selectMode, backToMenu } = useConnectFourSession(
-    identity,
-    onAuthInvalid,
-  );
-
-  if (session.status === 'selecting-mode') {
-    return (
-      <ConnectFourModeMenu
-        onSelect={(mode) => {
-          if (mode === 'multi') {
-            navigate('/rooms?create=connect-four');
-            return;
-          }
-          selectMode(mode);
-        }}
-        onExitToHub={() => navigate('/')}
-      />
-    );
-  }
-
-  if (session.status === 'connecting') {
-    return (
-      <ConnectingScreen
-        subtitleKey="connectingSubtitle"
-        subtitleNs="connect-four"
-      />
-    );
-  }
-
-  if (session.status === 'error') {
-    return (
-      <ErrorScreen
-        message={session.error}
-        onRetryAuth={onAuthInvalid}
-        onBack={() => navigate('/')}
-      />
-    );
-  }
-
-  return (
-    <ConnectFourBoard
-      session={session.session}
-      mode={session.mode}
-      onBackToMenu={backToMenu}
-    />
   );
 }

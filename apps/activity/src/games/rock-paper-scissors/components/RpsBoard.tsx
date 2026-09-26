@@ -18,7 +18,7 @@ import {
   applyRpsMessage,
   initialRpsView,
   ROUND_RESULT_DISPLAY_MS,
-} from '../rpsMessages';
+} from '../session/rpsMessages';
 
 export function PickButton({
   pick,

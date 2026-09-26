@@ -15,7 +15,7 @@ const BLOCK_INELIGIBLE_COLOR = '#5a4b36';
 const GONE_COLOR = '#2a2b2d';
 const SHAKE_DURATION_MS = 260;
 
-export interface TowerBoardCanvasProps {
+export interface TowerCanvasProps {
   state: TowerState | null;
   userId: string;
   onPull: (level: number, position: number) => void;
@@ -25,12 +25,12 @@ export interface TowerBoardCanvasProps {
   role?: 'player' | 'spectator' | 'queued' | null;
 }
 
-export function TowerBoardCanvas({
+export function TowerCanvas({
   state,
   userId,
   onPull,
   role = null,
-}: TowerBoardCanvasProps) {
+}: TowerCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
   const getState = useEffectEvent(() => state);

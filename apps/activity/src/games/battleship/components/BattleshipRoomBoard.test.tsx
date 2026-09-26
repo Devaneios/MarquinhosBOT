@@ -12,7 +12,7 @@ let captured: CapturedCanvasProps[];
 
 function installCanvasMock() {
   captured = [];
-  mock.module('./BattleshipCanvas', () => ({
+  mock.module('../rendering/BattleshipCanvas', () => ({
     BattleshipCanvas: (props: CapturedCanvasProps) => {
       captured.push(props);
       return null;

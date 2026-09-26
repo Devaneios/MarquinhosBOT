@@ -19,8 +19,6 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { Application, Graphics } from 'pixi.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { SnakeMode } from '../hooks/useSnakeSession';
-import { applySnakeMessage, initialSnakeView } from '../snakeMessages';
 import {
   BG_COLOR,
   CELL_SIZE,
@@ -29,9 +27,11 @@ import {
   drawGrid,
   INTERP_MS,
   KEY_TO_DIRECTION,
-} from './snakeRendering';
+} from '../rendering/snakeRendering';
+import { applySnakeMessage, initialSnakeView } from '../session/snakeMessages';
+import type { SnakeMode } from '../session/useSnakeSession';
 
-export function SnakeCanvas({
+export function SnakeBoard({
   session,
   mode,
   onMainMenu,

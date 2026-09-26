@@ -12,7 +12,7 @@ import {
   applyRpsMessage,
   initialRpsView,
   ROUND_RESULT_DISPLAY_MS,
-} from '../rpsMessages';
+} from '../session/rpsMessages';
 import { PickButton } from './RpsBoard';
 
 // Renders Rock-Paper-Scissors inside a multiplayer Room view — driven by

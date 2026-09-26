@@ -3,7 +3,7 @@ import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DominoesBlockBoard } from './components/DominoesBlockBoard';
-import { useDominoesSession } from './hooks/useDominoesSession';
+import { useDominoesSession } from './session/useDominoesSession';
 
 export function DominoesBlockGame({
   identity,

@@ -1,8 +1,8 @@
 import { ConnectingScreen, ErrorScreen, GameMenu } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useNavigate } from 'react-router-dom';
-import { BingoSpeedCanvas } from './components/BingoSpeedCanvas';
-import { useBingoSpeedSession } from './hooks/useBingoSpeedSession';
+import { BingoSpeedBoard } from './components/BingoSpeedBoard';
+import { useBingoSpeedSession } from './session/useBingoSpeedSession';
 
 export function BingoSpeedGame({
   identity,
@@ -67,7 +67,7 @@ export function BingoSpeedGame({
   }
 
   return (
-    <BingoSpeedCanvas
+    <BingoSpeedBoard
       session={session.session}
       userId={identity.userId}
       onMainMenu={toMainMenu}

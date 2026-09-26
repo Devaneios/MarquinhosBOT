@@ -1,12 +1,6 @@
 import type { WsSession } from '@/games/shared/session/gameSession';
-import {
-  ConnectingScreen,
-  ErrorScreen,
-  GameHeader,
-  GameMenu,
-} from '@/games/shared/shell';
+import { GameHeader } from '@/games/shared/shell';
 import { colyseusUrl } from '@/platform/api/apiBase';
-import type { DiscordIdentity } from '@/platform/discord/auth';
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
 import { useColyseusRoom } from '@/platform/realtime/colyseus/useColyseusRoom';
 import {
@@ -25,12 +19,11 @@ import {
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { BattleshipCanvas } from '../rendering/BattleshipCanvas';
 import {
   applyBattleshipMessage,
   initialBattleshipView,
-} from '../battleshipMessages';
-import { useBattleshipSession } from '../hooks/useBattleshipSession';
-import { BattleshipCanvas } from './BattleshipCanvas';
+} from '../session/battleshipMessages';
 import { PlacementPanel } from './PlacementPanel';
 
 const GAME_ID = 'battleship';
@@ -199,62 +192,4 @@ export function BattleshipBoard({ session }: { session: WsSession }) {
       </main>
     </div>
   );
-}
-
-export function BattleshipGame({
-  identity,
-  onAuthInvalid,
-}: {
-  identity: DiscordIdentity;
-  onAuthInvalid: () => void;
-}) {
-  const navigate = useNavigate();
-  const [mode, setMode] = useState<'single' | 'multi' | null>(null);
-  const session = useBattleshipSession(identity, mode, onAuthInvalid);
-
-  if (session.status === 'selecting-mode') {
-    return (
-      <GameMenu
-        gameId="battleship"
-        onBack={() => navigate('/')}
-        actions={[
-          {
-            key: 'single',
-            labelKey: 'vsBot',
-            labelNs: 'common',
-            descriptionKey: 'vsBotDescription',
-            onSelect: () => setMode('single'),
-          },
-          {
-            key: 'multi',
-            labelKey: 'vsPlayer',
-            labelNs: 'common',
-            descriptionKey: 'vsPlayerDescription',
-            onSelect: () => navigate('/rooms?create=battleship'),
-          },
-        ]}
-      />
-    );
-  }
-
-  if (session.status === 'connecting') {
-    return (
-      <ConnectingScreen
-        subtitleKey="connectingSubtitle"
-        subtitleNs="battleship"
-      />
-    );
-  }
-
-  if (session.status === 'error') {
-    return (
-      <ErrorScreen
-        message={session.error}
-        onRetryAuth={onAuthInvalid}
-        onBack={() => navigate('/')}
-      />
-    );
-  }
-
-  return <BattleshipBoard session={session.session} />;
 }

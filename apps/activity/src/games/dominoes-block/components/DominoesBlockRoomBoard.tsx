@@ -9,8 +9,11 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { legalEndsFor } from '@marquinhos/domain/games/dominoes-block/legality';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { applyDominoesMessage, initialDominoesView } from '../dominoesMessages';
-import { DominoesBlockCanvas } from './DominoesBlockCanvas';
+import { DominoesBlockCanvas } from '../rendering/DominoesBlockCanvas';
+import {
+  applyDominoesMessage,
+  initialDominoesView,
+} from '../session/dominoesMessages';
 
 // Renders Dominoes inside a multiplayer Room view — driven by
 // RoomConnectionContext instead of DominoesBlockBoard's own useColyseusRoom

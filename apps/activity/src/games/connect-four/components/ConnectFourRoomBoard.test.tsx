@@ -6,7 +6,7 @@ type CanvasProps = { interactive: boolean; onDrop: (col: number) => void };
 
 const capturedProps: CanvasProps[] = [];
 
-mock.module('./ConnectFourCanvas', () => ({
+mock.module('../rendering/ConnectFourCanvas', () => ({
   ConnectFourCanvas: (props: CanvasProps) => {
     capturedProps.push({
       interactive: props.interactive,

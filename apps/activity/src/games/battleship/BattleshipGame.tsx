@@ -2,10 +2,10 @@ import { ConnectingScreen, ErrorScreen, GameMenu } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RpsBoard } from './components/RpsBoard';
-import { useRpsSession } from './session/useRpsSession';
+import { BattleshipBoard } from './components/BattleshipBoard';
+import { useBattleshipSession } from './session/useBattleshipSession';
 
-export function RpsGame({
+export function BattleshipGame({
   identity,
   onAuthInvalid,
 }: {
@@ -14,12 +14,12 @@ export function RpsGame({
 }) {
   const navigate = useNavigate();
   const [mode, setMode] = useState<'single' | 'multi' | null>(null);
-  const session = useRpsSession(identity, mode, onAuthInvalid);
+  const session = useBattleshipSession(identity, mode, onAuthInvalid);
 
   if (session.status === 'selecting-mode') {
     return (
       <GameMenu
-        gameId="rock-paper-scissors"
+        gameId="battleship"
         onBack={() => navigate('/')}
         actions={[
           {
@@ -34,7 +34,7 @@ export function RpsGame({
             labelKey: 'vsPlayer',
             labelNs: 'common',
             descriptionKey: 'vsPlayerDescription',
-            onSelect: () => navigate('/rooms?create=rock-paper-scissors'),
+            onSelect: () => navigate('/rooms?create=battleship'),
           },
         ]}
       />
@@ -45,7 +45,7 @@ export function RpsGame({
     return (
       <ConnectingScreen
         subtitleKey="connectingSubtitle"
-        subtitleNs="rock-paper-scissors"
+        subtitleNs="battleship"
       />
     );
   }
@@ -60,5 +60,5 @@ export function RpsGame({
     );
   }
 
-  return <RpsBoard session={session.session} />;
+  return <BattleshipBoard session={session.session} />;
 }

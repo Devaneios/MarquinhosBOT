@@ -14,8 +14,8 @@ import {
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { applyTowerMessage, initialTowerView } from '../towerMessages';
-import { TowerBoardCanvas } from './TowerBoardCanvas';
+import { TowerCanvas } from '../rendering/TowerCanvas';
+import { applyTowerMessage, initialTowerView } from '../session/towerMessages';
 
 function sendLeaveOnDisconnect(room: { send: (type: string) => void }) {
   room.send('leave');
@@ -27,7 +27,7 @@ interface Props {
   onMainMenu: () => void;
 }
 
-export function TowerCanvas({ session, userId, onMainMenu }: Props) {
+export function TowerBoard({ session, userId, onMainMenu }: Props) {
   const { t } = useTranslation(['tower-unstable', 'common']);
   const [view, setView] = useState(initialTowerView);
   const {
@@ -70,7 +70,7 @@ export function TowerCanvas({ session, userId, onMainMenu }: Props) {
         )}
 
         <div className="relative border border-marquinhos-border bg-marquinhos-bg">
-          <TowerBoardCanvas
+          <TowerCanvas
             state={state}
             userId={userId}
             onPull={(level, position) =>

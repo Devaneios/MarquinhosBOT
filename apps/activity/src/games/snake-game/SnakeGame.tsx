@@ -1,8 +1,8 @@
 import { ConnectingScreen, ErrorScreen, GameMenu } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useNavigate } from 'react-router-dom';
-import { SnakeCanvas } from './components/SnakeCanvas';
-import { useSnakeSession } from './hooks/useSnakeSession';
+import { SnakeBoard } from './components/SnakeBoard';
+import { useSnakeSession } from './session/useSnakeSession';
 
 export function SnakeGame({
   identity,
@@ -62,7 +62,7 @@ export function SnakeGame({
   }
 
   return (
-    <SnakeCanvas
+    <SnakeBoard
       session={session.session}
       mode={session.mode}
       onMainMenu={backToMenu}

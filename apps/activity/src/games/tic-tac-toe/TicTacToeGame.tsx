@@ -16,12 +16,12 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { TicTacToeCanvas } from './components/TicTacToeCanvas';
-import { useTicTacToeSession } from './hooks/useTicTacToeSession';
+import { TicTacToeCanvas } from './rendering/TicTacToeCanvas';
 import {
   applyTicTacToeMessage,
   initialTicTacToeView,
-} from './ticTacToeMessages';
+} from './session/ticTacToeMessages';
+import { useTicTacToeSession } from './session/useTicTacToeSession';
 
 export function TicTacToeGame({
   identity,

@@ -15,12 +15,12 @@ import { legalEndsFor } from '@marquinhos/domain/games/dominoes-block/legality';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { DominoesBlockCanvas } from '../rendering/DominoesBlockCanvas';
 import {
   applyDominoesMessage,
   initialDominoesView,
   isMatchOver,
-} from '../dominoesMessages';
-import { DominoesBlockCanvas } from './DominoesBlockCanvas';
+} from '../session/dominoesMessages';
 
 export function DominoesBlockBoard({
   session,

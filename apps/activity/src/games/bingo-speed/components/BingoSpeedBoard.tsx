@@ -15,13 +15,13 @@ import {
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BingoSpeedCanvas } from '../rendering/BingoSpeedCanvas';
 import {
   applyBingoSpeedMessage,
   initialBingoSpeedView,
-} from '../bingoSpeedMessages';
-import { BingoSpeedBoardCanvas } from './BingoSpeedBoardCanvas';
+} from '../session/bingoSpeedMessages';
 
-export function BingoSpeedCanvas({
+export function BingoSpeedBoard({
   session,
   userId,
   onMainMenu,
@@ -59,7 +59,7 @@ export function BingoSpeedCanvas({
 
       <main className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 overflow-y-auto p-4 sm:p-6">
         <div className="relative flex items-center justify-center overflow-hidden border border-marquinhos-border bg-marquinhos-bg">
-          <BingoSpeedBoardCanvas card={card} drawnNumbers={drawnNumbers} />
+          <BingoSpeedCanvas card={card} drawnNumbers={drawnNumbers} />
           {!cardLoaded && (
             <div className="font-pixel animate-pong-blink absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-marquinhos-text">
               {t('bingo-speed:loadingCard')}

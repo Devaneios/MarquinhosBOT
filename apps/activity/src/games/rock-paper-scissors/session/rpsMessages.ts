@@ -5,7 +5,7 @@ import type {
   RpsRoundState,
   RpsServerMessage,
 } from '@marquinhos/contracts/activity/games/rockPaperScissors';
-import type { GamePhase } from './types';
+import type { GamePhase } from '../types';
 
 export interface RpsView {
   playerId: RpsPlayerId | null;

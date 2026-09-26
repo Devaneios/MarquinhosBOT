@@ -2,8 +2,8 @@ import { RoomConnectionContext } from '@/platform/realtime/colyseus/RoomConnecti
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
 
-mock.module('./BingoSpeedBoardCanvas', () => ({
-  BingoSpeedBoardCanvas: () => null,
+mock.module('../rendering/BingoSpeedCanvas', () => ({
+  BingoSpeedCanvas: () => null,
   CANVAS_SIZE: 500,
 }));
 

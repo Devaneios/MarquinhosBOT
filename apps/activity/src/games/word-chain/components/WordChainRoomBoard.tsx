@@ -13,7 +13,7 @@ import {
   applyWordChainMessage,
   initialWordChainView,
   isServerReply,
-} from '../wordChainMessages';
+} from '../session/wordChainMessages';
 import { WordChainBoard } from './WordChainBoard';
 
 // Renders Word Chain inside a multiplayer Room view — driven by

@@ -2,8 +2,8 @@ import { ConnectingScreen, ErrorScreen, GameMenu } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TowerCanvas } from './components/TowerCanvas';
-import { useTowerSession } from './hooks/useTowerSession';
+import { TowerBoard } from './components/TowerBoard';
+import { useTowerSession } from './session/useTowerSession';
 
 export function TowerGame({
   identity,
@@ -65,7 +65,7 @@ export function TowerGame({
   }
 
   return (
-    <TowerCanvas
+    <TowerBoard
       session={session.session}
       userId={identity.userId}
       onMainMenu={toMainMenu}

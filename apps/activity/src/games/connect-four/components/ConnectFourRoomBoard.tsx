@@ -5,11 +5,11 @@ import {
 } from '@marquinhos/contracts/activity/games/connectFour';
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useState } from 'react';
+import { ConnectFourCanvas } from '../rendering/ConnectFourCanvas';
 import {
   applyConnectFourMessage,
   initialConnectFourView,
-} from '../connectFourMessages';
-import { ConnectFourCanvas } from './ConnectFourCanvas';
+} from '../session/connectFourMessages';
 
 // Renders the Connect Four board inside a multiplayer Room view — driven by
 // RoomConnectionContext instead of ConnectFourBoard's own useColyseusRoom

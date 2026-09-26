@@ -15,11 +15,11 @@ import {
 } from '@marquinhos/domain/games/battleship/placement';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BattleshipCanvas } from '../rendering/BattleshipCanvas';
 import {
   applyBattleshipMessage,
   initialBattleshipView,
-} from '../battleshipMessages';
-import { BattleshipCanvas } from './BattleshipCanvas';
+} from '../session/battleshipMessages';
 import { PlacementPanel } from './PlacementPanel';
 
 // Renders Battleship inside a multiplayer Room view — driven by

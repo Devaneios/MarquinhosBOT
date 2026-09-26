@@ -18,15 +18,15 @@ const CELL_BORDER = 0x666666;
 const NUMBER_FONT_SIZE = Math.max(16, CELL_SIZE / 2);
 const FREE_FONT_SIZE = Math.max(10, CELL_SIZE / 4);
 
-export interface BingoSpeedBoardCanvasProps {
+export interface BingoSpeedCanvasProps {
   card: BingoCard | null;
   drawnNumbers: Set<number>;
 }
 
-export function BingoSpeedBoardCanvas({
+export function BingoSpeedCanvas({
   card,
   drawnNumbers,
-}: BingoSpeedBoardCanvasProps) {
+}: BingoSpeedCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<Application | null>(null);
   const getBoard = useEffectEvent(() => ({ card, drawnNumbers }));

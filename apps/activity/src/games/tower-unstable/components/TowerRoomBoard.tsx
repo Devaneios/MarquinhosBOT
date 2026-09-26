@@ -6,12 +6,12 @@ import {
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { applyTowerMessage, initialTowerView } from '../towerMessages';
-import { TowerBoardCanvas } from './TowerBoardCanvas';
+import { TowerCanvas } from '../rendering/TowerCanvas';
+import { applyTowerMessage, initialTowerView } from '../session/towerMessages';
 
 // Renders Tower Unstable inside a multiplayer Room view — driven by
-// RoomConnectionContext instead of TowerCanvas's own useColyseusRoom call,
-// reusing the extracted TowerBoardCanvas presentational component.
+// RoomConnectionContext instead of TowerBoard's own useColyseusRoom call,
+// reusing the extracted TowerCanvas presentational component.
 export function TowerRoomBoard() {
   const ctx = useRoomConnectionContext();
   const { t } = useTranslation(['tower-unstable', 'common']);
@@ -31,7 +31,7 @@ export function TowerRoomBoard() {
   return (
     <div className="flex flex-1 flex-col items-center gap-4 p-4">
       <div className="relative border border-marquinhos-border bg-marquinhos-bg">
-        <TowerBoardCanvas
+        <TowerCanvas
           state={state}
           userId={userId}
           role={ctx?.role ?? null}

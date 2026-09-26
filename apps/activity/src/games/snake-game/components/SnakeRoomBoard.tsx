@@ -10,7 +10,6 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { Application, Graphics } from 'pixi.js';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { applySnakeMessage, initialSnakeView } from '../snakeMessages';
 import {
   BG_COLOR,
   CELL_SIZE,
@@ -19,16 +18,17 @@ import {
   drawGrid,
   INTERP_MS,
   KEY_TO_DIRECTION,
-} from './snakeRendering';
+} from '../rendering/snakeRendering';
+import { applySnakeMessage, initialSnakeView } from '../session/snakeMessages';
 
 // Renders Snake inside a multiplayer Room view — driven by
-// RoomConnectionContext instead of SnakeCanvas's own useColyseusRoom call.
-// Reuses SnakeCanvas's exported pure rendering helpers (drawGrid,
+// RoomConnectionContext instead of SnakeBoard's own useColyseusRoom call.
+// Reuses SnakeBoard's exported pure rendering helpers (drawGrid,
 // drawEntities, interpolation math) rather than duplicating them; the game
 // loop / keyboard-input wiring is reimplemented here against
 // ctx.subscribe/ctx.send, gated on `ctx.role` — unlike every other room
 // board's redundant-but-consistent gate, this one is load-bearing: the
-// standalone SnakeCanvas's keydown handler sends 'input' unconditionally,
+// standalone SnakeBoard's keydown handler sends 'input' unconditionally,
 // with no check that the local viewer is even a registered player.
 export function SnakeRoomBoard() {
   const ctx = useRoomConnectionContext();

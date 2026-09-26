@@ -6,17 +6,17 @@ import {
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BingoSpeedCanvas } from '../rendering/BingoSpeedCanvas';
 import {
   applyBingoSpeedMessage,
   initialBingoSpeedView,
-} from '../bingoSpeedMessages';
-import { BingoSpeedBoardCanvas } from './BingoSpeedBoardCanvas';
+} from '../session/bingoSpeedMessages';
 
 // Renders Bingo Speed inside a multiplayer Room view — driven by
-// RoomConnectionContext instead of BingoSpeedCanvas's own useColyseusRoom
-// call, reusing the extracted BingoSpeedBoardCanvas presentational
+// RoomConnectionContext instead of BingoSpeedBoard's own useColyseusRoom
+// call, reusing the extracted BingoSpeedCanvas presentational
 // component. The Claim Bingo button is gated on `ctx.role`, not just
-// `cardLoaded` the way the standalone BingoSpeedCanvas is: the server sends
+// `cardLoaded` the way the standalone BingoSpeedBoard is: the server sends
 // `init { card: null }` for a non-player, but the standalone code sets
 // `cardLoaded = true` unconditionally on any 'init', so a spectator there
 // would see an enabled Claim Bingo button — a real client-side gap this
@@ -48,7 +48,7 @@ export function BingoSpeedRoomBoard() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-5 p-4 sm:p-6">
       <div className="relative flex items-center justify-center overflow-hidden border border-marquinhos-border bg-marquinhos-bg">
-        <BingoSpeedBoardCanvas card={card} drawnNumbers={drawnNumbers} />
+        <BingoSpeedCanvas card={card} drawnNumbers={drawnNumbers} />
         {!cardLoaded && (
           <div className="font-pixel animate-pong-blink absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-marquinhos-text">
             {t('bingo-speed:loadingCard')}

@@ -22,12 +22,12 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { WordChainBoard } from './components/WordChainBoard';
-import { useWordChainSession } from './hooks/useWordChainSession';
+import { useWordChainSession } from './session/useWordChainSession';
 import {
   applyWordChainMessage,
   initialWordChainView,
   isServerReply,
-} from './wordChainMessages';
+} from './session/wordChainMessages';
 
 export function WordChainGame({
   identity,

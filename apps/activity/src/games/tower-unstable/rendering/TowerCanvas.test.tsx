@@ -38,7 +38,7 @@ function installPixiMock() {
         position: { set: () => {} },
       };
       // The real pixi ticker calls its registered fn every frame;
-      // TowerBoardCanvas only ever renders through that callback (no
+      // TowerCanvas only ever renders through that callback (no
       // synchronous initial render like some other games' canvases), so
       // this fake invokes it once immediately to simulate a single frame.
       ticker = {
@@ -56,7 +56,7 @@ function installPixiMock() {
   });
 }
 
-// Level index 0 is only "eligible" (per TowerBoardCanvas's `i < totalLevels
+// Level index 0 is only "eligible" (per TowerCanvas's `i < totalLevels
 // - 2` rule — the top two levels are never eligible, matching Jenga's real
 // rule) when there are at least 3 levels total, so this fixture needs 3.
 const stateOnMyTurn: TowerState = {
@@ -82,12 +82,10 @@ async function renderCanvas(props: {
   onPull: (level: number, position: number) => void;
 }) {
   installPixiMock();
-  const { TowerBoardCanvas } = await import(
-    `./TowerBoardCanvas.tsx?${Math.random()}`
-  );
+  const { TowerCanvas } = await import(`./TowerCanvas.tsx?${Math.random()}`);
   await act(async () => {
     render(
-      <TowerBoardCanvas
+      <TowerCanvas
         state={stateOnMyTurn}
         userId="user-a"
         role={props.role}
@@ -99,7 +97,7 @@ async function renderCanvas(props: {
   });
 }
 
-describe('TowerBoardCanvas pull gating', () => {
+describe('TowerCanvas pull gating', () => {
   it('does not pull a block when the viewer is a spectator, even on their nominal turn', async () => {
     const onPull = mock((_l: number, _p: number) => {});
     await renderCanvas({ role: 'spectator', onPull });

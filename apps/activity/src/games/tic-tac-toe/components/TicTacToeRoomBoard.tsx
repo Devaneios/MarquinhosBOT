@@ -5,11 +5,11 @@ import {
 } from '@marquinhos/contracts/activity/games/ticTacToe';
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useState } from 'react';
+import { TicTacToeCanvas } from '../rendering/TicTacToeCanvas';
 import {
   applyTicTacToeMessage,
   initialTicTacToeView,
-} from '../ticTacToeMessages';
-import { TicTacToeCanvas } from './TicTacToeCanvas';
+} from '../session/ticTacToeMessages';
 
 // Renders the Tic-Tac-Toe board inside a multiplayer Room view — driven by
 // RoomConnectionContext (the room's one shared connection) instead of
