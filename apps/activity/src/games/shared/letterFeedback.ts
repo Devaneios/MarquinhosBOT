@@ -1,5 +1,5 @@
+import type { KeyboardKeyStyle } from '@/games/shared/keyboard';
 import type { LetterFeedback } from '@marquinhos/contracts/wordle';
-import type { KeyboardKeyStyle } from './keyboard';
 
 export type KeyState = LetterFeedback | 'unused';
 

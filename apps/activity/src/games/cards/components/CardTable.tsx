@@ -27,7 +27,6 @@ import {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { useCardTableSession } from '../hooks/useCardTableSession';
 import {
   moveLabel,
   presentationFor,
@@ -36,6 +35,7 @@ import {
   type RulesetPresentation,
   type Translate,
 } from '../rulesets/presentation';
+import { useCardTableSession } from '../session/useCardTableSession';
 import { CardBack, CardFace } from './CardFace';
 import { PlayerBadge } from './PlayerBadge';
 import { SeatShell } from './SeatShell';
