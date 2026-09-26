@@ -10,6 +10,7 @@ export interface CurrentRowProps {
   letters: string[];
   activeIndex: number;
   wordLength: number;
+  orderOffset: number;
   shake: boolean;
   disabled: boolean;
   registerInput: (index: number, element: HTMLInputElement | null) => void;

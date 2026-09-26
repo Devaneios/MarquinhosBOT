@@ -1,5 +1,6 @@
 import { ConnectingScreen, ErrorScreen, GameMenu } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import { useNavigate } from 'react-router-dom';
 import { BingoSpeedBoard } from './components/BingoSpeedBoard';
 import { useBingoSpeedSession } from './session/useBingoSpeedSession';
@@ -12,6 +13,7 @@ export function BingoSpeedGame({
   onAuthInvalid: () => void;
 }) {
   const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const { session, selectMode, backToMenu } = useBingoSpeedSession(
     identity,
     onAuthInvalid,
@@ -26,7 +28,7 @@ export function BingoSpeedGame({
     return (
       <GameMenu
         gameId="bingo-speed"
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
         actions={[
           {
             key: 'single',

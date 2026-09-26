@@ -1,5 +1,6 @@
 import type { GameModule } from '@/games/GameModule';
 import { FEEDBACK_COLORS } from '@/games/shared/letterFeedback';
+import { ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GamePreview } from './GamePreview';
 import { PlayGameLink } from './PlayGameLink';
@@ -31,12 +32,14 @@ export function FeaturedGame({ game }: { game: GameModule }) {
         </div>
 
         <div className="space-y-4">
-          <h2
-            id={`featured-${game.id}`}
-            className="font-pixel text-xl leading-relaxed break-words lg:text-[28px]"
-          >
-            {t(`games:${game.id}.name`)}
-          </h2>
+          <ViewTransition name="game-title">
+            <h2
+              id={`featured-${game.id}`}
+              className="font-pixel text-xl leading-relaxed break-words lg:text-[28px]"
+            >
+              {t(`games:${game.id}.name`)}
+            </h2>
+          </ViewTransition>
           <p className="max-w-96 text-sm leading-7 text-marquinhos-text-dim sm:text-base">
             {t(`games:${game.id}.blurb`)}
           </p>
@@ -63,7 +66,9 @@ export function FeaturedGame({ game }: { game: GameModule }) {
       </div>
 
       <div className="flex min-w-0 items-center justify-center px-5 pb-6 sm:px-8 md:py-8 lg:p-10 [@media(max-height:600px)]:py-5">
-        <GamePreview gameId={game.id} />
+        <ViewTransition name="game-panel">
+          <GamePreview gameId={game.id} />
+        </ViewTransition>
       </div>
     </section>
   );

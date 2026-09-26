@@ -4,7 +4,7 @@ import { isMobilePlatform } from '@/platform/discord/sdk';
 import { useDiscordIdentity } from '@/platform/discord/useDiscordIdentity';
 import { useIsActivityMinimized } from '@/platform/discord/useIsActivityMinimized';
 import { devlog } from '@/shared/logging/devlog';
-import { useEffect } from 'react';
+import { useDeferredValue, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
 import { DevConsole } from './dev/DevConsole';
@@ -18,6 +18,14 @@ function App() {
   );
   const isMinimized = useIsActivityMinimized();
   const { t } = useTranslation('common');
+  const phase =
+    identity.status === 'error'
+      ? 'error'
+      : identity.status === 'ready' && initialPath !== null
+        ? 'ready'
+        : 'loading';
+  const deferredPhase = useDeferredValue(phase);
+  const shownPhase = phase === 'ready' ? deferredPhase : phase;
 
   useEffect(() => {
     devlog('[app] identity status', identity.status);
@@ -25,15 +33,14 @@ function App() {
 
   return (
     <div className="app-shell relative flex h-full w-full flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,176,0,0.12),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_20%),var(--color-marquinhos-bg)] text-marquinhos-text">
-      {(identity.status === 'loading' ||
-        (identity.status === 'ready' && initialPath === null)) && (
+      {shownPhase === 'loading' && (
         <ConnectingScreen
           subtitleKey="connectingSubtitle"
           subtitleNs="common"
         />
       )}
 
-      {identity.status === 'error' && (
+      {shownPhase === 'error' && identity.status === 'error' && (
         <ErrorScreen
           message={identity.error}
           onRetryAuth={identity.reauth}
@@ -41,14 +48,16 @@ function App() {
         />
       )}
 
-      {identity.status === 'ready' && initialPath !== null && (
-        <MemoryRouter initialEntries={[initialPath]}>
-          <AppRoutes
-            identity={identity.identity}
-            onAuthInvalid={identity.reauth}
-          />
-        </MemoryRouter>
-      )}
+      {shownPhase === 'ready' &&
+        identity.status === 'ready' &&
+        initialPath !== null && (
+          <MemoryRouter initialEntries={[initialPath]}>
+            <AppRoutes
+              identity={identity.identity}
+              onAuthInvalid={identity.reauth}
+            />
+          </MemoryRouter>
+        )}
 
       {import.meta.env.DEV && !isMobilePlatform() && <DevConsole />}
 

@@ -7,6 +7,7 @@ import {
 import { colyseusUrl } from '@/platform/api/apiBase';
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
 import { useColyseusRoom } from '@/platform/realtime/colyseus/useColyseusRoom';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import {
   serverMessageSchema,
   type ConnectFourClientMessage,
@@ -14,7 +15,7 @@ import {
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import {} from 'react-router-dom';
 import { ConnectFourCanvas } from '../rendering/ConnectFourCanvas';
 import {
   applyConnectFourMessage,
@@ -32,7 +33,7 @@ export function ConnectFourBoard({
   mode: 'single' | 'multi';
   onBackToMenu: () => void;
 }) {
-  const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const { t } = useTranslation(['connect-four', 'common']);
   const [view, setView] = useState(initialConnectFourView);
   const { mySide, state, restartStatus } = view;
@@ -80,7 +81,7 @@ export function ConnectFourBoard({
       <GameHeader
         titleKey="connect-four.name"
         titleNs="games"
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
         variant="minimal"
       />
 

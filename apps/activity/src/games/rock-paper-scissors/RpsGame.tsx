@@ -1,5 +1,6 @@
 import { ConnectingScreen, ErrorScreen, GameMenu } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RpsBoard } from './components/RpsBoard';
@@ -13,6 +14,7 @@ export function RpsGame({
   onAuthInvalid: () => void;
 }) {
   const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const [mode, setMode] = useState<'single' | 'multi' | null>(null);
   const session = useRpsSession(identity, mode, onAuthInvalid);
 
@@ -20,7 +22,7 @@ export function RpsGame({
     return (
       <GameMenu
         gameId="rock-paper-scissors"
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
         actions={[
           {
             key: 'single',
@@ -55,7 +57,7 @@ export function RpsGame({
       <ErrorScreen
         message={session.error}
         onRetryAuth={onAuthInvalid}
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
       />
     );
   }

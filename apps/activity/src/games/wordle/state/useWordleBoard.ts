@@ -2,6 +2,7 @@ import type { WsSession } from '@/games/shared/session/gameSession';
 import { colyseusUrl } from '@/platform/api/apiBase';
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
 import { useColyseusRoom } from '@/platform/realtime/colyseus/useColyseusRoom';
+import { prefersReducedMotion } from '@/shared/motion/transitions';
 import {
   serverMessageSchema,
   type WordleClientMessage,
@@ -13,13 +14,14 @@ import {
   normalizeKey,
 } from '@marquinhos/domain/games/wordle/keyboardState';
 import React, {
+  startTransition,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
-import { KB_LETTERS, MIN_KEY_PRESS_MS } from '../constants';
+import { KB_LETTERS, MIN_KEY_PRESS_MS, revealDurationMs } from '../constants';
 
 interface WordleBoardOptions {
   enabled: boolean;
@@ -39,6 +41,8 @@ export function useWordleBoard(
 ) {
   const [wordLength, setWordLength] = useState<number | null>(null);
   const [guesses, setGuesses] = useState<GuessRow[]>([]);
+  const [revealedCount, setRevealedCount] = useState(0);
+  const [celebrateRow, setCelebrateRow] = useState<number | null>(null);
   const [solved, setSolved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentLetters, setCurrentLetters] = useState<string[]>([]);
@@ -48,6 +52,7 @@ export function useWordleBoard(
   const gridRef = useRef<HTMLDivElement>(null);
   const shakeTimeout = useRef<number | undefined>(undefined);
   const errorTimeout = useRef<number | undefined>(undefined);
+  const revealTimeout = useRef<number | undefined>(undefined);
   const [pressedKeys, setPressedKeys] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
@@ -68,13 +73,18 @@ export function useWordleBoard(
       if (!message) return;
       switch (message.type) {
         case 'init':
-          setWordLength(message.payload.wordLength);
-          setGuesses(message.payload.guesses);
-          setSolved(message.payload.solved);
-          window.clearTimeout(errorTimeout.current);
-          setError(null);
-          setCurrentLetters(Array(message.payload.wordLength).fill(''));
-          setActiveIndex(0);
+          window.clearTimeout(revealTimeout.current);
+          startTransition(() => {
+            setWordLength(message.payload.wordLength);
+            setGuesses(message.payload.guesses);
+            setSolved(message.payload.solved);
+            setRevealedCount(message.payload.guesses.length);
+            setCelebrateRow(null);
+            window.clearTimeout(errorTimeout.current);
+            setError(null);
+            setCurrentLetters(Array(message.payload.wordLength).fill(''));
+            setActiveIndex(0);
+          });
           return;
         case 'guess_result':
           setGuesses(message.payload.guesses);
@@ -83,6 +93,24 @@ export function useWordleBoard(
           setError(null);
           setCurrentLetters((prev) => prev.map(() => ''));
           setActiveIndex(0);
+          window.clearTimeout(revealTimeout.current);
+          {
+            const {
+              guesses: nextGuesses,
+              solved: nextSolved,
+              wordLength: length,
+            } = message.payload;
+            const finishReveal = () => {
+              setRevealedCount(nextGuesses.length);
+              if (nextSolved) setCelebrateRow(nextGuesses.length - 1);
+            };
+            if (prefersReducedMotion()) finishReveal();
+            else
+              revealTimeout.current = window.setTimeout(
+                finishReveal,
+                revealDurationMs(length),
+              );
+          }
           return;
         case 'guess_error':
           setError(message.payload.message);
@@ -95,9 +123,11 @@ export function useWordleBoard(
   );
 
   const letterStates = useMemo(
-    () => buildLetterStates(guesses, KB_LETTERS),
-    [guesses],
+    () => buildLetterStates(guesses.slice(0, revealedCount), KB_LETTERS),
+    [guesses, revealedCount],
   );
+  const revealingRow =
+    guesses.length > revealedCount ? guesses.length - 1 : null;
 
   useEffect(() => {
     const element = gridRef.current;
@@ -108,6 +138,7 @@ export function useWordleBoard(
     return () => {
       window.clearTimeout(shakeTimeout.current);
       window.clearTimeout(errorTimeout.current);
+      window.clearTimeout(revealTimeout.current);
     };
   }, []);
 
@@ -123,7 +154,8 @@ export function useWordleBoard(
   );
 
   function typeLetter(letter: string) {
-    if (!enabled || solved || wordLength === null) return;
+    if (!enabled || solved || wordLength === null || revealingRow !== null)
+      return;
     window.clearTimeout(errorTimeout.current);
     setError(null);
     setCurrentLetters((prev) => {
@@ -135,7 +167,8 @@ export function useWordleBoard(
   }
 
   function backspace() {
-    if (!enabled || solved || wordLength === null) return;
+    if (!enabled || solved || wordLength === null || revealingRow !== null)
+      return;
     window.clearTimeout(errorTimeout.current);
     setError(null);
     const hasLetter = currentLetters[activeIndex] !== '';
@@ -178,7 +211,8 @@ export function useWordleBoard(
   }
 
   function submitGuess() {
-    if (!enabled || solved || wordLength === null) return;
+    if (!enabled || solved || wordLength === null || revealingRow !== null)
+      return;
     if (currentLetters.some((letter) => letter === '')) {
       triggerShake();
       return;
@@ -311,6 +345,8 @@ export function useWordleBoard(
   return {
     wordLength,
     guesses,
+    revealingRow,
+    celebrateRow,
     solved,
     error,
     currentLetters,

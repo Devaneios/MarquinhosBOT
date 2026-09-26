@@ -1,5 +1,6 @@
 import { ConnectingScreen, ErrorScreen, GameMenu } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
+import { transitionTo } from '@/shared/motion/transitions';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TowerBoard } from './components/TowerBoard';
@@ -17,7 +18,7 @@ export function TowerGame({
   const session = useTowerSession(identity, mode, onAuthInvalid);
 
   function toMainMenu() {
-    navigate('/', { replace: true });
+    transitionTo('nav-back', () => navigate('/', { replace: true }));
   }
 
   if (session.status === 'selecting-mode') {

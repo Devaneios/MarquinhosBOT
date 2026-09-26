@@ -10,6 +10,7 @@ import { colyseusUrl } from '@/platform/api/apiBase';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
 import { useColyseusRoom } from '@/platform/realtime/colyseus/useColyseusRoom';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import {
   isHiddenCard,
   serverMessageSchema,
@@ -26,7 +27,6 @@ import {
 } from '@marquinhos/contracts/activity/protocol';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import {
   moveLabel,
   presentationFor,
@@ -50,7 +50,7 @@ function CardTableBoard({
   session: WsSession;
   ruleset: string;
 }) {
-  const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const { t } = useTranslation(['cards', 'common']);
   const presentation = presentationFor(ruleset, t);
   const [view, setView] = useState<TableView | null>(null);
@@ -177,7 +177,7 @@ function CardTableBoard({
           <button
             type="button"
             className={backChipClass}
-            onClick={() => navigate('/')}
+            onClick={() => navigateHome()}
           >
             {t('common:back')}
           </button>
@@ -344,7 +344,7 @@ function CardTableBoard({
           restartStatus={restartStatus}
           restartRequested={restartRequested}
           onRestart={requestRestart}
-          onBack={() => navigate('/')}
+          onBack={() => navigateHome()}
         />
       )}
     </div>
@@ -488,7 +488,7 @@ export function CardTable({
   // route rather than being hardcoded, so a second ruleset needs no new screen.
   ruleset: string;
 }) {
-  const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const session = useCardTableSession(identity, ruleset, onAuthInvalid);
 
   if (session.status === 'connecting') {
@@ -502,7 +502,7 @@ export function CardTable({
       <ErrorScreen
         message={session.error}
         onRetryAuth={onAuthInvalid}
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
       />
     );
   }

@@ -1,8 +1,9 @@
 import { MenuAction, MenuPanel } from '@/games/shared/shell';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import type { PlayerScore } from '@marquinhos/contracts/activity/games/triviaQuiz';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import {} from 'react-router-dom';
 
 interface LeaderboardScreenProps {
   leaderboard: PlayerScore[];
@@ -11,7 +12,7 @@ interface LeaderboardScreenProps {
 export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
   leaderboard,
 }) => {
-  const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const { t } = useTranslation(['trivia-quiz', 'common']);
 
   return (
@@ -45,7 +46,7 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
         <MenuAction
           variant="primary"
           label={t('common:backToHub')}
-          onSelect={() => navigate('/')}
+          onSelect={() => navigateHome()}
         />
       </MenuPanel>
     </div>

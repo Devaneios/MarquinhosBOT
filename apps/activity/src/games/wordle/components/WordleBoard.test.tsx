@@ -2,12 +2,13 @@ import '@/i18n';
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, mock } from 'bun:test';
+import { afterEach, describe, expect, it, mock } from 'bun:test';
 import { MemoryRouter } from 'react-router-dom';
 
 let deliverMessage: (message: ActivityMessage) => void = () => {
   throw new Error('Wordle room is not connected');
 };
+let connectionState = 'connected';
 
 mock.module('@/platform/realtime/colyseus/useColyseusRoom', () => ({
   useColyseusRoom(
@@ -19,7 +20,7 @@ mock.module('@/platform/realtime/colyseus/useColyseusRoom', () => ({
     deliverMessage = onMessage;
     return {
       send: () => {},
-      connectionState: 'connected',
+      connectionState,
       role: null,
     };
   },
@@ -31,6 +32,31 @@ const keyboardConfig = {
   enableSpaceKey: true,
   enableArrowKeys: true,
 } satisfies WordleUserConfig;
+
+afterEach(() => {
+  connectionState = 'connected';
+});
+
+function renderBoard(WordleBoard: typeof import('./WordleBoard').WordleBoard) {
+  return render(
+    <MemoryRouter>
+      <WordleBoard
+        session={{ token: 'token-1', roomKey: 'wordle-user-1' }}
+        config={keyboardConfig}
+        onSaveConfig={async () => {}}
+      />
+    </MemoryRouter>,
+  );
+}
+
+function initializeBoard() {
+  act(() => {
+    deliverMessage({
+      type: 'init',
+      payload: { wordLength: 5, guesses: [], solved: false, attempts: 0 },
+    });
+  });
+}
 
 function findKey(container: HTMLElement, label: string): HTMLElement {
   const key = Array.from(container.querySelectorAll('.hg-button')).find(
@@ -74,5 +100,38 @@ describe('WordleBoard focus keyboard', () => {
         .getByRole('textbox', { name: /letra 5/i })
         .getAttribute('aria-label'),
     );
+  });
+});
+
+describe('WordleBoard screen transitions', () => {
+  it('keeps the connecting screen until the room sends the board', async () => {
+    const { WordleBoard } = await import(`./WordleBoard.tsx?${Math.random()}`);
+    renderBoard(WordleBoard);
+    expect(screen.getByText('INICIANDO…')).toBeTruthy();
+    expect(screen.queryByRole('textbox')).toBeNull();
+    initializeBoard();
+    expect(screen.getAllByRole('textbox')).toHaveLength(5);
+  });
+
+  it('shows a way back when the room fails before sending the board', async () => {
+    connectionState = 'error';
+    const { WordleBoard } = await import(`./WordleBoard.tsx?${Math.random()}`);
+    renderBoard(WordleBoard);
+    expect(screen.getByText(/conexão perdida/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /voltar/i })).toBeTruthy();
+  });
+
+  it('opens settings and returns to the board', async () => {
+    const { WordleBoard } = await import(`./WordleBoard.tsx?${Math.random()}`);
+    renderBoard(WordleBoard);
+    initializeBoard();
+    fireEvent.click(
+      screen.getByRole('button', { name: /abrir configurações/i }),
+    );
+    expect(
+      screen.getByRole('switch', { name: /inverter ações/i }),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /voltar/i }));
+    expect(screen.getAllByRole('textbox')).toHaveLength(5);
   });
 });

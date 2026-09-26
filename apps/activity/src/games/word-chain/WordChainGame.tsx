@@ -9,6 +9,7 @@ import { colyseusUrl } from '@/platform/api/apiBase';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
 import { useColyseusRoom } from '@/platform/realtime/colyseus/useColyseusRoom';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import { cn } from '@/shared/utils/cn';
 import {
   serverMessageSchema,
@@ -37,6 +38,7 @@ export function WordChainGame({
   onAuthInvalid: () => void;
 }) {
   const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const { t } = useTranslation(['word-chain', 'common']);
   const [mode, setMode] = useState<'single' | 'multi' | null>(null);
   const session = useWordChainSession(identity, mode, onAuthInvalid);
@@ -99,7 +101,7 @@ export function WordChainGame({
     return (
       <GameMenu
         gameId="word-chain"
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
         actions={[
           {
             key: 'single',
@@ -134,7 +136,7 @@ export function WordChainGame({
       <ErrorScreen
         message={session.error}
         onRetryAuth={onAuthInvalid}
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
       />
     );
   }
@@ -144,7 +146,7 @@ export function WordChainGame({
       <GameHeader
         titleKey="word-chain.name"
         titleNs="games"
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
       />
 
       <main className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 sm:p-6">
@@ -228,7 +230,7 @@ export function WordChainGame({
             <button
               type="button"
               className={menuButtonPrimary}
-              onClick={() => navigate('/')}
+              onClick={() => navigateHome()}
             >
               {t('common:backToHub')}
             </button>

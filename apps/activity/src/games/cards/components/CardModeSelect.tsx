@@ -1,13 +1,15 @@
 import { GameMenu } from '@/games/shared/shell';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import { useNavigate } from 'react-router-dom';
 
 export function CardModeSelect() {
   const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
 
   return (
     <GameMenu
       gameId="cards"
-      onBack={() => navigate('/')}
+      onBack={() => navigateHome()}
       actions={[
         {
           key: 'truco',

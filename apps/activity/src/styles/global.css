@@ -132,7 +132,7 @@
 /* Termo-specific toast animation — implementation detail of the
    Wordle/Termo screen, not a shared hub design token. */
 @theme {
-  --animate-termo-toast-in: termo-toast-in 180ms ease-out;
+  --animate-termo-toast-in: termo-toast-in 240ms ease-out;
 }
 
 @keyframes termo-toast-in {
@@ -330,3 +330,65 @@
 body {
   margin: 0;
 }
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 220ms;
+}
+
+::view-transition-group(game-title),
+::view-transition-group(game-panel) {
+  animation-duration: 360ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+html:active-view-transition-type(nav-forward)::view-transition-old(root) {
+  animation: 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both vt-out-left;
+}
+
+html:active-view-transition-type(nav-forward)::view-transition-new(root) {
+  animation: 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both vt-in-right;
+}
+
+html:active-view-transition-type(nav-back)::view-transition-old(root) {
+  animation: 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both vt-out-right;
+}
+
+html:active-view-transition-type(nav-back)::view-transition-new(root) {
+  animation: 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both vt-in-left;
+}
+
+@keyframes vt-out-left { to { opacity: 0; transform: translateX(-24px); } }
+@keyframes vt-in-right { from { opacity: 0; transform: translateX(24px); } }
+@keyframes vt-out-right { to { opacity: 0; transform: translateX(24px); } }
+@keyframes vt-in-left { from { opacity: 0; transform: translateX(-24px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+.termo-pop { animation: termo-pop 160ms ease-out; }
+.termo-flip { animation-name: termo-flip; animation-timing-function: ease-in-out; animation-fill-mode: both; }
+.termo-bounce { animation-name: termo-bounce; animation-timing-function: ease-out; animation-fill-mode: both; }
+.wordle-entering .termo-tile:not(.termo-flip):not(.termo-bounce):not(.termo-pop) { animation: termo-tile-in 340ms cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: calc(min(var(--order, 0), 12) * 35ms); }
+.wordle-entering .termo-keyboard .hg-row { animation: termo-kb-row-in 350ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.wordle-entering .termo-keyboard .hg-row:nth-child(1) { animation-delay: 150ms; }
+.wordle-entering .termo-keyboard .hg-row:nth-child(2) { animation-delay: 210ms; }
+.wordle-entering .termo-keyboard .hg-row:nth-child(3) { animation-delay: 270ms; }
+.wordle-entering .termo-progress { animation: termo-fade-in 260ms ease-out 240ms both; }
+
+@keyframes termo-pop { 50% { transform: scale(1.12); } }
+@keyframes termo-flip {
+  0%, 49.99% { background-color: transparent; color: var(--color-marquinhos-text); border-color: var(--color-marquinhos-border-hover); }
+  0% { transform: rotateX(0); }
+  50% { transform: rotateX(90deg); background-color: var(--tile-bg); color: var(--tile-fg); border-color: transparent; }
+  100% { transform: rotateX(0); background-color: var(--tile-bg); color: var(--tile-fg); border-color: transparent; }
+}
+@keyframes termo-bounce { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-14px); } 70% { transform: translateY(2px); } }
+@keyframes termo-tile-in { from { opacity: 0; transform: scale(0.6); } }
+@keyframes termo-kb-row-in { from { opacity: 0; transform: translateY(12px); } }
+@keyframes termo-fade-in { from { opacity: 0; } }

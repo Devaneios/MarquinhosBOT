@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { ViewTransition, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { backChipClass } from './menu/menuButtons';
 
@@ -9,6 +9,7 @@ export interface GameHeaderProps {
   backLabel?: string;
   right?: ReactNode;
   variant?: 'bar' | 'minimal';
+  transitionTitle?: boolean;
 }
 
 export function GameHeader({
@@ -18,6 +19,7 @@ export function GameHeader({
   backLabel,
   right,
   variant = 'bar',
+  transitionTitle = true,
 }: GameHeaderProps) {
   const { t } = useTranslation([titleNs, 'common']);
   const title = t(`${titleNs}:${titleKey}`);
@@ -32,9 +34,11 @@ export function GameHeader({
       }
     >
       <div className="min-w-0">
-        <div className="truncate font-pixel text-sm tracking-[0.28em] text-marquinhos-accent sm:text-base">
-          {title}
-        </div>
+        <ViewTransition name={transitionTitle ? 'game-title' : undefined}>
+          <div className="truncate font-pixel text-sm tracking-[0.28em] text-marquinhos-accent sm:text-base">
+            {title}
+          </div>
+        </ViewTransition>
       </div>
       <div className="flex shrink-0 items-center gap-3">
         {right}

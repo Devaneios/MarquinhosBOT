@@ -1,5 +1,6 @@
 import { ConnectingScreen, ErrorScreen, GameMenu } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import { useNavigate } from 'react-router-dom';
 import { SnakeBoard } from './components/SnakeBoard';
 import { useSnakeSession } from './session/useSnakeSession';
@@ -12,6 +13,7 @@ export function SnakeGame({
   onAuthInvalid: () => void;
 }) {
   const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const { session, selectMode, backToMenu } = useSnakeSession(
     identity,
     onAuthInvalid,
@@ -21,7 +23,7 @@ export function SnakeGame({
     return (
       <GameMenu
         gameId="snake-game"
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
         actions={[
           {
             key: 'single',

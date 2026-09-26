@@ -1,6 +1,7 @@
 import { ConnectingScreen, ErrorScreen } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigateHome } from '@/shared/motion/transitions';
+import {} from 'react-router-dom';
 import { WordleBoard } from './components/WordleBoard';
 import { useWordleSession } from './session/useWordleSession';
 import { useWordleUserConfig } from './state/useWordleUserConfig';
@@ -12,7 +13,7 @@ export function WordleGame({
   identity: DiscordIdentity;
   onAuthInvalid: () => void;
 }) {
-  const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const session = useWordleSession(identity, onAuthInvalid);
   const userConfig = useWordleUserConfig(identity.accessToken, onAuthInvalid);
 
@@ -27,7 +28,7 @@ export function WordleGame({
       <ErrorScreen
         message={session.error}
         onRetryAuth={onAuthInvalid}
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
       />
     );
   }
@@ -37,7 +38,7 @@ export function WordleGame({
       <ErrorScreen
         message={userConfig.error}
         onRetryAuth={userConfig.retry}
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
       />
     );
   }

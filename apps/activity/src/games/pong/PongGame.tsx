@@ -1,5 +1,6 @@
 import { ConnectingScreen, ErrorScreen } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import { useNavigate } from 'react-router-dom';
 import { PongBoard } from './components/PongBoard';
 import { PongMenus } from './components/PongMenus';
@@ -13,6 +14,7 @@ export function PongGame({
   onAuthInvalid: () => void;
 }) {
   const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const { session, selectMode, backToMenu } = usePongSession(
     identity,
     onAuthInvalid,
@@ -28,7 +30,7 @@ export function PongGame({
       <PongMenus
         identity={identity}
         onSelectMode={selectMode}
-        onExitToHub={() => navigate('/')}
+        onExitToHub={() => navigateHome()}
       />
     );
   }

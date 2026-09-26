@@ -6,6 +6,7 @@ export function CurrentRow({
   letters,
   activeIndex,
   wordLength,
+  orderOffset,
   shake,
   disabled,
   registerInput,
@@ -33,6 +34,8 @@ export function CurrentRow({
           autoComplete="off"
           aria-label={t('letterAriaLabel', { position: index + 1 })}
           className={cn(
+            'termo-tile',
+            letters[index] && 'termo-pop',
             'flex h-11 w-11 items-center justify-center rounded-md border bg-transparent text-center font-pixel text-lg font-bold uppercase caret-transparent sm:h-12 sm:w-12',
             'cursor-default appearance-none outline-none',
             letters[index]
@@ -42,6 +45,7 @@ export function CurrentRow({
               !disabled &&
               'border-marquinhos-accent ring-2 ring-inset ring-marquinhos-accent',
           )}
+          style={{ '--order': orderOffset + index }}
         />
       ))}
     </div>

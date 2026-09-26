@@ -1,5 +1,6 @@
 import { ConnectingScreen, ErrorScreen, GameMenu } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BattleshipBoard } from './components/BattleshipBoard';
@@ -13,6 +14,7 @@ export function BattleshipGame({
   onAuthInvalid: () => void;
 }) {
   const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const [mode, setMode] = useState<'single' | 'multi' | null>(null);
   const session = useBattleshipSession(identity, mode, onAuthInvalid);
 
@@ -20,7 +22,7 @@ export function BattleshipGame({
     return (
       <GameMenu
         gameId="battleship"
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
         actions={[
           {
             key: 'single',
@@ -55,7 +57,7 @@ export function BattleshipGame({
       <ErrorScreen
         message={session.error}
         onRetryAuth={onAuthInvalid}
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
       />
     );
   }

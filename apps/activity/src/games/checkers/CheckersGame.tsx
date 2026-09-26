@@ -1,5 +1,6 @@
 import { ConnectingScreen, ErrorScreen } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import { useNavigate } from 'react-router-dom';
 import { CheckersBoard } from './components/CheckersBoard';
 import { CheckersMenus } from './components/CheckersMenus';
@@ -13,6 +14,7 @@ export function CheckersGame({
   onAuthInvalid: () => void;
 }) {
   const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const { session, selectMode, backToMenu } = useCheckersSession(
     identity,
     onAuthInvalid,
@@ -27,7 +29,7 @@ export function CheckersGame({
     return (
       <CheckersMenus
         onSelectMode={selectMode}
-        onExitToHub={() => navigate('/')}
+        onExitToHub={() => navigateHome()}
       />
     );
   }

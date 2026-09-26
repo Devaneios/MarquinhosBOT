@@ -8,6 +8,7 @@ import { colyseusUrl } from '@/platform/api/apiBase';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
 import { useColyseusRoom } from '@/platform/realtime/colyseus/useColyseusRoom';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import {
   serverMessageSchema,
   type TicTacToeClientMessage,
@@ -31,6 +32,7 @@ export function TicTacToeGame({
   onAuthInvalid: () => void;
 }) {
   const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const { t } = useTranslation(['tic-tac-toe', 'common']);
   const {
     state: sessionState,
@@ -74,7 +76,7 @@ export function TicTacToeGame({
     return (
       <GameMenu
         gameId="tic-tac-toe"
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
         actions={[
           {
             key: 'single',

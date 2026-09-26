@@ -3,6 +3,7 @@ import { EndScreen, GameHeader } from '@/games/shared/shell';
 import { colyseusUrl } from '@/platform/api/apiBase';
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
 import { useColyseusRoom } from '@/platform/realtime/colyseus/useColyseusRoom';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import { cn } from '@/shared/utils/cn';
 import {
   serverMessageSchema,
@@ -14,7 +15,7 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { legalEndsFor } from '@marquinhos/domain/games/dominoes-block/legality';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import {} from 'react-router-dom';
 import { DominoesBlockCanvas } from '../rendering/DominoesBlockCanvas';
 import {
   applyDominoesMessage,
@@ -29,7 +30,7 @@ export function DominoesBlockBoard({
   session: WsSession;
   selfId: string;
 }) {
-  const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const { t } = useTranslation(['dominoes-block', 'common']);
   const [view, setView] = useState(initialDominoesView);
   const {
@@ -94,7 +95,7 @@ export function DominoesBlockBoard({
         titleNs="games"
         onBack={() => {
           roomSend({ type: 'leave' } satisfies DominoesClientMessage);
-          navigate('/');
+          navigateHome();
         }}
       />
 
@@ -191,7 +192,7 @@ export function DominoesBlockBoard({
                 }
                 onBackToHub={() => {
                   roomSend({ type: 'leave' } satisfies DominoesClientMessage);
-                  navigate('/');
+                  navigateHome();
                 }}
               />
             </div>

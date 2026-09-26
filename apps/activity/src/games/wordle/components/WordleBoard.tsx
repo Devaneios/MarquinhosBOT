@@ -1,12 +1,21 @@
 import { Keyboard } from '@/games/shared/keyboard';
 import { FEEDBACK_COLORS } from '@/games/shared/letterFeedback';
 import type { WsSession } from '@/games/shared/session/gameSession';
-import { backChipClass, GameHeader } from '@/games/shared/shell';
+import {
+  backChipClass,
+  ConnectingScreen,
+  ErrorScreen,
+  GameHeader,
+} from '@/games/shared/shell';
+import { transitionTo, useNavigateHome } from '@/shared/motion/transitions';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { buildKeyboardRows, WORDLE_FOCUS_KEYS } from '../constants';
+import {
+  buildKeyboardRows,
+  ENTRANCE_MS,
+  WORDLE_FOCUS_KEYS,
+} from '../constants';
 import { useWordleBoard } from '../state/useWordleBoard';
 import { CurrentRow } from './CurrentRow';
 import { GuessRow } from './GuessRow';
@@ -21,7 +30,7 @@ export function WordleBoard({
   config: WordleUserConfig;
   onSaveConfig: (config: WordleUserConfig) => Promise<void>;
 }) {
-  const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const { t } = useTranslation(['wordle', 'common']);
   const [showSettings, setShowSettings] = useState(false);
   const {
@@ -31,6 +40,8 @@ export function WordleBoard({
     currentLetters,
     error,
     guesses,
+    revealingRow,
+    celebrateRow,
     letterStates,
     moveFocus,
     onKeyDownCell,
@@ -49,6 +60,14 @@ export function WordleBoard({
     enableSpaceKey: config.enableSpaceKey,
     enableArrowKeys: config.enableArrowKeys,
   });
+  const screen =
+    wordLength === null ? 'loading' : showSettings ? 'settings' : 'playing';
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    if (screen !== 'playing' || entered) return;
+    const timeout = window.setTimeout(() => setEntered(true), ENTRANCE_MS);
+    return () => window.clearTimeout(timeout);
+  }, [entered, screen]);
   const keyboardRows = useMemo(
     () =>
       buildKeyboardRows(config).map((row) =>
@@ -61,12 +80,20 @@ export function WordleBoard({
   );
   const attemptNumber = guesses.length + (solved ? 0 : 1);
 
-  if (showSettings) {
+  if (screen === 'loading') {
+    return connectionState === 'error' || connectionState === 'disconnected' ? (
+      <ErrorScreen message={t('common:connectionLost')} onBack={navigateHome} />
+    ) : (
+      <ConnectingScreen subtitleKey="connectingSubtitle" subtitleNs="wordle" />
+    );
+  }
+
+  if (screen === 'settings') {
     return (
       <WordleSettingsScreen
         config={config}
         onSave={onSaveConfig}
-        onBack={() => setShowSettings(false)}
+        onBack={() => transitionTo('nav-back', () => setShowSettings(false))}
       />
     );
   }
@@ -99,11 +126,13 @@ export function WordleBoard({
   );
 
   return (
-    <div className="relative flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,176,0,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_20%),var(--color-marquinhos-bg)]">
+    <div
+      className={`relative flex flex-1 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,176,0,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_20%),var(--color-marquinhos-bg)] ${!entered ? 'wordle-entering' : ''}`}
+    >
       <GameHeader
         titleKey="wordle.name"
         titleNs="games"
-        onBack={() => navigate('/')}
+        onBack={navigateHome}
         right={
           <button
             type="button"
@@ -112,7 +141,7 @@ export function WordleBoard({
             title={t('wordle:settingsAriaLabel')}
             onClick={() => {
               suspendInput();
-              setShowSettings(true);
+              transitionTo('nav-forward', () => setShowSettings(true));
             }}
           >
             <svg
@@ -135,66 +164,80 @@ export function WordleBoard({
       )}
 
       <main className="flex min-h-0 flex-1 items-stretch justify-center overflow-hidden p-2 sm:items-center sm:overflow-y-auto sm:p-6">
-        <div className="notch-8 flex w-full flex-1 flex-col gap-3 border border-marquinhos-border bg-[#1c1b1c] px-2 py-3 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:w-fit sm:min-w-135 sm:flex-none sm:gap-4 sm:px-6 sm:py-6">
-          {solved && (
-            <div className="notch-6 flex items-center justify-between gap-3 border border-marquinhos-border bg-black/25 px-4 py-3">
-              <div className="text-sm font-semibold text-marquinhos-text">
-                {t('wordle:solved', { count: guesses.length })}
+        <ViewTransition name="game-panel">
+          <div className="notch-8 flex w-full flex-1 flex-col gap-3 border border-marquinhos-border bg-[#1c1b1c] px-2 py-3 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:w-fit sm:min-w-135 sm:flex-none sm:gap-4 sm:px-6 sm:py-6">
+            {solved && revealingRow === null && (
+              <div className="notch-6 animate-termo-toast-in flex items-center justify-between gap-3 border border-marquinhos-border bg-black/25 px-4 py-3">
+                <div className="text-sm font-semibold text-marquinhos-text">
+                  {t('wordle:solved', { count: guesses.length })}
+                </div>
+                <div
+                  className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em]"
+                  style={{
+                    borderColor: `${FEEDBACK_COLORS.correct.bg}80`,
+                    backgroundColor: `${FEEDBACK_COLORS.correct.bg}26`,
+                    color: '#98d68f',
+                  }}
+                >
+                  {t('wordle:solvedBadge')}
+                </div>
               </div>
-              <div
-                className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em]"
-                style={{
-                  borderColor: `${FEEDBACK_COLORS.correct.bg}80`,
-                  backgroundColor: `${FEEDBACK_COLORS.correct.bg}26`,
-                  color: '#98d68f',
-                }}
-              >
-                {t('wordle:solvedBadge')}
-              </div>
-            </div>
-          )}
+            )}
 
-          <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 sm:flex-none">
-            <div
-              ref={registerGrid}
-              className="scrollbar-hide flex min-h-0 flex-initial flex-col gap-1.5 overflow-x-hidden overflow-y-auto px-1.5 py-1 sm:max-h-[42vh] sm:flex-none sm:gap-2"
-            >
-              {guesses.map((row, index) => (
-                <GuessRow key={index} row={row} />
-              ))}
-              {!solved && wordLength !== null && (
-                <CurrentRow
-                  letters={currentLetters}
-                  activeIndex={activeIndex}
-                  wordLength={wordLength}
-                  shake={shake}
-                  disabled={solved || wordLength === null}
-                  registerInput={registerInput}
-                  onFocusCell={setActiveIndex}
-                  onKeyDownCell={onKeyDownCell}
-                />
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 sm:flex-none">
+              <div
+                ref={registerGrid}
+                className="scrollbar-hide flex min-h-0 flex-initial flex-col gap-1.5 overflow-x-hidden overflow-y-auto px-1.5 py-1 sm:max-h-[42vh] sm:flex-none sm:gap-2"
+              >
+                {guesses.map((row, index) => (
+                  <GuessRow
+                    key={index}
+                    row={row}
+                    rowIndex={index}
+                    motion={
+                      index === revealingRow
+                        ? 'flip'
+                        : index === celebrateRow
+                          ? 'bounce'
+                          : undefined
+                    }
+                  />
+                ))}
+                {!solved && wordLength !== null && (
+                  <CurrentRow
+                    letters={currentLetters}
+                    activeIndex={activeIndex}
+                    wordLength={wordLength}
+                    orderOffset={guesses.length * wordLength}
+                    shake={shake}
+                    disabled={solved || wordLength === null}
+                    registerInput={registerInput}
+                    onFocusCell={setActiveIndex}
+                    onKeyDownCell={onKeyDownCell}
+                  />
+                )}
+              </div>
+
+              {wordLength !== null && (
+                <div className="termo-progress notch-4 border border-marquinhos-border bg-black/20 px-3 py-1.5 text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
+                  {t('wordle:progress', {
+                    letters: wordLength,
+                    attempt: attemptNumber,
+                  })}
+                </div>
               )}
             </div>
 
-            {wordLength !== null && (
-              <div className="notch-4 border border-marquinhos-border bg-black/20 px-3 py-1.5 text-[11px] uppercase tracking-[0.24em] text-marquinhos-text-dim">
-                {t('wordle:progress', {
-                  letters: wordLength,
-                  attempt: attemptNumber,
-                })}
+            <div className="hidden sm:contents">{keyboard}</div>
+
+            {(connectionState === 'disconnected' ||
+              connectionState === 'error') && (
+              <div className="notch-6 border border-marquinhos-danger/40 bg-marquinhos-danger/10 p-3 text-center text-sm text-marquinhos-danger">
+                {t('common:connectionLost')}
               </div>
             )}
           </div>
-
-          <div className="hidden sm:contents">{keyboard}</div>
-
-          {(connectionState === 'disconnected' ||
-            connectionState === 'error') && (
-            <div className="notch-6 border border-marquinhos-danger/40 bg-marquinhos-danger/10 p-3 text-center text-sm text-marquinhos-danger">
-              {t('common:connectionLost')}
-            </div>
-          )}
-        </div>
+        </ViewTransition>
       </main>
 
       <div className="pb-16 sm:hidden">{keyboard}</div>

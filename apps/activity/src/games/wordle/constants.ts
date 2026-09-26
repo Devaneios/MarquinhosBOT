@@ -4,6 +4,15 @@ import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 export const KB_ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
 export const KB_LETTERS = new Set(KB_ROWS.join(''));
 export const MIN_KEY_PRESS_MS = 100;
+export const FLIP_STAGGER_MS = 275;
+export const FLIP_DURATION_MS = 400;
+export const BOUNCE_STAGGER_MS = 100;
+export const BOUNCE_DURATION_MS = 480;
+export const ENTRANCE_MS = 800;
+
+export function revealDurationMs(wordLength: number): number {
+  return (wordLength - 1) * FLIP_STAGGER_MS + FLIP_DURATION_MS;
+}
 export const WORDLE_FOCUS_KEYS = {
   first: 'MoveFirst',
   left: 'MoveLeft',

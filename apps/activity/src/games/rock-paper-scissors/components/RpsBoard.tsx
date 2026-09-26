@@ -2,6 +2,7 @@ import { EndScreen, GameHeader } from '@/games/shared/shell';
 import { colyseusUrl } from '@/platform/api/apiBase';
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
 import { useColyseusRoom } from '@/platform/realtime/colyseus/useColyseusRoom';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import { cn } from '@/shared/utils/cn';
 import {
   serverMessageSchema,
@@ -11,7 +12,7 @@ import {
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import {} from 'react-router-dom';
 import { PICK_ICONS, PICK_LABEL_KEYS } from '../constants';
 import {
   advanceAfterRoundResult,
@@ -68,7 +69,7 @@ export function RpsBoard({
 }: {
   session: { token: string; roomKey: string };
 }) {
-  const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const { t } = useTranslation(['rock-paper-scissors', 'common']);
   const [view, setView] = useState(initialRpsView);
   const { playerId, phase, roundState, myPick, roundResult, error } = view;
@@ -111,7 +112,7 @@ export function RpsBoard({
       <GameHeader
         titleKey="rock-paper-scissors.name"
         titleNs="games"
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
       />
 
       <main className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto p-4 sm:p-6">
@@ -239,7 +240,7 @@ export function RpsBoard({
               <EndScreen
                 outcomeKey={isPlayerWinning ? 'outcomeWin' : 'outcomeLose'}
                 outcomeNs="rock-paper-scissors"
-                onBackToHub={() => navigate('/')}
+                onBackToHub={() => navigateHome()}
               />
             </div>
           )}

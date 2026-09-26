@@ -1,5 +1,6 @@
 import { ConnectingScreen, ErrorScreen } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import { useNavigate } from 'react-router-dom';
 import { ConnectFourBoard } from './components/ConnectFourBoard';
 import { ConnectFourModeMenu } from './components/ConnectFourModeMenu';
@@ -13,6 +14,7 @@ export function ConnectFourGame({
   onAuthInvalid: () => void;
 }) {
   const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const { session, selectMode, backToMenu } = useConnectFourSession(
     identity,
     onAuthInvalid,
@@ -28,7 +30,7 @@ export function ConnectFourGame({
           }
           selectMode(mode);
         }}
-        onExitToHub={() => navigate('/')}
+        onExitToHub={() => navigateHome()}
       />
     );
   }
@@ -47,7 +49,7 @@ export function ConnectFourGame({
       <ErrorScreen
         message={session.error}
         onRetryAuth={onAuthInvalid}
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
       />
     );
   }

@@ -1,12 +1,13 @@
 import type { DiscordIdentity } from '@/platform/discord/auth';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import { isGameId } from '@marquinhos/contracts/activity/gameId';
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { RoomLobbyScreen, type RoomReadyInfo } from './screens/RoomLobbyScreen';
 import { RoomView } from './screens/RoomView';
 
 export function RoomRoute({ identity }: { identity: DiscordIdentity }) {
-  const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const [searchParams] = useSearchParams();
   const [joined, setJoined] = useState<RoomReadyInfo | null>(null);
 
@@ -17,12 +18,12 @@ export function RoomRoute({ identity }: { identity: DiscordIdentity }) {
         identity={identity}
         preselectedGame={isGameId(createGame) ? createGame : undefined}
         onRoomReady={setJoined}
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
       />
     );
   }
 
   return (
-    <RoomView identity={identity} {...joined} onLeave={() => navigate('/')} />
+    <RoomView identity={identity} {...joined} onLeave={() => navigateHome()} />
   );
 }

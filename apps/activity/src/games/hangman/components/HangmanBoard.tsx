@@ -3,6 +3,7 @@ import { GameHeader } from '@/games/shared/shell';
 import { colyseusUrl } from '@/platform/api/apiBase';
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
 import { useColyseusRoom } from '@/platform/realtime/colyseus/useColyseusRoom';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import {
   serverMessageSchema,
   type HangmanClientMessage,
@@ -11,11 +12,11 @@ import {
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import {} from 'react-router-dom';
 import { HangmanCanvas } from '../rendering/HangmanCanvas';
 
 export function HangmanBoard({ session }: { session: WsSession }) {
-  const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const { t } = useTranslation('common');
   const [state, setState] = useState<HangmanState>({
     revealedWord: '',
@@ -56,7 +57,7 @@ export function HangmanBoard({ session }: { session: WsSession }) {
   }
 
   function handleRestart() {
-    navigate('/');
+    navigateHome();
   }
 
   return (
@@ -64,7 +65,7 @@ export function HangmanBoard({ session }: { session: WsSession }) {
       <GameHeader
         titleKey="hangman.name"
         titleNs="games"
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
       />
 
       <main className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4 sm:p-6">
@@ -100,7 +101,7 @@ export function HangmanBoard({ session }: { session: WsSession }) {
               <button
                 type="button"
                 className="notch-6 border border-marquinhos-border bg-marquinhos-bg px-5 py-3 text-sm text-marquinhos-text transition hover:border-marquinhos-border-hover"
-                onClick={() => navigate('/')}
+                onClick={() => navigateHome()}
               >
                 {t('backToHub')}
               </button>

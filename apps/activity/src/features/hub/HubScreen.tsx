@@ -14,7 +14,7 @@ export function HubScreen() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[radial-gradient(ellipse_at_top_right,rgba(255,176,0,0.06),transparent_55%),var(--color-marquinhos-bg)] text-marquinhos-text">
-      <GameHeader titleKey="brand" titleNs="common" />
+      <GameHeader titleKey="brand" titleNs="common" transitionTitle={false} />
 
       <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 md:py-10 [@media(max-height:600px)]:py-4">
         <div className="mx-auto flex w-full max-w-280 flex-col gap-6 md:gap-8 [@media(max-height:600px)]:gap-5">

@@ -1,3 +1,4 @@
+import { useNavigateForward } from '@/shared/motion/transitions';
 import { cn } from '@/shared/utils/cn';
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { useTranslation } from 'react-i18next';
@@ -11,10 +12,16 @@ export function PlayGameLink({
   featured?: boolean;
 }) {
   const { t } = useTranslation(['common', 'games']);
+  const navigateForward = useNavigateForward();
+  const to = `/games/${gameId}`;
 
   return (
     <Link
-      to={`/games/${gameId}`}
+      to={to}
+      onClick={(event) => {
+        event.preventDefault();
+        navigateForward(to);
+      }}
       className={cn(
         'inline-flex min-h-12 w-full scroll-my-4 items-center justify-between gap-4 rounded-sm border px-5 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marquinhos-accent motion-safe:transition-colors',
         featured

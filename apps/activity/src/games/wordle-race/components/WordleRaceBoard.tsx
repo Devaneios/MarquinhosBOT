@@ -3,6 +3,7 @@ import { ConnectingScreen, GameHeader } from '@/games/shared/shell';
 import { colyseusUrl } from '@/platform/api/apiBase';
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
 import { useColyseusRoom } from '@/platform/realtime/colyseus/useColyseusRoom';
+import { useNavigateHome } from '@/shared/motion/transitions';
 import { cn } from '@/shared/utils/cn';
 import {
   serverMessageSchema,
@@ -22,7 +23,7 @@ import {
 } from '@marquinhos/domain/games/wordle/keyboardState';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import {} from 'react-router-dom';
 import { FEEDBACK_COLORS, KB_LETTERS, KB_ROWS } from '../constants';
 import {
   applyWordleRaceMessage,
@@ -179,7 +180,7 @@ export function WordleRaceBoard({
   session: WsSession;
   userId: string;
 }) {
-  const navigate = useNavigate();
+  const navigateHome = useNavigateHome();
   const { t } = useTranslation(['wordle-race', 'common']);
   const [view, setView] = useState(initialWordleRaceView);
   const { state: gameState, error } = view;
@@ -304,7 +305,7 @@ export function WordleRaceBoard({
       <GameHeader
         titleKey="wordle-race.name"
         titleNs="games"
-        onBack={() => navigate('/')}
+        onBack={() => navigateHome()}
       />
 
       <main className="flex min-h-0 flex-1 gap-4 overflow-y-auto p-4 sm:p-6">
