@@ -21,12 +21,14 @@ itself never branches on which game it is showing.
 
 ## Architecture
 
-- `src/discord/` owns Discord SDK access, authentication, participant lookup, and Activity-specific hooks. `index.html` loads `src/discord/auth.ts` before the React entrypoint so the Discord handshake can start independently of React mounting.
-- `src/rooms/` owns the room lobby, in-room header and view, room HTTP calls, and queue eligibility.
-- `src/realtime/` owns game-scoped WebSocket sessions, Colyseus connection lifecycle, and the shared connection used by room-based multiplayer.
-- `src/navigation/` owns deep-link intent claiming and navigation.
-- `src/games/registry.ts` collects the game descriptors. Each `src/games/<game>/index.ts` is the descriptor entry point, with that game's routes, screens, hooks, and rendering code kept in its folder.
-- `src/lib/` contains shared HTTP, URL, logging, and styling helpers. `src/i18n/` contains translation setup and locale resources.
+`src/architecture.test.ts` enforces the dependency direction below; imports use the `@/` alias for `src/`.
+
+- `src/app/` owns entrypoints, the router, deep-link navigation, the dev console and the boot scripts `index.html` loads. `index.html` loads `src/platform/discord/auth.ts` before the React entrypoint so the Discord handshake can start independently of React mounting.
+- `src/platform/` wraps the outside world: `discord/` (SDK, auth, participants, Activity hooks), `api/` (HTTP helpers and endpoints) and `realtime/colyseus/` (connection lifecycle, `useColyseusRoom`, and the `RoomConnectionContext` a room shares with its board).
+- `src/features/` holds non-game product features: `hub/` and `rooms/` (lobby, in-room header and view, room HTTP calls, the room connection provider).
+- `src/games/registry.ts` lists every game. Each `src/games/<game>/index.ts` is that game's manifest (`GameModule`: id, status, lazy `Game` and optional `RoomBoard`); the app mounts it at `/games/<game>/*`, and a game with sub-menus declares its own descendant routes. Inside a game, `session/` holds the WS session and message reducer, `components/` the React UI (a `Board` owns a connection), and `rendering/` pure canvas renderers. Nothing outside a game imports past its `index.ts`, and games never import each other.
+- `src/games/shared/` is client infrastructure common to games: the game shell, keyboard, WS session minting and the letter-feedback palette.
+- `src/shared/` contains generic helpers (`cn`, `devlog`). `src/i18n/` contains translation setup and locale resources, with per-game namespaces under `locales/pt-BR/games/`.
 
 ## Local development
 
