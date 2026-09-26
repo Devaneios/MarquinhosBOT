@@ -30,9 +30,10 @@ import {
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LocalPaddlePredictor, PongSnapshotBuffer } from '../netcode';
+import { PongSfx } from '../audio/sfx';
+import { LocalPaddlePredictor, PongSnapshotBuffer } from '../netcode/netcode';
 import type { Side } from '../pongTypes';
-import { attachPongInput } from './pongInput';
+import { attachPongInput } from '../rendering/pongInput';
 import {
   circleOverlapsPoint,
   closestPointOnRect,
@@ -41,15 +42,14 @@ import {
   type PongConfig,
   type PongSceneFrame,
   type PongSceneHandle,
-} from './pongScene';
-import { PongSfx } from './sfx';
+} from '../rendering/pongScene';
 
 interface Snapshot {
   state: DecodedSnapshot;
   receivedAt: number;
 }
 
-export function PongCanvas({
+export function PongBoard({
   session,
   mode,
   sound,

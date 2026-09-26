@@ -76,7 +76,7 @@ export function TicTacToeCanvas({
       // Yield a microtask before touching the canvas so React 19
       // StrictMode's phantom mount (mount -> cleanup -> mount) bails out
       // here, before calling init(), instead of sharing a WebGL context
-      // with the real instance (see PongCanvas for the full rationale).
+      // with the real instance (see PongBoard for the full rationale).
       await Promise.resolve();
       if (cancelled) return;
 

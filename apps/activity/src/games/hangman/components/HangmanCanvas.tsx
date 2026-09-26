@@ -107,7 +107,7 @@ export function HangmanCanvas({
     appRef.current = app;
 
     (async () => {
-      // Mirrors PongCanvas: React 19 StrictMode double-invokes this effect
+      // Mirrors PongBoard: React 19 StrictMode double-invokes this effect
       // before any await settles, so bail here if the phantom first pass's
       // cleanup already ran.
       await Promise.resolve();

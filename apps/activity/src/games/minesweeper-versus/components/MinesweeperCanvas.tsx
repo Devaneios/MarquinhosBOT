@@ -172,7 +172,7 @@ export function MinesweeperCanvas({
     }
 
     (async () => {
-      // Same StrictMode double-invoke guard as PongCanvas: yield first so a
+      // Same StrictMode double-invoke guard as PongBoard: yield first so a
       // phantom first mount never calls app.init() on a canvas already
       // claimed by the real instance.
       await Promise.resolve();

@@ -5,7 +5,7 @@ import {
   usePongMenuSettings,
   type PongMenuSettings,
 } from '../flow/usePongMenuSettings';
-import type { usePongSession } from '../hooks/usePongSession';
+import type { usePongSession } from '../session/usePongSession';
 import { CompetitiveScreen } from './CompetitiveScreen';
 import { HowToPlay } from './HowToPlay';
 import { SettingsScreen } from './SettingsScreen';

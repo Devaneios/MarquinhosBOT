@@ -1,9 +1,9 @@
 import { ConnectingScreen, ErrorScreen } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useNavigate } from 'react-router-dom';
-import { PongCanvas } from './components/PongCanvas';
+import { PongBoard } from './components/PongBoard';
 import { PongMenus } from './components/PongMenus';
-import { usePongSession } from './hooks/usePongSession';
+import { usePongSession } from './session/usePongSession';
 
 export function PongGame({
   identity,
@@ -50,7 +50,7 @@ export function PongGame({
   }
 
   return (
-    <PongCanvas
+    <PongBoard
       session={session.session}
       mode={session.mode}
       sound={session.sound}
