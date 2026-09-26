@@ -2,7 +2,7 @@ import { ConnectingScreen, ErrorScreen, GameMenu } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TowerCanvas } from './components/index';
+import { TowerCanvas } from './components/TowerCanvas';
 import { useTowerSession } from './hooks/useTowerSession';
 
 export function TowerGame({

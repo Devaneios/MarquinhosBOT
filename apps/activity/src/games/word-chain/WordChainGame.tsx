@@ -21,7 +21,7 @@ import {
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { WordChainBoard } from './components/index';
+import { WordChainBoard } from './components/WordChainBoard';
 import { useWordChainSession } from './hooks/useWordChainSession';
 import {
   applyWordChainMessage,

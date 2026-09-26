@@ -1,4 +1,3 @@
-import type { GameModule } from '@/games/GameModule';
 import { battleshipGame } from '@/games/battleship';
 import { bingoSpeedGame } from '@/games/bingo-speed';
 import { boggleWordRaceGame } from '@/games/boggle-word-race';
@@ -18,6 +17,7 @@ import { wordChainGame } from '@/games/word-chain';
 import { wordSearchRaceGame } from '@/games/word-search-race';
 import { wordleGame } from '@/games/wordle';
 import { wordleRaceGame } from '@/games/wordle-race';
+import type { GameModule } from './GameModule';
 
 export const GAME_REGISTRY: GameModule[] = [
   cardsGame,

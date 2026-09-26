@@ -1,8 +1,8 @@
 import { ConnectingScreen, ErrorScreen } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useNavigate } from 'react-router-dom';
+import { CheckersBoard } from './components/CheckersBoard';
 import { CheckersMenus } from './components/CheckersMenus';
-import { CheckersBoard } from './components/index';
 import { useCheckersSession } from './hooks/useCheckersSession';
 
 export function CheckersGame({

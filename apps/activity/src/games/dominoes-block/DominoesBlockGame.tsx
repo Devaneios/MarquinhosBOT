@@ -2,7 +2,7 @@ import { ConnectingScreen, ErrorScreen, GameMenu } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DominoesBlockBoard } from './components/index';
+import { DominoesBlockBoard } from './components/DominoesBlockBoard';
 import { useDominoesSession } from './hooks/useDominoesSession';
 
 export function DominoesBlockGame({

@@ -2,7 +2,7 @@ import { ConnectingScreen, ErrorScreen, GameMenu } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RpsBoard } from './components/index';
+import { RpsBoard } from './components/RpsBoard';
 import { useRpsSession } from './hooks/useRpsSession';
 
 export function RpsGame({

@@ -3,7 +3,7 @@ import {
   type TableView,
 } from '@marquinhos/contracts/activity/games/cards';
 import type { ReactNode } from 'react';
-import { HUDStat } from '../components/index';
+import { HUDStat } from '../components/HUDStat';
 
 // A minimal stand-in for react-i18next's TFunction: presentation.tsx is not a
 // component (its hud/statusLine closures get called from inside CardTable's

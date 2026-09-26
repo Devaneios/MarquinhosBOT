@@ -1,1 +1,0 @@
-export { WordSearchRaceCanvas } from './WordSearchRaceCanvas';

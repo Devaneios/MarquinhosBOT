@@ -16,7 +16,7 @@ import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { TicTacToeCanvas } from './components/index';
+import { TicTacToeCanvas } from './components/TicTacToeCanvas';
 import { useTicTacToeSession } from './hooks/useTicTacToeSession';
 import {
   applyTicTacToeMessage,

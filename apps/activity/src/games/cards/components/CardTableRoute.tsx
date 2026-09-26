@@ -1,6 +1,6 @@
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useParams } from 'react-router-dom';
-import { CardTable } from './index';
+import { CardTable } from './CardTable';
 
 export function CardTableRoute({
   identity,

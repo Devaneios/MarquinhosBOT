@@ -1,7 +1,7 @@
 import { ConnectingScreen, ErrorScreen } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useNavigate } from 'react-router-dom';
-import { PongCanvas } from './components/index';
+import { PongCanvas } from './components/PongCanvas';
 import { PongMenus } from './components/PongMenus';
 import { usePongSession } from './hooks/usePongSession';
 
