@@ -1,5 +1,5 @@
 import type { GameModule } from '@/games/GameModule';
-import { FEEDBACK_COLORS } from '@/games/wordle/constants';
+import { FEEDBACK_COLORS } from '@/games/shared/letterFeedback';
 import { useTranslation } from 'react-i18next';
 import { GamePreview } from './GamePreview';
 import { PlayGameLink } from './PlayGameLink';

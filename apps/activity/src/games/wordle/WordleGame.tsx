@@ -2,8 +2,8 @@ import { ConnectingScreen, ErrorScreen } from '@/games/shared/shell';
 import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useNavigate } from 'react-router-dom';
 import { WordleBoard } from './components/WordleBoard';
-import { useWordleSession } from './hooks/useWordleSession';
-import { useWordleUserConfig } from './hooks/useWordleUserConfig';
+import { useWordleSession } from './session/useWordleSession';
+import { useWordleUserConfig } from './state/useWordleUserConfig';
 
 export function WordleGame({
   identity,

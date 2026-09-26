@@ -1,5 +1,5 @@
+import { FEEDBACK_COLORS } from '@/games/shared/letterFeedback';
 import { cn } from '@/shared/utils/cn';
-import { FEEDBACK_COLORS } from '../constants';
 
 export function WordleToggleTile({
   id,

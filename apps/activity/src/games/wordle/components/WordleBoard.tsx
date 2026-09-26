@@ -1,16 +1,13 @@
 import { Keyboard } from '@/games/shared/keyboard';
+import { FEEDBACK_COLORS } from '@/games/shared/letterFeedback';
 import type { WsSession } from '@/games/shared/session/gameSession';
 import { backChipClass, GameHeader } from '@/games/shared/shell';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import {
-  buildKeyboardRows,
-  FEEDBACK_COLORS,
-  WORDLE_FOCUS_KEYS,
-} from '../constants';
-import { useWordleBoard } from '../hooks/useWordleBoard';
+import { buildKeyboardRows, WORDLE_FOCUS_KEYS } from '../constants';
+import { useWordleBoard } from '../state/useWordleBoard';
 import { CurrentRow } from './CurrentRow';
 import { GuessRow } from './GuessRow';
 import { WordleSettingsScreen } from './WordleSettingsScreen';

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   getWordleUserConfig,
   updateWordleUserConfig,
-} from '../wordleUserConfigApi';
+} from '../api/wordleUserConfigApi';
 
 export type WordleUserConfigState =
   | { status: 'loading' }

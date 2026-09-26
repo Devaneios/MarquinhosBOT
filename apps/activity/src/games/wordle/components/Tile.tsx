@@ -1,6 +1,6 @@
+import { FEEDBACK_COLORS } from '@/games/shared/letterFeedback';
 import { cn } from '@/shared/utils/cn';
 import type { LetterFeedback } from '@marquinhos/contracts/wordle';
-import { FEEDBACK_COLORS } from '../constants';
 
 export function Tile({
   letter,

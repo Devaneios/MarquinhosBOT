@@ -1,4 +1,4 @@
-import { FEEDBACK_COLORS } from '@/games/wordle/constants';
+import { FEEDBACK_COLORS } from '@/games/shared/letterFeedback';
 import { cn } from '@/shared/utils/cn';
 import type { GameId } from '@marquinhos/contracts/activity/gameId';
 import { useTranslation } from 'react-i18next';

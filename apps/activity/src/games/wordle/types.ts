@@ -1,8 +1,5 @@
 import type { WsSession } from '@/games/shared/session/gameSession';
-import type { LetterFeedback } from '@marquinhos/contracts/wordle';
 import type { KeyboardEvent } from 'react';
-
-export type KeyState = LetterFeedback | 'unused';
 
 export type WordleSessionState =
   | { status: 'connecting' }
