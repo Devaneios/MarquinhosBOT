@@ -4,11 +4,13 @@ import {
   bigserial,
   boolean,
   check,
+  index,
   integer,
   pgTable,
   primaryKey,
   text,
   unique,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
 export const wordleUsedWords = pgTable('wordle_used_words', {
@@ -41,12 +43,24 @@ export const wordleSessions = pgTable(
     word_date: text('word_date').notNull(),
     guesses: text('guesses').notNull().default('[]'),
     solved: boolean('solved').notNull().default(false),
+    solved_at: bigint('solved_at', { mode: 'number' }),
+    first_solver: boolean('first_solver'),
     attempts: integer('attempts').notNull().default(0),
     created_at: bigint('created_at', { mode: 'number' }).notNull(),
     word_length: integer('word_length').notNull().default(0),
     announced_at: bigint('announced_at', { mode: 'number' }),
   },
-  (t) => [unique().on(t.user_id, t.guild_id, t.word_date)],
+  (t) => [
+    unique().on(t.user_id, t.guild_id, t.word_date),
+    index('wordle_sessions_guild_solve_idx').on(
+      t.guild_id,
+      t.word_date,
+      t.solved_at,
+    ),
+    uniqueIndex('wordle_sessions_first_solver_idx')
+      .on(t.guild_id, t.word_date)
+      .where(sql`${t.first_solver} = true`),
+  ],
 );
 
 export const wordlistReview = pgTable('wordlist_review', {

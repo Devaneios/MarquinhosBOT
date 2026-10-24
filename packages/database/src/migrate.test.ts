@@ -15,6 +15,43 @@ afterAll(async () => {
 });
 
 describe('baseline migrations', () => {
+  test('allows only one recorded first solver per guild and day', async () => {
+    await testDb.db.execute(sql`
+      INSERT INTO wordle_sessions (id, user_id, guild_id, word_date, solved, attempts, created_at, first_solver)
+      VALUES ('first-solver-a', 'first-a', 'first-guild', '2026-10-24', true, 1, 1, true)
+    `);
+    await expect(
+      testDb.db
+        .execute(
+          sql`
+      INSERT INTO wordle_sessions (id, user_id, guild_id, word_date, solved, attempts, created_at, first_solver)
+      VALUES ('first-solver-b', 'first-b', 'first-guild', '2026-10-24', true, 1, 1, true)
+    `,
+        )
+        .execute(),
+    ).rejects.toThrow();
+    await testDb.db.execute(sql`
+      INSERT INTO wordle_sessions (id, user_id, guild_id, word_date, solved, attempts, created_at, first_solver)
+      VALUES ('later-solver', 'later', 'first-guild', '2026-10-24', true, 2, 1, false)
+    `);
+  });
+  test('keeps legacy solve timestamps unknown and stores new solve timestamps', async () => {
+    await testDb.db.execute(sql`
+      INSERT INTO wordle_sessions (id, user_id, guild_id, word_date, solved, attempts, created_at)
+      VALUES ('legacy-wordle', 'u1', 'g1', '2026-10-23', true, 3, 1)
+    `);
+    const [legacy] = await testDb.db.execute<{ solved_at: number | null }>(sql`
+      SELECT solved_at FROM wordle_sessions WHERE id = 'legacy-wordle'
+    `);
+    expect(legacy?.solved_at).toBeNull();
+    await testDb.db.execute(sql`
+      UPDATE wordle_sessions SET solved_at = 1792800000 WHERE id = 'legacy-wordle'
+    `);
+    const [updated] = await testDb.db.execute<{ solved_at: number }>(sql`
+      SELECT solved_at::float8 AS solved_at FROM wordle_sessions WHERE id = 'legacy-wordle'
+    `);
+    expect(updated?.solved_at).toBe(1792800000);
+  });
   test('re-running is a no-op', async () => {
     await runMigrations(testDb.db);
     const rows = await testDb.db.execute<{ n: number }>(
