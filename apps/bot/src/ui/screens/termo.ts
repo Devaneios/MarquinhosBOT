@@ -3,6 +3,7 @@ import sharp from 'sharp';
 import {
   buildCrosswordLayout,
   denseRanks,
+  termoAchievementsCard,
   termoCrosswordCard,
   termoKeyboardCard,
   termoLeaderboardCard,
@@ -11,6 +12,7 @@ import {
   type DailyEntry,
   type LeaderboardPeriod,
   type RankedEntry,
+  type TermoAchievementsCardInput,
   type TermoSolvedStatus,
 } from '../compounds/termo';
 import { render } from '../render';
@@ -88,6 +90,16 @@ export async function buildTermoLeaderboardImage(
   return render([termoLeaderboardCard(entries, period, groupStreak, theme)], {
     width: 480,
   });
+}
+
+export type { TermoAchievementsCardInput };
+
+export async function buildTermoAchievementsImage(
+  input: TermoAchievementsCardInput,
+  options?: { theme?: Theme },
+): Promise<Buffer> {
+  const theme = options?.theme ?? defaultTheme;
+  return render([termoAchievementsCard(input, theme)], { width: 480 });
 }
 
 export async function normalizeKeyboardBuffer(buffer: Buffer): Promise<Buffer> {

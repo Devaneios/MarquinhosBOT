@@ -6,6 +6,7 @@ export type ProgressBarOptions = {
   width?: number;
   label?: string;
   color?: string;
+  trackColor?: string;
 };
 
 export function progressBar(
@@ -26,7 +27,7 @@ export function progressBar(
       Box({
         width,
         height,
-        backgroundColor: theme.colors.surface,
+        backgroundColor: options?.trackColor ?? theme.colors.surface,
         borderRadius: height / 2,
         children: [
           Box({

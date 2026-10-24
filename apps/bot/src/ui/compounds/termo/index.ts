@@ -1,3 +1,9 @@
+export {
+  distributionBarWidth,
+  termoAchievementsCard,
+  type TermoAchievementsCardInput,
+  type TermoAchievementsFamilyRow,
+} from './achievements';
 export { attemptGrid } from './attempt-grid';
 export {
   termoCrosswordCard,

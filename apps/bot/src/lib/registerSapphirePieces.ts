@@ -4,6 +4,7 @@ import { IaCommand } from '@marquinhos/commands/ai/ia';
 import { ApiStatusCommand } from '@marquinhos/commands/dev/apistatus';
 import { GamesCommand } from '@marquinhos/commands/games/games';
 import { TermoCommand } from '@marquinhos/commands/games/termo';
+import { TermoAchievementsCommand } from '@marquinhos/commands/games/termoAchievements';
 import { AnomCommand } from '@marquinhos/commands/general/anom';
 import { AvatarCommand } from '@marquinhos/commands/general/avatar';
 import { CatCommand } from '@marquinhos/commands/general/cat';
@@ -54,6 +55,7 @@ const commands = [
   ['ia', IaCommand],
   ['games', GamesCommand],
   ['termo', TermoCommand],
+  ['termo-conquistas', TermoAchievementsCommand],
   ['anom', AnomCommand],
   ['avatar', AvatarCommand],
   ['gato', CatCommand],

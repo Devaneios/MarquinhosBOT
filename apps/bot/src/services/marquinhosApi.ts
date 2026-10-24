@@ -299,6 +299,12 @@ export class MarquinhosApiService {
     });
   }
 
+  async getWordleAchievements(userId: string, guildId: string) {
+    return callContract(this.client, wordle.getAchievements, {
+      params: { guildId, userId },
+    });
+  }
+
   async getUnannouncedWordleWins(guildId: string) {
     return callContract(this.client, wordle.getUnannouncedWins, {
       params: { guildId },

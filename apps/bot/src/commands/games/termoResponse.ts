@@ -15,6 +15,7 @@ export const TERMO_BUTTON_IDS = {
   retry: 'termo_retry',
   link: 'termo_link',
   play: 'termo_play',
+  achievements: 'termo_achievements',
 } as const;
 
 export const TERMO_BUTTON_ID_SET = new Set<string>(
@@ -36,6 +37,11 @@ export function buildTermoActionRow(): ActionRowBuilder<ButtonBuilder> {
     new ButtonBuilder()
       .setCustomId(TERMO_BUTTON_IDS.link)
       .setLabel('Link da imagem')
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId(TERMO_BUTTON_IDS.achievements)
+      .setLabel('Conquistas')
+      .setEmoji('🏆')
       .setStyle(ButtonStyle.Secondary),
   );
 }

@@ -1,3 +1,4 @@
+import { buildTermoAchievementsReply } from '@marquinhos/commands/games/termoAchievements';
 import {
   buildKeyboardAttachment,
   buildTermoActionRow,
@@ -66,6 +67,31 @@ export class TermoButtonsHandler extends InteractionHandler {
 
     if (btn.customId === TERMO_BUTTON_IDS.play) {
       await handleTermoPlayButton(btn);
+      return;
+    }
+
+    if (btn.customId === TERMO_BUTTON_IDS.achievements) {
+      await btn.deferReply({ flags: MessageFlags.Ephemeral });
+      try {
+        const member = await btn.guild?.members
+          .fetch(btn.user.id)
+          .catch(() => null);
+        const reply = await buildTermoAchievementsReply(
+          btn.client,
+          btn.guildId,
+          {
+            id: btn.user.id,
+            displayName: member?.displayName ?? btn.user.displayName,
+            avatarUrl: (member ?? btn.user).displayAvatarURL(),
+          },
+        );
+        await btn.editReply(reply);
+      } catch (error) {
+        logger.error('Termo: failed to build achievements reply:', error);
+        await btn.editReply({
+          content: '❌ Não foi possível carregar suas conquistas.',
+        });
+      }
       return;
     }
 
