@@ -26,6 +26,7 @@ import {
   buildUniqueDayGuesses,
   type WordleSessionGuessesRow,
 } from 'services/wordle/dayGuesses';
+import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
 import type { z } from 'zod';
 
 const logger = {
@@ -427,6 +428,9 @@ export class WordleService {
       if (solved) {
         result.streak = await this.updateStreak(userId, guildId, tx);
       }
+
+      result.unlockedAchievements =
+        await new WordleAchievementService().checkAndAward(userId, guildId, tx);
 
       return result;
     });

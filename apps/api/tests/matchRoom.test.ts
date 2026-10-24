@@ -2349,6 +2349,7 @@ describe('MatchRoom', () => {
         guesses: [],
         solved: false,
         attempts: 0,
+        achievements: expect.any(Array),
       });
 
       for (const c of clients) c.leave();

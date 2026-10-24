@@ -9,9 +9,10 @@ import {
   userLevels,
   userStats,
 } from '@marquinhos/database/schema';
-import { and, asc, count, desc, eq, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 import { LevelingService } from 'services/gamification/LevelingService';
 import type { Achievement, UserAchievement } from 'services/gamification/types';
+import { WORDLE_ACHIEVEMENTS } from 'services/gamification/wordleAchievements';
 
 const DEFAULT_ACHIEVEMENTS = [
   {
@@ -84,18 +85,15 @@ export class AchievementService {
   }
 
   async initializeDefaults(): Promise<void> {
-    const [row] = await db.select({ count: count() }).from(achievements);
-    if (row && row.count > 0) return;
     await db
       .insert(achievements)
       .values(
-        DEFAULT_ACHIEVEMENTS.map((a) => ({
+        [...DEFAULT_ACHIEVEMENTS, ...WORDLE_ACHIEVEMENTS].map((a) => ({
           ...a,
           condition: JSON.stringify(a.condition),
         })),
       )
       .onConflictDoNothing();
-    console.log('Default achievements seeded');
   }
 
   async checkAndAwardAchievements(

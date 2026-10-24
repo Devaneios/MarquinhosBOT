@@ -5,6 +5,7 @@ import {
 import type { Client } from 'colyseus';
 import type { WsSessionPayload } from 'services/activity/wsSessionToken';
 import { WordleService } from 'services/wordle';
+import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
 import type {
   AdapterContext,
   GameRoomAdapter,
@@ -69,6 +70,10 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
   },
 
   async onJoin(service, auth, client, seat: SeatRole) {
+    const achievements = await new WordleAchievementService().getAchievements(
+      auth.userId,
+      auth.guildId,
+    );
     // maxPlayers: 64 makes this branch effectively unreachable via normal
     // simultaneous joins, but MatchRoom.switchGame() re-seats every
     // currently-connected client against the *new* adapter's maxPlayers
@@ -88,6 +93,7 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
           guesses: [],
           solved: false,
           attempts: 0,
+          achievements,
         },
       });
       return;
@@ -101,6 +107,7 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
         guesses: userSession?.guesses ?? [],
         solved: userSession?.solved ?? false,
         attempts: userSession?.attempts ?? 0,
+        achievements,
       },
     });
   },
