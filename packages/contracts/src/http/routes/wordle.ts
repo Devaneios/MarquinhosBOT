@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   guessRowSchema,
   letterFeedbackSchema,
+  wordleUnlockedAchievementSchema,
   wordleUserConfigSchema,
 } from '../../wordle';
 import { defineContract, envelope } from '../contract';
@@ -21,6 +22,7 @@ export const wordleGuessResultSchema = z.object({
   attempts: z.number(),
   wordLength: z.number(),
   streak: z.number().optional(),
+  unlockedAchievements: z.array(wordleUnlockedAchievementSchema).optional(),
 });
 export type WordleGuessResult = z.output<typeof wordleGuessResultSchema>;
 
