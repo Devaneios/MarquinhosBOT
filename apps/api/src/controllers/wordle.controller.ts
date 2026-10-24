@@ -3,6 +3,7 @@ import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import type { Request, Response } from 'express';
 import type { DiscordUser } from 'services/discord';
 import { WordleService } from 'services/wordle';
+import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
 import { parseRequest, sendContract } from 'utils/contract';
 
 const service = new WordleService();
@@ -23,6 +24,23 @@ interface UserConfigResponse {
 
 export default class WordleController {
   constructor(private readonly userConfig: WordleUserConfigStore) {}
+
+  async getAchievements(req: Request, res: Response): Promise<void> {
+    const input = parseRequest(contract.getAchievements, req);
+    if (!input) {
+      res.status(400).json({ message: 'guildId e userId são obrigatórios.' });
+      return;
+    }
+    try {
+      const { userId, guildId } = input.params;
+      sendContract(res, contract.getAchievements, {
+        data: await new WordleAchievementService().getOverview(userId, guildId),
+      });
+    } catch (error) {
+      console.error('WordleController.getAchievements error:', error);
+      res.status(500).json({ message: 'Erro interno.' });
+    }
+  }
 
   async getUserConfig(
     req: UserConfigRequest,

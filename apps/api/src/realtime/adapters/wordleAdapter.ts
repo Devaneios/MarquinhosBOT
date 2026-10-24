@@ -70,10 +70,11 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
   },
 
   async onJoin(service, auth, client, seat: SeatRole) {
-    const achievements = await new WordleAchievementService().getAchievements(
-      auth.userId,
-      auth.guildId,
-    );
+    const { achievements, stats } =
+      await new WordleAchievementService().getOverview(
+        auth.userId,
+        auth.guildId,
+      );
     // maxPlayers: 64 makes this branch effectively unreachable via normal
     // simultaneous joins, but MatchRoom.switchGame() re-seats every
     // currently-connected client against the *new* adapter's maxPlayers
@@ -94,6 +95,7 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
           solved: false,
           attempts: 0,
           achievements,
+          stats,
         },
       });
       return;
@@ -108,6 +110,7 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
         solved: userSession?.solved ?? false,
         attempts: userSession?.attempts ?? 0,
         achievements,
+        stats,
       },
     });
   },

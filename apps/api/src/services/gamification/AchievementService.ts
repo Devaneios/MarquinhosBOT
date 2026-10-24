@@ -9,10 +9,10 @@ import {
   userLevels,
   userStats,
 } from '@marquinhos/database/schema';
-import { and, asc, desc, eq, isNull } from 'drizzle-orm';
+import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
+import { and, asc, desc, eq, isNull, ne, sql } from 'drizzle-orm';
 import { LevelingService } from 'services/gamification/LevelingService';
 import type { Achievement, UserAchievement } from 'services/gamification/types';
-import { WORDLE_ACHIEVEMENTS } from 'services/gamification/wordleAchievements';
 
 const DEFAULT_ACHIEVEMENTS = [
   {
@@ -88,12 +88,38 @@ export class AchievementService {
     await db
       .insert(achievements)
       .values(
-        [...DEFAULT_ACHIEVEMENTS, ...WORDLE_ACHIEVEMENTS].map((a) => ({
+        DEFAULT_ACHIEVEMENTS.map((a) => ({
           ...a,
           condition: JSON.stringify(a.condition),
         })),
       )
       .onConflictDoNothing();
+    await db
+      .insert(achievements)
+      .values(
+        WORDLE_ACHIEVEMENT_CATALOG.map((definition) => ({
+          id: definition.id,
+          name: definition.name,
+          description: definition.description,
+          category: 'wordle',
+          rarity: definition.rarity,
+          icon: definition.icon,
+          condition: JSON.stringify(definition.rule),
+          reward_xp: definition.rewardXp,
+        })),
+      )
+      .onConflictDoUpdate({
+        target: achievements.id,
+        set: {
+          name: sql`excluded.name`,
+          description: sql`excluded.description`,
+          category: sql`excluded.category`,
+          rarity: sql`excluded.rarity`,
+          icon: sql`excluded.icon`,
+          condition: sql`excluded.condition`,
+          reward_xp: sql`excluded.reward_xp`,
+        },
+      });
   }
 
   async checkAndAwardAchievements(
@@ -137,7 +163,12 @@ export class AchievementService {
           eq(userAchievements.guild_id, guildId),
         ),
       )
-      .where(isNull(userAchievements.achievement_id))) as Achievement[];
+      .where(
+        and(
+          isNull(userAchievements.achievement_id),
+          ne(achievements.category, 'wordle'),
+        ),
+      )) as Achievement[];
 
     const unlocked: string[] = [];
 

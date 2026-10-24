@@ -45,7 +45,7 @@ interface WordleDaily {
 
 type WordleSession = z.input<typeof wordleSessionSchema>;
 
-export type GuessResult = z.input<typeof wordleGuessResultSchema>;
+export type GuessResult = z.output<typeof wordleGuessResultSchema>;
 
 export type DailyStats = z.input<typeof wordleDailyStatsSchema>;
 
@@ -389,6 +389,7 @@ export class WordleService {
         .set({
           guesses: JSON.stringify(newGuesses),
           solved,
+          solved_at: solved ? now : null,
           attempts: newAttempts,
         })
         .where(eq(wordleSessions.id, sessionId));
@@ -400,7 +401,7 @@ export class WordleService {
       // (previousGuesses.length > 0 → $is_new_player = 0).
       const isNewPlayer = previousGuesses.length === 0;
       if (isNewPlayer || solved) {
-        await tx
+        const [dailyStats] = await tx
           .update(wordleDaily)
           .set({
             ...(isNewPlayer
@@ -413,7 +414,14 @@ export class WordleService {
                 }
               : {}),
           })
-          .where(eq(wordleDaily.guild_id, guildId));
+          .where(eq(wordleDaily.guild_id, guildId))
+          .returning({ winnersCount: wordleDaily.winners_count });
+        if (solved) {
+          await tx
+            .update(wordleSessions)
+            .set({ first_solver: dailyStats?.winnersCount === 1 })
+            .where(eq(wordleSessions.id, sessionId));
+        }
       }
 
       const result: GuessResult = {
@@ -429,8 +437,14 @@ export class WordleService {
         result.streak = await this.updateStreak(userId, guildId, tx);
       }
 
-      result.unlockedAchievements =
-        await new WordleAchievementService().checkAndAward(userId, guildId, tx);
+      const achievements = await new WordleAchievementService().checkAndAward(
+        userId,
+        guildId,
+        tx,
+      );
+      result.unlockedAchievements = achievements.unlockedAchievements;
+      result.stats = achievements.stats;
+      result.achievementProgress = achievements.achievementProgress;
 
       return result;
     });
