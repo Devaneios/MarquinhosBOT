@@ -8,7 +8,11 @@ import {
   type WordleClientMessage,
 } from '@marquinhos/contracts/activity/games/wordle';
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
-import { type GuessRow } from '@marquinhos/contracts/wordle';
+import {
+  type GuessRow,
+  type WordleAchievementStatus,
+  type WordleUnlockedAchievement,
+} from '@marquinhos/contracts/wordle';
 import {
   buildLetterStates,
   normalizeKey,
@@ -22,6 +26,24 @@ import React, {
   useState,
 } from 'react';
 import { KB_LETTERS, MIN_KEY_PRESS_MS, revealDurationMs } from '../constants';
+
+export function mergeUnlockedAchievements(
+  current: WordleAchievementStatus[],
+  unlocked: WordleUnlockedAchievement[] | undefined,
+): WordleAchievementStatus[] {
+  if (!unlocked || unlocked.length === 0) return current;
+  const byId = new Map(unlocked.map((item) => [item.id, item]));
+  const updated = current.map((item) => {
+    const match = byId.get(item.id);
+    if (!match) return item;
+    byId.delete(item.id);
+    return { ...item, ...match, unlockedAt: match.unlockedAt };
+  });
+  for (const remaining of byId.values()) {
+    updated.push(remaining);
+  }
+  return updated;
+}
 
 interface WordleBoardOptions {
   enabled: boolean;
@@ -44,6 +66,12 @@ export function useWordleBoard(
   const [revealedCount, setRevealedCount] = useState(0);
   const [celebrateRow, setCelebrateRow] = useState<number | null>(null);
   const [solved, setSolved] = useState(false);
+  const [achievements, setAchievements] = useState<WordleAchievementStatus[]>(
+    [],
+  );
+  const [unlockedAchievements, setUnlockedAchievements] = useState<
+    WordleUnlockedAchievement[]
+  >([]);
   const [error, setError] = useState<string | null>(null);
   const [currentLetters, setCurrentLetters] = useState<string[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -78,6 +106,8 @@ export function useWordleBoard(
             setWordLength(message.payload.wordLength);
             setGuesses(message.payload.guesses);
             setSolved(message.payload.solved);
+            setAchievements(message.payload.achievements ?? []);
+            setUnlockedAchievements([]);
             setRevealedCount(message.payload.guesses.length);
             setCelebrateRow(null);
             window.clearTimeout(errorTimeout.current);
@@ -89,6 +119,13 @@ export function useWordleBoard(
         case 'guess_result':
           setGuesses(message.payload.guesses);
           setSolved(message.payload.solved);
+          setAchievements((prev) =>
+            mergeUnlockedAchievements(
+              prev,
+              message.payload.unlockedAchievements,
+            ),
+          );
+          setUnlockedAchievements(message.payload.unlockedAchievements ?? []);
           window.clearTimeout(errorTimeout.current);
           setError(null);
           setCurrentLetters((prev) => prev.map(() => ''));
@@ -342,12 +379,19 @@ export function useWordleBoard(
     }
   }
 
+  const dismissUnlockedAchievements = useCallback(() => {
+    setUnlockedAchievements([]);
+  }, []);
+
   return {
     wordLength,
     guesses,
     revealingRow,
     celebrateRow,
     solved,
+    achievements,
+    unlockedAchievements,
+    dismissUnlockedAchievements,
     error,
     currentLetters,
     activeIndex,

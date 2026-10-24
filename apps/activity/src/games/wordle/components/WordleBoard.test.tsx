@@ -134,4 +134,78 @@ describe('WordleBoard screen transitions', () => {
     fireEvent.click(screen.getByRole('button', { name: /voltar/i }));
     expect(screen.getAllByRole('textbox')).toHaveLength(5);
   });
+
+  it('shows an unlock toast on guess_result and opens the achievements collection screen', async () => {
+    const { WordleBoard } = await import(`./WordleBoard.tsx?${Math.random()}`);
+    renderBoard(WordleBoard);
+    act(() => {
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          achievements: [
+            {
+              id: 'wordle_first_win',
+              name: 'Primeira palavra',
+              description: 'Acerte sua primeira palavra.',
+              icon: '🟩',
+              rarity: 'common',
+              rewardXp: 25,
+              unlockedAt: null,
+            },
+          ],
+        },
+      });
+    });
+
+    act(() => {
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'termo',
+          feedback: ['correct', 'correct', 'correct', 'correct', 'correct'],
+          guesses: [
+            {
+              guess: 'termo',
+              feedback: ['correct', 'correct', 'correct', 'correct', 'correct'],
+            },
+          ],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+          unlockedAchievements: [
+            {
+              id: 'wordle_first_win',
+              name: 'Primeira palavra',
+              description: 'Acerte sua primeira palavra.',
+              icon: '🟩',
+              rarity: 'common',
+              rewardXp: 25,
+              unlockedAt: '2026-10-24T04:15:00.000Z',
+            },
+          ],
+        },
+      });
+    });
+
+    expect(screen.getByText(/conquista desbloqueada/i)).toBeTruthy();
+    expect(screen.getByText('Primeira palavra')).toBeTruthy();
+    expect(screen.getByText('+25 XP')).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /fechar conquista desbloqueada/i }),
+    );
+    expect(screen.queryByText(/conquista desbloqueada/i)).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /abrir conquistas/i }));
+    expect(screen.getByRole('heading', { name: /conquistas/i })).toBeTruthy();
+    expect(screen.getByText('1 de 1 desbloqueadas')).toBeTruthy();
+    expect(screen.getByText('Desbloqueada')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /voltar/i }));
+    expect(screen.queryByRole('heading', { name: /conquistas/i })).toBeNull();
+  });
 });

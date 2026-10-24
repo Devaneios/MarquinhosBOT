@@ -18,5 +18,21 @@
   "savingSettings": "SALVANDO…",
   "settingsSaveError": "Não foi possível salvar as configurações. Tente novamente.",
   "settingsSubtitle": "Ajuste como o teclado responde durante a partida.",
-  "settingsAriaLabel": "Abrir configurações do Terminhos"
+  "settingsAriaLabel": "Abrir configurações do Terminhos",
+  "achievementsTitle": "Conquistas",
+  "achievementsSubtitle": "Desbloqueie medalhas jogando o Terminhos todos os dias.",
+  "achievementsAriaLabel": "Abrir conquistas do Terminhos",
+  "achievementsProgress": "{{unlocked}} de {{total}} desbloqueadas",
+  "achievementsEmpty": "Nenhuma conquista disponível no momento.",
+  "achievementUnlockedToast": "Conquista desbloqueada",
+  "dismissAchievementToast": "Fechar conquista desbloqueada",
+  "achievementRewardXp": "+{{xp}} XP",
+  "achievementLocked": "Bloqueada",
+  "achievementUnlocked": "Desbloqueada",
+  "rarity": {
+    "common": "Comum",
+    "rare": "Rara",
+    "epic": "Épica",
+    "legendary": "Lendária"
+  }
 }

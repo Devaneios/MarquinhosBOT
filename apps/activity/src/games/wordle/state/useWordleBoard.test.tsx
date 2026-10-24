@@ -191,4 +191,89 @@ describe('useWordleBoard reveal', () => {
     expect(result.current.revealingRow).toBeNull();
     expect(result.current.letterStates.c).toBe('absent');
   });
+
+  it('hydrates achievements on init and merges newly unlocked achievements on guess_result', async () => {
+    const { useWordleBoard } = await import(
+      `./useWordleBoard.ts?${Math.random()}`
+    );
+    const { result } = renderHook(() =>
+      useWordleBoard(
+        { token: 'token-1', roomKey: 'wordle-user-1' },
+        { enabled: true, enableSpaceKey: false, enableArrowKeys: false },
+      ),
+    );
+
+    act(() => {
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          achievements: [
+            {
+              id: 'wordle_first_win',
+              name: 'Primeira palavra',
+              description: 'Acerte sua primeira palavra.',
+              icon: '🟩',
+              rarity: 'common',
+              rewardXp: 25,
+              unlockedAt: null,
+            },
+            {
+              id: 'wordle_wins_10',
+              name: 'Dez palavras',
+              description: 'Acerte 10 palavras.',
+              icon: '🏅',
+              rarity: 'rare',
+              rewardXp: 100,
+              unlockedAt: null,
+            },
+          ],
+        },
+      });
+    });
+
+    expect(result.current.achievements).toHaveLength(2);
+    expect(result.current.achievements[0]?.unlockedAt).toBeNull();
+    expect(result.current.unlockedAchievements).toEqual([]);
+
+    act(() => {
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'termo',
+          feedback: Array(5).fill('correct'),
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+          unlockedAchievements: [
+            {
+              id: 'wordle_first_win',
+              name: 'Primeira palavra',
+              description: 'Acerte sua primeira palavra.',
+              icon: '🟩',
+              rarity: 'common',
+              rewardXp: 25,
+              unlockedAt: '2026-10-24T04:15:00.000Z',
+            },
+          ],
+        },
+      });
+    });
+
+    expect(result.current.unlockedAchievements).toHaveLength(1);
+    expect(result.current.unlockedAchievements[0]?.id).toBe('wordle_first_win');
+    expect(result.current.achievements[0]?.unlockedAt).toBe(
+      '2026-10-24T04:15:00.000Z',
+    );
+    expect(result.current.achievements[1]?.unlockedAt).toBeNull();
+
+    act(() => {
+      result.current.dismissUnlockedAchievements();
+    });
+    expect(result.current.unlockedAchievements).toEqual([]);
+  });
 });
