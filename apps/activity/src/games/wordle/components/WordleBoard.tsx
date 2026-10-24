@@ -9,9 +9,11 @@ import {
 } from '@/games/shared/shell';
 import { transitionTo, useNavigateHome } from '@/shared/motion/transitions';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
-import { useEffect, useMemo, useState, ViewTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
+import { playAchievementChime } from '../audio/achievementChime';
 import {
+  ACHIEVEMENT_TOAST_MS,
   buildKeyboardRows,
   ENTRANCE_MS,
   WORDLE_FOCUS_KEYS,
@@ -42,9 +44,11 @@ export function WordleBoard({
     backspace,
     connectionState,
     currentLetters,
+    dismissCurrentAchievement,
     dismissUnlockedAchievements,
     error,
     guesses,
+    hasUnlockedInSession,
     revealingRow,
     celebrateRow,
     letterStates,
@@ -56,6 +60,7 @@ export function WordleBoard({
     setActiveIndex,
     shake,
     solved,
+    stats,
     submitGuess,
     suspendInput,
     typeLetter,
@@ -68,11 +73,32 @@ export function WordleBoard({
   });
   const screen = wordLength === null ? 'loading' : subScreen;
   const [entered, setEntered] = useState(false);
+  const activeToast = unlockedAchievements[0] ?? null;
+  const activeToastId = activeToast?.id ?? null;
+  const queuedToastCount = Math.max(0, unlockedAchievements.length - 1);
+  const lastChimedToastId = useRef<string | null>(null);
+
   useEffect(() => {
     if (screen !== 'playing' || entered) return;
     const timeout = window.setTimeout(() => setEntered(true), ENTRANCE_MS);
     return () => window.clearTimeout(timeout);
   }, [entered, screen]);
+
+  useEffect(() => {
+    if (!activeToastId) {
+      lastChimedToastId.current = null;
+      return;
+    }
+    if (lastChimedToastId.current !== activeToastId) {
+      lastChimedToastId.current = activeToastId;
+      playAchievementChime(config.enableSounds);
+    }
+    const timeout = window.setTimeout(() => {
+      dismissCurrentAchievement();
+    }, ACHIEVEMENT_TOAST_MS);
+    return () => window.clearTimeout(timeout);
+  }, [activeToastId, config.enableSounds, dismissCurrentAchievement]);
+
   const keyboardRows = useMemo(
     () =>
       buildKeyboardRows(config).map((row) =>
@@ -84,6 +110,12 @@ export function WordleBoard({
     [letterStates, config],
   );
   const attemptNumber = guesses.length + (solved ? 0 : 1);
+
+  function openAchievements() {
+    suspendInput();
+    dismissUnlockedAchievements();
+    transitionTo('nav-forward', () => setSubScreen('achievements'));
+  }
 
   if (screen === 'loading') {
     return connectionState === 'error' || connectionState === 'disconnected' ? (
@@ -107,6 +139,7 @@ export function WordleBoard({
     return (
       <WordleAchievementsScreen
         achievements={achievements}
+        stats={stats}
         onBack={() => transitionTo('nav-back', () => setSubScreen('playing'))}
       />
     );
@@ -154,11 +187,7 @@ export function WordleBoard({
               className={`${backChipClass} px-3`}
               aria-label={t('wordle:achievementsAriaLabel')}
               title={t('wordle:achievementsAriaLabel')}
-              onClick={() => {
-                suspendInput();
-                dismissUnlockedAchievements();
-                transitionTo('nav-forward', () => setSubScreen('achievements'));
-              }}
+              onClick={openAchievements}
             >
               <svg
                 aria-hidden="true"
@@ -202,61 +231,82 @@ export function WordleBoard({
         <ViewTransition name="game-panel">
           <div className="notch-8 flex w-full flex-1 flex-col gap-3 border border-marquinhos-border bg-[#1c1b1c] px-2 py-3 shadow-[0_20px_40px_rgba(0,0,0,0.35)] sm:w-fit sm:min-w-135 sm:flex-none sm:gap-4 sm:px-6 sm:py-6">
             {solved && revealingRow === null && (
-              <div className="notch-6 animate-termo-toast-in flex items-center justify-between gap-3 border border-marquinhos-border bg-black/25 px-4 py-3">
+              <div className="notch-6 animate-termo-toast-in flex flex-wrap items-center justify-between gap-3 border border-marquinhos-border bg-black/25 px-4 py-3">
                 <div className="text-sm font-semibold text-marquinhos-text">
                   {t('wordle:solved', { count: guesses.length })}
                 </div>
-                <div
-                  className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em]"
-                  style={{
-                    borderColor: `${FEEDBACK_COLORS.correct.bg}80`,
-                    backgroundColor: `${FEEDBACK_COLORS.correct.bg}26`,
-                    color: '#98d68f',
-                  }}
-                >
-                  {t('wordle:solvedBadge')}
+                <div className="flex items-center gap-2">
+                  {(hasUnlockedInSession ||
+                    unlockedAchievements.length > 0 ||
+                    achievements.some((item) => item.unlockedAt !== null)) && (
+                    <button
+                      type="button"
+                      onClick={openAchievements}
+                      className="notch-4 border border-marquinhos-accent/60 bg-marquinhos-accent/15 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-marquinhos-accent transition-colors hover:bg-marquinhos-accent/25"
+                    >
+                      {t('wordle:viewAchievementsCta')}
+                    </button>
+                  )}
+                  <div
+                    className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em]"
+                    style={{
+                      borderColor: `${FEEDBACK_COLORS.correct.bg}80`,
+                      backgroundColor: `${FEEDBACK_COLORS.correct.bg}26`,
+                      color: '#98d68f',
+                    }}
+                  >
+                    {t('wordle:solvedBadge')}
+                  </div>
                 </div>
               </div>
             )}
 
-            {unlockedAchievements.length > 0 && (
+            {activeToast && (
               <div
+                key={activeToast.id}
                 role="status"
                 aria-live="polite"
-                className="notch-6 animate-termo-toast-in flex flex-col gap-2 border border-marquinhos-accent/50 bg-marquinhos-accent/10 px-4 py-3"
+                className="termo-achievement-toast notch-6 flex flex-col gap-2 border border-marquinhos-accent/50 bg-marquinhos-accent/10 px-4 py-3"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-pixel text-[11px] uppercase tracking-[0.2em] text-marquinhos-accent">
-                    {t('wordle:achievementUnlockedToast')}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-pixel text-[11px] uppercase tracking-[0.2em] text-marquinhos-accent">
+                      {t('wordle:achievementUnlockedToast')}
+                    </span>
+                    {queuedToastCount > 0 && (
+                      <span className="rounded border border-marquinhos-accent/40 bg-black/30 px-1.5 py-0.5 text-[10px] font-bold text-marquinhos-accent">
+                        {t('wordle:achievementToastQueueCount', {
+                          count: queuedToastCount,
+                        })}
+                      </span>
+                    )}
+                  </div>
                   <button
                     type="button"
                     aria-label={t('wordle:dismissAchievementToast')}
                     className="rounded px-1.5 py-0.5 text-xs text-marquinhos-text-dim transition-colors hover:text-marquinhos-text"
-                    onClick={dismissUnlockedAchievements}
+                    onClick={dismissCurrentAchievement}
                   >
                     ✕
                   </button>
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  {unlockedAchievements.map((achievement) => (
-                    <div
-                      key={achievement.id}
-                      className="flex items-center justify-between gap-3 text-sm"
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className="termo-achievement-badge inline-block"
                     >
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span aria-hidden="true">{achievement.icon}</span>
-                        <span className="truncate font-semibold text-marquinhos-text">
-                          {achievement.name}
-                        </span>
-                      </div>
-                      <span className="shrink-0 font-pixel text-xs text-marquinhos-accent">
-                        {t('wordle:achievementRewardXp', {
-                          xp: achievement.rewardXp,
-                        })}
-                      </span>
-                    </div>
-                  ))}
+                      {activeToast.icon}
+                    </span>
+                    <span className="truncate font-semibold text-marquinhos-text">
+                      {activeToast.name}
+                    </span>
+                  </div>
+                  <span className="shrink-0 font-pixel text-xs text-marquinhos-accent">
+                    {t('wordle:achievementRewardXp', {
+                      xp: activeToast.rewardXp,
+                    })}
+                  </span>
                 </div>
               </div>
             )}

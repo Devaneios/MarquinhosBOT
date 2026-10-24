@@ -9,6 +9,7 @@ export const FLIP_DURATION_MS = 400;
 export const BOUNCE_STAGGER_MS = 100;
 export const BOUNCE_DURATION_MS = 480;
 export const ENTRANCE_MS = 800;
+export const ACHIEVEMENT_TOAST_MS = 4500;
 
 export function revealDurationMs(wordLength: number): number {
   return (wordLength - 1) * FLIP_STAGGER_MS + FLIP_DURATION_MS;

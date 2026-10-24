@@ -136,30 +136,101 @@ describe('WordleBoard screen transitions', () => {
   });
 
   it('shows an unlock toast on guess_result and opens the achievements collection screen', async () => {
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = (() => ({
+      matches: true,
+    })) as unknown as typeof window.matchMedia;
+    try {
+      const { WordleBoard } = await import(
+        `./WordleBoard.tsx?${Math.random()}`
+      );
+      renderBoard(WordleBoard);
+      act(() => {
+        deliverMessage({
+          type: 'init',
+          payload: {
+            wordLength: 5,
+            guesses: [],
+            solved: false,
+            attempts: 0,
+            achievements: [
+              {
+                id: 'wordle_first_win',
+                name: 'Primeira palavra',
+                description: 'Acerte sua primeira palavra.',
+                icon: '🟩',
+                rarity: 'common',
+                rewardXp: 25,
+                unlockedAt: null,
+              },
+            ],
+          },
+        });
+      });
+
+      act(() => {
+        deliverMessage({
+          type: 'guess_result',
+          payload: {
+            guess: 'termo',
+            feedback: ['correct', 'correct', 'correct', 'correct', 'correct'],
+            guesses: [
+              {
+                guess: 'termo',
+                feedback: [
+                  'correct',
+                  'correct',
+                  'correct',
+                  'correct',
+                  'correct',
+                ],
+              },
+            ],
+            solved: true,
+            attempts: 1,
+            wordLength: 5,
+            unlockedAchievements: [
+              {
+                id: 'wordle_first_win',
+                name: 'Primeira palavra',
+                description: 'Acerte sua primeira palavra.',
+                icon: '🟩',
+                rarity: 'common',
+                rewardXp: 25,
+                unlockedAt: '2026-10-24T04:15:00.000Z',
+              },
+            ],
+          },
+        });
+      });
+
+      expect(screen.getByText(/conquista desbloqueada/i)).toBeTruthy();
+      expect(screen.getByText('Primeira palavra')).toBeTruthy();
+      expect(screen.getByText('+25 XP')).toBeTruthy();
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /fechar conquista desbloqueada/i }),
+      );
+      expect(screen.queryByText(/conquista desbloqueada/i)).toBeNull();
+
+      const cta = screen.getByRole('button', { name: /ver conquistas/i });
+      expect(cta).toBeTruthy();
+      fireEvent.click(cta);
+      expect(screen.getByRole('heading', { name: /conquistas/i })).toBeTruthy();
+      expect(screen.getByText('1 de 1 desbloqueadas')).toBeTruthy();
+      expect(screen.getByText('Desbloqueada')).toBeTruthy();
+
+      fireEvent.click(screen.getByRole('button', { name: /voltar/i }));
+      expect(screen.queryByRole('heading', { name: /conquistas/i })).toBeNull();
+    } finally {
+      window.matchMedia = originalMatchMedia;
+    }
+  });
+
+  it('queues multiple unlocked achievements one at a time', async () => {
     const { WordleBoard } = await import(`./WordleBoard.tsx?${Math.random()}`);
     renderBoard(WordleBoard);
-    act(() => {
-      deliverMessage({
-        type: 'init',
-        payload: {
-          wordLength: 5,
-          guesses: [],
-          solved: false,
-          attempts: 0,
-          achievements: [
-            {
-              id: 'wordle_first_win',
-              name: 'Primeira palavra',
-              description: 'Acerte sua primeira palavra.',
-              icon: '🟩',
-              rarity: 'common',
-              rewardXp: 25,
-              unlockedAt: null,
-            },
-          ],
-        },
-      });
-    });
+    initializeBoard();
 
     act(() => {
       deliverMessage({
@@ -179,11 +250,26 @@ describe('WordleBoard screen transitions', () => {
           unlockedAchievements: [
             {
               id: 'wordle_first_win',
+              family: 'wins',
+              tier: 1,
               name: 'Primeira palavra',
               description: 'Acerte sua primeira palavra.',
               icon: '🟩',
               rarity: 'common',
               rewardXp: 25,
+              hidden: false,
+              unlockedAt: '2026-10-24T04:15:00.000Z',
+            },
+            {
+              id: 'wordle_solved_in_1',
+              family: 'precision',
+              tier: 3,
+              name: 'Na mosca',
+              description: 'Acerte na primeira tentativa.',
+              icon: '🍀',
+              rarity: 'epic',
+              rewardXp: 100,
+              hidden: false,
               unlockedAt: '2026-10-24T04:15:00.000Z',
             },
           ],
@@ -191,21 +277,19 @@ describe('WordleBoard screen transitions', () => {
       });
     });
 
-    expect(screen.getByText(/conquista desbloqueada/i)).toBeTruthy();
     expect(screen.getByText('Primeira palavra')).toBeTruthy();
-    expect(screen.getByText('+25 XP')).toBeTruthy();
+    expect(screen.queryByText('Na mosca')).toBeNull();
+    expect(screen.getByText('+1 na fila')).toBeTruthy();
 
     fireEvent.click(
       screen.getByRole('button', { name: /fechar conquista desbloqueada/i }),
     );
-    expect(screen.queryByText(/conquista desbloqueada/i)).toBeNull();
+    expect(screen.queryByText('Primeira palavra')).toBeNull();
+    expect(screen.getByText('Na mosca')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: /abrir conquistas/i }));
-    expect(screen.getByRole('heading', { name: /conquistas/i })).toBeTruthy();
-    expect(screen.getByText('1 de 1 desbloqueadas')).toBeTruthy();
-    expect(screen.getByText('Desbloqueada')).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('button', { name: /voltar/i }));
-    expect(screen.queryByRole('heading', { name: /conquistas/i })).toBeNull();
+    fireEvent.click(
+      screen.getByRole('button', { name: /fechar conquista desbloqueada/i }),
+    );
+    expect(screen.queryByText('Na mosca')).toBeNull();
   });
 });

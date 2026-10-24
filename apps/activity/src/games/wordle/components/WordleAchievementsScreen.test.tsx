@@ -1,27 +1,77 @@
 import '@/i18n';
-import type { WordleAchievementStatus } from '@marquinhos/contracts/wordle';
-import { fireEvent, render, screen } from '@testing-library/react';
+import type {
+  WordleAchievementStatus,
+  WordlePlayerStats,
+} from '@marquinhos/contracts/wordle';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, mock } from 'bun:test';
 import { WordleAchievementsScreen } from './WordleAchievementsScreen';
+
+const sampleStats: WordlePlayerStats = {
+  played: 20,
+  wins: 17,
+  winRate: 85,
+  currentStreak: 4,
+  bestStreak: 9,
+  distribution: [2, 5, 6, 3, 1, 0, 0],
+};
 
 const sampleAchievements: WordleAchievementStatus[] = [
   {
     id: 'wordle_first_win',
+    family: 'wins',
+    tier: 1,
     name: 'Primeira palavra',
     description: 'Acerte sua primeira palavra do dia no Terminhos.',
     icon: '🟩',
     rarity: 'common',
     rewardXp: 25,
+    hidden: false,
     unlockedAt: '2026-10-24T04:00:00.000Z',
+    progress: { current: 1, target: 1 },
+    holdersPercent: 88,
+  },
+  {
+    id: 'wordle_wins_10',
+    family: 'wins',
+    tier: 2,
+    name: 'Dez palavras',
+    description: 'Acerte a palavra diária em 10 dias.',
+    icon: '📚',
+    rarity: 'rare',
+    rewardXp: 100,
+    hidden: false,
+    unlockedAt: null,
+    progress: { current: 7, target: 10 },
+    holdersPercent: 35.5,
   },
   {
     id: 'wordle_streak_7',
+    family: 'streak',
+    tier: 2,
     name: 'Semana perfeita',
     description: 'Mantenha uma sequência de 7 dias acertando o Terminhos.',
     icon: '🔥',
     rarity: 'epic',
     rewardXp: 150,
+    hidden: false,
     unlockedAt: null,
+    progress: { current: 4, target: 7 },
+    holdersPercent: 12,
+  },
+  {
+    id: 'wordle_night_owl',
+    family: 'timing',
+    tier: 4,
+    name: '',
+    description: '',
+    icon: '❔',
+    rarity: 'common',
+    rewardXp: 50,
+    hidden: true,
+    unlockedAt: null,
+    progress: null,
+    holdersPercent: 4,
   },
 ];
 
@@ -35,23 +85,110 @@ describe('WordleAchievementsScreen', () => {
     ).toBeTruthy();
   });
 
-  it('renders unlocked and locked achievements with progress and XP rewards', () => {
-    render(
+  it('renders stats header, distribution bars, families, tier ladders, progress bars, holders %, and secret masking', () => {
+    const { container } = render(
       <WordleAchievementsScreen
         achievements={sampleAchievements}
+        stats={sampleStats}
         onBack={() => {}}
       />,
     );
 
-    expect(screen.getByText('1 de 2 desbloqueadas')).toBeTruthy();
+    expect(screen.getByText('1 de 4 desbloqueadas')).toBeTruthy();
+    expect(
+      within(container.querySelector('[data-stat="played"]')!).getByText('20'),
+    ).toBeTruthy();
+    expect(
+      within(container.querySelector('[data-stat="wins"]')!).getByText('17'),
+    ).toBeTruthy();
+    expect(
+      within(container.querySelector('[data-stat="winRate"]')!).getByText(
+        '85%',
+      ),
+    ).toBeTruthy();
+    expect(
+      within(container.querySelector('[data-stat="currentStreak"]')!).getByText(
+        '4',
+      ),
+    ).toBeTruthy();
+    expect(
+      within(container.querySelector('[data-stat="bestStreak"]')!).getByText(
+        '9',
+      ),
+    ).toBeTruthy();
+    expect(
+      container.querySelectorAll('[data-distribution-bucket]'),
+    ).toHaveLength(7);
+
+    expect(container.querySelector('section[data-family="wins"]')).toBeTruthy();
+    expect(
+      container.querySelector('section[data-family="streak"]'),
+    ).toBeTruthy();
+    expect(
+      container.querySelector('section[data-family="timing"]'),
+    ).toBeTruthy();
+
     expect(screen.getByText('Primeira palavra')).toBeTruthy();
-    expect(screen.getByText('Semana perfeita')).toBeTruthy();
-    expect(screen.getByText('+25 XP')).toBeTruthy();
-    expect(screen.getByText('+150 XP')).toBeTruthy();
-    expect(screen.getByText('Comum')).toBeTruthy();
-    expect(screen.getByText('Épica')).toBeTruthy();
-    expect(screen.getByText('Desbloqueada')).toBeTruthy();
-    expect(screen.getByText('Bloqueada')).toBeTruthy();
+    expect(screen.getByText('Dez palavras')).toBeTruthy();
+    expect(screen.getByText('7 / 10')).toBeTruthy();
+    expect(screen.getByText('88% do servidor')).toBeTruthy();
+    expect(screen.getByText('35.5% do servidor')).toBeTruthy();
+
+    expect(screen.getByText('Conquista secreta')).toBeTruthy();
+    expect(
+      screen.getByText(
+        /continue jogando o terminhos para descobrir como desbloquear/i,
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Secreta')).toBeTruthy();
+  });
+
+  it('filters achievements by todas, desbloqueadas, and bloqueadas', () => {
+    render(
+      <WordleAchievementsScreen
+        achievements={sampleAchievements}
+        stats={sampleStats}
+        onBack={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Desbloqueadas' }));
+    expect(screen.getByText('Primeira palavra')).toBeTruthy();
+    expect(screen.queryByText('Dez palavras')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Bloqueadas' }));
+    expect(screen.queryByText('Primeira palavra')).toBeNull();
+    expect(screen.getByText('Dez palavras')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Todas' }));
+    expect(screen.getByText('Primeira palavra')).toBeTruthy();
+    expect(screen.getByText('Dez palavras')).toBeTruthy();
+  });
+
+  it('opens and closes the achievement detail sheet on click and Escape', () => {
+    render(
+      <WordleAchievementsScreen
+        achievements={sampleAchievements}
+        stats={sampleStats}
+        onBack={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Dez palavras'));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toBeTruthy();
+    expect(within(dialog).getByText('Detalhes da conquista')).toBeTruthy();
+    expect(within(dialog).getByText('7 / 10')).toBeTruthy();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    fireEvent.click(screen.getByText('Primeira palavra'));
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole('button', { name: /fechar detalhes da conquista/i }),
+    );
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('invokes onBack when the back button is clicked', () => {
