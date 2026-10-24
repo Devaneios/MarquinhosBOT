@@ -2,6 +2,9 @@ import { z } from 'zod';
 import {
   guessRowSchema,
   letterFeedbackSchema,
+  wordleAchievementProgressUpdateSchema,
+  wordleAchievementsOverviewSchema,
+  wordlePlayerStatsSchema,
   wordleUnlockedAchievementSchema,
   wordleUserConfigSchema,
 } from '../../wordle';
@@ -23,6 +26,10 @@ export const wordleGuessResultSchema = z.object({
   wordLength: z.number(),
   streak: z.number().optional(),
   unlockedAchievements: z.array(wordleUnlockedAchievementSchema).optional(),
+  stats: wordlePlayerStatsSchema.optional(),
+  achievementProgress: z
+    .array(wordleAchievementProgressUpdateSchema)
+    .optional(),
 });
 export type WordleGuessResult = z.output<typeof wordleGuessResultSchema>;
 
@@ -133,6 +140,13 @@ export const getStats = defineContract({
   path: '/api/wordle/stats/:guildId',
   params: guildParams,
   response: envelope(wordleDailyStatsSchema),
+});
+
+export const getAchievements = defineContract({
+  method: 'GET',
+  path: '/api/wordle/achievements/:guildId/:userId',
+  params: userGuildParams,
+  response: envelope(wordleAchievementsOverviewSchema),
 });
 
 export const getUserSession = defineContract({

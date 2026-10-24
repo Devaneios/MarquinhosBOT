@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { wordleGuessResultSchema } from '../../http/routes/wordle';
-import { guessRowSchema, wordleAchievementStatusSchema } from '../../wordle';
+import {
+  guessRowSchema,
+  wordleAchievementStatusSchema,
+  wordlePlayerStatsSchema,
+} from '../../wordle';
 
 export const guessPayloadSchema = z.object({ guess: z.string().default('') });
 
@@ -18,6 +22,7 @@ export const serverMessageSchema = z.discriminatedUnion('type', [
       solved: z.boolean(),
       attempts: z.number(),
       achievements: z.array(wordleAchievementStatusSchema).optional(),
+      stats: wordlePlayerStatsSchema.optional(),
     }),
   }),
   z.object({
