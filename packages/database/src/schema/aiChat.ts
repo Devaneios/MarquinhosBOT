@@ -8,6 +8,7 @@ import {
   pgTable,
   primaryKey,
   text,
+  unique,
 } from 'drizzle-orm/pg-core';
 
 export const aiChatConfig = pgTable('ai_chat_config', {
@@ -84,14 +85,19 @@ export const aiTraces = pgTable(
     duration_ms: bigint('duration_ms', { mode: 'number' }),
     created_at: bigint('created_at', { mode: 'number' }).notNull(),
   },
-  (t) => [index('idx_ai_traces_created_at').on(t.created_at)],
+  (t) => [
+    index('idx_ai_traces_created_at').on(t.created_at),
+    index('idx_ai_traces_user_created').on(t.user_id, t.created_at.desc()),
+  ],
 );
 
 export const aiTraceEvents = pgTable(
   'ai_trace_events',
   {
     id: bigserial('id', { mode: 'number' }).primaryKey(),
-    trace_id: text('trace_id').notNull(),
+    trace_id: text('trace_id')
+      .notNull()
+      .references(() => aiTraces.trace_id, { onDelete: 'cascade' }),
     seq: integer('seq').notNull(),
     type: text('type').notNull(),
     phase: text('phase'),
@@ -103,7 +109,7 @@ export const aiTraceEvents = pgTable(
     duration_ms: bigint('duration_ms', { mode: 'number' }),
     created_at: bigint('created_at', { mode: 'number' }).notNull(),
   },
-  (t) => [index('idx_ai_trace_events_trace').on(t.trace_id, t.seq)],
+  (t) => [unique('ai_trace_events_trace_seq_unique').on(t.trace_id, t.seq)],
 );
 
 export const aiThreadSessions = pgTable(
@@ -129,6 +135,7 @@ export const aiThreadSessions = pgTable(
       sql`${t.status} IN ('active','closed')`,
     ),
     index('idx_ai_thread_sessions_last_used').on(t.last_used_at),
+    index('idx_ai_thread_sessions_owner').on(t.owner_user_id),
   ],
 );
 
@@ -136,12 +143,14 @@ export const aiThreadItems = pgTable(
   'ai_thread_items',
   {
     id: bigserial('id', { mode: 'number' }).primaryKey(),
-    thread_id: text('thread_id').notNull(),
+    thread_id: text('thread_id')
+      .notNull()
+      .references(() => aiThreadSessions.thread_id, { onDelete: 'cascade' }),
     seq: integer('seq').notNull(),
     item_json: text('item_json').notNull(),
     created_at: bigint('created_at', { mode: 'number' }).notNull(),
   },
-  (t) => [index('idx_ai_thread_items_thread').on(t.thread_id, t.seq)],
+  (t) => [unique('ai_thread_items_thread_seq_unique').on(t.thread_id, t.seq)],
 );
 
 export const aiResearchJobs = pgTable(
@@ -168,6 +177,7 @@ export const aiResearchJobs = pgTable(
       sql`${t.status} IN ('queued','running','done','error')`,
     ),
     index('idx_ai_research_jobs_created_at').on(t.created_at),
+    index('idx_ai_research_jobs_user').on(t.user_id),
   ],
 );
 
@@ -175,11 +185,13 @@ export const aiResearchEvents = pgTable(
   'ai_research_events',
   {
     id: bigserial('id', { mode: 'number' }).primaryKey(),
-    job_id: text('job_id').notNull(),
+    job_id: text('job_id')
+      .notNull()
+      .references(() => aiResearchJobs.job_id, { onDelete: 'cascade' }),
     seq: integer('seq').notNull(),
     stage: text('stage').notNull(),
     message: text('message').notNull(),
     created_at: bigint('created_at', { mode: 'number' }).notNull(),
   },
-  (t) => [index('idx_ai_research_events_job').on(t.job_id, t.seq)],
+  (t) => [unique('ai_research_events_job_seq_unique').on(t.job_id, t.seq)],
 );

@@ -137,6 +137,29 @@ async function copyTable(
   return { table: name, source: sourceRows.length, target: counted?.n ?? 0 };
 }
 
+/**
+ * wordle_days has no SQLite source. Compat triggers create its rows while
+ * wordle_daily and wordle_sessions are copied; days known only from sessions
+ * (no wordle_daily row) still need their counters, as in migration 0005.
+ */
+async function deriveWordleDayStats(tx: Tx): Promise<void> {
+  await tx.execute(sql`
+    UPDATE wordle_days d SET
+      players_count = ss.players_count,
+      winners_count = ss.winners_count,
+      total_attempts = ss.total_attempts,
+      created_at = ss.created_at
+    FROM (
+      SELECT guild_id, word_date,
+             count(*) FILTER (WHERE attempts > 0)::integer AS players_count,
+             count(*) FILTER (WHERE solved)::integer AS winners_count,
+             coalesce(sum(attempts) FILTER (WHERE solved), 0)::integer AS total_attempts,
+             min(created_at) AS created_at
+      FROM wordle_sessions GROUP BY guild_id, word_date
+    ) ss
+    WHERE d.guild_id = ss.guild_id AND d.word_date = ss.word_date AND d.word IS NULL`);
+}
+
 /** Explicit ids were copied, so each serial sequence must resume after them. */
 async function resetSequences(tx: Tx, tables: PgTable[]): Promise<void> {
   for (const table of tables) {
@@ -193,6 +216,7 @@ export async function importSqlite(
       for (const table of tables) {
         reports.push(await copyTable(sqlite, tx, table));
       }
+      await deriveWordleDayStats(tx);
       await resetSequences(tx, tables);
 
       const mismatched = reports.filter((r) => r.source !== r.target);

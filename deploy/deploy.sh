@@ -13,6 +13,19 @@ env_file="$root_dir/deploy/.env"
 [[ -f "$env_file" ]] || { echo "missing deployment environment file" >&2; exit 1; }
 [[ -n "${BACKUP_DIR-}" ]] || { echo "BACKUP_DIR is required" >&2; exit 1; }
 
+# MIGRATION_BREAKING marks a release whose migration cannot be undone by
+# redeploying the previous image (the contract release). Reject anything
+# ambiguous before changing anything, rather than guess.
+case "${MIGRATION_BREAKING:-0}" in
+  1|true|TRUE|yes|YES) migration_breaking=1 ;;
+  0|false|FALSE|no|NO|"") migration_breaking=0 ;;
+  *)
+    echo "MIGRATION_BREAKING must be 1 or 0 (got '${MIGRATION_BREAKING}')" >&2
+    exit 2
+    ;;
+esac
+postgres_backup=""
+
 docker info >/dev/null
 docker_gid=$(getent group docker | cut -d: -f3)
 [[ -n "$docker_gid" ]] || { echo "docker group is required" >&2; exit 1; }
@@ -51,9 +64,20 @@ backup_api_data() {
     tar -C /data -czf "/backup/marquinhos-api-$timestamp.tar.gz" .
   # Absent on the first Postgres deploy; nothing to dump yet.
   if docker inspect marquinhos-postgres >/dev/null 2>&1; then
-    docker exec marquinhos-postgres \
-      pg_dump -U marquinhos -d marquinhos --format=custom \
-      > "$BACKUP_DIR/marquinhos-postgres-$timestamp.dump"
+    local dump="$BACKUP_DIR/marquinhos-postgres-$timestamp.dump"
+    # Only a dump that pg_restore can read becomes a backup; otherwise stop
+    # before the API (and its migrations) is touched.
+    if ! docker exec marquinhos-postgres \
+          pg_dump -U marquinhos -d marquinhos --format=custom > "$dump.partial" \
+       || [[ ! -s "$dump.partial" ]] \
+       || ! docker exec -i marquinhos-postgres pg_restore --list < "$dump.partial" >/dev/null; then
+      rm -f "$dump.partial"
+      echo "Postgres backup failed verification; aborting before the API is touched." >&2
+      exit 1
+    fi
+    mv "$dump.partial" "$dump"
+    postgres_backup=$dump
+    echo "Verified Postgres backup: $dump"
   fi
   find "$BACKUP_DIR" -maxdepth 1 -type f \
     \( -name 'marquinhos-api-*.tar.gz' -o -name 'marquinhos-postgres-*.dump' \) \
@@ -88,6 +112,11 @@ deploy_api() {
   # API reports healthy.
   if ! compose up --detach --no-deps --force-recreate --wait --wait-timeout 300 api; then
     docker logs marquinhos-api --tail 200 2>&1 || true
+    if [[ "$migration_breaking" == "1" ]]; then
+      compose stop api || true
+      echo "Breaking database migration failed. API remains stopped; restore ${postgres_backup:-the saved Postgres backup} and start the matching image manually before resuming traffic." >&2
+      exit 1
+    fi
     rollback_api || true
     exit 1
   fi

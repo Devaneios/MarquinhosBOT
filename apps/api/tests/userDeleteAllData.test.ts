@@ -1,5 +1,5 @@
 import { db } from '@marquinhos/database/client';
-import { describe, expect, it } from 'bun:test';
+import { afterAll, describe, expect, it } from 'bun:test';
 import { sql } from 'drizzle-orm';
 import { UserService } from 'services/user';
 
@@ -24,6 +24,10 @@ async function seed(userId: string) {
     sql`INSERT INTO user_levels (user_id, guild_id) VALUES (${userId}, 'g')`,
   );
   await db.execute(
+    sql`INSERT INTO wordle_days (guild_id, word_date, is_legacy, created_at)
+        VALUES ('g', '2026-09-24', true, ${now}) ON CONFLICT DO NOTHING`,
+  );
+  await db.execute(
     sql`INSERT INTO wordle_sessions (id, user_id, guild_id, word_date, created_at)
         VALUES (${`ws-${userId}`}, ${userId}, 'g', '2026-09-24', ${now})`,
   );
@@ -44,6 +48,15 @@ async function seed(userId: string) {
         VALUES (${`thread-${userId}`}, 1, '{}', ${now})`,
   );
 }
+
+// The test database is shared with other files: remove what the test leaves
+// behind (the other user's rows and the day row the sessions point at).
+afterAll(async () => {
+  await new UserService().deleteAllData(OTHER);
+  await db.execute(
+    sql`DELETE FROM wordle_days WHERE guild_id = 'g' AND word_date = '2026-09-24'`,
+  );
+});
 
 describe('UserService.deleteAllData', () => {
   it("deletes the user's stored data and leaves other users' alone", async () => {

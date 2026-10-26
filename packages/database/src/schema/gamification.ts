@@ -67,7 +67,14 @@ export const userAchievements = pgTable(
     unlocked_at: bigint('unlocked_at', { mode: 'number' }).notNull(),
     updated_at: bigint('updated_at', { mode: 'number' }),
   },
-  (t) => [primaryKey({ columns: [t.user_id, t.guild_id, t.achievement_id] })],
+  (t) => [
+    primaryKey({ columns: [t.user_id, t.guild_id, t.achievement_id] }),
+    index('idx_user_achievements_guild_achievement_user').on(
+      t.guild_id,
+      t.achievement_id,
+      t.user_id,
+    ),
+  ],
 );
 
 export const userStats = pgTable(
@@ -115,13 +122,17 @@ export const userGameResults = pgTable(
       .notNull()
       .references(() => gameResults.id),
     user_id: text('user_id').notNull(),
-    guild_id: text('guild_id').notNull(),
+    // legacy: the guild lives on game_results. Kept nullable (a trigger fills
+    // it) so the previous release still works; dropped in the contract release.
+    guild_id: text('guild_id'),
     position: integer('position').notNull(),
     xp_awarded: integer('xp_awarded').notNull(),
   },
   (t) => [
     primaryKey({ columns: [t.game_result_id, t.user_id] }),
+    // legacy: dropped in the contract release.
     index('idx_user_game_results_user').on(t.user_id, t.guild_id),
+    index('idx_user_game_results_user_game').on(t.user_id, t.game_result_id),
   ],
 );
 

@@ -24,6 +24,8 @@ export const wordleConfig = pgTable('wordle_config', {
   updated_at: bigint('updated_at', { mode: 'number' }).notNull(),
 });
 
+// legacy: superseded by wordle_days. Compat triggers keep both in sync so the
+// previous release keeps working; dropped in the contract release.
 export const wordleDaily = pgTable('wordle_daily', {
   guild_id: text('guild_id').primaryKey(),
   word: text('word').notNull(),
@@ -33,6 +35,36 @@ export const wordleDaily = pgTable('wordle_daily', {
   total_attempts: integer('total_attempts').notNull().default(0),
   created_at: bigint('created_at', { mode: 'number' }).notNull(),
 });
+
+export const wordleDays = pgTable(
+  'wordle_days',
+  {
+    guild_id: text('guild_id').notNull(),
+    word_date: text('word_date').notNull(),
+    word: text('word'),
+    word_length: integer('word_length'),
+    is_legacy: boolean('is_legacy').notNull().default(false),
+    players_count: integer('players_count').notNull().default(0),
+    winners_count: integer('winners_count').notNull().default(0),
+    total_attempts: integer('total_attempts').notNull().default(0),
+    created_at: bigint('created_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.guild_id, t.word_date] }),
+    check(
+      'wordle_days_word_length_check',
+      sql`${t.word_length} IS NULL OR ${t.word_length} > 0`,
+    ),
+    check(
+      'wordle_days_word_matches_length_check',
+      sql`${t.word} IS NULL OR (${t.word_length} IS NOT NULL AND char_length(${t.word}) = ${t.word_length})`,
+    ),
+    check(
+      'wordle_days_current_word_required_check',
+      sql`${t.is_legacy} OR (${t.word} IS NOT NULL AND ${t.word_length} IS NOT NULL)`,
+    ),
+  ],
+);
 
 export const wordleSessions = pgTable(
   'wordle_sessions',
@@ -47,6 +79,8 @@ export const wordleSessions = pgTable(
     first_solver: boolean('first_solver'),
     attempts: integer('attempts').notNull().default(0),
     created_at: bigint('created_at', { mode: 'number' }).notNull(),
+    // legacy: the length lives on wordle_days (a trigger fills it). Dropped in
+    // the contract release, together with the wordle_sessions -> wordle_days FK.
     word_length: integer('word_length').notNull().default(0),
     announced_at: bigint('announced_at', { mode: 'number' }),
   },
@@ -63,12 +97,20 @@ export const wordleSessions = pgTable(
   ],
 );
 
-export const wordlistReview = pgTable('wordlist_review', {
-  word: text('word').primaryKey(),
-  is_banned: boolean('is_banned'),
-  // Stands in for SQLite's rowid: the review walks words in insertion order.
-  seq: bigserial('seq', { mode: 'number' }).notNull(),
-});
+export const wordlistReview = pgTable(
+  'wordlist_review',
+  {
+    word: text('word').primaryKey(),
+    is_banned: boolean('is_banned'),
+    // Stands in for SQLite's rowid: the review walks words in insertion order.
+    seq: bigserial('seq', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    index('wordlist_review_pending_seq_idx')
+      .on(t.seq)
+      .where(sql`${t.is_banned} IS NULL`),
+  ],
+);
 
 export const wordleStreaks = pgTable(
   'wordle_streaks',

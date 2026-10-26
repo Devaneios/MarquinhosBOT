@@ -3,7 +3,7 @@ import type { GuessResult } from 'services/wordle';
 
 import { db } from '@marquinhos/database/client';
 import {
-  wordleDaily,
+  wordleDays,
   wordleSessions,
   wordlistReview,
 } from '@marquinhos/database/schema';
@@ -39,9 +39,19 @@ async function seedSession(
     guesses: '[]',
     solved,
     attempts,
-    word_length: wordLength,
     created_at: 0,
   };
+  await db
+    .insert(wordleDays)
+    .values({
+      guild_id: guildId,
+      word_date: wordDate,
+      word: null,
+      word_length: wordLength,
+      is_legacy: true,
+      created_at: 0,
+    })
+    .onConflictDoNothing();
   const { id: _id, ...update } = session;
   await db
     .insert(wordleSessions)
@@ -62,7 +72,8 @@ describe('WordleService.pickNewWord', () => {
 
   beforeEach(async () => {
     await db.execute(sql`DELETE FROM wordle_used_words`);
-    await db.execute(sql`DELETE FROM wordle_daily`);
+    await db.execute(sql`DELETE FROM wordle_sessions`);
+    await db.execute(sql`DELETE FROM wordle_days`);
     service = new WordleService();
   });
 
@@ -248,25 +259,30 @@ describe('WordleService.submitGuess', () => {
     const daily = {
       word,
       word_date: getRecifeDate(),
+      word_length: word.length,
+      is_legacy: false,
       players_count: 0,
       winners_count: 0,
       total_attempts: 0,
       created_at: 0,
     };
     await db
-      .insert(wordleDaily)
+      .insert(wordleDays)
       .values({ guild_id: guildId, ...daily })
-      .onConflictDoUpdate({ target: wordleDaily.guild_id, set: daily });
+      .onConflictDoUpdate({
+        target: [wordleDays.guild_id, wordleDays.word_date],
+        set: daily,
+      });
   }
 
   async function dailyCounts() {
     const [row] = await db
       .select({
-        players_count: wordleDaily.players_count,
-        winners_count: wordleDaily.winners_count,
+        players_count: wordleDays.players_count,
+        winners_count: wordleDays.winners_count,
       })
-      .from(wordleDaily)
-      .where(eq(wordleDaily.guild_id, guildId));
+      .from(wordleDays)
+      .where(eq(wordleDays.guild_id, guildId));
     return row!;
   }
 
@@ -285,7 +301,7 @@ describe('WordleService.submitGuess', () => {
 
   beforeEach(async () => {
     await db.execute(sql`DELETE FROM wordle_sessions`);
-    await db.execute(sql`DELETE FROM wordle_daily`);
+    await db.execute(sql`DELETE FROM wordle_days`);
     await db.execute(sql`DELETE FROM wordle_streaks`);
     service = new WordleService();
 

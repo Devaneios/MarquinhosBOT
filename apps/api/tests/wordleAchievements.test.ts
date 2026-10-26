@@ -3,7 +3,7 @@ import {
   achievements,
   userAchievements,
   userLevels,
-  wordleDaily,
+  wordleDays,
   wordleSessions,
   wordleStreaks,
 } from '@marquinhos/database/schema';
@@ -37,19 +37,30 @@ async function seedDays(
   solved: boolean,
   attempts = 3,
 ) {
-  await db.insert(wordleSessions).values(
-    Array.from({ length: days }, (_, index) => ({
-      id: randomUUID(),
-      user_id: userId,
-      guild_id: guildId,
-      word_date: dateAt(index + 1),
-      guesses: '[]',
-      solved,
-      attempts,
-      word_length: 5,
-      created_at: 0,
-    })),
-  );
+  const sessions = Array.from({ length: days }, (_, index) => ({
+    id: randomUUID(),
+    user_id: userId,
+    guild_id: guildId,
+    word_date: dateAt(index + 1),
+    guesses: '[]',
+    solved,
+    attempts,
+    created_at: 0,
+  }));
+  await db
+    .insert(wordleDays)
+    .values(
+      sessions.map(({ guild_id, word_date }) => ({
+        guild_id,
+        word_date,
+        word: null,
+        word_length: 5,
+        is_legacy: true,
+        created_at: 0,
+      })),
+    )
+    .onConflictDoNothing();
+  await db.insert(wordleSessions).values(sessions);
 }
 
 async function earned(userId: string, guildId: string) {
@@ -134,6 +145,14 @@ describe('daily Wordle achievements', () => {
     await seedDays(userId, guildId, 9, true);
     const before = await db.transaction((tx) => award(userId, guildId, tx));
     expect(before.some((a) => a.id === 'wordle_wins_10')).toBe(false);
+    await db.insert(wordleDays).values({
+      guild_id: guildId,
+      word_date: dateAt(10),
+      word: null,
+      word_length: 5,
+      is_legacy: true,
+      created_at: 0,
+    });
     await db.insert(wordleSessions).values({
       id: randomUUID(),
       user_id: userId,
@@ -173,6 +192,14 @@ describe('daily Wordle achievements', () => {
     await seedDays(userId, guildId, 49, true);
     const before = await db.transaction((tx) => award(userId, guildId, tx));
     expect(before.some((a) => a.id === 'wordle_wins_50')).toBe(false);
+    await db.insert(wordleDays).values({
+      guild_id: guildId,
+      word_date: dateAt(50),
+      word: null,
+      word_length: 5,
+      is_legacy: true,
+      created_at: 0,
+    });
     await db.insert(wordleSessions).values({
       id: randomUUID(),
       user_id: userId,
@@ -279,10 +306,12 @@ describe('Wordle guess award integration', () => {
     const today = new Intl.DateTimeFormat('sv-SE', {
       timeZone: process.env.WORDLE_TIMEZONE ?? 'America/Recife',
     }).format(new Date());
-    await db.insert(wordleDaily).values({
+    await db.insert(wordleDays).values({
       guild_id: guildId,
       word: 'termo',
       word_date: today,
+      word_length: 5,
+      is_legacy: false,
       created_at: 0,
     });
   }
@@ -342,8 +371,8 @@ describe('Wordle guess award integration', () => {
     expect(await xp(userId, guildId)).toBe(0);
     const [daily] = await db
       .select()
-      .from(wordleDaily)
-      .where(eq(wordleDaily.guild_id, guildId));
+      .from(wordleDays)
+      .where(eq(wordleDays.guild_id, guildId));
     expect(daily).toMatchObject({ players_count: 0, winners_count: 0 });
     const streak = await db
       .select()

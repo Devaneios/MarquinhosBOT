@@ -3,11 +3,8 @@ import type { LastfmTopListenedPeriod } from '@marquinhos/contracts/http/routes/
 import { db } from '@marquinhos/database/client';
 import {
   activityDeepLinks,
-  aiResearchEvents,
   aiResearchJobs,
-  aiThreadItems,
   aiThreadSessions,
-  aiTraceEvents,
   aiTraces,
   evolutiveAchievements,
   mazeSessions,
@@ -23,7 +20,7 @@ import {
   xpCooldowns,
 } from '@marquinhos/database/schema';
 import dotenv from 'dotenv';
-import { eq, inArray, not, sql } from 'drizzle-orm';
+import { eq, not, sql } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { DiscordService } from 'services/discord';
 import { LastfmService } from 'services/lastfm';
@@ -36,6 +33,8 @@ dotenv.config();
 // on purpose: AI usage counters (deleting them would reset quotas), sandbox
 // sessions (the sweep needs the row to stop the container), and Pong
 // tournaments and ranked matches, which other players' results depend on.
+// Child rows (AI trace events, thread items, research events) go with their
+// parent through ON DELETE CASCADE (migration 0004), so they are not listed.
 const USER_OWNED_TABLES: readonly (readonly [
   table: PgTable,
   column: PgColumn,
@@ -131,39 +130,6 @@ export class UserService {
 
   async deleteAllData(id: string) {
     await db.transaction(async (tx) => {
-      await tx
-        .delete(aiTraceEvents)
-        .where(
-          inArray(
-            aiTraceEvents.trace_id,
-            tx
-              .select({ id: aiTraces.trace_id })
-              .from(aiTraces)
-              .where(eq(aiTraces.user_id, id)),
-          ),
-        );
-      await tx
-        .delete(aiThreadItems)
-        .where(
-          inArray(
-            aiThreadItems.thread_id,
-            tx
-              .select({ id: aiThreadSessions.thread_id })
-              .from(aiThreadSessions)
-              .where(eq(aiThreadSessions.owner_user_id, id)),
-          ),
-        );
-      await tx
-        .delete(aiResearchEvents)
-        .where(
-          inArray(
-            aiResearchEvents.job_id,
-            tx
-              .select({ id: aiResearchJobs.job_id })
-              .from(aiResearchJobs)
-              .where(eq(aiResearchJobs.user_id, id)),
-          ),
-        );
       for (const [table, column] of USER_OWNED_TABLES) {
         await tx.delete(table).where(eq(column, id));
       }

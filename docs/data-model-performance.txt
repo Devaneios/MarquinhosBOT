@@ -1,0 +1,193 @@
+BEGIN
+CREATE TABLE
+INSERT 0 100000
+CREATE INDEX
+CREATE TABLE
+INSERT 0 200000
+CREATE INDEX
+CREATE TABLE
+INSERT 0 200000
+CREATE INDEX
+CREATE TABLE
+INSERT 0 100000
+CREATE INDEX
+CREATE TABLE
+INSERT 0 100000
+CREATE INDEX
+CREATE TABLE
+INSERT 0 100000
+CREATE INDEX
+CREATE TABLE
+INSERT 0 200000
+CREATE INDEX
+CREATE TABLE
+INSERT 0 20000
+CREATE INDEX
+ANALYZE
+ANALYZE
+ANALYZE
+ANALYZE
+ANALYZE
+ANALYZE
+ANALYZE
+ANALYZE
+                                                                                      QUERY PLAN                                                                                       
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.42..176.17 rows=50 width=8) (actual time=0.013..0.068 rows=50 loops=1)
+   Buffers: local read=53
+   ->  Index Only Scan using bench_pong_tournaments_guild_id_created_at_idx on bench_pong_tournaments  (cost=0.42..699.90 rows=199 width=8) (actual time=0.012..0.066 rows=50 loops=1)
+         Index Cond: (guild_id = 'guild-17'::text)
+         Heap Fetches: 50
+         Buffers: local read=53
+ Planning:
+   Buffers: shared hit=26, local read=1
+ Planning Time: 0.061 ms
+ Execution Time: 0.074 ms
+(10 rows)
+
+                                                                         QUERY PLAN                                                                          
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=145.01..145.11 rows=40 width=8) (actual time=0.060..0.062 rows=40 loops=1)
+   Buffers: local read=43
+   ->  Sort  (cost=145.01..145.11 rows=40 width=8) (actual time=0.060..0.061 rows=40 loops=1)
+         Sort Key: created_at DESC
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: local read=43
+         ->  Bitmap Heap Scan on bench_ai_traces  (cost=4.73..143.94 rows=40 width=8) (actual time=0.012..0.057 rows=40 loops=1)
+               Recheck Cond: (user_id = 'user-17'::text)
+               Heap Blocks: exact=40
+               Buffers: local read=43
+               ->  Bitmap Index Scan on bench_ai_traces_user_id_created_at_idx  (cost=0.00..4.72 rows=40 width=0) (actual time=0.007..0.007 rows=40 loops=1)
+                     Index Cond: (user_id = 'user-17'::text)
+                     Buffers: local read=3
+ Planning:
+   Buffers: shared hit=8, local read=1
+ Planning Time: 0.025 ms
+ Execution Time: 0.070 ms
+(17 rows)
+
+                                                                                QUERY PLAN                                                                                
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.29..3.39 rows=100 width=8) (actual time=0.007..0.014 rows=100 loops=1)
+   Buffers: local read=3
+   ->  Index Only Scan using bench_wordlist_review_seq_idx on bench_wordlist_review  (cost=0.29..3098.79 rows=100033 width=8) (actual time=0.007..0.011 rows=100 loops=1)
+         Heap Fetches: 100
+         Buffers: local read=3
+ Planning:
+   Buffers: shared hit=8, local read=1
+ Planning Time: 0.046 ms
+ Execution Time: 0.017 ms
+(9 rows)
+
+                                                                              QUERY PLAN                                                                               
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on bench_user_achievements  (cost=4.55..51.87 rows=13 width=10) (actual time=0.038..0.308 rows=250 loops=1)
+   Recheck Cond: ((guild_id = 'guild-17'::text) AND (achievement_id = 'achievement-17'::text))
+   Heap Blocks: exact=250
+   Buffers: local read=254
+   ->  Bitmap Index Scan on bench_user_achievements_guild_id_achievement_id_user_id_idx  (cost=0.00..4.55 rows=13 width=0) (actual time=0.020..0.020 rows=250 loops=1)
+         Index Cond: ((guild_id = 'guild-17'::text) AND (achievement_id = 'achievement-17'::text))
+         Buffers: local read=4
+ Planning:
+   Buffers: shared hit=11, local read=1
+ Planning Time: 0.025 ms
+ Execution Time: 0.314 ms
+(11 rows)
+
+                                                                     QUERY PLAN                                                                      
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on bench_ai_thread_sessions  (cost=4.45..74.07 rows=20 width=12) (actual time=0.007..0.029 rows=20 loops=1)
+   Recheck Cond: (owner_user_id = 'user-17'::text)
+   Heap Blocks: exact=20
+   Buffers: local read=22
+   ->  Bitmap Index Scan on bench_ai_thread_sessions_owner_user_id_idx  (cost=0.00..4.44 rows=20 width=0) (actual time=0.004..0.004 rows=20 loops=1)
+         Index Cond: (owner_user_id = 'user-17'::text)
+         Buffers: local read=2
+ Planning:
+   Buffers: shared hit=8, local read=1
+ Planning Time: 0.014 ms
+ Execution Time: 0.030 ms
+(11 rows)
+
+                                                                 QUERY PLAN                                                                  
+---------------------------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on bench_ai_research_jobs  (cost=4.45..74.07 rows=20 width=9) (actual time=0.006..0.028 rows=20 loops=1)
+   Recheck Cond: (user_id = 'user-17'::text)
+   Heap Blocks: exact=20
+   Buffers: local read=22
+   ->  Bitmap Index Scan on bench_ai_research_jobs_user_id_idx  (cost=0.00..4.44 rows=20 width=0) (actual time=0.003..0.003 rows=20 loops=1)
+         Index Cond: (user_id = 'user-17'::text)
+         Buffers: local read=2
+ Planning:
+   Buffers: shared hit=8, local read=1
+ Planning Time: 0.012 ms
+ Execution Time: 0.029 ms
+(11 rows)
+
+                                                                                            QUERY PLAN                                                                                            
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=1620.89..1624.60 rows=25 width=16) (actual time=8.600..8.602 rows=1 loops=1)
+   Group Key: a.achievement_id
+   Buffers: local hit=147 read=1281
+   ->  Sort  (cost=1620.89..1622.05 rows=461 width=16) (actual time=6.710..7.404 rows=40000 loops=1)
+         Sort Key: a.achievement_id, a.user_id
+         Sort Method: quicksort  Memory: 3099kB
+         Buffers: local hit=147 read=1281
+         ->  Hash Join  (cost=195.87..1600.50 rows=461 width=16) (actual time=0.237..2.638 rows=40000 loops=1)
+               Hash Cond: (s.user_id = a.user_id)
+               Buffers: local hit=147 read=1281
+               ->  Bitmap Heap Scan on bench_wordle_sessions s  (cost=30.30..1366.87 rows=2307 width=16) (actual time=0.153..1.290 rows=2000 loops=1)
+                     Recheck Cond: ((guild_id = 'guild-17'::text) AND (attempts > 0))
+                     Heap Blocks: exact=1274
+                     Buffers: local read=1279
+                     ->  Bitmap Index Scan on bench_wordle_sessions_guild_id_user_id_idx  (cost=0.00..29.72 rows=2307 width=0) (actual time=0.078..0.078 rows=2000 loops=1)
+                           Index Cond: (guild_id = 'guild-17'::text)
+                           Buffers: local read=5
+               ->  Hash  (cost=163.07..163.07 rows=200 width=24) (actual time=0.080..0.081 rows=200 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 20kB
+                     Buffers: local hit=147 read=2
+                     ->  Bitmap Heap Scan on bench_wordle_achievements a  (cost=5.84..163.07 rows=200 width=24) (actual time=0.016..0.069 rows=200 loops=1)
+                           Recheck Cond: (guild_id = 'guild-17'::text)
+                           Heap Blocks: exact=147
+                           Buffers: local hit=147 read=2
+                           ->  Bitmap Index Scan on bench_wordle_achievements_guild_id_achievement_id_user_id_idx  (cost=0.00..5.79 rows=200 width=0) (actual time=0.007..0.007 rows=200 loops=1)
+                                 Index Cond: (guild_id = 'guild-17'::text)
+                                 Buffers: local read=2
+ Planning:
+   Buffers: shared hit=35 read=2, local read=2
+ Planning Time: 0.340 ms
+ Execution Time: 8.615 ms
+(31 rows)
+
+                                                                                          QUERY PLAN                                                                                          
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=1413.76..1415.51 rows=25 width=16) (actual time=0.396..0.396 rows=1 loops=1)
+   Group Key: a.achievement_id
+   Buffers: local hit=791 read=158
+   ->  Sort  (cost=1413.76..1414.26 rows=200 width=16) (actual time=0.383..0.387 rows=200 loops=1)
+         Sort Key: a.achievement_id, a.user_id
+         Sort Method: quicksort  Memory: 32kB
+         Buffers: local hit=791 read=158
+         ->  Nested Loop Semi Join  (cost=6.26..1406.12 rows=200 width=16) (actual time=0.031..0.353 rows=200 loops=1)
+               Buffers: local hit=791 read=158
+               ->  Bitmap Heap Scan on bench_wordle_achievements a  (cost=5.84..163.07 rows=200 width=24) (actual time=0.021..0.180 rows=200 loops=1)
+                     Recheck Cond: (guild_id = 'guild-17'::text)
+                     Heap Blocks: exact=147
+                     Buffers: local hit=1 read=148
+                     ->  Bitmap Index Scan on bench_wordle_achievements_guild_id_achievement_id_user_id_idx  (cost=0.00..5.79 rows=200 width=0) (actual time=0.010..0.010 rows=200 loops=1)
+                           Index Cond: (guild_id = 'guild-17'::text)
+                           Buffers: local read=2
+               ->  Index Only Scan using bench_wordle_sessions_guild_id_user_id_idx on bench_wordle_sessions s  (cost=0.42..9.98 rows=2 width=16) (actual time=0.001..0.001 rows=1 loops=200)
+                     Index Cond: ((guild_id = 'guild-17'::text) AND (user_id = a.user_id))
+                     Heap Fetches: 200
+                     Buffers: local hit=790 read=10
+ Planning Time: 0.097 ms
+ Execution Time: 0.405 ms
+(22 rows)
+
+    comparison     | differing_rows 
+-------------------+----------------
+ join_minus_exists |              0
+(1 row)
+
+ROLLBACK

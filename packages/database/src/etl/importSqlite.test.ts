@@ -9,6 +9,7 @@ import {
   aiTraceEvents,
   pongTournamentEntries,
   users,
+  wordleDays,
   wordleSessions,
   wordlistReview,
 } from '../schema';
@@ -82,6 +83,18 @@ describe('importSqlite', () => {
     });
     const [entry] = await testDb.db.select().from(pongTournamentEntries);
     expect(entry).toMatchObject({ rating: 1512.5, eliminated: true });
+    // wordle_days has no SQLite source: it is derived from the sessions.
+    const [day] = await testDb.db.select().from(wordleDays);
+    expect(day).toMatchObject({
+      word_date: '2026-09-01',
+      word: null,
+      word_length: 5,
+      is_legacy: true,
+      players_count: 1,
+      winners_count: 1,
+      total_attempts: 3,
+      created_at: 1000,
+    });
   });
 
   test('keeps the review queue in SQLite insertion order', async () => {
@@ -102,6 +115,9 @@ describe('importSqlite', () => {
 
   test('resumes serial ids after the copied rows', async () => {
     const sqlite = await legacyDatabase();
+    sqlite.run(
+      "INSERT INTO ai_traces (trace_id, user_id, guild_id, channel_id, content, created_at) VALUES ('t', 'u', 'g', 'c', 'prompt', 1)",
+    );
     sqlite.run(
       "INSERT INTO ai_trace_events (id, trace_id, seq, type, created_at) VALUES (41, 't', 1, 'llm', 1)",
     );

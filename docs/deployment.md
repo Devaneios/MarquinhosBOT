@@ -34,7 +34,7 @@ Add the required variables `BACKUP_DIR`, `CORS_ORIGINS`, `DISCORD_CLIENT_ID`, `D
 
 Install a self-hosted GitHub Actions runner with the `devaneios-runner` label on development and `hostinger-runner` on production. The runner account must be in the Docker group and have Docker Compose v2 available. Create `BACKUP_DIR` with owner access for that account. The API sandbox mirror path defaults to `/opt/marquinhos/sandbox-mirror`; create and maintain it with `apps/api/scripts/sync-sandbox-mirror.sh` under a host timer before deploying the API.
 
-Run the first release with the Deploy workflow’s `all` input. Later `develop` pushes select the changed component automatically, and a release tag selects the components changed since the previous `v*` tag. The first tag deploys everything. To redeploy production manually, dispatch the workflow from the release tag. API deploys write a `pg_dump` custom-format dump (and, until the SQLite volume is removed, a compressed snapshot of it) to `BACKUP_DIR`, retain fourteen days of backups, start PostgreSQL if it is not running, recreate only the API container, and roll back its image if the HTTP health check fails. The API applies pending migrations from `packages/database/drizzle` at startup. Restore a database backup manually only when a migration requires it.
+Run the first release with the Deploy workflow’s `all` input. Later `develop` pushes select the changed component automatically, and a release tag selects the components changed since the previous `v*` tag. The first tag deploys everything. To redeploy production manually, dispatch the workflow from the release tag. API deploys write a compressed snapshot of the SQLite volume and a `pg_dump` custom-format dump to `BACKUP_DIR`, retain fourteen days of backups, start PostgreSQL if it is not running, recreate only the API container, and roll back its image if the HTTP health check fails. The dump must pass `pg_restore --list` before it counts as a backup; if it does not, the deploy stops before the API is touched. The API applies pending migrations from `packages/database/drizzle` at startup.
 
 ## Cloudflare and Discord
 
@@ -44,7 +44,20 @@ In the Discord Developer Portal, map the Activity root to the gateway hostname a
 
 ## Rollback
 
-The deploy script retains the previously running image under a `rollback` tag and automatically recreates the failed service from it. Inspect `docker logs marquinhos-api`, `marquinhos-bot`, or `marquinhos-gateway` after a failed workflow. If an API database migration itself must be reversed, stop the API, restore the matching dump with `docker exec -i marquinhos-postgres pg_restore -U marquinhos -d marquinhos --clean --if-exists < BACKUP_DIR/marquinhos-postgres-<timestamp>.dump`, then redeploy the prior image.
+The deploy script retains the previously running image under a `rollback` tag (`marquinhos-api:rollback`) and automatically recreates a failed service from it. Inspect `docker logs marquinhos-api`, `marquinhos-bot`, or `marquinhos-gateway` after a failed workflow.
+
+Schema changes ship as expand, then contract (see the Rollout section of [data-model.md](data-model.md)). That keeps the previous image compatible with the migrated database:
+
+- **Expand release (normal case).** Migrations are additive, and triggers keep the legacy columns and tables the previous image uses in sync. Roll back by redeploying the previous image. No database restore is needed, and writes made since the migration are kept. To redo it by hand: `DEPLOY_IMAGE_TAG=rollback docker compose --env-file deploy/.env -f deploy/docker-compose.yml up --detach --no-deps --force-recreate --wait api`.
+- **Contract release.** It drops objects the previous image reads, so the previous image cannot run against the migrated database. Treat it as a planned maintenance window, as below.
+
+### Contract release (breaking migration)
+
+Export `MIGRATION_BREAKING=1` in the environment of the deploy script (on the runner host; the workflow does not set it). The script rejects any value other than `1`/`0`. With it set, a failed migration does not roll the API image back; it leaves the API stopped and prints the verified dump path. The script never restores the database automatically.
+
+Before the window, build all images and rehearse the migration against a recent copy of the production database. Run `pnpm --filter @marquinhos/database db:audit` with `DATABASE_URL` pointing at that copy and resolve every reported conflict. For the contract release it must report no `game_result_guild_mismatch` or `wordle_day_conflicting_lengths` issues. Record the rehearsal and migration durations. During the window, block API traffic, pause the bot, stop the API, create and verify a Postgres dump, then run the API deployment with `MIGRATION_BREAKING=1`. Run `pnpm --filter @marquinhos/database db:audit -- --post`, API and database tests, and smoke checks. Record migration duration, constraint failures, data reconciliation and smoke-test results before releasing traffic.
+
+If migration or smoke checks fail, keep the API stopped and traffic blocked. Restore the matching backup manually with `docker exec -i marquinhos-postgres pg_restore -U marquinhos -d marquinhos --clean --if-exists < BACKUP_DIR/marquinhos-postgres-<timestamp>.dump`, then start the previous image with `DEPLOY_IMAGE_TAG=rollback` as above. Writes made after the dump are lost.
 
 ## SQLite to PostgreSQL cutover
 

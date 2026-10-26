@@ -1,11 +1,8 @@
-import { and, eq, inArray, lt, sql } from 'drizzle-orm';
+import { and, eq, lt, sql } from 'drizzle-orm';
 import type { Db } from './client';
 import {
-  aiResearchEvents,
   aiResearchJobs,
-  aiThreadItems,
   aiThreadSessions,
-  aiTraceEvents,
   aiTraces,
   mazeSessions,
   scrobblesQueue,
@@ -34,36 +31,16 @@ export async function cleanupScrobbleQueue(db: Db): Promise<void> {
     );
 }
 
+// Event and item rows are not deleted here: they cascade from their trace,
+// research job or thread session (migration 0004).
 export async function cleanupAiRetention(
   db: Db,
   now: number = Date.now(),
 ): Promise<void> {
   const traceCutoff = now - traceRetentionDays * DAY_MS;
-  await db
-    .delete(aiTraceEvents)
-    .where(
-      inArray(
-        aiTraceEvents.trace_id,
-        db
-          .select({ id: aiTraces.trace_id })
-          .from(aiTraces)
-          .where(lt(aiTraces.created_at, traceCutoff)),
-      ),
-    );
   await db.delete(aiTraces).where(lt(aiTraces.created_at, traceCutoff));
 
   const researchCutoff = now - researchRetentionDays * DAY_MS;
-  await db
-    .delete(aiResearchEvents)
-    .where(
-      inArray(
-        aiResearchEvents.job_id,
-        db
-          .select({ id: aiResearchJobs.job_id })
-          .from(aiResearchJobs)
-          .where(lt(aiResearchJobs.created_at, researchCutoff)),
-      ),
-    );
   await db
     .delete(aiResearchJobs)
     .where(lt(aiResearchJobs.created_at, researchCutoff));
@@ -71,17 +48,6 @@ export async function cleanupAiRetention(
   // A Discord thread auto-archives long before this; once nobody has spoken in
   // it for a month its transcript is dead weight.
   const threadCutoff = now - threadRetentionDays * DAY_MS;
-  await db
-    .delete(aiThreadItems)
-    .where(
-      inArray(
-        aiThreadItems.thread_id,
-        db
-          .select({ id: aiThreadSessions.thread_id })
-          .from(aiThreadSessions)
-          .where(lt(aiThreadSessions.last_used_at, threadCutoff)),
-      ),
-    );
   await db
     .delete(aiThreadSessions)
     .where(lt(aiThreadSessions.last_used_at, threadCutoff));

@@ -17,6 +17,11 @@ afterAll(async () => {
 describe('baseline migrations', () => {
   test('allows only one recorded first solver per guild and day', async () => {
     await testDb.db.execute(sql`
+      INSERT INTO wordle_days (guild_id, word_date, is_legacy, created_at)
+      VALUES ('first-guild', '2026-10-24', true, 1)
+      ON CONFLICT DO NOTHING
+    `);
+    await testDb.db.execute(sql`
       INSERT INTO wordle_sessions (id, user_id, guild_id, word_date, solved, attempts, created_at, first_solver)
       VALUES ('first-solver-a', 'first-a', 'first-guild', '2026-10-24', true, 1, 1, true)
     `);
@@ -35,7 +40,12 @@ describe('baseline migrations', () => {
       VALUES ('later-solver', 'later', 'first-guild', '2026-10-24', true, 2, 1, false)
     `);
   });
-  test('keeps legacy solve timestamps unknown and stores new solve timestamps', async () => {
+  test('keeps legacy solve timestamps unknown and lets one be recorded later', async () => {
+    await testDb.db.execute(sql`
+      INSERT INTO wordle_days (guild_id, word_date, is_legacy, created_at)
+      VALUES ('g1', '2026-10-23', true, 1)
+      ON CONFLICT DO NOTHING
+    `);
     await testDb.db.execute(sql`
       INSERT INTO wordle_sessions (id, user_id, guild_id, word_date, solved, attempts, created_at)
       VALUES ('legacy-wordle', 'u1', 'g1', '2026-10-23', true, 3, 1)

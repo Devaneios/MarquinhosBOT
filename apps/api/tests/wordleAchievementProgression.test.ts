@@ -3,7 +3,7 @@ import {
   achievements,
   userAchievements,
   userLevels,
-  wordleDaily,
+  wordleDays,
   wordleSessions,
 } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
@@ -33,17 +33,28 @@ async function day(
     guesses?: string;
   } = {},
 ) {
+  const wordDate = options.date ?? '2026-01-01';
+  await db
+    .insert(wordleDays)
+    .values({
+      guild_id: guildId,
+      word_date: wordDate,
+      word: null,
+      word_length: 5,
+      is_legacy: true,
+      created_at: 0,
+    })
+    .onConflictDoNothing();
   await db.insert(wordleSessions).values({
     id: options.id ?? randomUUID(),
     user_id: userId,
     guild_id: guildId,
-    word_date: options.date ?? '2026-01-01',
+    word_date: wordDate,
     attempts: options.attempts ?? 3,
     solved: options.solved ?? true,
     created_at: options.startedAt ?? 100,
     solved_at: options.solvedAt ?? null,
     guesses: options.guesses ?? '[]',
-    word_length: 5,
   });
 }
 
@@ -226,10 +237,12 @@ describe('Wordle achievement progression', () => {
     const today = new Intl.DateTimeFormat('sv-SE', {
       timeZone: process.env.WORDLE_TIMEZONE ?? 'America/Recife',
     }).format(new Date());
-    await db.insert(wordleDaily).values({
+    await db.insert(wordleDays).values({
       guild_id: guildId,
       word: 'termo',
       word_date: today,
+      word_length: 5,
+      is_legacy: false,
       created_at: 0,
     });
     const wordle = new WordleService();
@@ -282,10 +295,12 @@ describe('Wordle achievement progression', () => {
     const today = new Intl.DateTimeFormat('sv-SE', {
       timeZone: process.env.WORDLE_TIMEZONE ?? 'America/Recife',
     }).format(new Date());
-    await db.insert(wordleDaily).values({
+    await db.insert(wordleDays).values({
       guild_id: guildId,
       word: 'termo',
       word_date: today,
+      word_length: 5,
+      is_legacy: false,
       created_at: 0,
     });
     await day('early-player', guildId, {

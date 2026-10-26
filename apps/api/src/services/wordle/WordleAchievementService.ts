@@ -166,15 +166,17 @@ export class WordleAchievementService {
         holders: countDistinct(userAchievements.user_id),
       })
       .from(userAchievements)
-      .innerJoin(
-        wordleSessions,
+      .where(
         and(
-          eq(wordleSessions.user_id, userAchievements.user_id),
-          eq(wordleSessions.guild_id, userAchievements.guild_id),
-          gt(wordleSessions.attempts, 0),
+          eq(userAchievements.guild_id, guildId),
+          sql`EXISTS (
+            SELECT 1 FROM ${wordleSessions}
+            WHERE ${wordleSessions.user_id} = ${userAchievements.user_id}
+              AND ${wordleSessions.guild_id} = ${userAchievements.guild_id}
+              AND ${wordleSessions.attempts} > 0
+          )`,
         ),
       )
-      .where(eq(userAchievements.guild_id, guildId))
       .groupBy(userAchievements.achievement_id);
     for (const row of holders) {
       percentages.set(

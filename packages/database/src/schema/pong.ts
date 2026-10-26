@@ -4,6 +4,7 @@ import {
   boolean,
   check,
   doublePrecision,
+  foreignKey,
   index,
   integer,
   pgTable,
@@ -70,6 +71,10 @@ export const pongTournaments = pgTable(
       'pong_tournaments_status_check',
       sql`${t.status} IN ('registration', 'active', 'complete')`,
     ),
+    index('idx_pong_tournaments_guild_created').on(
+      t.guild_id,
+      t.created_at.desc(),
+    ),
   ],
 );
 
@@ -110,6 +115,26 @@ export const pongTournamentMatches = pgTable(
       'pong_tournament_matches_status_check',
       sql`${t.status} IN ('pending', 'ready', 'complete')`,
     ),
+    check(
+      'pong_tournament_matches_winner_check',
+      sql`${t.winner_id} IS NULL OR coalesce(${t.winner_id} = ${t.player_a}, false) OR coalesce(${t.winner_id} = ${t.player_b}, false)`,
+    ),
+    foreignKey({
+      name: 'pong_tournament_matches_player_a_fk',
+      columns: [t.tournament_id, t.player_a],
+      foreignColumns: [
+        pongTournamentEntries.tournament_id,
+        pongTournamentEntries.user_id,
+      ],
+    }),
+    foreignKey({
+      name: 'pong_tournament_matches_player_b_fk',
+      columns: [t.tournament_id, t.player_b],
+      foreignColumns: [
+        pongTournamentEntries.tournament_id,
+        pongTournamentEntries.user_id,
+      ],
+    }),
     unique().on(t.tournament_id, t.bracket, t.round, t.position),
   ],
 );

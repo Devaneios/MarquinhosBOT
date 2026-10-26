@@ -154,7 +154,7 @@ export class GamificationService {
         DEFAULT_PARTICIPATE_XP,
       );
 
-      await tx
+      const insertedGame = await tx
         .insert(gameResults)
         .values({
           id: input.sessionId,
@@ -163,7 +163,24 @@ export class GamificationService {
           played_at: now,
           duration_ms: input.durationMs ?? null,
         })
-        .onConflictDoNothing();
+        .onConflictDoNothing()
+        .returning({ id: gameResults.id });
+      if (insertedGame.length === 0) {
+        const [existing] = await tx
+          .select({
+            guild_id: gameResults.guild_id,
+            game_type: gameResults.game_type,
+          })
+          .from(gameResults)
+          .where(eq(gameResults.id, input.sessionId));
+        if (
+          !existing ||
+          existing.guild_id !== input.guildId ||
+          existing.game_type !== input.gameType
+        ) {
+          throw new Error('Game result ID collision with different game data');
+        }
+      }
 
       for (const player of input.results) {
         await this.levelingService.ensureUser(player.userId, input.guildId, tx);
@@ -175,7 +192,6 @@ export class GamificationService {
           .values({
             game_result_id: input.sessionId,
             user_id: player.userId,
-            guild_id: input.guildId,
             position: player.position,
             xp_awarded: xpAwarded,
           })
@@ -250,7 +266,7 @@ export class GamificationService {
       .where(
         and(
           eq(userGameResults.user_id, userId),
-          eq(userGameResults.guild_id, guildId),
+          eq(gameResults.guild_id, guildId),
         ),
       )
       .groupBy(gameResults.game_type)
@@ -275,7 +291,7 @@ export class GamificationService {
       )
       .where(
         and(
-          eq(userGameResults.guild_id, guildId),
+          eq(gameResults.guild_id, guildId),
           eq(gameResults.game_type, gameType),
         ),
       )

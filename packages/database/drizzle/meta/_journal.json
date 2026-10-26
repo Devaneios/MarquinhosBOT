@@ -29,6 +29,20 @@
       "when": 1792817550454,
       "tag": "0003_wordle_achievements",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792983492985,
+      "tag": "0004_expand_game_ai_pong",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792983521206,
+      "tag": "0005_expand_wordle_days",
+      "breakpoints": true
     }
   ]
 }

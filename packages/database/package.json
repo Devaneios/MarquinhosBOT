@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint 'src/**/*.ts'",
     "test": "bun test src",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "db:audit": "bun src/audit.ts"
   },
   "dependencies": {
     "drizzle-orm": "0.45.3",

@@ -1,7 +1,11 @@
 import { callContract } from '@marquinhos/api-client/bot';
 import { getAchievements } from '@marquinhos/contracts/http/routes/wordle';
 import { db } from '@marquinhos/database/client';
-import { userAchievements, wordleSessions } from '@marquinhos/database/schema';
+import {
+  userAchievements,
+  wordleDays,
+  wordleSessions,
+} from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { randomUUID } from 'crypto';
@@ -23,6 +27,14 @@ beforeAll(async () => {
     const headers = new Headers(config.headers);
     headers.delete('authorization');
     return { ...config, headers };
+  });
+  await db.insert(wordleDays).values({
+    guild_id: guildId,
+    word_date: '2026-01-01',
+    word: null,
+    word_length: 5,
+    is_legacy: true,
+    created_at: 0,
   });
   await db.insert(wordleSessions).values({
     id: randomUUID(),

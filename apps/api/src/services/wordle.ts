@@ -10,7 +10,7 @@ import type { GuessRow } from '@marquinhos/contracts/wordle';
 import { db, type DbExecutor } from '@marquinhos/database/client';
 import {
   wordleConfig,
-  wordleDaily,
+  wordleDays,
   wordleSessions,
   wordleStreaks,
   wordleUsedWords,
@@ -19,7 +19,7 @@ import {
 import { computeFeedback } from '@marquinhos/domain/games/wordle/feedback';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 import { randomUUID } from 'crypto';
-import { and, asc, count, desc, eq, isNull, ne, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, isNull, sql } from 'drizzle-orm';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import {
@@ -37,6 +37,7 @@ interface WordleDaily {
   guild_id: string;
   word: string;
   word_date: string;
+  word_length: number;
   players_count: number;
   winners_count: number;
   total_attempts: number;
@@ -238,41 +239,65 @@ export class WordleService {
     const now = Math.floor(Date.now() / 1000);
 
     return db.transaction(async (tx) => {
-      const fresh = {
-        guild_id: guildId,
-        word,
-        word_date: wordDate,
-        players_count: 0,
-        winners_count: 0,
-        total_attempts: 0,
-        created_at: now,
-      };
-      const { guild_id: _guildId, ...replacement } = fresh;
-      // In `ifStale` mode two concurrent joins race here; the WHERE lets only
-      // the first replace yesterday's row, and the loser adopts its word.
-      const written = await tx
-        .insert(wordleDaily)
-        .values(fresh)
-        .onConflictDoUpdate({
-          target: wordleDaily.guild_id,
-          set: replacement,
-          ...(mode === 'ifStale'
-            ? { setWhere: ne(wordleDaily.word_date, wordDate) }
-            : {}),
+      await tx
+        .insert(wordleDays)
+        .values({
+          guild_id: guildId,
+          word_date: wordDate,
+          word,
+          word_length: word.length,
+          is_legacy: false,
+          created_at: now,
         })
-        .returning({ word: wordleDaily.word });
+        .onConflictDoNothing();
+      const [current] = await tx
+        .select()
+        .from(wordleDays)
+        .where(
+          and(
+            eq(wordleDays.guild_id, guildId),
+            eq(wordleDays.word_date, wordDate),
+          ),
+        )
+        .for('update');
 
-      if (written.length === 0) {
-        const [current] = await tx
-          .select()
-          .from(wordleDaily)
-          .where(eq(wordleDaily.guild_id, guildId));
+      if (!current) throw new Error('Failed to initialize Wordle day');
+      if (mode === 'ifStale' && current.word !== null) {
         return {
-          word: current!.word,
-          wordDate: current!.word_date,
-          wordLength: current!.word.length,
+          word: current.word,
+          wordDate,
+          wordLength: current.word_length!,
         };
       }
+
+      if (mode === 'force') {
+        await tx
+          .delete(wordleSessions)
+          .where(
+            and(
+              eq(wordleSessions.guild_id, guildId),
+              eq(wordleSessions.word_date, wordDate),
+            ),
+          );
+      }
+
+      await tx
+        .update(wordleDays)
+        .set({
+          word,
+          word_length: word.length,
+          is_legacy: false,
+          players_count: 0,
+          winners_count: 0,
+          total_attempts: 0,
+          created_at: now,
+        })
+        .where(
+          and(
+            eq(wordleDays.guild_id, guildId),
+            eq(wordleDays.word_date, wordDate),
+          ),
+        );
 
       await tx
         .insert(wordleUsedWords)
@@ -286,24 +311,32 @@ export class WordleService {
     });
   }
 
-  async getDailyWord(guildId: string): Promise<WordleDaily> {
-    const today = getRecifeDate();
-    const row = await this.findDaily(guildId);
-
-    if (!row || row.word_date !== today) {
-      // Lazy init: pick a new word for today
+  /** `today` is injectable so a caller that already read the date stays on it across midnight. */
+  async getDailyWord(
+    guildId: string,
+    today: string = getRecifeDate(),
+  ): Promise<WordleDaily> {
+    let row = await this.findDaily(guildId, today);
+    if (!row || row.word === null || row.word_length === null) {
       await this.pickNewWord(guildId, today, 'ifStale');
-      return (await this.findDaily(guildId))!;
+      row = await this.findDaily(guildId, today);
     }
-
-    return row;
+    if (!row?.word || !row.word_length) {
+      throw new Error(`Wordle day ${guildId}/${today} has no playable word`);
+    }
+    return { ...row, word: row.word, word_length: row.word_length };
   }
 
-  private async findDaily(guildId: string): Promise<WordleDaily | undefined> {
+  private async findDaily(guildId: string, wordDate: string) {
     const [row] = await db
       .select()
-      .from(wordleDaily)
-      .where(eq(wordleDaily.guild_id, guildId));
+      .from(wordleDays)
+      .where(
+        and(
+          eq(wordleDays.guild_id, guildId),
+          eq(wordleDays.word_date, wordDate),
+        ),
+      );
     return row;
   }
 
@@ -317,22 +350,32 @@ export class WordleService {
       return { error: 'Palavra não encontrada na lista de palavras válidas.' };
     }
 
-    const daily = await this.getDailyWord(guildId);
-
-    // Validate length matches today's word
-    if (canonicalGuess.length !== daily.word.length) {
-      return {
-        error: `A palavra de hoje tem ${daily.word.length} letras. Sua tentativa tem ${canonicalGuess.length}.`,
-      };
-    }
-
     const strippedGuess = stripDiacritics(canonicalGuess);
-    const strippedWord = stripDiacritics(daily.word);
-
     const today = getRecifeDate();
+    await this.getDailyWord(guildId, today);
     const now = Math.floor(Date.now() / 1000);
 
     return db.transaction(async (tx) => {
+      const [daily] = await tx
+        .select()
+        .from(wordleDays)
+        .where(
+          and(
+            eq(wordleDays.guild_id, guildId),
+            eq(wordleDays.word_date, today),
+          ),
+        )
+        .for('update');
+      if (!daily?.word || !daily.word_length) {
+        throw new Error(`Wordle day ${guildId}/${today} has no playable word`);
+      }
+      if (canonicalGuess.length !== daily.word_length) {
+        return {
+          error: `A palavra de hoje tem ${daily.word_length} letras. Sua tentativa tem ${canonicalGuess.length}.`,
+        };
+      }
+      const strippedWord = stripDiacritics(daily.word);
+
       // The row must exist before it can be locked: create an empty session
       // unless one is already there, then lock it for the read-modify-write.
       // A concurrent first guess waits here instead of failing on the
@@ -347,7 +390,6 @@ export class WordleService {
           guesses: '[]',
           solved: false,
           attempts: 0,
-          word_length: daily.word.length,
           created_at: now,
         })
         .onConflictDoNothing();
@@ -402,20 +444,25 @@ export class WordleService {
       const isNewPlayer = previousGuesses.length === 0;
       if (isNewPlayer || solved) {
         const [dailyStats] = await tx
-          .update(wordleDaily)
+          .update(wordleDays)
           .set({
             ...(isNewPlayer
-              ? { players_count: sql`${wordleDaily.players_count} + 1` }
+              ? { players_count: sql`${wordleDays.players_count} + 1` }
               : {}),
             ...(solved
               ? {
-                  winners_count: sql`${wordleDaily.winners_count} + 1`,
-                  total_attempts: sql`${wordleDaily.total_attempts} + ${newAttempts}`,
+                  winners_count: sql`${wordleDays.winners_count} + 1`,
+                  total_attempts: sql`${wordleDays.total_attempts} + ${newAttempts}`,
                 }
               : {}),
           })
-          .where(eq(wordleDaily.guild_id, guildId))
-          .returning({ winnersCount: wordleDaily.winners_count });
+          .where(
+            and(
+              eq(wordleDays.guild_id, guildId),
+              eq(wordleDays.word_date, today),
+            ),
+          )
+          .returning({ winnersCount: wordleDays.winners_count });
         if (solved) {
           await tx
             .update(wordleSessions)
@@ -430,7 +477,7 @@ export class WordleService {
         guesses: newGuesses,
         solved,
         attempts: newAttempts,
-        wordLength: daily.word.length,
+        wordLength: daily.word_length,
       };
 
       if (solved) {
@@ -542,18 +589,18 @@ export class WordleService {
     const normalized = guess.trim().toLowerCase();
     const daily = await this.getDailyWord(guildId);
 
-    if (normalized.length !== daily.word.length) {
+    if (normalized.length !== daily.word_length) {
       return {
         valid: false,
-        wordLength: daily.word.length,
-        message: `A palavra de hoje tem ${daily.word.length} letras (você digitou ${normalized.length})`,
+        wordLength: daily.word_length,
+        message: `A palavra de hoje tem ${daily.word_length} letras (você digitou ${normalized.length})`,
       };
     }
 
     const canonical = resolveCanonical(normalized);
     return {
       valid: canonical !== null,
-      wordLength: daily.word.length,
+      wordLength: daily.word_length,
       message: canonical
         ? `"${canonical}" é uma palavra válida`
         : `"${normalized}" não está na lista de palavras válidas`,
@@ -569,7 +616,7 @@ export class WordleService {
 
     return {
       wordDate: daily.word_date,
-      wordLength: daily.word.length,
+      wordLength: daily.word_length,
       playersCount: daily.players_count,
       winnersCount: daily.winners_count,
       avgAttempts,
@@ -577,9 +624,9 @@ export class WordleService {
   }
 
   async getDayGuesses(guildId: string): Promise<DayGuesses | null> {
-    const daily = await this.findDaily(guildId);
+    const daily = await this.findDaily(guildId, getRecifeDate());
 
-    if (!daily) return null;
+    if (!daily?.word || !daily.word_length) return null;
 
     const rows: WordleSessionGuessesRow[] = await db
       .select({ guesses: wordleSessions.guesses })
@@ -595,7 +642,7 @@ export class WordleService {
     return {
       word: daily.word,
       wordDate: daily.word_date,
-      wordLength: daily.word.length,
+      wordLength: daily.word_length,
       guesses: buildUniqueDayGuesses(daily.word, rows),
     };
   }
@@ -796,7 +843,12 @@ export class WordleService {
       dateFrom = `${getRecifeDate().substring(0, 8)}01`;
     }
 
-    const dateFilter = dateFrom ? sql`AND word_date >= ${dateFrom}` : sql``;
+    const sessionDateFilter = dateFrom
+      ? sql`AND word_date >= ${dateFrom}`
+      : sql``;
+    const dayDateFilter = dateFrom
+      ? sql`AND d.word_date >= ${dateFrom}`
+      : sql``;
 
     const rows = await db.execute<{
       user_id: string;
@@ -812,12 +864,18 @@ export class WordleService {
         )::float8 AS avg_score
       FROM (
         SELECT DISTINCT user_id FROM wordle_sessions
-        WHERE guild_id = ${guildId} ${dateFilter}
+        WHERE guild_id = ${guildId} ${sessionDateFilter}
       ) p
       CROSS JOIN (
-        SELECT DISTINCT word_date, word_length
-        FROM wordle_sessions
-        WHERE guild_id = ${guildId} AND word_length > 0 ${dateFilter}
+        SELECT d.word_date, d.word_length
+        FROM wordle_days d
+        WHERE d.guild_id = ${guildId}
+          AND d.word_length > 0
+          AND EXISTS (
+            SELECT 1 FROM wordle_sessions s
+            WHERE s.guild_id = d.guild_id AND s.word_date = d.word_date
+          )
+          ${dayDateFilter}
       ) d
       LEFT JOIN wordle_sessions s
         ON s.user_id = p.user_id
@@ -864,17 +922,7 @@ export class WordleService {
 
   async forceNewWord(guildId: string): Promise<ForceNewWordResult> {
     const today = getRecifeDate();
-    const result = await this.pickNewWord(guildId, today);
-    // Clear all player sessions for today so everyone can play the new word
-    await db
-      .delete(wordleSessions)
-      .where(
-        and(
-          eq(wordleSessions.guild_id, guildId),
-          eq(wordleSessions.word_date, today),
-        ),
-      );
-    return result;
+    return this.pickNewWord(guildId, today, 'force');
   }
 
   async setConfig(guildId: string, channelId: string): Promise<void> {

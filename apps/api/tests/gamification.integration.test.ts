@@ -1,7 +1,8 @@
 import { db } from '@marquinhos/database/client';
-import { xpConfig } from '@marquinhos/database/schema';
+import { userLevels, xpConfig } from '@marquinhos/database/schema';
 import { afterEach, beforeAll, describe, expect, it, spyOn } from 'bun:test';
 import { randomUUID } from 'crypto';
+import { and, eq } from 'drizzle-orm';
 import { GamificationService } from 'services/gamification';
 
 const COMMAND_XP = 5;
@@ -110,5 +111,41 @@ describe('recordGameResult', () => {
     const stats = await service.getUserGameStats('winner', guild);
     expect(stats.stats.total_games).toBe(1);
     expect(stats.stats.games_won).toBe(1);
+  });
+
+  it('rejects a reused result id from another guild before granting participant XP', async () => {
+    const sessionId = randomUUID();
+    await service.recordGameResult({
+      sessionId,
+      guildId: `guild-${randomUUID()}`,
+      gameType: 'tic-tac-toe',
+      results: [{ userId: 'original-player', position: 1 }],
+    });
+
+    const otherGuild = `guild-${randomUUID()}`;
+    await expect(
+      service.recordGameResult({
+        sessionId,
+        guildId: otherGuild,
+        gameType: 'tic-tac-toe',
+        results: [{ userId: 'collision-player', position: 1 }],
+      }),
+    ).rejects.toThrow('Game result ID collision with different game data');
+
+    const stats = await service.getUserGameStats(
+      'collision-player',
+      otherGuild,
+    );
+    expect(stats.stats.total_games).toBe(0);
+    const [level] = await db
+      .select()
+      .from(userLevels)
+      .where(
+        and(
+          eq(userLevels.user_id, 'collision-player'),
+          eq(userLevels.guild_id, otherGuild),
+        ),
+      );
+    expect(level?.total_xp ?? 0).toBe(0);
   });
 });
