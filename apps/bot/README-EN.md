@@ -1,6 +1,10 @@
 # MarquinhosBOT
 ## Discord bot developed in JS
 
+Daily Wordle, called Terminhos, shares player progress between `/termo` and the
+Activity. See the [implementation reference](../../docs/wordle.md) and
+[operations guide](../../docs/wordle-operations.md).
+
 - **Commands:**
 	- [!anom](commands/anom.js)
 	- [!boombam](commands/boombam.js)

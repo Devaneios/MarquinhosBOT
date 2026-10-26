@@ -16,6 +16,13 @@
 	- Sexta-Feira
 	- Bom dia
 
+### Terminhos
+
+O jogo diário usa a mesma sessão no comando `/termo` e na Activity.
+Veja a [referência da implementação](../../docs/wordle.md) e o
+[guia de operação](../../docs/wordle-operations.md) para configuração,
+palavras, conquistas e testes.
+
 ### IA
 
 Três formas de falar com a IA, todas servidas pela `marquinhos-web-api`:

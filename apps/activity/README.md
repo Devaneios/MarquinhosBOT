@@ -32,6 +32,10 @@ itself never branches on which game it is showing.
 
 ## Local development
 
+The [daily Wordle implementation reference](../../docs/wordle.md) describes
+Terminhos session initialization, board state, settings, achievements, and the
+shared API contracts.
+
 Run the full development stack from the monorepo root with `bun run dev`.
 See [local development](../../docs/local-development.md) for environment files,
 Docker, tunnel routing, Discord URL mapping, and testing.

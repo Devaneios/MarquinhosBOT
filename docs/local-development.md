@@ -118,7 +118,7 @@ pnpm run dev:doctor
 ```
 
 The test command builds the current checkout and runs configuration tests,
-real Vite/Express/Colyseus gateway smoke tests, and the workspace test suites in
+real Vite/Express/Colyseus gateway smoke tests, and the app test suites in
 a disposable container. It uses dummy credentials and throwaway databases on the
 Compose PostgreSQL service;
 Discord login and the tunnel are not needed. Gateway tests run outside the
@@ -140,6 +140,74 @@ OAuth code exchange does not use the legacy web-login callback.
 
 Browser SDK mocks are useful for UI work, but do not implement complete guild
 authentication or multi-user browser testing. Use Discord for full gameplay.
+
+## Run workspace checks
+
+To run tests on the host, set `TEST_DATABASE_URL` to a PostgreSQL 17 server whose
+account can create databases. Install the bot's native dependencies on the host
+as well. The [development image](../dev/Dockerfile) lists the system libraries
+used by the container setup.
+
+From the repository root, run the same checks as the
+[CI workflow](../.github/workflows/ci.yml).
+
+```sh
+pnpm run test:deploy-env
+pnpm run typecheck
+pnpm run lint
+pnpm run test
+pnpm run test:dev
+pnpm run build
+```
+
+`test:deploy-env` checks deployment environment generation. `test:dev` runs the
+development tooling and gateway tests, then typechecks the development tooling.
+`test` includes both app and shared-package suites. Build outputs live in each
+app's `dist/` directory.
+
+## Run checks for selected packages
+
+Use the package's manifest name with `pnpm --filter` to run its script directly.
+
+```sh
+pnpm --filter @marquinhos/domain test
+pnpm --filter marquinhos-web-api typecheck
+```
+
+To preview checks for changed packages and their dependents, use the following
+Turbo selector. It compares `HEAD` with its merge base with `origin/main`.
+Fetch that reference first if it is missing or stale.
+
+```sh
+pnpm exec turbo run lint typecheck test build --filter='...[origin/main...HEAD]' --dry-run=json
+```
+
+Inspect the selected tasks, then omit `--dry-run=json` to execute them. CI still
+checks the full workspace.
+
+### Bypass cached results
+
+Root build, lint, typecheck, and test commands use [turbo.json](../turbo.json).
+Turbo caches task results locally. The root `dev` command runs the Docker CLI
+in `dev/cli.ts` separately from Turbo.
+
+To rerun a check regardless of cached results, pass `--force` through the root
+script.
+
+```sh
+pnpm run typecheck --force
+```
+
+## Update dependencies
+
+Use pnpm to update dependencies and regenerate `pnpm-lock.yaml`. Commit the
+lockfile with the manifest changes. To add an API dependency, run
+`pnpm --filter marquinhos-web-api add <package>`. Add `-D` for a development
+dependency.
+
+Internal dependencies use `workspace:*`. Shared packages are private workspace
+libraries. [pnpm-workspace.yaml](../pnpm-workspace.yaml) defines workspace
+membership, dependency overrides, and permitted dependency build scripts.
 
 ## Troubleshooting
 

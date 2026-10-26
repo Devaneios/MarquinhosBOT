@@ -4,6 +4,11 @@ The deployment unit is `deploy/docker-compose.yml`. It runs PostgreSQL, the API,
 
 For daily work on your machine, use the separate [local development stack](local-development.md). Do not run `deploy/deploy.sh` for the edit/test loop.
 
+Use [Operate daily Wordle](wordle-operations.md) for the Terminhos day boundary,
+word-bank rebuilds, and achievement backfills. The
+[implementation reference](wordle.md#current-integration-limits) records the current
+midnight-summary behavior and the bot's fixed `America/Recife` schedule.
+
 ## GitHub Environments
 
 Create `development` and `production` environments. The deploy workflow maps pushes to `develop` to development and `v*` tags on `main` to production. Pushes to `main` only run CI; release with `git tag v1.2.3 && git push origin v1.2.3`.

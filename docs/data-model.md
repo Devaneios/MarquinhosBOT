@@ -107,6 +107,9 @@ Tournament match participant keys reference entries using `(tournament_id, user_
 
 Wordle challenge metadata lives once per server and date. Historical rows can retain sessions and metrics while storing an unknown answer or length as `NULL`. Once the contract release lands, sessions reference their day with a restrictive composite foreign key; until then a trigger creates a missing day row for each session. The session's user/server/date uniqueness and the partial first-solver uniqueness remain in place.
 
+The [daily Wordle implementation reference](wordle.md) describes guess transactions,
+counter updates, streaks, achievement awards, and the Wordle-specific import behavior.
+
 User ownership fields such as `user_id`, `owner_user_id`, and `guild_id` are intentionally not foreign keys to the `users` table: Discord identities can appear in domain data before profile rows are created, and the existing user deletion service removes owned records explicitly.
 
 ## Rollout: expand, then contract
