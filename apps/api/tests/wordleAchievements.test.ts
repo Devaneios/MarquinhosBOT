@@ -119,6 +119,24 @@ describe('daily Wordle achievements', () => {
     }
   });
 
+  it('leaves the generic defaults to the operator once seeded', async () => {
+    const [removed] = await db
+      .delete(achievements)
+      .where(eq(achievements.id, 'first_command'))
+      .returning();
+    try {
+      await defaults.initializeDefaults();
+      expect(
+        await db
+          .select()
+          .from(achievements)
+          .where(eq(achievements.id, 'first_command')),
+      ).toEqual([]);
+    } finally {
+      if (removed) await db.insert(achievements).values(removed);
+    }
+  });
+
   it('awards historical first-guess solves once, with ISO timestamps and XP', async () => {
     const { userId, guildId } = identity();
     await seedDays(userId, guildId, 1, true, 1);
@@ -352,28 +370,31 @@ describe('Wordle guess award integration', () => {
     ]);
   });
 
-  it('rolls back the guess, streak and daily stats when rewarding XP fails', async () => {
+  it('keeps the guess when rewarding XP fails, and awards on the next evaluation', async () => {
     const { userId, guildId } = identity();
     await seedDaily(guildId);
     const failingReward = spyOn(
       LevelingService.prototype,
       'addXpToUser',
     ).mockRejectedValueOnce(new Error('reward unavailable'));
+    let result: Awaited<ReturnType<WordleService['submitGuess']>>;
     try {
-      await expect(
-        service.submitGuess(userId, guildId, 'termo'),
-      ).rejects.toThrow('reward unavailable');
+      result = await service.submitGuess(userId, guildId, 'termo');
     } finally {
       failingReward.mockRestore();
     }
-    expect(await service.getUserSession(userId, guildId)).toBeNull();
+    if ('error' in result) throw new Error(result.error);
+    expect(result.solved).toBe(true);
+    expect(result.unlockedAchievements).toBeUndefined();
+    expect((await service.getUserSession(userId, guildId))?.solved).toBe(true);
+    // Achievements and their XP still land together or not at all.
     expect(await earned(userId, guildId)).toEqual([]);
     expect(await xp(userId, guildId)).toBe(0);
     const [daily] = await db
       .select()
       .from(wordleDays)
       .where(eq(wordleDays.guild_id, guildId));
-    expect(daily).toMatchObject({ players_count: 0, winners_count: 0 });
+    expect(daily).toMatchObject({ players_count: 1, winners_count: 1 });
     const streak = await db
       .select()
       .from(wordleStreaks)
@@ -383,6 +404,38 @@ describe('Wordle guess award integration', () => {
           eq(wordleStreaks.guild_id, guildId),
         ),
       );
-    expect(streak).toEqual([]);
+    expect(streak).toHaveLength(1);
+
+    expect(
+      await db.transaction((tx) => award(userId, guildId, tx)),
+    ).not.toEqual([]);
+  });
+
+  it('decides the first solver from the sessions, not the day counter', async () => {
+    const guildId = randomUUID();
+    const [first, second] = [randomUUID(), randomUUID()];
+    await seedDaily(guildId);
+    // A drifted counter (backfill, deleted data) must not hide the first solver.
+    await db
+      .update(wordleDays)
+      .set({ winners_count: 3 })
+      .where(eq(wordleDays.guild_id, guildId));
+
+    await service.submitGuess(first, guildId, 'termo');
+    await service.submitGuess(second, guildId, 'termo');
+
+    const sessions = await db
+      .select({
+        user: wordleSessions.user_id,
+        first: wordleSessions.first_solver,
+      })
+      .from(wordleSessions)
+      .where(eq(wordleSessions.guild_id, guildId));
+    expect(sessions).toEqual(
+      expect.arrayContaining([
+        { user: first, first: true },
+        { user: second, first: false },
+      ]),
+    );
   });
 });

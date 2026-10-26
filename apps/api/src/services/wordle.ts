@@ -27,6 +27,7 @@ import {
   type WordleSessionGuessesRow,
 } from 'services/wordle/dayGuesses';
 import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
+import { getRecifeDate } from 'services/wordle/wordleDate';
 import type { z } from 'zod';
 
 const logger = {
@@ -172,13 +173,6 @@ const REVIEW_SEED_BATCH_SIZE = 5_000;
 /** `ifStale` keeps a word another caller already picked for `wordDate`. */
 type PickMode = 'force' | 'ifStale';
 
-function getRecifeDate(): string {
-  // Use Intl to get the correct date in Recife timezone
-  const tz = process.env.WORDLE_TIMEZONE ?? 'America/Recife';
-  return new Intl.DateTimeFormat('sv-SE', { timeZone: tz }).format(new Date());
-  // 'sv-SE' locale gives YYYY-MM-DD format
-}
-
 export class WordleService {
   async pickNewWord(
     guildId: string,
@@ -239,7 +233,7 @@ export class WordleService {
     const now = Math.floor(Date.now() / 1000);
 
     return db.transaction(async (tx) => {
-      await tx
+      const inserted = await tx
         .insert(wordleDays)
         .values({
           guild_id: guildId,
@@ -249,55 +243,61 @@ export class WordleService {
           is_legacy: false,
           created_at: now,
         })
-        .onConflictDoNothing();
-      const [current] = await tx
-        .select()
-        .from(wordleDays)
-        .where(
-          and(
-            eq(wordleDays.guild_id, guildId),
-            eq(wordleDays.word_date, wordDate),
-          ),
-        )
-        .for('update');
+        .onConflictDoNothing()
+        .returning({ word: wordleDays.word });
 
-      if (!current) throw new Error('Failed to initialize Wordle day');
-      if (mode === 'ifStale' && current.word !== null) {
-        return {
-          word: current.word,
-          wordDate,
-          wordLength: current.word_length!,
-        };
-      }
-
-      if (mode === 'force') {
-        await tx
-          .delete(wordleSessions)
+      // The day already existed: adopt its word, or replace it (force, or a
+      // legacy day that never had one).
+      if (inserted.length === 0) {
+        const [current] = await tx
+          .select()
+          .from(wordleDays)
           .where(
             and(
-              eq(wordleSessions.guild_id, guildId),
-              eq(wordleSessions.word_date, wordDate),
+              eq(wordleDays.guild_id, guildId),
+              eq(wordleDays.word_date, wordDate),
+            ),
+          )
+          .for('update');
+
+        if (!current) throw new Error('Failed to initialize Wordle day');
+        if (mode === 'ifStale' && current.word !== null) {
+          return {
+            word: current.word,
+            wordDate,
+            wordLength: current.word_length!,
+          };
+        }
+
+        if (mode === 'force') {
+          await tx
+            .delete(wordleSessions)
+            .where(
+              and(
+                eq(wordleSessions.guild_id, guildId),
+                eq(wordleSessions.word_date, wordDate),
+              ),
+            );
+        }
+
+        await tx
+          .update(wordleDays)
+          .set({
+            word,
+            word_length: word.length,
+            is_legacy: false,
+            players_count: 0,
+            winners_count: 0,
+            total_attempts: 0,
+            created_at: now,
+          })
+          .where(
+            and(
+              eq(wordleDays.guild_id, guildId),
+              eq(wordleDays.word_date, wordDate),
             ),
           );
       }
-
-      await tx
-        .update(wordleDays)
-        .set({
-          word,
-          word_length: word.length,
-          is_legacy: false,
-          players_count: 0,
-          winners_count: 0,
-          total_attempts: 0,
-          created_at: now,
-        })
-        .where(
-          and(
-            eq(wordleDays.guild_id, guildId),
-            eq(wordleDays.word_date, wordDate),
-          ),
-        );
 
       await tx
         .insert(wordleUsedWords)
@@ -352,10 +352,12 @@ export class WordleService {
 
     const strippedGuess = stripDiacritics(canonicalGuess);
     const today = getRecifeDate();
+    // Initialize before reserving a guess connection: word selection reads
+    // through the pool and must also work when it has only one connection.
     await this.getDailyWord(guildId, today);
     const now = Math.floor(Date.now() / 1000);
 
-    return db.transaction(async (tx) => {
+    const outcome = await db.transaction(async (tx) => {
       const [daily] = await tx
         .select()
         .from(wordleDays)
@@ -443,7 +445,7 @@ export class WordleService {
       // (previousGuesses.length > 0 → $is_new_player = 0).
       const isNewPlayer = previousGuesses.length === 0;
       if (isNewPlayer || solved) {
-        const [dailyStats] = await tx
+        await tx
           .update(wordleDays)
           .set({
             ...(isNewPlayer
@@ -461,12 +463,19 @@ export class WordleService {
               eq(wordleDays.guild_id, guildId),
               eq(wordleDays.word_date, today),
             ),
-          )
-          .returning({ winnersCount: wordleDays.winners_count });
+          );
         if (solved) {
+          // Decided from the sessions, not winners_count: the day-row lock
+          // serialises solvers, and the counter can drift (backfills, deletions).
           await tx
             .update(wordleSessions)
-            .set({ first_solver: dailyStats?.winnersCount === 1 })
+            .set({
+              first_solver: sql`NOT EXISTS (
+                SELECT 1 FROM wordle_sessions other
+                WHERE other.guild_id = ${guildId} AND other.word_date = ${today}
+                  AND other.first_solver AND other.id <> ${sessionId}
+              )`,
+            })
             .where(eq(wordleSessions.id, sessionId));
         }
       }
@@ -484,17 +493,24 @@ export class WordleService {
         result.streak = await this.updateStreak(userId, guildId, tx);
       }
 
-      const achievements = await new WordleAchievementService().checkAndAward(
-        userId,
-        guildId,
-        tx,
-      );
-      result.unlockedAchievements = achievements.unlockedAchievements;
-      result.stats = achievements.stats;
-      result.achievementProgress = achievements.achievementProgress;
-
       return result;
     });
+    if ('error' in outcome) return outcome;
+
+    // Best-effort, after the guess commits: a failure here must not lose the
+    // guess. Anything missed is awarded by the next evaluation or the backfill
+    // script, since checkAndAward awards every met-but-unearned achievement.
+    try {
+      const achievements = await db.transaction((tx) =>
+        new WordleAchievementService().checkAndAward(userId, guildId, tx),
+      );
+      outcome.unlockedAchievements = achievements.unlockedAchievements;
+      outcome.stats = achievements.stats;
+      outcome.achievementProgress = achievements.achievementProgress;
+    } catch (error) {
+      logger.warn('wordle.achievements.award_failed', error);
+    }
+    return outcome;
   }
 
   async getUserSession(

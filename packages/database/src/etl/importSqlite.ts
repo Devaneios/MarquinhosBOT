@@ -6,7 +6,8 @@
  * Runs the Postgres migrations, refuses to touch a target that already holds
  * user data (the defaults the API seeds on boot are replaced), copies every
  * table in one transaction and fails (rolling everything back) unless each
- * table's row count matches the source.
+ * table's row count matches the source, less the orphan AI event rows it
+ * drops (see AI_CHILD_TABLES).
  */
 import { Database } from 'bun:sqlite';
 import { is, sql } from 'drizzle-orm';
@@ -28,10 +29,22 @@ const SEEDED_TABLES = new Set(['achievements', 'ai_chat_config', 'xp_config']);
 // Postgres-only columns that stand in for SQLite's implicit rowid.
 const ROWID_COLUMNS: Record<string, string> = { wordlist_review: 'seq' };
 
+// AI event tables are telemetry. SQLite never enforced their parent link or
+// (parent, seq) uniqueness, so orphans are dropped and duplicate seqs are
+// renumbered instead of failing the import. The parent key has the same name
+// on both sides.
+const AI_CHILD_TABLES: Record<string, { parent: string; key: string }> = {
+  ai_trace_events: { parent: 'ai_traces', key: 'trace_id' },
+  ai_thread_items: { parent: 'ai_thread_sessions', key: 'thread_id' },
+  ai_research_events: { parent: 'ai_research_jobs', key: 'job_id' },
+};
+
 export interface TableReport {
   table: string;
   source: number;
   target: number;
+  dropped?: number;
+  renumbered?: number;
 }
 
 type Row = Record<string, unknown>;
@@ -91,6 +104,82 @@ async function assertTargetEmpty(db: Db, tables: PgTable[]): Promise<void> {
   }
 }
 
+/**
+ * Pong matches are game data, so conflicts with the new foreign keys and
+ * winner check are not repaired: they abort the import before anything is
+ * written, listing the rows to fix in the SQLite file. Same rules as the
+ * migration 0004 pre-check.
+ */
+function assertLegacyPongConsistent(sqlite: Database): void {
+  if (
+    sqliteColumns(sqlite, 'pong_tournament_matches').size === 0 ||
+    sqliteColumns(sqlite, 'pong_tournament_entries').size === 0
+  ) {
+    return;
+  }
+  const conflicts = sqlite
+    .query<Row, []>(
+      `SELECT m.id, m.tournament_id, m.player_a, m.player_b, m.winner_id,
+              CASE WHEN m.player_a IS NOT NULL AND a.user_id IS NULL THEN 'missing_player_a'
+                   WHEN m.player_b IS NOT NULL AND b.user_id IS NULL THEN 'missing_player_b'
+                   ELSE 'winner_not_participant' END AS issue
+       FROM pong_tournament_matches m
+       LEFT JOIN pong_tournament_entries a
+         ON a.tournament_id = m.tournament_id AND a.user_id = m.player_a
+       LEFT JOIN pong_tournament_entries b
+         ON b.tournament_id = m.tournament_id AND b.user_id = m.player_b
+       WHERE (m.player_a IS NOT NULL AND a.user_id IS NULL)
+          OR (m.player_b IS NOT NULL AND b.user_id IS NULL)
+          OR (m.winner_id IS NOT NULL AND m.winner_id IS NOT m.player_a
+              AND m.winner_id IS NOT m.player_b)`,
+    )
+    .all();
+  if (conflicts.length > 0) {
+    throw new Error(
+      `Legacy pong tournament conflicts: ${JSON.stringify(conflicts)}`,
+    );
+  }
+}
+
+async function repairAiChildren(
+  tx: Tx,
+  table: string,
+  rows: Row[],
+): Promise<{ rows: Row[]; dropped: number; renumbered: number }> {
+  const link = AI_CHILD_TABLES[table];
+  if (!link) return { rows, dropped: 0, renumbered: 0 };
+
+  // Parents precede children in inDependencyOrder, so they are copied already.
+  const parents = await tx.execute<{ id: string }>(
+    sql`SELECT ${sql.identifier(link.key)} AS id FROM ${sql.identifier(link.parent)}`,
+  );
+  const known = new Set(parents.map((row) => row.id));
+  const kept = rows.filter((row) => known.has(row[link.key] as string));
+
+  const maxSeq = new Map<string, number>();
+  for (const row of kept) {
+    const parent = row[link.key] as string;
+    maxSeq.set(parent, Math.max(maxSeq.get(parent) ?? 0, Number(row.seq)));
+  }
+  // Rows arrive in rowid order: the first keeps its seq, later duplicates
+  // move past the parent's highest seq.
+  const seen = new Set<string>();
+  let renumbered = 0;
+  const repaired = kept.map((row) => {
+    const parent = row[link.key] as string;
+    if (!seen.has(`${parent}\u0000${row.seq}`)) {
+      seen.add(`${parent}\u0000${row.seq}`);
+      return row;
+    }
+    const seq = maxSeq.get(parent)! + 1;
+    maxSeq.set(parent, seq);
+    seen.add(`${parent}\u0000${seq}`);
+    renumbered++;
+    return { ...row, seq };
+  });
+  return { rows: repaired, dropped: rows.length - kept.length, renumbered };
+}
+
 async function copyTable(
   sqlite: Database,
   tx: Tx,
@@ -115,13 +204,18 @@ async function copyTable(
   const sourceRows = sqlite
     .query<Row, []>(`SELECT ${selectList} FROM "${name}" ORDER BY rowid`)
     .all();
+  const { rows, dropped, renumbered } = await repairAiChildren(
+    tx,
+    name,
+    sourceRows,
+  );
 
   const batchSize = Math.max(
     1,
     Math.floor(MAX_PARAMS_PER_INSERT / copied.length),
   );
-  for (let i = 0; i < sourceRows.length; i += batchSize) {
-    const batch = sourceRows.slice(i, i + batchSize).map((row) => {
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const batch = rows.slice(i, i + batchSize).map((row) => {
       const converted: Row = {};
       for (const column of copied) {
         converted[column.name] = convert(column, row[column.name]);
@@ -134,7 +228,13 @@ async function copyTable(
   const [counted] = await tx.execute<{ n: number }>(
     sql`SELECT COUNT(*)::int AS n FROM ${sql.identifier(name)}`,
   );
-  return { table: name, source: sourceRows.length, target: counted?.n ?? 0 };
+  return {
+    table: name,
+    source: sourceRows.length,
+    target: counted?.n ?? 0,
+    ...(dropped ? { dropped } : {}),
+    ...(renumbered ? { renumbered } : {}),
+  };
 }
 
 /**
@@ -205,6 +305,7 @@ export async function importSqlite(
     await runMigrations(db);
     const tables = inDependencyOrder(schemaTables());
     await assertTargetEmpty(db, tables);
+    assertLegacyPongConsistent(sqlite);
 
     return await db.transaction(async (tx) => {
       // DELETE, not TRUNCATE: Postgres refuses to truncate a table other
@@ -219,7 +320,9 @@ export async function importSqlite(
       await deriveWordleDayStats(tx);
       await resetSequences(tx, tables);
 
-      const mismatched = reports.filter((r) => r.source !== r.target);
+      const mismatched = reports.filter(
+        (r) => r.source - (r.dropped ?? 0) !== r.target,
+      );
       if (mismatched.length > 0) {
         throw new Error(
           `Row counts differ: ${mismatched

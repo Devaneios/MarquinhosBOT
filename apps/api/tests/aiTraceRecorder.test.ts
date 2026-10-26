@@ -1,8 +1,9 @@
 import { createDb } from '@marquinhos/database/client';
 import { aiTraceEvents, aiTraces } from '@marquinhos/database/schema';
-import { afterEach, describe, expect, it } from 'bun:test';
+import { afterEach, describe, expect, it, spyOn } from 'bun:test';
 import { asc } from 'drizzle-orm';
 import { AiTraceRecorder, NOOP_TRACE } from 'services/aiChat/AiTraceRecorder';
+import { logger } from 'utils/logger';
 import { useTestDb } from './helpers/testDb';
 
 const testDb = useTestDb();
@@ -200,6 +201,28 @@ describe('AiTraceRecorder', () => {
     expect(() => recorder.start(baseRequest)).not.toThrow();
     await recorder.flush();
     await unreachable.close();
+  });
+
+  it('skips the remaining writes once the trace row failed to insert', async () => {
+    const warn = spyOn(logger, 'warn').mockImplementation(() => {});
+    try {
+      const recorder = new AiTraceRecorder(testDb.current.db);
+      // Postgres rejects NUL bytes in text, so only the trace insert fails.
+      const trace = recorder.start({ ...baseRequest, content: 'nul\u0000' });
+      trace.sandbox({ action: 'session_created', containerId: 'c1' });
+      trace.finish({ status: 'ok' });
+      await recorder.flush();
+
+      expect(await traceRow()).toBeUndefined();
+      expect(await events()).toHaveLength(0);
+      expect(
+        warn.mock.calls.filter(
+          ([event]) => event === 'ai.trace.persist_failed',
+        ),
+      ).toHaveLength(1);
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it('returns the noop trace and writes nothing when tracing is disabled', async () => {

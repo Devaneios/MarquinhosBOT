@@ -6,6 +6,7 @@ import type { Client } from 'colyseus';
 import type { WsSessionPayload } from 'services/activity/wsSessionToken';
 import { WordleService } from 'services/wordle';
 import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
+import { logger } from 'utils/logger';
 import type {
   AdapterContext,
   GameRoomAdapter,
@@ -70,38 +71,34 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
   },
 
   async onJoin(service, auth, client, seat: SeatRole) {
-    const { achievements, stats } =
-      await new WordleAchievementService().getOverview(
-        auth.userId,
-        auth.guildId,
-      );
-    // maxPlayers: 64 makes this branch effectively unreachable via normal
-    // simultaneous joins, but MatchRoom.switchGame() re-seats every
+    // Achievements are optional in `init`: a failure there must not keep the
+    // player out of the game.
+    const overview = new WordleAchievementService()
+      .getOverview(auth.userId, auth.guildId)
+      .catch((error: unknown) => {
+        logger.error('wordle.achievements.overview_failed', {
+          error,
+          userId: auth.userId,
+          guildId: auth.guildId,
+        });
+        return {};
+      });
+    // Non-player seats: maxPlayers: 64 makes them effectively unreachable via
+    // normal simultaneous joins, but MatchRoom.switchGame() re-seats every
     // currently-connected client against the *new* adapter's maxPlayers
     // when a room switches into wordle — a room that organically
     // accumulated 65+ clients under a different (uncapped) game produces
     // real non-player seats here, no simultaneity required. WordleService
     // has no player-registration concept to skip for a spectator, so
-    // there's no harm in reading state for them — just send the same ack
-    // shape a real player gets (with the same safe defaults used in the
-    // player branch below) instead of leaving them without any ack at all.
-    if (seat !== 'player') {
-      const daily = await service.getDailyWord(auth.guildId);
-      sendMessage<WordleServerMessage>(client, {
-        type: 'init',
-        payload: {
-          wordLength: daily.word.length,
-          guesses: [],
-          solved: false,
-          attempts: 0,
-          achievements,
-          stats,
-        },
-      });
-      return;
-    }
-    const daily = await service.getDailyWord(auth.guildId);
-    const userSession = await service.getUserSession(auth.userId, auth.guildId);
+    // there's no harm in reading state for them — they get the same ack
+    // shape a real player gets, with an empty session, instead of no ack.
+    const [daily, userSession, achievements] = await Promise.all([
+      service.getDailyWord(auth.guildId),
+      seat === 'player'
+        ? service.getUserSession(auth.userId, auth.guildId)
+        : null,
+      overview,
+    ]);
     sendMessage<WordleServerMessage>(client, {
       type: 'init',
       payload: {
@@ -109,8 +106,7 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
         guesses: userSession?.guesses ?? [],
         solved: userSession?.solved ?? false,
         attempts: userSession?.attempts ?? 0,
-        achievements,
-        stats,
+        ...achievements,
       },
     });
   },

@@ -132,6 +132,58 @@ describe('importSqlite', () => {
     expect(inserted!.id).toBe(42);
   });
 
+  test('drops orphan AI events and renumbers duplicate sequence numbers', async () => {
+    const sqlite = await legacyDatabase();
+    sqlite.run(
+      "INSERT INTO ai_traces (trace_id, user_id, guild_id, channel_id, content, created_at) VALUES ('t', 'u', 'g', 'c', 'prompt', 1)",
+    );
+    sqlite.run(
+      `INSERT INTO ai_trace_events (id, trace_id, seq, type, created_at)
+       VALUES (1, 't', 1, 'llm', 1), (2, 't', 1, 'tool', 2), (3, 'gone', 1, 'llm', 3)`,
+    );
+    sqlite.close();
+
+    const reports = await importSqlite(sqlitePath, testDb.db);
+
+    expect(reports.find((r) => r.table === 'ai_trace_events')).toEqual({
+      table: 'ai_trace_events',
+      source: 3,
+      target: 2,
+      dropped: 1,
+      renumbered: 1,
+    });
+    const rows = await testDb.db
+      .select({ id: aiTraceEvents.id, seq: aiTraceEvents.seq })
+      .from(aiTraceEvents)
+      .orderBy(asc(aiTraceEvents.id));
+    expect(rows).toEqual([
+      { id: 1, seq: 1 },
+      { id: 2, seq: 2 },
+    ]);
+  });
+
+  test('refuses pong matches whose players are not registered, writing nothing', async () => {
+    const sqlite = await legacyDatabase();
+    sqlite.run("INSERT INTO users (id) VALUES ('legacy')");
+    sqlite.run(
+      `INSERT INTO pong_tournaments (id, guild_id, name, format, pool, status, config_json, created_by, created_at)
+       VALUES ('t1', 'g', 'Cup', 'round-robin', 'classic-1v1', 'active', '{}', 'host', 1)`,
+    );
+    sqlite.run(
+      "INSERT INTO pong_tournament_entries (tournament_id, user_id, seed, rating) VALUES ('t1', 'a', 1, 1500)",
+    );
+    sqlite.run(
+      `INSERT INTO pong_tournament_matches (id, tournament_id, bracket, round, position, player_a, player_b, status)
+       VALUES ('m1', 't1', 'main', 1, 1, 'a', 'outsider', 'ready')`,
+    );
+    sqlite.close();
+
+    await expect(importSqlite(sqlitePath, testDb.db)).rejects.toThrow(
+      /Legacy pong tournament conflicts: .*"issue":"missing_player_b"/,
+    );
+    expect(await testDb.db.select().from(users)).toEqual([]);
+  });
+
   test('replaces the defaults the API seeds on its first boot', async () => {
     const sqlite = await legacyDatabase();
     sqlite.run(

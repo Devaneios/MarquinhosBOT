@@ -34,6 +34,7 @@ import {
 } from 'drizzle-orm';
 import { AchievementService } from 'services/gamification/AchievementService';
 import { LevelingService } from 'services/gamification/LevelingService';
+import { getRecifeDate, getWordleTimeZone } from 'services/wordle/wordleDate';
 import { z } from 'zod';
 
 const backfillOptionsSchema = z.object({
@@ -117,14 +118,11 @@ export class WordleAchievementService {
       solvedAt: row.solved ? row.solved_at : null,
       firstSolverInGuild: row.solved && firstIds.has(row.id),
     }));
-    const timeZone = process.env.WORDLE_TIMEZONE ?? 'America/Recife';
     return {
       days,
       options: {
-        today: new Intl.DateTimeFormat('sv-SE', { timeZone }).format(
-          new Date(),
-        ),
-        timeZone,
+        today: getRecifeDate(),
+        timeZone: getWordleTimeZone(),
         persistedBestStreak: Math.max(
           saved?.current_streak ?? 0,
           saved?.max_streak ?? 0,

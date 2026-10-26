@@ -101,20 +101,26 @@ describe('Wordle achievement progression', () => {
       condition: '{}',
       reward_xp: 123,
     });
-    await defaults.initializeDefaults();
-    await defaults.initializeDefaults();
-    const [wordle] = await db
-      .select()
-      .from(achievements)
-      .where(eq(achievements.id, 'wordle_first_win'));
-    expect(wordle).toMatchObject({ name: 'Primeira palavra', reward_xp: 25 });
-    const [custom] = await db
-      .select()
-      .from(achievements)
-      .where(eq(achievements.id, customId));
-    expect(custom).toMatchObject({ name: 'custom', reward_xp: 123 });
-    const catalog = await service.getAchievements('nobody', 'no-guild');
-    expect(catalog).toHaveLength(WORDLE_ACHIEVEMENT_CATALOG.length);
+    try {
+      await defaults.initializeDefaults();
+      await defaults.initializeDefaults();
+      const [wordle] = await db
+        .select()
+        .from(achievements)
+        .where(eq(achievements.id, 'wordle_first_win'));
+      expect(wordle).toMatchObject({ name: 'Primeira palavra', reward_xp: 25 });
+      const [custom] = await db
+        .select()
+        .from(achievements)
+        .where(eq(achievements.id, customId));
+      expect(custom).toMatchObject({ name: 'custom', reward_xp: 123 });
+      const catalog = await service.getAchievements('nobody', 'no-guild');
+      expect(catalog).toHaveLength(WORDLE_ACHIEVEMENT_CATALOG.length);
+    } finally {
+      // The preload database is shared by every test file: a leftover generic
+      // row would stop initializeDefaults from seeding the generic defaults.
+      await db.delete(achievements).where(eq(achievements.id, customId));
+    }
   });
 
   it('returns capped progress and statistics without awarding on reads', async () => {

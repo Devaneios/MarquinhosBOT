@@ -10,7 +10,7 @@ import {
   userStats,
 } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
-import { and, asc, desc, eq, isNull, ne, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, isNull, ne, sql } from 'drizzle-orm';
 import { LevelingService } from 'services/gamification/LevelingService';
 import type { Achievement, UserAchievement } from 'services/gamification/types';
 
@@ -85,15 +85,24 @@ export class AchievementService {
   }
 
   async initializeDefaults(): Promise<void> {
-    await db
-      .insert(achievements)
-      .values(
-        DEFAULT_ACHIEVEMENTS.map((a) => ({
-          ...a,
-          condition: JSON.stringify(a.condition),
-        })),
-      )
-      .onConflictDoNothing();
+    // Generic defaults are seeded once; after that the rows are the operator's.
+    const [generic] = await db
+      .select({ count: count() })
+      .from(achievements)
+      .where(ne(achievements.category, 'wordle'));
+    if (!generic?.count) {
+      await db
+        .insert(achievements)
+        .values(
+          DEFAULT_ACHIEVEMENTS.map((a) => ({
+            ...a,
+            condition: JSON.stringify(a.condition),
+          })),
+        )
+        .onConflictDoNothing();
+    }
+    // Wordle rows mirror WORDLE_ACHIEVEMENT_CATALOG, which is authoritative
+    // (unlock payloads read rewardXp from it): DB edits are overwritten here.
     await db
       .insert(achievements)
       .values(

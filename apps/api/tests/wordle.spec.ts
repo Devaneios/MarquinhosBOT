@@ -81,6 +81,14 @@ describe('WordleService.pickNewWord', () => {
     Math.random = originalRandom;
   });
 
+  it('records the lazily picked daily word as used', async () => {
+    const daily = await service.getDailyWord('guild-lazy', '2026-01-01');
+    const used = await db.execute<{ word: string }>(
+      sql`SELECT word FROM wordle_used_words`,
+    );
+    expect([...used]).toEqual([{ word: daily.word }]);
+  });
+
   it('picks from devaneios-wordlist.txt when Math.random() is below the 80% weight', async () => {
     Math.random = () => 0.1;
     const result = await service.pickNewWord('guild-devaneios', '2026-01-01');

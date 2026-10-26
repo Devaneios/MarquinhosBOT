@@ -107,14 +107,19 @@ class RecordedTrace implements TraceContext {
   // Writes for one trace are chained so they land in order: the ai_traces
   // insert first, then events, then the finishing update. Callers never wait.
   private pending: Promise<void>;
+  // Without the ai_traces row every later write would fail its foreign key,
+  // so they are skipped (the failed insert was already logged once).
+  private parentWritten = false;
 
   constructor(
     readonly traceId: string,
     private db: Db,
-    created: Promise<void>,
+    created: Promise<boolean>,
     private onFinished: (trace: RecordedTrace) => void,
   ) {
-    this.pending = created;
+    this.pending = created.then((written) => {
+      this.parentWritten = written;
+    });
   }
 
   get settled(): Promise<void> {
@@ -319,12 +324,14 @@ class RecordedTrace implements TraceContext {
   }
 
   private enqueue(write: () => Promise<void>): void {
-    this.pending = this.pending.then(write).catch((error: unknown) => {
-      logger.warn('ai.trace.persist_failed', {
-        traceId: this.traceId,
-        error: describeError(error),
+    this.pending = this.pending
+      .then(() => (this.parentWritten ? write() : undefined))
+      .catch((error: unknown) => {
+        logger.warn('ai.trace.persist_failed', {
+          traceId: this.traceId,
+          error: describeError(error),
+        });
       });
-    });
   }
 }
 
@@ -348,12 +355,13 @@ export class AiTraceRecorder {
         created_at: Date.now(),
       })
       .then(
-        () => undefined,
+        () => true,
         (error: unknown) => {
           logger.warn('ai.trace.persist_failed', {
             traceId,
             error: describeError(error),
           });
+          return false;
         },
       );
 
