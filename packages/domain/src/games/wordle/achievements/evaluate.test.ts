@@ -5,7 +5,6 @@ import {
   evaluateWordleAchievements,
   evaluateWordleRule,
 } from './evaluate';
-import { LEGACY_WORDLE_ACHIEVEMENT_CATALOG } from './legacyCatalog';
 import type { WordleAchievementRule } from './rules';
 import type { WordleDayRecord } from './stats';
 import { epoch, failedDay, rows, solvedDay, solvedStreak } from './testing';
@@ -81,20 +80,6 @@ describe('evaluateWordleRule', () => {
   });
 
   describe('one-shot rules', () => {
-    it('solved_within requires a solved day within the limit', () => {
-      const days = [
-        failedDay('2026-10-01', { guesses: rows('ccaaa') }),
-        solvedDay('2026-10-02', { guesses: rows('aaaaa', 'ccccc') }),
-      ];
-      expect(check({ kind: 'solved_within', maxAttempts: 1 }, days)).toEqual({
-        met: false,
-        progress: null,
-      });
-      expect(check({ kind: 'solved_within', maxAttempts: 2 }, days).met).toBe(
-        true,
-      );
-    });
-
     it('solved_after rewards persistence but not unsolved marathons', () => {
       expect(
         check({ kind: 'solved_after', minAttempts: 10 }, [
@@ -176,32 +161,6 @@ describe('evaluateWordleRule', () => {
       ).toBe(true);
     });
 
-    it('clean_solve rejects any yellow letter on the way', () => {
-      const rule: WordleAchievementRule = {
-        kind: 'clean_solve',
-        minAttempts: 3,
-      };
-      expect(
-        check(rule, [
-          solvedDay('2026-10-01', {
-            guesses: rows('caaaa', 'ccaaa', 'ccccc'),
-          }),
-        ]).met,
-      ).toBe(true);
-      expect(
-        check(rule, [
-          solvedDay('2026-10-01', {
-            guesses: rows('caaap', 'ccaaa', 'ccccc'),
-          }),
-        ]).met,
-      ).toBe(false);
-      expect(
-        check(rule, [
-          solvedDay('2026-10-01', { guesses: rows('caaaa', 'ccccc') }),
-        ]).met,
-      ).toBe(false);
-    });
-
     it('blank_start needs an all-grey opener and a quick recovery', () => {
       const rule: WordleAchievementRule = {
         kind: 'blank_start',
@@ -264,9 +223,6 @@ describe('evaluateWordleRule', () => {
         guesses: [...rows('aaaaa', 'caaaa', 'ccaaa'), ...rows('cccc')],
       });
       for (const day of [legacy, partial, unsolvedLastRow, ragged]) {
-        expect(check({ kind: 'clean_solve', minAttempts: 3 }, [day]).met).toBe(
-          false,
-        );
         expect(check({ kind: 'blank_start', maxAttempts: 5 }, [day]).met).toBe(
           false,
         );
@@ -288,38 +244,19 @@ describe('evaluateWordleRule', () => {
         ]).met,
       ).toBe(false);
     });
-
-    it('phoenix needs two separate qualifying streaks', () => {
-      const rule: WordleAchievementRule = { kind: 'phoenix', days: 7 };
-      const first = solvedStreak('2026-09-01', 7);
-      expect(check(rule, first).met).toBe(false);
-      expect(
-        check(rule, [...first, ...solvedStreak('2026-09-09', 6)]).met,
-      ).toBe(false);
-      expect(
-        check(rule, [...first, ...solvedStreak('2026-09-09', 7)]).met,
-      ).toBe(true);
-    });
   });
 });
 
 describe('evaluateWordleAchievements', () => {
-  it('still renders the explicitly selected legacy catalog with its lifetime streak progress', () => {
-    const result = evaluateWordleAchievements(
-      [],
-      { today: TODAY, persistedBestStreak: 7 },
-      LEGACY_WORDLE_ACHIEVEMENT_CATALOG,
+  it('never applies lifetime streaks to the current catalog', () => {
+    const result = evaluateWordleAchievements([], {
+      today: TODAY,
+      persistedBestStreak: 7,
+    });
+    expect(result.map((row) => row.id)).toEqual(
+      WORDLE_ACHIEVEMENT_CATALOG.map((definition) => definition.id),
     );
-    expect(result.map((r) => r.id)).toEqual(
-      LEGACY_WORDLE_ACHIEVEMENT_CATALOG.map((d) => d.id),
-    );
-    expect(result.find((r) => r.id === 'wordle_streak_7')?.met).toBe(true);
-    expect(
-      evaluateWordleAchievements([], {
-        today: TODAY,
-        persistedBestStreak: 7,
-      }).some((r) => r.met),
-    ).toBe(false);
+    expect(result.some((row) => row.met)).toBe(false);
   });
   it('evaluates every catalog entry in catalog order', () => {
     const result = evaluateWordleAchievements([], { today: TODAY });

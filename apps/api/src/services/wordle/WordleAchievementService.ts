@@ -24,7 +24,6 @@ import {
 } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { evaluateWordleAchievements } from '@marquinhos/domain/games/wordle/achievements/evaluate';
 import type { AchievementHistoryDay } from '@marquinhos/domain/games/wordle/achievements/historyFacts';
-import { LEGACY_WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/legacyCatalog';
 import {
   matchWordlePatterns,
   parseAchievementMatrix,
@@ -200,12 +199,7 @@ export class WordleAchievementService {
           eq(userAchievements.guild_id, guildId),
           isNull(achievements.archived_at),
           eq(achievements.category, 'wordle'),
-          version === 1
-            ? or(
-                eq(achievements.wordle_version, 1),
-                isNull(achievements.wordle_version),
-              )
-            : eq(achievements.wordle_version, version),
+          eq(achievements.wordle_version, version),
         ),
       );
   }
@@ -291,24 +285,21 @@ export class WordleAchievementService {
     evidence: Map<string, WordlePatternEvidence>,
     exec: DbExecutor,
   ) {
-    const catalog =
-      version === 1
-        ? LEGACY_WORDLE_ACHIEVEMENT_CATALOG
-        : version === WORDLE_ACHIEVEMENT_VERSION
-          ? WORDLE_ACHIEVEMENT_CATALOG
-          : [];
+    if (version !== WORDLE_ACHIEVEMENT_VERSION) {
+      return wordleAchievementsOverviewSchema.parse({
+        achievementVersion: version,
+        achievements: [],
+        stats: computeWordlePlayerStats(history.days, history.options),
+      });
+    }
     const days = history.days.filter(
       (day) => day.achievementVersion === version,
     );
-    const evaluations = evaluateWordleAchievements(
-      days,
-      {
-        today: history.options.today,
-        timeZone: history.options.timeZone,
-        discoveryIds: new Set(evidence.keys()),
-      },
-      catalog,
-    );
+    const evaluations = evaluateWordleAchievements(days, {
+      today: history.options.today,
+      timeZone: history.options.timeZone,
+      discoveryIds: new Set(evidence.keys()),
+    });
     const progress = new Map(evaluations.map((row) => [row.id, row.progress]));
     const unlocks = new Map(
       (await this.loadUnlocks(userId, guildId, version, exec)).map((row) => [
@@ -329,39 +320,39 @@ export class WordleAchievementService {
           .where(isNotNull(achievements.archived_at))
       ).map((row) => row.id),
     );
-    const collection = catalog
-      .filter((definition) => !archived.has(definition.id))
-      .map((definition) => {
-        const at = unlocks.get(definition.id);
-        const concealed = definition.hidden && at === undefined;
-        const patternId =
-          definition.rule.kind === 'pattern'
-            ? definition.rule.patternId
-            : undefined;
-        return {
-          id: definition.id,
-          family: definition.family,
-          tier: definition.tier,
-          hidden: definition.hidden,
-          name: concealed ? '' : definition.name,
-          description: concealed ? '' : definition.description,
-          icon: concealed ? '❔' : definition.icon,
-          rarity: definition.rarity,
-          rewardXp: definition.rewardXp,
-          unlockedAt: at === undefined ? null : new Date(at).toISOString(),
-          progress: concealed ? null : (progress.get(definition.id) ?? null),
-          holdersPercent: hasPlayers
-            ? (percentages.get(definition.id) ?? 0)
-            : null,
-          ...(patternId && !concealed
-            ? {
-                patternPreview: getWordlePatternPreview(patternId),
-                matchEvidence:
-                  at === undefined ? null : (evidence.get(patternId) ?? null),
-              }
-            : {}),
-        };
-      });
+    const collection = WORDLE_ACHIEVEMENT_CATALOG.filter(
+      (definition) => !archived.has(definition.id),
+    ).map((definition) => {
+      const at = unlocks.get(definition.id);
+      const concealed = definition.hidden && at === undefined;
+      const patternId =
+        definition.rule.kind === 'pattern'
+          ? definition.rule.patternId
+          : undefined;
+      return {
+        id: definition.id,
+        family: definition.family,
+        tier: definition.tier,
+        hidden: definition.hidden,
+        name: concealed ? '' : definition.name,
+        description: concealed ? '' : definition.description,
+        icon: concealed ? '❔' : definition.icon,
+        rarity: definition.rarity,
+        rewardXp: definition.rewardXp,
+        unlockedAt: at === undefined ? null : new Date(at).toISOString(),
+        progress: concealed ? null : (progress.get(definition.id) ?? null),
+        holdersPercent: hasPlayers
+          ? (percentages.get(definition.id) ?? 0)
+          : null,
+        ...(patternId && !concealed
+          ? {
+              patternPreview: getWordlePatternPreview(patternId),
+              matchEvidence:
+                at === undefined ? null : (evidence.get(patternId) ?? null),
+            }
+          : {}),
+      };
+    });
     return wordleAchievementsOverviewSchema.parse({
       achievementVersion: version,
       achievements: collection,

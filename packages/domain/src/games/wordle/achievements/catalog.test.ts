@@ -5,7 +5,6 @@ import {
   WORDLE_ACHIEVEMENT_CATALOG,
   WORDLE_ACHIEVEMENT_VERSION,
 } from './catalog';
-import { LEGACY_WORDLE_ACHIEVEMENT_CATALOG } from './legacyCatalog';
 import { WORDLE_PATTERN_CATALOG } from './patterns';
 import {
   WORDLE_ACHIEVEMENT_FAMILIES,
@@ -13,21 +12,11 @@ import {
 } from './rules';
 
 describe('version 2 catalog', () => {
-  it('uses entirely fresh unique identities and preserves legacy definitions separately', () => {
+  it('uses unique identities for the current collection', () => {
     expect(WORDLE_ACHIEVEMENT_VERSION).toBe(2);
     const ids = WORDLE_ACHIEVEMENT_CATALOG.map((d) => d.id);
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids.every((id) => id.startsWith('wordle_v2_'))).toBe(true);
-    expect(
-      ids.every(
-        (id) => !LEGACY_WORDLE_ACHIEVEMENT_CATALOG.some((old) => old.id === id),
-      ),
-    ).toBe(true);
-    expect(
-      LEGACY_WORDLE_ACHIEVEMENT_CATALOG.some(
-        (old) => old.id === 'wordle_first_win',
-      ),
-    ).toBe(true);
   });
   it('publishes every drawing with a validated preview and no hidden drawings', () => {
     const patterns = WORDLE_ACHIEVEMENT_CATALOG.filter(

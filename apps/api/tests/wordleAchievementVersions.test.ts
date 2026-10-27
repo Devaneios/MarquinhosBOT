@@ -111,6 +111,9 @@ describe('Wordle achievement activation boundary', () => {
     expect(await getActiveWordleAchievementVersion(db)).toBe(1);
     const { userId, guildId } = { userId: randomUUID(), guildId: randomUUID() };
     await board(userId, guildId);
+    const overview = await service.getOverview(userId, guildId);
+    expect(overview.achievements).toHaveLength(0);
+    expect(overview.stats.played).toBe(1);
     expect(
       (await db.transaction((tx) => service.checkAndAward(userId, guildId, tx)))
         .unlockedAchievements,

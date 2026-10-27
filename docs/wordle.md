@@ -184,6 +184,10 @@ game history, and lifetime statistics. Generic achievement readers hide archived
 definitions. The [operations guide](wordle-operations.md#start-the-new-achievement-collection)
 describes inspection and explicit activation.
 
+There is one authoritative achievement catalog. Before activation, the overview
+returns an empty collection and lifetime statistics. The previous achievement
+iteration was never deployed and has no compatibility catalog or evaluator mode.
+
 [`evaluateWordleAchievements()`](../packages/domain/src/games/wordle/achievements/evaluate.ts)
 evaluates the catalog against eligible session history and durable discoveries.
 The rule families cover wins, participation, streaks, calendar coverage, precision,

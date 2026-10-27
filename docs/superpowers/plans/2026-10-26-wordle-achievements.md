@@ -69,14 +69,14 @@ Interfaces follow.
 
 ## Task 3. Replacement catalog and history rules
 
-Files are domain `rules.ts`, `catalog.ts`, `evaluate.ts`, new `historyFacts.ts`, and their tests. Preserve `stats.ts` lifetime behavior and keep a legacy catalog for pre-activation presentation.
+Files are domain `rules.ts`, `catalog.ts`, `evaluate.ts`, new `historyFacts.ts`, and their tests. Preserve `stats.ts` lifetime behavior and use one authoritative achievement catalog. The earlier achievement iteration was never deployed and needs no compatibility catalog.
 
 Interfaces follow.
 
 - `AchievementHistoryDay` extends `WordleDayRecord` with `feedback`, `wordLength`, `answerHasRepeatedLetters`, and `answerHasAccent`.
 - `WordleEvaluationOptions` retains today/timeZone and adds optional `discoveryIds: ReadonlySet<string>`. No lifetime persisted best streak is supplied to version-2 awards.
-- Preserve `evaluateWordleAchievements(days, options)` and existing rule helpers where semantics match. Add `pattern` and `pattern_collection`, plus focused history variants from architecture A.
-- Export `WORDLE_ACHIEVEMENT_VERSION = 2`, `WORDLE_ACHIEVEMENT_CATALOG`, and `LEGACY_WORDLE_ACHIEVEMENT_CATALOG`.
+- Preserve `evaluateWordleAchievements(days, options)` and the rule helpers used by the current catalog. Add `pattern` and `pattern_collection`, plus focused history variants from architecture A. The evaluator has no catalog override or prior-catalog mode.
+- Export `WORDLE_ACHIEVEMENT_VERSION = 2` and `WORDLE_ACHIEVEMENT_CATALOG`.
 
 - [x] Replace preservation tests with fresh-ID, schema, template coverage, rewards, and hidden-ID checks. Add failing tests for every new history predicate and exact date boundaries.
 - [x] Implement the approved catalog, collection goals, and history rules. Keep malformed matrices ineligible for visual rules while numerical counters remain usable.

@@ -7,7 +7,6 @@ export const wordleAchievementRuleSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('wins'), count }),
   z.object({ kind: z.literal('streak'), days: count }),
   z.object({ kind: z.literal('played'), days: count }),
-  z.object({ kind: z.literal('solved_within'), maxAttempts: count }),
   z.object({ kind: z.literal('wins_within'), maxAttempts: count, count }),
   z.object({ kind: z.literal('solved_after'), minAttempts: count }),
   z.object({
@@ -23,10 +22,8 @@ export const wordleAchievementRuleSchema = z.discriminatedUnion('kind', [
       toHour: hour,
     })
     .refine((rule) => rule.fromHour < rule.toHour),
-  z.object({ kind: z.literal('clean_solve'), minAttempts: count }),
   z.object({ kind: z.literal('blank_start'), maxAttempts: count }),
   z.object({ kind: z.literal('staircase'), minAttempts: count }),
-  z.object({ kind: z.literal('phoenix'), days: count }),
   z.object({ kind: z.literal('pattern'), patternId: z.string().min(1) }),
   z.object({
     kind: z.literal('pattern_collection'),

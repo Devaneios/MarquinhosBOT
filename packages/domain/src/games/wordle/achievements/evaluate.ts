@@ -1,7 +1,4 @@
-import {
-  WORDLE_ACHIEVEMENT_CATALOG,
-  type WordleAchievementDefinition,
-} from './catalog';
+import { WORDLE_ACHIEVEMENT_CATALOG } from './catalog';
 import {
   bestParticipationStreak,
   completeFeedback,
@@ -16,7 +13,6 @@ import {
   computeWordlePlayerStats,
   dayNumber,
   playedDays,
-  solvedRuns,
   type WordleDayRecord,
   type WordlePlayerStats,
   type WordleStatsOptions,
@@ -44,7 +40,6 @@ export interface WordleAchievementFacts {
   played: AchievementHistoryDay[];
   today: string;
   discoveryIds: ReadonlySet<string>;
-  runs: number[];
   solvedHours: number[];
 }
 
@@ -83,7 +78,6 @@ export function buildWordleAchievementFacts(
     today: options.today,
     discoveryIds: options.discoveryIds ?? new Set(),
     solved,
-    runs: solvedRuns(played),
     solvedHours: solved
       .filter((day) => day.solvedAt !== null)
       .map((day) => localHour(day.solvedAt!, formatter)),
@@ -105,8 +99,7 @@ export function evaluateWordleRule(
   rule: WordleAchievementRule,
   facts: WordleAchievementFacts,
 ): WordleRuleResult {
-  const { stats, solved, runs, solvedHours, played, today, discoveryIds } =
-    facts;
+  const { stats, solved, solvedHours, played, today, discoveryIds } = facts;
   const matrices = played.flatMap((day) => {
     const feedback = completeFeedback(day);
     return feedback === null ? [] : [{ day, feedback }];
@@ -119,8 +112,6 @@ export function evaluateWordleRule(
       return counter(stats.bestStreak, rule.days);
     case 'played':
       return counter(stats.played, rule.days);
-    case 'solved_within':
-      return flag(solved.some((day) => day.attempts <= rule.maxAttempts));
     case 'wins_within':
       return counter(
         solved.filter((day) => day.attempts <= rule.maxAttempts).length,
@@ -148,14 +139,6 @@ export function evaluateWordleRule(
       return flag(
         solvedHours.some((h) => h >= rule.fromHour && h < rule.toHour),
       );
-    case 'clean_solve':
-      return flag(
-        evidenced.some(
-          ({ day, feedback }) =>
-            day.attempts >= rule.minAttempts &&
-            feedback.every((row) => !row.includes('present')),
-        ),
-      );
     case 'blank_start':
       return flag(
         evidenced.some(
@@ -177,8 +160,6 @@ export function evaluateWordleRule(
           );
         }),
       );
-    case 'phoenix':
-      return flag(runs.filter((length) => length >= rule.days).length >= 2);
     case 'pattern':
       return flag(discoveryIds.has(rule.patternId));
     case 'pattern_collection':
@@ -292,12 +273,9 @@ export function evaluateWordleRule(
 export function evaluateWordleAchievements(
   days: readonly WordleDayRecord[],
   options: WordleEvaluationOptions,
-  catalog: readonly WordleAchievementDefinition[] = WORDLE_ACHIEVEMENT_CATALOG,
 ): WordleAchievementEvaluation[] {
   const facts = buildWordleAchievementFacts(days, options);
-  if (catalog.some((definition) => !definition.id.startsWith('wordle_v2_')))
-    facts.stats = computeWordlePlayerStats(facts.played, options);
-  return catalog.map((definition) => ({
+  return WORDLE_ACHIEVEMENT_CATALOG.map((definition) => ({
     id: definition.id,
     ...evaluateWordleRule(definition.rule, facts),
   }));
