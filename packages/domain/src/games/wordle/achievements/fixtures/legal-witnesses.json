@@ -1,0 +1,744 @@
+[
+  {
+    "patternId": "arrow_down",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["aatrox", "aavora", "parada", "baamês", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "arrow_down",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "aetite", "apeado", "apache", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "arrow_left",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["abrace", "barabu", "parada", "baraia", "abrais", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "arrow_left",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "aetita", "aetite", "apeado", "abecar", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "arrow_right",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["paanga", "paaris", "parada", "pabllo", "pabola", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "arrow_right",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["ababuí", "aetita", "aetite", "apache", "abacto", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "arrow_up",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["aatrox", "parada", "aavora", "baamês", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "arrow_up",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "aetite", "apache", "apagai", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "cross",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["aatrox", "parada", "aavora", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "cross",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "aetite", "apache", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "diamond_outline",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["aatrox", "parada", "aavora", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "diamond_outline",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "aetite", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_0",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "parado", "paraju", "parajá", "parans", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_0",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "abecar", "abedal", "aetite", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_1",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["aatrox", "paanga", "aavora", "baamês", "parada", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_1",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "aetite", "apache", "apagai", "apeado", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_2",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["paanga", "abrace", "aatrox", "paaris", "parada", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_2",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "aetite", "ababuí", "apeado", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_3",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["paanga", "abrace", "aatrox", "abrais", "paaris", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_3",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "aetite", "abecar", "apache", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_4",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "parado", "paraju", "abrace", "abrais", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_4",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "abecar", "aetita", "abedal", "abegoa", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_5",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "paanga", "paaris", "abrace", "pabllo", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_5",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "ababuí", "aetite", "abebra", "apache", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_6",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["barabu", "paanga", "parada", "parado", "paraju", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_6",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "ababuí", "aetite", "abebra", "apeado", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_7",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "abrace", "aatrox", "aavora", "baamês", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_7",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "aetite", "apache", "apagai", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_8",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "parado", "paraju", "parajá", "parans", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_8",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "aetite", "abecar", "apeado", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_9",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "parado", "paraju", "abrace", "paanga", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_9",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "aetite", "abecar", "apache", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "heart",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "parado", "paraju", "aatrox", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "heart",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "aetita", "aetite", "apache", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "hourglass",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "aatrox", "parado", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "hourglass",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "aetite", "apeado", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_a",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["aatrox", "parada", "parado", "paraju", "parajá", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_a",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "aetite", "abecar", "abedal", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_b",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["paanga", "parada", "paaris", "parado", "pabllo", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_b",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "aetite", "abecar", "apache", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_c",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["barabu", "paanga", "paaris", "pabllo", "baraia", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_c",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "ababuí", "abacto", "abacur", "aetite", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_d",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["paanga", "parada", "parado", "paraju", "paaris", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_d",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "abecar", "abedal", "aetite", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_e",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "paanga", "paaris", "pabllo", "parado", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_e",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "ababuí", "aetite", "abacto", "apeado", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_f",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "paanga", "paaris", "pabllo", "pabola", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_f",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "ababuí", "aetite", "abacto", "abacur", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_g",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["barabu", "paanga", "parada", "parado", "baraia", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_g",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "ababuí", "abebra", "abecar", "aetite", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_h",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "parado", "paraju", "parajá", "parans", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_h",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "abecar", "aetita", "abedal", "abegoa", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_i",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "aatrox", "aavora", "baamês", "parado", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_i",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "aetite", "apache", "apagai", "apeado", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_j",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["abrace", "abrais", "abrans", "parada", "aatrox", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_j",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "abecar", "abedal", "abegoa", "aetita", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_k",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "parado", "paanga", "paraju", "parajá", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_k",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "abecar", "aetita", "abedal", "abegoa", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_l",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["paanga", "paaris", "pabllo", "pabola", "parada", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_l",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["ababuí", "abacto", "abacur", "abadar", "aetita", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_m",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "parado", "paraju", "parajá", "parans", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_m",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "aetita", "aetite", "abecar", "abedal", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_n",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "parado", "paraju", "parajá", "parans", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_n",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "aetita", "aetite", "apeado", "abecar", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_o",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["aatrox", "parada", "parado", "paraju", "aavora", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_o",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "abecar", "abedal", "aetite", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_p",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["paanga", "parada", "paaris", "pabllo", "pabola", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_p",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "aetite", "ababuí", "abacto", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_q",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["aatrox", "parada", "parado", "paraju", "abrace", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_q",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "abecar", "aetite", "abedal", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_r",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["paanga", "parada", "paaris", "parado", "paraju", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_r",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "aetite", "abecar", "abedal", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_s",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["barabu", "paanga", "aatrox", "abrace", "paaris", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_s",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "ababuí", "aetite", "abebra", "apache", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_t",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "aatrox", "aavora", "baamês", "baanda", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_t",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "aetite", "apache", "apagai", "apagam", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_u",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "parado", "paraju", "parajá", "parans", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_u",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "abecar", "abedal", "abegoa", "aetita", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_v",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "parado", "paraju", "aatrox", "aavora", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_v",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "abecar", "abedal", "aetita", "aetite", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_w",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "parado", "paraju", "parajá", "parans", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_w",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "abecar", "aetita", "aetite", "abedal", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_x",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "parado", "aatrox", "paraju", "parajá", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_x",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "abecar", "aetita", "abedal", "abegoa", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_y",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "parado", "aatrox", "aavora", "baamês", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_y",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "abecar", "aetita", "aetite", "apache", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_z",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "abrace", "aatrox", "paanga", "parado", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_z",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "aetite", "ababuí", "apeado", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "square_outline",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "parado", "paraju", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "square_outline",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "abebra", "aetite", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "staircase",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["paanga", "paaris", "parada", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "staircase",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["ababuí", "aetita", "aetite", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "tetromino_i",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["partam", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "tetromino_i",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aperar", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "tetromino_j",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["paanga", "parada", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "tetromino_j",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["ababuí", "aetita", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "tetromino_l",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["abrace", "parada", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "tetromino_l",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "aetita", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "tetromino_o",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["paanga", "paaris", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "tetromino_o",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "aetite", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "tetromino_s",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["barabu", "paanga", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "tetromino_s",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "aetite", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "tetromino_t",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "aatrox", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "tetromino_t",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "aetite", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "tetromino_z",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["paanga", "barabu", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "tetromino_z",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "aetite", "partes"],
+    "origin": [0, 0]
+  }
+]
