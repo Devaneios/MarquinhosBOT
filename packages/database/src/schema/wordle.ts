@@ -6,6 +6,7 @@ import {
   check,
   index,
   integer,
+  jsonb,
   pgTable,
   primaryKey,
   text,
@@ -78,6 +79,7 @@ export const wordleSessions = pgTable(
     solved_at: bigint('solved_at', { mode: 'number' }),
     first_solver: boolean('first_solver'),
     attempts: integer('attempts').notNull().default(0),
+    achievement_version: integer('achievement_version').notNull().default(1),
     created_at: bigint('created_at', { mode: 'number' }).notNull(),
     // legacy: the length lives on wordle_days (a trigger fills it). Dropped in
     // the contract release, together with the wordle_sessions -> wordle_days FK.
@@ -94,6 +96,39 @@ export const wordleSessions = pgTable(
     uniqueIndex('wordle_sessions_first_solver_idx')
       .on(t.guild_id, t.word_date)
       .where(sql`${t.first_solver} = true`),
+  ],
+);
+
+export const wordleAchievementVersions = pgTable(
+  'wordle_achievement_versions',
+  {
+    version: integer('version').primaryKey(),
+    active: boolean('active').notNull().default(false),
+    activated_at: bigint('activated_at', { mode: 'number' }).notNull(),
+  },
+  (table) => [
+    uniqueIndex('wordle_achievement_versions_active_idx')
+      .on(table.active)
+      .where(sql`${table.active} = true`),
+    check('wordle_achievement_versions_positive', sql`${table.version} > 0`),
+  ],
+);
+
+export const wordlePatternDiscoveries = pgTable(
+  'wordle_pattern_discoveries',
+  {
+    user_id: text('user_id').notNull(),
+    guild_id: text('guild_id').notNull(),
+    version: integer('version').notNull(),
+    pattern_id: text('pattern_id').notNull(),
+    session_id: text('session_id').notNull(),
+    discovered_at: bigint('discovered_at', { mode: 'number' }).notNull(),
+    evidence: jsonb('evidence').$type<unknown>().notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.user_id, table.guild_id, table.version, table.pattern_id],
+    }),
   ],
 );
 

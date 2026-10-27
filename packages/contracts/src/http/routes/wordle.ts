@@ -3,6 +3,7 @@ import {
   guessRowSchema,
   letterFeedbackSchema,
   wordleAchievementProgressUpdateSchema,
+  wordleAchievementStatusSchema,
   wordleAchievementsOverviewSchema,
   wordlePlayerStatsSchema,
   wordleUnlockedAchievementSchema,
@@ -25,6 +26,8 @@ export const wordleGuessResultSchema = z.object({
   attempts: z.number(),
   wordLength: z.number(),
   streak: z.number().optional(),
+  achievementVersion: z.number().int().positive().optional(),
+  achievements: z.array(wordleAchievementStatusSchema).optional(),
   unlockedAchievements: z.array(wordleUnlockedAchievementSchema).optional(),
   stats: wordlePlayerStatsSchema.optional(),
   achievementProgress: z

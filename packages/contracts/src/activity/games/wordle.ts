@@ -21,6 +21,7 @@ export const serverMessageSchema = z.discriminatedUnion('type', [
       guesses: z.array(guessRowSchema),
       solved: z.boolean(),
       attempts: z.number(),
+      achievementVersion: z.number().int().positive().optional(),
       achievements: z.array(wordleAchievementStatusSchema).optional(),
       stats: wordlePlayerStatsSchema.optional(),
     }),

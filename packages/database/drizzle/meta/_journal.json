@@ -43,6 +43,13 @@
       "when": 1792983521206,
       "tag": "0005_expand_wordle_days",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793069142077,
+      "tag": "0006_wordle_achievement_versions",
+      "breakpoints": true
     }
   ]
 }

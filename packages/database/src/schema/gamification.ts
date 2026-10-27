@@ -47,6 +47,8 @@ export const achievements = pgTable(
     icon: text('icon').notNull(),
     condition: text('condition').notNull(),
     reward_xp: integer('reward_xp').notNull().default(0),
+    wordle_version: integer('wordle_version'),
+    archived_at: bigint('archived_at', { mode: 'number' }),
   },
   (t) => [
     check(

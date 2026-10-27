@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'bun:test';
 import { serverMessageSchema } from './activity/games/wordle';
 import { wordleGuessResultSchema } from './http/routes/wordle';
-import { wordlePlayerStatsSchema } from './wordle';
+import {
+  wordleAchievementStatusSchema,
+  wordlePlayerStatsSchema,
+} from './wordle';
 
 const badge = {
   id: 'wordle_first_win',
@@ -26,6 +29,72 @@ const guess = {
 };
 
 describe('Wordle achievement messages', () => {
+  const patternPreview = {
+    patternId: 'tetromino_t',
+    mask: ['###', '.#.'],
+    colors: ['correct', 'present'],
+    rotations: [0, 90, 180, 270],
+  };
+  const matchEvidence = {
+    patternId: 'tetromino_t',
+    color: 'present',
+    origin: [0, 0],
+    rotation: 0,
+    cells: [
+      [0, 0],
+      [0, 1],
+      [0, 2],
+      [1, 1],
+    ],
+    feedback: [
+      ['present', 'present', 'present', 'absent', 'correct'],
+      ['absent', 'present', 'absent', 'absent', 'correct'],
+    ],
+    date: '2026-10-26',
+  };
+
+  it('preserves yellow shape previews and evidence in versioned snapshots', () => {
+    const achievement = { ...badge, patternPreview, matchEvidence };
+    const result = wordleGuessResultSchema.parse({
+      ...guess,
+      achievementVersion: 2,
+      achievements: [achievement],
+      unlockedAchievements: [achievement],
+    });
+    expect(result).toHaveProperty('achievementVersion', 2);
+    expect(result).toHaveProperty(
+      'achievements.0.patternPreview',
+      patternPreview,
+    );
+    expect(result).toHaveProperty(
+      'unlockedAchievements.0.matchEvidence',
+      matchEvidence,
+    );
+  });
+
+  it('rejects forged evidence with invalid coordinates, colors, or duplicate cells', () => {
+    for (const invalid of [
+      { ...matchEvidence, cells: [[9, 0]] },
+      { ...matchEvidence, cells: [[0, 4]] },
+      {
+        ...matchEvidence,
+        cells: [
+          [0, 0],
+          [0, 0],
+        ],
+      },
+      { ...matchEvidence, feedback: [['present'], ['present', 'present']] },
+      { ...matchEvidence, origin: [-1, 0] },
+    ]) {
+      expect(
+        wordleAchievementStatusSchema.safeParse({
+          ...badge,
+          matchEvidence: invalid,
+        }).success,
+      ).toBe(false);
+    }
+  });
+
   it('preserves progress updates for badges that are still locked', () => {
     const achievementProgress = [
       { id: 'wordle_wins_10', progress: { current: 1, target: 10 } },
