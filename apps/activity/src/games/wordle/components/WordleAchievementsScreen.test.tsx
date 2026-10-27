@@ -76,6 +76,57 @@ const sampleAchievements: WordleAchievementStatus[] = [
 ];
 
 describe('WordleAchievementsScreen', () => {
+  it('shows both drawing colors and highlights a saved yellow discovery', () => {
+    const achievement: WordleAchievementStatus = {
+      ...sampleAchievements[0]!,
+      id: 'wordle_v2_tetromino_t',
+      family: 'tetrominoes',
+      name: 'Peça T',
+      patternPreview: {
+        patternId: 'tetromino_t',
+        mask: ['###', '.#.'],
+        colors: ['correct', 'present'],
+        rotations: [0, 90, 180, 270],
+      },
+      matchEvidence: {
+        patternId: 'tetromino_t',
+        color: 'present',
+        origin: [0, 0],
+        rotation: 0,
+        cells: [
+          [0, 0],
+          [0, 1],
+          [0, 2],
+          [1, 1],
+        ],
+        date: '2026-10-26',
+        feedback: [
+          ['present', 'present', 'present', 'absent', 'correct'],
+          ['absent', 'present', 'absent', 'absent', 'correct'],
+        ],
+      },
+    };
+    render(
+      <WordleAchievementsScreen
+        achievements={[achievement]}
+        onBack={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Peça T/ }));
+    const dialog = screen.getByRole('dialog');
+    expect(
+      within(dialog).getByRole('img', { name: /modelo.*verde/i }),
+    ).toBeTruthy();
+    expect(
+      within(dialog).getByRole('img', { name: /modelo.*amarelo/i }),
+    ).toBeTruthy();
+    const evidence = within(dialog).getByRole('img', {
+      name: /sua descoberta.*amarelo/i,
+    });
+    expect(evidence.querySelectorAll('[data-matched="true"]')).toHaveLength(4);
+    expect(evidence.querySelectorAll('[data-color="correct"]')).toHaveLength(2);
+  });
+
   it('renders an empty state when no achievements exist', () => {
     render(<WordleAchievementsScreen achievements={[]} onBack={() => {}} />);
 

@@ -1,4 +1,5 @@
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
+import type { WordleAchievementStatus } from '@marquinhos/contracts/wordle';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, jest, mock } from 'bun:test';
 import { revealDurationMs } from '../constants';
@@ -59,6 +60,108 @@ async function renderBoardHook(enableArrowKeys = false) {
 }
 
 describe('useWordleBoard focus controls', () => {
+  it('replaces the collection and clears retired notifications on a version change', async () => {
+    const { result } = await renderBoardHook();
+    const retired = {
+      id: 'wordle_first_win',
+      name: 'Antiga',
+      description: 'Antiga',
+      icon: 'A',
+      rarity: 'common',
+      rewardXp: 25,
+      family: 'wins',
+      tier: 1,
+      hidden: false,
+      unlockedAt: '2026-10-24T04:15:00.000Z',
+    };
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'carro',
+          feedback: miss('carro').feedback,
+          guesses: [miss('carro')],
+          solved: false,
+          attempts: 1,
+          wordLength: 5,
+          achievementVersion: 1,
+          unlockedAchievements: [retired],
+        },
+      }),
+    );
+    expect(result.current.unlockedAchievements).toHaveLength(1);
+    const fresh = {
+      ...retired,
+      id: 'wordle_v2_wins_1',
+      name: 'Nova',
+      unlockedAt: null,
+    };
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'livro',
+          feedback: miss('livro').feedback,
+          guesses: [miss('carro'), miss('livro')],
+          solved: false,
+          attempts: 2,
+          wordLength: 5,
+          achievementVersion: 2,
+          achievements: [fresh],
+          unlockedAchievements: [],
+        },
+      }),
+    );
+    expect(
+      result.current.achievements.map(
+        (item: WordleAchievementStatus) => item.id,
+      ),
+    ).toEqual(['wordle_v2_wins_1']);
+    expect(result.current.unlockedAchievements).toEqual([]);
+    expect(result.current.hasUnlockedInSession).toBe(false);
+  });
+
+  it('discards retired collection data when a new-version delta has no snapshot', async () => {
+    const { result } = await renderBoardHook();
+    const retired = {
+      id: 'wordle_first_win',
+      name: 'Antiga',
+      description: 'Antiga',
+      icon: 'A',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: null,
+    };
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          achievementVersion: 1,
+          achievements: [retired],
+        },
+      }),
+    );
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'carro',
+          feedback: miss('carro').feedback,
+          guesses: [miss('carro')],
+          solved: false,
+          attempts: 1,
+          wordLength: 5,
+          achievementVersion: 2,
+        },
+      }),
+    );
+    expect(result.current.achievements).toEqual([]);
+  });
+
   it('moves focus one letter to the right for space', async () => {
     const { result } = await renderBoardHook();
 

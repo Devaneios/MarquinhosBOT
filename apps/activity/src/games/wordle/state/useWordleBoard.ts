@@ -24,6 +24,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
 } from 'react';
@@ -72,6 +73,70 @@ export function mergeUnlockedAchievements(
   return updated;
 }
 
+interface AchievementState {
+  achievementVersion: number;
+  achievements: WordleAchievementStatus[];
+  unlockedAchievements: WordleUnlockedAchievement[];
+  hasUnlockedInSession: boolean;
+}
+
+type AchievementAction =
+  | { type: 'init'; version: number; achievements: WordleAchievementStatus[] }
+  | {
+      type: 'guess';
+      version?: number;
+      achievements?: WordleAchievementStatus[];
+      unlocked: WordleUnlockedAchievement[];
+      progress?: WordleAchievementProgressUpdate[];
+    }
+  | { type: 'dismiss_current' | 'dismiss_all' };
+
+function achievementReducer(
+  state: AchievementState,
+  action: AchievementAction,
+): AchievementState {
+  switch (action.type) {
+    case 'init':
+      return {
+        achievementVersion: action.version,
+        achievements: action.achievements,
+        unlockedAchievements: [],
+        hasUnlockedInSession: false,
+      };
+    case 'guess': {
+      const version = action.version ?? state.achievementVersion;
+      if (version < state.achievementVersion) return state;
+      const changed = version !== state.achievementVersion;
+      const pending = changed ? [] : state.unlockedAchievements;
+      const existing = new Set(pending.map((item) => item.id));
+      return {
+        achievementVersion: version,
+        achievements:
+          action.achievements ??
+          mergeUnlockedAchievements(
+            changed ? [] : state.achievements,
+            action.unlocked,
+            action.progress,
+          ),
+        unlockedAchievements: [
+          ...pending,
+          ...action.unlocked.filter((item) => !existing.has(item.id)),
+        ],
+        hasUnlockedInSession:
+          (!changed && state.hasUnlockedInSession) ||
+          action.unlocked.length > 0,
+      };
+    }
+    case 'dismiss_current':
+      return {
+        ...state,
+        unlockedAchievements: state.unlockedAchievements.slice(1),
+      };
+    case 'dismiss_all':
+      return { ...state, unlockedAchievements: [] };
+  }
+}
+
 interface WordleBoardOptions {
   enabled: boolean;
   enableSpaceKey: boolean;
@@ -93,14 +158,21 @@ export function useWordleBoard(
   const [revealedCount, setRevealedCount] = useState(0);
   const [celebrateRow, setCelebrateRow] = useState<number | null>(null);
   const [solved, setSolved] = useState(false);
-  const [achievements, setAchievements] = useState<WordleAchievementStatus[]>(
-    [],
-  );
+  const [
+    {
+      achievementVersion,
+      achievements,
+      unlockedAchievements,
+      hasUnlockedInSession,
+    },
+    dispatchAchievements,
+  ] = useReducer(achievementReducer, {
+    achievementVersion: 1,
+    achievements: [],
+    unlockedAchievements: [],
+    hasUnlockedInSession: false,
+  });
   const [stats, setStats] = useState<WordlePlayerStats | null>(null);
-  const [unlockedAchievements, setUnlockedAchievements] = useState<
-    WordleUnlockedAchievement[]
-  >([]);
-  const [hasUnlockedInSession, setHasUnlockedInSession] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentLetters, setCurrentLetters] = useState<string[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -135,10 +207,12 @@ export function useWordleBoard(
             setWordLength(message.payload.wordLength);
             setGuesses(message.payload.guesses);
             setSolved(message.payload.solved);
-            setAchievements(message.payload.achievements ?? []);
+            dispatchAchievements({
+              type: 'init',
+              version: message.payload.achievementVersion ?? 1,
+              achievements: message.payload.achievements ?? [],
+            });
             setStats(message.payload.stats ?? null);
-            setUnlockedAchievements([]);
-            setHasUnlockedInSession(false);
             setRevealedCount(message.payload.guesses.length);
             setCelebrateRow(null);
             window.clearTimeout(errorTimeout.current);
@@ -155,19 +229,13 @@ export function useWordleBoard(
           if (message.payload.stats !== undefined) {
             setStats(message.payload.stats);
           }
-          setAchievements((prev) =>
-            mergeUnlockedAchievements(prev, nextUnlocked, nextProgress),
-          );
-          if (nextUnlocked.length > 0) {
-            setUnlockedAchievements((prev) => {
-              const existingIds = new Set(prev.map((item) => item.id));
-              const appended = nextUnlocked.filter(
-                (item) => !existingIds.has(item.id),
-              );
-              return [...prev, ...appended];
-            });
-            setHasUnlockedInSession(true);
-          }
+          dispatchAchievements({
+            type: 'guess',
+            version: message.payload.achievementVersion,
+            achievements: message.payload.achievements,
+            unlocked: nextUnlocked,
+            progress: nextProgress,
+          });
           window.clearTimeout(errorTimeout.current);
           setError(null);
           setCurrentLetters((prev) => prev.map(() => ''));
@@ -421,14 +489,15 @@ export function useWordleBoard(
   }
 
   const dismissCurrentAchievement = useCallback(() => {
-    setUnlockedAchievements((prev) => prev.slice(1));
+    dispatchAchievements({ type: 'dismiss_current' });
   }, []);
 
   const dismissUnlockedAchievements = useCallback(() => {
-    setUnlockedAchievements([]);
+    dispatchAchievements({ type: 'dismiss_all' });
   }, []);
 
   return {
+    achievementVersion,
     wordLength,
     guesses,
     revealingRow,

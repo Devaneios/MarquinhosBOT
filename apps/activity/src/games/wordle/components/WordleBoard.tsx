@@ -39,6 +39,7 @@ export function WordleBoard({
     'playing' | 'settings' | 'achievements'
   >('playing');
   const {
+    achievementVersion,
     achievements,
     activeIndex,
     backspace,
@@ -138,6 +139,7 @@ export function WordleBoard({
   if (screen === 'achievements') {
     return (
       <WordleAchievementsScreen
+        key={achievementVersion}
         achievements={achievements}
         stats={stats}
         onBack={() => transitionTo('nav-back', () => setSubScreen('playing'))}
