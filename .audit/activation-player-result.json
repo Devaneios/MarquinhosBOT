@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "catalog": 104,
+  "earned": 0,
+  "progress": [],
+  "newAwards": 0,
+  "lifetimeStats": {
+    "played": 1,
+    "wins": 1,
+    "winRate": 100,
+    "currentStreak": 1,
+    "bestStreak": 1,
+    "distribution": [1, 0, 0, 0, 0, 0, 0]
+  },
+  "xp": 25
+}

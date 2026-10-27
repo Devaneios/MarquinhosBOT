@@ -1,6 +1,6 @@
 # Wordle achievements design
 
-Status is approved by the user, with yellow explicitly emphasized for drawings that would be impractical during a win-oriented game using greens alone. The builder check found no important unanswered requirements. Implementation is in progress.
+Status is implemented on the feature branch and verified with workspace tests, typechecks, lint, and builds. The user approved the design and emphasized yellow for drawings that would be impractical during a win-oriented game using greens alone. Activity browser automation and live remaining-answer availability remain unverified. No live activation or deployment has occurred.
 
 ## Intent and decisions
 

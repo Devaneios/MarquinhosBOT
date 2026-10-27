@@ -94,28 +94,28 @@ Interfaces follow.
 - Hold a shared version-row lock during first-session stamping and awards. Activation holds an exclusive lock. Acquire a player/guild/version advisory transaction lock before loading discovery facts.
 - Insert discoveries without replacing first evidence. Evaluate all collection rules against the resulting set. Reuse unlock insertion and XP in the same transaction.
 
-- [ ] Write failing database tests for zero reset, archival, old-board exclusion, stamp immutability, activation retries, version races, collection races, rollback, and unchanged lifetime statistics/XP.
-- [ ] Implement activation, compatible startup synchronization, archive filters in all generic readers and awards, session stamping, whole-matrix loading, and version-scoped holder percentages.
-- [ ] Update old-ID tests to the deliberately new behavior. Keep meaningful generic, concurrency, rollback, and gameplay-availability assertions.
-- [ ] Run API achievement/contract tests and all affected Wordle tests against the disposable PostgreSQL instance. Verify the CLI inspection is read-only and --apply is explicit.
-- [ ] Record and commit the checkpoint. Do not apply activation to any existing environment.
+- [x] Write failing database tests for zero reset, archival, old-board exclusion, stamp immutability, activation retries, version races, collection races, rollback, and unchanged lifetime statistics/XP.
+- [x] Implement activation, compatible startup synchronization, archive filters in all generic readers and awards, session stamping, whole-matrix loading, and version-scoped holder percentages.
+- [x] Update old-ID tests to the deliberately new behavior. Keep meaningful generic, concurrency, rollback, and gameplay-availability assertions.
+- [x] Run API achievement/contract tests and all affected Wordle tests against the disposable PostgreSQL instance. Verify the CLI inspection is read-only and --apply is explicit.
+- [x] Record and commit the checkpoint. Do not apply activation to any existing environment.
 
 ## Task 5. Activity and bot evidence
 
 Files are Activity `useWordleBoard.ts`, achievements screens, Portuguese locale, and tests; bot achievement formatter, command, canvas compound, and tests. API adapter initialization spreads the shared versioned overview.
 
-- [ ] Write failing client cases for yellow preview/evidence, matched-cell highlights, and a version change clearing retired state and notifications.
-- [ ] Render pattern previews and earned feedback snapshots from the shared contract. Add family labels. Replace full collection snapshots rather than merging across versions.
-- [ ] Add compact bot matrix detail through its existing command and renderer, with matched-cell emphasis. Preserve progress and recent-award behavior.
-- [ ] Run Activity/bot tests and relevant typechecks. Drive the actual changed views and inspect the rendered artifact.
-- [ ] Record and commit the integration checkpoint.
+- [x] Write failing client cases for yellow preview/evidence, matched-cell highlights, and a version change clearing retired state and notifications.
+- [x] Render pattern previews and earned feedback snapshots from the shared contract. Add family labels. Replace full collection snapshots rather than merging across versions.
+- [x] Add compact bot matrix detail through its existing command and renderer, with matched-cell emphasis. Preserve progress and recent-award behavior.
+- [x] Run Activity/bot tests and relevant typechecks. Inspect the rendered bot PNG artifact. Skip the Activity browser drive because no browser provider was available and native browser calls timed out. Activity interaction tests and production build pass.
+- [x] Record and commit the integration checkpoint.
 
 ## Task 6. Whole-change verification and handback
 
-- [ ] Update `docs/wordle.md` and `docs/wordle-operations.md` with versioning, subset/yellow semantics, the verification script, inspection, explicit activation, old-writer cutover, and rollout limits.
-- [ ] Run affected workspace tests, typechecks, lint, builds, and the 53-template legal-witness verifier. Resolve failures before expanding checks further.
-- [ ] Obtain independent correctness/security and maintainability review, including comment review. Fix material findings and verify their observed behavior.
-- [ ] Audit the decision trail, reconcile the approved design with final behavior, inspect the diff, and preserve user changes.
-- [ ] Hand back the implementation and named reset procedure. Report actual tests and any remaining live-environment checks. No deployment, push, or live activation.
+- [x] Update `docs/wordle.md` and `docs/wordle-operations.md` with versioning, subset/yellow semantics, the verification script, inspection, explicit activation, old-writer cutover, and rollout limits.
+- [x] Run affected workspace tests, typechecks, lint, builds, and the 53-template legal-witness verifier. Resolve failures before expanding checks further.
+- [x] Obtain independent correctness/security and maintainability review, including comment review. Fix material findings and verify their observed behavior.
+- [x] Audit the decision trail, reconcile the approved design with final behavior, inspect the diff, and preserve user changes.
+- [x] Hand back the implementation and named reset procedure. Report actual tests and any remaining live-environment checks. No deployment, push, or live activation.
 
 Execution uses the already authorized feature scope. The parent owns contracts, migration foundation, and client integration. Independent writers may implement the domain and API seams in separate worktrees after the shared interfaces are committed. Their commits are reviewed and integrated sequentially. No further approval checkpoint is needed for reversible implementation.

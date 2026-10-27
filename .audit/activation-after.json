@@ -1,0 +1,17 @@
+{
+  "mode": "apply",
+  "currentVersion": 2,
+  "proposedVersion": 2,
+  "alreadyActive": true,
+  "activatedAt": 1793070896475,
+  "definitionsToArchive": 0,
+  "unlocksPreserved": 1,
+  "proposedDefinitions": 104,
+  "sessionsByVersion": [
+    {
+      "version": 1,
+      "count": 1
+    }
+  ],
+  "sessionBoundary": "Existing sessions keep their recorded version. Only new sessions accepted after activation enter the new collection."
+}

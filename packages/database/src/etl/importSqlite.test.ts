@@ -9,6 +9,7 @@ import {
   aiTraceEvents,
   pongTournamentEntries,
   users,
+  wordleAchievementVersions,
   wordleDays,
   wordleSessions,
   wordlistReview,
@@ -77,6 +78,7 @@ describe('importSqlite', () => {
     ]);
     const [session] = await testDb.db.select().from(wordleSessions);
     expect(session).toMatchObject({
+      achievement_version: 1,
       solved: true,
       attempts: 3,
       word_length: 5,
@@ -95,6 +97,26 @@ describe('importSqlite', () => {
       total_attempts: 3,
       created_at: 1000,
     });
+    expect(await testDb.db.select().from(wordleAchievementVersions)).toEqual([
+      { version: 1, active: true, activated_at: 0 },
+    ]);
+  });
+
+  test('refuses import after achievement activation even without user sessions', async () => {
+    const sqlite = await legacyDatabase();
+    sqlite.run("INSERT INTO users (id) VALUES ('legacy')");
+    sqlite.close();
+    await testDb.db.update(wordleAchievementVersions).set({ active: false });
+    await testDb.db
+      .insert(wordleAchievementVersions)
+      .values({ version: 2, active: true, activated_at: 1 });
+    await expect(importSqlite(sqlitePath, testDb.db)).rejects.toThrow(
+      /achievement activation data/,
+    );
+    expect(await testDb.db.select().from(users)).toEqual([]);
+    expect(
+      await testDb.db.select().from(wordleAchievementVersions),
+    ).toHaveLength(2);
   });
 
   test('keeps the review queue in SQLite insertion order', async () => {

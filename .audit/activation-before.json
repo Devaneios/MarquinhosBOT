@@ -1,0 +1,17 @@
+{
+  "mode": "inspection",
+  "currentVersion": 1,
+  "proposedVersion": 2,
+  "alreadyActive": false,
+  "activatedAt": null,
+  "definitionsToArchive": 1,
+  "unlocksPreserved": 1,
+  "proposedDefinitions": 104,
+  "sessionsByVersion": [
+    {
+      "version": 1,
+      "count": 1
+    }
+  ],
+  "sessionBoundary": "Existing sessions keep their recorded version. Only new sessions accepted after activation enter the new collection."
+}

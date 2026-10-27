@@ -1,0 +1,37 @@
+{
+  "testsByPackage": {
+    "@marquinhos/contracts": 19,
+    "@marquinhos/database": 30,
+    "@marquinhos/api-client": 3,
+    "@marquinhos/domain": 90,
+    "marquinhos-web-api": 1628,
+    "marquinhosbot": 227,
+    "marquinhos-activity-client": 272
+  },
+  "totalPassingTests": 2269,
+  "workspaceTests": "passed",
+  "workspaceTypecheck": "passed",
+  "workspaceLint": "passed with two existing empty-method warnings in wordleAdapter.ts",
+  "workspaceBuild": "passed",
+  "patternVerifier": {
+    "patterns": 53,
+    "witnesses": 106,
+    "yellow": 53
+  },
+  "independentReview": {
+    "correctness": "one deletion issue fixed and regression tested",
+    "maintainability": "no material findings"
+  },
+  "limitations": [
+    "Activity browser automation unavailable; DOM interaction tests and build passed",
+    "Live answer-pool availability unchecked",
+    "No live database activation or deployment"
+  ],
+  "commands": [
+    "TEST_DATABASE_URL=<disposable UTF8 PostgreSQL> pnpm run test",
+    "pnpm run typecheck",
+    "pnpm run lint",
+    "pnpm run build",
+    "bun apps/api/scripts/verifyWordlePatterns.ts"
+  ]
+}

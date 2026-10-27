@@ -1,0 +1,26 @@
+[
+  {
+    "shape": "T",
+    "guesses": ["terco", "aedes", "aeita"],
+    "template": ["GGG", ".G.", ".G."],
+    "answer": "termo",
+    "masks": ["GGG.G", ".G...", ".G..."],
+    "matcher": "exact green window in columns 1 through 3"
+  },
+  {
+    "shape": "A",
+    "guesses": ["aedes", "tarar", "terco", "tarau", "tarbá"],
+    "template": [".G.", "G.G", "GGG", "G.G", "G.G"],
+    "answer": "termo",
+    "masks": [".G...", "G.G..", "GGG.G", "G.G..", "G.G.."],
+    "matcher": "exact green window in columns 1 through 3"
+  },
+  {
+    "shape": "0",
+    "guesses": ["terco", "tarar", "tarau", "tarbá", "terei"],
+    "template": ["GGG", "G.G", "G.G", "G.G", "GGG"],
+    "answer": "termo",
+    "masks": ["GGG.G", "G.G..", "G.G..", "G.G..", "GGG.."],
+    "matcher": "exact green window in columns 1 through 3"
+  }
+]

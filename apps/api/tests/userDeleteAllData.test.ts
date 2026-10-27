@@ -1,10 +1,16 @@
 import { db } from '@marquinhos/database/client';
-import { afterAll, describe, expect, it } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { sql } from 'drizzle-orm';
 import { UserService } from 'services/user';
+import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
+import { installWordleAchievementCatalog } from './helpers/wordleAchievementCatalog';
 
 const USER = 'delete-me';
 const OTHER = 'keep-me';
+let restoreCatalog: (() => Promise<void>) | undefined;
+beforeAll(async () => {
+  restoreCatalog = await installWordleAchievementCatalog();
+});
 
 async function count(
   table: string,
@@ -31,6 +37,23 @@ async function seed(userId: string) {
     sql`INSERT INTO wordle_sessions (id, user_id, guild_id, word_date, created_at)
         VALUES (${`ws-${userId}`}, ${userId}, 'g', '2026-09-24', ${now})`,
   );
+  const evidence = {
+    patternId: 'tetromino_i',
+    color: 'present',
+    origin: [0, 0],
+    rotation: 0,
+    cells: [
+      [0, 0],
+      [0, 1],
+      [0, 2],
+      [0, 3],
+    ],
+    feedback: [['present', 'present', 'present', 'present', 'absent']],
+    date: '2026-09-24',
+  };
+  await db.execute(sql`INSERT INTO wordle_pattern_discoveries
+    (user_id, guild_id, version, pattern_id, session_id, discovered_at, evidence)
+    VALUES (${userId}, 'g', 2, 'tetromino_i', ${`ws-${userId}`}, ${now}, ${JSON.stringify(evidence)}::jsonb)`);
   await db.execute(
     sql`INSERT INTO ai_traces (trace_id, user_id, guild_id, channel_id, content, created_at)
         VALUES (${`trace-${userId}`}, ${userId}, 'g', 'c', 'what I asked', ${now})`,
@@ -56,6 +79,7 @@ afterAll(async () => {
   await db.execute(
     sql`DELETE FROM wordle_days WHERE guild_id = 'g' AND word_date = '2026-09-24'`,
   );
+  await restoreCatalog?.();
 });
 
 describe('UserService.deleteAllData', () => {
@@ -69,6 +93,7 @@ describe('UserService.deleteAllData', () => {
       ['users', 'id'],
       ['user_levels', 'user_id'],
       ['wordle_sessions', 'user_id'],
+      ['wordle_pattern_discoveries', 'user_id'],
       ['ai_traces', 'user_id'],
       ['ai_thread_sessions', 'owner_user_id'],
     ] as const) {
@@ -85,5 +110,11 @@ describe('UserService.deleteAllData', () => {
     expect(await count('ai_thread_items', 'thread_id', `thread-${OTHER}`)).toBe(
       1,
     );
+    const awards = await db.transaction((tx) =>
+      new WordleAchievementService().checkAndAward(USER, 'g', tx),
+    );
+    expect(awards.unlockedAchievements).toEqual([]);
+    expect(await count('user_achievements', 'user_id', USER)).toBe(0);
+    expect(await count('user_levels', 'user_id', USER)).toBe(0);
   });
 });
