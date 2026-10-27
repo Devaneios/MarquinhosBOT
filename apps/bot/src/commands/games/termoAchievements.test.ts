@@ -5,6 +5,7 @@ import { buildTermoAchievementsReply } from './termoAchievements';
 import { buildTermoActionRow, TERMO_BUTTON_IDS } from './termoResponse';
 
 const overview: WordleAchievementsOverview = {
+  achievementVersion: 1,
   achievements: [
     {
       id: 'wordle_first_win',
@@ -69,6 +70,132 @@ describe('buildTermoAchievementsReply', () => {
         } as never,
       ),
     ).rejects.toThrow('api down');
+  });
+
+  it('selects a drawing by name and renders its preview instead of the overview', async () => {
+    const reply = await buildTermoAchievementsReply(
+      { user: null },
+      'guild-1',
+      { id: 'user-1', displayName: 'Ana', avatarUrl: 'https://cdn/ana.png' },
+      {
+        getWordleAchievements: async () => ({
+          data: {
+            ...overview,
+            achievements: [
+              {
+                ...overview.achievements[0]!,
+                id: 'wordle_v2_letter_t',
+                name: 'Letra T',
+                unlockedAt: null,
+                patternPreview: {
+                  patternId: 'letter_t',
+                  mask: ['###', '.#.', '.#.'],
+                  colors: ['correct', 'present'],
+                  rotations: [0],
+                },
+              },
+            ],
+          },
+        }),
+      } as never,
+      'letra t',
+    );
+    expect(reply.embeds[0]!.toJSON().title).toContain('Letra T');
+    expect(reply.embeds[0]!.toJSON().description).not.toContain(
+      'desbloqueadas',
+    );
+    expect(reply.files).toHaveLength(1);
+    expect(
+      (await sharp(reply.files[0]!.attachment as Buffer).metadata()).width,
+    ).toBe(480);
+  });
+
+  it('returns selection guidance when the requested achievement is missing', async () => {
+    const reply = await buildTermoAchievementsReply(
+      { user: null },
+      'guild-1',
+      { id: 'user-1', displayName: 'Ana', avatarUrl: 'https://cdn/ana.png' },
+      { getWordleAchievements: async () => ({ data: overview }) } as never,
+      'missing',
+    );
+    expect(reply.embeds[0]!.toJSON().description).toContain('Nome ou ID');
+    expect(reply.files).toHaveLength(0);
+  });
+
+  it('selects an earned drawing by ID and includes its saved match', async () => {
+    const reply = await buildTermoAchievementsReply(
+      { user: null },
+      'guild-1',
+      { id: 'user-1', displayName: 'Ana', avatarUrl: 'https://cdn/ana.png' },
+      {
+        getWordleAchievements: async () => ({
+          data: {
+            ...overview,
+            achievements: [
+              {
+                ...overview.achievements[0]!,
+                matchEvidence: {
+                  patternId: 'tetromino_i',
+                  color: 'correct',
+                  origin: [0, 0],
+                  rotation: 0,
+                  cells: [
+                    [0, 0],
+                    [0, 1],
+                    [0, 2],
+                    [0, 3],
+                  ],
+                  feedback: [
+                    ['correct', 'correct', 'correct', 'correct', 'correct'],
+                  ],
+                  date: '2026-10-01',
+                },
+              },
+            ],
+          },
+        }),
+      } as never,
+      'wordle_first_win',
+    );
+    expect(
+      reply.embeds[0]!.toJSON().fields?.find(
+        (field) => field.name === 'Desenho encontrado',
+      )?.value,
+    ).toContain('2026-10-01');
+    expect(reply.files).toHaveLength(1);
+  });
+
+  it('does not attach a locked secret preview or reveal its name', async () => {
+    const reply = await buildTermoAchievementsReply(
+      { user: null },
+      'guild-1',
+      { id: 'user-1', displayName: 'Ana', avatarUrl: 'https://cdn/ana.png' },
+      {
+        getWordleAchievements: async () => ({
+          data: {
+            ...overview,
+            achievements: [
+              {
+                ...overview.achievements[0]!,
+                hidden: true,
+                unlockedAt: null,
+                patternPreview: {
+                  patternId: 'letter_t',
+                  mask: ['###', '.#.', '.#.'],
+                  colors: ['correct', 'present'],
+                  rotations: [0],
+                },
+              },
+            ],
+          },
+        }),
+      } as never,
+      'wordle_first_win',
+    );
+    expect(reply.files).toHaveLength(0);
+    expect(JSON.stringify(reply.embeds[0]!.toJSON())).not.toContain(
+      'Primeira palavra',
+    );
   });
 });
 

@@ -3,6 +3,7 @@ import sharp from 'sharp';
 import {
   buildCrosswordLayout,
   denseRanks,
+  termoAchievementDetailCard,
   termoAchievementsCard,
   termoCrosswordCard,
   termoKeyboardCard,
@@ -12,6 +13,7 @@ import {
   type DailyEntry,
   type LeaderboardPeriod,
   type RankedEntry,
+  type TermoAchievementDetailInput,
   type TermoAchievementsCardInput,
   type TermoSolvedStatus,
 } from '../compounds/termo';
@@ -92,7 +94,15 @@ export async function buildTermoLeaderboardImage(
   });
 }
 
-export type { TermoAchievementsCardInput };
+export type { TermoAchievementDetailInput, TermoAchievementsCardInput };
+
+export async function buildTermoAchievementDetailImage(
+  input: TermoAchievementDetailInput,
+  options?: { theme?: Theme },
+): Promise<Buffer> {
+  const theme = options?.theme ?? defaultTheme;
+  return render([termoAchievementDetailCard(input, theme)], { width: 480 });
+}
 
 export async function buildTermoAchievementsImage(
   input: TermoAchievementsCardInput,

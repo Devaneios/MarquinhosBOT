@@ -16,6 +16,16 @@ export const TERMO_FAMILY_LABELS: Record<string, string> = {
   timing: 'Horário',
   style: 'Estilo',
   comeback: 'Retorno',
+  letters: 'Letras',
+  digits: 'Dígitos',
+  tetrominoes: 'Tetraminós',
+  shapes: 'Formas',
+  collections: 'Coleções',
+  participation_streak: 'Constância',
+  calendar: 'Calendário',
+  feedback: 'Pistas',
+  variety: 'Variedade',
+  vocabulary: 'Vocabulário',
 };
 
 const RECENT_LIMIT = 5;
@@ -172,6 +182,67 @@ export function buildTermoAchievementsEmbed(
     });
   }
 
+  if (imageName !== undefined) embed.setImage(`attachment://${imageName}`);
+  embed.setFooter({
+    text: 'Use /termo-conquistas conquista:Nome ou ID para ver os detalhes.',
+  });
+  return embed;
+}
+
+export function buildTermoAchievementDetailEmbed(
+  client: BaseEmbedClient,
+  target: { displayName: string; avatarUrl: string },
+  achievement: WordleAchievementStatus,
+  imageName?: string,
+): EmbedBuilder {
+  const secret = achievement.hidden && achievement.unlockedAt === null;
+  const embed = baseEmbed(client)
+    .setTitle(
+      secret
+        ? '🔒 Conquista secreta'
+        : `${achievement.icon} ${achievement.name}`,
+    )
+    .setThumbnail(target.avatarUrl)
+    .setDescription(
+      secret
+        ? 'Continue jogando para descobrir esta conquista.'
+        : achievement.description,
+    );
+  if (secret) return embed;
+
+  embed.addFields({
+    name: `${familyLabel(achievement.family)} · +${achievement.rewardXp} XP`,
+    value:
+      achievement.unlockedAt === null
+        ? 'Ainda não desbloqueada.'
+        : `Desbloqueada por ${target.displayName} em <t:${unixSeconds(achievement.unlockedAt)}:d>.`,
+  });
+  if (achievement.progress !== null) {
+    const { current, target: goal } = achievement.progress;
+    embed.addFields({
+      name: 'Progresso',
+      value: `${textProgressBar(current, goal)} ${current}/${goal}`,
+    });
+  }
+  if (achievement.patternPreview !== undefined) {
+    embed.addFields({
+      name: 'Como desenhar',
+      value:
+        'Use verde ou amarelo, uma cor por desenho. Os pontos aceitam qualquer cor e células extras são permitidas. A linha da vitória também conta.',
+    });
+    if (achievement.patternPreview.rotations.length > 1) {
+      embed.addFields({
+        name: 'Orientação',
+        value: 'Pode girar o desenho. Espelhamentos não contam.',
+      });
+    }
+  }
+  if (achievement.unlockedAt !== null && achievement.matchEvidence) {
+    embed.addFields({
+      name: 'Desenho encontrado',
+      value: `Partida de ${achievement.matchEvidence.date}. As células contornadas formam o desenho.`,
+    });
+  }
   if (imageName !== undefined) embed.setImage(`attachment://${imageName}`);
   return embed;
 }

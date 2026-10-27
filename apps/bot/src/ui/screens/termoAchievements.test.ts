@@ -1,9 +1,11 @@
+import type { WordleAchievementStatus } from '@marquinhos/contracts/wordle';
 import { describe, expect, it } from 'bun:test';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import sharp from 'sharp';
 import { distributionBarWidth } from '../compounds/termo';
 import {
+  buildTermoAchievementDetailImage,
   buildTermoAchievementsImage,
   type TermoAchievementsCardInput,
 } from './termo';
@@ -79,5 +81,101 @@ describe('distributionBarWidth', () => {
     expect(distributionBarWidth(1, 27)).toBe(22);
     expect(distributionBarWidth(0, 0)).toBe(22);
     expect(distributionBarWidth(9, 27)).toBe(100);
+  });
+});
+
+const drawing: WordleAchievementStatus = {
+  id: 'wordle_v2_letter_t',
+  name: 'Letra T',
+  description: 'Desenhe a letra T.',
+  icon: '🎨',
+  rarity: 'common',
+  rewardXp: 25,
+  family: 'letters',
+  tier: 1,
+  hidden: false,
+  unlockedAt: null,
+  progress: null,
+  holdersPercent: null,
+  patternPreview: {
+    patternId: 'letter_t',
+    mask: ['###', '.#.', '.#.'],
+    colors: ['correct', 'present'],
+    rotations: [0],
+  },
+};
+
+async function pixelCount(buffer: Buffer, rgb: [number, number, number]) {
+  const { data, info } = await sharp(buffer)
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  let count = 0;
+  for (let offset = 0; offset < data.length; offset += info.channels) {
+    if (
+      data[offset] === rgb[0] &&
+      data[offset + 1] === rgb[1] &&
+      data[offset + 2] === rgb[2]
+    )
+      count += 1;
+  }
+  return count;
+}
+
+describe('buildTermoAchievementDetailImage', () => {
+  it('renders green and yellow previews with wildcard dots', async () => {
+    const buffer = await buildTermoAchievementDetailImage({
+      displayName: 'Ana',
+      achievement: drawing,
+    });
+    mkdirSync(OUT_DIR, { recursive: true });
+    writeFileSync(join(OUT_DIR, 'termo-achievement-preview.png'), buffer);
+    expect((await sharp(buffer).metadata()).width).toBe(480);
+    expect(await pixelCount(buffer, [88, 129, 87])).toBeGreaterThan(2000);
+    expect(await pixelCount(buffer, [192, 160, 84])).toBeGreaterThan(2000);
+  });
+
+  it('preserves saved feedback and outlines only the matching yellow cells', async () => {
+    const earned: WordleAchievementStatus = {
+      ...drawing,
+      unlockedAt: '2026-10-26T12:00:00.000Z',
+      matchEvidence: {
+        patternId: 'letter_t',
+        color: 'present',
+        origin: [0, 0],
+        rotation: 0,
+        cells: [
+          [0, 0],
+          [0, 1],
+          [0, 2],
+          [1, 1],
+          [2, 1],
+        ],
+        date: '2026-10-26',
+        feedback: [
+          ['present', 'present', 'present', 'absent', 'correct'],
+          ['absent', 'present', 'present', 'absent', 'correct'],
+          ['absent', 'present', 'absent', 'absent', 'correct'],
+          ['correct', 'correct', 'correct', 'correct', 'correct'],
+        ],
+      },
+    };
+    const buffer = await buildTermoAchievementDetailImage({
+      displayName: 'Ana',
+      achievement: earned,
+    });
+    writeFileSync(join(OUT_DIR, 'termo-achievement-evidence.png'), buffer);
+    const noHighlights = await buildTermoAchievementDetailImage({
+      displayName: 'Ana',
+      achievement: {
+        ...earned,
+        matchEvidence: { ...earned.matchEvidence!, cells: [] },
+      },
+    });
+    expect(await pixelCount(buffer, [232, 232, 232])).toBeGreaterThan(
+      (await pixelCount(noHighlights, [232, 232, 232])) + 100,
+    );
+    expect(await pixelCount(buffer, [192, 160, 84])).toBeGreaterThan(2000);
+    expect(await pixelCount(buffer, [88, 129, 87])).toBeGreaterThan(3000);
   });
 });

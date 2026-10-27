@@ -4,6 +4,7 @@ import type {
 } from '@marquinhos/contracts/wordle';
 import { describe, expect, it } from 'bun:test';
 import {
+  buildTermoAchievementDetailEmbed,
   buildTermoAchievementsEmbed,
   familyLabel,
   summarizeTermoAchievements,
@@ -142,12 +143,20 @@ describe('familyLabel', () => {
     expect(familyLabel('speed')).toBe('Velocidade');
     expect(familyLabel('novidade')).toBe('novidade');
   });
+  it('labels drawing families in Portuguese', () => {
+    expect(
+      ['letters', 'digits', 'tetrominoes', 'shapes', 'collections'].map(
+        familyLabel,
+      ),
+    ).toEqual(['Letras', 'Dígitos', 'Tetraminós', 'Formas', 'Coleções']);
+  });
 });
 
 describe('buildTermoAchievementsEmbed', () => {
   const client = { user: { displayAvatarURL: () => 'https://bot/avatar.png' } };
   const target = { displayName: 'Ana', avatarUrl: 'https://cdn/ana.png' };
   const overview: WordleAchievementsOverview = {
+    achievementVersion: 1,
     achievements,
     stats: {
       played: 12,
@@ -199,5 +208,48 @@ describe('buildTermoAchievementsEmbed', () => {
     }).toJSON();
     expect(json.fields?.[0]?.value).toContain('/termo');
     expect(json.fields?.some((f) => f.name === 'Próximas metas')).toBe(false);
+  });
+});
+
+describe('buildTermoAchievementDetailEmbed', () => {
+  const client = { user: null };
+  const target = { displayName: 'Ana', avatarUrl: 'https://cdn/ana.png' };
+  const drawing = status({
+    id: 'wordle_v2_letter_t',
+    name: 'Letra T',
+    family: 'letters',
+    description: 'Desenhe a letra T.',
+    patternPreview: {
+      patternId: 'letter_t',
+      mask: ['###', '.#.', '.#.'],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
+  });
+
+  it('explains both colors, wildcard cells, and the winning row', () => {
+    const json = buildTermoAchievementDetailEmbed(
+      client,
+      target,
+      drawing,
+      'detail.png',
+    ).toJSON();
+    expect(json.title).toContain('Letra T');
+    expect(json.description).toContain('Desenhe a letra T.');
+    const text = JSON.stringify(json);
+    expect(text).toContain('verde ou amarelo');
+    expect(text).toContain('células extras');
+    expect(text).toContain('linha da vitória');
+    expect(json.image?.url).toBe('attachment://detail.png');
+  });
+
+  it('keeps hidden locked metadata private', () => {
+    const json = buildTermoAchievementDetailEmbed(client, target, {
+      ...drawing,
+      hidden: true,
+    }).toJSON();
+    expect(JSON.stringify(json)).not.toContain('Letra T');
+    expect(JSON.stringify(json)).not.toContain('Desenhe');
+    expect(json.title).toContain('Conquista secreta');
   });
 });

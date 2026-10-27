@@ -1,4 +1,8 @@
-import type { WordlePlayerStats } from '@marquinhos/contracts/wordle';
+import type {
+  LetterFeedback,
+  WordleAchievementStatus,
+  WordlePlayerStats,
+} from '@marquinhos/contracts/wordle';
 import { Box, Column, Row, Style, Text } from '@meonode/canvas';
 import { card, labelText, progressBar } from '../../primitives';
 import { defaultTheme, type Theme } from '../../theme';
@@ -23,7 +27,7 @@ const DISTRIBUTION_LABELS = ['1', '2', '3', '4', '5', '6', '7+'];
 const DISTRIBUTION_BAR_MAX = 300;
 const DISTRIBUTION_BAR_MIN = 22;
 const FAMILY_BAR_WIDTH = 230;
-const ROW_LABEL_WIDTH = 96;
+const ROW_LABEL_WIDTH = 140;
 
 function truncate(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
@@ -220,4 +224,113 @@ export function termoAchievementsCard(
     ],
     theme,
   );
+}
+
+export type TermoAchievementDetailInput = {
+  displayName: string;
+  achievement: WordleAchievementStatus;
+};
+
+function drawingGrid(
+  rows: (LetterFeedback | null)[][],
+  matchedCells: readonly [number, number][],
+  theme: Theme,
+): CanvasNode {
+  const matched = new Set(matchedCells.map(([row, col]) => `${row},${col}`));
+  return Column({
+    gap: 4,
+    children: rows.map((row, rowIndex) =>
+      Row({
+        gap: 4,
+        children: row.map((feedback, colIndex) =>
+          Box({
+            width: 28,
+            height: 28,
+            backgroundColor:
+              feedback === null ? theme.colors.card : theme.colors[feedback].bg,
+            borderRadius: theme.radii.sm,
+            border: matched.has(`${rowIndex},${colIndex}`) ? 2 : 0,
+            borderColor: theme.colors.textPrimary,
+            justifyContent: Style.Justify.Center,
+            alignItems: Style.Align.Center,
+            children:
+              feedback === null
+                ? [
+                    Text('·', {
+                      color: theme.colors.textMuted,
+                      fontSize: theme.fontSizes.xl,
+                      fontFamily: theme.fontFamilies.body,
+                    }),
+                  ]
+                : [],
+          }),
+        ),
+      }),
+    ),
+  });
+}
+
+export function termoAchievementDetailCard(
+  input: TermoAchievementDetailInput,
+  theme: Theme = defaultTheme,
+): CanvasNode {
+  const { achievement } = input;
+  const children: CanvasNode[] = [
+    sectionLabel('CONQUISTA', theme),
+    Text(achievement.name, {
+      fontFamily: theme.fontFamilies.heading,
+      fontWeight: 'bold',
+      fontSize: theme.fontSizes.xl,
+      color: theme.colors.textPrimary,
+    }),
+    Text(truncate(input.displayName, 36), {
+      fontFamily: theme.fontFamilies.body,
+      fontSize: theme.fontSizes.md,
+      color: theme.colors.textMuted,
+    }),
+  ];
+  const evidence =
+    achievement.unlockedAt === null
+      ? null
+      : (achievement.matchEvidence ?? null);
+  if (evidence !== null) {
+    children.push(
+      sectionLabel(`DESCOBERTO EM ${evidence.date}`, theme),
+      drawingGrid(evidence.feedback, evidence.cells, theme),
+      Text('O contorno marca as células do desenho.', {
+        fontFamily: theme.fontFamilies.body,
+        fontSize: theme.fontSizes.md,
+        color: theme.colors.textMuted,
+      }),
+    );
+  } else if (achievement.patternPreview !== undefined) {
+    const preview = achievement.patternPreview;
+    children.push(
+      sectionLabel('DESENHE EM UMA DAS CORES', theme),
+      Row({
+        gap: theme.spacing.lg,
+        children: preview.colors.map((color) =>
+          Column({
+            gap: theme.spacing.sm,
+            children: [
+              labelText(color === 'correct' ? 'VERDE' : 'AMARELO', {}, theme),
+              drawingGrid(
+                preview.mask.map((row) =>
+                  [...row].map((cell) => (cell === '#' ? color : null)),
+                ),
+                [],
+                theme,
+              ),
+            ],
+          }),
+        ),
+      }),
+      Text('Os pontos aceitam qualquer cor. Células extras são permitidas.', {
+        fontFamily: theme.fontFamilies.body,
+        fontSize: theme.fontSizes.md,
+        color: theme.colors.textMuted,
+      }),
+    );
+  }
+  return card(children, theme);
 }
