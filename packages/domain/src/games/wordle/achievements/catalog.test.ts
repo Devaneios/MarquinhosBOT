@@ -1,80 +1,117 @@
 import { achievementRaritySchema } from '@marquinhos/contracts/http/routes/gamification';
+import { wordlePatternPreviewSchema } from '@marquinhos/contracts/wordle';
 import { describe, expect, it } from 'bun:test';
-import { WORDLE_ACHIEVEMENT_CATALOG } from './catalog';
+import {
+  WORDLE_ACHIEVEMENT_CATALOG,
+  WORDLE_ACHIEVEMENT_VERSION,
+} from './catalog';
+import { LEGACY_WORDLE_ACHIEVEMENT_CATALOG } from './legacyCatalog';
+import { WORDLE_PATTERN_CATALOG } from './patterns';
 import {
   WORDLE_ACHIEVEMENT_FAMILIES,
   wordleAchievementRuleSchema,
 } from './rules';
 
-const PHASE_ONE_IDS = [
-  'wordle_first_win',
-  'wordle_wins_10',
-  'wordle_wins_50',
-  'wordle_streak_3',
-  'wordle_streak_7',
-  'wordle_streak_30',
-  'wordle_solved_in_1',
-  'wordle_solved_in_2',
-  'wordle_played_10',
-];
-
-describe('WORDLE_ACHIEVEMENT_CATALOG', () => {
-  it('has unique ids prefixed with wordle_', () => {
+describe('version 2 catalog', () => {
+  it('uses entirely fresh unique identities and preserves legacy definitions separately', () => {
+    expect(WORDLE_ACHIEVEMENT_VERSION).toBe(2);
     const ids = WORDLE_ACHIEVEMENT_CATALOG.map((d) => d.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids.every((id) => id.startsWith('wordle_'))).toBe(true);
+    expect(ids.every((id) => id.startsWith('wordle_v2_'))).toBe(true);
+    expect(
+      ids.every(
+        (id) => !LEGACY_WORDLE_ACHIEVEMENT_CATALOG.some((old) => old.id === id),
+      ),
+    ).toBe(true);
+    expect(
+      LEGACY_WORDLE_ACHIEVEMENT_CATALOG.some(
+        (old) => old.id === 'wordle_first_win',
+      ),
+    ).toBe(true);
   });
-
-  it('keeps every phase-one id so existing unlocks stay valid', () => {
-    const ids = new Set(WORDLE_ACHIEVEMENT_CATALOG.map((d) => d.id));
-    for (const id of PHASE_ONE_IDS) expect(ids.has(id)).toBe(true);
+  it('publishes every drawing with a validated preview and no hidden drawings', () => {
+    const patterns = WORDLE_ACHIEVEMENT_CATALOG.filter(
+      (d) => d.rule.kind === 'pattern',
+    );
+    expect(patterns).toHaveLength(53);
+    expect(
+      patterns.map((d) => d.rule.kind === 'pattern' && d.rule.patternId),
+    ).toEqual(WORDLE_PATTERN_CATALOG.map((p) => p.id));
+    for (const definition of patterns) {
+      expect(definition.hidden).toBe(false);
+      expect(
+        wordlePatternPreviewSchema.safeParse(definition.patternPreview).success,
+      ).toBe(true);
+    }
+    const i = patterns.find((d) => d.id === 'wordle_v2_pattern_tetromino_i');
+    expect(i?.rarity).toBe('common');
+    expect(i?.rewardXp).toBe(25);
   });
-
-  it('stores only rules the schema accepts', () => {
-    for (const definition of WORDLE_ACHIEVEMENT_CATALOG) {
-      expect(wordleAchievementRuleSchema.parse(definition.rule)).toEqual(
-        definition.rule,
+  it('uses schemas, Portuguese text, known families and fixed launch rewards', () => {
+    for (const d of WORDLE_ACHIEVEMENT_CATALOG) {
+      expect(wordleAchievementRuleSchema.safeParse(d.rule).success).toBe(true);
+      expect(WORDLE_ACHIEVEMENT_FAMILIES).toContain(d.family);
+      expect(achievementRaritySchema.safeParse(d.rarity).success).toBe(true);
+      expect(d.name.length).toBeGreaterThan(0);
+      expect(d.description.length).toBeGreaterThan(0);
+      expect(d.rewardXp).toBe(
+        d.id === 'wordle_v2_letters_all' ||
+          (d.rule.kind === 'wins' && d.rule.count === 365) ||
+          (d.rule.kind === 'played' && d.rule.days === 365)
+          ? 750
+          : { common: 25, rare: 75, epic: 150, legendary: 300 }[d.rarity],
       );
     }
   });
-
-  it('uses known families and rarities with positive rewards and text', () => {
-    for (const d of WORDLE_ACHIEVEMENT_CATALOG) {
-      expect(WORDLE_ACHIEVEMENT_FAMILIES).toContain(d.family);
-      expect(achievementRaritySchema.parse(d.rarity)).toBe(d.rarity);
-      expect(d.rewardXp).toBeGreaterThan(0);
-      expect(d.name.length).toBeGreaterThan(0);
-      expect(d.description.length).toBeGreaterThan(0);
-      expect(d.icon.length).toBeGreaterThan(0);
-    }
+  it('covers the seven family collections and exact milestone targets', () => {
+    expect(
+      WORDLE_ACHIEVEMENT_CATALOG.filter(
+        (d) => d.rule.kind === 'pattern_collection',
+      ).map((d) => d.rule),
+    ).toEqual([
+      { kind: 'pattern_collection', family: 'letter', count: 5 },
+      { kind: 'pattern_collection', family: 'letter', count: 26 },
+      { kind: 'pattern_collection', family: 'digit', count: 5 },
+      { kind: 'pattern_collection', family: 'digit', count: 10 },
+      { kind: 'pattern_collection', family: 'tetromino', count: 7 },
+      { kind: 'pattern_collection', family: 'shape', count: 5 },
+      { kind: 'pattern_collection', family: 'shape', count: 10 },
+    ]);
+    expect(
+      WORDLE_ACHIEVEMENT_CATALOG.flatMap((d) =>
+        d.rule.kind === 'wins' ? [d.rule.count] : [],
+      ),
+    ).toEqual([1, 10, 50, 100, 365]);
+    expect(
+      WORDLE_ACHIEVEMENT_CATALOG.flatMap((d) =>
+        d.rule.kind === 'played' ? [d.rule.days] : [],
+      ),
+    ).toEqual([1, 7, 30, 100, 365]);
+    expect(
+      WORDLE_ACHIEVEMENT_CATALOG.flatMap((d) =>
+        d.rule.kind === 'streak' ? [d.rule.days] : [],
+      ),
+    ).toEqual([3, 7, 14, 30, 100]);
   });
-
-  it('numbers tiers 1..n without gaps inside every family', () => {
-    for (const family of WORDLE_ACHIEVEMENT_FAMILIES) {
-      const tiers = WORDLE_ACHIEVEMENT_CATALOG.filter(
-        (d) => d.family === family,
-      )
-        .map((d) => d.tier)
-        .sort((a, b) => a - b);
-      expect(tiers.length).toBeGreaterThan(0);
-      expect(tiers).toEqual(tiers.map((_, i) => i + 1));
-    }
-  });
-
-  it('never rewards a harder counter tier with less XP', () => {
-    for (const family of ['wins', 'streak', 'played'] as const) {
-      const rewards = WORDLE_ACHIEVEMENT_CATALOG.filter(
-        (d) => d.family === family,
-      )
-        .sort((a, b) => a.tier - b.tier)
-        .map((d) => d.rewardXp);
-      expect(rewards).toEqual([...rewards].sort((a, b) => a - b));
-    }
-  });
-
-  it('keeps a mix of visible and secret achievements', () => {
+  it('keeps hidden conditions out of their opaque identifiers', () => {
     const hidden = WORDLE_ACHIEVEMENT_CATALOG.filter((d) => d.hidden);
     expect(hidden.length).toBeGreaterThan(0);
-    expect(hidden.length).toBeLessThan(WORDLE_ACHIEVEMENT_CATALOG.length / 2);
+    expect(
+      hidden.every((d) => /^wordle_v2_secret_[0-9a-f]{8}$/.test(d.id)),
+    ).toBe(true);
+  });
+  it('never reduces XP across harder numerical tiers', () => {
+    for (const kind of [
+      'wins',
+      'played',
+      'streak',
+      'solved_after',
+      'fast_solve',
+    ] as const) {
+      const rewards = WORDLE_ACHIEVEMENT_CATALOG.filter(
+        (d) => d.rule.kind === kind,
+      ).map((d) => d.rewardXp);
+      expect(rewards).toEqual([...rewards].sort((a, b) => a - b));
+    }
   });
 });

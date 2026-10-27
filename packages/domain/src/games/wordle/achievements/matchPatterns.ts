@@ -27,7 +27,11 @@ export function parseAchievementMatrix(
     if (
       !result.success ||
       result.data.length !== attempts ||
-      result.data.some((row) => row.feedback.length !== expectedWidth)
+      result.data.some(
+        (row) =>
+          row.feedback.length !== expectedWidth ||
+          row.guess.length !== expectedWidth,
+      )
     )
       return null;
     return result.data.map((row) => row.feedback);

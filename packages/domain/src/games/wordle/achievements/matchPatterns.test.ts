@@ -34,6 +34,65 @@ describe('pattern matching', () => {
       WORDLE_PATTERN_CATALOG.filter((p) => p.family === 'digit'),
     ).toHaveLength(10);
   });
+  it('matches every silhouette at both board edges and loses it when any required cell is removed', () => {
+    for (const template of WORDLE_PATTERN_CATALOG) {
+      for (const color of ['correct', 'present'] as const) {
+        const exact = template.mask.map((row) =>
+          [...row].map((cell) => (cell === '#' ? color : 'absent')),
+        );
+        for (const width of [5, 6]) {
+          for (const column of [0, width - (template.mask[0]?.length ?? 0)]) {
+            const board: LetterFeedback[][] = [
+              Array<LetterFeedback>(width).fill('absent'),
+              ...exact.map((row) => [
+                ...Array<LetterFeedback>(column).fill('absent'),
+                ...row,
+                ...Array<LetterFeedback>(width - column - row.length).fill(
+                  'absent',
+                ),
+              ]),
+            ];
+            const match = matchWordlePatterns(board, [template])[0];
+            expect(match?.origin).toEqual([1, column]);
+            expect(match?.color).toBe(color);
+          }
+        }
+        const required = template.mask.flatMap((row, r) =>
+          [...row].flatMap((cell, c) =>
+            cell === '#' ? [[r, c] as const] : [],
+          ),
+        );
+        for (const [row, column] of required) {
+          const incomplete = exact.map((row) => [...row]);
+          const changed = incomplete[row];
+          if (!changed) throw new Error('missing required row');
+          changed[column] = 'absent';
+          expect(matchWordlePatterns(incomplete, [template])).toEqual([]);
+        }
+      }
+    }
+  });
+  it('orders origins before color and honors each declared transform order', () => {
+    expect(matchWordlePatterns(matrix('pppccc', 'apaccc'), [t])[0]?.color).toBe(
+      'present',
+    );
+    expect(
+      matchWordlePatterns(matrix('ccc', 'ccc', 'ccc'), [
+        { ...t, rotations: [90, 0] },
+      ])[0]?.rotation,
+    ).toBe(90);
+  });
+  it('does not reflect S into Z', () => {
+    const s = WORDLE_PATTERN_CATALOG.find(
+      (pattern) => pattern.id === 'tetromino_s',
+    );
+    const z = WORDLE_PATTERN_CATALOG.find(
+      (pattern) => pattern.id === 'tetromino_z',
+    );
+    if (!s || !z) throw new Error('missing tetromino');
+    expect(matchWordlePatterns(matrix('acc', 'cca'), [s])).toHaveLength(1);
+    expect(matchWordlePatterns(matrix('acc', 'cca'), [z])).toHaveLength(0);
+  });
   it('matches dense subsets and chooses the first origin and declared rotation', () => {
     expect(matchWordlePatterns(matrix('ccccc', 'ccccc'), [t])).toEqual([
       {
@@ -117,6 +176,20 @@ describe('parseAchievementMatrix', () => {
       },
     ];
     expect(parseAchievementMatrix(JSON.stringify(rows), 5, 3)).toBeNull();
+  });
+  it('rejects a guess whose length disagrees with its feedback width', () => {
+    expect(
+      parseAchievementMatrix(
+        JSON.stringify([
+          {
+            guess: 'four',
+            feedback: ['correct', 'present', 'absent', 'absent', 'absent'],
+          },
+        ]),
+        5,
+        1,
+      ),
+    ).toBeNull();
   });
   it('rejects malformed JSON, unknown width, mismatched counters and row widths', () => {
     for (const [json, width, attempts] of [

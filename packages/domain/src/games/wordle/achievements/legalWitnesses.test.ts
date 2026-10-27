@@ -25,6 +25,11 @@ describe('legal source-bank witnesses', () => {
             .every((row) => row.some((cell) => cell !== 'correct')),
         ).toBe(true);
         expect(
+          matchWordlePatterns(feedback).find(
+            (match) => match.patternId === pattern.id,
+          )?.color,
+        ).toBe(color);
+        expect(
           matchWordlePatterns(feedback, [
             { ...pattern, colors: [color], rotations: [0] },
           ])[0]?.color,

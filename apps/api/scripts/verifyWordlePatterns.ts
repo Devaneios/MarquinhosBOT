@@ -7,6 +7,7 @@ import { computeFeedback } from '@marquinhos/domain/games/wordle/feedback';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { format } from 'prettier';
 import { z } from 'zod';
 
 const root = new URL('../', import.meta.url);
@@ -199,9 +200,9 @@ function verify(witnesses: Witness[]) {
         });
       }
     }
-    const match = matchWordlePatterns(matrix, [
-      { ...pattern, colors: [witness.color], rotations: [0] },
-    ])[0];
+    const match = matchWordlePatterns(matrix).find(
+      (found) => found.patternId === pattern.id,
+    );
     if (
       !match ||
       match.color !== witness.color ||
@@ -235,7 +236,10 @@ if (import.meta.main) {
   if (process.argv.includes('--search')) {
     const witnesses = search();
     verify(witnesses);
-    writeFileSync(fixturePath, `${JSON.stringify(witnesses, null, 2)}\n`);
+    writeFileSync(
+      fixturePath,
+      await format(JSON.stringify(witnesses), { parser: 'json' }),
+    );
   } else {
     verify(
       z

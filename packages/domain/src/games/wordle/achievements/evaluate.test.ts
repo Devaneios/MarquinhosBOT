@@ -5,6 +5,7 @@ import {
   evaluateWordleAchievements,
   evaluateWordleRule,
 } from './evaluate';
+import { LEGACY_WORDLE_ACHIEVEMENT_CATALOG } from './legacyCatalog';
 import type { WordleAchievementRule } from './rules';
 import type { WordleDayRecord } from './stats';
 import { epoch, failedDay, rows, solvedDay, solvedStreak } from './testing';
@@ -303,6 +304,23 @@ describe('evaluateWordleRule', () => {
 });
 
 describe('evaluateWordleAchievements', () => {
+  it('still renders the explicitly selected legacy catalog with its lifetime streak progress', () => {
+    const result = evaluateWordleAchievements(
+      [],
+      { today: TODAY, persistedBestStreak: 7 },
+      LEGACY_WORDLE_ACHIEVEMENT_CATALOG,
+    );
+    expect(result.map((r) => r.id)).toEqual(
+      LEGACY_WORDLE_ACHIEVEMENT_CATALOG.map((d) => d.id),
+    );
+    expect(result.find((r) => r.id === 'wordle_streak_7')?.met).toBe(true);
+    expect(
+      evaluateWordleAchievements([], {
+        today: TODAY,
+        persistedBestStreak: 7,
+      }).some((r) => r.met),
+    ).toBe(false);
+  });
   it('evaluates every catalog entry in catalog order', () => {
     const result = evaluateWordleAchievements([], { today: TODAY });
     expect(result.map((r) => r.id)).toEqual(
@@ -324,11 +342,11 @@ describe('evaluateWordleAchievements', () => {
       { today: TODAY },
     );
     expect(result.filter((r) => r.met).map((r) => r.id)).toEqual([
-      'wordle_first_win',
-      'wordle_solved_in_2',
-      'wordle_solved_in_1',
-      'wordle_first_solver_1',
-      'wordle_early_bird',
+      'wordle_v2_wins_1',
+      'wordle_v2_played_1',
+      'wordle_v2_solved_exactly_1',
+      'wordle_v2_morning',
+      'wordle_v2_first_solver_1',
     ]);
   });
 });
