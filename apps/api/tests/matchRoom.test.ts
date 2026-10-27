@@ -2346,6 +2346,7 @@ describe('MatchRoom', () => {
       const initMessages = [await nextMessage(spectator, 'init')];
       expect(initMessages[0]).toEqual({
         wordLength: expect.any(Number),
+        achievementVersion: expect.any(Number),
         guesses: [],
         solved: false,
         attempts: 0,

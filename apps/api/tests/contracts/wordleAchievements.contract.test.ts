@@ -12,13 +12,19 @@ import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
 import wordleRouter from '../../src/routes/wordle.route';
 import { startContractServer } from '../helpers/contractServer';
+import {
+  achievementId,
+  installWordleAchievementCatalog,
+} from '../helpers/wordleAchievementCatalog';
 
 let server: Awaited<ReturnType<typeof startContractServer>>;
 let omitAuth = false;
+let restoreCatalog: (() => Promise<void>) | undefined;
 const guildId = randomUUID();
 const userId = randomUUID();
 
 beforeAll(async () => {
+  restoreCatalog = await installWordleAchievementCatalog();
   server = await startContractServer((app) =>
     app.use('/api/wordle', wordleRouter),
   );
@@ -43,17 +49,22 @@ beforeAll(async () => {
     word_date: '2026-01-01',
     solved: true,
     attempts: 2,
+    achievement_version: 2,
     created_at: 0,
   });
 });
 
-afterAll(() => server.close());
+afterAll(async () => {
+  await server.close();
+  await restoreCatalog?.();
+});
 
 describe('Wordle achievement overview contract', () => {
   it('serves scoped stats and progress without awarding on GET', async () => {
     const response = await callContract(server.http, getAchievements, {
       params: { guildId, userId },
     });
+    expect(response.data.achievementVersion).toBe(2);
     expect(response.data.stats).toMatchObject({
       played: 1,
       wins: 1,
@@ -63,8 +74,11 @@ describe('Wordle achievement overview contract', () => {
       WORDLE_ACHIEVEMENT_CATALOG.length,
     );
     expect(
-      response.data.achievements.find((a) => a.id === 'wordle_wins_10')
-        ?.progress,
+      response.data.achievements.find(
+        (a) =>
+          a.id ===
+          achievementId((rule) => rule.kind === 'wins' && rule.count === 10),
+      )?.progress,
     ).toEqual({ current: 1, target: 10 });
     expect(
       response.data.achievements

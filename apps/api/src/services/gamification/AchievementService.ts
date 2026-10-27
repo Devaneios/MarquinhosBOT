@@ -9,10 +9,14 @@ import {
   userLevels,
   userStats,
 } from '@marquinhos/database/schema';
-import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
-import { and, asc, count, desc, eq, isNull, ne, sql } from 'drizzle-orm';
+import { WORDLE_ACHIEVEMENT_VERSION } from '@marquinhos/domain/games/wordle/achievements/catalog';
+import { and, asc, count, desc, eq, isNull, ne } from 'drizzle-orm';
 import { LevelingService } from 'services/gamification/LevelingService';
 import type { Achievement, UserAchievement } from 'services/gamification/types';
+import {
+  getActiveWordleAchievementVersion,
+  syncCompatibleWordleCatalog,
+} from 'services/wordle/WordleAchievementVersionService';
 
 const DEFAULT_ACHIEVEMENTS = [
   {
@@ -101,34 +105,7 @@ export class AchievementService {
         )
         .onConflictDoNothing();
     }
-    // Wordle rows mirror WORDLE_ACHIEVEMENT_CATALOG, which is authoritative
-    // (unlock payloads read rewardXp from it): DB edits are overwritten here.
-    await db
-      .insert(achievements)
-      .values(
-        WORDLE_ACHIEVEMENT_CATALOG.map((definition) => ({
-          id: definition.id,
-          name: definition.name,
-          description: definition.description,
-          category: 'wordle',
-          rarity: definition.rarity,
-          icon: definition.icon,
-          condition: JSON.stringify(definition.rule),
-          reward_xp: definition.rewardXp,
-        })),
-      )
-      .onConflictDoUpdate({
-        target: achievements.id,
-        set: {
-          name: sql`excluded.name`,
-          description: sql`excluded.description`,
-          category: sql`excluded.category`,
-          rarity: sql`excluded.rarity`,
-          icon: sql`excluded.icon`,
-          condition: sql`excluded.condition`,
-          reward_xp: sql`excluded.reward_xp`,
-        },
-      });
+    await db.transaction((tx) => syncCompatibleWordleCatalog(tx));
   }
 
   async checkAndAwardAchievements(
@@ -176,6 +153,7 @@ export class AchievementService {
         and(
           isNull(userAchievements.achievement_id),
           ne(achievements.category, 'wordle'),
+          isNull(achievements.archived_at),
         ),
       )) as Achievement[];
 
@@ -232,14 +210,25 @@ export class AchievementService {
     achievementId: string,
     exec: DbExecutor = db,
   ): Promise<boolean> {
-    await this.levelingService.ensureUser(userId, guildId, exec);
-
     const [achievement] = await exec
       .select()
       .from(achievements)
-      .where(eq(achievements.id, achievementId));
+      .where(
+        and(
+          eq(achievements.id, achievementId),
+          isNull(achievements.archived_at),
+        ),
+      );
 
     if (!achievement) return false;
+    if (
+      achievement.category === 'wordle' &&
+      (achievement.wordle_version !== WORDLE_ACHIEVEMENT_VERSION ||
+        achievement.wordle_version !==
+          (await getActiveWordleAchievementVersion(exec, 'share')))
+    )
+      return false;
+    await this.levelingService.ensureUser(userId, guildId, exec);
 
     // The primary key decides the race: only the insert that lands awards XP.
     const inserted = await exec
@@ -295,6 +284,7 @@ export class AchievementService {
         and(
           eq(userAchievements.user_id, userId),
           eq(userAchievements.guild_id, guildId),
+          isNull(achievements.archived_at),
         ),
       )
       .orderBy(desc(userAchievements.unlocked_at))) as UserAchievement[];
@@ -304,6 +294,7 @@ export class AchievementService {
     return (await db
       .select()
       .from(achievements)
+      .where(isNull(achievements.archived_at))
       .orderBy(
         asc(achievements.rarity),
         asc(achievements.id),

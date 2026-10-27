@@ -1,90 +1,33 @@
 import { db } from '@marquinhos/database/client';
 import {
   achievements,
-  userAchievements,
-  userLevels,
   wordleDays,
   wordleSessions,
   wordleStreaks,
 } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { afterAll, beforeAll, describe, expect, it, spyOn } from 'bun:test';
-import { randomUUID } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { AchievementService } from 'services/gamification/AchievementService';
 import { LevelingService } from 'services/gamification/LevelingService';
 import { WordleService } from 'services/wordle';
 import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
-import { installWordleAchievementCatalog } from './helpers/wordleAchievementCatalog';
+import { getRecifeDate } from 'services/wordle/wordleDate';
+import {
+  achievementId,
+  achievementXp,
+  dateAt,
+  earnedAchievements,
+  identity,
+  installWordleAchievementCatalog,
+  seedAchievementDay,
+  seedAchievementDays,
+} from './helpers/wordleAchievementCatalog';
 
 const awards = new WordleAchievementService();
 const defaults = new AchievementService(new LevelingService());
-async function award(
-  ...args: Parameters<WordleAchievementService['checkAndAward']>
-) {
-  return (await awards.checkAndAward(...args)).unlockedAchievements;
-}
-const identity = () => ({ userId: randomUUID(), guildId: randomUUID() });
-
-function dateAt(day: number): string {
-  return new Date(Date.UTC(2025, 0, day)).toISOString().slice(0, 10);
-}
-
-async function seedDays(
-  userId: string,
-  guildId: string,
-  days: number,
-  solved: boolean,
-  attempts = 3,
-) {
-  const sessions = Array.from({ length: days }, (_, index) => ({
-    id: randomUUID(),
-    user_id: userId,
-    guild_id: guildId,
-    word_date: dateAt(index + 1),
-    guesses: '[]',
-    solved,
-    attempts,
-    created_at: 0,
-  }));
-  await db
-    .insert(wordleDays)
-    .values(
-      sessions.map(({ guild_id, word_date }) => ({
-        guild_id,
-        word_date,
-        word: null,
-        word_length: 5,
-        is_legacy: true,
-        created_at: 0,
-      })),
-    )
-    .onConflictDoNothing();
-  await db.insert(wordleSessions).values(sessions);
-}
-
-async function earned(userId: string, guildId: string) {
-  return db
-    .select()
-    .from(userAchievements)
-    .where(
-      and(
-        eq(userAchievements.user_id, userId),
-        eq(userAchievements.guild_id, guildId),
-      ),
-    );
-}
-
-async function xp(userId: string, guildId: string) {
-  const [row] = await db
-    .select()
-    .from(userLevels)
-    .where(
-      and(eq(userLevels.user_id, userId), eq(userLevels.guild_id, guildId)),
-    );
-  return row?.total_xp ?? 0;
-}
-
+const award = (userId: string, guildId: string) =>
+  db.transaction((tx) => awards.checkAndAward(userId, guildId, tx));
 let restoreCatalog: (() => Promise<void>) | undefined;
 beforeAll(async () => {
   restoreCatalog = await installWordleAchievementCatalog();
@@ -93,39 +36,27 @@ afterAll(async () => {
   await restoreCatalog?.();
 });
 
-describe('daily Wordle achievements', () => {
-  it('tops up defaults and upgrades canonical Wordle definitions', async () => {
+describe('daily Wordle v2 achievements', () => {
+  it('synchronizes only the compatible catalog and preserves operator-owned generic defaults', async () => {
+    const definition = WORDLE_ACHIEVEMENT_CATALOG[0]!;
     await db
       .update(achievements)
-      .set({ name: 'Nome personalizado' })
-      .where(eq(achievements.id, 'wordle_wins_50'));
-    await db
-      .delete(achievements)
-      .where(eq(achievements.id, 'wordle_played_10'));
-    try {
-      await defaults.initializeDefaults();
-      const catalog = await awards.getAchievements('fresh', 'fresh');
-      expect(catalog).toHaveLength(WORDLE_ACHIEVEMENT_CATALOG.length);
-      expect(catalog.find((a) => a.id === 'wordle_wins_50')?.name).toBe(
-        'Cinquenta palavras',
-      );
-      expect(catalog.every((a) => a.unlockedAt === null)).toBe(true);
-      expect(await xp('fresh', 'fresh')).toBe(0);
-    } finally {
-      await db
-        .update(achievements)
-        .set({ name: 'Cinquenta palavras' })
-        .where(eq(achievements.id, 'wordle_wins_50'));
-    }
-  });
-
-  it('leaves the generic defaults to the operator once seeded', async () => {
+      .set({ name: 'customized' })
+      .where(eq(achievements.id, definition.id));
     const [removed] = await db
       .delete(achievements)
       .where(eq(achievements.id, 'first_command'))
       .returning();
     try {
       await defaults.initializeDefaults();
+      expect(
+        (
+          await db
+            .select()
+            .from(achievements)
+            .where(eq(achievements.id, definition.id))
+        )[0]?.name,
+      ).toBe(definition.name);
       expect(
         await db
           .select()
@@ -137,106 +68,107 @@ describe('daily Wordle achievements', () => {
     }
   });
 
-  it('awards historical first-guess solves once, with ISO timestamps and XP', async () => {
+  it('hides archived entries from generic and Wordle readers and rejects new rewards', async () => {
+    const definition = WORDLE_ACHIEVEMENT_CATALOG[0]!;
     const { userId, guildId } = identity();
-    await seedDays(userId, guildId, 1, true, 1);
-    const unlocked = await db.transaction((tx) => award(userId, guildId, tx));
-    expect(unlocked.map((a) => a.id).sort()).toEqual([
-      'wordle_first_win',
-      'wordle_solved_in_1',
-      'wordle_solved_in_2',
-    ]);
-    for (const badge of unlocked) {
-      expect(new Date(badge.unlockedAt).toISOString()).toBe(badge.unlockedAt);
+    await db
+      .update(achievements)
+      .set({ archived_at: Date.now() })
+      .where(eq(achievements.id, definition.id));
+    try {
+      expect(
+        (await awards.getAchievements(userId, guildId)).some(
+          (row) => row.id === definition.id,
+        ),
+      ).toBe(false);
+      expect(
+        (await defaults.getAllAchievements()).some(
+          (row) => row.id === definition.id,
+        ),
+      ).toBe(false);
+      expect(
+        await defaults.unlockAchievement(userId, guildId, definition.id),
+      ).toBe(false);
+      expect(await achievementXp(userId, guildId)).toBe(0);
+    } finally {
+      await defaults.initializeDefaults();
     }
-    expect(await xp(userId, guildId)).toBe(175);
-    expect(await db.transaction((tx) => award(userId, guildId, tx))).toEqual(
-      [],
+  });
+
+  it('awards exact first-guess solves once and returns a full ISO-dated collection snapshot', async () => {
+    const { userId, guildId } = identity();
+    await seedAchievementDay(userId, guildId, { attempts: 1 });
+    const result = await award(userId, guildId);
+    expect(result.achievementVersion).toBe(2);
+    expect(result.achievements).toHaveLength(WORDLE_ACHIEVEMENT_CATALOG.length);
+    expect(result.unlockedAchievements.map((row) => row.id)).toContain(
+      achievementId((rule) => rule.kind === 'wins' && rule.count === 1),
     );
-    expect(await xp(userId, guildId)).toBe(175);
-    const collection = await awards.getAchievements(userId, guildId);
-    expect(collection.filter((a) => a.unlockedAt !== null)).toHaveLength(3);
-  });
-
-  it('uses solved-day thresholds without awarding efficiency for unsolved sessions', async () => {
-    const { userId, guildId } = identity();
-    await seedDays(userId, guildId, 9, true);
-    const before = await db.transaction((tx) => award(userId, guildId, tx));
-    expect(before.some((a) => a.id === 'wordle_wins_10')).toBe(false);
-    await db.insert(wordleDays).values({
-      guild_id: guildId,
-      word_date: dateAt(10),
-      word: null,
-      word_length: 5,
-      is_legacy: true,
-      created_at: 0,
-    });
-    await db.insert(wordleSessions).values({
-      id: randomUUID(),
-      user_id: userId,
-      guild_id: guildId,
-      word_date: dateAt(10),
-      solved: true,
-      attempts: 3,
-      created_at: 0,
-    });
-    const after = await db.transaction((tx) => award(userId, guildId, tx));
-    expect(after.map((a) => a.id).sort()).toEqual([
-      'wordle_played_10',
-      'wordle_wins_10',
-      'wordle_wins_within_3_10',
-    ]);
-    expect(
-      (await earned(userId, guildId)).some((a) =>
-        a.achievement_id.startsWith('wordle_solved_in_'),
+    expect(result.unlockedAchievements.map((row) => row.id)).toContain(
+      achievementId(
+        (rule) => rule.kind === 'solved_exactly' && rule.attempts === 1,
       ),
-    ).toBe(false);
+    );
+    expect(result.unlockedAchievements.map((row) => row.id)).not.toContain(
+      achievementId(
+        (rule) => rule.kind === 'solved_exactly' && rule.attempts === 2,
+      ),
+    );
+    for (const badge of result.unlockedAchievements)
+      expect(new Date(badge.unlockedAt).toISOString()).toBe(badge.unlockedAt);
+    const xp = result.unlockedAchievements.reduce(
+      (sum, badge) => sum + badge.rewardXp,
+      0,
+    );
+    expect(await achievementXp(userId, guildId)).toBe(xp);
+    expect((await award(userId, guildId)).unlockedAchievements).toEqual([]);
+    expect(await achievementXp(userId, guildId)).toBe(xp);
   });
 
-  it('counts unsolved participation while ignoring empty sessions', async () => {
+  it('evaluates wins and efficient solves from eligible counters without requiring matrix evidence', async () => {
     const { userId, guildId } = identity();
-    await seedDays(userId, guildId, 10, false, 1);
-    const unlocked = await db.transaction((tx) => award(userId, guildId, tx));
-    expect(unlocked.map((a) => a.id)).toEqual(['wordle_played_10']);
-    const empty = identity();
-    await seedDays(empty.userId, empty.guildId, 10, false, 0);
+    await seedAchievementDays(userId, guildId, 9);
+    const wins10 = achievementId(
+      (rule) => rule.kind === 'wins' && rule.count === 10,
+    );
     expect(
-      await db.transaction((tx) => award(empty.userId, empty.guildId, tx)),
+      (await award(userId, guildId)).unlockedAchievements.map((row) => row.id),
+    ).not.toContain(wins10);
+    await seedAchievementDay(userId, guildId, { date: dateAt(10) });
+    const ids = (await award(userId, guildId)).unlockedAchievements.map(
+      (row) => row.id,
+    );
+    expect(ids).toContain(wins10);
+    expect(ids).toContain(
+      achievementId((rule) => rule.kind === 'wins_within' && rule.count === 10),
+    );
+  });
+
+  it('counts accepted unsolved dates and ignores empty sessions', async () => {
+    const { userId, guildId } = identity();
+    await seedAchievementDays(userId, guildId, 7, false, 1);
+    const ids = (await award(userId, guildId)).unlockedAchievements.map(
+      (row) => row.id,
+    );
+    expect(ids).toContain(
+      achievementId((rule) => rule.kind === 'played' && rule.days === 7),
+    );
+    expect(ids).not.toContain(
+      achievementId((rule) => rule.kind === 'wins' && rule.count === 1),
+    );
+    const empty = identity();
+    await seedAchievementDay(empty.userId, empty.guildId, {
+      attempts: 0,
+      solved: false,
+    });
+    expect(
+      (await award(empty.userId, empty.guildId)).unlockedAchievements,
     ).toEqual([]);
   });
 
-  it('awards fifty wins only at the fiftieth solved day', async () => {
+  it('does not bridge unsolved days or use the lifetime best for v2 streak rewards', async () => {
     const { userId, guildId } = identity();
-    await seedDays(userId, guildId, 49, true);
-    const before = await db.transaction((tx) => award(userId, guildId, tx));
-    expect(before.some((a) => a.id === 'wordle_wins_50')).toBe(false);
-    await db.insert(wordleDays).values({
-      guild_id: guildId,
-      word_date: dateAt(50),
-      word: null,
-      word_length: 5,
-      is_legacy: true,
-      created_at: 0,
-    });
-    await db.insert(wordleSessions).values({
-      id: randomUUID(),
-      user_id: userId,
-      guild_id: guildId,
-      word_date: dateAt(50),
-      solved: true,
-      attempts: 3,
-      created_at: 0,
-    });
-    const after = await db.transaction((tx) => award(userId, guildId, tx));
-    expect(after.map((a) => a.id)).toEqual([
-      'wordle_wins_50',
-      'wordle_wins_within_3_50',
-    ]);
-  });
-
-  it('does not bridge unsolved days when reconstructing a streak', async () => {
-    const { userId, guildId } = identity();
-    await seedDays(userId, guildId, 4, true, 2);
+    await seedAchievementDays(userId, guildId, 4);
     await db
       .update(wordleSessions)
       .set({ solved: false })
@@ -247,133 +179,110 @@ describe('daily Wordle achievements', () => {
           eq(wordleSessions.word_date, dateAt(3)),
         ),
       );
-    const unlocked = await db.transaction((tx) => award(userId, guildId, tx));
-    expect(unlocked.map((a) => a.id)).toEqual([
-      'wordle_first_win',
-      'wordle_solved_in_2',
-    ]);
-  });
-
-  it('reconstructs best streak from history and respects a preserved best streak', async () => {
-    const { userId, guildId } = identity();
-    await seedDays(userId, guildId, 7, true);
-    const unlocked = await db.transaction((tx) => award(userId, guildId, tx));
-    expect(unlocked.map((a) => a.id)).toContain('wordle_streak_7');
-    expect(unlocked.map((a) => a.id)).not.toContain('wordle_streak_30');
     await db.insert(wordleStreaks).values({
       user_id: userId,
       guild_id: guildId,
       current_streak: 0,
-      max_streak: 30,
+      max_streak: 100,
     });
-    expect(
-      (await db.transaction((tx) => award(userId, guildId, tx))).map(
-        (a) => a.id,
-      ),
-    ).toEqual(['wordle_streak_14', 'wordle_streak_30']);
+    const result = await award(userId, guildId);
+    expect(result.stats.bestStreak).toBe(100);
+    expect(result.unlockedAchievements.map((row) => row.id)).not.toContain(
+      achievementId((rule) => rule.kind === 'streak' && rule.days === 3),
+    );
   });
 
-  it('does not combine history or unlocks across users and guilds', async () => {
+  it('isolates history, discoveries and unlocks across players and guilds', async () => {
     const { userId, guildId } = identity();
-    await seedDays(userId, guildId, 1, true, 1);
-    await db.transaction((tx) => award(userId, guildId, tx));
-    const others: [string, string][] = [
-      [userId, 'other'],
+    await seedAchievementDay(userId, guildId, { attempts: 1 });
+    await award(userId, guildId);
+    for (const [user, guild] of [
+      [userId, 'elsewhere'],
       ['other', guildId],
-    ];
-    for (const [user, guild] of others) {
-      expect(await db.transaction((tx) => award(user, guild, tx))).toEqual([]);
+    ]) {
+      expect((await award(user!, guild!)).unlockedAchievements).toEqual([]);
       expect(
-        (await awards.getAchievements(user, guild)).every(
-          (a) => a.unlockedAt === null,
+        (await awards.getAchievements(user!, guild!)).every(
+          (row) => row.unlockedAt === null,
         ),
       ).toBe(true);
     }
   });
 
-  it('awards concurrent evaluations only once', async () => {
+  it('serializes concurrent evaluations and grants each reward once', async () => {
     const { userId, guildId } = identity();
-    await seedDays(userId, guildId, 1, true, 1);
+    await seedAchievementDay(userId, guildId, { attempts: 1 });
     const results = await Promise.all(
-      Array.from({ length: 3 }, () =>
-        db.transaction((tx) => award(userId, guildId, tx)),
-      ),
+      Array.from({ length: 3 }, () => award(userId, guildId)),
     );
-    expect(results.flat()).toHaveLength(3);
-    expect(await earned(userId, guildId)).toHaveLength(3);
-    expect(await xp(userId, guildId)).toBe(175);
+    const badges = results.flatMap((result) => result.unlockedAchievements);
+    expect(new Set(badges.map((row) => row.id)).size).toBe(badges.length);
+    expect(await earnedAchievements(userId, guildId)).toHaveLength(
+      badges.length,
+    );
+    expect(await achievementXp(userId, guildId)).toBe(
+      badges.reduce((sum, badge) => sum + badge.rewardXp, 0),
+    );
   });
 
-  it('rolls back achievement and XP writes with the caller transaction', async () => {
+  it('rolls back unlocks and XP with the caller transaction', async () => {
     const { userId, guildId } = identity();
-    await seedDays(userId, guildId, 1, true, 1);
+    await seedAchievementDay(userId, guildId, { attempts: 1 });
     await expect(
       db.transaction(async (tx) => {
-        await award(userId, guildId, tx);
+        await awards.checkAndAward(userId, guildId, tx);
         throw new Error('rollback test');
       }),
     ).rejects.toThrow('rollback test');
-    expect(await earned(userId, guildId)).toEqual([]);
-    expect(await xp(userId, guildId)).toBe(0);
+    expect(await earnedAchievements(userId, guildId)).toEqual([]);
+    expect(await achievementXp(userId, guildId)).toBe(0);
   });
 });
 
 describe('Wordle guess award integration', () => {
   const service = new WordleService();
-  async function seedDaily(guildId: string) {
-    const today = new Intl.DateTimeFormat('sv-SE', {
-      timeZone: process.env.WORDLE_TIMEZONE ?? 'America/Recife',
-    }).format(new Date());
-    await db.insert(wordleDays).values({
+  const seedDaily = (guildId: string) =>
+    db.insert(wordleDays).values({
       guild_id: guildId,
       word: 'termo',
-      word_date: today,
+      word_date: getRecifeDate(),
       word_length: 5,
-      is_legacy: false,
       created_at: 0,
     });
-  }
 
-  it('returns fresh unlocks with the solved guess and rejects a repeated solve', async () => {
+  it('returns pattern evidence and a replacement collection on the winning row', async () => {
     const { userId, guildId } = identity();
     await seedDaily(guildId);
     const result = await service.submitGuess(userId, guildId, 'termo');
-    expect(result).not.toHaveProperty('error');
     if ('error' in result) throw new Error(result.error);
-    expect(result.unlockedAchievements?.map((a) => a.id)).toEqual(
-      expect.arrayContaining([
-        'wordle_first_win',
-        'wordle_solved_in_1',
-        'wordle_solved_in_2',
-      ]),
+    expect(result.achievementVersion).toBe(2);
+    expect(result.achievements).toHaveLength(WORDLE_ACHIEVEMENT_CATALOG.length);
+    const pattern = result.unlockedAchievements?.find(
+      (row) => row.patternPreview?.patternId === 'tetromino_i',
     );
+    expect(pattern?.matchEvidence).toMatchObject({
+      patternId: 'tetromino_i',
+      color: 'correct',
+      date: getRecifeDate(),
+    });
+    expect(pattern?.matchEvidence?.feedback).toEqual([
+      Array(5).fill('correct'),
+    ]);
     expect(await service.submitGuess(userId, guildId, 'termo')).toHaveProperty(
       'error',
     );
-    expect(await xp(userId, guildId)).toBe(
+    expect(await achievementXp(userId, guildId)).toBe(
       result.unlockedAchievements?.reduce(
-        (total, badge) => total + badge.rewardXp,
+        (sum, badge) => sum + badge.rewardXp,
         0,
       ) ?? 0,
     );
   });
 
-  it('awards the tenth participation day on an unsolved guess', async () => {
-    const { userId, guildId } = identity();
-    await seedDays(userId, guildId, 9, false, 1);
-    await seedDaily(guildId);
-    const result = await service.submitGuess(userId, guildId, 'gatos');
-    if ('error' in result) throw new Error(result.error);
-    expect(result.solved).toBe(false);
-    expect(result.unlockedAchievements?.map((a) => a.id)).toEqual([
-      'wordle_played_10',
-    ]);
-  });
-
-  it('keeps the guess when rewarding XP fails, and awards on the next evaluation', async () => {
+  it('keeps the accepted guess if awarding fails and reconciles XP on the next evaluation', async () => {
     const { userId, guildId } = identity();
     await seedDaily(guildId);
-    const failingReward = spyOn(
+    const failure = spyOn(
       LevelingService.prototype,
       'addXpToUser',
     ).mockRejectedValueOnce(new Error('reward unavailable'));
@@ -381,61 +290,38 @@ describe('Wordle guess award integration', () => {
     try {
       result = await service.submitGuess(userId, guildId, 'termo');
     } finally {
-      failingReward.mockRestore();
+      failure.mockRestore();
     }
     if ('error' in result) throw new Error(result.error);
     expect(result.solved).toBe(true);
     expect(result.unlockedAchievements).toBeUndefined();
     expect((await service.getUserSession(userId, guildId))?.solved).toBe(true);
-    // Achievements and their XP still land together or not at all.
-    expect(await earned(userId, guildId)).toEqual([]);
-    expect(await xp(userId, guildId)).toBe(0);
-    const [daily] = await db
-      .select()
-      .from(wordleDays)
-      .where(eq(wordleDays.guild_id, guildId));
-    expect(daily).toMatchObject({ players_count: 1, winners_count: 1 });
-    const streak = await db
-      .select()
-      .from(wordleStreaks)
-      .where(
-        and(
-          eq(wordleStreaks.user_id, userId),
-          eq(wordleStreaks.guild_id, guildId),
-        ),
-      );
-    expect(streak).toHaveLength(1);
-
+    expect(await earnedAchievements(userId, guildId)).toEqual([]);
+    expect(await achievementXp(userId, guildId)).toBe(0);
     expect(
-      await db.transaction((tx) => award(userId, guildId, tx)),
-    ).not.toEqual([]);
+      (await award(userId, guildId)).unlockedAchievements.length,
+    ).toBeGreaterThan(0);
   });
 
-  it('decides the first solver from the sessions, not the day counter', async () => {
-    const guildId = randomUUID();
-    const [first, second] = [randomUUID(), randomUUID()];
+  it('derives first solver from all sessions even when day counters drift', async () => {
+    const { userId, guildId } = identity();
     await seedDaily(guildId);
-    // A drifted counter (backfill, deleted data) must not hide the first solver.
     await db
       .update(wordleDays)
       .set({ winners_count: 3 })
       .where(eq(wordleDays.guild_id, guildId));
-
-    await service.submitGuess(first, guildId, 'termo');
+    const second = identity().userId;
+    await service.submitGuess(userId, guildId, 'termo');
     await service.submitGuess(second, guildId, 'termo');
-
     const sessions = await db
-      .select({
-        user: wordleSessions.user_id,
-        first: wordleSessions.first_solver,
-      })
+      .select()
       .from(wordleSessions)
       .where(eq(wordleSessions.guild_id, guildId));
-    expect(sessions).toEqual(
-      expect.arrayContaining([
-        { user: first, first: true },
-        { user: second, first: false },
-      ]),
+    expect(sessions.find((row) => row.user_id === userId)?.first_solver).toBe(
+      true,
+    );
+    expect(sessions.find((row) => row.user_id === second)?.first_solver).toBe(
+      false,
     );
   });
 });

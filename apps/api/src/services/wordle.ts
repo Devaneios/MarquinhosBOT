@@ -27,6 +27,7 @@ import {
   type WordleSessionGuessesRow,
 } from 'services/wordle/dayGuesses';
 import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
+import { getActiveWordleAchievementVersion } from 'services/wordle/WordleAchievementVersionService';
 import { getRecifeDate } from 'services/wordle/wordleDate';
 import type { z } from 'zod';
 
@@ -382,6 +383,10 @@ export class WordleService {
       // unless one is already there, then lock it for the read-modify-write.
       // A concurrent first guess waits here instead of failing on the
       // unique key.
+      const achievementVersion = await getActiveWordleAchievementVersion(
+        tx,
+        'share',
+      );
       await tx
         .insert(wordleSessions)
         .values({
@@ -392,6 +397,7 @@ export class WordleService {
           guesses: '[]',
           solved: false,
           attempts: 0,
+          achievement_version: achievementVersion,
           created_at: now,
         })
         .onConflictDoNothing();
@@ -507,6 +513,8 @@ export class WordleService {
       outcome.unlockedAchievements = achievements.unlockedAchievements;
       outcome.stats = achievements.stats;
       outcome.achievementProgress = achievements.achievementProgress;
+      outcome.achievementVersion = achievements.achievementVersion;
+      outcome.achievements = achievements.achievements;
     } catch (error) {
       logger.warn('wordle.achievements.award_failed', error);
     }
