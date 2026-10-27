@@ -273,31 +273,27 @@ describe('Wordle discovery reconciliation', () => {
     });
     const reads = spyOn(service, 'loadHistory');
     for (const date of ['2026-01-01', '2026-01-02']) {
-      await db
-        .insert(wordleDays)
-        .values({
-          guild_id: guildId,
-          word_date: date,
-          word: null,
-          word_length: 5,
-          is_legacy: true,
-          created_at: 0,
-        });
+      await db.insert(wordleDays).values({
+        guild_id: guildId,
+        word_date: date,
+        word: null,
+        word_length: 5,
+        is_legacy: true,
+        created_at: 0,
+      });
     }
     const first = db.transaction(async (tx) => {
-      await tx
-        .insert(wordleSessions)
-        .values({
-          id: `${guildId}-s`,
-          user_id: userId,
-          guild_id: guildId,
-          word_date: '2026-01-01',
-          attempts: 2,
-          solved: false,
-          guesses: guesses(['.##', '##.']),
-          achievement_version: 2,
-          created_at: 1,
-        });
+      await tx.insert(wordleSessions).values({
+        id: `${guildId}-s`,
+        user_id: userId,
+        guild_id: guildId,
+        word_date: '2026-01-01',
+        attempts: 2,
+        solved: false,
+        guesses: guesses(['.##', '##.']),
+        achievement_version: 2,
+        created_at: 1,
+      });
       const result = await service.checkAndAward(userId, guildId, tx);
       firstDone();
       await gate;
@@ -305,19 +301,17 @@ describe('Wordle discovery reconciliation', () => {
     });
     await firstReady;
     const second = db.transaction(async (tx) => {
-      await tx
-        .insert(wordleSessions)
-        .values({
-          id: `${guildId}-z`,
-          user_id: userId,
-          guild_id: guildId,
-          word_date: '2026-01-02',
-          attempts: 2,
-          solved: false,
-          guesses: guesses(['##.', '.##']),
-          achievement_version: 2,
-          created_at: 1,
-        });
+      await tx.insert(wordleSessions).values({
+        id: `${guildId}-z`,
+        user_id: userId,
+        guild_id: guildId,
+        word_date: '2026-01-02',
+        attempts: 2,
+        solved: false,
+        guesses: guesses(['##.', '.##']),
+        achievement_version: 2,
+        created_at: 1,
+      });
       return service.checkAndAward(userId, guildId, tx);
     });
     try {

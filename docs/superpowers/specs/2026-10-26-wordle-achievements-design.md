@@ -8,7 +8,7 @@ Rebuild the daily Wordle achievement collection around pictures in the submitted
 
 The user chose a curated achievement catalog with reusable pattern rules. They also chose any matching subset of cells. Extra cells must not invalidate a discovered picture. These are settled product requirements.
 
-This design adds implementation defaults where the user has not expressed a preference. Those defaults include color handling, the winning row, the reset boundary, archival, rewards, and visible discovery previews. They are proposed choices for approval, not prior user instructions.
+This design adds implementation defaults where the user had not expressed a preference. Those defaults include color handling, the winning row, the reset boundary, archival, rewards, and visible discovery previews. The user approved this design and then emphasized yellow discoveries.
 
 ## Approaches considered
 
@@ -72,7 +72,7 @@ The shape registry targets the following complete sets.
 
 Every template must fit a supported board width and have a distinct-legal-guess example generated through production `computeFeedback()`. Prefer three-column glyphs so both answer widths can produce them. Larger drawings can use five columns and either supported answer width. They can require more than six attempts because the daily game has no attempt cap.
 
-The launch target is 53 individual patterns. Current evidence covers only T, A, and 0. The other 50 patterns remain unproven. Existing examples also satisfy subset semantics, but no new subset matcher has been implemented or verified yet.
+The launch contains 53 individual patterns. Checked-in fixtures and the rerunnable `verifyWordlePatterns.ts` script prove all 53 separately in both green and yellow through the production feedback algorithm and default subset matcher. Yellow witnesses preserve previously known green positions and finish with a solve. Live remaining-answer availability still requires inspection against the deployment database.
 
 Reachability means an example from the source answer banks, not a promise that its answer remains unused or unbanned in the live database. Also check the remaining answer pool before deployment and report templates whose witnesses are exhausted. If a required template cannot be realized with legal words, report the blocking template and evidence. Do not silently replace its silhouette or omit it from the promised set.
 

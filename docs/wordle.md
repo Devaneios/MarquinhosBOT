@@ -171,21 +171,52 @@ the number of eligible dates, including dates the user missed.
 [`WORDLE_ACHIEVEMENT_CATALOG`](../packages/domain/src/games/wordle/achievements/catalog.ts)
 defines achievement IDs, names, descriptions, families, tiers, rarity, visibility,
 XP rewards, and rules. Startup upserts these definitions into `achievements`.
-Database edits to Wordle definitions are overwritten by that synchronization.
+Version 2 contains 104 achievements, including 53 drawings and seven distinct-pattern
+collections. Startup synchronizes definitions only when the active database version
+matches the binary's catalog version. It does not activate version 2. Compatible
+synchronization overwrites database edits to active Wordle definitions.
+
+`wordle_achievement_versions` records activation. Existing sessions keep
+`achievement_version = 1`. New sessions take the active version inside their first
+accepted-guess transaction. Continuing an old board never changes its version.
+Activation archives old Wordle definitions and keeps their unlock rows, existing XP,
+game history, and lifetime statistics. Generic achievement readers hide archived
+definitions. The [operations guide](wordle-operations.md#start-the-new-achievement-collection)
+describes inspection and explicit activation.
 
 [`evaluateWordleAchievements()`](../packages/domain/src/games/wordle/achievements/evaluate.ts)
-evaluates the catalog against session history. The rule families cover wins,
-streaks, days played, precision, persistence, speed, timing, guess patterns, and
-recovery after a broken streak. Counter progress stops at its target. Rules that
+evaluates the catalog against eligible session history and durable discoveries.
+The rule families cover wins, participation, streaks, calendar coverage, precision,
+persistence, elapsed duration, local hours, feedback, recovery, vocabulary, variety,
+and drawings. Achievement streaks ignore persisted lifetime streak maxima.
+Counter progress stops at its target. Rules that
 produce a yes-or-no result return `progress: null`.
 
 `WordleAchievementService.loadHistory()` includes sessions with at least one
-attempt. Missing or malformed guess JSON becomes an empty history of guesses.
-Rows whose guess and feedback lengths differ are discarded. Guess-pattern rules
-require a complete history whose final row is entirely `correct`.
+attempt. Numerical statistics can use session counters even when feedback is
+unavailable. Matrix evidence rejects the entire history when JSON, row widths,
+feedback values, guess lengths, or attempt counts disagree. Invalid middle rows
+are never removed to join neighboring rows into a drawing.
+
+[`WORDLE_PATTERN_CATALOG`](../packages/domain/src/games/wordle/achievements/patterns.ts)
+contains upright letters A through Z, digits 0 through 9, all seven tetrominoes,
+and ten other shapes. Required template cells retain their spacing. Dots are
+wildcards, so extra and touching foreground cells are allowed. Green and yellow
+are separate valid foreground colors. The matcher never combines both colors
+into one drawing. Tetrominoes can rotate but cannot reflect. Letters and digits
+stay upright.
+
+All submitted rows participate, including the winning row. A winning row therefore
+contains a horizontal I tetromino. Dense areas can contain several overlapping
+patterns and unlock each of them. Unsolved boards can produce discoveries too.
+`wordle_pattern_discoveries` saves the first witness for each player, guild, version,
+and pattern. Collections deduplicate colors, orientations, positions, and dates.
+Snapshots contain feedback and highlighted coordinates, without guess or answer text.
 
 Timing rules require a recorded `solved_at`. Speed measures elapsed seconds from
 session creation to the solve and also checks the rule's minimum attempt count.
+The interval includes idle time and can include transaction lock wait. It does
+not measure active thinking time. Fast goals require at least two guesses.
 Hour ranges use `WORDLE_TIMEZONE`, include the start hour, and exclude the end
 hour. The service does not invent timestamps for legacy solves.
 
@@ -198,12 +229,24 @@ achievements missed by an earlier failed evaluation. Each unlock uses the
 `user_achievements` primary key and `ON CONFLICT DO NOTHING`. Only a newly
 inserted unlock grants XP and applies level-ups. The caller's transaction keeps
 the unlock and reward together.
+The award transaction locks the player, guild, and version before loading
+discoveries, so concurrent final discoveries cannot miss a collection reward.
+The permanent version-1 row serializes activation against new-session stamping
+and award transactions.
 
 `getOverview()` reads progress and statistics without awarding achievements.
 Locked hidden achievements have empty names and descriptions, an unknown icon,
 and null progress. Earned achievements expose their definition and unlock time.
 `holdersPercent` counts distinct holders among users with an accepted Wordle
-guess in the guild. With no participating players, the percentage is null.
+guess in the same guild and active version. With no participating players, the
+percentage is null. Overview, initialization, and guess updates identify the
+achievement version. Accepted-guess award responses include a complete collection
+snapshot so clients replace retired entries when the version changes.
+
+Today’s unsolved session is in progress. A past attempted date that remains
+unsolved is an expired failure. An absent date is not a failure. Expired-day
+achievements unlock on the next accepted guess or explicit reconciliation.
+Overview reads do not award them.
 
 Player statistics are derived by
 [`computeWordlePlayerStats()`](../packages/domain/src/games/wordle/achievements/stats.ts).

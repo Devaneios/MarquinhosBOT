@@ -67,6 +67,69 @@ counters. Streak rows, earned achievements, and XP remain.
 3. Submit a guess through `/termo`.
 4. Reopen the Activity and verify that it restores the same guess.
 
+## Start the new achievement collection
+
+This release includes the version-2 catalog but does not activate it through
+migrations, startup, or backfill. Activation applies to Wordle achievements across
+the database. Existing games and XP remain. Boards that started before activation
+stay version 1 and cannot earn version-2 progress, even when solved later.
+
+1. Apply the release migrations using the normal deployment procedure.
+2. Set `DATABASE_URL` to the intended database in a checkout with dependencies installed.
+3. Inspect the change from the repository root.
+
+   ```sh
+   pnpm --filter marquinhos-web-api exec bun scripts/activateWordleAchievements.ts
+   ```
+
+4. Review the active and proposed versions, old-definition and unlock counts,
+   session versions, and any existing activation timestamp in the JSON report.
+5. Stop old API processes and backfill workers. Old binaries do not honor version
+   and archival rules and must not restart after the switch.
+6. When applying the reviewed activation to that database, run the explicit command.
+
+   ```sh
+   pnpm --filter marquinhos-web-api exec bun scripts/activateWordleAchievements.ts --apply
+   ```
+
+7. Start only compatible API processes. Confirm that `/termo-conquistas` shows the
+   fresh collection while lifetime statistics and existing XP remain intact.
+8. Start a new daily board and check that an accepted guess updates the version-2
+   collection. An already-started board remains playable in version 1.
+
+The activation tool does not run migrations. Its default mode only reads the
+database. Repeating `--apply` preserves the original version-2 activation and all
+new progress. Retired definitions and unlocks remain archived for inspection.
+No historical XP is subtracted. Use `--help` to inspect the CLI arguments.
+
+The release API image does not include `apps/api/scripts/`. Run the tool from a
+checkout with access to the intended database. This procedure does not register
+Discord commands. The bot's optional `conquista` argument accepts an achievement
+ID or exact visible name to show its drawing preview or earned evidence.
+
+## Verify legal pattern examples
+
+Run the verifier from the repository root.
+
+```sh
+bun apps/api/scripts/verifyWordlePatterns.ts
+```
+
+The JSON result must report 53 patterns, 106 witnesses, and 53 yellow witnesses.
+The verifier checks source answer banks, accepted distinct guesses, production
+feedback, and the default matcher. Yellow examples preserve every previously
+discovered green position and finish with a solve.
+
+To regenerate the checked-in fixtures deterministically, run the following command.
+
+```sh
+bun apps/api/scripts/verifyWordlePatterns.ts --search
+```
+
+Source-bank examples do not establish live answer availability. Before deployment,
+compare witness answers with the target database's used-word and banned-word sets.
+The verifier deliberately reports that the live pool is unchecked.
+
 ## Backfill achievement awards
 
 1. Use a checkout with the target release's dependencies installed.
@@ -85,6 +148,8 @@ To process all guilds, omit `--guild-id GUILD_ID`. Use `--batch-size` between
 
 The script applies pending database migrations and synchronizes achievement
 definitions before awarding. It commits each player's evaluation separately.
+Only sessions belonging to the active achievement version contribute to new
+progress. Backfill never moves the activation boundary or promotes old boards.
 If a run stops, rerun the command. Existing unlocks do not grant XP again.
 Missing legacy solve times remain unknown, so timing awards require recorded
 evidence. Reading the achievement overview alone does not grant missed awards.

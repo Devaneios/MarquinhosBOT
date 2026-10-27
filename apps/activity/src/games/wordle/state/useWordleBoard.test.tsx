@@ -119,6 +119,50 @@ describe('useWordleBoard focus controls', () => {
     ).toEqual(['wordle_v2_wins_1']);
     expect(result.current.unlockedAchievements).toEqual([]);
     expect(result.current.hasUnlockedInSession).toBe(false);
+    const first = { ...fresh, unlockedAt: retired.unlockedAt };
+    const second = { ...first, id: 'wordle_v2_played_1' };
+    act(() => {
+      for (const achievement of [first, second]) {
+        deliverMessage({
+          type: 'guess_result',
+          payload: {
+            guess: 'livro',
+            feedback: miss('livro').feedback,
+            guesses: [miss('livro')],
+            solved: false,
+            attempts: 1,
+            wordLength: 5,
+            achievementVersion: 2,
+            unlockedAchievements: [achievement],
+          },
+        });
+      }
+    });
+    expect(
+      result.current.unlockedAchievements.map(
+        (item: WordleAchievementStatus) => item.id,
+      ),
+    ).toEqual([first.id, second.id]);
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'livro',
+          feedback: miss('livro').feedback,
+          guesses: [miss('livro')],
+          solved: false,
+          attempts: 1,
+          wordLength: 5,
+          achievementVersion: 1,
+          achievements: [{ ...retired, unlockedAt: null }],
+        },
+      }),
+    );
+    expect(
+      result.current.achievements.map(
+        (item: WordleAchievementStatus) => item.id,
+      ),
+    ).toEqual([first.id, second.id]);
   });
 
   it('discards retired collection data when a new-version delta has no snapshot', async () => {

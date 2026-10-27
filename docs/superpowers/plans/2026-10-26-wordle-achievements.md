@@ -44,10 +44,10 @@ Interfaces follow.
 - Overview has `achievementVersion`, defaulting to 1 for older payloads. Initialization and guess responses have optional `achievementVersion`. Guess responses can contain the full `achievements` collection to replace cached catalogs across activation.
 - Database exports `wordleAchievementVersions` with version, active, and activated_at; `wordlePatternDiscoveries` with the user/guild/version/pattern composite key, session_id, discovered_at, and JSONB evidence. Sessions add `achievement_version`, default 1. Definitions add nullable `wordle_version` and `archived_at`.
 
-- [ ] Write contract tests for yellow evidence round trips, out-of-bounds and wrong-color cells, and legacy payloads. Watch the new cases fail.
-- [ ] Add schemas and migration foundation. Validate coordinates, unique cells, rectangular matrices, and matching foreground.
-- [ ] Run contract tests, migration tests, and contracts/database typechecks. Expect pass and no automatic version-2 activation.
-- [ ] Record the checkpoint and commit the foundation.
+- [x] Write contract tests for yellow evidence round trips, out-of-bounds and wrong-color cells, and legacy payloads. Watch the new cases fail.
+- [x] Add schemas and migration foundation. Validate coordinates, unique cells, rectangular matrices, and matching foreground.
+- [x] Run contract tests, migration tests, and contracts/database typechecks. Expect pass and no automatic version-2 activation.
+- [x] Record the checkpoint and commit the foundation.
 
 ## Task 2. Pattern registry, matcher, and legal witnesses
 
@@ -61,11 +61,11 @@ Interfaces follow.
 - `parseAchievementMatrix(serializedGuesses, expectedWidth, attempts)` returns a complete feedback matrix or null.
 - Pattern IDs use `letter_a`, `digit_0`, `tetromino_i`, and descriptive shape IDs. They are independent of achievement IDs.
 
-- [ ] Write failing tests for dense subset matches, yellow matches, winning-row I, required-cell removal, translations, rotations without reflections, and malformed histories.
-- [ ] Implement the registry and deterministic matching in row/column/color/declared-rotation order. Dots are wildcards.
-- [ ] Build a rerunnable legal-witness search and verifier using the source banks, distinct canonical guesses, and production feedback. Save inspectable fixtures.
-- [ ] Run tests and the verifier. Expect every promised template to have a legal witness, including yellow examples. Record exhausted or unavailable live-pool checks separately.
-- [ ] Record and commit the matcher checkpoint.
+- [x] Write failing tests for dense subset matches, yellow matches, winning-row I, required-cell removal, translations, rotations without reflections, and malformed histories.
+- [x] Implement the registry and deterministic matching in row/column/color/declared-rotation order. Dots are wildcards.
+- [x] Build a rerunnable legal-witness search and verifier using the source banks, distinct canonical guesses, and production feedback. Save inspectable fixtures.
+- [x] Run tests and the verifier. Expect every promised template to have a legal witness, including yellow examples. Record exhausted or unavailable live-pool checks separately.
+- [x] Record and commit the matcher checkpoint.
 
 ## Task 3. Replacement catalog and history rules
 
@@ -78,10 +78,10 @@ Interfaces follow.
 - Preserve `evaluateWordleAchievements(days, options)` and existing rule helpers where semantics match. Add `pattern` and `pattern_collection`, plus focused history variants from architecture A.
 - Export `WORDLE_ACHIEVEMENT_VERSION = 2`, `WORDLE_ACHIEVEMENT_CATALOG`, and `LEGACY_WORDLE_ACHIEVEMENT_CATALOG`.
 
-- [ ] Replace preservation tests with fresh-ID, schema, template coverage, rewards, and hidden-ID checks. Add failing tests for every new history predicate and exact date boundaries.
-- [ ] Implement the approved catalog, collection goals, and history rules. Keep malformed matrices ineligible for visual rules while numerical counters remain usable.
-- [ ] Verify current-day unsolved, missing timestamps, completed weeks/months, gap return, both lengths, vocabulary, and first-solver facts.
-- [ ] Run all domain tests and domain typecheck. Record and commit the checkpoint.
+- [x] Replace preservation tests with fresh-ID, schema, template coverage, rewards, and hidden-ID checks. Add failing tests for every new history predicate and exact date boundaries.
+- [x] Implement the approved catalog, collection goals, and history rules. Keep malformed matrices ineligible for visual rules while numerical counters remain usable.
+- [x] Verify current-day unsolved, missing timestamps, completed weeks/months, gap return, both lengths, vocabulary, and first-solver facts.
+- [x] Run all domain tests and domain typecheck. Record and commit the checkpoint.
 
 ## Task 4. Explicit activation and transactional reconciliation
 
