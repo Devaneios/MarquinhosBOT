@@ -1,13 +1,10 @@
 import { describe, expect, it } from 'bun:test';
-import { WORDLE_ACHIEVEMENT_CATALOG } from './catalog';
-import {
-  buildWordleAchievementFacts,
-  evaluateWordleAchievements,
-  evaluateWordleRule,
-} from './evaluate';
+import type { WordleDayRecord } from '../../playerStats';
+import { WORDLE_ACHIEVEMENT_CATALOG } from '../catalog';
+import { epoch, failedDay, rows, solvedDay, solvedStreak } from '../testing';
+import { evaluateWordleAchievements, evaluateWordleRule } from './evaluate';
+import { buildWordleAchievementFacts } from './history';
 import type { WordleAchievementRule } from './rules';
-import type { WordleDayRecord } from './stats';
-import { epoch, failedDay, rows, solvedDay, solvedStreak } from './testing';
 
 const TODAY = '2026-10-24';
 

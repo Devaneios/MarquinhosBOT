@@ -3,6 +3,7 @@ import { serverMessageSchema } from './activity/games/wordle';
 import { wordleGuessResultSchema } from './http/routes/wordle';
 import {
   wordleAchievementStatusSchema,
+  wordlePatternPreviewSchema,
   wordlePlayerStatsSchema,
 } from './wordle';
 
@@ -204,5 +205,31 @@ describe('Wordle achievement messages', () => {
         payload: { wordLength: 5, guesses: [], solved: false, attempts: 0 },
       }).success,
     ).toBe(true);
+  });
+});
+
+describe('wordlePatternPreviewSchema variants', () => {
+  const base = {
+    patternId: 'x',
+    mask: ['#.#'],
+    colors: ['correct'],
+    rotations: [0],
+  };
+  it('accepts wider distinct variants up to 5 columns', () => {
+    expect(
+      wordlePatternPreviewSchema.safeParse({ ...base, variants: [['#...#']] })
+        .success,
+    ).toBe(true);
+  });
+  it('rejects narrower, too wide, duplicate and ragged variants', () => {
+    for (const variants of [
+      [['#.']],
+      [['#.....#']],
+      [['#.#']],
+      [['#...#', '#..']],
+    ])
+      expect(
+        wordlePatternPreviewSchema.safeParse({ ...base, variants }).success,
+      ).toBe(false);
   });
 });

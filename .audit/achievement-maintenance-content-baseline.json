@@ -1,0 +1,3613 @@
+{
+  "catalog": [
+    {
+      "id": "wordle_v2_wins_1",
+      "family": "wins",
+      "tier": 1,
+      "name": "Palavra encontrada",
+      "description": "Resolva a palavra diária em 1 data elegível.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "wins",
+        "count": 1
+      }
+    },
+    {
+      "id": "wordle_v2_wins_10",
+      "family": "wins",
+      "tier": 2,
+      "name": "Dez respostas",
+      "description": "Resolva a palavra diária em 10 datas elegíveis.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "wins",
+        "count": 10
+      }
+    },
+    {
+      "id": "wordle_v2_wins_50",
+      "family": "wins",
+      "tier": 3,
+      "name": "Cinquenta descobertas",
+      "description": "Resolva a palavra diária em 50 datas elegíveis.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "wins",
+        "count": 50
+      }
+    },
+    {
+      "id": "wordle_v2_wins_100",
+      "family": "wins",
+      "tier": 4,
+      "name": "Cem soluções",
+      "description": "Resolva a palavra diária em 100 datas elegíveis.",
+      "icon": "🏅",
+      "rarity": "epic",
+      "rewardXp": 150,
+      "hidden": false,
+      "rule": {
+        "kind": "wins",
+        "count": 100
+      }
+    },
+    {
+      "id": "wordle_v2_wins_365",
+      "family": "wins",
+      "tier": 5,
+      "name": "Ano de respostas",
+      "description": "Resolva a palavra diária em 365 datas elegíveis.",
+      "icon": "🏅",
+      "rarity": "legendary",
+      "rewardXp": 750,
+      "hidden": false,
+      "rule": {
+        "kind": "wins",
+        "count": 365
+      }
+    },
+    {
+      "id": "wordle_v2_played_1",
+      "family": "played",
+      "tier": 1,
+      "name": "Ponto de partida",
+      "description": "Envie ao menos um palpite válido em 1 data elegível.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "played",
+        "days": 1
+      }
+    },
+    {
+      "id": "wordle_v2_played_7",
+      "family": "played",
+      "tier": 2,
+      "name": "Sete encontros",
+      "description": "Envie ao menos um palpite válido em 7 datas elegíveis.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "played",
+        "days": 7
+      }
+    },
+    {
+      "id": "wordle_v2_played_30",
+      "family": "played",
+      "tier": 3,
+      "name": "Trinta visitas",
+      "description": "Envie ao menos um palpite válido em 30 datas elegíveis.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "played",
+        "days": 30
+      }
+    },
+    {
+      "id": "wordle_v2_played_100",
+      "family": "played",
+      "tier": 4,
+      "name": "Presença constante",
+      "description": "Envie ao menos um palpite válido em 100 datas elegíveis.",
+      "icon": "🏅",
+      "rarity": "epic",
+      "rewardXp": 150,
+      "hidden": false,
+      "rule": {
+        "kind": "played",
+        "days": 100
+      }
+    },
+    {
+      "id": "wordle_v2_played_365",
+      "family": "played",
+      "tier": 5,
+      "name": "Um ano presente",
+      "description": "Envie ao menos um palpite válido em 365 datas elegíveis.",
+      "icon": "🏅",
+      "rarity": "legendary",
+      "rewardXp": 750,
+      "hidden": false,
+      "rule": {
+        "kind": "played",
+        "days": 365
+      }
+    },
+    {
+      "id": "wordle_v2_streak_3",
+      "family": "streak",
+      "tier": 1,
+      "name": "Trinca diária",
+      "description": "Resolva em 3 datas consecutivas desta coleção.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "streak",
+        "days": 3
+      }
+    },
+    {
+      "id": "wordle_v2_streak_7",
+      "family": "streak",
+      "tier": 2,
+      "name": "Sete acertos seguidos",
+      "description": "Resolva em 7 datas consecutivas desta coleção.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "streak",
+        "days": 7
+      }
+    },
+    {
+      "id": "wordle_v2_streak_14",
+      "family": "streak",
+      "tier": 3,
+      "name": "Duas semanas certas",
+      "description": "Resolva em 14 datas consecutivas desta coleção.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "streak",
+        "days": 14
+      }
+    },
+    {
+      "id": "wordle_v2_streak_30",
+      "family": "streak",
+      "tier": 4,
+      "name": "Mês de acertos",
+      "description": "Resolva em 30 datas consecutivas desta coleção.",
+      "icon": "🏅",
+      "rarity": "epic",
+      "rewardXp": 150,
+      "hidden": false,
+      "rule": {
+        "kind": "streak",
+        "days": 30
+      }
+    },
+    {
+      "id": "wordle_v2_streak_100",
+      "family": "streak",
+      "tier": 5,
+      "name": "Cem sem pausa",
+      "description": "Resolva em 100 datas consecutivas desta coleção.",
+      "icon": "🏅",
+      "rarity": "legendary",
+      "rewardXp": 300,
+      "hidden": false,
+      "rule": {
+        "kind": "streak",
+        "days": 100
+      }
+    },
+    {
+      "id": "wordle_v2_played_streak_7",
+      "family": "participation_streak",
+      "tier": 1,
+      "name": "Toda semana",
+      "description": "Envie um palpite válido em 7 datas consecutivas, com ou sem vitória.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "played_streak",
+        "days": 7
+      }
+    },
+    {
+      "id": "wordle_v2_played_streak_30",
+      "family": "participation_streak",
+      "tier": 2,
+      "name": "Ritual diário",
+      "description": "Envie um palpite válido em 30 datas consecutivas, com ou sem vitória.",
+      "icon": "🏅",
+      "rarity": "epic",
+      "rewardXp": 150,
+      "hidden": false,
+      "rule": {
+        "kind": "played_streak",
+        "days": 30
+      }
+    },
+    {
+      "id": "wordle_v2_calendar_week",
+      "family": "calendar",
+      "tier": 1,
+      "name": "Agenda preenchida",
+      "description": "Jogue em todas as datas de uma semana já encerrada, de segunda a domingo.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "calendar_coverage",
+        "period": "week"
+      }
+    },
+    {
+      "id": "wordle_v2_calendar_month",
+      "family": "calendar",
+      "tier": 2,
+      "name": "Mês completo",
+      "description": "Jogue em todas as datas de um mês do calendário já encerrado.",
+      "icon": "🏅",
+      "rarity": "epic",
+      "rewardXp": 150,
+      "hidden": false,
+      "rule": {
+        "kind": "calendar_coverage",
+        "period": "month"
+      }
+    },
+    {
+      "id": "wordle_v2_solved_exactly_1",
+      "family": "precision",
+      "tier": 1,
+      "name": "Palpite certeiro",
+      "description": "Resolva na primeira tentativa.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "solved_exactly",
+        "attempts": 1
+      }
+    },
+    {
+      "id": "wordle_v2_solved_exactly_2",
+      "family": "precision",
+      "tier": 2,
+      "name": "Segunda é a certa",
+      "description": "Resolva em exatamente duas tentativas.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "solved_exactly",
+        "attempts": 2
+      }
+    },
+    {
+      "id": "wordle_v2_wins_within_3_10",
+      "family": "precision",
+      "tier": 3,
+      "name": "Mira treinada",
+      "description": "Resolva em até três tentativas em 10 datas elegíveis.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "wins_within",
+        "maxAttempts": 3,
+        "count": 10
+      }
+    },
+    {
+      "id": "wordle_v2_solved_after_10",
+      "family": "persistence",
+      "tier": 1,
+      "name": "Até encontrar",
+      "description": "Resolva depois de pelo menos 10 tentativas.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "solved_after",
+        "minAttempts": 10
+      }
+    },
+    {
+      "id": "wordle_v2_solved_after_20",
+      "family": "persistence",
+      "tier": 2,
+      "name": "Fôlego de sobra",
+      "description": "Resolva depois de pelo menos 20 tentativas.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "solved_after",
+        "minAttempts": 20
+      }
+    },
+    {
+      "id": "wordle_v2_all_yellow",
+      "family": "feedback",
+      "tier": 1,
+      "name": "Tudo no lugar errado",
+      "description": "Obtenha uma linha inteira amarela.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "all_yellow_row"
+      }
+    },
+    {
+      "id": "wordle_v2_blank_opening",
+      "family": "feedback",
+      "tier": 2,
+      "name": "Recomeço em cinza",
+      "description": "Abra com uma linha toda cinza e depois resolva.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "blank_start",
+        "maxAttempts": 9007199254740991
+      }
+    },
+    {
+      "id": "wordle_v2_mixed_rows",
+      "family": "feedback",
+      "tier": 3,
+      "name": "Três cores em sequência",
+      "description": "Faça três linhas consecutivas antes da solução, cada uma com verde, amarelo e cinza.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "mixed_rows",
+        "count": 3
+      }
+    },
+    {
+      "id": "wordle_v2_improvement",
+      "family": "style",
+      "tier": 1,
+      "name": "Passo a passo",
+      "description": "Resolva em pelo menos três tentativas, aumentando os verdes a cada palpite.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "staircase",
+        "minAttempts": 3
+      }
+    },
+    {
+      "id": "wordle_v2_near_miss",
+      "family": "style",
+      "tier": 2,
+      "name": "Faltava uma",
+      "description": "Resolva depois de uma linha com exatamente uma posição sem verde.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "near_miss"
+      }
+    },
+    {
+      "id": "wordle_v2_secret_7c42a1e9",
+      "family": "comeback",
+      "tier": 1,
+      "name": "O dia seguinte existe",
+      "description": "Deixe uma partida com palpites terminar sem solução.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": true,
+      "rule": {
+        "kind": "expired_unsolved"
+      }
+    },
+    {
+      "id": "wordle_v2_secret_b83d2f06",
+      "family": "comeback",
+      "tier": 2,
+      "name": "De volta ao acerto",
+      "description": "Resolva na data imediatamente após uma partida expirada sem solução.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": true,
+      "rule": {
+        "kind": "recovery"
+      }
+    },
+    {
+      "id": "wordle_v2_return_7",
+      "family": "comeback",
+      "tier": 3,
+      "name": "Bom te ver de novo",
+      "description": "Volte a jogar depois de pelo menos sete datas sem palpites elegíveis.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "return_after_gap",
+        "days": 7
+      }
+    },
+    {
+      "id": "wordle_v2_fast_60",
+      "family": "speed",
+      "tier": 1,
+      "name": "Minuto decisivo",
+      "description": "Resolva em até 60 segundos desde o primeiro palpite, com pelo menos duas tentativas.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "fast_solve",
+        "seconds": 60,
+        "minAttempts": 2
+      }
+    },
+    {
+      "id": "wordle_v2_secret_d6a09c31",
+      "family": "speed",
+      "tier": 2,
+      "name": "Meio minuto",
+      "description": "Resolva em até 30 segundos desde o primeiro palpite, com pelo menos duas tentativas.",
+      "icon": "🏅",
+      "rarity": "epic",
+      "rewardXp": 150,
+      "hidden": true,
+      "rule": {
+        "kind": "fast_solve",
+        "seconds": 30,
+        "minAttempts": 2
+      }
+    },
+    {
+      "id": "wordle_v2_secret_a14f8e52",
+      "family": "speed",
+      "tier": 3,
+      "name": "No seu tempo",
+      "description": "Resolva depois de pelo menos uma hora desde o primeiro palpite. O intervalo inclui pausas.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": true,
+      "rule": {
+        "kind": "slow_solve",
+        "seconds": 3600
+      }
+    },
+    {
+      "id": "wordle_v2_midnight",
+      "family": "timing",
+      "tier": 1,
+      "name": "Primeira hora",
+      "description": "Resolva entre 00h e 01h no fuso do jogo.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "solved_at_hours",
+        "fromHour": 0,
+        "toHour": 1
+      }
+    },
+    {
+      "id": "wordle_v2_morning",
+      "family": "timing",
+      "tier": 2,
+      "name": "Café com palavras",
+      "description": "Resolva entre 05h e 08h no fuso do jogo.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "solved_at_hours",
+        "fromHour": 5,
+        "toHour": 8
+      }
+    },
+    {
+      "id": "wordle_v2_late",
+      "family": "timing",
+      "tier": 3,
+      "name": "Antes de dormir",
+      "description": "Resolva entre 22h e meia-noite no fuso do jogo.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "solved_at_hours",
+        "fromHour": 22,
+        "toHour": 24
+      }
+    },
+    {
+      "id": "wordle_v2_first_solver_1",
+      "family": "timing",
+      "tier": 4,
+      "name": "Abriu os trabalhos",
+      "description": "Seja a primeira pessoa do servidor a resolver em uma data elegível.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "first_solver",
+        "count": 1
+      }
+    },
+    {
+      "id": "wordle_v2_first_solver_10",
+      "family": "timing",
+      "tier": 5,
+      "name": "Sempre chegando cedo",
+      "description": "Seja a primeira pessoa do servidor a resolver em 10 datas elegíveis.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "first_solver",
+        "count": 10
+      }
+    },
+    {
+      "id": "wordle_v2_both_lengths",
+      "family": "variety",
+      "tier": 1,
+      "name": "Cinco e seis",
+      "description": "Resolva palavras dos dois tamanhos, cinco e seis letras.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "answer_lengths"
+      }
+    },
+    {
+      "id": "wordle_v2_attempts_1_to_6",
+      "family": "variety",
+      "tier": 2,
+      "name": "Todos os caminhos",
+      "description": "Resolva pelo menos uma vez com cada quantidade exata de tentativas de 1 a 6.",
+      "icon": "🏅",
+      "rarity": "epic",
+      "rewardXp": 150,
+      "hidden": false,
+      "rule": {
+        "kind": "attempt_variety",
+        "maxAttempts": 6
+      }
+    },
+    {
+      "id": "wordle_v2_repeated_letters",
+      "family": "vocabulary",
+      "tier": 1,
+      "name": "Letra em dobro",
+      "description": "Resolva uma resposta com letras repetidas depois de remover os acentos.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "answer_vocabulary",
+        "feature": "repeated_letters"
+      }
+    },
+    {
+      "id": "wordle_v2_accented_answer",
+      "family": "vocabulary",
+      "tier": 2,
+      "name": "Com acento",
+      "description": "Resolva uma resposta cuja grafia canônica tenha acento.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "answer_vocabulary",
+        "feature": "accent"
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_a",
+      "family": "letters",
+      "tier": 1,
+      "name": "Letra A",
+      "description": "Forme letra a com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_a"
+      },
+      "patternPreview": {
+        "patternId": "letter_a",
+        "mask": [
+          ".#.",
+          "#.#",
+          "###",
+          "#.#",
+          "#.#"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_b",
+      "family": "letters",
+      "tier": 2,
+      "name": "Letra B",
+      "description": "Forme letra b com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_b"
+      },
+      "patternPreview": {
+        "patternId": "letter_b",
+        "mask": [
+          "##.",
+          "#.#",
+          "##.",
+          "#.#",
+          "##."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_c",
+      "family": "letters",
+      "tier": 3,
+      "name": "Letra C",
+      "description": "Forme letra c com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_c"
+      },
+      "patternPreview": {
+        "patternId": "letter_c",
+        "mask": [
+          ".##",
+          "#..",
+          "#..",
+          "#..",
+          ".##"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_d",
+      "family": "letters",
+      "tier": 4,
+      "name": "Letra D",
+      "description": "Forme letra d com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_d"
+      },
+      "patternPreview": {
+        "patternId": "letter_d",
+        "mask": [
+          "##.",
+          "#.#",
+          "#.#",
+          "#.#",
+          "##."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_e",
+      "family": "letters",
+      "tier": 5,
+      "name": "Letra E",
+      "description": "Forme letra e com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_e"
+      },
+      "patternPreview": {
+        "patternId": "letter_e",
+        "mask": [
+          "###",
+          "#..",
+          "##.",
+          "#..",
+          "###"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_f",
+      "family": "letters",
+      "tier": 6,
+      "name": "Letra F",
+      "description": "Forme letra f com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_f"
+      },
+      "patternPreview": {
+        "patternId": "letter_f",
+        "mask": [
+          "###",
+          "#..",
+          "##.",
+          "#..",
+          "#.."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_g",
+      "family": "letters",
+      "tier": 7,
+      "name": "Letra G",
+      "description": "Forme letra g com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_g"
+      },
+      "patternPreview": {
+        "patternId": "letter_g",
+        "mask": [
+          ".###.",
+          "#....",
+          "#.###",
+          "#...#",
+          ".###."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_h",
+      "family": "letters",
+      "tier": 8,
+      "name": "Letra H",
+      "description": "Forme letra h com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_h"
+      },
+      "patternPreview": {
+        "patternId": "letter_h",
+        "mask": [
+          "#.#",
+          "#.#",
+          "###",
+          "#.#",
+          "#.#"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_i",
+      "family": "letters",
+      "tier": 9,
+      "name": "Letra I",
+      "description": "Forme letra i com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_i"
+      },
+      "patternPreview": {
+        "patternId": "letter_i",
+        "mask": [
+          "###",
+          ".#.",
+          ".#.",
+          ".#.",
+          "###"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_j",
+      "family": "letters",
+      "tier": 10,
+      "name": "Letra J",
+      "description": "Forme letra j com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_j"
+      },
+      "patternPreview": {
+        "patternId": "letter_j",
+        "mask": [
+          "..#",
+          "..#",
+          "..#",
+          "#.#",
+          ".#."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_k",
+      "family": "letters",
+      "tier": 11,
+      "name": "Letra K",
+      "description": "Forme letra k com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_k"
+      },
+      "patternPreview": {
+        "patternId": "letter_k",
+        "mask": [
+          "#.#",
+          "#.#",
+          "##.",
+          "#.#",
+          "#.#"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_l",
+      "family": "letters",
+      "tier": 12,
+      "name": "Letra L",
+      "description": "Forme letra l com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_l"
+      },
+      "patternPreview": {
+        "patternId": "letter_l",
+        "mask": [
+          "#..",
+          "#..",
+          "#..",
+          "#..",
+          "###"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_m",
+      "family": "letters",
+      "tier": 13,
+      "name": "Letra M",
+      "description": "Forme letra m com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_m"
+      },
+      "patternPreview": {
+        "patternId": "letter_m",
+        "mask": [
+          "#...#",
+          "##.##",
+          "#.#.#",
+          "#...#",
+          "#...#"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_n",
+      "family": "letters",
+      "tier": 14,
+      "name": "Letra N",
+      "description": "Forme letra n com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_n"
+      },
+      "patternPreview": {
+        "patternId": "letter_n",
+        "mask": [
+          "#...#",
+          "##..#",
+          "#.#.#",
+          "#..##",
+          "#...#"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_o",
+      "family": "letters",
+      "tier": 15,
+      "name": "Letra O",
+      "description": "Forme letra o com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_o"
+      },
+      "patternPreview": {
+        "patternId": "letter_o",
+        "mask": [
+          ".#.",
+          "#.#",
+          "#.#",
+          "#.#",
+          ".#."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_p",
+      "family": "letters",
+      "tier": 16,
+      "name": "Letra P",
+      "description": "Forme letra p com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_p"
+      },
+      "patternPreview": {
+        "patternId": "letter_p",
+        "mask": [
+          "##.",
+          "#.#",
+          "##.",
+          "#..",
+          "#.."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_q",
+      "family": "letters",
+      "tier": 17,
+      "name": "Letra Q",
+      "description": "Forme letra q com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_q"
+      },
+      "patternPreview": {
+        "patternId": "letter_q",
+        "mask": [
+          ".###.",
+          "#...#",
+          "#.#.#",
+          "#..#.",
+          ".##.#"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_r",
+      "family": "letters",
+      "tier": 18,
+      "name": "Letra R",
+      "description": "Forme letra r com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_r"
+      },
+      "patternPreview": {
+        "patternId": "letter_r",
+        "mask": [
+          "####.",
+          "#...#",
+          "####.",
+          "#..#.",
+          "#...#"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_s",
+      "family": "letters",
+      "tier": 19,
+      "name": "Letra S",
+      "description": "Forme letra s com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_s"
+      },
+      "patternPreview": {
+        "patternId": "letter_s",
+        "mask": [
+          ".##",
+          "#..",
+          ".#.",
+          "..#",
+          "##."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_t",
+      "family": "letters",
+      "tier": 20,
+      "name": "Letra T",
+      "description": "Forme letra t com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_t"
+      },
+      "patternPreview": {
+        "patternId": "letter_t",
+        "mask": [
+          "###",
+          ".#.",
+          ".#.",
+          ".#.",
+          ".#."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_u",
+      "family": "letters",
+      "tier": 21,
+      "name": "Letra U",
+      "description": "Forme letra u com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_u"
+      },
+      "patternPreview": {
+        "patternId": "letter_u",
+        "mask": [
+          "#.#",
+          "#.#",
+          "#.#",
+          "#.#",
+          "###"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_v",
+      "family": "letters",
+      "tier": 22,
+      "name": "Letra V",
+      "description": "Forme letra v com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_v"
+      },
+      "patternPreview": {
+        "patternId": "letter_v",
+        "mask": [
+          "#.#",
+          "#.#",
+          "#.#",
+          ".#.",
+          ".#."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_w",
+      "family": "letters",
+      "tier": 23,
+      "name": "Letra W",
+      "description": "Forme letra w com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_w"
+      },
+      "patternPreview": {
+        "patternId": "letter_w",
+        "mask": [
+          "#...#",
+          "#...#",
+          "#.#.#",
+          "#.#.#",
+          ".#.#."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_x",
+      "family": "letters",
+      "tier": 24,
+      "name": "Letra X",
+      "description": "Forme letra x com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_x"
+      },
+      "patternPreview": {
+        "patternId": "letter_x",
+        "mask": [
+          "#.#",
+          "#.#",
+          ".#.",
+          "#.#",
+          "#.#"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_y",
+      "family": "letters",
+      "tier": 25,
+      "name": "Letra Y",
+      "description": "Forme letra y com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_y"
+      },
+      "patternPreview": {
+        "patternId": "letter_y",
+        "mask": [
+          "#.#",
+          "#.#",
+          ".#.",
+          ".#.",
+          ".#."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_letter_z",
+      "family": "letters",
+      "tier": 26,
+      "name": "Letra Z",
+      "description": "Forme letra z com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔤",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "letter_z"
+      },
+      "patternPreview": {
+        "patternId": "letter_z",
+        "mask": [
+          "###",
+          "..#",
+          ".#.",
+          "#..",
+          "###"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_digit_0",
+      "family": "digits",
+      "tier": 1,
+      "name": "Número 0",
+      "description": "Forme número 0 com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔢",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "digit_0"
+      },
+      "patternPreview": {
+        "patternId": "digit_0",
+        "mask": [
+          "###",
+          "#.#",
+          "#.#",
+          "#.#",
+          "###"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_digit_1",
+      "family": "digits",
+      "tier": 2,
+      "name": "Número 1",
+      "description": "Forme número 1 com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔢",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "digit_1"
+      },
+      "patternPreview": {
+        "patternId": "digit_1",
+        "mask": [
+          ".#.",
+          "##.",
+          ".#.",
+          ".#.",
+          "###"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_digit_2",
+      "family": "digits",
+      "tier": 3,
+      "name": "Número 2",
+      "description": "Forme número 2 com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔢",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "digit_2"
+      },
+      "patternPreview": {
+        "patternId": "digit_2",
+        "mask": [
+          "##.",
+          "..#",
+          ".#.",
+          "#..",
+          "###"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_digit_3",
+      "family": "digits",
+      "tier": 4,
+      "name": "Número 3",
+      "description": "Forme número 3 com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔢",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "digit_3"
+      },
+      "patternPreview": {
+        "patternId": "digit_3",
+        "mask": [
+          "##.",
+          "..#",
+          ".#.",
+          "..#",
+          "##."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_digit_4",
+      "family": "digits",
+      "tier": 5,
+      "name": "Número 4",
+      "description": "Forme número 4 com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔢",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "digit_4"
+      },
+      "patternPreview": {
+        "patternId": "digit_4",
+        "mask": [
+          "#.#",
+          "#.#",
+          "###",
+          "..#",
+          "..#"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_digit_5",
+      "family": "digits",
+      "tier": 6,
+      "name": "Número 5",
+      "description": "Forme número 5 com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔢",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "digit_5"
+      },
+      "patternPreview": {
+        "patternId": "digit_5",
+        "mask": [
+          "###",
+          "#..",
+          "##.",
+          "..#",
+          "##."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_digit_6",
+      "family": "digits",
+      "tier": 7,
+      "name": "Número 6",
+      "description": "Forme número 6 com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔢",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "digit_6"
+      },
+      "patternPreview": {
+        "patternId": "digit_6",
+        "mask": [
+          ".##",
+          "#..",
+          "###",
+          "#.#",
+          "###"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_digit_7",
+      "family": "digits",
+      "tier": 8,
+      "name": "Número 7",
+      "description": "Forme número 7 com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔢",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "digit_7"
+      },
+      "patternPreview": {
+        "patternId": "digit_7",
+        "mask": [
+          "###",
+          "..#",
+          ".#.",
+          ".#.",
+          ".#."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_digit_8",
+      "family": "digits",
+      "tier": 9,
+      "name": "Número 8",
+      "description": "Forme número 8 com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔢",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "digit_8"
+      },
+      "patternPreview": {
+        "patternId": "digit_8",
+        "mask": [
+          "###",
+          "#.#",
+          "###",
+          "#.#",
+          "###"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_digit_9",
+      "family": "digits",
+      "tier": 10,
+      "name": "Número 9",
+      "description": "Forme número 9 com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🔢",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "digit_9"
+      },
+      "patternPreview": {
+        "patternId": "digit_9",
+        "mask": [
+          "###",
+          "#.#",
+          "###",
+          "..#",
+          "##."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_tetromino_i",
+      "family": "tetrominoes",
+      "tier": 1,
+      "name": "Tetraminó I",
+      "description": "Forme tetraminó i com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "tetromino_i"
+      },
+      "patternPreview": {
+        "patternId": "tetromino_i",
+        "mask": [
+          "####"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_tetromino_o",
+      "family": "tetrominoes",
+      "tier": 2,
+      "name": "Tetraminó O",
+      "description": "Forme tetraminó o com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "tetromino_o"
+      },
+      "patternPreview": {
+        "patternId": "tetromino_o",
+        "mask": [
+          "##",
+          "##"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_tetromino_t",
+      "family": "tetrominoes",
+      "tier": 3,
+      "name": "Tetraminó T",
+      "description": "Forme tetraminó t com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "tetromino_t"
+      },
+      "patternPreview": {
+        "patternId": "tetromino_t",
+        "mask": [
+          "###",
+          ".#."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_tetromino_j",
+      "family": "tetrominoes",
+      "tier": 4,
+      "name": "Tetraminó J",
+      "description": "Forme tetraminó j com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "tetromino_j"
+      },
+      "patternPreview": {
+        "patternId": "tetromino_j",
+        "mask": [
+          "#..",
+          "###"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_tetromino_l",
+      "family": "tetrominoes",
+      "tier": 5,
+      "name": "Tetraminó L",
+      "description": "Forme tetraminó l com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "tetromino_l"
+      },
+      "patternPreview": {
+        "patternId": "tetromino_l",
+        "mask": [
+          "..#",
+          "###"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_tetromino_s",
+      "family": "tetrominoes",
+      "tier": 6,
+      "name": "Tetraminó S",
+      "description": "Forme tetraminó s com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "tetromino_s"
+      },
+      "patternPreview": {
+        "patternId": "tetromino_s",
+        "mask": [
+          ".##",
+          "##."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_tetromino_z",
+      "family": "tetrominoes",
+      "tier": 7,
+      "name": "Tetraminó Z",
+      "description": "Forme tetraminó z com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "common",
+      "rewardXp": 25,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "tetromino_z"
+      },
+      "patternPreview": {
+        "patternId": "tetromino_z",
+        "mask": [
+          "##.",
+          ".##"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_square_outline",
+      "family": "shapes",
+      "tier": 1,
+      "name": "Quadrado vazado",
+      "description": "Forme quadrado vazado com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "square_outline"
+      },
+      "patternPreview": {
+        "patternId": "square_outline",
+        "mask": [
+          "###",
+          "#.#",
+          "###"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_diamond_outline",
+      "family": "shapes",
+      "tier": 2,
+      "name": "Losango",
+      "description": "Forme losango com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "diamond_outline"
+      },
+      "patternPreview": {
+        "patternId": "diamond_outline",
+        "mask": [
+          ".#.",
+          "#.#",
+          ".#."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_cross",
+      "family": "shapes",
+      "tier": 3,
+      "name": "Cruz",
+      "description": "Forme cruz com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "cross"
+      },
+      "patternPreview": {
+        "patternId": "cross",
+        "mask": [
+          ".#.",
+          "###",
+          ".#."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_heart",
+      "family": "shapes",
+      "tier": 4,
+      "name": "Coração",
+      "description": "Forme coração com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "heart"
+      },
+      "patternPreview": {
+        "patternId": "heart",
+        "mask": [
+          "#.#",
+          "###",
+          "###",
+          ".#."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_arrow_up",
+      "family": "shapes",
+      "tier": 5,
+      "name": "Seta para cima",
+      "description": "Forme seta para cima com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "arrow_up"
+      },
+      "patternPreview": {
+        "patternId": "arrow_up",
+        "mask": [
+          ".#.",
+          "###",
+          ".#.",
+          ".#."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_arrow_down",
+      "family": "shapes",
+      "tier": 6,
+      "name": "Seta para baixo",
+      "description": "Forme seta para baixo com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "arrow_down"
+      },
+      "patternPreview": {
+        "patternId": "arrow_down",
+        "mask": [
+          ".#.",
+          ".#.",
+          "###",
+          ".#."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_arrow_left",
+      "family": "shapes",
+      "tier": 7,
+      "name": "Seta para a esquerda",
+      "description": "Forme seta para a esquerda com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "arrow_left"
+      },
+      "patternPreview": {
+        "patternId": "arrow_left",
+        "mask": [
+          "..#",
+          ".##",
+          "###",
+          ".##",
+          "..#"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_arrow_right",
+      "family": "shapes",
+      "tier": 8,
+      "name": "Seta para a direita",
+      "description": "Forme seta para a direita com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "arrow_right"
+      },
+      "patternPreview": {
+        "patternId": "arrow_right",
+        "mask": [
+          "#..",
+          "##.",
+          "###",
+          "##.",
+          "#.."
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_staircase",
+      "family": "shapes",
+      "tier": 9,
+      "name": "Escadinha",
+      "description": "Forme escadinha com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "staircase"
+      },
+      "patternPreview": {
+        "patternId": "staircase",
+        "mask": [
+          "#..",
+          "##.",
+          "###"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_pattern_hourglass",
+      "family": "shapes",
+      "tier": 10,
+      "name": "Ampulheta",
+      "description": "Forme ampulheta com células verdes ou amarelas. Outras células não atrapalham.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern",
+        "patternId": "hourglass"
+      },
+      "patternPreview": {
+        "patternId": "hourglass",
+        "mask": [
+          "###",
+          ".#.",
+          "###"
+        ],
+        "colors": [
+          "correct",
+          "present"
+        ],
+        "rotations": [
+          0
+        ]
+      }
+    },
+    {
+      "id": "wordle_v2_letters_5",
+      "family": "collections",
+      "tier": 1,
+      "name": "Primeiras letras",
+      "description": "Descubra cinco letras diferentes.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern_collection",
+        "family": "letter",
+        "count": 5
+      }
+    },
+    {
+      "id": "wordle_v2_letters_all",
+      "family": "collections",
+      "tier": 2,
+      "name": "Alfabeto completo",
+      "description": "Descubra as 26 letras do alfabeto.",
+      "icon": "🏅",
+      "rarity": "legendary",
+      "rewardXp": 750,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern_collection",
+        "family": "letter",
+        "count": 26
+      }
+    },
+    {
+      "id": "wordle_v2_digits_5",
+      "family": "collections",
+      "tier": 3,
+      "name": "Meia contagem",
+      "description": "Descubra cinco dígitos diferentes.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern_collection",
+        "family": "digit",
+        "count": 5
+      }
+    },
+    {
+      "id": "wordle_v2_digits_all",
+      "family": "collections",
+      "tier": 4,
+      "name": "De zero a nove",
+      "description": "Descubra os dez dígitos.",
+      "icon": "🏅",
+      "rarity": "epic",
+      "rewardXp": 150,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern_collection",
+        "family": "digit",
+        "count": 10
+      }
+    },
+    {
+      "id": "wordle_v2_tetrominoes_all",
+      "family": "collections",
+      "tier": 5,
+      "name": "Sete peças",
+      "description": "Descubra os sete tetraminós.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern_collection",
+        "family": "tetromino",
+        "count": 7
+      }
+    },
+    {
+      "id": "wordle_v2_shapes_5",
+      "family": "collections",
+      "tier": 6,
+      "name": "Caderno de desenhos",
+      "description": "Descubra cinco formas diferentes.",
+      "icon": "🏅",
+      "rarity": "rare",
+      "rewardXp": 75,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern_collection",
+        "family": "shape",
+        "count": 5
+      }
+    },
+    {
+      "id": "wordle_v2_shapes_all",
+      "family": "collections",
+      "tier": 7,
+      "name": "Galeria completa",
+      "description": "Descubra as dez formas.",
+      "icon": "🏅",
+      "rarity": "epic",
+      "rewardXp": 150,
+      "hidden": false,
+      "rule": {
+        "kind": "pattern_collection",
+        "family": "shape",
+        "count": 10
+      }
+    }
+  ],
+  "patterns": [
+    {
+      "id": "letter_a",
+      "patternId": "letter_a",
+      "family": "letter",
+      "name": "Letra A",
+      "mask": [
+        ".#.",
+        "#.#",
+        "###",
+        "#.#",
+        "#.#"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_b",
+      "patternId": "letter_b",
+      "family": "letter",
+      "name": "Letra B",
+      "mask": [
+        "##.",
+        "#.#",
+        "##.",
+        "#.#",
+        "##."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_c",
+      "patternId": "letter_c",
+      "family": "letter",
+      "name": "Letra C",
+      "mask": [
+        ".##",
+        "#..",
+        "#..",
+        "#..",
+        ".##"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_d",
+      "patternId": "letter_d",
+      "family": "letter",
+      "name": "Letra D",
+      "mask": [
+        "##.",
+        "#.#",
+        "#.#",
+        "#.#",
+        "##."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_e",
+      "patternId": "letter_e",
+      "family": "letter",
+      "name": "Letra E",
+      "mask": [
+        "###",
+        "#..",
+        "##.",
+        "#..",
+        "###"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_f",
+      "patternId": "letter_f",
+      "family": "letter",
+      "name": "Letra F",
+      "mask": [
+        "###",
+        "#..",
+        "##.",
+        "#..",
+        "#.."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_g",
+      "patternId": "letter_g",
+      "family": "letter",
+      "name": "Letra G",
+      "mask": [
+        ".###.",
+        "#....",
+        "#.###",
+        "#...#",
+        ".###."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_h",
+      "patternId": "letter_h",
+      "family": "letter",
+      "name": "Letra H",
+      "mask": [
+        "#.#",
+        "#.#",
+        "###",
+        "#.#",
+        "#.#"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_i",
+      "patternId": "letter_i",
+      "family": "letter",
+      "name": "Letra I",
+      "mask": [
+        "###",
+        ".#.",
+        ".#.",
+        ".#.",
+        "###"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_j",
+      "patternId": "letter_j",
+      "family": "letter",
+      "name": "Letra J",
+      "mask": [
+        "..#",
+        "..#",
+        "..#",
+        "#.#",
+        ".#."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_k",
+      "patternId": "letter_k",
+      "family": "letter",
+      "name": "Letra K",
+      "mask": [
+        "#.#",
+        "#.#",
+        "##.",
+        "#.#",
+        "#.#"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_l",
+      "patternId": "letter_l",
+      "family": "letter",
+      "name": "Letra L",
+      "mask": [
+        "#..",
+        "#..",
+        "#..",
+        "#..",
+        "###"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_m",
+      "patternId": "letter_m",
+      "family": "letter",
+      "name": "Letra M",
+      "mask": [
+        "#...#",
+        "##.##",
+        "#.#.#",
+        "#...#",
+        "#...#"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_n",
+      "patternId": "letter_n",
+      "family": "letter",
+      "name": "Letra N",
+      "mask": [
+        "#...#",
+        "##..#",
+        "#.#.#",
+        "#..##",
+        "#...#"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_o",
+      "patternId": "letter_o",
+      "family": "letter",
+      "name": "Letra O",
+      "mask": [
+        ".#.",
+        "#.#",
+        "#.#",
+        "#.#",
+        ".#."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_p",
+      "patternId": "letter_p",
+      "family": "letter",
+      "name": "Letra P",
+      "mask": [
+        "##.",
+        "#.#",
+        "##.",
+        "#..",
+        "#.."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_q",
+      "patternId": "letter_q",
+      "family": "letter",
+      "name": "Letra Q",
+      "mask": [
+        ".###.",
+        "#...#",
+        "#.#.#",
+        "#..#.",
+        ".##.#"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_r",
+      "patternId": "letter_r",
+      "family": "letter",
+      "name": "Letra R",
+      "mask": [
+        "####.",
+        "#...#",
+        "####.",
+        "#..#.",
+        "#...#"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_s",
+      "patternId": "letter_s",
+      "family": "letter",
+      "name": "Letra S",
+      "mask": [
+        ".##",
+        "#..",
+        ".#.",
+        "..#",
+        "##."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_t",
+      "patternId": "letter_t",
+      "family": "letter",
+      "name": "Letra T",
+      "mask": [
+        "###",
+        ".#.",
+        ".#.",
+        ".#.",
+        ".#."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_u",
+      "patternId": "letter_u",
+      "family": "letter",
+      "name": "Letra U",
+      "mask": [
+        "#.#",
+        "#.#",
+        "#.#",
+        "#.#",
+        "###"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_v",
+      "patternId": "letter_v",
+      "family": "letter",
+      "name": "Letra V",
+      "mask": [
+        "#.#",
+        "#.#",
+        "#.#",
+        ".#.",
+        ".#."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_w",
+      "patternId": "letter_w",
+      "family": "letter",
+      "name": "Letra W",
+      "mask": [
+        "#...#",
+        "#...#",
+        "#.#.#",
+        "#.#.#",
+        ".#.#."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_x",
+      "patternId": "letter_x",
+      "family": "letter",
+      "name": "Letra X",
+      "mask": [
+        "#.#",
+        "#.#",
+        ".#.",
+        "#.#",
+        "#.#"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_y",
+      "patternId": "letter_y",
+      "family": "letter",
+      "name": "Letra Y",
+      "mask": [
+        "#.#",
+        "#.#",
+        ".#.",
+        ".#.",
+        ".#."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "letter_z",
+      "patternId": "letter_z",
+      "family": "letter",
+      "name": "Letra Z",
+      "mask": [
+        "###",
+        "..#",
+        ".#.",
+        "#..",
+        "###"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "digit_0",
+      "patternId": "digit_0",
+      "family": "digit",
+      "name": "Número 0",
+      "mask": [
+        "###",
+        "#.#",
+        "#.#",
+        "#.#",
+        "###"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "digit_1",
+      "patternId": "digit_1",
+      "family": "digit",
+      "name": "Número 1",
+      "mask": [
+        ".#.",
+        "##.",
+        ".#.",
+        ".#.",
+        "###"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "digit_2",
+      "patternId": "digit_2",
+      "family": "digit",
+      "name": "Número 2",
+      "mask": [
+        "##.",
+        "..#",
+        ".#.",
+        "#..",
+        "###"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "digit_3",
+      "patternId": "digit_3",
+      "family": "digit",
+      "name": "Número 3",
+      "mask": [
+        "##.",
+        "..#",
+        ".#.",
+        "..#",
+        "##."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "digit_4",
+      "patternId": "digit_4",
+      "family": "digit",
+      "name": "Número 4",
+      "mask": [
+        "#.#",
+        "#.#",
+        "###",
+        "..#",
+        "..#"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "digit_5",
+      "patternId": "digit_5",
+      "family": "digit",
+      "name": "Número 5",
+      "mask": [
+        "###",
+        "#..",
+        "##.",
+        "..#",
+        "##."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "digit_6",
+      "patternId": "digit_6",
+      "family": "digit",
+      "name": "Número 6",
+      "mask": [
+        ".##",
+        "#..",
+        "###",
+        "#.#",
+        "###"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "digit_7",
+      "patternId": "digit_7",
+      "family": "digit",
+      "name": "Número 7",
+      "mask": [
+        "###",
+        "..#",
+        ".#.",
+        ".#.",
+        ".#."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "digit_8",
+      "patternId": "digit_8",
+      "family": "digit",
+      "name": "Número 8",
+      "mask": [
+        "###",
+        "#.#",
+        "###",
+        "#.#",
+        "###"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "digit_9",
+      "patternId": "digit_9",
+      "family": "digit",
+      "name": "Número 9",
+      "mask": [
+        "###",
+        "#.#",
+        "###",
+        "..#",
+        "##."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "tetromino_i",
+      "patternId": "tetromino_i",
+      "family": "tetromino",
+      "name": "Tetraminó I",
+      "mask": [
+        "####"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ]
+    },
+    {
+      "id": "tetromino_o",
+      "patternId": "tetromino_o",
+      "family": "tetromino",
+      "name": "Tetraminó O",
+      "mask": [
+        "##",
+        "##"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ]
+    },
+    {
+      "id": "tetromino_t",
+      "patternId": "tetromino_t",
+      "family": "tetromino",
+      "name": "Tetraminó T",
+      "mask": [
+        "###",
+        ".#."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ]
+    },
+    {
+      "id": "tetromino_j",
+      "patternId": "tetromino_j",
+      "family": "tetromino",
+      "name": "Tetraminó J",
+      "mask": [
+        "#..",
+        "###"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ]
+    },
+    {
+      "id": "tetromino_l",
+      "patternId": "tetromino_l",
+      "family": "tetromino",
+      "name": "Tetraminó L",
+      "mask": [
+        "..#",
+        "###"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ]
+    },
+    {
+      "id": "tetromino_s",
+      "patternId": "tetromino_s",
+      "family": "tetromino",
+      "name": "Tetraminó S",
+      "mask": [
+        ".##",
+        "##."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ]
+    },
+    {
+      "id": "tetromino_z",
+      "patternId": "tetromino_z",
+      "family": "tetromino",
+      "name": "Tetraminó Z",
+      "mask": [
+        "##.",
+        ".##"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0,
+        90,
+        180,
+        270
+      ]
+    },
+    {
+      "id": "square_outline",
+      "patternId": "square_outline",
+      "family": "shape",
+      "name": "Quadrado vazado",
+      "mask": [
+        "###",
+        "#.#",
+        "###"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "diamond_outline",
+      "patternId": "diamond_outline",
+      "family": "shape",
+      "name": "Losango",
+      "mask": [
+        ".#.",
+        "#.#",
+        ".#."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "cross",
+      "patternId": "cross",
+      "family": "shape",
+      "name": "Cruz",
+      "mask": [
+        ".#.",
+        "###",
+        ".#."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "heart",
+      "patternId": "heart",
+      "family": "shape",
+      "name": "Coração",
+      "mask": [
+        "#.#",
+        "###",
+        "###",
+        ".#."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "arrow_up",
+      "patternId": "arrow_up",
+      "family": "shape",
+      "name": "Seta para cima",
+      "mask": [
+        ".#.",
+        "###",
+        ".#.",
+        ".#."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "arrow_down",
+      "patternId": "arrow_down",
+      "family": "shape",
+      "name": "Seta para baixo",
+      "mask": [
+        ".#.",
+        ".#.",
+        "###",
+        ".#."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "arrow_left",
+      "patternId": "arrow_left",
+      "family": "shape",
+      "name": "Seta para a esquerda",
+      "mask": [
+        "..#",
+        ".##",
+        "###",
+        ".##",
+        "..#"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "arrow_right",
+      "patternId": "arrow_right",
+      "family": "shape",
+      "name": "Seta para a direita",
+      "mask": [
+        "#..",
+        "##.",
+        "###",
+        "##.",
+        "#.."
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "staircase",
+      "patternId": "staircase",
+      "family": "shape",
+      "name": "Escadinha",
+      "mask": [
+        "#..",
+        "##.",
+        "###"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    },
+    {
+      "id": "hourglass",
+      "patternId": "hourglass",
+      "family": "shape",
+      "name": "Ampulheta",
+      "mask": [
+        "###",
+        ".#.",
+        "###"
+      ],
+      "colors": [
+        "correct",
+        "present"
+      ],
+      "rotations": [
+        0
+      ]
+    }
+  ],
+  "conditions": [
+    "{\"kind\":\"wins\",\"count\":1}",
+    "{\"kind\":\"wins\",\"count\":10}",
+    "{\"kind\":\"wins\",\"count\":50}",
+    "{\"kind\":\"wins\",\"count\":100}",
+    "{\"kind\":\"wins\",\"count\":365}",
+    "{\"kind\":\"played\",\"days\":1}",
+    "{\"kind\":\"played\",\"days\":7}",
+    "{\"kind\":\"played\",\"days\":30}",
+    "{\"kind\":\"played\",\"days\":100}",
+    "{\"kind\":\"played\",\"days\":365}",
+    "{\"kind\":\"streak\",\"days\":3}",
+    "{\"kind\":\"streak\",\"days\":7}",
+    "{\"kind\":\"streak\",\"days\":14}",
+    "{\"kind\":\"streak\",\"days\":30}",
+    "{\"kind\":\"streak\",\"days\":100}",
+    "{\"kind\":\"played_streak\",\"days\":7}",
+    "{\"kind\":\"played_streak\",\"days\":30}",
+    "{\"kind\":\"calendar_coverage\",\"period\":\"week\"}",
+    "{\"kind\":\"calendar_coverage\",\"period\":\"month\"}",
+    "{\"kind\":\"solved_exactly\",\"attempts\":1}",
+    "{\"kind\":\"solved_exactly\",\"attempts\":2}",
+    "{\"kind\":\"wins_within\",\"maxAttempts\":3,\"count\":10}",
+    "{\"kind\":\"solved_after\",\"minAttempts\":10}",
+    "{\"kind\":\"solved_after\",\"minAttempts\":20}",
+    "{\"kind\":\"all_yellow_row\"}",
+    "{\"kind\":\"blank_start\",\"maxAttempts\":9007199254740991}",
+    "{\"kind\":\"mixed_rows\",\"count\":3}",
+    "{\"kind\":\"staircase\",\"minAttempts\":3}",
+    "{\"kind\":\"near_miss\"}",
+    "{\"kind\":\"expired_unsolved\"}",
+    "{\"kind\":\"recovery\"}",
+    "{\"kind\":\"return_after_gap\",\"days\":7}",
+    "{\"kind\":\"fast_solve\",\"seconds\":60,\"minAttempts\":2}",
+    "{\"kind\":\"fast_solve\",\"seconds\":30,\"minAttempts\":2}",
+    "{\"kind\":\"slow_solve\",\"seconds\":3600}",
+    "{\"kind\":\"solved_at_hours\",\"fromHour\":0,\"toHour\":1}",
+    "{\"kind\":\"solved_at_hours\",\"fromHour\":5,\"toHour\":8}",
+    "{\"kind\":\"solved_at_hours\",\"fromHour\":22,\"toHour\":24}",
+    "{\"kind\":\"first_solver\",\"count\":1}",
+    "{\"kind\":\"first_solver\",\"count\":10}",
+    "{\"kind\":\"answer_lengths\"}",
+    "{\"kind\":\"attempt_variety\",\"maxAttempts\":6}",
+    "{\"kind\":\"answer_vocabulary\",\"feature\":\"repeated_letters\"}",
+    "{\"kind\":\"answer_vocabulary\",\"feature\":\"accent\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_a\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_b\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_c\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_d\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_e\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_f\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_g\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_h\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_i\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_j\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_k\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_l\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_m\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_n\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_o\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_p\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_q\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_r\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_s\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_t\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_u\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_v\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_w\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_x\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_y\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"letter_z\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"digit_0\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"digit_1\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"digit_2\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"digit_3\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"digit_4\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"digit_5\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"digit_6\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"digit_7\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"digit_8\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"digit_9\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"tetromino_i\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"tetromino_o\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"tetromino_t\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"tetromino_j\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"tetromino_l\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"tetromino_s\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"tetromino_z\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"square_outline\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"diamond_outline\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"cross\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"heart\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"arrow_up\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"arrow_down\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"arrow_left\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"arrow_right\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"staircase\"}",
+    "{\"kind\":\"pattern\",\"patternId\":\"hourglass\"}",
+    "{\"kind\":\"pattern_collection\",\"family\":\"letter\",\"count\":5}",
+    "{\"kind\":\"pattern_collection\",\"family\":\"letter\",\"count\":26}",
+    "{\"kind\":\"pattern_collection\",\"family\":\"digit\",\"count\":5}",
+    "{\"kind\":\"pattern_collection\",\"family\":\"digit\",\"count\":10}",
+    "{\"kind\":\"pattern_collection\",\"family\":\"tetromino\",\"count\":7}",
+    "{\"kind\":\"pattern_collection\",\"family\":\"shape\",\"count\":5}",
+    "{\"kind\":\"pattern_collection\",\"family\":\"shape\",\"count\":10}"
+  ]
+}

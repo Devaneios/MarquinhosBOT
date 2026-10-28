@@ -1,24 +1,15 @@
-import { WORDLE_ACHIEVEMENT_CATALOG } from './catalog';
+import { dayNumber, type WordleDayRecord } from '../../playerStats';
+import { WORDLE_ACHIEVEMENT_CATALOG } from '../catalog';
+import { WORDLE_PATTERN_CATALOG } from '../patterns';
 import {
   bestParticipationStreak,
-  completeFeedback,
+  buildWordleAchievementFacts,
   elapsedSeconds,
   hasCalendarCoverage,
-  toAchievementHistoryDay,
-  type AchievementHistoryDay,
-} from './historyFacts';
-import { WORDLE_PATTERN_CATALOG } from './patterns';
+  type WordleAchievementFacts,
+  type WordleEvaluationOptions,
+} from './history';
 import type { WordleAchievementRule } from './rules';
-import {
-  computeWordlePlayerStats,
-  dayNumber,
-  playedDays,
-  type WordleDayRecord,
-  type WordlePlayerStats,
-  type WordleStatsOptions,
-} from './stats';
-
-export const WORDLE_ACHIEVEMENT_TIME_ZONE = 'America/Recife';
 
 export interface WordleAchievementProgress {
   current: number;
@@ -32,56 +23,6 @@ export interface WordleRuleResult {
 
 export interface WordleAchievementEvaluation extends WordleRuleResult {
   id: string;
-}
-
-export interface WordleAchievementFacts {
-  stats: WordlePlayerStats;
-  solved: AchievementHistoryDay[];
-  played: AchievementHistoryDay[];
-  today: string;
-  discoveryIds: ReadonlySet<string>;
-  solvedHours: number[];
-}
-
-export interface WordleEvaluationOptions extends WordleStatsOptions {
-  timeZone?: string;
-  discoveryIds?: ReadonlySet<string>;
-}
-
-function localHour(epochSeconds: number, formatter: Intl.DateTimeFormat) {
-  const part = formatter
-    .formatToParts(new Date(epochSeconds * 1000))
-    .find((p) => p.type === 'hour');
-  return Number(part?.value ?? 0) % 24;
-}
-
-export function buildWordleAchievementFacts(
-  days: readonly WordleDayRecord[],
-  options: WordleEvaluationOptions,
-): WordleAchievementFacts {
-  const played = playedDays([
-    ...new Map(
-      days
-        .filter((day) => day.date <= options.today)
-        .map((day) => [day.date, toAchievementHistoryDay(day)]),
-    ).values(),
-  ]).map(toAchievementHistoryDay);
-  const solved = played.filter((day) => day.solved);
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: options.timeZone ?? WORDLE_ACHIEVEMENT_TIME_ZONE,
-    hour: 'numeric',
-    hourCycle: 'h23',
-  });
-  return {
-    stats: computeWordlePlayerStats(played, { today: options.today }),
-    played,
-    today: options.today,
-    discoveryIds: options.discoveryIds ?? new Set(),
-    solved,
-    solvedHours: solved
-      .filter((day) => day.solvedAt !== null)
-      .map((day) => localHour(day.solvedAt!, formatter)),
-  };
 }
 
 function counter(current: number, target: number): WordleRuleResult {
@@ -99,12 +40,16 @@ export function evaluateWordleRule(
   rule: WordleAchievementRule,
   facts: WordleAchievementFacts,
 ): WordleRuleResult {
-  const { stats, solved, solvedHours, played, today, discoveryIds } = facts;
-  const matrices = played.flatMap((day) => {
-    const feedback = completeFeedback(day);
-    return feedback === null ? [] : [{ day, feedback }];
-  });
-  const evidenced = matrices.filter(({ day }) => day.solved);
+  const {
+    stats,
+    solved,
+    solvedHours,
+    played,
+    today,
+    discoveryIds,
+    matrices,
+    solvedMatrices,
+  } = facts;
   switch (rule.kind) {
     case 'wins':
       return counter(stats.wins, rule.count);
@@ -141,7 +86,7 @@ export function evaluateWordleRule(
       );
     case 'blank_start':
       return flag(
-        evidenced.some(
+        solvedMatrices.some(
           ({ day, feedback }) =>
             day.attempts >= 2 &&
             day.attempts <= rule.maxAttempts &&
@@ -150,7 +95,7 @@ export function evaluateWordleRule(
       );
     case 'staircase':
       return flag(
-        evidenced.some(({ day, feedback }) => {
+        solvedMatrices.some(({ day, feedback }) => {
           const counts = feedback.map(
             (row) => row.filter((cell) => cell === 'correct').length,
           );

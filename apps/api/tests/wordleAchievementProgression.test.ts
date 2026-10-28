@@ -6,7 +6,7 @@ import {
   wordleSessions,
 } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
-import { matchWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/matchPatterns';
+import { matchWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/engine/matchPatterns';
 import { WORDLE_PATTERN_CATALOG } from '@marquinhos/domain/games/wordle/achievements/patterns';
 import { afterAll, beforeAll, describe, expect, it, spyOn } from 'bun:test';
 import { and, eq } from 'drizzle-orm';

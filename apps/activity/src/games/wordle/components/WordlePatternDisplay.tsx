@@ -29,34 +29,40 @@ export function WordlePatternDisplay({
             {t('patternSubsetHint')}
           </p>
           <div className="flex flex-wrap gap-5">
-            {preview.colors.map((color) => (
-              <figure key={color} className="flex flex-col gap-2">
-                <figcaption className="text-xs text-marquinhos-text-dim">
-                  {t(`patternColor.${color}`)}
-                </figcaption>
-                <div
-                  role="img"
-                  aria-label={t('patternPreviewLabel', {
-                    color: t(`patternColor.${color}`),
-                  })}
-                  className="grid w-fit gap-1"
-                  style={{
-                    gridTemplateColumns: `repeat(${preview.mask[0]?.length ?? 1}, 1.25rem)`,
-                  }}
-                >
-                  {preview.mask.flatMap((row, rowIndex) =>
-                    [...row].map((cell, column) => (
-                      <span
-                        key={`${rowIndex},${column}`}
-                        data-required={cell === '#'}
-                        aria-hidden="true"
-                        className={`h-5 w-5 rounded-sm border ${cell === '#' ? `${CELL_COLORS[color]} border-white/30` : 'border-dashed border-white/20'}`}
-                      />
-                    )),
-                  )}
-                </div>
-              </figure>
-            ))}
+            {[preview.mask, ...(preview.variants ?? [])].flatMap(
+              (mask, variant) =>
+                preview.colors.map((color) => (
+                  <figure
+                    key={`${variant}-${color}`}
+                    className="flex flex-col gap-2"
+                  >
+                    <figcaption className="text-xs text-marquinhos-text-dim">
+                      {t(`patternColor.${color}`)}
+                    </figcaption>
+                    <div
+                      role="img"
+                      aria-label={t('patternPreviewLabel', {
+                        color: t(`patternColor.${color}`),
+                      })}
+                      className="grid w-fit gap-1"
+                      style={{
+                        gridTemplateColumns: `repeat(${mask[0]?.length ?? 1}, 1.25rem)`,
+                      }}
+                    >
+                      {mask.flatMap((row, rowIndex) =>
+                        [...row].map((cell, column) => (
+                          <span
+                            key={`${rowIndex},${column}`}
+                            data-required={cell === '#'}
+                            aria-hidden="true"
+                            className={`h-5 w-5 rounded-sm border ${cell === '#' ? `${CELL_COLORS[color]} border-white/30` : 'border-dashed border-white/20'}`}
+                          />
+                        )),
+                      )}
+                    </div>
+                  </figure>
+                )),
+            )}
           </div>
           {preview.rotations.length > 1 && (
             <p className="text-xs text-marquinhos-text-dim">

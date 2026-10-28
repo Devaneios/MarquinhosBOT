@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'bun:test';
-import { computeWordlePlayerStats, solvedRuns } from './stats';
-import { addDays, failedDay, rows, solvedDay, solvedStreak } from './testing';
+import {
+  addDays,
+  failedDay,
+  rows,
+  solvedDay,
+  solvedStreak,
+} from './achievements/testing';
+import { computeWordlePlayerStats, solvedRuns } from './playerStats';
 
 const TODAY = '2026-10-24';
 

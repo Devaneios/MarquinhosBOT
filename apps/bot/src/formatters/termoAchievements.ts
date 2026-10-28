@@ -2,7 +2,7 @@ import type {
   WordleAchievementStatus,
   WordleAchievementsOverview,
 } from '@marquinhos/contracts/wordle';
-import { WORDLE_ACHIEVEMENT_FAMILIES } from '@marquinhos/domain/games/wordle/achievements/rules';
+import { WORDLE_ACHIEVEMENT_FAMILIES } from '@marquinhos/domain/games/wordle/achievements/families';
 import { baseEmbed, type BaseEmbedClient } from '@marquinhos/utils/discord';
 import type { EmbedBuilder } from 'discord.js';
 

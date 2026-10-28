@@ -13,7 +13,7 @@ afterAll(async () => {
 describe('achievement version migration', () => {
   it('keeps version one active until explicit activation', async () => {
     expect(await testDb.db.select().from(wordleAchievementVersions)).toEqual([
-      { version: 1, active: true, activated_at: 0 },
+      { version: 1, active: true, activated_at: 0, catalog_revision: 0 },
     ]);
     expect(await testDb.db.select().from(wordlePatternDiscoveries)).toEqual([]);
   });

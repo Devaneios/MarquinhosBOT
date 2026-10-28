@@ -1,0 +1,1 @@
+ALTER TABLE "wordle_achievement_versions" ADD COLUMN "catalog_revision" integer DEFAULT 0 NOT NULL;

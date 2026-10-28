@@ -22,14 +22,14 @@ import {
   WORDLE_ACHIEVEMENT_CATALOG,
   WORDLE_ACHIEVEMENT_VERSION,
 } from '@marquinhos/domain/games/wordle/achievements/catalog';
-import { evaluateWordleAchievements } from '@marquinhos/domain/games/wordle/achievements/evaluate';
-import type { AchievementHistoryDay } from '@marquinhos/domain/games/wordle/achievements/historyFacts';
+import { evaluateWordleAchievements } from '@marquinhos/domain/games/wordle/achievements/engine/evaluate';
 import {
-  matchWordlePatterns,
   parseAchievementMatrix,
-} from '@marquinhos/domain/games/wordle/achievements/matchPatterns';
+  type AchievementHistoryDay,
+} from '@marquinhos/domain/games/wordle/achievements/engine/history';
+import { matchWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/engine/matchPatterns';
 import { getWordlePatternPreview } from '@marquinhos/domain/games/wordle/achievements/patterns';
-import { computeWordlePlayerStats } from '@marquinhos/domain/games/wordle/achievements/stats';
+import { computeWordlePlayerStats } from '@marquinhos/domain/games/wordle/playerStats';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 import {
   and,

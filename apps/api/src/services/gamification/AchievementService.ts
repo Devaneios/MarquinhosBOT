@@ -105,7 +105,7 @@ export class AchievementService {
         )
         .onConflictDoNothing();
     }
-    await db.transaction((tx) => syncCompatibleWordleCatalog(tx));
+    await syncCompatibleWordleCatalog(db);
   }
 
   async checkAndAwardAchievements(
@@ -210,6 +210,21 @@ export class AchievementService {
     achievementId: string,
     exec: DbExecutor = db,
   ): Promise<boolean> {
+    if (exec === db)
+      return db.transaction((tx) =>
+        this.unlockAchievement(userId, guildId, achievementId, tx),
+      );
+    const [candidate] = await exec
+      .select({ category: achievements.category })
+      .from(achievements)
+      .where(eq(achievements.id, achievementId));
+    if (!candidate) return false;
+    if (
+      candidate.category === 'wordle' &&
+      (await getActiveWordleAchievementVersion(exec, 'share')) !==
+        WORDLE_ACHIEVEMENT_VERSION
+    )
+      return false;
     const [achievement] = await exec
       .select()
       .from(achievements)
@@ -223,9 +238,7 @@ export class AchievementService {
     if (!achievement) return false;
     if (
       achievement.category === 'wordle' &&
-      (achievement.wordle_version !== WORDLE_ACHIEVEMENT_VERSION ||
-        achievement.wordle_version !==
-          (await getActiveWordleAchievementVersion(exec, 'share')))
+      achievement.wordle_version !== WORDLE_ACHIEVEMENT_VERSION
     )
       return false;
     await this.levelingService.ensureUser(userId, guildId, exec);

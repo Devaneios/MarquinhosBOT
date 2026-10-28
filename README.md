@@ -5,6 +5,21 @@ Activity for playing games inside Discord, including Terminhos, its daily word
 game. You can start a Terminhos puzzle through the bot and pick it up in the
 Activity with the same saved guesses.
 
+<!--
+Add the real screenshots at the paths below, then remove this comment block's
+opening and closing markers to display them.
+
+## Screenshots
+
+### Terminhos in the Activity
+
+![Terminhos board inside the Discord Activity](docs/screenshots/terminhos-activity.png)
+
+### Terminhos through the bot
+
+![Terminhos board in a Discord bot reply](docs/screenshots/terminhos-bot.png)
+-->
+
 Everything lives here: the bot, API, Activity, shared packages, and database code.
 The project uses TypeScript, pnpm, Bun, and Turborepo, with Express and Colyseus
 on the API side and PostgreSQL for storage.

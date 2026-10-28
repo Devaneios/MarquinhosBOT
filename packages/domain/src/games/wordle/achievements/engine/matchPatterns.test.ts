@@ -1,10 +1,8 @@
 import type { LetterFeedback } from '@marquinhos/contracts/wordle';
 import { describe, expect, it } from 'bun:test';
-import { matchWordlePatterns, parseAchievementMatrix } from './matchPatterns';
-import {
-  WORDLE_PATTERN_CATALOG,
-  type WordlePatternDefinition,
-} from './patterns';
+import { WORDLE_PATTERN_CATALOG } from '../patterns';
+import type { WordlePatternDefinition } from '../types';
+import { matchWordlePatterns } from './matchPatterns';
 
 function matrix(...rows: string[]): LetterFeedback[][] {
   return rows.map((row) =>
@@ -35,7 +33,8 @@ describe('pattern matching', () => {
     ).toHaveLength(10);
   });
   it('matches every silhouette at both board edges and loses it when any required cell is removed', () => {
-    for (const template of WORDLE_PATTERN_CATALOG) {
+    for (const full of WORDLE_PATTERN_CATALOG) {
+      const template = { ...full, variants: [] };
       for (const color of ['correct', 'present'] as const) {
         const exact = template.mask.map((row) =>
           [...row].map((cell) => (cell === '#' ? color : 'absent')),
@@ -154,51 +153,58 @@ describe('pattern matching', () => {
   });
 });
 
-describe('parseAchievementMatrix', () => {
-  const valid = JSON.stringify([
-    {
-      guess: 'teste',
-      feedback: ['correct', 'present', 'absent', 'absent', 'absent'],
-    },
-  ]);
-  it('preserves all accepted rows', () =>
-    expect(parseAchievementMatrix(valid, 5, 1)).toEqual(matrix('cpaaa')));
-  it('rejects corrupt middle rows rather than joining the neighbors', () => {
-    const rows = [
-      {
-        guess: 'teste',
-        feedback: ['correct', 'present', 'absent', 'absent', 'absent'],
-      },
-      { guess: 'ruim', feedback: ['invalid'] },
-      {
-        guess: 'teste',
-        feedback: ['correct', 'present', 'absent', 'absent', 'absent'],
-      },
-    ];
-    expect(parseAchievementMatrix(JSON.stringify(rows), 5, 3)).toBeNull();
+describe('wider pattern variants', () => {
+  const h = WORDLE_PATTERN_CATALOG.find((p) => p.id === 'letter_h');
+  if (!h?.variants?.length) throw new Error('letter_h needs a variant');
+
+  it('matches the wide variant when the narrow base does not fit', () => {
+    const wide = matrix('c...c', 'c...c', 'ccccc', 'c...c', 'c...c');
+    const found = matchWordlePatterns(wide, [h]);
+    expect(found).toHaveLength(1);
+    expect(found[0]?.cells).toHaveLength(13);
   });
-  it('rejects a guess whose length disagrees with its feedback width', () => {
-    expect(
-      parseAchievementMatrix(
-        JSON.stringify([
-          {
-            guess: 'four',
-            feedback: ['correct', 'present', 'absent', 'absent', 'absent'],
-          },
-        ]),
-        5,
-        1,
-      ),
-    ).toBeNull();
+
+  it('every variant is minimal: removing any required cell breaks it', () => {
+    for (const pattern of WORDLE_PATTERN_CATALOG) {
+      for (const variant of pattern.variants ?? []) {
+        const only = { ...pattern, mask: variant, variants: [] };
+        const rows = variant.map((row) =>
+          [...row].map((c) => (c === '#' ? 'c' : '.')).join(''),
+        );
+        expect(matchWordlePatterns(matrix(...rows), [only])).toHaveLength(1);
+        rows.forEach((row, r) =>
+          [...row].forEach((cell, c) => {
+            if (cell !== 'c') return;
+            const broken = rows.map((x, i) =>
+              i === r ? `${x.slice(0, c)  }.${  x.slice(c + 1)}` : x,
+            );
+            expect(matchWordlePatterns(matrix(...broken), [only])).toHaveLength(
+              0,
+            );
+          }),
+        );
+      }
+    }
   });
-  it('rejects malformed JSON, unknown width, mismatched counters and row widths', () => {
-    for (const [json, width, attempts] of [
-      [valid, null, 1],
-      [valid, 6, 1],
-      [valid, 5, 2],
-      ['bad', 5, 1],
-      ['[]', 5, 0],
-    ] satisfies [string, number | null, number][])
-      expect(parseAchievementMatrix(json, width, attempts)).toBeNull();
+
+  it('keeps every variant between the base width and the 5-column board', () => {
+    for (const pattern of WORDLE_PATTERN_CATALOG)
+      for (const variant of pattern.variants ?? []) {
+        expect(variant[0]?.length).toBeGreaterThanOrEqual(
+          pattern.mask[0]?.length ?? 0,
+        );
+        expect(variant[0]?.length).toBeLessThanOrEqual(5);
+      }
+  });
+
+  it('has distinct variants with no empty edge columns', () => {
+    for (const pattern of WORDLE_PATTERN_CATALOG) {
+      const forms = [pattern.mask, ...(pattern.variants ?? [])];
+      expect(new Set(forms.map((f) => f.join('\n'))).size).toBe(forms.length);
+      for (const form of forms) {
+        expect(form.some((row) => row.startsWith('#'))).toBe(true);
+        expect(form.some((row) => row.endsWith('#'))).toBe(true);
+      }
+    }
   });
 });

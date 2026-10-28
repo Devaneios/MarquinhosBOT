@@ -1,5 +1,5 @@
 import type { GuessRow, LetterFeedback } from '@marquinhos/contracts/wordle';
-import type { WordleDayRecord } from './stats';
+import type { WordleDayRecord } from '../playerStats';
 
 const CODES: Record<string, LetterFeedback> = {
   c: 'correct',

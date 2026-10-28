@@ -8,7 +8,10 @@ import {
   wordlePatternDiscoveries,
   wordleSessions,
 } from '@marquinhos/database/schema';
-import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
+import {
+  WORDLE_ACHIEVEMENT_CATALOG,
+  WORDLE_ACHIEVEMENT_CATALOG_REVISION,
+} from '@marquinhos/domain/games/wordle/achievements/catalog';
 import {
   afterAll,
   beforeAll,
@@ -201,6 +204,40 @@ describe('Wordle achievement activation boundary', () => {
         .where(eq(wordlePatternDiscoveries.guild_id, guildId)),
     ).toEqual([]);
     await db.delete(achievements).where(eq(achievements.id, customId));
+  });
+
+  it('activation retires current-version definitions missing from the catalog and reports them', async () => {
+    const before = await inspectWordleAchievementActivation();
+    const [omitted] = await db
+      .insert(achievements)
+      .values({
+        id: `wordle_v2_removed_${randomUUID()}`,
+        name: 'Removida',
+        description: 'Fora do catálogo atual.',
+        category: 'wordle',
+        rarity: 'common',
+        icon: '🏅',
+        condition: JSON.stringify({ kind: 'wins', count: 1 }),
+        reward_xp: 25,
+        wordle_version: 2,
+      })
+      .returning();
+    if (!omitted) throw new Error('Missing seeded achievement');
+    try {
+      expect(
+        (await inspectWordleAchievementActivation()).definitionsToArchive,
+      ).toBe(before.definitionsToArchive + 1);
+      expect(await activateWordleAchievements()).toMatchObject({
+        catalogRevision: WORDLE_ACHIEVEMENT_CATALOG_REVISION,
+      });
+      const [retired] = await db
+        .select()
+        .from(achievements)
+        .where(eq(achievements.id, omitted.id));
+      expect(retired?.archived_at).toBeNumber();
+    } finally {
+      await db.delete(achievements).where(eq(achievements.id, omitted.id));
+    }
   });
 
   it('activation retries preserve the activation record and earned progress', async () => {

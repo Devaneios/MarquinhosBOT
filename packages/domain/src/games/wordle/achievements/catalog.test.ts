@@ -3,20 +3,50 @@ import { wordlePatternPreviewSchema } from '@marquinhos/contracts/wordle';
 import { describe, expect, it } from 'bun:test';
 import {
   WORDLE_ACHIEVEMENT_CATALOG,
+  WORDLE_ACHIEVEMENT_CATALOG_REVISION,
   WORDLE_ACHIEVEMENT_VERSION,
 } from './catalog';
+import { wordleAchievementRuleSchema } from './engine/rules';
+import { WORDLE_ACHIEVEMENT_FAMILIES } from './families';
+import revisions from './fixtures/catalog-revisions.json';
 import { WORDLE_PATTERN_CATALOG } from './patterns';
-import {
-  WORDLE_ACHIEVEMENT_FAMILIES,
-  wordleAchievementRuleSchema,
-} from './rules';
 
 describe('version 2 catalog', () => {
   it('uses unique identities for the current collection', () => {
     expect(WORDLE_ACHIEVEMENT_VERSION).toBe(2);
     const ids = WORDLE_ACHIEVEMENT_CATALOG.map((d) => d.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids.every((id) => id.startsWith('wordle_v2_'))).toBe(true);
+    expect(
+      ids.every((id) =>
+        id.startsWith(`wordle_v${WORDLE_ACHIEVEMENT_VERSION}_`),
+      ),
+    ).toBe(true);
+  });
+  it('records a new revision whenever persisted content changes', () => {
+    const fingerprint = new Bun.CryptoHasher('sha256')
+      .update(
+        JSON.stringify(
+          WORDLE_ACHIEVEMENT_CATALOG.map((d) => [
+            d.id,
+            d.name,
+            d.description,
+            d.rarity,
+            d.icon,
+            JSON.stringify(d.rule),
+            d.rewardXp,
+          ]),
+        ),
+      )
+      .digest('hex');
+    const recorded: Record<string, string> = revisions;
+    const latest = Math.max(0, ...Object.keys(recorded).map(Number));
+    if (
+      latest !== WORDLE_ACHIEVEMENT_CATALOG_REVISION ||
+      recorded[latest] !== fingerprint
+    )
+      throw new Error(
+        `Persisted catalog content changed. Set WORDLE_ACHIEVEMENT_CATALOG_REVISION to ${latest + 1} and add "${latest + 1}": "${fingerprint}" to fixtures/catalog-revisions.json.`,
+      );
   });
   it('publishes every drawing with a validated preview and no hidden drawings', () => {
     const patterns = WORDLE_ACHIEVEMENT_CATALOG.filter(

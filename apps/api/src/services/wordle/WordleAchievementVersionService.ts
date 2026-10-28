@@ -7,9 +7,10 @@ import {
 } from '@marquinhos/database/schema';
 import {
   WORDLE_ACHIEVEMENT_CATALOG,
+  WORDLE_ACHIEVEMENT_CATALOG_REVISION,
   WORDLE_ACHIEVEMENT_VERSION,
 } from '@marquinhos/domain/games/wordle/achievements/catalog';
-import { and, count, eq, isNull, ne, or, sql } from 'drizzle-orm';
+import { and, count, eq, isNull, ne, notInArray, or, sql } from 'drizzle-orm';
 
 export async function getActiveWordleAchievementVersion(
   exec: DbExecutor,
@@ -70,33 +71,71 @@ async function seedCatalog(exec: DbExecutor) {
     });
 }
 
+const oldDefinitions = and(
+  eq(achievements.category, 'wordle'),
+  or(
+    isNull(achievements.wordle_version),
+    ne(achievements.wordle_version, WORDLE_ACHIEVEMENT_VERSION),
+  ),
+);
+
+const omittedCurrentDefinitions = and(
+  eq(achievements.category, 'wordle'),
+  eq(achievements.wordle_version, WORDLE_ACHIEVEMENT_VERSION),
+  notInArray(
+    achievements.id,
+    WORDLE_ACHIEVEMENT_CATALOG.map((definition) => definition.id),
+  ),
+);
+
+// Callers hold the exclusive version anchor lock. A process built from an
+// older catalog revision must not undo a newer deploy.
+async function reconcileCatalog(exec: DbExecutor): Promise<boolean> {
+  const [record] = await exec
+    .select({ revision: wordleAchievementVersions.catalog_revision })
+    .from(wordleAchievementVersions)
+    .where(eq(wordleAchievementVersions.version, WORDLE_ACHIEVEMENT_VERSION));
+  if ((record?.revision ?? 0) > WORDLE_ACHIEVEMENT_CATALOG_REVISION)
+    return false;
+  await seedCatalog(exec);
+  await exec
+    .update(achievements)
+    .set({ archived_at: Date.now() })
+    .where(and(omittedCurrentDefinitions, isNull(achievements.archived_at)));
+  await exec
+    .update(wordleAchievementVersions)
+    .set({ catalog_revision: WORDLE_ACHIEVEMENT_CATALOG_REVISION })
+    .where(eq(wordleAchievementVersions.version, WORDLE_ACHIEVEMENT_VERSION));
+  return true;
+}
+
 export async function syncCompatibleWordleCatalog(
   exec: DbExecutor,
 ): Promise<boolean> {
+  if (exec === db)
+    return db.transaction((tx) => syncCompatibleWordleCatalog(tx));
   if (
-    (await getActiveWordleAchievementVersion(exec, 'share')) !==
+    (await getActiveWordleAchievementVersion(exec, 'update')) !==
     WORDLE_ACHIEVEMENT_VERSION
   )
     return false;
-  await seedCatalog(exec);
-  return true;
+  if (await reconcileCatalog(exec)) return true;
+  console.warn(
+    '[wordle]',
+    `Skipped catalog sync: the database holds a newer revision than ${WORDLE_ACHIEVEMENT_CATALOG_REVISION}`,
+  );
+  return false;
 }
 
 export async function inspectWordleAchievementActivation(
   exec: DbExecutor = db,
 ) {
   const currentVersion = await getActiveWordleAchievementVersion(exec);
-  const oldDefinitions = and(
-    eq(achievements.category, 'wordle'),
-    or(
-      isNull(achievements.wordle_version),
-      ne(achievements.wordle_version, WORDLE_ACHIEVEMENT_VERSION),
-    ),
-  );
+  const retiringDefinitions = or(oldDefinitions, omittedCurrentDefinitions);
   const [entries] = await exec
     .select({ count: count() })
     .from(achievements)
-    .where(and(oldDefinitions, isNull(achievements.archived_at)));
+    .where(and(retiringDefinitions, isNull(achievements.archived_at)));
   const [unlocks] = await exec
     .select({ count: count() })
     .from(userAchievements)
@@ -104,7 +143,7 @@ export async function inspectWordleAchievementActivation(
       achievements,
       eq(achievements.id, userAchievements.achievement_id),
     )
-    .where(oldDefinitions);
+    .where(retiringDefinitions);
   const sessions = await exec
     .select({ version: wordleSessions.achievement_version, count: count() })
     .from(wordleSessions)
@@ -118,6 +157,8 @@ export async function inspectWordleAchievementActivation(
     proposedVersion: WORDLE_ACHIEVEMENT_VERSION,
     alreadyActive: currentVersion === WORDLE_ACHIEVEMENT_VERSION,
     activatedAt: record?.activated_at ?? null,
+    catalogRevision: record?.catalog_revision ?? 0,
+    proposedCatalogRevision: WORDLE_ACHIEVEMENT_CATALOG_REVISION,
     definitionsToArchive: entries?.count ?? 0,
     unlocksPreserved: unlocks?.count ?? 0,
     proposedDefinitions: WORDLE_ACHIEVEMENT_CATALOG.length,
@@ -140,17 +181,7 @@ export async function activateWordleAchievements() {
     await tx
       .update(achievements)
       .set({ archived_at: now })
-      .where(
-        and(
-          eq(achievements.category, 'wordle'),
-          isNull(achievements.archived_at),
-          or(
-            isNull(achievements.wordle_version),
-            ne(achievements.wordle_version, WORDLE_ACHIEVEMENT_VERSION),
-          ),
-        ),
-      );
-    await seedCatalog(tx);
+      .where(and(oldDefinitions, isNull(achievements.archived_at)));
     await tx
       .update(wordleAchievementVersions)
       .set({ active: false })
@@ -166,6 +197,10 @@ export async function activateWordleAchievements() {
         target: wordleAchievementVersions.version,
         set: { active: true },
       });
+    if (!(await reconcileCatalog(tx)))
+      throw new Error(
+        `Refusing to activate catalog revision ${WORDLE_ACHIEVEMENT_CATALOG_REVISION} over a newer one`,
+      );
     return inspectWordleAchievementActivation(tx);
   });
 }

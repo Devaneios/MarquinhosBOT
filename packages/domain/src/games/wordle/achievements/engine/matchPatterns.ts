@@ -1,44 +1,13 @@
-import {
-  guessRowSchema,
-  type LetterFeedback,
-  type WordlePatternEvidence,
-  type WordlePatternPreview,
+import type {
+  LetterFeedback,
+  WordlePatternEvidence,
+  WordlePatternPreview,
 } from '@marquinhos/contracts/wordle';
-import { z } from 'zod';
-import {
-  WORDLE_PATTERN_CATALOG,
-  type WordlePatternDefinition,
-} from './patterns';
+import { WORDLE_PATTERN_CATALOG } from '../patterns';
+import type { WordlePatternDefinition } from '../types';
 
 type Match = Omit<WordlePatternEvidence, 'feedback' | 'date'>;
 type Cell = WordlePatternEvidence['cells'][number];
-
-export function parseAchievementMatrix(
-  serializedGuesses: string,
-  expectedWidth: number | null,
-  attempts: number,
-): LetterFeedback[][] | null {
-  if (expectedWidth === null || expectedWidth <= 0 || attempts <= 0)
-    return null;
-  try {
-    const result = z
-      .array(guessRowSchema)
-      .safeParse(JSON.parse(serializedGuesses));
-    if (
-      !result.success ||
-      result.data.length !== attempts ||
-      result.data.some(
-        (row) =>
-          row.feedback.length !== expectedWidth ||
-          row.guess.length !== expectedWidth,
-      )
-    )
-      return null;
-    return result.data.map((row) => row.feedback);
-  } catch {
-    return null;
-  }
-}
 
 function geometry(
   mask: readonly string[],
@@ -67,10 +36,13 @@ export function matchWordlePatterns(
   if (width === 0 || matrix.some((row) => row.length !== width)) return [];
   const matches: Match[] = [];
   for (const template of templates) {
-    const rotations = template.rotations.map((rotation) => ({
-      rotation,
-      ...geometry(template.mask, rotation),
-    }));
+    const rotations = [template.mask, ...(template.variants ?? [])].flatMap(
+      (mask) =>
+        template.rotations.map((rotation) => ({
+          rotation,
+          ...geometry(mask, rotation),
+        })),
+    );
     let found: Match | undefined;
     for (let row = 0; row < matrix.length && !found; row++) {
       for (let column = 0; column < width && !found; column++) {

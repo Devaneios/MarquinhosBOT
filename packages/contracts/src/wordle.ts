@@ -15,19 +15,37 @@ const patternCellSchema = z.tuple([
   z.number().int().nonnegative(),
   z.number().int().nonnegative(),
 ]);
+const MAX_PATTERN_WIDTH = 5;
+const patternMaskSchema = z.array(z.string().regex(/^[#.]+$/)).min(1);
+const isRectangularMask = (mask: readonly string[]) =>
+  mask.some((row) => row.includes('#')) &&
+  mask.every((row) => row.length === mask[0]?.length);
 export const wordlePatternPreviewSchema = z
   .object({
     patternId: z.string().min(1),
-    mask: z.array(z.string().regex(/^[#.]+$/)).min(1),
+    mask: patternMaskSchema,
+    variants: z.array(patternMaskSchema).optional(),
     colors: z.array(wordlePatternColorSchema).min(1),
     rotations: z.array(wordlePatternRotationSchema).min(1),
   })
   .refine(
     (value) =>
-      value.mask.some((row) => row.includes('#')) &&
-      value.mask.every((row) => row.length === value.mask[0]?.length),
+      isRectangularMask(value.mask) &&
+      (value.variants ?? []).every(isRectangularMask),
     'Pattern masks must be rectangular and contain a required cell',
-  );
+  )
+  .refine((value) => {
+    const baseWidth = value.mask[0]?.length ?? 0;
+    const seen = new Set([value.mask.join('\n')]);
+    return (value.variants ?? []).every((variant) => {
+      const width = variant[0]?.length ?? 0;
+      const key = variant.join('\n');
+      if (width < baseWidth || width > MAX_PATTERN_WIDTH || seen.has(key))
+        return false;
+      seen.add(key);
+      return true;
+    });
+  }, `Pattern variants must be distinct and between the base width and ${MAX_PATTERN_WIDTH} columns`);
 export type WordlePatternPreview = z.infer<typeof wordlePatternPreviewSchema>;
 
 export const wordlePatternEvidenceSchema = z

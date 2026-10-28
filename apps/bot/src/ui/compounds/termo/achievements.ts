@@ -307,24 +307,26 @@ export function termoAchievementDetailCard(
     const preview = achievement.patternPreview;
     children.push(
       sectionLabel('DESENHE EM UMA DAS CORES', theme),
-      Row({
-        gap: theme.spacing.lg,
-        children: preview.colors.map((color) =>
-          Column({
-            gap: theme.spacing.sm,
-            children: [
-              labelText(color === 'correct' ? 'VERDE' : 'AMARELO', {}, theme),
-              drawingGrid(
-                preview.mask.map((row) =>
-                  [...row].map((cell) => (cell === '#' ? color : null)),
+      ...[preview.mask, ...(preview.variants ?? [])].map((mask) =>
+        Row({
+          gap: theme.spacing.lg,
+          children: preview.colors.map((color) =>
+            Column({
+              gap: theme.spacing.sm,
+              children: [
+                labelText(color === 'correct' ? 'VERDE' : 'AMARELO', {}, theme),
+                drawingGrid(
+                  mask.map((row) =>
+                    [...row].map((cell) => (cell === '#' ? color : null)),
+                  ),
+                  [],
+                  theme,
                 ),
-                [],
-                theme,
-              ),
-            ],
-          }),
-        ),
-      }),
+              ],
+            }),
+          ),
+        }),
+      ),
       Text('Os pontos aceitam qualquer cor. Células extras são permitidas.', {
         fontFamily: theme.fontFamilies.body,
         fontSize: theme.fontSizes.md,

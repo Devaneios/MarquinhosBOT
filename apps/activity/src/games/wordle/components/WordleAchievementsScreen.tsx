@@ -3,7 +3,7 @@ import type {
   WordleAchievementStatus,
   WordlePlayerStats,
 } from '@marquinhos/contracts/wordle';
-import { WORDLE_ACHIEVEMENT_FAMILIES } from '@marquinhos/domain/games/wordle/achievements/rules';
+import { WORDLE_ACHIEVEMENT_FAMILIES } from '@marquinhos/domain/games/wordle/achievements/families';
 import { useEffect, useMemo, useState, ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WordlePatternDisplay } from './WordlePatternDisplay';

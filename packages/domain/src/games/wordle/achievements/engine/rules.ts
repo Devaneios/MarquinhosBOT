@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { WORDLE_PATTERN_FAMILIES } from '../families';
 
 const count = z.number().int().positive();
 const hour = z.number().int().min(0).max(24);
@@ -27,7 +28,7 @@ export const wordleAchievementRuleSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('pattern'), patternId: z.string().min(1) }),
   z.object({
     kind: z.literal('pattern_collection'),
-    family: z.enum(['letter', 'digit', 'tetromino', 'shape']),
+    family: z.enum(WORDLE_PATTERN_FAMILIES),
     count,
   }),
   z.object({ kind: z.literal('played_streak'), days: count }),
@@ -52,27 +53,3 @@ export const wordleAchievementRuleSchema = z.discriminatedUnion('kind', [
 ]);
 export type WordleAchievementRule = z.infer<typeof wordleAchievementRuleSchema>;
 export type WordleAchievementRuleKind = WordleAchievementRule['kind'];
-
-export const WORDLE_ACHIEVEMENT_FAMILIES = [
-  'wins',
-  'streak',
-  'played',
-  'precision',
-  'persistence',
-  'speed',
-  'timing',
-  'style',
-  'comeback',
-  'participation_streak',
-  'calendar',
-  'feedback',
-  'variety',
-  'vocabulary',
-  'letters',
-  'digits',
-  'tetrominoes',
-  'shapes',
-  'collections',
-] as const;
-export type WordleAchievementFamily =
-  (typeof WORDLE_ACHIEVEMENT_FAMILIES)[number];

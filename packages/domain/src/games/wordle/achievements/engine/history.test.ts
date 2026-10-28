@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { buildWordleAchievementFacts, evaluateWordleRule } from './evaluate';
-import type { AchievementHistoryDay } from './historyFacts';
-import type { WordleAchievementRule } from './rules';
-import type { WordleDayRecord } from './stats';
+import type { WordleDayRecord } from '../../playerStats';
 import {
   addDays,
   epoch,
@@ -10,7 +7,14 @@ import {
   rows,
   solvedDay,
   solvedStreak,
-} from './testing';
+} from '../testing';
+import { evaluateWordleRule } from './evaluate';
+import {
+  buildWordleAchievementFacts,
+  parseAchievementMatrix,
+  type AchievementHistoryDay,
+} from './history';
+import type { WordleAchievementRule } from './rules';
 
 const today = '2026-10-26';
 const check = (
@@ -45,6 +49,17 @@ describe('version 2 history facts', () => {
       check({ kind: 'played', days: 2 }, [solvedDay(today), solvedDay(today)])
         .met,
     ).toBe(false);
+  });
+  it('keeps a played date when a later duplicate record has no attempts', () => {
+    const empty = {
+      ...solvedDay(today),
+      solved: false,
+      attempts: 0,
+      guesses: [],
+    };
+    expect(
+      check({ kind: 'wins', count: 1 }, [solvedDay(today), empty]).met,
+    ).toBe(true);
   });
   it('counts participation streaks across unsolved dates, but never across a gap', () => {
     const days = [
@@ -311,5 +326,56 @@ describe('version 2 history facts', () => {
         discoveryIds,
       }).progress,
     ).toEqual({ current: 1, target: 5 });
+  });
+});
+
+describe('parseAchievementMatrix', () => {
+  const valid = JSON.stringify([
+    {
+      guess: 'teste',
+      feedback: ['correct', 'present', 'absent', 'absent', 'absent'],
+    },
+  ]);
+  it('preserves all accepted rows', () =>
+    expect(parseAchievementMatrix(valid, 5, 1)).toEqual(
+      rows('cpaaa').map((row) => row.feedback),
+    ));
+  it('rejects corrupt middle rows rather than joining the neighbors', () => {
+    const rows = [
+      {
+        guess: 'teste',
+        feedback: ['correct', 'present', 'absent', 'absent', 'absent'],
+      },
+      { guess: 'ruim', feedback: ['invalid'] },
+      {
+        guess: 'teste',
+        feedback: ['correct', 'present', 'absent', 'absent', 'absent'],
+      },
+    ];
+    expect(parseAchievementMatrix(JSON.stringify(rows), 5, 3)).toBeNull();
+  });
+  it('rejects a guess whose length disagrees with its feedback width', () => {
+    expect(
+      parseAchievementMatrix(
+        JSON.stringify([
+          {
+            guess: 'four',
+            feedback: ['correct', 'present', 'absent', 'absent', 'absent'],
+          },
+        ]),
+        5,
+        1,
+      ),
+    ).toBeNull();
+  });
+  it('rejects malformed JSON, unknown width, mismatched counters and row widths', () => {
+    for (const [json, width, attempts] of [
+      [valid, null, 1],
+      [valid, 6, 1],
+      [valid, 5, 2],
+      ['bad', 5, 1],
+      ['[]', 5, 0],
+    ] satisfies [string, number | null, number][])
+      expect(parseAchievementMatrix(json, width, attempts)).toBeNull();
   });
 });

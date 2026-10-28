@@ -1,7 +1,7 @@
-import { matchWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/matchPatterns';
+import type { WordlePatternDefinition } from '@marquinhos/domain/games/wordle/achievements/types';
+import { matchWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/engine/matchPatterns';
 import {
   WORDLE_PATTERN_CATALOG,
-  type WordlePatternDefinition,
 } from '@marquinhos/domain/games/wordle/achievements/patterns';
 import { computeFeedback } from '@marquinhos/domain/games/wordle/feedback';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
@@ -34,12 +34,27 @@ const guesses = [
 const legalGuesses = new Set(readWords('valid-guesses.txt'));
 const witnessSchema = z.object({
   patternId: z.string(),
+  variant: z.number().int().nonnegative().optional(),
   color: z.enum(['correct', 'present']),
   answer: z.string(),
   guesses: z.array(z.string()),
   origin: z.tuple([z.number(), z.number()]),
 });
 type Witness = z.infer<typeof witnessSchema>;
+
+/** One drawable form of a pattern: variant 0 is the base mask. */
+const variantMasks = (pattern: WordlePatternDefinition) => [
+  pattern.mask,
+  ...(pattern.variants ?? []),
+];
+const variantTemplate = (
+  pattern: WordlePatternDefinition,
+  variant: number,
+): WordlePatternDefinition => ({
+  ...pattern,
+  mask: variantMasks(pattern)[variant] ?? pattern.mask,
+  variants: [],
+});
 
 function chooseRows(
   candidates: readonly string[][],
@@ -60,6 +75,7 @@ function chooseRows(
 
 function findWitness(
   pattern: WordlePatternDefinition,
+  variant: number,
   color: Witness['color'],
   answer: string,
   feedback: readonly {
@@ -67,9 +83,10 @@ function findWitness(
     states: ReturnType<typeof computeFeedback>;
   }[],
 ): Witness | null {
-  const width = pattern.mask[0]?.length ?? 0;
+  const rows = variantMasks(pattern)[variant] ?? pattern.mask;
+  const width = rows[0]?.length ?? 0;
   for (let column = 0; column + width <= answer.length; column++) {
-    const candidates = pattern.mask.map((mask) =>
+    const candidates = rows.map((mask) =>
       feedback
         .filter(
           (row) =>
@@ -78,7 +95,7 @@ function findWitness(
               (cell, c) => cell !== '#' || row.states[c + column] === color,
             ),
         )
-        .slice(0, pattern.mask.length + 1)
+        .slice(0, rows.length + 1)
         .map((row) => row.guess),
     );
     if (candidates.some((row) => row.length === 0)) continue;
@@ -86,6 +103,7 @@ function findWitness(
     if (selected)
       return {
         patternId: pattern.id,
+        ...(variant > 0 ? { variant } : {}),
         color,
         answer,
         guesses: [...selected, answer],
@@ -98,12 +116,15 @@ function findWitness(
 function search(): Witness[] {
   const pending = new Map(
     WORDLE_PATTERN_CATALOG.flatMap((pattern) =>
-      (['correct', 'present'] as const).map((color) => [
-        `${pattern.id}:${color}`,
-        { pattern, color },
-      ]),
+      variantMasks(pattern).flatMap((_, variant) =>
+        (['correct', 'present'] as const).map((color) => [
+          `${pattern.id}:${variant}:${color}`,
+          { pattern, variant, color },
+        ]),
+      ),
     ),
   );
+  const total = pending.size;
   const witnesses: Witness[] = [];
   const priority = [
     'cantos',
@@ -136,23 +157,29 @@ function search(): Witness[] {
         guess,
         states: computeFeedback(stripDiacritics(guess), normalized),
       }));
-    for (const [key, { pattern, color }] of pending) {
-      const witness = findWitness(pattern, color, answer, feedback);
+    for (const [key, { pattern, variant, color }] of pending) {
+      const witness = findWitness(pattern, variant, color, answer, feedback);
       if (witness) {
         witnesses.push(witness);
         pending.delete(key);
       }
     }
     process.stderr.write(
-      `Searched ${answer}; ${witnesses.length}/106 color witnesses\n`,
+      `Searched ${answer}; ${witnesses.length}/${total} color witnesses\n`,
     );
   }
-  const missing = WORDLE_PATTERN_CATALOG.filter(
-    (pattern) => !witnesses.some((w) => w.patternId === pattern.id),
+  const unreachable = WORDLE_PATTERN_CATALOG.flatMap((pattern) =>
+    variantMasks(pattern).flatMap((_, variant) =>
+      witnesses.some(
+        (w) => w.patternId === pattern.id && (w.variant ?? 0) === variant,
+      )
+        ? []
+        : [`${pattern.id}#${variant}`],
+    ),
   );
-  if (missing.length)
+  if (unreachable.length)
     throw new Error(
-      `Unreachable after exhaustive source-bank search: ${missing.map((p) => p.id).join(', ')}`,
+      `Unreachable after exhaustive source-bank search: ${unreachable.join(', ')}`,
     );
   if (pending.size)
     process.stderr.write(
@@ -160,7 +187,9 @@ function search(): Witness[] {
     );
   return witnesses.sort(
     (a, b) =>
-      a.patternId.localeCompare(b.patternId) || a.color.localeCompare(b.color),
+      a.patternId.localeCompare(b.patternId) ||
+      (a.variant ?? 0) - (b.variant ?? 0) ||
+      a.color.localeCompare(b.color),
   );
 }
 
@@ -200,7 +229,9 @@ function verify(witnesses: Witness[]) {
         });
       }
     }
-    const match = matchWordlePatterns(matrix).find(
+    const match = matchWordlePatterns(matrix, [
+      variantTemplate(pattern, witness.variant ?? 0),
+    ]).find(
       (found) => found.patternId === pattern.id,
     );
     if (
@@ -213,13 +244,17 @@ function verify(witnesses: Witness[]) {
         `Unverified drawing ${witness.patternId}/${witness.color}`,
       );
   }
-  const missing = WORDLE_PATTERN_CATALOG.filter(
-    (pattern) => !witnesses.some((w) => w.patternId === pattern.id),
+  const missing = WORDLE_PATTERN_CATALOG.flatMap((pattern) =>
+    variantMasks(pattern).flatMap((_, variant) =>
+      witnesses.some(
+        (w) => w.patternId === pattern.id && (w.variant ?? 0) === variant,
+      )
+        ? []
+        : [`${pattern.id}#${variant}`],
+    ),
   );
   if (missing.length)
-    throw new Error(
-      `Missing witnesses: ${missing.map((p) => p.id).join(', ')}`,
-    );
+    throw new Error(`Missing witnesses: ${missing.join(', ')}`);
   console.log(
     JSON.stringify({
       patterns: WORDLE_PATTERN_CATALOG.length,

@@ -105,6 +105,7 @@ export const wordleAchievementVersions = pgTable(
     version: integer('version').primaryKey(),
     active: boolean('active').notNull().default(false),
     activated_at: bigint('activated_at', { mode: 'number' }).notNull(),
+    catalog_revision: integer('catalog_revision').notNull().default(0),
   },
   (table) => [
     uniqueIndex('wordle_achievement_versions_active_idx')

@@ -1,4 +1,4 @@
-import { WORDLE_ACHIEVEMENT_TIME_ZONE } from '@marquinhos/domain/games/wordle/achievements/evaluate';
+import { WORDLE_ACHIEVEMENT_TIME_ZONE } from '@marquinhos/domain/games/wordle/achievements/engine/history';
 
 /** The day boundary for daily words, streaks and achievements alike. */
 export function getWordleTimeZone(): string {
