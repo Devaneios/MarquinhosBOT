@@ -1,18 +1,23 @@
 import { describe, expect, it } from 'bun:test';
-import type { WordleDayRecord } from '../playerStats';
 import {
   WORDLE_ACHIEVEMENT_CATALOG,
   WORDLE_ACHIEVEMENT_VERSION,
 } from './catalog';
-import { evaluateWordleAchievements } from './engine/evaluate';
 import {
-  toAchievementHistoryDay,
+  evaluateWordleAchievements,
   type AchievementHistoryDay,
   type WordleEvaluationOptions,
-} from './engine/history';
+} from './engine/evaluate';
 import { wordleAchievementRuleSchema } from './engine/rules';
 import { WORDLE_PATTERN_CATALOG } from './patterns';
-import { epoch, failedDay, rows, solvedDay, solvedStreak } from './testing';
+import {
+  achievementDay,
+  epoch,
+  failedDay,
+  rows,
+  solvedDay,
+  solvedStreak,
+} from './testing';
 
 const today = '2026-10-24';
 const startedAt = epoch('2026-02-01T12:00:00Z');
@@ -42,15 +47,18 @@ const completed: AchievementHistoryDay[] = [
     guesses: rows(...Array.from({ length: 19 }, () => 'apaaa'), 'ccccc'),
   }),
   solvedDay('2026-03-08', { guesses: rows('apaaaa', 'cccccc') }),
-].map((day) => ({
-  ...toAchievementHistoryDay(day),
-  answerHasAccent: true,
-  answerHasRepeatedLetters: true,
-}));
+].map((day) =>
+  achievementDay(day, {
+    answerHasAccent: true,
+    answerHasRepeatedLetters: true,
+  }),
+);
+
+const lifetimeStreakOptions = { today, persistedBestStreak: 999 };
 
 const cases: {
   name: string;
-  days: readonly WordleDayRecord[];
+  days: readonly AchievementHistoryDay[];
   options: WordleEvaluationOptions;
 }[] = [
   { name: 'empty history', days: [], options: { today } },
@@ -65,28 +73,36 @@ const cases: {
   {
     name: 'partial history and one discovery',
     days: [
-      solvedDay('2026-10-23', { guesses: rows('ccccc') }),
-      failedDay(today),
+      achievementDay(solvedDay('2026-10-23', { guesses: rows('ccccc') })),
+      achievementDay(failedDay(today)),
     ],
     options: { today, discoveryIds: new Set(['letter_a']) },
   },
   {
     name: 'duplicate future and malformed history',
     days: [
-      solvedDay('2026-10-20'),
-      failedDay('2026-10-20'),
-      solvedDay('2026-10-21', { attempts: 20 }),
-      solvedDay('2026-10-22', { startedAt, solvedAt: startedAt - 1 }),
-      solvedDay('2026-10-25', { guesses: rows('ccccc') }),
+      achievementDay(solvedDay('2026-10-20')),
+      achievementDay(failedDay('2026-10-20')),
+      achievementDay(solvedDay('2026-10-21', { attempts: 20 })),
+      achievementDay(
+        solvedDay('2026-10-22', { startedAt, solvedAt: startedAt - 1 }),
+      ),
+      achievementDay(solvedDay('2026-10-25', { guesses: rows('ccccc') })),
     ],
-    options: { today, persistedBestStreak: 999 },
+    options: lifetimeStreakOptions,
   },
   {
     name: 'clock and elapsed boundaries',
     days: [
-      solvedDay('2026-10-20', { startedAt, solvedAt: startedAt + 60 }),
-      solvedDay('2026-10-21', { solvedAt: epoch('2026-10-21T05:00:00Z') }),
-      solvedDay('2026-10-22', { solvedAt: epoch('2026-10-22T08:00:00Z') }),
+      achievementDay(
+        solvedDay('2026-10-20', { startedAt, solvedAt: startedAt + 60 }),
+      ),
+      achievementDay(
+        solvedDay('2026-10-21', { solvedAt: epoch('2026-10-21T05:00:00Z') }),
+      ),
+      achievementDay(
+        solvedDay('2026-10-22', { solvedAt: epoch('2026-10-22T08:00:00Z') }),
+      ),
     ],
     options: { today, timeZone: 'UTC' },
   },

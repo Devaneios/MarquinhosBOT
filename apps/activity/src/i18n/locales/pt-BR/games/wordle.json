@@ -54,7 +54,7 @@
   "detailSheetTitle": "Detalhes da conquista",
   "closeAchievementDetail": "Fechar detalhes da conquista",
   "unlockedAtLabel": "Desbloqueada em {{date}}",
-  "patternSubsetHint": "Forme o desenho com quadrados verdes ou amarelos da mesma cor. Os outros quadrados podem ter qualquer cor.",
+  "patternSubsetHint": "Forme o desenho com quadrados verdes ou amarelos da mesma cor. O desenho precisa estar isolado: outro quadrado da mesma cor encostando nele, até na diagonal, invalida. A linha vencedora só conta quando o desenho a ocupa.",
   "patternRotationHint": "Esta peça também vale girada. Espelhar muda a peça.",
   "patternPreviewLabel": "Modelo em {{color}}",
   "patternEvidenceLabel": "Sua descoberta em {{color}}",
@@ -76,11 +76,9 @@
     "streak": "Sequência",
     "played": "Presença",
     "precision": "Precisão",
-    "persistence": "Persistência",
     "speed": "Velocidade",
     "timing": "Horário",
     "style": "Estilo",
-    "comeback": "Retorno",
     "wordle": "Geral"
   },
   "rarity": {

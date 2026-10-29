@@ -10,7 +10,7 @@
     "patternId": "arrow_down",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "aetite", "apeado", "apache", "partes"],
+    "guesses": ["bebaça", "bebena", "aetita", "beberu", "partes"],
     "origin": [0, 0]
   },
   {
@@ -26,7 +26,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "aetite", "aperar", "apeado", "partes"],
+    "guesses": ["beagle", "besuga", "aperar", "besugo", "partes"],
     "origin": [0, 0]
   },
   {
@@ -34,7 +34,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["abrace", "abrais", "partem", "abrans", "partes"],
+    "guesses": ["abrace", "abrasa", "partem", "abrase", "partes"],
     "origin": [0, 0]
   },
   {
@@ -42,7 +42,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "abecar", "aperta", "abedal", "partes"],
+    "guesses": ["abebra", "bdélio", "aperta", "bianda", "partes"],
     "origin": [0, 0]
   },
   {
@@ -50,7 +50,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["abrace", "abrais", "partem", "cartar", "abrans", "partes"],
+    "guesses": ["abrace", "abrasa", "partem", "cartar", "abrais", "partes"],
     "origin": [0, 0]
   },
   {
@@ -58,7 +58,7 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "abecar", "aperta", "aperar", "abedal", "partes"],
+    "guesses": ["abebra", "bdélio", "aperta", "besana", "bianda", "partes"],
     "origin": [0, 0]
   },
   {
@@ -72,7 +72,7 @@
     "patternId": "arrow_left",
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "aetita", "aetite", "apeado", "abecar", "partes"],
+    "guesses": ["bdelar", "beagle", "aetita", "besuga", "bdélio", "partes"],
     "origin": [0, 0]
   },
   {
@@ -88,7 +88,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abaetê", "aberta", "aperar", "aberto", "abarca", "partes"],
+    "guesses": ["abarca", "bipene", "aperar", "bisaco", "abarco", "partes"],
     "origin": [0, 0]
   },
   {
@@ -96,7 +96,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["ababes", "cartel", "partem", "cartes", "abades", "partes"],
+    "guesses": ["abafei", "cortei", "partem", "cortem", "abafem", "partes"],
     "origin": [0, 0]
   },
   {
@@ -104,7 +104,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abacto", "aberta", "aperta", "aberto", "abaetê", "partes"],
+    "guesses": ["abacto", "bispal", "aperta", "blasto", "abanto", "partes"],
     "origin": [0, 0]
   },
   {
@@ -112,7 +112,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["ababes", "abatei", "partem", "abatem", "abades", "partes"],
+    "guesses": ["abafei", "abatei", "partem", "abatem", "abafem", "partes"],
     "origin": [0, 0]
   },
   {
@@ -120,21 +120,21 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abacto", "abaetê", "aperta", "abaste", "abaité", "partes"],
+    "guesses": ["abacto", "bicará", "aperta", "bicato", "abanto", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "arrow_right",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "paaris", "parada", "pabllo", "pabola", "partes"],
+    "guesses": ["pcomos", "paanga", "parada", "paaris", "peador", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "arrow_right",
     "color": "present",
     "answer": "partes",
-    "guesses": ["ababuí", "aetita", "aetite", "apache", "abacto", "partes"],
+    "guesses": ["ababuí", "apache", "aetita", "apagai", "abacto", "partes"],
     "origin": [0, 0]
   },
   {
@@ -142,7 +142,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "paaris", "partam", "pabllo", "pabola", "partes"],
+    "guesses": ["pcomos", "paanga", "partam", "paaris", "peador", "partes"],
     "origin": [0, 0]
   },
   {
@@ -150,7 +150,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["ababuí", "aetita", "aperar", "aetite", "abacto", "partes"],
+    "guesses": ["ababuí", "apache", "aperar", "apagai", "abacto", "partes"],
     "origin": [0, 0]
   },
   {
@@ -158,7 +158,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "parada", "partem", "parado", "paaris", "partes"],
+    "guesses": ["pcomos", "parada", "partem", "parado", "peador", "partes"],
     "origin": [0, 0]
   },
   {
@@ -174,7 +174,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "paaris", "partem", "pabllo", "pabola", "partes"],
+    "guesses": ["pcomos", "paanga", "partem", "pabllo", "peador", "partes"],
     "origin": [0, 0]
   },
   {
@@ -182,7 +182,7 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["ababuí", "aetita", "aperta", "aetite", "abacto", "partes"],
+    "guesses": ["ababuí", "apagai", "aperta", "apagam", "abacto", "partes"],
     "origin": [0, 0]
   },
   {
@@ -196,7 +196,7 @@
     "patternId": "arrow_up",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "aetite", "apache", "apagai", "partes"],
+    "guesses": ["bebena", "aetita", "beberu", "bebaça", "partes"],
     "origin": [0, 0]
   },
   {
@@ -212,7 +212,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "aperar", "aetite", "apeado", "partes"],
+    "guesses": ["beagle", "aperar", "besuga", "besugo", "partes"],
     "origin": [0, 0]
   },
   {
@@ -220,7 +220,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["abrace", "partem", "abrais", "abrans", "partes"],
+    "guesses": ["abrace", "partem", "abrasa", "abrais", "partes"],
     "origin": [0, 0]
   },
   {
@@ -228,7 +228,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "aperta", "abecar", "abedal", "partes"],
+    "guesses": ["bdélio", "aperta", "bianda", "abebra", "partes"],
     "origin": [0, 0]
   },
   {
@@ -236,7 +236,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["abrace", "cartar", "partem", "abrais", "abrans", "partes"],
+    "guesses": ["abrace", "cartar", "partem", "abrasa", "abrais", "partes"],
     "origin": [0, 0]
   },
   {
@@ -244,7 +244,7 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "aperar", "aperta", "abecar", "abedal", "partes"],
+    "guesses": ["bdélio", "besana", "aperta", "bianda", "abebra", "partes"],
     "origin": [0, 0]
   },
   {
@@ -258,7 +258,7 @@
     "patternId": "cross",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "aetite", "apache", "partes"],
+    "guesses": ["bebena", "aetita", "beberu", "partes"],
     "origin": [0, 0]
   },
   {
@@ -274,7 +274,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "aperar", "aetite", "partes"],
+    "guesses": ["beagle", "aperar", "besuga", "partes"],
     "origin": [0, 0]
   },
   {
@@ -282,7 +282,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["abrace", "partem", "abrais", "partes"],
+    "guesses": ["abrace", "partem", "abrasa", "partes"],
     "origin": [0, 0]
   },
   {
@@ -290,7 +290,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "aperta", "abecar", "partes"],
+    "guesses": ["bdélio", "aperta", "bianda", "partes"],
     "origin": [0, 0]
   },
   {
@@ -298,7 +298,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["abrace", "abrais", "partem", "abrans", "abrasa", "partes"],
+    "guesses": ["abrace", "abrasa", "partem", "abrase", "abrais", "partes"],
     "origin": [0, 0]
   },
   {
@@ -306,21 +306,21 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "abecar", "aperta", "abedal", "abegoa", "partes"],
+    "guesses": ["abebra", "bdélio", "aperta", "bianda", "abecar", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "diamond_outline",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["aatrox", "parada", "aavora", "partes"],
+    "guesses": ["aatrox", "perada", "aavora", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "diamond_outline",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abebra", "aetite", "partes"],
+    "guesses": ["bebena", "abebra", "beberu", "partes"],
     "origin": [0, 0]
   },
   {
@@ -328,7 +328,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["barabu", "pactar", "baraia", "partes"],
+    "guesses": ["abrace", "baetal", "peagem", "baetão", "abrais", "partes"],
     "origin": [0, 0]
   },
   {
@@ -336,46 +336,14 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abaetê", "aetite", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "diamond_outline",
-    "variant": 2,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["barabu", "pactar", "pactos", "baraia", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "diamond_outline",
-    "variant": 2,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["aetita", "abaetê", "abarca", "aetite", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "diamond_outline",
-    "variant": 3,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["abrace", "baetal", "pachel", "baetas", "abrais", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "diamond_outline",
-    "variant": 3,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["abebra", "aparam", "abacto", "aparar", "abecar", "partes"],
+    "guesses": ["bdélio", "bebaça", "abacto", "bebaço", "bianda", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "digit_0",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "parado", "paraju", "parajá", "parans", "partes"],
+    "guesses": ["parada", "perada", "perado", "peraes", "parado", "partes"],
     "origin": [0, 0]
   },
   {
@@ -390,7 +358,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["barabu", "pactar", "pactos", "pactua", "baraia", "partes"],
+    "guesses": ["partam", "pectar", "peitai", "peitam", "partas", "partes"],
     "origin": [0, 0]
   },
   {
@@ -398,147 +366,21 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abaetê", "abarca", "abarco", "aetite", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_0",
-    "variant": 2,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["partam", "pactar", "pactos", "pactua", "partas", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_0",
-    "variant": 2,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["aperar", "abaetê", "abarca", "abarco", "apercá", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_0",
-    "variant": 3,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["cartar", "pachel", "pacães", "pacões", "cartaz", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_0",
-    "variant": 3,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["aperar", "abacto", "abaetê", "abaité", "apercá", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_0",
-    "variant": 4,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["cartes", "baamês", "baarás", "babais", "fartes", "partes"],
-    "origin": [0, 1]
-  },
-  {
-    "patternId": "digit_0",
-    "variant": 4,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["aperta", "abacto", "abaetê", "abaité", "aperte", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_1",
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["aatrox", "paanga", "aavora", "baamês", "parada", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_1",
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["aetita", "aetite", "apache", "apagai", "apeado", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_1",
-    "variant": 1,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["barabu", "parada", "baraia", "barajá", "partam", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_1",
-    "variant": 1,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["aetita", "aetite", "apeado", "apeará", "aperar", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_1",
-    "variant": 2,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["aatrox", "paanga", "aavora", "baamês", "cartar", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_1",
-    "variant": 2,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["aetita", "aetite", "apache", "apagai", "aperar", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_1",
-    "variant": 3,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["aatrox", "paanga", "aavora", "baamês", "partem", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_1",
-    "variant": 3,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["aetita", "aetite", "apache", "apagai", "aperta", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_1",
-    "variant": 4,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["abrace", "barabu", "parada", "abrais", "partem", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_1",
-    "variant": 4,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["abebra", "aetita", "abecar", "abedal", "aperta", "partes"],
+    "guesses": ["aperar", "abarca", "abarco", "abarga", "apercá", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "digit_2",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "abrace", "aatrox", "paaris", "parada", "partes"],
+    "guesses": ["paanga", "abrace", "aatrox", "pcomos", "parada", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "digit_2",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abebra", "aetite", "ababuí", "apeado", "partes"],
+    "guesses": ["apache", "bdelar", "bebena", "ababuí", "aetita", "partes"],
     "origin": [0, 0]
   },
   {
@@ -546,7 +388,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["barabu", "pactar", "abrace", "aatrox", "partam", "partes"],
+    "guesses": ["barabu", "pectar", "abrace", "aatrox", "partam", "partes"],
     "origin": [0, 0]
   },
   {
@@ -554,7 +396,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abaetê", "abebra", "aetite", "aperar", "partes"],
+    "guesses": ["beagle", "abarca", "bdélio", "bebena", "aperar", "partes"],
     "origin": [0, 0]
   },
   {
@@ -562,7 +404,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "abatam", "barabu", "paanga", "partam", "partes"],
+    "guesses": ["parada", "abatam", "barabu", "pcomos", "partam", "partes"],
     "origin": [0, 0]
   },
   {
@@ -570,7 +412,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abaetê", "aetite", "ababuí", "aperar", "partes"],
+    "guesses": ["aetita", "bibaga", "beagle", "ababuí", "aperar", "partes"],
     "origin": [0, 0]
   },
   {
@@ -578,7 +420,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartar", "ababes", "aortas", "aatrox", "partem", "partes"],
+    "guesses": ["cartar", "abafei", "certar", "aatrox", "partem", "partes"],
     "origin": [0, 0]
   },
   {
@@ -586,7 +428,7 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abacto", "aberta", "aetita", "aperta", "partes"],
+    "guesses": ["besana", "bibiru", "bipene", "bebido", "aperta", "partes"],
     "origin": [0, 0]
   },
   {
@@ -594,7 +436,7 @@
     "variant": 4,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "ababes", "aortas", "aatrox", "partem", "partes"],
+    "guesses": ["partam", "abafei", "certar", "aatrox", "partem", "partes"],
     "origin": [0, 0]
   },
   {
@@ -602,7 +444,7 @@
     "variant": 4,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abacto", "aberta", "aetita", "aperta", "partes"],
+    "guesses": ["aperar", "bibiru", "bipene", "bebido", "aperta", "partes"],
     "origin": [0, 0]
   },
   {
@@ -616,7 +458,7 @@
     "patternId": "digit_3",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abebra", "aetite", "abecar", "apache", "partes"],
+    "guesses": ["apache", "bdelar", "bebena", "bdélio", "apagai", "partes"],
     "origin": [0, 0]
   },
   {
@@ -632,7 +474,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abaetê", "aetite", "abarca", "apeado", "partes"],
+    "guesses": ["aetita", "bibaga", "beagle", "bibelô", "aetite", "partes"],
     "origin": [0, 0]
   },
   {
@@ -648,7 +490,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abaetê", "abebra", "abarca", "aetite", "partes"],
+    "guesses": ["aetita", "bibaga", "abecar", "bibelô", "aetite", "partes"],
     "origin": [0, 0]
   },
   {
@@ -656,7 +498,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "ababes", "cartar", "abades", "partas", "partes"],
+    "guesses": ["partam", "abafei", "cartar", "abafem", "partia", "partes"],
     "origin": [0, 0]
   },
   {
@@ -664,7 +506,7 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abacto", "apercá", "abaetê", "aperta", "partes"],
+    "guesses": ["aperar", "bibiru", "besana", "bichão", "apercá", "partes"],
     "origin": [0, 0]
   },
   {
@@ -672,7 +514,7 @@
     "variant": 4,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "ababes", "aortas", "abades", "partas", "partes"],
+    "guesses": ["partam", "abafei", "certar", "abafem", "partia", "partes"],
     "origin": [0, 0]
   },
   {
@@ -680,99 +522,21 @@
     "variant": 4,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abacto", "aberta", "abaetê", "apercá", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_4",
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["parada", "parado", "paraju", "abrace", "abrais", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_4",
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["abebra", "abecar", "aetita", "abedal", "abegoa", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_4",
-    "variant": 1,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["pactar", "pactos", "partam", "abatam", "abatas", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_4",
-    "variant": 1,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["abaetê", "abarca", "aperar", "abarco", "abarga", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_4",
-    "variant": 2,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["abrace", "barabu", "parada", "partam", "abrais", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_4",
-    "variant": 2,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["abebra", "aetita", "abecar", "aperar", "abedal", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_4",
-    "variant": 3,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["pachel", "pacães", "partem", "ababes", "abades", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_4",
-    "variant": 3,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["abacto", "abaetê", "aperta", "abaité", "abante", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_4",
-    "variant": 4,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["abatam", "aortas", "baetal", "partem", "abatas", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "digit_4",
-    "variant": 4,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["abaetê", "aberta", "aparam", "aperta", "abarca", "partes"],
+    "guesses": ["aperar", "bibiru", "abessi", "bichão", "apercá", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "digit_5",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "paanga", "paaris", "abrace", "pabllo", "partes"],
+    "guesses": ["parada", "pcomos", "paanga", "abrace", "paaris", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "digit_5",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "ababuí", "aetite", "abebra", "apache", "partes"],
+    "guesses": ["aetita", "ababuí", "apache", "bdelar", "apagai", "partes"],
     "origin": [0, 0]
   },
   {
@@ -780,7 +544,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "paanga", "parada", "abatam", "parado", "partes"],
+    "guesses": ["partam", "pcomos", "parada", "abatam", "parado", "partes"],
     "origin": [0, 0]
   },
   {
@@ -788,7 +552,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "ababuí", "aetita", "abaetê", "aetite", "partes"],
+    "guesses": ["aperar", "ababuí", "aetita", "bibaga", "aetite", "partes"],
     "origin": [0, 0]
   },
   {
@@ -796,7 +560,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partem", "paanga", "partam", "ababes", "partas", "partes"],
+    "guesses": ["partem", "peador", "partam", "abafei", "partia", "partes"],
     "origin": [0, 0]
   },
   {
@@ -804,21 +568,21 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "ababuí", "aperar", "abacto", "apercá", "partes"],
+    "guesses": ["aperta", "ababuí", "aperar", "bibiru", "apercá", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "digit_6",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["barabu", "paanga", "parada", "parado", "paraju", "partes"],
+    "guesses": ["barabu", "pcomos", "parada", "perada", "parado", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "digit_6",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "ababuí", "aetite", "abebra", "apeado", "partes"],
+    "guesses": ["beagle", "ababuí", "aetita", "abebra", "aetite", "partes"],
     "origin": [0, 0]
   },
   {
@@ -826,7 +590,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartar", "paanga", "parada", "pactar", "barabu", "partes"],
+    "guesses": ["cartar", "pcomos", "parada", "pectar", "barabu", "partes"],
     "origin": [0, 0]
   },
   {
@@ -834,7 +598,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "ababuí", "aetita", "abaetê", "aetite", "partes"],
+    "guesses": ["besana", "ababuí", "aetita", "abarca", "beagle", "partes"],
     "origin": [0, 0]
   },
   {
@@ -842,7 +606,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["barabu", "paanga", "parada", "pactar", "baraia", "partes"],
+    "guesses": ["barabu", "pcomos", "parada", "pectar", "baraia", "partes"],
     "origin": [0, 0]
   },
   {
@@ -850,7 +614,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "ababuí", "aetite", "abaetê", "apeado", "partes"],
+    "guesses": ["beagle", "ababuí", "aetita", "abarca", "besuga", "partes"],
     "origin": [0, 0]
   },
   {
@@ -858,7 +622,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartar", "paanga", "partam", "pachel", "cartaz", "partes"],
+    "guesses": ["cartar", "pcomos", "partam", "peagem", "cartaz", "partes"],
     "origin": [0, 0]
   },
   {
@@ -866,7 +630,7 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "ababuí", "apercá", "abacto", "aperta", "partes"],
+    "guesses": ["besana", "ababuí", "aperar", "abacto", "brasil", "partes"],
     "origin": [0, 0]
   },
   {
@@ -874,7 +638,7 @@
     "variant": 4,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartel", "paanga", "partam", "pachel", "cartar", "partes"],
+    "guesses": ["cortei", "peador", "partam", "peagem", "cartar", "partes"],
     "origin": [0, 0]
   },
   {
@@ -882,7 +646,7 @@
     "variant": 4,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aberta", "ababuí", "aperar", "abacto", "apercá", "partes"],
+    "guesses": ["bispal", "ababuí", "aperar", "abacto", "besana", "partes"],
     "origin": [0, 0]
   },
   {
@@ -896,7 +660,7 @@
     "patternId": "digit_7",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abebra", "aetite", "apache", "apagai", "partes"],
+    "guesses": ["aetita", "bdelar", "bebena", "bebaça", "bebaço", "partes"],
     "origin": [0, 0]
   },
   {
@@ -912,7 +676,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abaetê", "abebra", "aetita", "aetite", "partes"],
+    "guesses": ["aperar", "bibaga", "bdélio", "bebena", "bebaça", "partes"],
     "origin": [0, 0]
   },
   {
@@ -928,7 +692,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abaetê", "abebra", "abecar", "abedal", "partes"],
+    "guesses": ["aperar", "bibaga", "abecar", "abebra", "abedal", "partes"],
     "origin": [0, 0]
   },
   {
@@ -936,7 +700,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partem", "ababes", "abatam", "abrace", "abrais", "partes"],
+    "guesses": ["partem", "abafei", "abatam", "abrace", "abrais", "partes"],
     "origin": [0, 0]
   },
   {
@@ -944,7 +708,7 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "abacto", "abaetê", "abebra", "abecar", "partes"],
+    "guesses": ["aperta", "bibiru", "abarca", "abecar", "abebra", "partes"],
     "origin": [0, 0]
   },
   {
@@ -952,7 +716,7 @@
     "variant": 4,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partem", "ababes", "abatam", "abrace", "aatrox", "partes"],
+    "guesses": ["partem", "abafei", "abatam", "abrace", "aatrox", "partes"],
     "origin": [0, 0]
   },
   {
@@ -960,14 +724,14 @@
     "variant": 4,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "abacto", "abaetê", "abebra", "aetita", "partes"],
+    "guesses": ["aperta", "bibiru", "abarca", "bdélio", "bebena", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "digit_8",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "parado", "paraju", "parajá", "parans", "partes"],
+    "guesses": ["parada", "perada", "parado", "perado", "paraju", "partes"],
     "origin": [0, 0]
   },
   {
@@ -982,7 +746,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["barabu", "pactar", "baraia", "pactos", "barajá", "partes"],
+    "guesses": ["barabu", "pectar", "baraia", "peitai", "barajá", "partes"],
     "origin": [0, 0]
   },
   {
@@ -990,7 +754,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abaetê", "aetite", "abarca", "apeado", "partes"],
+    "guesses": ["beagle", "abarca", "besuga", "abarco", "besugo", "partes"],
     "origin": [0, 0]
   },
   {
@@ -998,7 +762,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartar", "pachel", "cartaz", "pacães", "cartel", "partes"],
+    "guesses": ["cartar", "peagem", "cartaz", "pechém", "carton", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1006,21 +770,21 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abacto", "apercá", "abaetê", "aperta", "partes"],
+    "guesses": ["besana", "abacto", "brasil", "abanto", "brasio", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "digit_9",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "parado", "paraju", "abrace", "paanga", "partes"],
+    "guesses": ["parada", "perada", "parado", "abrace", "paanga", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "digit_9",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abebra", "aetite", "abecar", "apache", "partes"],
+    "guesses": ["aetita", "abebra", "aetite", "bdelar", "apache", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1028,7 +792,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["barabu", "pactar", "cartar", "abatam", "baraia", "partes"],
+    "guesses": ["barabu", "pectar", "cartar", "abatam", "baraia", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1036,7 +800,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abaetê", "aperar", "abarca", "aetite", "partes"],
+    "guesses": ["beagle", "abarca", "besana", "bibaga", "besuga", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1044,7 +808,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["barabu", "pactar", "cartar", "abatam", "parada", "partes"],
+    "guesses": ["barabu", "pectar", "cartar", "abatam", "parada", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1052,7 +816,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abaetê", "aperar", "abarca", "aetite", "partes"],
+    "guesses": ["beagle", "abarca", "besana", "bibaga", "aetita", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1060,7 +824,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartar", "pachel", "cartel", "ababes", "cartaz", "partes"],
+    "guesses": ["cartar", "peagem", "cartel", "abafei", "cartaz", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1068,7 +832,7 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abacto", "aperta", "abaetê", "apercá", "partes"],
+    "guesses": ["besana", "abacto", "betara", "bibiru", "brasil", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1076,7 +840,7 @@
     "variant": 4,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartes", "baamês", "fartes", "ababes", "cartel", "partes"],
+    "guesses": ["cartes", "baarás", "fartes", "ababás", "cortei", "partes"],
     "origin": [0, 1]
   },
   {
@@ -1084,21 +848,21 @@
     "variant": 4,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "abacto", "aperte", "abaetê", "aperar", "partes"],
+    "guesses": ["aperta", "abacto", "aperte", "bibiru", "besana", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "heart",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "parado", "paraju", "aatrox", "partes"],
+    "guesses": ["perada", "parada", "parado", "aatrox", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "heart",
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "aetita", "aetite", "apache", "partes"],
+    "guesses": ["abebra", "aetita", "aetite", "bebena", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1106,7 +870,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pactar", "partam", "partas", "barabu", "partes"],
+    "guesses": ["pectar", "partam", "partas", "barabu", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1114,7 +878,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abaetê", "aperar", "apercá", "aetita", "partes"],
+    "guesses": ["abarca", "aperar", "apercá", "beagle", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1122,7 +886,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["agrees", "cartes", "fartes", "cartel", "abatam", "partes"],
+    "guesses": ["arreei", "cartes", "fartes", "cortei", "abatam", "partes"],
     "origin": [0, 1]
   },
   {
@@ -1130,7 +894,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aparam", "aperta", "aperte", "aperar", "abebra", "partes"],
+    "guesses": ["bebaça", "aperta", "aperte", "besana", "bdélio", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1138,7 +902,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["barres", "cartes", "fartes", "cartel", "abatam", "partes"],
+    "guesses": ["barres", "cartes", "fartes", "cortei", "abatam", "partes"],
     "origin": [0, 1]
   },
   {
@@ -1146,7 +910,7 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aparta", "aperta", "aperte", "aperar", "abebra", "partes"],
+    "guesses": ["aparta", "aperta", "aperte", "besana", "bdélio", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1160,7 +924,7 @@
     "patternId": "hourglass",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "aetite", "apeado", "partes"],
+    "guesses": ["aetita", "bebena", "aetite", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1176,7 +940,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "aetita", "apercá", "partes"],
+    "guesses": ["aperar", "beagle", "apercá", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1192,7 +956,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "aetita", "aetite", "apercá", "partes"],
+    "guesses": ["aperar", "beagle", "besuga", "apercá", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1200,7 +964,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartes", "cartel", "fartes", "partes"],
+    "guesses": ["cartes", "cortei", "abatam", "cortem", "fartes", "partes"],
     "origin": [0, 1]
   },
   {
@@ -1208,53 +972,21 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "aperar", "aperte", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "hourglass",
-    "variant": 4,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["cartes", "cartel", "abatam", "cortei", "fartes", "partes"],
-    "origin": [0, 1]
-  },
-  {
-    "patternId": "hourglass",
-    "variant": 4,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["aperta", "aperar", "abebra", "apercá", "aperte", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "hourglass",
-    "variant": 5,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["cartes", "abatam", "fartes", "partes"],
-    "origin": [0, 1]
-  },
-  {
-    "patternId": "hourglass",
-    "variant": 5,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["aperta", "abebra", "aperte", "partes"],
+    "guesses": ["aperta", "besana", "bdélio", "brasil", "aperte", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_a",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["aatrox", "parada", "parado", "paraju", "parajá", "partes"],
+    "guesses": ["aatrox", "perada", "parada", "perado", "peraes", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_a",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abebra", "aetite", "abecar", "abedal", "partes"],
+    "guesses": ["bebena", "abebra", "aetita", "abecar", "abedal", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1262,7 +994,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["barabu", "pactar", "partam", "pactos", "pactua", "partes"],
+    "guesses": ["barabu", "pectar", "partam", "peitai", "peitam", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1270,7 +1002,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abaetê", "aperar", "abarca", "abarco", "partes"],
+    "guesses": ["beagle", "abarca", "aperar", "abarco", "abarga", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1278,7 +1010,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartar", "pachel", "partem", "pacães", "pacões", "partes"],
+    "guesses": ["cartar", "peagem", "partem", "pechém", "peguei", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1286,7 +1018,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abacto", "aperta", "abaetê", "abaité", "partes"],
+    "guesses": ["besana", "abacto", "aperta", "abanto", "abaíra", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1294,7 +1026,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["abrace", "baetal", "pachel", "partem", "pacães", "partes"],
+    "guesses": ["abrace", "baetal", "peagem", "partem", "pechém", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1302,37 +1034,37 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "aparam", "abacto", "aperta", "abaetê", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_a",
-    "variant": 4,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["abrace", "baetal", "partem", "pachel", "pacães", "partes"],
+    "guesses": ["bdélio", "bebaça", "abacto", "aperta", "abanto", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_a",
     "variant": 4,
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["abrace", "baetal", "partem", "peagem", "pechém", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "letter_a",
+    "variant": 4,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "aparam", "aperta", "abacto", "abaetê", "partes"],
+    "guesses": ["bdélio", "bebaça", "aperta", "abacto", "abanto", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_b",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "parada", "paaris", "parado", "pabllo", "partes"],
+    "guesses": ["paanga", "perada", "paaris", "perado", "pabllo", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_b",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abebra", "aetite", "abecar", "apache", "partes"],
+    "guesses": ["apache", "abebra", "apagai", "abecar", "apagam", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1340,7 +1072,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "pactar", "parado", "pactos", "paraju", "partes"],
+    "guesses": ["parada", "pectar", "parado", "peitai", "paraju", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1348,7 +1080,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abaetê", "aetite", "abarca", "apeado", "partes"],
+    "guesses": ["aetita", "abarca", "aetite", "abarco", "apeado", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1356,7 +1088,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "pachel", "partas", "pacães", "partem", "partes"],
+    "guesses": ["partam", "peagem", "partia", "pechém", "partir", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1364,7 +1096,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abacto", "apercá", "abaetê", "aperta", "partes"],
+    "guesses": ["aperar", "abacto", "apercá", "abanto", "aperçu", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1372,7 +1104,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "pachel", "parada", "pacães", "partas", "partes"],
+    "guesses": ["partam", "peagem", "parada", "pechém", "partia", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1380,21 +1112,21 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abacto", "aetita", "abaetê", "apercá", "partes"],
+    "guesses": ["aperar", "abacto", "aetita", "abanto", "apercá", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_c",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["barabu", "paanga", "paaris", "pabllo", "baraia", "partes"],
+    "guesses": ["barabu", "pcomos", "peador", "peados", "baraia", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_c",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "ababuí", "abacto", "abacur", "aetite", "partes"],
+    "guesses": ["beagle", "ababuí", "abacto", "abacur", "besuga", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1402,7 +1134,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartar", "paanga", "paaris", "pabllo", "cartaz", "partes"],
+    "guesses": ["cartar", "pcomos", "peador", "peados", "cartaz", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1410,7 +1142,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "ababuí", "abacto", "abacur", "apercá", "partes"],
+    "guesses": ["besana", "ababuí", "abacto", "abacur", "brasil", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1418,7 +1150,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "paanga", "paaris", "pabllo", "partas", "partes"],
+    "guesses": ["partam", "pcomos", "peador", "peados", "partas", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1434,7 +1166,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartel", "paanga", "paaris", "pabllo", "cartes", "partes"],
+    "guesses": ["cartel", "peador", "pcomos", "pealar", "cárter", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1442,7 +1174,7 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "ababuí", "abacto", "abacur", "aperte", "partes"],
+    "guesses": ["betara", "ababuí", "abacto", "abadia", "betral", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1450,7 +1182,7 @@
     "variant": 4,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartes", "aatrox", "aavora", "baamês", "fartes", "partes"],
+    "guesses": ["cartes", "aatrox", "aavora", "baanda", "fartes", "partes"],
     "origin": [0, 1]
   },
   {
@@ -1458,21 +1190,21 @@
     "variant": 4,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "ababuí", "abacto", "abacur", "aperte", "partes"],
+    "guesses": ["aperta", "ababuí", "abacto", "abadia", "aperte", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_d",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "parada", "parado", "paraju", "paaris", "partes"],
+    "guesses": ["paanga", "perada", "perado", "peraes", "paaris", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_d",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abebra", "abecar", "abedal", "aetite", "partes"],
+    "guesses": ["apache", "abebra", "abecar", "abedal", "apagai", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1480,7 +1212,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "pactar", "pactos", "pactua", "parado", "partes"],
+    "guesses": ["parada", "pectar", "peitai", "peitam", "parado", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1488,7 +1220,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abaetê", "abarca", "abarco", "aetite", "partes"],
+    "guesses": ["aetita", "abarca", "abarco", "abarga", "aetite", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1496,7 +1228,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "pachel", "pacães", "pacões", "partas", "partes"],
+    "guesses": ["partam", "peagem", "pechém", "peguei", "partia", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1504,21 +1236,21 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abacto", "abaetê", "abaité", "apercá", "partes"],
+    "guesses": ["aperar", "abacto", "abanto", "abaíra", "apercá", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_e",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "paanga", "paaris", "pabllo", "parado", "partes"],
+    "guesses": ["parada", "pcomos", "paanga", "peador", "parado", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_e",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "ababuí", "aetite", "abacto", "apeado", "partes"],
+    "guesses": ["aetita", "ababuí", "apache", "abacto", "aetite", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1526,7 +1258,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "paanga", "parada", "paaris", "partas", "partes"],
+    "guesses": ["partam", "pcomos", "parada", "peador", "partas", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1534,7 +1266,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "ababuí", "aetita", "abacto", "apercá", "partes"],
+    "guesses": ["aperar", "ababuí", "aetita", "abacur", "apercá", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1550,7 +1282,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "ababuí", "aperar", "abacto", "aperte", "partes"],
+    "guesses": ["aperta", "ababuí", "aperar", "abadia", "aperte", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1566,21 +1298,21 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "ababuí", "aperte", "abacto", "aperto", "partes"],
+    "guesses": ["aperta", "ababuí", "aperte", "abadia", "aperto", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_f",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "paanga", "paaris", "pabllo", "pabola", "partes"],
+    "guesses": ["parada", "pcomos", "paanga", "peador", "peados", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_f",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "ababuí", "aetite", "abacto", "abacur", "partes"],
+    "guesses": ["aetita", "ababuí", "apache", "abacto", "abacur", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1588,7 +1320,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "paanga", "parada", "paaris", "pabllo", "partes"],
+    "guesses": ["partam", "pcomos", "parada", "peador", "peados", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1604,7 +1336,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partem", "paanga", "partam", "paaris", "pabllo", "partes"],
+    "guesses": ["partem", "peador", "partam", "pcomos", "peados", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1612,7 +1344,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "ababuí", "aperar", "abacto", "abacur", "partes"],
+    "guesses": ["aperta", "ababuí", "aperar", "abacur", "abacto", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1628,21 +1360,21 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "ababuí", "aperte", "abacto", "abacur", "partes"],
+    "guesses": ["aperta", "ababuí", "aperte", "abadia", "abacto", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_g",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartar", "paanga", "partem", "pachel", "cartaz", "partes"],
+    "guesses": ["cartar", "peador", "portei", "peagem", "cartaz", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_g",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "ababuí", "aberta", "abacto", "apercá", "partes"],
+    "guesses": ["besana", "ababuí", "aberta", "abacto", "brasil", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1666,7 +1398,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartel", "paanga", "partem", "pachel", "cartar", "partes"],
+    "guesses": ["cartel", "peador", "portei", "peagem", "cartar", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1674,14 +1406,14 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "ababuí", "aberta", "abacto", "aperar", "partes"],
+    "guesses": ["betara", "ababuí", "aberta", "abacto", "besana", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_h",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "parado", "paraju", "parajá", "parans", "partes"],
+    "guesses": ["perada", "perado", "parada", "peraes", "perais", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1696,7 +1428,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pactar", "pactos", "partam", "pactua", "pactue", "partes"],
+    "guesses": ["pectar", "peitai", "partam", "peitam", "peitar", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1704,7 +1436,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abaetê", "abarca", "aperar", "abarco", "abarga", "partes"],
+    "guesses": ["abarca", "abarco", "aperar", "abarga", "abasia", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1712,7 +1444,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pachel", "pacães", "partem", "pacões", "padres", "partes"],
+    "guesses": ["peagem", "pechém", "partem", "peguei", "peguem", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1720,7 +1452,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abacto", "abaetê", "aperta", "abaité", "abante", "partes"],
+    "guesses": ["abacto", "abanto", "aperta", "abaíra", "abdita", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1734,7 +1466,7 @@
     "patternId": "letter_i",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "aetite", "apache", "apagai", "apeado", "partes"],
+    "guesses": ["aetita", "bebena", "bebaça", "beberu", "aetite", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1750,7 +1482,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "aetita", "aetite", "apeado", "apercá", "partes"],
+    "guesses": ["aperar", "beagle", "besuga", "besugo", "apercá", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1758,7 +1490,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartes", "abatam", "abatas", "abatei", "fartes", "partes"],
+    "guesses": ["cartes", "abatam", "abatas", "abetal", "fartes", "partes"],
     "origin": [0, 1]
   },
   {
@@ -1766,21 +1498,21 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "abebra", "abecar", "abedal", "aperte", "partes"],
+    "guesses": ["aperta", "bdélio", "abebra", "bianda", "aperte", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_j",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["abrace", "abrais", "abrans", "parada", "aatrox", "partes"],
+    "guesses": ["abrace", "abrais", "abrans", "perada", "aatrox", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_j",
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "abecar", "abedal", "abegoa", "aetita", "partes"],
+    "guesses": ["abebra", "abecar", "bdelar", "abedal", "bebena", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1788,7 +1520,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["abatam", "abatas", "abatei", "pactar", "barabu", "partes"],
+    "guesses": ["abatam", "abatas", "abatis", "pectar", "barabu", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1796,7 +1528,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abaetê", "abarca", "abarco", "abarga", "aetita", "partes"],
+    "guesses": ["abarca", "abarco", "bibaga", "abarga", "beagle", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1804,7 +1536,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["ababes", "abades", "abafei", "pachel", "cartar", "partes"],
+    "guesses": ["abafei", "abafem", "abalei", "peagem", "cartar", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1812,37 +1544,21 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abacto", "abaetê", "abaité", "abante", "aperar", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_j",
-    "variant": 3,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["partem", "abrace", "abrais", "parada", "barabu", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_j",
-    "variant": 3,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["aperta", "abebra", "abecar", "abedal", "aetita", "partes"],
+    "guesses": ["abacto", "abanto", "bibiru", "abaíra", "besana", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_k",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "parado", "paanga", "paraju", "parajá", "partes"],
+    "guesses": ["perada", "perado", "paanga", "peraes", "perais", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_k",
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "abecar", "aetita", "abedal", "abegoa", "partes"],
+    "guesses": ["abebra", "abecar", "apache", "abedal", "abegoa", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1850,7 +1566,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pactar", "parada", "paanga", "parado", "pactos", "partes"],
+    "guesses": ["pectar", "perada", "paanga", "perado", "peitai", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1858,7 +1574,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abaetê", "abebra", "aetita", "abecar", "abarca", "partes"],
+    "guesses": ["abarca", "abecar", "apache", "abedal", "abarco", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1866,7 +1582,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pachel", "pactar", "parada", "pactos", "pacães", "partes"],
+    "guesses": ["peagem", "pectar", "parada", "peitai", "pechém", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1874,14 +1590,14 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abacto", "abaetê", "aetita", "abarca", "abaité", "partes"],
+    "guesses": ["abacto", "abarca", "aetita", "abarco", "abanto", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_l",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "paaris", "pabllo", "pabola", "parada", "partes"],
+    "guesses": ["pcomos", "peador", "peados", "peagem", "parada", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1896,7 +1612,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "paaris", "pabllo", "pabola", "partam", "partes"],
+    "guesses": ["pcomos", "peador", "peados", "pealar", "partam", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1908,33 +1624,17 @@
     "origin": [0, 0]
   },
   {
-    "patternId": "letter_l",
-    "variant": 2,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["paanga", "paaris", "pabllo", "pabola", "partem", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_l",
-    "variant": 2,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["ababuí", "abacto", "abacur", "abadar", "aperta", "partes"],
-    "origin": [0, 0]
-  },
-  {
     "patternId": "letter_m",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pachel", "paetês", "parcel", "pacães", "pacões", "partes"],
+    "guesses": ["peagem", "panteu", "perdei", "pechém", "peguei", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_m",
     "color": "present",
     "answer": "partes",
-    "guesses": ["abacto", "aparta", "abebra", "abaetê", "abaité", "partes"],
+    "guesses": ["abacto", "aparta", "abebra", "abanto", "abaíra", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1942,7 +1642,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paetês", "parcel", "pachel", "pacães", "pacões", "partes"],
+    "guesses": ["peagem", "panteu", "perdei", "perdem", "pechém", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1950,37 +1650,21 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aparta", "abebra", "abacto", "abaetê", "abaité", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_m",
-    "variant": 2,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["pachel", "paetês", "parcel", "pardês", "pacães", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_m",
-    "variant": 2,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["abacto", "aparta", "abebra", "abeira", "abaetê", "partes"],
+    "guesses": ["abacto", "aparta", "abebra", "abeira", "abanto", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_n",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pachel", "pacães", "parcel", "paetês", "pacões", "partes"],
+    "guesses": ["peagem", "pachel", "perdei", "peitei", "pechém", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_n",
     "color": "present",
     "answer": "partes",
-    "guesses": ["abacto", "aparta", "abebra", "abaetê", "abaité", "partes"],
+    "guesses": ["abacto", "apiari", "abebra", "abaetê", "abanto", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1988,7 +1672,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pachel", "parcel", "pardês", "paetês", "pacães", "partes"],
+    "guesses": ["pachel", "perdei", "perdem", "peitei", "peagem", "partes"],
     "origin": [0, 0]
   },
   {
@@ -1996,67 +1680,35 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aparta", "abebra", "abeira", "abaetê", "abacto", "partes"],
+    "guesses": ["apiari", "abebra", "abeira", "abaetê", "abacto", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_o",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["aatrox", "parada", "parado", "paraju", "aavora", "partes"],
+    "guesses": ["aatrox", "perada", "perado", "peraes", "aavora", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_o",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abebra", "abecar", "abedal", "aetite", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_o",
-    "variant": 1,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["barabu", "pactar", "pactos", "pactua", "baraia", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_o",
-    "variant": 1,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["aetita", "abaetê", "abarca", "abarco", "aetite", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_o",
-    "variant": 2,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["cartar", "pachel", "pacães", "pacões", "cartaz", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_o",
-    "variant": 2,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["aperar", "abacto", "abaetê", "abaité", "apercá", "partes"],
+    "guesses": ["bebena", "abebra", "abecar", "abedal", "beberu", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_p",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "parada", "paaris", "pabllo", "pabola", "partes"],
+    "guesses": ["paanga", "perada", "paaris", "pcomos", "peador", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_p",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abebra", "aetite", "ababuí", "abacto", "partes"],
+    "guesses": ["apache", "abebra", "apagai", "ababuí", "abacto", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2064,7 +1716,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "pactar", "parado", "paanga", "paaris", "partes"],
+    "guesses": ["parada", "pectar", "parado", "pcomos", "peador", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2072,7 +1724,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abaetê", "aetite", "ababuí", "abacto", "partes"],
+    "guesses": ["aetita", "abarca", "aetite", "ababuí", "abacto", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2080,7 +1732,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "pachel", "partas", "paanga", "paaris", "partes"],
+    "guesses": ["partam", "peagem", "partia", "pcomos", "peador", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2095,14 +1747,14 @@
     "patternId": "letter_q",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartar", "pachel", "parcel", "pactar", "barbeá", "partes"],
+    "guesses": ["cartar", "peagem", "perdei", "pectar", "barbeá", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_q",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abacto", "abebra", "abaetê", "apeará", "partes"],
+    "guesses": ["besana", "abacto", "abebra", "abarca", "branta", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2110,7 +1762,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartar", "pachel", "pacães", "pactar", "barbeá", "partes"],
+    "guesses": ["cartar", "peagem", "pechém", "pectar", "barbeá", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2118,7 +1770,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abacto", "abaetê", "abarca", "apeará", "partes"],
+    "guesses": ["besana", "abacto", "abanto", "abarca", "branta", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2126,7 +1778,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartar", "pachel", "parcel", "paetês", "cartel", "partes"],
+    "guesses": ["cartar", "peagem", "perdei", "peitei", "cartel", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2134,21 +1786,21 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abacto", "abebra", "abaetê", "aperta", "partes"],
+    "guesses": ["besana", "abacto", "abebra", "abaetê", "betara", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_r",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "pachel", "partas", "pactar", "pacães", "partes"],
+    "guesses": ["partam", "peagem", "partia", "pectar", "pechém", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_r",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abacto", "apercá", "abaetê", "abaité", "partes"],
+    "guesses": ["aperar", "abacto", "apercá", "abarca", "abanto", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2156,7 +1808,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "pachel", "partas", "parada", "pactar", "partes"],
+    "guesses": ["partam", "peagem", "partia", "pectar", "peitei", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2164,37 +1816,21 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abacto", "apercá", "abebra", "abaetê", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_r",
-    "variant": 2,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["partam", "pachel", "partas", "pactar", "paetês", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_r",
-    "variant": 2,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["aperar", "abacto", "apercá", "abaetê", "abaste", "partes"],
+    "guesses": ["aperar", "abacto", "apercá", "abarca", "abaetê", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_s",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["barabu", "paanga", "aatrox", "abrace", "paaris", "partes"],
+    "guesses": ["barabu", "pcomos", "aatrox", "abrace", "paanga", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_s",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "ababuí", "aetite", "abebra", "apache", "partes"],
+    "guesses": ["beagle", "ababuí", "bebena", "bdelar", "apache", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2202,7 +1838,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartar", "paanga", "barabu", "abatam", "parada", "partes"],
+    "guesses": ["cartar", "pcomos", "barabu", "abatam", "parada", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2210,7 +1846,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "ababuí", "aetita", "abaetê", "aetite", "partes"],
+    "guesses": ["besana", "ababuí", "beagle", "bibaga", "aetita", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2218,7 +1854,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartel", "paanga", "cartar", "ababes", "partam", "partes"],
+    "guesses": ["cartel", "peador", "cartar", "abafei", "partam", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2226,7 +1862,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "ababuí", "aperar", "abacto", "apercá", "partes"],
+    "guesses": ["betara", "ababuí", "besana", "bibiru", "aperar", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2240,7 +1876,7 @@
     "patternId": "letter_t",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "aetite", "apache", "apagai", "apagam", "partes"],
+    "guesses": ["aetita", "bebena", "bebaça", "bebaço", "beberu", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2256,7 +1892,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "aetita", "aetite", "apeado", "apeará", "partes"],
+    "guesses": ["aperar", "beagle", "besuga", "besugo", "betuma", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2272,14 +1908,14 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "abebra", "abecar", "abedal", "abegoa", "partes"],
+    "guesses": ["aperta", "bdélio", "abebra", "abecar", "abedal", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_u",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "parado", "paraju", "parajá", "parans", "partes"],
+    "guesses": ["perada", "perado", "peraes", "perais", "parada", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2294,7 +1930,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pactar", "pactos", "pactua", "pactue", "partam", "partes"],
+    "guesses": ["pectar", "peitai", "peitam", "peitar", "partam", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2302,7 +1938,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abaetê", "abarca", "abarco", "abarga", "aperar", "partes"],
+    "guesses": ["abarca", "abarco", "abarga", "abasia", "aperar", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2310,7 +1946,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pachel", "pacães", "pacões", "padres", "partem", "partes"],
+    "guesses": ["peagem", "pechém", "peguei", "peguem", "cartar", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2318,37 +1954,21 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abacto", "abaetê", "abaité", "abante", "aperta", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_u",
-    "variant": 3,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["pachel", "pacães", "pacões", "padres", "cartar", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_u",
-    "variant": 3,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["abacto", "abaetê", "abaité", "abante", "aperar", "partes"],
+    "guesses": ["abacto", "abanto", "abaíra", "abdita", "besana", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_v",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "parado", "paraju", "aatrox", "aavora", "partes"],
+    "guesses": ["perada", "perado", "peraes", "aatrox", "aavora", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_v",
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "abecar", "abedal", "aetita", "aetite", "partes"],
+    "guesses": ["abebra", "abecar", "abedal", "bebena", "bebaça", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2356,7 +1976,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pactar", "pactos", "pactua", "barabu", "baraia", "partes"],
+    "guesses": ["pectar", "peitai", "peitam", "barabu", "baraia", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2364,7 +1984,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abaetê", "abarca", "abarco", "aetita", "aetite", "partes"],
+    "guesses": ["abarca", "abarco", "abarga", "beagle", "besuga", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2372,7 +1992,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pachel", "pacães", "pacões", "baetal", "abrace", "partes"],
+    "guesses": ["peagem", "pechém", "peguei", "baetal", "abrace", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2380,7 +2000,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abacto", "abaetê", "abaité", "aparam", "abebra", "partes"],
+    "guesses": ["abacto", "abanto", "abaíra", "bebaça", "bdélio", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2388,7 +2008,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pachel", "pacães", "baetal", "baetas", "abrace", "partes"],
+    "guesses": ["peagem", "pechém", "baetal", "baetas", "abrace", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2396,21 +2016,21 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abacto", "abaetê", "aparam", "aparar", "abebra", "partes"],
+    "guesses": ["abacto", "abanto", "bebaça", "bebaço", "bdélio", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_w",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pachel", "pacães", "parcel", "pardês", "baetal", "partes"],
+    "guesses": ["peagem", "pechém", "perdei", "perdem", "baetal", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_w",
     "color": "present",
     "answer": "partes",
-    "guesses": ["abacto", "abaetê", "abebra", "abeira", "aparam", "partes"],
+    "guesses": ["abacto", "abanto", "abebra", "abeira", "bebaça", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2418,7 +2038,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pachel", "pacães", "parcel", "paetês", "pacões", "partes"],
+    "guesses": ["peagem", "pechém", "peguei", "perdei", "baetal", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2426,37 +2046,21 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abacto", "abaetê", "abebra", "aparta", "abaité", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_w",
-    "variant": 2,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["pachel", "pacães", "pacões", "parcel", "baetal", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_w",
-    "variant": 2,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["abacto", "abaetê", "abaité", "abebra", "aparam", "partes"],
+    "guesses": ["abacto", "abanto", "abaíra", "abebra", "bebaça", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_x",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "parado", "aatrox", "paraju", "parajá", "partes"],
+    "guesses": ["perada", "perado", "aatrox", "peraes", "perais", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_x",
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "abecar", "aetita", "abedal", "abegoa", "partes"],
+    "guesses": ["abebra", "abecar", "bebena", "abedal", "abegoa", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2464,7 +2068,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pactar", "pactos", "barabu", "pactua", "pactue", "partes"],
+    "guesses": ["pectar", "peitai", "barabu", "peitam", "peitar", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2472,7 +2076,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abaetê", "abarca", "aetita", "abarco", "abarga", "partes"],
+    "guesses": ["abarca", "abarco", "beagle", "abarga", "abasia", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2480,7 +2084,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pactar", "barabu", "baraia", "barajá", "pactos", "partes"],
+    "guesses": ["peagem", "baetal", "abrace", "baetão", "pechém", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2488,37 +2092,21 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abaetê", "aetita", "aetite", "apeado", "abarca", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_x",
-    "variant": 3,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["pachel", "baetal", "abrace", "baetas", "pacães", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "letter_x",
-    "variant": 3,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["abacto", "aparam", "abebra", "aparar", "abaetê", "partes"],
+    "guesses": ["abacto", "bebaça", "bdélio", "bebaço", "abanto", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_y",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "parado", "aatrox", "aavora", "baamês", "partes"],
+    "guesses": ["perada", "perado", "aatrox", "aavora", "baamês", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_y",
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "abecar", "aetita", "aetite", "apache", "partes"],
+    "guesses": ["abebra", "abecar", "bebena", "bebaça", "bebaço", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2526,7 +2114,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pactar", "pactos", "barabu", "baraia", "barajá", "partes"],
+    "guesses": ["pectar", "peitai", "barabu", "baraia", "barajá", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2534,7 +2122,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abaetê", "abarca", "aetita", "aetite", "apeado", "partes"],
+    "guesses": ["abarca", "abarco", "beagle", "besuga", "besugo", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2542,7 +2130,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pachel", "pacães", "baetal", "abrace", "abrais", "partes"],
+    "guesses": ["peagem", "pechém", "baetal", "abrace", "abrais", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2550,7 +2138,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abacto", "abaetê", "aparam", "abebra", "abecar", "partes"],
+    "guesses": ["abacto", "abanto", "bebaça", "bdélio", "abebra", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2558,7 +2146,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["pachel", "baetal", "abrace", "abrais", "abrans", "partes"],
+    "guesses": ["peagem", "baetal", "abrace", "abrais", "abrans", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2566,21 +2154,21 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["abacto", "aparam", "abebra", "abecar", "abedal", "partes"],
+    "guesses": ["abacto", "bebaça", "bdélio", "abebra", "abecar", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_z",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "abrace", "aatrox", "paanga", "parado", "partes"],
+    "guesses": ["parada", "abrace", "aatrox", "pcomos", "parado", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "letter_z",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "abebra", "aetite", "ababuí", "apeado", "partes"],
+    "guesses": ["aetita", "bdelar", "bebena", "ababuí", "aetite", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2588,7 +2176,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "abatam", "barabu", "paanga", "partas", "partes"],
+    "guesses": ["partam", "abatam", "barabu", "pcomos", "partas", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2596,7 +2184,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abaetê", "aetita", "ababuí", "apercá", "partes"],
+    "guesses": ["aperar", "bibaga", "beagle", "ababuí", "apercá", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2604,7 +2192,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartes", "ababes", "abatam", "aatrox", "fartes", "partes"],
+    "guesses": ["cartes", "ababás", "abatam", "aatrox", "fartes", "partes"],
     "origin": [0, 1]
   },
   {
@@ -2612,7 +2200,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "abacto", "abebra", "ababuí", "aperte", "partes"],
+    "guesses": ["aperta", "bibiru", "bdélio", "ababuí", "aperte", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2620,7 +2208,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartes", "ababes", "abatam", "abrace", "fartes", "partes"],
+    "guesses": ["cartes", "abafei", "abatam", "abrace", "fartes", "partes"],
     "origin": [0, 1]
   },
   {
@@ -2628,14 +2216,14 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "abaetê", "abebra", "aetita", "aperte", "partes"],
+    "guesses": ["aperta", "bibaga", "bdélio", "bebido", "aperte", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "square_outline",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["parada", "parado", "paraju", "partes"],
+    "guesses": ["parada", "perada", "parado", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2650,7 +2238,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "pactar", "partas", "partes"],
+    "guesses": ["partam", "pectar", "partas", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2658,7 +2246,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abaetê", "apercá", "partes"],
+    "guesses": ["aperar", "abarca", "apercá", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2666,7 +2254,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["partam", "pactar", "pactos", "partas", "partes"],
+    "guesses": ["partam", "pectar", "peitai", "partas", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2674,7 +2262,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperar", "abaetê", "abarca", "apercá", "partes"],
+    "guesses": ["aperar", "abarca", "abarco", "apercá", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2682,7 +2270,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartes", "baamês", "fartes", "partes"],
+    "guesses": ["cartes", "baarás", "fartes", "partes"],
     "origin": [0, 1]
   },
   {
@@ -2698,7 +2286,7 @@
     "variant": 4,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["cartes", "baamês", "baarás", "fartes", "partes"],
+    "guesses": ["cartes", "baarás", "babais", "fartes", "partes"],
     "origin": [0, 1]
   },
   {
@@ -2706,37 +2294,21 @@
     "variant": 4,
     "color": "present",
     "answer": "partes",
-    "guesses": ["aperta", "abacto", "abaetê", "aperte", "partes"],
-    "origin": [0, 0]
-  },
-  {
-    "patternId": "square_outline",
-    "variant": 5,
-    "color": "correct",
-    "answer": "partes",
-    "guesses": ["cartes", "baamês", "baarás", "babais", "fartes", "partes"],
-    "origin": [0, 1]
-  },
-  {
-    "patternId": "square_outline",
-    "variant": 5,
-    "color": "present",
-    "answer": "partes",
-    "guesses": ["aperta", "abacto", "abaetê", "abaité", "aperte", "partes"],
+    "guesses": ["aperta", "abacto", "abanto", "aperte", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "staircase",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "paaris", "parada", "partes"],
+    "guesses": ["pcomos", "paanga", "parada", "partes"],
     "origin": [0, 0]
   },
   {
     "patternId": "staircase",
     "color": "present",
     "answer": "partes",
-    "guesses": ["ababuí", "aetita", "aetite", "partes"],
+    "guesses": ["ababuí", "apache", "aetita", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2744,7 +2316,7 @@
     "variant": 1,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "paaris", "partam", "partes"],
+    "guesses": ["pcomos", "paanga", "partam", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2752,7 +2324,7 @@
     "variant": 1,
     "color": "present",
     "answer": "partes",
-    "guesses": ["ababuí", "aetita", "aperar", "partes"],
+    "guesses": ["ababuí", "apache", "aperar", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2760,7 +2332,7 @@
     "variant": 2,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "paaris", "parada", "partam", "partes"],
+    "guesses": ["pcomos", "paanga", "parada", "partam", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2768,7 +2340,7 @@
     "variant": 2,
     "color": "present",
     "answer": "partes",
-    "guesses": ["ababuí", "aetita", "aetite", "aperar", "partes"],
+    "guesses": ["ababuí", "apache", "aetita", "aperar", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2776,7 +2348,7 @@
     "variant": 3,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "paaris", "parada", "partam", "partem", "partes"],
+    "guesses": ["pcomos", "paanga", "parada", "partam", "partem", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2784,7 +2356,7 @@
     "variant": 3,
     "color": "present",
     "answer": "partes",
-    "guesses": ["ababuí", "aetita", "aetite", "aperar", "aperta", "partes"],
+    "guesses": ["ababuí", "apache", "aetita", "aperar", "aperta", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2792,7 +2364,7 @@
     "variant": 4,
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "paaris", "partem", "partes"],
+    "guesses": ["pcomos", "paanga", "partem", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2800,7 +2372,7 @@
     "variant": 4,
     "color": "present",
     "answer": "partes",
-    "guesses": ["ababuí", "aetita", "aperta", "partes"],
+    "guesses": ["ababuí", "apagai", "aperta", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2821,7 +2393,7 @@
     "patternId": "tetromino_j",
     "color": "correct",
     "answer": "partes",
-    "guesses": ["paanga", "parada", "partes"],
+    "guesses": ["pcomos", "parada", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2842,7 +2414,7 @@
     "patternId": "tetromino_l",
     "color": "present",
     "answer": "partes",
-    "guesses": ["abebra", "aetita", "partes"],
+    "guesses": ["bdelar", "aetita", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2856,7 +2428,7 @@
     "patternId": "tetromino_o",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "aetite", "partes"],
+    "guesses": ["apache", "apagai", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2870,7 +2442,7 @@
     "patternId": "tetromino_s",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "aetite", "partes"],
+    "guesses": ["beagle", "apache", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2884,7 +2456,7 @@
     "patternId": "tetromino_t",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "aetite", "partes"],
+    "guesses": ["aetita", "bebena", "partes"],
     "origin": [0, 0]
   },
   {
@@ -2898,7 +2470,131 @@
     "patternId": "tetromino_z",
     "color": "present",
     "answer": "partes",
-    "guesses": ["aetita", "aetite", "partes"],
+    "guesses": ["apache", "beagle", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_1",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["aatrox", "paanga", "aavora", "baamês", "parada", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_1",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["bebaça", "apache", "bebaço", "bebena", "aetita", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_1",
+    "variant": 1,
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["aatrox", "paanga", "aavora", "baanda", "partam", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_1",
+    "variant": 1,
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["bebaça", "apache", "bebaço", "bebena", "aperar", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_1",
+    "variant": 2,
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["aatrox", "paanga", "aavora", "baanda", "partem", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_1",
+    "variant": 2,
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["bebaça", "apache", "bebaço", "bebido", "aperta", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_1",
+    "variant": 3,
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["abrace", "barabu", "abrais", "abrasa", "partem", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_1",
+    "variant": 3,
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["bdelar", "beagle", "bdélio", "bianda", "aperta", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_4",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["perada", "perado", "parada", "abrace", "abrais", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_4",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "abecar", "aetita", "bdelar", "abedal", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_4",
+    "variant": 1,
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["pectar", "peitai", "partam", "abatam", "abatas", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_4",
+    "variant": 1,
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abarca", "abarco", "aperar", "bibaga", "abarga", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_4",
+    "variant": 2,
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["peagem", "pechém", "partem", "abafei", "abafem", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_4",
+    "variant": 2,
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abacto", "abanto", "aperta", "bibiru", "abaíra", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_4",
+    "variant": 3,
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["abatam", "aortas", "baetal", "partem", "abetal", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "digit_4",
+    "variant": 3,
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abarca", "bipene", "bebaça", "aperta", "bibaga", "partes"],
     "origin": [0, 0]
   }
 ]

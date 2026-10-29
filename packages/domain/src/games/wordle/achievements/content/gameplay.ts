@@ -84,28 +84,6 @@ export const GAMEPLAY = [
     },
   },
   {
-    id: 'wordle_v2_solved_after_10',
-    family: 'persistence',
-    name: 'Até encontrar',
-    description: 'Resolva depois de pelo menos 10 tentativas.',
-    rarity: 'common',
-    rule: {
-      kind: 'solved_after',
-      minAttempts: 10,
-    },
-  },
-  {
-    id: 'wordle_v2_solved_after_20',
-    family: 'persistence',
-    name: 'Fôlego de sobra',
-    description: 'Resolva depois de pelo menos 20 tentativas.',
-    rarity: 'rare',
-    rule: {
-      kind: 'solved_after',
-      minAttempts: 20,
-    },
-  },
-  {
     id: 'wordle_v2_all_yellow',
     family: 'feedback',
     name: 'Tudo no lugar errado',
@@ -123,7 +101,6 @@ export const GAMEPLAY = [
     rarity: 'common',
     rule: {
       kind: 'blank_start',
-      maxAttempts: Number.MAX_SAFE_INTEGER,
     },
   },
   {
@@ -162,41 +139,6 @@ export const GAMEPLAY = [
     },
   },
   {
-    id: 'wordle_v2_secret_7c42a1e9',
-    family: 'comeback',
-    name: 'O dia seguinte existe',
-    description: 'Deixe uma partida com palpites terminar sem solução.',
-    rarity: 'common',
-    hidden: true,
-    rule: {
-      kind: 'expired_unsolved',
-    },
-  },
-  {
-    id: 'wordle_v2_secret_b83d2f06',
-    family: 'comeback',
-    name: 'De volta ao acerto',
-    description:
-      'Resolva na data imediatamente após uma partida expirada sem solução.',
-    rarity: 'rare',
-    hidden: true,
-    rule: {
-      kind: 'recovery',
-    },
-  },
-  {
-    id: 'wordle_v2_return_7',
-    family: 'comeback',
-    name: 'Bom te ver de novo',
-    description:
-      'Volte a jogar depois de pelo menos sete datas sem palpites elegíveis.',
-    rarity: 'common',
-    rule: {
-      kind: 'return_after_gap',
-      days: 7,
-    },
-  },
-  {
     id: 'wordle_v2_fast_60',
     family: 'speed',
     name: 'Minuto decisivo',
@@ -221,19 +163,6 @@ export const GAMEPLAY = [
       kind: 'fast_solve',
       seconds: 30,
       minAttempts: 2,
-    },
-  },
-  {
-    id: 'wordle_v2_secret_a14f8e52',
-    family: 'speed',
-    name: 'No seu tempo',
-    description:
-      'Resolva depois de pelo menos uma hora desde o primeiro palpite. O intervalo inclui pausas.',
-    rarity: 'rare',
-    hidden: true,
-    rule: {
-      kind: 'slow_solve',
-      seconds: 3600,
     },
   },
   {
@@ -304,18 +233,6 @@ export const GAMEPLAY = [
     rarity: 'rare',
     rule: {
       kind: 'answer_lengths',
-    },
-  },
-  {
-    id: 'wordle_v2_attempts_1_to_6',
-    family: 'variety',
-    name: 'Todos os caminhos',
-    description:
-      'Resolva pelo menos uma vez com cada quantidade exata de tentativas de 1 a 6.',
-    rarity: 'epic',
-    rule: {
-      kind: 'attempt_variety',
-      maxAttempts: 6,
     },
   },
   {

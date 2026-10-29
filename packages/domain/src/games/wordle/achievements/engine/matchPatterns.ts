@@ -28,6 +28,37 @@ function geometry(
   return { cells, height, width };
 }
 
+/**
+ * The drawing is the whole group of same-colored cells it belongs to: a
+ * same-colored neighbor (diagonals included) that the pattern does not contain
+ * means the player drew a different figure. The all-green winning row only
+ * counts when the pattern itself reaches it; otherwise it is ignored.
+ */
+function isExactFigure(
+  matrix: readonly (readonly LetterFeedback[])[],
+  cells: readonly Cell[],
+  color: LetterFeedback,
+): boolean {
+  const owned = new Set(cells.map(([r, c]) => `${r},${c}`));
+  const lastRow = matrix.length - 1;
+  const winningRow =
+    matrix[lastRow]?.every((cell) => cell === 'correct') &&
+    !cells.some(([row]) => row === lastRow)
+      ? lastRow
+      : -1;
+  return cells.every(([row, column]) =>
+    [-1, 0, 1].every((dr) =>
+      [-1, 0, 1].every((dc) => {
+        const r = row + dr;
+        const c = column + dc;
+        return (
+          r === winningRow || matrix[r]?.[c] !== color || owned.has(`${r},${c}`)
+        );
+      }),
+    ),
+  );
+}
+
 export function matchWordlePatterns(
   matrix: readonly (readonly LetterFeedback[])[],
   templates: readonly WordlePatternDefinition[] = WORDLE_PATTERN_CATALOG,
@@ -62,7 +93,10 @@ export function matchWordlePatterns(
               row + r,
               column + c,
             ]);
-            if (cells.every(([r, c]) => matrix[r]?.[c] === color)) {
+            if (
+              cells.every(([r, c]) => matrix[r]?.[c] === color) &&
+              isExactFigure(matrix, cells, color)
+            ) {
               found = {
                 patternId: template.id,
                 color,

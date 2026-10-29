@@ -9,7 +9,6 @@ export const wordleAchievementRuleSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('streak'), days: count }),
   z.object({ kind: z.literal('played'), days: count }),
   z.object({ kind: z.literal('wins_within'), maxAttempts: count, count }),
-  z.object({ kind: z.literal('solved_after'), minAttempts: count }),
   z.object({
     kind: z.literal('fast_solve'),
     seconds: count,
@@ -23,7 +22,7 @@ export const wordleAchievementRuleSchema = z.discriminatedUnion('kind', [
       toHour: hour,
     })
     .refine((rule) => rule.fromHour < rule.toHour),
-  z.object({ kind: z.literal('blank_start'), maxAttempts: count }),
+  z.object({ kind: z.literal('blank_start') }),
   z.object({ kind: z.literal('staircase'), minAttempts: count }),
   z.object({ kind: z.literal('pattern'), patternId: z.string().min(1) }),
   z.object({
@@ -40,12 +39,7 @@ export const wordleAchievementRuleSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('all_yellow_row') }),
   z.object({ kind: z.literal('mixed_rows'), count }),
   z.object({ kind: z.literal('near_miss') }),
-  z.object({ kind: z.literal('expired_unsolved') }),
-  z.object({ kind: z.literal('recovery') }),
-  z.object({ kind: z.literal('return_after_gap'), days: count }),
-  z.object({ kind: z.literal('slow_solve'), seconds: count }),
   z.object({ kind: z.literal('answer_lengths') }),
-  z.object({ kind: z.literal('attempt_variety'), maxAttempts: count }),
   z.object({
     kind: z.literal('answer_vocabulary'),
     feature: z.enum(['repeated_letters', 'accent']),

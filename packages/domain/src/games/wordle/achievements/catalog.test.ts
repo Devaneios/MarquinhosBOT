@@ -12,6 +12,27 @@ import revisions from './fixtures/catalog-revisions.json';
 import { WORDLE_PATTERN_CATALOG } from './patterns';
 
 describe('version 2 catalog', () => {
+  it('keeps the curated catalog at 97 entries and drops artificial incentives', () => {
+    expect(WORDLE_ACHIEVEMENT_CATALOG).toHaveLength(97);
+    expect(
+      WORDLE_ACHIEVEMENT_CATALOG.some((entry) =>
+        [
+          'solved_after',
+          'expired_unsolved',
+          'recovery',
+          'return_after_gap',
+          'slow_solve',
+          'attempt_variety',
+        ].includes(entry.rule.kind),
+      ),
+    ).toBe(false);
+    expect(
+      WORDLE_ACHIEVEMENT_CATALOG.find(
+        (entry) => entry.id === 'wordle_v2_blank_opening',
+      )?.rule,
+    ).toEqual({ kind: 'blank_start' });
+  });
+
   it('uses unique identities for the current collection', () => {
     expect(WORDLE_ACHIEVEMENT_VERSION).toBe(2);
     const ids = WORDLE_ACHIEVEMENT_CATALOG.map((d) => d.id);
@@ -53,6 +74,13 @@ describe('version 2 catalog', () => {
       (d) => d.rule.kind === 'pattern',
     );
     expect(patterns).toHaveLength(53);
+    expect(
+      patterns.every(
+        ({ description }) =>
+          description.includes('inclusive na diagonal') &&
+          description.includes('linha vencedora'),
+      ),
+    ).toBe(true);
     expect(
       patterns.map((d) => d.rule.kind === 'pattern' && d.rule.patternId),
     ).toEqual(WORDLE_PATTERN_CATALOG.map((p) => p.id));
@@ -120,13 +148,7 @@ describe('version 2 catalog', () => {
     ).toBe(true);
   });
   it('never reduces XP across harder numerical tiers', () => {
-    for (const kind of [
-      'wins',
-      'played',
-      'streak',
-      'solved_after',
-      'fast_solve',
-    ] as const) {
+    for (const kind of ['wins', 'played', 'streak', 'fast_solve'] as const) {
       const rewards = WORDLE_ACHIEVEMENT_CATALOG.filter(
         (d) => d.rule.kind === kind,
       ).map((d) => d.rewardXp);

@@ -11,11 +11,9 @@ export const TERMO_FAMILY_LABELS: Record<string, string> = {
   streak: 'Sequência',
   played: 'Presença',
   precision: 'Precisão',
-  persistence: 'Persistência',
   speed: 'Velocidade',
   timing: 'Horário',
   style: 'Estilo',
-  comeback: 'Retorno',
   letters: 'Letras',
   digits: 'Dígitos',
   tetrominoes: 'Tetraminós',
@@ -228,7 +226,7 @@ export function buildTermoAchievementDetailEmbed(
     embed.addFields({
       name: 'Como desenhar',
       value:
-        'Use verde ou amarelo, uma cor por desenho. Os pontos aceitam qualquer cor e células extras são permitidas. A linha da vitória também conta.',
+        'Use verde ou amarelo, uma cor por desenho. O desenho precisa estar isolado: outro quadrado da mesma cor encostando, até na diagonal, invalida. A linha da vitória só conta se o desenho precisar dela.',
     });
     if (achievement.patternPreview.rotations.length > 1) {
       embed.addFields({

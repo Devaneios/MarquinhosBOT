@@ -250,7 +250,7 @@ describe('Wordle guess award integration', () => {
       created_at: 0,
     });
 
-  it('returns pattern evidence and a replacement collection on the winning row', async () => {
+  it('does not treat an incomplete figure inside the winning row as a pattern', async () => {
     const { userId, guildId } = identity();
     await seedDaily(guildId);
     const result = await service.submitGuess(userId, guildId, 'termo');
@@ -260,14 +260,7 @@ describe('Wordle guess award integration', () => {
     const pattern = result.unlockedAchievements?.find(
       (row) => row.patternPreview?.patternId === 'tetromino_i',
     );
-    expect(pattern?.matchEvidence).toMatchObject({
-      patternId: 'tetromino_i',
-      color: 'correct',
-      date: getRecifeDate(),
-    });
-    expect(pattern?.matchEvidence?.feedback).toEqual([
-      Array(5).fill('correct'),
-    ]);
+    expect(pattern).toBeUndefined();
     expect(await service.submitGuess(userId, guildId, 'termo')).toHaveProperty(
       'error',
     );

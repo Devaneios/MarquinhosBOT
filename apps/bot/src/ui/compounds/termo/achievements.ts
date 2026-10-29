@@ -327,11 +327,14 @@ export function termoAchievementDetailCard(
           ),
         }),
       ),
-      Text('Os pontos aceitam qualquer cor. Células extras são permitidas.', {
-        fontFamily: theme.fontFamilies.body,
-        fontSize: theme.fontSizes.md,
-        color: theme.colors.textMuted,
-      }),
+      Text(
+        'O desenho precisa estar isolado: sem outro quadrado da mesma cor encostando, até na diagonal. A linha vencedora só conta se o desenho precisar dela.',
+        {
+          fontFamily: theme.fontFamilies.body,
+          fontSize: theme.fontSizes.md,
+          color: theme.colors.textMuted,
+        },
+      ),
     );
   }
   return card(children, theme);

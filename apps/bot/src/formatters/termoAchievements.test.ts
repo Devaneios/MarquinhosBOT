@@ -238,7 +238,7 @@ describe('buildTermoAchievementDetailEmbed', () => {
     expect(json.description).toContain('Desenhe a letra T.');
     const text = JSON.stringify(json);
     expect(text).toContain('verde ou amarelo');
-    expect(text).toContain('células extras');
+    expect(text).toContain('isolado');
     expect(text).toContain('linha da vitória');
     expect(json.image?.url).toBe('attachment://detail.png');
   });

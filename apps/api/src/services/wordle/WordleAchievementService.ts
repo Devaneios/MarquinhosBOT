@@ -22,12 +22,9 @@ import {
   WORDLE_ACHIEVEMENT_CATALOG,
   WORDLE_ACHIEVEMENT_VERSION,
 } from '@marquinhos/domain/games/wordle/achievements/catalog';
+import { discoverWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/engine/discoverPatterns';
 import { evaluateWordleAchievements } from '@marquinhos/domain/games/wordle/achievements/engine/evaluate';
-import {
-  parseAchievementMatrix,
-  type AchievementHistoryDay,
-} from '@marquinhos/domain/games/wordle/achievements/engine/history';
-import { matchWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/engine/matchPatterns';
+import type { AchievementHistoryDay } from '@marquinhos/domain/games/wordle/achievements/engine/history';
 import { getWordlePatternPreview } from '@marquinhos/domain/games/wordle/achievements/patterns';
 import { computeWordlePlayerStats } from '@marquinhos/domain/games/wordle/playerStats';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
@@ -152,7 +149,6 @@ export class WordleAchievementService {
         solved: row.solved,
         attempts: row.attempts,
         guesses: readGuesses(row.guesses),
-        feedback: parseAchievementMatrix(row.guesses, width, row.attempts),
         wordLength: width,
         answerHasRepeatedLetters:
           normalized === null
@@ -392,26 +388,35 @@ export class WordleAchievementService {
     );
     const history = await this.loadHistory(userId, guildId, exec);
     if (version === WORDLE_ACHIEVEMENT_VERSION) {
-      for (const day of history.days) {
-        if (day.achievementVersion !== version || day.feedback === null)
-          continue;
-        const discoveries = matchWordlePatterns(day.feedback);
-        if (discoveries.length === 0) continue;
+      const eligibleDays = history.days.filter(
+        (day) => day.achievementVersion === version,
+      );
+      const sessionIdsByDate = new Map(
+        eligibleDays.map((day) => [day.date, day.sessionId]),
+      );
+      const discoveries = discoverWordlePatterns(eligibleDays, {
+        today: history.options.today,
+      });
+      if (discoveries.length > 0) {
+        const discoveryRows = discoveries.map((evidence) => {
+          const sessionId = sessionIdsByDate.get(evidence.date);
+          if (sessionId === undefined)
+            throw new Error(
+              `Wordle pattern evidence has no source session for ${evidence.date}`,
+            );
+          return { evidence, sessionId };
+        });
         await exec
           .insert(wordlePatternDiscoveries)
           .values(
-            discoveries.map((match) => ({
+            discoveryRows.map(({ evidence, sessionId }) => ({
               user_id: userId,
               guild_id: guildId,
               version,
-              pattern_id: match.patternId,
-              session_id: day.sessionId,
+              pattern_id: evidence.patternId,
+              session_id: sessionId,
               discovered_at: Date.now(),
-              evidence: wordlePatternEvidenceSchema.parse({
-                ...match,
-                feedback: day.feedback,
-                date: day.date,
-              }),
+              evidence: wordlePatternEvidenceSchema.parse(evidence),
             })),
           )
           .onConflictDoNothing();

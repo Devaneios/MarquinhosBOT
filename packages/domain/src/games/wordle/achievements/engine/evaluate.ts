@@ -1,13 +1,12 @@
-import { dayNumber, type WordleDayRecord } from '../../playerStats';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '../catalog';
 import { WORDLE_PATTERN_CATALOG } from '../patterns';
 import {
   bestParticipationStreak,
-  buildWordleAchievementFacts,
   elapsedSeconds,
   hasCalendarCoverage,
-  type WordleAchievementFacts,
-  type WordleEvaluationOptions,
+  prepareAchievementHistory,
+  type AchievementEvaluationOptions,
+  type AchievementHistoryDay,
 } from './history';
 import type { WordleAchievementRule } from './rules';
 
@@ -36,9 +35,9 @@ function flag(met: boolean): WordleRuleResult {
   return { met, progress: null };
 }
 
-export function evaluateWordleRule(
+function evaluateWordleRule(
   rule: WordleAchievementRule,
-  facts: WordleAchievementFacts,
+  facts: ReturnType<typeof prepareAchievementHistory>,
 ): WordleRuleResult {
   const {
     stats,
@@ -62,8 +61,6 @@ export function evaluateWordleRule(
         solved.filter((day) => day.attempts <= rule.maxAttempts).length,
         rule.count,
       );
-    case 'solved_after':
-      return flag(solved.some((day) => day.attempts >= rule.minAttempts));
     case 'fast_solve':
       return flag(
         solved.some((day) => {
@@ -88,9 +85,7 @@ export function evaluateWordleRule(
       return flag(
         solvedMatrices.some(
           ({ day, feedback }) =>
-            day.attempts >= 2 &&
-            day.attempts <= rule.maxAttempts &&
-            feedback[0]?.every((f) => f === 'absent'),
+            day.attempts >= 2 && feedback[0]?.every((f) => f === 'absent'),
         ),
       );
     case 'staircase':
@@ -101,7 +96,10 @@ export function evaluateWordleRule(
           );
           return (
             day.attempts >= rule.minAttempts &&
-            counts.every((count, i) => i === 0 || count > counts[i - 1]!)
+            counts.every((count, i) => {
+              const previous = counts[i - 1];
+              return previous === undefined || count > previous;
+            })
           );
         }),
       );
@@ -152,35 +150,6 @@ export function evaluateWordleRule(
               ),
         ),
       );
-    case 'expired_unsolved':
-      return flag(played.some((day) => !day.solved && day.date < today));
-    case 'recovery':
-      return flag(
-        solved.some((day) =>
-          played.some(
-            (previous) =>
-              !previous.solved &&
-              previous.date < today &&
-              dayNumber(day.date) - dayNumber(previous.date) === 1,
-          ),
-        ),
-      );
-    case 'return_after_gap':
-      return flag(
-        played.some(
-          (day, i) =>
-            i > 0 &&
-            dayNumber(day.date) - dayNumber(played[i - 1]!.date) - 1 >=
-              rule.days,
-        ),
-      );
-    case 'slow_solve':
-      return flag(
-        solved.some((day) => {
-          const elapsed = elapsedSeconds(day);
-          return elapsed !== null && elapsed >= rule.seconds;
-        }),
-      );
     case 'answer_lengths':
       return counter(
         new Set(
@@ -189,15 +158,6 @@ export function evaluateWordleRule(
             .filter((length) => length === 5 || length === 6),
         ).size,
         2,
-      );
-    case 'attempt_variety':
-      return counter(
-        new Set(
-          solved
-            .filter((day) => day.attempts <= rule.maxAttempts)
-            .map((day) => day.attempts),
-        ).size,
-        rule.maxAttempts,
       );
     case 'answer_vocabulary':
       return flag(
@@ -215,11 +175,14 @@ export function evaluateWordleRule(
   }
 }
 
+export type WordleEvaluationOptions = AchievementEvaluationOptions;
+export type { AchievementHistoryDay } from './history';
+
 export function evaluateWordleAchievements(
-  days: readonly WordleDayRecord[],
+  days: readonly AchievementHistoryDay[],
   options: WordleEvaluationOptions,
 ): WordleAchievementEvaluation[] {
-  const facts = buildWordleAchievementFacts(days, options);
+  const facts = prepareAchievementHistory(days, options);
   return WORDLE_ACHIEVEMENT_CATALOG.map((definition) => ({
     id: definition.id,
     ...evaluateWordleRule(definition.rule, facts),

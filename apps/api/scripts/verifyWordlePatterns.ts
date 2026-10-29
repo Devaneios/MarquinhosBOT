@@ -1,8 +1,11 @@
-import type { WordlePatternDefinition } from '@marquinhos/domain/games/wordle/achievements/types';
 import { matchWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/engine/matchPatterns';
 import {
-  WORDLE_PATTERN_CATALOG,
-} from '@marquinhos/domain/games/wordle/achievements/patterns';
+  missingWordlePatternWitnesses,
+  requiredWordlePatternWitnesses,
+  wordlePatternWitnessKey,
+} from '@marquinhos/domain/games/wordle/achievements/fixtures/witnessCoverage';
+import { WORDLE_PATTERN_CATALOG } from '@marquinhos/domain/games/wordle/achievements/patterns';
+import type { WordlePatternDefinition } from '@marquinhos/domain/games/wordle/achievements/types';
 import { computeFeedback } from '@marquinhos/domain/games/wordle/feedback';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -86,14 +89,28 @@ function findWitness(
   const rows = variantMasks(pattern)[variant] ?? pattern.mask;
   const width = rows[0]?.length ?? 0;
   for (let column = 0; column + width <= answer.length; column++) {
-    const candidates = rows.map((mask) =>
+    // The drawing is the whole same-colored group, so no neighbor of the
+    // mask, diagonals included, may share its color.
+    const touching = rows.map((_, i) => {
+      const columns = new Set<number>();
+      for (const near of [rows[i - 1], rows[i], rows[i + 1]])
+        [...(near ?? '')].forEach((cell, c) => {
+          if (cell === '#') for (let d = -1; d <= 1; d++) columns.add(c + d);
+        });
+      return [...columns]
+        .filter((c) => rows[i]?.[c] !== '#')
+        .map((c) => c + column)
+        .filter((c) => c >= 0 && c < answer.length);
+    });
+    const candidates = rows.map((mask, i) =>
       feedback
         .filter(
           (row) =>
             (color !== 'present' || !row.states.includes('correct')) &&
             [...mask].every(
               (cell, c) => cell !== '#' || row.states[c + column] === color,
-            ),
+            ) &&
+            (touching[i] ?? []).every((c) => row.states[c] !== color),
         )
         .slice(0, rows.length + 1)
         .map((row) => row.guess),
@@ -113,16 +130,18 @@ function findWitness(
   return null;
 }
 
-function search(): Witness[] {
+function search(patterns: readonly WordlePatternDefinition[]): Witness[] {
   const pending = new Map(
-    WORDLE_PATTERN_CATALOG.flatMap((pattern) =>
-      variantMasks(pattern).flatMap((_, variant) =>
-        (['correct', 'present'] as const).map((color) => [
-          `${pattern.id}:${variant}:${color}`,
-          { pattern, variant, color },
-        ]),
-      ),
-    ),
+    requiredWordlePatternWitnesses(patterns).map((requirement) => {
+      const pattern = patterns.find(
+        (candidate) => candidate.id === requirement.patternId,
+      );
+      if (!pattern) throw new Error(`Unknown pattern ${requirement.patternId}`);
+      return [
+        wordlePatternWitnessKey(requirement),
+        { pattern, variant: requirement.variant, color: requirement.color },
+      ] as const;
+    }),
   );
   const total = pending.size;
   const witnesses: Witness[] = [];
@@ -168,15 +187,7 @@ function search(): Witness[] {
       `Searched ${answer}; ${witnesses.length}/${total} color witnesses\n`,
     );
   }
-  const unreachable = WORDLE_PATTERN_CATALOG.flatMap((pattern) =>
-    variantMasks(pattern).flatMap((_, variant) =>
-      witnesses.some(
-        (w) => w.patternId === pattern.id && (w.variant ?? 0) === variant,
-      )
-        ? []
-        : [`${pattern.id}#${variant}`],
-    ),
-  );
+  const unreachable = missingWordlePatternWitnesses(patterns, witnesses);
   if (unreachable.length)
     throw new Error(
       `Unreachable after exhaustive source-bank search: ${unreachable.join(', ')}`,
@@ -193,8 +204,14 @@ function search(): Witness[] {
   );
 }
 
-function verify(witnesses: Witness[]) {
-  for (const witness of witnesses) {
+function verify(witnesses: Witness[], selectedIds?: ReadonlySet<string>) {
+  const selectedWitnesses = selectedIds
+    ? witnesses.filter((witness) => selectedIds.has(witness.patternId))
+    : witnesses;
+  const selectedPatterns = selectedIds
+    ? WORDLE_PATTERN_CATALOG.filter((pattern) => selectedIds.has(pattern.id))
+    : WORDLE_PATTERN_CATALOG;
+  for (const witness of selectedWitnesses) {
     const pattern = WORDLE_PATTERN_CATALOG.find(
       (p) => p.id === witness.patternId,
     );
@@ -231,9 +248,7 @@ function verify(witnesses: Witness[]) {
     }
     const match = matchWordlePatterns(matrix, [
       variantTemplate(pattern, witness.variant ?? 0),
-    ]).find(
-      (found) => found.patternId === pattern.id,
-    );
+    ]).find((found) => found.patternId === pattern.id);
     if (
       !match ||
       match.color !== witness.color ||
@@ -244,15 +259,7 @@ function verify(witnesses: Witness[]) {
         `Unverified drawing ${witness.patternId}/${witness.color}`,
       );
   }
-  const missing = WORDLE_PATTERN_CATALOG.flatMap((pattern) =>
-    variantMasks(pattern).flatMap((_, variant) =>
-      witnesses.some(
-        (w) => w.patternId === pattern.id && (w.variant ?? 0) === variant,
-      )
-        ? []
-        : [`${pattern.id}#${variant}`],
-    ),
-  );
+  const missing = missingWordlePatternWitnesses(selectedPatterns, witnesses);
   if (missing.length)
     throw new Error(`Missing witnesses: ${missing.join(', ')}`);
   console.log(
@@ -268,8 +275,30 @@ function verify(witnesses: Witness[]) {
 }
 
 if (import.meta.main) {
-  if (process.argv.includes('--search')) {
-    const witnesses = search();
+  const searchPatternIndex = process.argv.indexOf('--search-pattern');
+  if (searchPatternIndex !== -1) {
+    const patternId = process.argv[searchPatternIndex + 1];
+    if (patternId === undefined)
+      throw new Error('Pass a pattern id after --search-pattern.');
+    const selected = WORDLE_PATTERN_CATALOG.filter(
+      (pattern) => pattern.id === patternId,
+    );
+    if (selected.length === 0)
+      throw new Error(`Unknown Wordle pattern: ${patternId}`);
+    const existing = z
+      .array(witnessSchema)
+      .parse(JSON.parse(readFileSync(fixturePath, 'utf8')));
+    const witnesses = [
+      ...existing.filter((witness) => witness.patternId !== patternId),
+      ...search(selected),
+    ];
+    verify(witnesses, new Set([patternId]));
+    writeFileSync(
+      fixturePath,
+      await format(JSON.stringify(witnesses), { parser: 'json' }),
+    );
+  } else if (process.argv.includes('--search')) {
+    const witnesses = search(WORDLE_PATTERN_CATALOG);
     verify(witnesses);
     writeFileSync(
       fixturePath,

@@ -91,7 +91,8 @@ describe('Wordle discovery reconciliation', () => {
   it('keeps locked secret metadata concealed and reveals only earned conditions', async () => {
     const { userId, guildId } = identity();
     const secret = WORDLE_ACHIEVEMENT_CATALOG.find(
-      (row) => row.hidden && row.rule.kind === 'slow_solve',
+      (row) =>
+        row.hidden && row.rule.kind === 'fast_solve' && row.rule.seconds === 30,
     );
     if (!secret) throw new Error('Secret definition missing');
     const status = (await service.getAchievements(userId, guildId)).find(
@@ -107,7 +108,7 @@ describe('Wordle discovery reconciliation', () => {
     await seedAchievementDay(userId, guildId, {
       attempts: 3,
       startedAt: 100,
-      solvedAt: 3700,
+      solvedAt: 120,
     });
     await award(userId, guildId);
     const revealed = (await service.getAchievements(userId, guildId)).find(
@@ -147,7 +148,7 @@ describe('Wordle discovery reconciliation', () => {
     await seedAchievementDay(userId, guildId, {
       attempts: 1,
       solved: false,
-      guesses: guesses(['#####'], 'present'),
+      guesses: guesses(['####.'], 'present'),
     });
     const first = await award(userId, guildId);
     const id = achievementId(
@@ -205,8 +206,24 @@ describe('Wordle discovery reconciliation', () => {
     );
     expect(await discoveryRows(userId, guildId)).toEqual([]);
     expect(
-      (await service.loadHistory(userId, guildId)).days[0]?.feedback,
-    ).toBeNull();
+      (await service.loadHistory(userId, guildId)).days[0]?.guesses,
+    ).toEqual([]);
+  });
+
+  it('does not persist a drawing when a solved board lacks its winning row', async () => {
+    const { userId, guildId } = identity();
+    await seedAchievementDay(userId, guildId, {
+      attempts: 2,
+      solved: true,
+      guesses: guesses(['####.', '.....']),
+    });
+
+    const result = await award(userId, guildId);
+
+    expect(result.unlockedAchievements.map((row) => row.id)).toContain(
+      achievementId((rule) => rule.kind === 'wins' && rule.count === 1),
+    );
+    expect(await discoveryRows(userId, guildId)).toEqual([]);
   });
 
   it('retains evidence snapshots when saved gameplay is later changed', async () => {

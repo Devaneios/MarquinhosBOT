@@ -1,62 +1,61 @@
-import {
-  guessRowSchema,
-  type LetterFeedback,
-} from '@marquinhos/contracts/wordle';
-import { z } from 'zod';
+import type { LetterFeedback } from '@marquinhos/contracts/wordle';
 import {
   computeWordlePlayerStats,
   dayNumber,
-  playedDays,
   type WordleDayRecord,
   type WordlePlayerStats,
-  type WordleStatsOptions,
 } from '../../playerStats';
 
 export const WORDLE_ACHIEVEMENT_TIME_ZONE = 'America/Recife';
 
 export interface AchievementHistoryDay extends WordleDayRecord {
-  feedback: LetterFeedback[][] | null;
   wordLength: number | null;
   answerHasRepeatedLetters: boolean | null;
   answerHasAccent: boolean | null;
 }
 
-export function toAchievementHistoryDay(
-  day: WordleDayRecord | AchievementHistoryDay,
-): AchievementHistoryDay {
-  if ('feedback' in day) return day;
-  const wordLength = day.guesses[0]?.feedback.length ?? null;
-  return {
-    ...day,
-    feedback: parseAchievementMatrix(
-      JSON.stringify(day.guesses),
-      wordLength,
-      day.attempts,
-    ),
-    wordLength,
-    answerHasRepeatedLetters: null,
-    answerHasAccent: null,
-  };
+export interface AchievementEvaluationOptions {
+  today: string;
+  timeZone?: string;
+  discoveryIds?: ReadonlySet<string>;
 }
 
-export function completeFeedback(
+interface AchievementHistory {
+  stats: WordlePlayerStats;
+  solved: AchievementHistoryDay[];
+  played: AchievementHistoryDay[];
+  today: string;
+  discoveryIds: ReadonlySet<string>;
+  solvedHours: number[];
+  matrices: { day: AchievementHistoryDay; feedback: LetterFeedback[][] }[];
+  solvedMatrices: {
+    day: AchievementHistoryDay;
+    feedback: LetterFeedback[][];
+  }[];
+}
+
+function completeFeedback(
   day: AchievementHistoryDay,
 ): LetterFeedback[][] | null {
-  const matrix = day.feedback;
   if (
-    matrix === null ||
-    matrix.length !== day.attempts ||
+    day.guesses.length === 0 ||
+    day.guesses.length !== day.attempts ||
     day.wordLength === null ||
     day.wordLength <= 0 ||
-    matrix.some((row) => row.length !== day.wordLength)
+    day.guesses.some(
+      ({ guess, feedback }) =>
+        guess.length !== day.wordLength || feedback.length !== day.wordLength,
+    )
   )
     return null;
-  if (day.solved && !matrix.at(-1)?.every((cell) => cell === 'correct'))
+
+  const feedback = day.guesses.map((guess) => guess.feedback);
+  if (day.solved && !feedback.at(-1)?.every((cell) => cell === 'correct'))
     return null;
-  return matrix;
+  return feedback;
 }
 
-export function elapsedSeconds(day: WordleDayRecord): number | null {
+function elapsedSeconds(day: WordleDayRecord): number | null {
   if (
     day.solvedAt === null ||
     !Number.isFinite(day.solvedAt) ||
@@ -68,9 +67,7 @@ export function elapsedSeconds(day: WordleDayRecord): number | null {
   return day.solvedAt - day.startedAt;
 }
 
-export function bestParticipationStreak(
-  days: readonly WordleDayRecord[],
-): number {
+function bestParticipationStreak(days: readonly WordleDayRecord[]): number {
   let best = 0;
   let current = 0;
   let previous: number | undefined;
@@ -83,7 +80,7 @@ export function bestParticipationStreak(
   return best;
 }
 
-export function hasCalendarCoverage(
+function hasCalendarCoverage(
   days: readonly WordleDayRecord[],
   today: string,
   period: 'week' | 'month',
@@ -110,52 +107,6 @@ export function hasCalendarCoverage(
   return false;
 }
 
-export function parseAchievementMatrix(
-  serializedGuesses: string,
-  expectedWidth: number | null,
-  attempts: number,
-): LetterFeedback[][] | null {
-  if (expectedWidth === null || expectedWidth <= 0 || attempts <= 0)
-    return null;
-  try {
-    const result = z
-      .array(guessRowSchema)
-      .safeParse(JSON.parse(serializedGuesses));
-    if (
-      !result.success ||
-      result.data.length !== attempts ||
-      result.data.some(
-        (row) =>
-          row.feedback.length !== expectedWidth ||
-          row.guess.length !== expectedWidth,
-      )
-    )
-      return null;
-    return result.data.map((row) => row.feedback);
-  } catch {
-    return null;
-  }
-}
-
-export interface WordleAchievementFacts {
-  stats: WordlePlayerStats;
-  solved: AchievementHistoryDay[];
-  played: AchievementHistoryDay[];
-  today: string;
-  discoveryIds: ReadonlySet<string>;
-  solvedHours: number[];
-  matrices: { day: AchievementHistoryDay; feedback: LetterFeedback[][] }[];
-  solvedMatrices: {
-    day: AchievementHistoryDay;
-    feedback: LetterFeedback[][];
-  }[];
-}
-
-export interface WordleEvaluationOptions extends WordleStatsOptions {
-  timeZone?: string;
-  discoveryIds?: ReadonlySet<string>;
-}
-
 function localHour(epochSeconds: number, formatter: Intl.DateTimeFormat) {
   const part = formatter
     .formatToParts(new Date(epochSeconds * 1000))
@@ -163,16 +114,16 @@ function localHour(epochSeconds: number, formatter: Intl.DateTimeFormat) {
   return Number(part?.value ?? 0) % 24;
 }
 
-export function buildWordleAchievementFacts(
-  days: readonly WordleDayRecord[],
-  options: WordleEvaluationOptions,
-): WordleAchievementFacts {
+export function prepareAchievementHistory(
+  days: readonly AchievementHistoryDay[],
+  options: AchievementEvaluationOptions,
+): AchievementHistory {
   const played = [
     ...new Map(
-      playedDays(days.filter((day) => day.date <= options.today)).map((day) => [
-        day.date,
-        toAchievementHistoryDay(day),
-      ]),
+      days
+        .filter((day) => day.attempts > 0 && day.date <= options.today)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .map((day) => [day.date, day]),
     ).values(),
   ];
   const solved = played.filter((day) => day.solved);
@@ -185,6 +136,10 @@ export function buildWordleAchievementFacts(
     hour: 'numeric',
     hourCycle: 'h23',
   });
+  const solvedHours = solved.flatMap((day) => {
+    if (day.solvedAt === null || !Number.isFinite(day.solvedAt)) return [];
+    return [localHour(day.solvedAt, formatter)];
+  });
   return {
     stats: computeWordlePlayerStats(played, { today: options.today }),
     played,
@@ -193,8 +148,8 @@ export function buildWordleAchievementFacts(
     solved,
     matrices,
     solvedMatrices: matrices.filter(({ day }) => day.solved),
-    solvedHours: solved
-      .filter((day) => day.solvedAt !== null)
-      .map((day) => localHour(day.solvedAt!, formatter)),
+    solvedHours,
   };
 }
+
+export { bestParticipationStreak, elapsedSeconds, hasCalendarCoverage };

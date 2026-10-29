@@ -15,7 +15,7 @@ import type {
 
 export const WORDLE_ACHIEVEMENT_VERSION = 2;
 // Increment whenever a persisted field changes; catalog.test.ts enforces it.
-export const WORDLE_ACHIEVEMENT_CATALOG_REVISION = 1;
+export const WORDLE_ACHIEVEMENT_CATALOG_REVISION = 2;
 
 const XP: Record<AchievementRarity, number> = {
   common: 25,
@@ -44,7 +44,7 @@ const drawings = WORDLE_PATTERN_CATALOG.map((pattern) => ({
     id: `wordle_v${WORDLE_ACHIEVEMENT_VERSION}_pattern_${pattern.id}`,
     family: PATTERN_FAMILY_DEFAULTS[pattern.family].achievementFamily,
     name: pattern.name,
-    description: `Forme ${pattern.name.toLowerCase()} com células verdes ou amarelas. Outras células não atrapalham.`,
+    description: `Forme ${pattern.name.toLowerCase()} com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.`,
     rarity: PATTERN_FAMILY_DEFAULTS[pattern.family].rarity,
     rule: { kind: 'pattern', patternId: pattern.id },
   }),

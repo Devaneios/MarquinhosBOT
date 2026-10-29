@@ -76,7 +76,7 @@ describe('pattern matching', () => {
       'present',
     );
     expect(
-      matchWordlePatterns(matrix('ccc', 'ccc', 'ccc'), [
+      matchWordlePatterns(matrix('aca', 'cca', 'aca'), [
         { ...t, rotations: [90, 0] },
       ])[0]?.rotation,
     ).toBe(90);
@@ -92,8 +92,10 @@ describe('pattern matching', () => {
     expect(matchWordlePatterns(matrix('acc', 'cca'), [s])).toHaveLength(1);
     expect(matchWordlePatterns(matrix('acc', 'cca'), [z])).toHaveLength(0);
   });
-  it('matches dense subsets and chooses the first origin and declared rotation', () => {
-    expect(matchWordlePatterns(matrix('ccccc', 'ccccc'), [t])).toEqual([
+  it('only matches the whole figure and chooses the first origin and declared rotation', () => {
+    expect(matchWordlePatterns(matrix('ccccc', 'ccccc'), [t])).toEqual([]);
+    expect(matchWordlePatterns(matrix('ccc', 'acc'), [t])).toEqual([]);
+    expect(matchWordlePatterns(matrix('cccac', 'acaaa'), [t])).toEqual([
       {
         patternId: 'test_t',
         color: 'correct',
@@ -108,19 +110,44 @@ describe('pattern matching', () => {
       },
     ]);
   });
+  it('treats a diagonal neighbor of the same color as part of the figure', () => {
+    expect(matchWordlePatterns(matrix('cccaa', 'acaaa', 'aacaa'), [t])).toEqual(
+      [],
+    );
+    expect(
+      matchWordlePatterns(matrix('cccaa', 'acaaa', 'aaaac'), [t]),
+    ).toHaveLength(1);
+  });
+  it('ignores the all-green winning row as a neighbor unless the pattern owns it', () => {
+    const i = WORDLE_PATTERN_CATALOG.find((p) => p.id === 'tetromino_i');
+    if (!i) throw new Error('missing tetromino_i');
+    const bar = {
+      ...i,
+      rotations: [0] satisfies WordlePatternDefinition['rotations'],
+    };
+    expect(matchWordlePatterns(matrix('ccccaa', 'ccccaa'), [bar])).toEqual([]);
+    expect(
+      matchWordlePatterns(matrix('cccca', 'ccccc'), [bar])[0]?.origin,
+    ).toEqual([0, 0]);
+    expect(matchWordlePatterns(matrix('aaaaa', 'ccccc'), [bar])).toEqual([]);
+    expect(
+      matchWordlePatterns(matrix('aaaaa', 'cccca'), [bar])[0]?.origin,
+    ).toEqual([1, 0]);
+  });
   it('matches yellow independently and never combines foreground colors', () => {
     expect(matchWordlePatterns(matrix('ppp', 'apa'), [t])[0]?.color).toBe(
       'present',
     );
     expect(matchWordlePatterns(matrix('cpc', 'aca'), [t])).toEqual([]);
   });
-  it('uses the winning row and both board widths', () => {
-    for (const row of ['ccccc', 'cccccc'])
-      expect(
-        matchWordlePatterns(matrix(row)).some(
-          (m) => m.patternId === 'tetromino_i',
-        ),
-      ).toBe(true);
+  it('counts the winning row only for patterns that span the whole board width', () => {
+    const bar = {
+      ...t,
+      mask: ['#####'],
+      rotations: [0] satisfies WordlePatternDefinition['rotations'],
+    };
+    expect(matchWordlePatterns(matrix('ccccc'), [bar])).toHaveLength(1);
+    expect(matchWordlePatterns(matrix('cccccc'), [bar])).toEqual([]);
   });
   it('rejects a removed required cell, preserves offsets, and translates', () => {
     const upright = {
@@ -176,7 +203,7 @@ describe('wider pattern variants', () => {
           [...row].forEach((cell, c) => {
             if (cell !== 'c') return;
             const broken = rows.map((x, i) =>
-              i === r ? `${x.slice(0, c)  }.${  x.slice(c + 1)}` : x,
+              i === r ? `${x.slice(0, c)}.${x.slice(c + 1)}` : x,
             );
             expect(matchWordlePatterns(matrix(...broken), [only])).toHaveLength(
               0,
@@ -204,6 +231,22 @@ describe('wider pattern variants', () => {
       for (const form of forms) {
         expect(form.some((row) => row.startsWith('#'))).toBe(true);
         expect(form.some((row) => row.endsWith('#'))).toBe(true);
+      }
+    }
+  });
+
+  it('draws every figure as itself and nothing else', () => {
+    for (const pattern of WORDLE_PATTERN_CATALOG) {
+      for (const form of [pattern.mask, ...(pattern.variants ?? [])]) {
+        const board = form.map((row) =>
+          [...row]
+            .map((c): LetterFeedback => (c === '#' ? 'correct' : 'absent'))
+            .concat(Array<LetterFeedback>(5 - row.length).fill('absent')),
+        );
+        expect({
+          form,
+          matches: matchWordlePatterns(board).map((m) => m.patternId),
+        }).toEqual({ form, matches: [pattern.id] });
       }
     }
   });

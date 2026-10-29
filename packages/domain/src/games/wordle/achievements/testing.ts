@@ -1,5 +1,6 @@
 import type { GuessRow, LetterFeedback } from '@marquinhos/contracts/wordle';
 import type { WordleDayRecord } from '../playerStats';
+import type { AchievementHistoryDay } from './engine/history';
 
 const CODES: Record<string, LetterFeedback> = {
   c: 'correct',
@@ -39,6 +40,24 @@ export function solvedDay(
     solvedAt: startedAt + 120,
     firstSolverInGuild: false,
     ...overrides,
+  };
+}
+
+export function achievementDay(
+  day: WordleDayRecord,
+  facts: Partial<
+    Pick<
+      AchievementHistoryDay,
+      'wordLength' | 'answerHasAccent' | 'answerHasRepeatedLetters'
+    >
+  > = {},
+): AchievementHistoryDay {
+  return {
+    ...day,
+    wordLength: day.guesses[0]?.guess.length ?? null,
+    answerHasAccent: null,
+    answerHasRepeatedLetters: null,
+    ...facts,
   };
 }
 
