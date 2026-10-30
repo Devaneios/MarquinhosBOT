@@ -42,8 +42,7 @@ describe('Wordle achievement catalog', () => {
           rotations: definition.drawing.rotations,
         }).success,
       ).toBe(true);
-      expect(definition.description).toContain('inclusive na diagonal');
-      expect(definition.description).toContain('linha vencedora');
+      expect(definition.description).toStartWith('Desenhe');
     }
     const tetrominoI = WORDLE_ACHIEVEMENT_CATALOG.find(
       (definition) => definition.id === 'wordle_v2_pattern_tetromino_i',
@@ -89,7 +88,7 @@ describe('Wordle achievement catalog', () => {
       hidden: false,
     });
     expect(devaneios?.description).toContain('mesma linha');
-    expect(devaneios?.description).toContain('reinicia');
+    expect(devaneios?.description).toContain('volta ao começo');
   });
 
   it('keeps milestone IDs and hidden conditions stable', () => {

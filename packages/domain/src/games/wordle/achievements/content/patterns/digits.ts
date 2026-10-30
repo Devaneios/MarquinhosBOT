@@ -8,8 +8,7 @@ export const DIGITS: readonly WordleAchievementDefinition[] = [
     family: 'digits',
     tier: 1,
     name: 'Número 0',
-    description:
-      'Forme número 0 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe o número 0.',
     rarity: 'rare',
     icon: '🔢',
     rewardXp: 75,
@@ -30,8 +29,7 @@ export const DIGITS: readonly WordleAchievementDefinition[] = [
     family: 'digits',
     tier: 2,
     name: 'Número 1',
-    description:
-      'Forme número 1 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe o número 1.',
     rarity: 'rare',
     icon: '🔢',
     rewardXp: 75,
@@ -56,8 +54,7 @@ export const DIGITS: readonly WordleAchievementDefinition[] = [
     family: 'digits',
     tier: 3,
     name: 'Número 2',
-    description:
-      'Forme número 2 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe o número 2.',
     rarity: 'rare',
     icon: '🔢',
     rewardXp: 75,
@@ -83,8 +80,7 @@ export const DIGITS: readonly WordleAchievementDefinition[] = [
     family: 'digits',
     tier: 4,
     name: 'Número 3',
-    description:
-      'Forme número 3 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe o número 3.',
     rarity: 'rare',
     icon: '🔢',
     rewardXp: 75,
@@ -110,8 +106,7 @@ export const DIGITS: readonly WordleAchievementDefinition[] = [
     family: 'digits',
     tier: 5,
     name: 'Número 4',
-    description:
-      'Forme número 4 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe o número 4.',
     rarity: 'rare',
     icon: '🔢',
     rewardXp: 75,
@@ -136,8 +131,7 @@ export const DIGITS: readonly WordleAchievementDefinition[] = [
     family: 'digits',
     tier: 6,
     name: 'Número 5',
-    description:
-      'Forme número 5 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe o número 5.',
     rarity: 'rare',
     icon: '🔢',
     rewardXp: 75,
@@ -161,8 +155,7 @@ export const DIGITS: readonly WordleAchievementDefinition[] = [
     family: 'digits',
     tier: 7,
     name: 'Número 6',
-    description:
-      'Forme número 6 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe o número 6.',
     rarity: 'rare',
     icon: '🔢',
     rewardXp: 75,
@@ -188,8 +181,7 @@ export const DIGITS: readonly WordleAchievementDefinition[] = [
     family: 'digits',
     tier: 8,
     name: 'Número 7',
-    description:
-      'Forme número 7 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe o número 7.',
     rarity: 'rare',
     icon: '🔢',
     rewardXp: 75,
@@ -215,8 +207,7 @@ export const DIGITS: readonly WordleAchievementDefinition[] = [
     family: 'digits',
     tier: 9,
     name: 'Número 8',
-    description:
-      'Forme número 8 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe o número 8.',
     rarity: 'rare',
     icon: '🔢',
     rewardXp: 75,
@@ -240,8 +231,7 @@ export const DIGITS: readonly WordleAchievementDefinition[] = [
     family: 'digits',
     tier: 10,
     name: 'Número 9',
-    description:
-      'Forme número 9 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe o número 9.',
     rarity: 'rare',
     icon: '🔢',
     rewardXp: 75,

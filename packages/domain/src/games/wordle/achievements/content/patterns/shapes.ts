@@ -8,8 +8,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     family: 'shapes',
     tier: 1,
     name: 'Quadrado vazado',
-    description:
-      'Forme quadrado vazado com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe um quadrado vazado.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,
@@ -35,8 +34,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     family: 'shapes',
     tier: 2,
     name: 'Losango',
-    description:
-      'Forme losango com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe um losango.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,
@@ -57,8 +55,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     family: 'shapes',
     tier: 3,
     name: 'Cruz',
-    description:
-      'Forme cruz com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe uma cruz.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,
@@ -83,8 +80,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     family: 'shapes',
     tier: 4,
     name: 'Coração',
-    description:
-      'Forme coração com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe um coração.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,
@@ -109,8 +105,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     family: 'shapes',
     tier: 5,
     name: 'Seta para cima',
-    description:
-      'Forme seta para cima com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe uma seta para cima.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,
@@ -135,8 +130,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     family: 'shapes',
     tier: 6,
     name: 'Seta para baixo',
-    description:
-      'Forme seta para baixo com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe uma seta para baixo.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,
@@ -161,8 +155,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     family: 'shapes',
     tier: 7,
     name: 'Seta para a esquerda',
-    description:
-      'Forme seta para a esquerda com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe uma seta para a esquerda.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,
@@ -187,8 +180,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     family: 'shapes',
     tier: 8,
     name: 'Seta para a direita',
-    description:
-      'Forme seta para a direita com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe uma seta para a direita.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,
@@ -213,8 +205,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     family: 'shapes',
     tier: 9,
     name: 'Escadinha',
-    description:
-      'Forme escadinha com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe uma escadinha.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,
@@ -240,8 +231,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     family: 'shapes',
     tier: 10,
     name: 'Ampulheta',
-    description:
-      'Forme ampulheta com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe uma ampulheta.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,
@@ -266,8 +256,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     family: 'shapes',
     tier: 11,
     name: 'Triângulo de base 5',
-    description:
-      'Forme um triângulo de base 5 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe um triângulo de base 5.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,
@@ -288,8 +277,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     family: 'shapes',
     tier: 12,
     name: 'Triângulo de base 6',
-    description:
-      'Forme um triângulo de base 6 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe um triângulo de base 6.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,
@@ -310,8 +298,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     family: 'shapes',
     tier: 13,
     name: 'Escada para a direita',
-    description:
-      'Forme uma escada para a direita com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe uma escada para a direita.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,
@@ -333,7 +320,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     tier: 14,
     name: 'Escada de cabeça para baixo',
     description:
-      'Forme uma escada de cabeça para baixo, virada para a esquerda ou para a direita, com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+      'Desenhe uma escada de cabeça para baixo, virada para a esquerda ou para a direita,.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,
@@ -354,8 +341,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     family: 'shapes',
     tier: 15,
     name: 'Hang loose',
-    description:
-      'Forme o sinal de hang loose com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe o sinal de hang loose.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,
@@ -376,8 +362,7 @@ export const SHAPES: readonly WordleAchievementDefinition[] = [
     family: 'shapes',
     tier: 16,
     name: 'Dedo do meio',
-    description:
-      'Forme o gesto do dedo do meio com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe o gesto do dedo do meio.',
     rarity: 'rare',
     icon: '🏅',
     rewardXp: 75,

@@ -8,8 +8,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 1,
     name: 'Letra A',
-    description:
-      'Forme letra a com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra A.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -35,8 +34,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 2,
     name: 'Letra B',
-    description:
-      'Forme letra b com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra B.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -61,8 +59,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 3,
     name: 'Letra C',
-    description:
-      'Forme letra c com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra C.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -88,8 +85,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 4,
     name: 'Letra D',
-    description:
-      'Forme letra d com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra D.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -113,8 +109,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 5,
     name: 'Letra E',
-    description:
-      'Forme letra e com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra E.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -139,8 +134,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 6,
     name: 'Letra F',
-    description:
-      'Forme letra f com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra F.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -165,8 +159,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 7,
     name: 'Letra G',
-    description:
-      'Forme letra g com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra G.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -190,8 +183,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 8,
     name: 'Letra H',
-    description:
-      'Forme letra h com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra H.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -215,8 +207,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 9,
     name: 'Letra I',
-    description:
-      'Forme letra i com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra I.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -240,8 +231,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 10,
     name: 'Letra J',
-    description:
-      'Forme letra j com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra J.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -265,8 +255,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 11,
     name: 'Letra K',
-    description:
-      'Forme letra k com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra K.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -290,8 +279,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 12,
     name: 'Letra L',
-    description:
-      'Forme letra l com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra L.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -312,8 +300,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 13,
     name: 'Letra M',
-    description:
-      'Forme letra m com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra M.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -334,8 +321,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 14,
     name: 'Letra N',
-    description:
-      'Forme letra n com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra N.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -356,8 +342,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 15,
     name: 'Letra O',
-    description:
-      'Forme letra o com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra O.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -378,8 +363,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 16,
     name: 'Letra P',
-    description:
-      'Forme letra p com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra P.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -403,8 +387,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 17,
     name: 'Letra Q',
-    description:
-      'Forme letra q com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra Q.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -428,8 +411,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 18,
     name: 'Letra R',
-    description:
-      'Forme letra r com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra R.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -450,8 +432,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 19,
     name: 'Letra S',
-    description:
-      'Forme letra s com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra S.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -475,8 +456,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 20,
     name: 'Letra T',
-    description:
-      'Forme letra t com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra T.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -500,8 +480,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 21,
     name: 'Letra U',
-    description:
-      'Forme letra u com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra U.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -525,8 +504,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 22,
     name: 'Letra V',
-    description:
-      'Forme letra v com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra V.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -551,8 +529,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 23,
     name: 'Letra W',
-    description:
-      'Forme letra w com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra W.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -573,8 +550,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 24,
     name: 'Letra X',
-    description:
-      'Forme letra x com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra X.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -598,8 +574,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 25,
     name: 'Letra Y',
-    description:
-      'Forme letra y com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra Y.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
@@ -624,8 +599,7 @@ export const LETTERS: readonly WordleAchievementDefinition[] = [
     family: 'letters',
     tier: 26,
     name: 'Letra Z',
-    description:
-      'Forme letra z com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    description: 'Desenhe a letra Z.',
     rarity: 'rare',
     icon: '🔤',
     rewardXp: 75,
