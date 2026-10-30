@@ -142,6 +142,8 @@ export function prepareAchievementHistory(
     hourCycle: 'h23',
   });
   const solvedHours = solved.flatMap((day) => {
+    // A draft win is stamped with the end of its day, not when it was solved.
+    if (day.solvedFromDraft) return [];
     if (day.solvedAt === null || !Number.isFinite(day.solvedAt)) return [];
     return [localHour(day.solvedAt, formatter)];
   });

@@ -76,6 +76,29 @@ describe('confirmed gameplay achievements', () => {
     expect(analysis.discoverPatterns(new Set())).toEqual([]);
   });
 
+  it('does not treat a draft win as a timed or fast-attempt solve', () => {
+    const lateStamp = Date.UTC(2026, 9, 29, 2, 59, 59) / 1000;
+    const draftWins: AchievementHistoryDay[] = Array.from(
+      { length: 10 },
+      (_, index) => ({
+        ...day([], true),
+        date: `2026-10-${String(10 + index).padStart(2, '0')}`,
+        attempts: 0,
+        solvedFromDraft: true,
+        solvedAt: lateStamp,
+      }),
+    );
+    const results = new Map(
+      analyzeWordleAchievements(draftWins, { today })
+        .evaluate(new Set())
+        .map((entry) => [entry.id, entry]),
+    );
+
+    expect(results.get('wordle_v2_late')?.met).toBe(false);
+    expect(results.get('wordle_v2_wins_within_3_10')?.met).toBe(false);
+    expect(results.get('wordle_v2_zero_attempt_solve')?.met).toBe(true);
+  });
+
   it('requires two consecutive all-grey rows before a valid winning row', () => {
     expect(
       met('wordle_v2_blank_twice_then_solved', day([grey, grey, green], true)),

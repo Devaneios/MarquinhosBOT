@@ -32,7 +32,9 @@ export function winsWithin(
   target: number,
 ): WordleAchievementResult {
   return counter(
-    facts.solved.filter((day) => day.attempts <= maxAttempts).length,
+    facts.solved.filter(
+      (day) => !day.solvedFromDraft && day.attempts <= maxAttempts,
+    ).length,
     target,
   );
 }
