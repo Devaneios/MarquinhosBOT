@@ -10,8 +10,8 @@ import {
 import { parseMessage } from '@marquinhos/contracts/activity/protocol';
 import {
   type GuessRow,
-  type WordleAchievementProgressUpdate,
   type WordleAchievementStatus,
+  type WordleAchievementUpdate,
   type WordlePlayerStats,
   type WordleUnlockedAchievement,
 } from '@marquinhos/contracts/wordle';
@@ -30,66 +30,36 @@ import React, {
 } from 'react';
 import { KB_LETTERS, MIN_KEY_PRESS_MS, revealDurationMs } from '../constants';
 
-export function mergeUnlockedAchievements(
-  current: WordleAchievementStatus[],
-  unlocked: WordleUnlockedAchievement[] | undefined,
-  progressUpdates?: ReadonlyArray<WordleAchievementProgressUpdate>,
-): WordleAchievementStatus[] {
-  const hasUnlocks = Boolean(unlocked && unlocked.length > 0);
-  const hasProgress = Boolean(progressUpdates && progressUpdates.length > 0);
-  if (!hasUnlocks && !hasProgress) return current;
-  const progressById = new Map(
-    (progressUpdates ?? []).map((item) => [item.id, item.progress]),
-  );
-  const byId = new Map((unlocked ?? []).map((item) => [item.id, item]));
-  const updated = current.map((item) => {
-    const nextProgress = progressById.has(item.id)
-      ? (progressById.get(item.id) ?? null)
-      : item.progress;
-    const match = byId.get(item.id);
-    if (!match) {
-      return nextProgress === item.progress
-        ? item
-        : { ...item, progress: nextProgress };
-    }
-    byId.delete(item.id);
-    return {
-      ...item,
-      ...match,
-      unlockedAt: match.unlockedAt,
-      progress: nextProgress
-        ? { current: nextProgress.target, target: nextProgress.target }
-        : null,
-      holdersPercent: item.holdersPercent ?? null,
-    };
-  });
-  for (const remaining of byId.values()) {
-    updated.push({
-      ...remaining,
-      progress: progressById.get(remaining.id) ?? null,
-      holdersPercent: null,
-    });
-  }
-  return updated;
-}
-
 interface AchievementState {
-  achievementVersion: number;
   achievements: WordleAchievementStatus[];
   unlockedAchievements: WordleUnlockedAchievement[];
   hasUnlockedInSession: boolean;
 }
 
 type AchievementAction =
-  | { type: 'init'; version: number; achievements: WordleAchievementStatus[] }
   | {
-      type: 'guess';
-      version?: number;
-      achievements?: WordleAchievementStatus[];
-      unlocked: WordleUnlockedAchievement[];
-      progress?: WordleAchievementProgressUpdate[];
+      type: 'init';
+      overview: WordleAchievementUpdate['overview'] | undefined;
     }
+  | { type: 'guess'; update: WordleAchievementUpdate | undefined }
   | { type: 'dismiss_current' | 'dismiss_all' };
+
+function unlockedFromUpdate(
+  update: WordleAchievementUpdate,
+): WordleUnlockedAchievement[] {
+  const statuses = new Map(
+    update.overview.achievements.map((achievement) => [
+      achievement.id,
+      achievement,
+    ]),
+  );
+  return update.unlockedIds.flatMap((id) => {
+    const status = statuses.get(id);
+    return status?.unlockedAt
+      ? [{ ...status, unlockedAt: status.unlockedAt }]
+      : [];
+  });
+}
 
 function achievementReducer(
   state: AchievementState,
@@ -97,34 +67,24 @@ function achievementReducer(
 ): AchievementState {
   switch (action.type) {
     case 'init':
+      if (!action.overview) return state;
       return {
-        achievementVersion: action.version,
-        achievements: action.achievements,
+        achievements: action.overview.achievements,
         unlockedAchievements: [],
         hasUnlockedInSession: false,
       };
     case 'guess': {
-      const version = action.version ?? state.achievementVersion;
-      if (version < state.achievementVersion) return state;
-      const changed = version !== state.achievementVersion;
-      const pending = changed ? [] : state.unlockedAchievements;
+      if (!action.update) return state;
+      const unlocked = unlockedFromUpdate(action.update);
+      const pending = state.unlockedAchievements;
       const existing = new Set(pending.map((item) => item.id));
       return {
-        achievementVersion: version,
-        achievements:
-          action.achievements ??
-          mergeUnlockedAchievements(
-            changed ? [] : state.achievements,
-            action.unlocked,
-            action.progress,
-          ),
+        achievements: action.update.overview.achievements,
         unlockedAchievements: [
           ...pending,
-          ...action.unlocked.filter((item) => !existing.has(item.id)),
+          ...unlocked.filter((item) => !existing.has(item.id)),
         ],
-        hasUnlockedInSession:
-          (!changed && state.hasUnlockedInSession) ||
-          action.unlocked.length > 0,
+        hasUnlockedInSession: state.hasUnlockedInSession || unlocked.length > 0,
       };
     }
     case 'dismiss_current':
@@ -144,6 +104,7 @@ interface WordleBoardOptions {
 }
 
 type WordleFocusCommand = 'first' | 'left' | 'space' | 'right' | 'last';
+const DRAFT_ACK_TIMEOUT_MS = 5_000;
 
 export function useWordleBoard(
   session: WsSession,
@@ -159,15 +120,9 @@ export function useWordleBoard(
   const [celebrateRow, setCelebrateRow] = useState<number | null>(null);
   const [solved, setSolved] = useState(false);
   const [
-    {
-      achievementVersion,
-      achievements,
-      unlockedAchievements,
-      hasUnlockedInSession,
-    },
+    { achievements, unlockedAchievements, hasUnlockedInSession },
     dispatchAchievements,
   ] = useReducer(achievementReducer, {
-    achievementVersion: 1,
     achievements: [],
     unlockedAchievements: [],
     hasUnlockedInSession: false,
@@ -186,6 +141,30 @@ export function useWordleBoard(
     () => new Set(),
   );
   const pressTimers = useRef<Map<string, number>>(new Map());
+  const draftDateRef = useRef<string | null>(null);
+  const draftRevisionRef = useRef(0);
+  const draftReadyRef = useRef(false);
+  const draftInFlightRef = useRef(false);
+  const draftPendingRef = useRef<{
+    rowIndex: number;
+    cells: string[];
+    activeIndex: number;
+  } | null>(null);
+  const draftLatestRef = useRef<{
+    rowIndex: number;
+    cells: string[];
+    activeIndex: number;
+  } | null>(null);
+  const draftSavedSnapshotRef = useRef<string | null>(null);
+  const drainDraftQueueRef = useRef<() => void>(() => undefined);
+  const draftRequestRef = useRef<{
+    rowIndex: number;
+    cells: string[];
+    activeIndex: number;
+  } | null>(null);
+  const draftRequestIdRef = useRef(0);
+  const draftInFlightRequestIdRef = useRef<number | null>(null);
+  const draftAckTimeoutRef = useRef<number | undefined>(undefined);
 
   function triggerShake() {
     setShake(true);
@@ -202,6 +181,24 @@ export function useWordleBoard(
       if (!message) return;
       switch (message.type) {
         case 'init':
+          window.clearTimeout(draftAckTimeoutRef.current);
+          draftInFlightRequestIdRef.current = null;
+          draftDateRef.current = message.payload.date;
+          draftRevisionRef.current = message.payload.draft?.revision ?? 0;
+          draftReadyRef.current = true;
+          draftInFlightRef.current = false;
+          draftPendingRef.current = null;
+          draftRequestRef.current = null;
+          draftLatestRef.current = {
+            rowIndex: message.payload.guesses.length,
+            cells:
+              message.payload.draft?.cells ??
+              Array(message.payload.wordLength).fill(''),
+            activeIndex: message.payload.draft?.activeIndex ?? 0,
+          };
+          draftSavedSnapshotRef.current = JSON.stringify(
+            draftLatestRef.current,
+          );
           window.clearTimeout(revealTimeout.current);
           startTransition(() => {
             setWordLength(message.payload.wordLength);
@@ -209,32 +206,31 @@ export function useWordleBoard(
             setSolved(message.payload.solved);
             dispatchAchievements({
               type: 'init',
-              version: message.payload.achievementVersion ?? 1,
-              achievements: message.payload.achievements ?? [],
+              overview: message.payload.achievementOverview,
             });
-            setStats(message.payload.stats ?? null);
+            if (message.payload.achievementOverview) {
+              setStats(message.payload.achievementOverview.stats);
+            }
             setRevealedCount(message.payload.guesses.length);
             setCelebrateRow(null);
             window.clearTimeout(errorTimeout.current);
             setError(null);
-            setCurrentLetters(Array(message.payload.wordLength).fill(''));
-            setActiveIndex(0);
+            setCurrentLetters(
+              message.payload.draft?.cells ??
+                Array(message.payload.wordLength).fill(''),
+            );
+            setActiveIndex(message.payload.draft?.activeIndex ?? 0);
           });
           return;
         case 'guess_result': {
-          const nextUnlocked = message.payload.unlockedAchievements ?? [];
-          const nextProgress = message.payload.achievementProgress;
           setGuesses(message.payload.guesses);
           setSolved(message.payload.solved);
-          if (message.payload.stats !== undefined) {
-            setStats(message.payload.stats);
+          if (message.payload.achievementUpdate !== undefined) {
+            setStats(message.payload.achievementUpdate.overview.stats);
           }
           dispatchAchievements({
             type: 'guess',
-            version: message.payload.achievementVersion,
-            achievements: message.payload.achievements,
-            unlocked: nextUnlocked,
-            progress: nextProgress,
+            update: message.payload.achievementUpdate,
           });
           window.clearTimeout(errorTimeout.current);
           setError(null);
@@ -264,6 +260,48 @@ export function useWordleBoard(
           errorTimeout.current = window.setTimeout(() => setError(null), 2500);
           triggerShake();
           return;
+        case 'draft_result': {
+          if (
+            message.payload.requestId === undefined ||
+            message.payload.requestId !== draftInFlightRequestIdRef.current
+          )
+            return;
+          window.clearTimeout(draftAckTimeoutRef.current);
+          draftInFlightRequestIdRef.current = null;
+          draftInFlightRef.current = false;
+          const request = draftRequestRef.current;
+          draftRequestRef.current = null;
+          if (message.payload.status === 'saved') {
+            draftRevisionRef.current = message.payload.draft.revision;
+            draftSavedSnapshotRef.current = JSON.stringify(request);
+          } else if (message.payload.status === 'conflict') {
+            draftRevisionRef.current = message.payload.draft?.revision ?? 0;
+            draftSavedSnapshotRef.current = message.payload.draft
+              ? JSON.stringify({
+                  rowIndex: message.payload.draft.rowIndex,
+                  cells: message.payload.draft.cells,
+                  activeIndex: message.payload.draft.activeIndex,
+                })
+              : null;
+            const latest = draftLatestRef.current;
+            if (
+              latest &&
+              JSON.stringify(latest) !== draftSavedSnapshotRef.current
+            )
+              draftPendingRef.current = latest;
+          } else {
+            const latest = draftLatestRef.current;
+            if (latest && request && latest.rowIndex !== request.rowIndex) {
+              draftRevisionRef.current = 0;
+              draftSavedSnapshotRef.current = null;
+              draftPendingRef.current = latest;
+            } else {
+              draftPendingRef.current = null;
+            }
+          }
+          queueMicrotask(() => drainDraftQueueRef.current());
+          return;
+        }
       }
     },
   );
@@ -276,6 +314,58 @@ export function useWordleBoard(
     guesses.length > revealedCount ? guesses.length - 1 : null;
 
   useEffect(() => {
+    const drainDraftQueue = () => {
+      if (draftInFlightRef.current || !draftReadyRef.current) return;
+      const next = draftPendingRef.current;
+      const date = draftDateRef.current;
+      if (!next || !date) return;
+      draftPendingRef.current = null;
+      draftInFlightRef.current = true;
+      draftRequestRef.current = next;
+      const requestId = ++draftRequestIdRef.current;
+      draftInFlightRequestIdRef.current = requestId;
+      window.clearTimeout(draftAckTimeoutRef.current);
+      draftAckTimeoutRef.current = window.setTimeout(() => {
+        if (draftInFlightRequestIdRef.current !== requestId) return;
+        draftInFlightRequestIdRef.current = null;
+        draftInFlightRef.current = false;
+        draftRequestRef.current = null;
+        const latest = draftLatestRef.current;
+        if (latest) draftPendingRef.current = latest;
+        queueMicrotask(() => drainDraftQueueRef.current());
+      }, DRAFT_ACK_TIMEOUT_MS);
+      send({
+        type: 'draft_update',
+        payload: {
+          ...next,
+          date,
+          expectedRevision: draftRevisionRef.current,
+          requestId,
+        },
+      } satisfies WordleClientMessage);
+    };
+    drainDraftQueueRef.current = drainDraftQueue;
+    return () => {
+      if (drainDraftQueueRef.current === drainDraftQueue) {
+        drainDraftQueueRef.current = () => undefined;
+      }
+    };
+  }, [send]);
+
+  useEffect(() => {
+    if (!draftReadyRef.current || solved || wordLength === null) return;
+    const latest = {
+      rowIndex: guesses.length,
+      cells: [...currentLetters],
+      activeIndex,
+    };
+    draftLatestRef.current = latest;
+    if (JSON.stringify(latest) === draftSavedSnapshotRef.current) return;
+    draftPendingRef.current = latest;
+    drainDraftQueueRef.current();
+  }, [activeIndex, currentLetters, guesses.length, solved, wordLength]);
+
+  useEffect(() => {
     const element = gridRef.current;
     if (element) element.scrollTop = element.scrollHeight;
   }, [guesses.length]);
@@ -285,6 +375,7 @@ export function useWordleBoard(
       window.clearTimeout(shakeTimeout.current);
       window.clearTimeout(errorTimeout.current);
       window.clearTimeout(revealTimeout.current);
+      window.clearTimeout(draftAckTimeoutRef.current);
     };
   }, []);
 
@@ -325,6 +416,31 @@ export function useWordleBoard(
       return next;
     });
     if (!hasLetter) setActiveIndex((prev) => Math.max(prev - 1, 0));
+  }
+
+  function pasteLetters(index: number, text: string) {
+    if (!enabled || solved || wordLength === null || revealingRow !== null)
+      return;
+    const pasted = [...text.toLocaleLowerCase('pt-BR')]
+      .map((letter) => normalizeKey(letter, KB_LETTERS))
+      .filter((letter) => KB_LETTERS.has(letter));
+    if (pasted.length === 0) return;
+    setCurrentLetters((previous) => {
+      const next = [...previous];
+      pasted.slice(0, wordLength - index).forEach((letter, offset) => {
+        next[index + offset] = letter;
+      });
+      return next;
+    });
+    setActiveIndex(Math.min(index + pasted.length, wordLength - 1));
+  }
+
+  function onPasteCell(
+    index: number,
+    event: React.ClipboardEvent<HTMLInputElement>,
+  ) {
+    event.preventDefault();
+    pasteLetters(index, event.clipboardData.getData('text'));
   }
 
   function moveFocus(command: WordleFocusCommand) {
@@ -497,7 +613,6 @@ export function useWordleBoard(
   }, []);
 
   return {
-    achievementVersion,
     wordLength,
     guesses,
     revealingRow,
@@ -524,6 +639,7 @@ export function useWordleBoard(
     moveFocus,
     suspendInput,
     onKeyDownCell,
+    onPasteCell,
     setActiveIndex,
   };
 }

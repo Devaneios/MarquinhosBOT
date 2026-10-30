@@ -22,6 +22,12 @@ function daysAgo(n: number): string {
   return d.toISOString().split('T')[0];
 }
 
+function daysAhead(n: number): string {
+  const d = new Date(`${getRecifeDate()}T12:00:00`);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().split('T')[0]!;
+}
+
 async function seedSession(
   guildId: string,
   userId: string,
@@ -343,6 +349,33 @@ describe('WordleService.submitGuess', () => {
     expect(session).toBeNull();
     expect(daily.players_count).toBe(0);
     expect(daily.winners_count).toBe(0);
+  });
+
+  it('rejects a guess when the date advances after it acquires the day lock', async () => {
+    const dates = [
+      getRecifeDate(),
+      getRecifeDate(),
+      getRecifeDate(),
+      daysAhead(1),
+    ];
+    const racingService = new WordleService(
+      () => dates.shift() ?? daysAhead(1),
+    );
+
+    const result = await racingService.submitGuess(
+      'user-cutoff-race',
+      guildId,
+      dailyWord,
+    );
+
+    expect(result).toEqual({
+      error: 'O dia do jogo mudou. Envie o palpite novamente.',
+    });
+    expect(await sessionOf('user-cutoff-race')).toBeNull();
+    expect(await dailyCounts()).toMatchObject({
+      players_count: 0,
+      winners_count: 0,
+    });
   });
 
   it('atomically updates session, daily stats, and streak on a solved guess', async () => {

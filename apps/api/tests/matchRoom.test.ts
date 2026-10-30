@@ -2344,20 +2344,21 @@ describe('MatchRoom', () => {
       });
 
       const initMessages = [await nextMessage(spectator, 'init')];
-      expect(initMessages[0]).toEqual({
+      expect(initMessages[0]).toMatchObject({
         wordLength: expect.any(Number),
-        achievementVersion: expect.any(Number),
         guesses: [],
         solved: false,
         attempts: 0,
-        achievements: expect.any(Array),
-        stats: {
-          played: 0,
-          wins: 0,
-          winRate: 0,
-          currentStreak: 0,
-          bestStreak: 0,
-          distribution: [0, 0, 0, 0, 0, 0, 0],
+        achievementOverview: {
+          achievements: expect.any(Array),
+          stats: {
+            played: 0,
+            wins: 0,
+            winRate: 0,
+            currentStreak: 0,
+            bestStreak: 0,
+            distribution: [0, 0, 0, 0, 0, 0, 0, 0],
+          },
         },
       });
 

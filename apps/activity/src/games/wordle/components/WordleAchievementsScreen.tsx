@@ -136,6 +136,7 @@ export function WordleAchievementsScreen({
   }, [selectedAchievement]);
 
   const distributionBuckets = [
+    '0',
     '1',
     '2',
     '3',
@@ -632,7 +633,14 @@ export function WordleAchievementsScreen({
                         })}
                       </span>
                     </div>
-                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-black/40">
+                    <div
+                      role="progressbar"
+                      aria-label={displayName}
+                      aria-valuenow={progress.current}
+                      aria-valuemin={0}
+                      aria-valuemax={progress.target}
+                      className="h-2.5 w-full overflow-hidden rounded-full bg-black/40"
+                    >
                       <div
                         className="h-full rounded-full bg-marquinhos-accent transition-all"
                         style={{ width: `${progressPercent}%` }}

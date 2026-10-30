@@ -1,361 +1,264 @@
-import type { PatternSpec } from '../../types';
+import { discoveredDrawing } from '../../engine/predicates';
+import type { WordleAchievementDefinition } from '../../types';
 
-export const DIGITS = [
+export const DIGITS: readonly WordleAchievementDefinition[] = [
   {
-    id: 'digit_0',
-    family: 'digit',
+    id: 'wordle_v2_pattern_digit_0',
+    kind: 'drawing',
+    family: 'digits',
+    tier: 1,
     name: 'Número 0',
-    mask: `
-      ###
-      #.#
-      #.#
-      #.#
-      ###
-    `,
-    variants: [
-      `
-        ####
-        #..#
-        #..#
-        #..#
-        ####
-      `,
-    ],
+    description:
+      'Forme número 0 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔢',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'digit_0',
+      family: 'digit',
+      mask: ['###', '#.#', '#.#', '#.#', '###'],
+      variants: [['####', '#..#', '#..#', '#..#', '####']],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'digit_1',
-    family: 'digit',
+    id: 'wordle_v2_pattern_digit_1',
+    kind: 'drawing',
+    family: 'digits',
+    tier: 2,
     name: 'Número 1',
-    mask: `
-      .#.
-      ##.
-      .#.
-      .#.
-      ###
-    `,
-    variants: [
-      `
-        .#..
-        ##..
-        .#..
-        .#..
-        ####
-      `,
-      `
-        .#...
-        ##...
-        .#...
-        .#...
-        #####
-      `,
-      `
-        ..#..
-        .##..
-        ..#..
-        ..#..
-        #####
-      `,
-    ],
+    description:
+      'Forme número 1 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔢',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'digit_1',
+      family: 'digit',
+      mask: ['.#.', '##.', '.#.', '.#.', '###'],
+      variants: [
+        ['.#..', '##..', '.#..', '.#..', '####'],
+        ['.#...', '##...', '.#...', '.#...', '#####'],
+        ['..#..', '.##..', '..#..', '..#..', '#####'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'digit_2',
-    family: 'digit',
+    id: 'wordle_v2_pattern_digit_2',
+    kind: 'drawing',
+    family: 'digits',
+    tier: 3,
     name: 'Número 2',
-    mask: `
-      ##.
-      ..#
-      .#.
-      #..
-      ###
-    `,
-    variants: [
-      `
-        .##.
-        #..#
-        ..#.
-        .#..
-        ####
-      `,
-      `
-        ###.
-        ...#
-        .##.
-        #...
-        ####
-      `,
-      `
-        .###.
-        ....#
-        ..##.
-        .#...
-        #####
-      `,
-      `
-        ####.
-        ....#
-        ..##.
-        .#...
-        #####
-      `,
-    ],
+    description:
+      'Forme número 2 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔢',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'digit_2',
+      family: 'digit',
+      mask: ['##.', '..#', '.#.', '#..', '###'],
+      variants: [
+        ['.##.', '#..#', '..#.', '.#..', '####'],
+        ['###.', '...#', '.##.', '#...', '####'],
+        ['.###.', '....#', '..##.', '.#...', '#####'],
+        ['####.', '....#', '..##.', '.#...', '#####'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'digit_3',
-    family: 'digit',
+    id: 'wordle_v2_pattern_digit_3',
+    kind: 'drawing',
+    family: 'digits',
+    tier: 4,
     name: 'Número 3',
-    mask: `
-      ##.
-      ..#
-      .#.
-      ..#
-      ##.
-    `,
-    variants: [
-      `
-        ###.
-        ...#
-        .##.
-        ...#
-        ###.
-      `,
-      `
-        ###.
-        ...#
-        ..#.
-        ...#
-        ###.
-      `,
-      `
-        ####.
-        ....#
-        .###.
-        ....#
-        ####.
-      `,
-      `
-        ####.
-        ....#
-        ..##.
-        ....#
-        ####.
-      `,
-    ],
+    description:
+      'Forme número 3 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔢',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'digit_3',
+      family: 'digit',
+      mask: ['##.', '..#', '.#.', '..#', '##.'],
+      variants: [
+        ['###.', '...#', '.##.', '...#', '###.'],
+        ['###.', '...#', '..#.', '...#', '###.'],
+        ['####.', '....#', '.###.', '....#', '####.'],
+        ['####.', '....#', '..##.', '....#', '####.'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'digit_4',
-    family: 'digit',
+    id: 'wordle_v2_pattern_digit_4',
+    kind: 'drawing',
+    family: 'digits',
+    tier: 5,
     name: 'Número 4',
-    mask: `
-      #.#
-      #.#
-      ###
-      ..#
-      ..#
-    `,
-    variants: [
-      `
-        #..#
-        #..#
-        ####
-        ...#
-        ...#
-      `,
-      `
-        #...#
-        #...#
-        #####
-        ....#
-        ....#
-      `,
-      `
-        ...#.
-        ..##.
-        .#.#.
-        #####
-        ...#.
-      `,
-    ],
+    description:
+      'Forme número 4 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔢',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'digit_4',
+      family: 'digit',
+      mask: ['#.#', '#.#', '###', '..#', '..#'],
+      variants: [
+        ['#..#', '#..#', '####', '...#', '...#'],
+        ['#...#', '#...#', '#####', '....#', '....#'],
+        ['...#.', '..##.', '.#.#.', '#####', '...#.'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'digit_5',
-    family: 'digit',
+    id: 'wordle_v2_pattern_digit_5',
+    kind: 'drawing',
+    family: 'digits',
+    tier: 6,
     name: 'Número 5',
-    mask: `
-      ###
-      #..
-      ##.
-      ..#
-      ##.
-    `,
-    variants: [
-      `
-        ####
-        #...
-        ###.
-        ...#
-        ###.
-      `,
-      `
-        #####
-        #....
-        ####.
-        ....#
-        ####.
-      `,
-    ],
+    description:
+      'Forme número 5 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔢',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'digit_5',
+      family: 'digit',
+      mask: ['###', '#..', '##.', '..#', '##.'],
+      variants: [
+        ['####', '#...', '###.', '...#', '###.'],
+        ['#####', '#....', '####.', '....#', '####.'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'digit_6',
-    family: 'digit',
+    id: 'wordle_v2_pattern_digit_6',
+    kind: 'drawing',
+    family: 'digits',
+    tier: 7,
     name: 'Número 6',
-    mask: `
-      .##
-      #..
-      ###
-      #.#
-      ###
-    `,
-    variants: [
-      `
-        .###
-        #...
-        ###.
-        #..#
-        .##.
-      `,
-      `
-        .##.
-        #...
-        ###.
-        #..#
-        .##.
-      `,
-      `
-        .###.
-        #....
-        ####.
-        #...#
-        .###.
-      `,
-      `
-        ..###
-        #....
-        ####.
-        #...#
-        .###.
-      `,
-    ],
+    description:
+      'Forme número 6 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔢',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'digit_6',
+      family: 'digit',
+      mask: ['.##', '#..', '###', '#.#', '###'],
+      variants: [
+        ['.###', '#...', '###.', '#..#', '.##.'],
+        ['.##.', '#...', '###.', '#..#', '.##.'],
+        ['.###.', '#....', '####.', '#...#', '.###.'],
+        ['..###', '#....', '####.', '#...#', '.###.'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'digit_7',
-    family: 'digit',
+    id: 'wordle_v2_pattern_digit_7',
+    kind: 'drawing',
+    family: 'digits',
+    tier: 8,
     name: 'Número 7',
-    mask: `
-      ###
-      ..#
-      .#.
-      .#.
-      .#.
-    `,
-    variants: [
-      `
-        ####
-        ...#
-        ..#.
-        .#..
-        .#..
-      `,
-      `
-        ####
-        ...#
-        ..#.
-        ..#.
-        ..#.
-      `,
-      `
-        #####
-        ....#
-        ...#.
-        ..#..
-        ..#..
-      `,
-      `
-        #####
-        ....#
-        ...#.
-        ..#..
-        .#...
-      `,
-    ],
+    description:
+      'Forme número 7 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔢',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'digit_7',
+      family: 'digit',
+      mask: ['###', '..#', '.#.', '.#.', '.#.'],
+      variants: [
+        ['####', '...#', '..#.', '.#..', '.#..'],
+        ['####', '...#', '..#.', '..#.', '..#.'],
+        ['#####', '....#', '...#.', '..#..', '..#..'],
+        ['#####', '....#', '...#.', '..#..', '.#...'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'digit_8',
-    family: 'digit',
+    id: 'wordle_v2_pattern_digit_8',
+    kind: 'drawing',
+    family: 'digits',
+    tier: 9,
     name: 'Número 8',
-    mask: `
-      ###
-      #.#
-      ###
-      #.#
-      ###
-    `,
-    variants: [
-      `
-        .##.
-        #..#
-        .##.
-        #..#
-        .##.
-      `,
-      `
-        .###.
-        #...#
-        .###.
-        #...#
-        .###.
-      `,
-    ],
+    description:
+      'Forme número 8 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔢',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'digit_8',
+      family: 'digit',
+      mask: ['###', '#.#', '###', '#.#', '###'],
+      variants: [
+        ['.##.', '#..#', '.##.', '#..#', '.##.'],
+        ['.###.', '#...#', '.###.', '#...#', '.###.'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'digit_9',
-    family: 'digit',
+    id: 'wordle_v2_pattern_digit_9',
+    kind: 'drawing',
+    family: 'digits',
+    tier: 10,
     name: 'Número 9',
-    mask: `
-      ###
-      #.#
-      ###
-      ..#
-      ##.
-    `,
-    variants: [
-      `
-        .##.
-        #..#
-        .###
-        ...#
-        .##.
-      `,
-      `
-        .##.
-        #..#
-        .###
-        ...#
-        ###.
-      `,
-      `
-        .###.
-        #...#
-        .####
-        ....#
-        .###.
-      `,
-      `
-        #####
-        #...#
-        #####
-        ....#
-        .###.
-      `,
-    ],
+    description:
+      'Forme número 9 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔢',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'digit_9',
+      family: 'digit',
+      mask: ['###', '#.#', '###', '..#', '##.'],
+      variants: [
+        ['.##.', '#..#', '.###', '...#', '.##.'],
+        ['.##.', '#..#', '.###', '...#', '###.'],
+        ['.###.', '#...#', '.####', '....#', '.###.'],
+        ['#####', '#...#', '#####', '....#', '.###.'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
-] satisfies readonly PatternSpec[];
+];

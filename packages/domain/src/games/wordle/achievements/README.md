@@ -1,112 +1,162 @@
 # Maintain Wordle achievements
 
-Edit achievement objects in `content/`. Keep evaluation algorithms in `engine/`.
+The catalog is authored in `content/` and combined in `catalog.ts`. Each object
+contains its ID, Portuguese copy, family, explicit tier, rarity, icon, XP reward,
+and pure `evaluate` function. Drawing objects also own their pattern ID, family,
+mask, variants, colors, and allowed rotations. `engine/predicates.ts` contains
+reusable pure behavior; `engine/history.ts` prepares eligible facts once.
 
-## Add or edit an achievement
+The `wordle_v2_` prefix is part of the established IDs. It is not a runtime
+collection version. Existing sessions participate when their date and counters
+are eligible. Wordle evaluator functions are source code and are not serialized
+into the database.
 
-Choose the list that owns the achievement.
+## Edit one achievement
 
-- `content/milestones.ts` contains wins, played days, and winning streak milestones.
-- `content/gameplay.ts` contains the other history-based goals.
-- `content/collections.ts` contains pattern collection goals with explicit targets.
+Find the complete object by ID. For example:
 
-Open the owning list, change the complete achievement object, and keep its ID stable. For example, changing the annual wins threshold means updating both `count` and the Portuguese description:
-
-```ts
-{
-  id: 'wordle_v2_wins_365',
-  family: 'wins',
-  name: 'Ano de respostas',
-  description: 'Resolva a palavra diária em 365 datas elegíveis.',
-  rarity: 'legendary',
-  rewardXp: 750,
-  rule: { kind: 'wins', count: 365 },
-}
+```sh
+rg -n "wordle_v2_pattern_tetromino_i" packages/domain/src/games/wordle/achievements/content
 ```
 
-Use a new ID for a new challenge. Renaming an ID retires the old entry and creates a separate achievement.
+The object is in `content/patterns/tetrominoes.ts`. Its achievement metadata,
+`evaluate: discoveredDrawing`, and `drawing.mask` are together. To change the
+silhouette, edit the explicit mask rows there and update the Portuguese
+description if it no longer describes the same figure. Keep the ID when the
+identity remains the I tetromino.
 
-Require an explicit rarity. The catalog supplies XP from rarity unless `rewardXp` overrides it. Hidden status defaults to `false`. Icons use the existing family defaults. Set `hidden`, `icon`, or `rewardXp` only when overriding those defaults.
+Run the geometric matcher and production-feedback witness checks:
 
-When changing a threshold, update its Portuguese description in the same object. Existing unlocks and XP remain attached to the ID. Changing a rule does not revoke earned achievements.
+```sh
+bun test packages/domain/src/games/wordle/achievements/engine/matchPatterns.test.ts
+bun test packages/domain/src/games/wordle/achievements/legalWitnesses.test.ts
+bun apps/api/scripts/verifyWordlePatterns.ts --search-pattern tetromino_i
+```
 
-Keep the lists in the intended order. The catalog assembles milestones, gameplay goals, drawing achievements, and collections in that order. Each family's encounter order determines its tiers. Inserting, removing, or moving an entry renumbers later tiers in that family.
-
-## Record a catalog revision
-
-Any change to a stored field requires a new catalog revision. Stored fields are the ID, name, description, rarity, icon, rule, and XP. Adding, removing, or editing an achievement or a pattern changes them. When that happens, `catalog.test.ts` fails and prints the next revision number and fingerprint. Set `WORDLE_ACHIEVEMENT_CATALOG_REVISION` in `catalog.ts` to that number. Add the printed line to `fixtures/catalog-revisions.json`.
-
-The database stores the latest synchronized revision. A process with an older revision skips synchronization and logs a warning. During a rolling deploy, it therefore cannot undo the newer catalog.
+The targeted verifier replaces that pattern's witnesses in
+`fixtures/legal-witnesses.json`. Review the changed guesses and feedback, then
+run the verifier without `--search-pattern` to check every drawing. Each base
+mask and variant needs one legal green and one legal yellow witness produced
+through `computeFeedback()`.
 
 ## Add a drawing
 
-Edit the appropriate list in `content/patterns/`. Each pattern has an ID, family, Portuguese name, and mask. Each mask row appears on its own source line.
+Add one complete drawing object to its family file, such as
+`content/patterns/shapes.ts`. Copy the shape of a nearby entry and give it a new
+achievement ID and pattern ID. Keep the mask rows explicit and the allowed
+colors and transforms intentional. For example, the essential geometry and
+evaluator fields look like this:
 
 ```ts
 {
-  id: 'hourglass',
-  family: 'shape',
-  name: 'Ampulheta',
-  mask: `
-    ###
-    .#.
-    ###
-  `,
+  id: 'wordle_v2_pattern_shape_example',
+  kind: 'drawing',
+  family: 'shapes',
+  tier: 17,
+  name: 'Exemplo',
+  description: 'Forme a figura completa em uma cor.',
+  rarity: 'rare',
+  icon: '🎨',
+  rewardXp: 75,
+  hidden: false,
+  evaluate: discoveredDrawing,
+  drawing: {
+    patternId: 'shape_example',
+    family: 'shape',
+    mask: ['###', '#.#', '###'],
+    variants: [],
+    colors: ['correct', 'present'],
+    rotations: [0],
+  },
 }
 ```
 
-Use `#` for the cells of the drawing and `.` for empty cells. Keep every row the same width. Green and yellow match separately. A drawing matches only as the whole group of same-colored cells: any other cell of that color touching it, diagonals included, means the player drew a different figure. The all-green winning row counts as a neighbor only when the drawing itself reaches it. Add wider forms of a drawing with `variants`; each must be distinct, at least as wide as `mask`, at most 5 columns wide, and must not equal any other pattern's figure (the matcher test draws every form and expects only its own pattern).
+Use `#` for required cells and `.` for empty positions. Rows must be rectangular
+and no wider than six columns. A drawing is the complete figure in one color:
+another same-color cell touching it, including diagonally, changes the figure.
+Green and yellow are matched independently. The all-green winning row is
+ignored as a neighbor unless the figure itself occupies it. Tetrominoes may
+rotate without reflection; letters and digits stay upright.
 
-The pattern source generates its matcher definition, preview, and drawing achievement. Keep pattern IDs stable because saved discoveries reference them. Pattern-family policies supply allowed colors, rotations, achievement family, and rarity. Tetrominoes permit quarter-turn rotations. Other families keep their declared orientation.
-
-For every mask and variant, add one legal green witness and one legal yellow witness to `fixtures/legal-witnesses.json`. The verifier checks this same coverage. Yellow witnesses must preserve previously known green positions and finish with a solve. Keep production-generated feedback as proof that the guess sequence is legal.
-
-Run the verifier to check existing witnesses, or regenerate a single pattern when its mask changes:
-
-```sh
-bun apps/api/scripts/verifyWordlePatterns.ts
-bun apps/api/scripts/verifyWordlePatterns.ts --search-pattern hourglass
-```
-
-Review the targeted fixture diff and run the verifier again without `--search-pattern`. Use `--search` only when intentionally regenerating witnesses for every drawing. Add or change drawings through the public matcher tests, including both colors, exact neighboring cells, translations, rotations, and forbidden reflections.
-
-Collection counts are explicit. Review the applicable collection goals when adding or removing patterns. Do not automatically raise an existing target to match a larger pattern list. Keep targets reachable and update descriptions when intentionally changing them.
-
-## Add a rule kind
-
-1. Add its discriminated schema to `engine/rules.ts`. Keep the inferred rule type as the authority for rule objects.
-2. Add its case to the exhaustive switch in `engine/evaluate.ts`.
-3. If the rule needs shared evidence, prepare that evidence in `engine/history.ts`.
-4. Test it through `evaluateWordleAchievements`: cover threshold boundaries, missing evidence, and capped progress.
-5. Add a complete achievement object using the new rule.
-
-Return capped progress for counters and `null` progress for flags. Preserve serialized rule field names for existing kinds. The API stores `JSON.stringify(definition.rule)` as the condition.
-
-Use complete feedback evidence for board-based rules. A malformed matrix must not remove an otherwise valid day from numerical counters. Keep lifetime player statistics separate from the history eligible for the active achievement version.
-
-The engine's public entry point prepares shared history once and returns results in catalog order. Keep rule preparation and individual rule evaluation private; do not add a second evaluator API or a generic rule registry.
-
-## Retire or restore an achievement
-
-Remove the object from its content list. For a drawing achievement, remove its pattern definition and review dependent collections and witnesses.
-
-Record a new catalog revision. On the next API startup, catalog synchronization archives omitted Wordle definitions in the current version. Activation applies the same retirement. Archived definitions disappear from active readers and cannot earn new rewards. Definitions, unlock history, discoveries, and awarded XP remain stored.
-
-Restoring the same ID restores its existing history. Previously earned achievements do not award XP again. Use a new ID when the restored entry represents a different challenge.
-
-Deploying a content edit does not require resetting the achievement version. A deliberate collection reset uses the separate activation procedure.
-
-## Verify an edit
-
-From the repository root, run:
+After adding the object, add legal green and yellow witnesses for its mask and
+every variant. `witnessCoverage.ts` checks that the fixture covers both colors
+for every authored shape. `matchPatterns.test.ts` exercises the public matcher,
+including translations, neighboring cells, winning-row behavior, and
+tetromino transforms. Run:
 
 ```sh
-bun test packages/domain/src/games/wordle
+bun test packages/domain/src/games/wordle/achievements
 bun apps/api/scripts/verifyWordlePatterns.ts
-pnpm --filter @marquinhos/domain typecheck
-pnpm --filter @marquinhos/domain lint
 ```
 
-The pattern verifier reads checked-in witnesses without changing them. Its search options regenerate witness fixtures, so review that diff before keeping it.
+If witnesses need to be searched from the source word banks, use
+`--search-pattern shape_example`, review the fixture diff, and run the full
+verifier afterward. The verifier checks source-bank legality, not availability
+in a live used-word or banned-word pool.
 
-Run affected API integration tests when discovery persistence, catalog synchronization, or retirement changes. The API test preload creates and drops a disposable database using `TEST_DATABASE_URL`. Run bot and Activity tests when changing family labels, domain imports, or exported metadata.
+Collection targets live as explicit objects in `content/collections.ts`. Review
+those targets and descriptions when a drawing is added; adding a drawing does
+not automatically raise a target.
+
+## Add a reusable rule
+
+Put shared pure behavior in `engine/predicates.ts` only when the helper captures
+a meaningful behavior that more than one definition can use. Keep each
+achievement's complete identity and `evaluate` function on the object in
+`content/`. For example, a history counter could be attached like this:
+
+```ts
+// content/gameplay.ts
+{
+  id: 'wordle_v2_example_goal',
+  kind: 'standard',
+  family: 'precision',
+  tier: 7,
+  name: 'Exemplo',
+  description: 'Resolva em até três tentativas em dez datas.',
+  rarity: 'rare',
+  icon: '🏅',
+  rewardXp: 75,
+  hidden: false,
+  evaluate: (facts) => winsWithin(facts, 3, 10),
+}
+```
+
+Test through the public `analyzeWordleAchievements()` interface, not by
+depending on evaluator internals. Cover the threshold boundary, duplicate and
+future dates, missing or malformed board evidence when relevant, and capped
+progress. Counter results expose progress up to the target; yes-or-no results
+use `progress: null`. Board-based rules receive only complete validated
+feedback. Malformed boards can retain valid numerical progress, but cannot
+provide a drawing or row-based evidence.
+
+There is no Wordle rule registry, rule schema, or exhaustive rule-kind switch.
+Do not serialize evaluator functions. Wordle rows in the generic
+`achievements` table keep `condition = null`; generic achievement conditions
+remain serialized and non-null.
+
+## Seeding and backfill
+
+API startup seeds Wordle metadata from `WORDLE_ACHIEVEMENT_CATALOG` into the
+generic `achievements` table. The catalog source remains authoritative for
+Wordle presentation and evaluation. Existing eligible sessions participate;
+there is no activation boundary or version negotiation. Pattern evidence keeps
+the first persisted witness for each player, guild, and pattern ID.
+
+Accepted guesses commit before best-effort achievement awarding. A failed award
+does not reject the guess. A later accepted guess or the explicit backfill can
+reconcile missed unlocks and XP. `getOverview()` is read-only: it reports
+progress and stored evidence but never discovers patterns, unlocks achievements,
+or grants XP.
+
+Run an explicit backfill from the repository root when missed awards need to be
+reconciled:
+
+```sh
+pnpm --filter marquinhos-web-api exec bun scripts/backfillWordleAchievements.ts --guild-id GUILD_ID --batch-size 100
+```
+
+Omit `--guild-id` to process every guild. Backfill is repeat-safe: existing
+unlock rows and XP are not granted again. See
+[`docs/wordle-operations.md`](../../../../../../docs/wordle-operations.md) for
+database and test commands.

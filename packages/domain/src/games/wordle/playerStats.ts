@@ -3,6 +3,7 @@ import type { GuessRow } from '@marquinhos/contracts/wordle';
 export interface WordleDayRecord {
   date: string;
   solved: boolean;
+  solvedFromDraft: boolean;
   attempts: number;
   guesses: GuessRow[];
   startedAt: number;
@@ -24,7 +25,7 @@ export interface WordleStatsOptions {
   persistedBestStreak?: number;
 }
 
-export const WORDLE_DISTRIBUTION_BUCKETS = 7;
+export const WORDLE_DISTRIBUTION_BUCKETS = 8;
 
 const DAY_MS = 86_400_000;
 
@@ -36,11 +37,20 @@ export function playedDays(
   days: readonly WordleDayRecord[],
 ): WordleDayRecord[] {
   return days
-    .filter((day) => day.attempts > 0)
+    .filter(
+      (day) =>
+        day.attempts > 0 ||
+        (day.solved && day.solvedFromDraft && day.attempts === 0),
+    )
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-export function solvedRuns(played: readonly WordleDayRecord[]): number[] {
+type StatsDay = Pick<
+  WordleDayRecord,
+  'date' | 'solved' | 'attempts' | 'solvedFromDraft'
+>;
+
+export function solvedRuns(played: readonly StatsDay[]): number[] {
   const runs: number[] = [];
   let previous: number | null = null;
   for (const day of played) {
@@ -57,14 +67,20 @@ export function solvedRuns(played: readonly WordleDayRecord[]): number[] {
 }
 
 export function distributionBucket(attempts: number): number {
-  return Math.min(Math.max(attempts, 1), WORDLE_DISTRIBUTION_BUCKETS) - 1;
+  return Math.min(Math.max(attempts, 0), WORDLE_DISTRIBUTION_BUCKETS - 1);
 }
 
 export function computeWordlePlayerStats(
-  days: readonly WordleDayRecord[],
+  days: readonly StatsDay[],
   options: WordleStatsOptions,
 ): WordlePlayerStats {
-  const played = playedDays(days);
+  const played = days
+    .filter(
+      (day) =>
+        day.attempts > 0 ||
+        (day.solved && day.solvedFromDraft && day.attempts === 0),
+    )
+    .sort((a, b) => a.date.localeCompare(b.date));
   const solved = played.filter((day) => day.solved);
   const runs = solvedRuns(played);
   const distribution = new Array<number>(WORDLE_DISTRIBUTION_BUCKETS).fill(0);

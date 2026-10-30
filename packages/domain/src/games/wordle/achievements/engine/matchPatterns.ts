@@ -3,8 +3,8 @@ import type {
   WordlePatternEvidence,
   WordlePatternPreview,
 } from '@marquinhos/contracts/wordle';
-import { WORDLE_PATTERN_CATALOG } from '../patterns';
-import type { WordlePatternDefinition } from '../types';
+import { WORDLE_DRAWING_CATALOG } from '../catalog';
+import type { DrawingDefinition } from '../types';
 
 type Match = Omit<WordlePatternEvidence, 'feedback' | 'date'>;
 type Cell = WordlePatternEvidence['cells'][number];
@@ -61,7 +61,7 @@ function isExactFigure(
 
 export function matchWordlePatterns(
   matrix: readonly (readonly LetterFeedback[])[],
-  templates: readonly WordlePatternDefinition[] = WORDLE_PATTERN_CATALOG,
+  templates: readonly DrawingDefinition[] = WORDLE_DRAWING_CATALOG,
 ): Match[] {
   const width = matrix[0]?.length ?? 0;
   if (width === 0 || matrix.some((row) => row.length !== width)) return [];
@@ -98,7 +98,7 @@ export function matchWordlePatterns(
               isExactFigure(matrix, cells, color)
             ) {
               found = {
-                patternId: template.id,
+                patternId: template.patternId,
                 color,
                 origin: [row, column],
                 rotation: shape.rotation,

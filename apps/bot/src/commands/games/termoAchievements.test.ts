@@ -5,7 +5,6 @@ import { buildTermoAchievementsReply } from './termoAchievements';
 import { buildTermoActionRow, TERMO_BUTTON_IDS } from './termoResponse';
 
 const overview: WordleAchievementsOverview = {
-  achievementVersion: 1,
   achievements: [
     {
       id: 'wordle_first_win',
@@ -28,7 +27,7 @@ const overview: WordleAchievementsOverview = {
     winRate: 33,
     currentStreak: 0,
     bestStreak: 1,
-    distribution: [0, 0, 1, 0, 0, 0, 0],
+    distribution: [0, 0, 1, 0, 0, 0, 0, 0],
   },
 };
 

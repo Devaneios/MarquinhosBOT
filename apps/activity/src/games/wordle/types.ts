@@ -19,4 +19,8 @@ export interface CurrentRowProps {
     index: number,
     event: KeyboardEvent<HTMLInputElement>,
   ) => void;
+  onPasteCell: (
+    index: number,
+    event: React.ClipboardEvent<HTMLInputElement>,
+  ) => void;
 }

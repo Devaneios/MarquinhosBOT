@@ -13,7 +13,7 @@ const sampleStats: WordlePlayerStats = {
   winRate: 85,
   currentStreak: 4,
   bestStreak: 9,
-  distribution: [2, 5, 6, 3, 1, 0, 0],
+  distribution: [2, 5, 6, 3, 1, 0, 0, 0],
 };
 
 const sampleAchievements: WordleAchievementStatus[] = [
@@ -76,6 +76,31 @@ const sampleAchievements: WordleAchievementStatus[] = [
 ];
 
 describe('WordleAchievementsScreen', () => {
+  it('shows the current DEVANEIOS row prefix as capped progress', () => {
+    const devaneios: WordleAchievementStatus = {
+      ...sampleAchievements[0]!,
+      id: 'wordle_v2_devaneios_rows',
+      family: 'vocabulary',
+      name: 'DEVANEIOS',
+      description: 'Forme DEVANEIOS na mesma linha ao longo de vários dias.',
+      icon: '🔤',
+      rarity: 'legendary',
+      rewardXp: 300,
+      unlockedAt: null,
+      progress: { current: 4, target: 9 },
+    };
+    render(
+      <WordleAchievementsScreen achievements={[devaneios]} onBack={() => {}} />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /DEVANEIOS/ }));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('4 / 9')).toBeTruthy();
+    const progress = within(dialog).getByRole('progressbar');
+    expect(progress.getAttribute('aria-valuenow')).toBe('4');
+    expect(progress.getAttribute('aria-valuemax')).toBe('9');
+  });
+
   it('shows both drawing colors and highlights a saved yellow discovery', () => {
     const achievement: WordleAchievementStatus = {
       ...sampleAchievements[0]!,
@@ -127,6 +152,67 @@ describe('WordleAchievementsScreen', () => {
     expect(evidence.querySelectorAll('[data-color="correct"]')).toHaveLength(2);
   });
 
+  it('renders six-column pattern previews and saved evidence', () => {
+    const achievement: WordleAchievementStatus = {
+      ...sampleAchievements[0]!,
+      id: 'wordle_v2_pattern_triangle_6',
+      name: 'Triângulo de base 6',
+      patternPreview: {
+        patternId: 'triangle_6',
+        mask: ['..##..', '.####.', '######'],
+        colors: ['correct', 'present'],
+        rotations: [0],
+      },
+      matchEvidence: {
+        patternId: 'triangle_6',
+        color: 'correct',
+        origin: [0, 0],
+        rotation: 0,
+        cells: [
+          [0, 2],
+          [0, 3],
+          [1, 1],
+          [1, 2],
+          [1, 3],
+          [1, 4],
+          [2, 0],
+          [2, 1],
+          [2, 2],
+          [2, 3],
+          [2, 4],
+          [2, 5],
+        ],
+        date: '2026-10-28',
+        feedback: [
+          ['absent', 'absent', 'correct', 'correct', 'absent', 'absent'],
+          ['absent', 'correct', 'correct', 'correct', 'correct', 'absent'],
+          Array(6).fill('correct'),
+        ],
+      },
+    };
+    render(
+      <WordleAchievementsScreen
+        achievements={[achievement]}
+        onBack={() => {}}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: /Triângulo de base 6/ }),
+    );
+    const dialog = screen.getByRole('dialog');
+    const previews = within(dialog).getAllByRole('img', { name: /modelo/i });
+    expect(previews).toHaveLength(2);
+    expect(
+      previews.every((preview) =>
+        preview.getAttribute('style')?.includes('repeat(6, 1.25rem'),
+      ),
+    ).toBe(true);
+    const evidence = within(dialog).getByRole('img', {
+      name: /sua descoberta.*verde/i,
+    });
+    expect(evidence.getAttribute('style')).toContain('repeat(6, 1.5rem');
+  });
+
   it('renders an empty state when no achievements exist', () => {
     render(<WordleAchievementsScreen achievements={[]} onBack={() => {}} />);
 
@@ -169,7 +255,10 @@ describe('WordleAchievementsScreen', () => {
     ).toBeTruthy();
     expect(
       container.querySelectorAll('[data-distribution-bucket]'),
-    ).toHaveLength(7);
+    ).toHaveLength(8);
+    expect(
+      container.querySelector('[data-distribution-bucket="0"]'),
+    ).toBeTruthy();
 
     expect(container.querySelector('section[data-family="wins"]')).toBeTruthy();
     expect(

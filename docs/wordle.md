@@ -21,7 +21,7 @@ The implementation is split across these modules.
 | Activity messages                                                                   | [`activity/games/wordle.ts`](../packages/contracts/src/activity/games/wordle.ts)                                                                                               |
 | Colyseus integration                                                                | [`wordleAdapter`](../apps/api/src/realtime/adapters/wordleAdapter.ts)                                                                                                          |
 | Letter feedback and keyboard state                                                  | [`feedback.ts`](../packages/domain/src/games/wordle/feedback.ts), [`keyboardState.ts`](../packages/domain/src/games/wordle/keyboardState.ts)                                   |
-| Achievement definitions, rules, and statistics                                      | [`achievements/`](../packages/domain/src/games/wordle/achievements)                                                                                                            |
+| Achievement definitions, pure evaluators, and history                               | [`achievements/`](../packages/domain/src/games/wordle/achievements), [`playerStats.ts`](../packages/domain/src/games/wordle/playerStats.ts)                                    |
 | Achievement persistence and rewards                                                 | [`WordleAchievementService`](../apps/api/src/services/wordle/WordleAchievementService.ts), [`AchievementService`](../apps/api/src/services/gamification/AchievementService.ts) |
 | Database tables                                                                     | [`schema/wordle.ts`](../packages/database/src/schema/wordle.ts), [`schema/gamification.ts`](../packages/database/src/schema/gamification.ts)                                   |
 | Activity screens and state                                                          | [`games/wordle/`](../apps/activity/src/games/wordle)                                                                                                                           |
@@ -93,7 +93,7 @@ sequenceDiagram
 	Service->>DB: Save guess, counters, first solver, and streak
 	DB-->>Service: Commit
 	Service->>Awards: Evaluate history in a separate transaction
-	Awards-->>Service: Unlocks, statistics, and progress, or failure
+	Awards-->>Service: Full overview and new IDs, or no update
 	Service-->>Entry: Committed guess result
 	Entry-->>Player: Feedback and updated board
 ```
@@ -122,8 +122,8 @@ day. The service checks sessions rather than `winners_count`. A partial unique
 index permits only one `first_solver = true` per guild and date.
 
 Achievement evaluation starts after the guess commits. An award failure logs
-`wordle.achievements.award_failed` and leaves the guess result intact. Achievement
-fields are optional in that response.
+`wordle.achievements.award_failed` and leaves the guess result intact. The
+optional `achievementUpdate` is present only when award evaluation succeeds.
 
 ## Counters, streaks, and rankings
 
@@ -169,100 +169,91 @@ the number of eligible dates, including dates the user missed.
 ## Achievements and player statistics
 
 [`WORDLE_ACHIEVEMENT_CATALOG`](../packages/domain/src/games/wordle/achievements/catalog.ts)
-defines achievement IDs, names, descriptions, families, tiers, rarity, visibility,
-XP rewards, and rules. Startup upserts these definitions into `achievements`.
-Version 2 contains 104 achievements, including 53 drawings and seven distinct-pattern
-collections. Startup synchronizes definitions only when the active database version
-matches the binary's catalog version. It does not activate version 2. Compatible
-synchronization overwrites database edits to active Wordle definitions.
+contains 110 explicit achievement objects: 59 drawings and seven collection
+milestones. Each object owns its visible metadata and pure evaluator. The
+`wordle_v2_` prefix remains part of the stable IDs; there is no runtime
+achievement version, activation boundary, or session version filter. Existing
+eligible sessions participate in the collection.
 
-`wordle_achievement_versions` records activation. Existing sessions keep
-`achievement_version = 1`. New sessions take the active version inside their first
-accepted-guess transaction. Continuing an old board never changes its version.
-Activation archives old Wordle definitions and keeps their unlock rows, existing XP,
-game history, and lifetime statistics. Generic achievement readers hide archived
-definitions. The [operations guide](wordle-operations.md#start-the-new-achievement-collection)
-describes inspection and explicit activation.
+API startup seeds the Wordle metadata into the shared `achievements` table.
+Wordle evaluators are TypeScript functions and are not stored as serialized
+conditions, so Wordle rows have `condition = null`. Generic achievements keep
+their serialized conditions. The catalog source is authoritative for Wordle
+metadata and behavior.
 
-There is one authoritative achievement catalog. Before activation, the overview
-returns an empty collection and lifetime statistics. The previous achievement
-iteration was never deployed and has no compatibility catalog or evaluator mode.
+[`analyzeWordleAchievements()`](../packages/domain/src/games/wordle/achievements/engine/evaluate.ts)
+prepares dated history and exposes pattern discovery and evaluation over the
+same facts. Dates after today are filtered out; eligible dates are sorted and
+deduplicated. Valid counters can contribute numerical progress when a board is
+malformed, but the whole board is withheld as evidence. Submitted board evidence
+requires complete rows of the answer width and, for a solved session, a final
+all-green row. A valid zero-attempt draft win contributes to wins, streaks, and
+numerical milestones but has no feedback rows to supply board evidence. Goals
+that require an accepted guess, such as participation streaks, use only dates
+with submitted guesses.
 
-[`evaluateWordleAchievements()`](../packages/domain/src/games/wordle/achievements/evaluate.ts)
-evaluates the catalog against eligible session history and durable discoveries.
-The rule families cover wins, participation, streaks, calendar coverage, precision,
-persistence, elapsed duration, local hours, feedback, recovery, vocabulary, variety,
-and drawings. Achievement streaks ignore persisted lifetime streak maxima.
-Counter progress stops at its target. Rules that
-produce a yes-or-no result return `progress: null`.
+The catalog includes solve and participation milestones, streaks, calendar
+coverage, exact attempt counts, feedback challenges, vocabulary goals, and
+drawings. `wordle_v2_devaneios_rows` derives its `DEVANEIOS` prefix separately
+for each guess row: only green letters in column order advance it; an unreached
+row preserves its prefix; a played row that makes no progress resets only
+itself and can start again with `D`. The longest current row prefix is returned
+as capped progress out of nine. A valid zero-guess win has no row and neither
+adds letters nor resets one.
 
-`WordleAchievementService.loadHistory()` includes sessions with at least one
-attempt. Numerical statistics can use session counters even when feedback is
-unavailable. Matrix evidence rejects the entire history when JSON, row widths,
-feedback values, guess lengths, or attempt counts disagree. Invalid middle rows
-are never removed to join neighboring rows into a drawing.
+Drawings are explicit objects in
+[`content/patterns/`](../packages/domain/src/games/wordle/achievements/content/patterns).
+They include alphabet letters, digits, seven tetrominoes, and the authored
+shapes. The matcher recognizes the complete same-color figure: another cell of
+that color touching it, including diagonally, changes the drawing. Green and
+yellow are checked independently. Tetrominoes can rotate without reflection;
+letters and digits stay upright. The winning row is excluded as a neighbor
+unless the drawing itself uses it. Drawings can be recognized during an
+unfinished game. The matcher and witness verifier support six-column masks.
+Every mask and variant has separate green and yellow legal witnesses checked
+through production `computeFeedback()`.
 
-[`WORDLE_PATTERN_CATALOG`](../packages/domain/src/games/wordle/achievements/patterns.ts)
-contains upright letters A through Z, digits 0 through 9, all seven tetrominoes,
-and ten other shapes. Required template cells retain their spacing. Dots are
-wildcards, so extra and touching foreground cells are allowed. Green and yellow
-are separate valid foreground colors. The matcher never combines both colors
-into one drawing. Tetrominoes can rotate but cannot reflect. Letters and digits
-stay upright.
+`wordle_pattern_discoveries` stores the first witness per player, guild, and
+pattern ID, with its source session and feedback snapshot. Repeated colors,
+dates, positions, and orientations do not increase collection progress. The
+snapshot contains feedback and matched coordinates, not the guess or answer.
 
-All submitted rows participate, including the winning row. A winning row therefore
-contains a horizontal I tetromino. Dense areas can contain several overlapping
-patterns and unlock each of them. Unsolved boards can produce discoveries too.
-`wordle_pattern_discoveries` saves the first witness for each player, guild, version,
-and pattern. Collections deduplicate colors, orientations, positions, and dates.
-Snapshots contain feedback and highlighted coordinates, without guess or answer text.
+An accepted guess commits before achievement awarding. In its separate
+transaction, `checkAndAward()` takes a player-and-guild lock, loads history once,
+prepares one analysis, discovers unknown patterns, persists their first
+witnesses, reloads persisted discovery IDs, evaluates the catalog once, and
+grants XP in one batch for newly inserted unlocks. A failed achievement update
+does not reject the already accepted guess. The guess result carries one
+optional `achievementUpdate` with the complete overview and newly unlocked IDs.
+A later accepted guess or explicit backfill can reconcile a missed award.
 
-Timing rules require a recorded `solved_at`. Speed measures elapsed seconds from
-session creation to the solve and also checks the rule's minimum attempt count.
-The interval includes idle time and can include transaction lock wait. It does
-not measure active thinking time. Fast goals require at least two guesses.
-Hour ranges use `WORDLE_TIMEZONE`, include the start hour, and exclude the end
-hour. The service does not invent timestamps for legacy solves.
+`getOverview()` is read-only: it evaluates against persisted discoveries but
+does not match patterns, insert unlocks, or grant XP. Hidden achievements keep
+their metadata concealed until unlocked. `holdersPercent` counts distinct
+players in the guild with an accepted guess or a valid zero-guess win.
 
-First-solver evaluation prefers a persisted `first_solver = true`. For legacy
-rows with a null flag, it uses the earliest `solved_at`, then the session ID as
-a tie-breaker. Rows with `first_solver = false` are excluded from that fallback.
-
-`checkAndAward()` evaluates every met but unearned achievement, including
-achievements missed by an earlier failed evaluation. Each unlock uses the
-`user_achievements` primary key and `ON CONFLICT DO NOTHING`. Only a newly
-inserted unlock grants XP and applies level-ups. The caller's transaction keeps
-the unlock and reward together.
-The award transaction locks the player, guild, and version before loading
-discoveries, so concurrent final discoveries cannot miss a collection reward.
-The permanent version-1 row serializes activation against new-session stamping
-and award transactions.
-
-`getOverview()` reads progress and statistics without awarding achievements.
-Locked hidden achievements have empty names and descriptions, an unknown icon,
-and null progress. Earned achievements expose their definition and unlock time.
-`holdersPercent` counts distinct holders among users with an accepted Wordle
-guess in the same guild and active version. With no participating players, the
-percentage is null. Overview, initialization, and guess updates identify the
-achievement version. Accepted-guess award responses include a complete collection
-snapshot so clients replace retired entries when the version changes.
-
-Today’s unsolved session is in progress. A past attempted date that remains
-unsolved is an expired failure. An absent date is not a failure. Expired-day
-achievements unlock on the next accepted guess or explicit reconciliation.
-Overview reads do not award them.
+Activity saves the current draft with optimistic revisions and restores its
+cells and active position on reconnect. The bot saves text delivered through
+`/termo` autocomplete, including short or cleared values when Discord sends
+those events; input never delivered to the bot cannot be persisted. When the
+configured Wordle date closes, a saved final draft becomes a zero-attempt win
+only if it still equals that day's normalized answer and the player has no
+accepted guesses. A background finalizer checks after startup and every 30
+seconds, then records the win, streak, daily counters, statistics, and award
+retry state. Typing alone does not reveal correctness, start the guess timer,
+or change the streak.
 
 Player statistics are derived by
-[`computeWordlePlayerStats()`](../packages/domain/src/games/wordle/achievements/stats.ts).
+[`computeWordlePlayerStats()`](../packages/domain/src/games/wordle/playerStats.ts).
 
 | Field           | Meaning                                                                                    |
 | --------------- | ------------------------------------------------------------------------------------------ |
-| `played`        | Dates with at least one accepted guess                                                     |
-| `wins`          | Solved dates                                                                               |
+| `played`        | Dates with an accepted guess or a valid zero-attempt draft win                             |
+| `wins`          | Solved dates, including a valid zero-attempt draft win                                     |
 | `winRate`       | Rounded integer percentage of played dates solved                                          |
 | `currentStreak` | Latest consecutive solved run if its last date is today or yesterday                       |
 | `bestStreak`    | Maximum of historical solved runs and the persisted streak maximum supplied by the service |
-| `distribution`  | Solved counts for attempts 1, 2, 3, 4, 5, 6, and 7 or more                                 |
+| `distribution`  | Solved counts in eight buckets: `0`, `1`, `2`, `3`, `4`, `5`, `6`, and `7+` attempts       |
 
 Wordle session times use epoch seconds. Achievement unlock times use epoch
 milliseconds in the database and ISO datetime strings in Wordle payloads.
@@ -282,31 +273,36 @@ The request does not select another user.
 The following paths are relative to `/api/wordle`. Contract definitions are in
 [`http/routes/wordle.ts`](../packages/contracts/src/http/routes/wordle.ts).
 
-| Method | Path                             | Input beyond path parameters                          | Success response                                            |
-| ------ | -------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------- |
-| `POST` | `/guess`                         | Body: `userId`, `guildId`, `guess`                    | `{ data: WordleGuessResult }`                               |
-| `GET`  | `/session/:userId/:guildId`      | None                                                  | `{ data: session or null }` for today                       |
-| `GET`  | `/stats/:guildId`                | None                                                  | `{ data: WordleDailyStats }`                                |
-| `GET`  | `/achievements/:guildId/:userId` | None                                                  | `{ data: WordleAchievementsOverview }`                      |
-| `GET`  | `/streak/:userId/:guildId`       | None                                                  | `{ data: { currentStreak, maxStreak } }`                    |
-| `GET`  | `/leaderboard/:guildId`          | Query: `period`, optional `date`                      | `{ data: entries, groupStreak }`                            |
-| `GET`  | `/validate/:guildId`             | Query: `guess`                                        | `{ data: { valid, wordLength, message } }`                  |
-| `GET`  | `/day-guesses/:guildId`          | None                                                  | `{ data: { word, wordDate, wordLength, guesses } or null }` |
-| `POST` | `/admin/force-new-word`          | Body: `guildId`                                       | `{ data: { word, wordDate, wordLength, stats } }`           |
-| `POST` | `/config`                        | Body: `guildId`, `channelId`                          | `{ message }`                                               |
-| `GET`  | `/config/:guildId`               | None                                                  | `{ data: { channelId } or null }`                           |
-| `POST` | `/mark-announced`                | Body: `userId`, `guildId`                             | `{ data: { claimed } }`                                     |
-| `GET`  | `/unannounced/:guildId`          | None                                                  | `{ data: [{ userId, guesses, attempts }] }`                 |
-| `GET`  | `/wordlist-pool-stats`           | None                                                  | `{ data: { total, used, remaining } }`                      |
-| `GET`  | `/review/next`                   | None                                                  | `{ data: { word, index, total, done } }`                    |
-| `POST` | `/review/decision`               | Body: `word`, `decision` as `keep` or `remove`        | Same shape as `/review/next`                                |
-| `GET`  | `/user-config`                   | Discord access token                                  | `{ data: WordleUserConfig }`                                |
-| `PUT`  | `/user-config`                   | Discord access token and full `WordleUserConfig` body | `{ data: WordleUserConfig }`                                |
+| Method | Path                             | Input beyond path parameters                                  | Success response                                            |
+| ------ | -------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------- |
+| `POST` | `/guess`                         | Body: `userId`, `guildId`, `guess`                            | `{ data: WordleGuessResult }`                               |
+| `POST` | `/draft`                         | User/guild, date, row, cells, active index, expected revision | `{ data: WordleDraftWriteResult }`                          |
+| `GET`  | `/session/:userId/:guildId`      | None                                                          | `{ data: session or null }` for today                       |
+| `GET`  | `/stats/:guildId`                | None                                                          | `{ data: WordleDailyStats }`                                |
+| `GET`  | `/achievements/:guildId/:userId` | None                                                          | `{ data: WordleAchievementsOverview }`                      |
+| `GET`  | `/streak/:userId/:guildId`       | None                                                          | `{ data: { currentStreak, maxStreak } }`                    |
+| `GET`  | `/leaderboard/:guildId`          | Query: `period`, optional `date`                              | `{ data: entries, groupStreak }`                            |
+| `GET`  | `/validate/:guildId`             | Query: `guess`                                                | `{ data: { valid, wordLength, message } }`                  |
+| `GET`  | `/day-guesses/:guildId`          | None                                                          | `{ data: { word, wordDate, wordLength, guesses } or null }` |
+| `POST` | `/admin/force-new-word`          | Body: `guildId`                                               | `{ data: { word, wordDate, wordLength, stats } }`           |
+| `POST` | `/config`                        | Body: `guildId`, `channelId`                                  | `{ message }`                                               |
+| `GET`  | `/config/:guildId`               | None                                                          | `{ data: { channelId } or null }`                           |
+| `POST` | `/mark-announced`                | Body: `userId`, `guildId`                                     | `{ data: { claimed } }`                                     |
+| `GET`  | `/unannounced/:guildId`          | None                                                          | `{ data: [{ userId, guesses, attempts }] }`                 |
+| `GET`  | `/wordlist-pool-stats`           | None                                                          | `{ data: { total, used, remaining } }`                      |
+| `GET`  | `/review/next`                   | None                                                          | `{ data: { word, index, total, done } }`                    |
+| `POST` | `/review/decision`               | Body: `word`, `decision` as `keep` or `remove`                | Same shape as `/review/next`                                |
+| `GET`  | `/user-config`                   | Discord access token                                          | `{ data: WordleUserConfig }`                                |
+| `PUT`  | `/user-config`                   | Discord access token and full `WordleUserConfig` body         | `{ data: WordleUserConfig }`                                |
 
 `WordleGuessResult` contains the canonical guess, its feedback, the complete
 guess history, `solved`, `attempts`, and `wordLength`. A solve adds `streak`.
-Successful achievement evaluation adds `unlockedAchievements`, `stats`, and
-`achievementProgress`.
+Successful achievement evaluation adds one optional `achievementUpdate`:
+`{ overview, unlockedIds }`. Its `overview` is the full current collection and
+statistics; `unlockedIds` identifies the achievements newly unlocked by this
+guess. If award evaluation fails, this field is absent while the accepted guess
+still succeeds. Draft writes return `saved` with the new draft, `conflict` with
+the current draft or `null`, or `closed` after the date has finalized.
 
 The leaderboard contract defaults an absent or invalid `period` to `all-time`.
 Its optional `date` accepts the `YYYY-MM-DD` shape and affects only `daily`.
@@ -336,12 +332,14 @@ the submitting client.
 
 The game protocol has these messages.
 
-| Direction        | Type           | Payload                                                                                        |
-| ---------------- | -------------- | ---------------------------------------------------------------------------------------------- |
-| Client to server | `guess`        | `{ guess }`                                                                                    |
-| Server to client | `init`         | Answer length, saved guesses, solved state, attempts, and optional achievements and statistics |
-| Server to client | `guess_result` | `WordleGuessResult`                                                                            |
-| Server to client | `guess_error`  | `{ message }`                                                                                  |
+| Direction        | Type           | Payload                                                                                  |
+| ---------------- | -------------- | ---------------------------------------------------------------------------------------- |
+| Client to server | `guess`        | `{ guess }`                                                                              |
+| Client to server | `draft_update` | Current date, row, cells, active index, and expected revision                            |
+| Server to client | `init`         | Date, answer length, saved guesses, solved state, attempts, draft, and optional overview |
+| Server to client | `guess_result` | `WordleGuessResult`, including optional `achievementUpdate`                              |
+| Server to client | `guess_error`  | `{ message }`                                                                            |
+| Server to client | `draft_result` | Saved draft, revision conflict, or closed-date result                                    |
 
 `init` contains no answer. Achievement overview failure logs
 `wordle.achievements.overview_failed` and still permits board initialization.
@@ -354,17 +352,20 @@ error screen.
 
 [`useWordleBoard()`](../apps/activity/src/games/wordle/state/useWordleBoard.ts)
 owns input, saved guesses, reveal timing, keyboard feedback, and achievement
-updates. An accepted guess clears the input row. Keyboard colors update after
-the new row finishes its reveal. Restored guesses appear already revealed.
-Reduced motion makes the feedback available immediately. Input and submission
-are disabled during the reveal, after a solve, and outside the playing screen.
+updates. It restores the exact draft cells and active position from `init`, and
+sends typing, deletion, paste, and positional edits through a serialized
+revision queue. An accepted guess clears the input row and starts the next
+draft row. Keyboard colors update after the new row finishes its reveal.
+Restored guesses appear already revealed. Reduced motion makes the feedback
+available immediately. Input and submission are disabled during the reveal,
+after a solve, and outside the playing screen.
 
 [`constants.ts`](../apps/activity/src/games/wordle/constants.ts) defines motion
 and keyboard timing. Reveal duration is
-`(wordLength - 1) * FLIP_STAGGER_MS + FLIP_DURATION_MS`. The board queues new
-achievement toasts, suppresses duplicate unlock IDs, and merges progress updates
-into the achievement collection. Opening the achievements screen dismisses the
-toast queue. Portuguese copy lives in
+`(wordLength - 1) * FLIP_STAGGER_MS + FLIP_DURATION_MS`. The board replaces its
+saved collection and statistics from `achievementUpdate.overview`, then queues
+the listed `unlockedIds` for toasts. It suppresses duplicate unlock IDs.
+Opening the achievements screen dismisses the toast queue. Portuguese copy lives in
 [`games/wordle.json`](../apps/activity/src/i18n/locales/pt-BR/games/wordle.json).
 
 Settings belong to the Discord user across guilds. All settings default to false.
@@ -389,7 +390,9 @@ currently commented out in `WordleSettingsScreen`.
 The command requires a configured text channel and rejects play outside that
 channel. Replies are ephemeral images with keyboard feedback and action buttons.
 Without `palpite`, the command shows the player's existing board. Autocomplete
-checks five- or six-letter input with `/validate`.
+checks five- or six-letter input with `/validate` and records the value delivered
+to the bot as a draft. It can persist short or cleared values only when Discord
+actually sends those autocomplete interactions.
 
 [`termoButtons.ts`](../apps/bot/src/interaction-handlers/termoButtons.ts)
 handles board actions and the Activity link. `/termo-conquistas` returns an
@@ -416,21 +419,23 @@ The bot caches guild channel configuration in memory. `setWordleConfig()` update
 that cache, and startup preloads it. Direct API or database configuration changes
 do not invalidate a running bot's cache.
 
-## Storage and legacy compatibility
+## Storage model and SQLite import
 
 The feature stores these records in PostgreSQL through Drizzle.
 
-| Table                | Key                                           | Contents                                                                                         |
-| -------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `wordle_days`        | Guild and date                                | Answer, length, legacy flag, counters, and creation time                                         |
-| `wordle_sessions`    | Session ID, plus unique user, guild, and date | JSON text guesses, attempts, solved state, solve time, first-solver flag, and announcement claim |
-| `wordle_used_words`  | Word                                          | Global answer-use time                                                                           |
-| `wordle_streaks`     | User and guild                                | Current streak, maximum streak, and last solved date                                             |
-| `wordle_config`      | Guild                                         | Discord announcement and play channel                                                            |
-| `wordle_user_config` | User                                          | Activity keyboard and sound settings                                                             |
-| `wordlist_review`    | Word                                          | Nullable ban decision and insertion-order `seq`                                                  |
-| `achievements`       | Achievement ID                                | Catalog definitions and XP rewards                                                               |
-| `user_achievements`  | User, guild, and achievement ID               | Earned achievements and unlock times                                                             |
+| Table                        | Key                                           | Contents                                                                                                           |
+| ---------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `wordle_days`                | Guild and date                                | Answer, length, legacy flag, counters, and creation time                                                           |
+| `wordle_sessions`            | Session ID, plus unique user, guild, and date | JSON text guesses, attempts, solved state, solve time, first-solver flag, draft-win marker, and announcement claim |
+| `wordle_drafts`              | User, guild, and date                         | Current row cells, active position, optimistic revision, and day-end/reward reconciliation timestamps              |
+| `wordle_pattern_discoveries` | User, guild, and pattern ID                   | First source session, discovery time, and feedback evidence snapshot                                               |
+| `wordle_used_words`          | Word                                          | Global answer-use time                                                                                             |
+| `wordle_streaks`             | User and guild                                | Current streak, maximum streak, and last solved date                                                               |
+| `wordle_config`              | Guild                                         | Discord announcement and play channel                                                                              |
+| `wordle_user_config`         | User                                          | Activity keyboard and sound settings                                                                               |
+| `wordlist_review`            | Word                                          | Nullable ban decision and insertion-order `seq`                                                                    |
+| `achievements`               | Achievement ID                                | Generic definitions and Wordle catalog metadata; Wordle condition is null                                          |
+| `user_achievements`          | User, guild, and achievement ID               | Earned achievements and unlock times                                                                               |
 
 `wordle_days` requires a positive length when present and an answer whose length
 matches that value. A non-legacy row requires both fields. Legacy history can
@@ -450,9 +455,9 @@ described in [data model rollout](data-model.md#rollout-expand-then-contract).
 
 User IDs have no foreign key to a profile row. The
 [`UserService`](../apps/api/src/services/user.ts) deletion transaction explicitly
-removes a user's sessions, streaks, settings, and achievement unlocks. It retains
-guild day rows and the global used-word history. Day counters are not recomputed
-by that deletion.
+removes a user's sessions, drafts, streaks, settings, and achievement unlocks.
+It retains guild day rows and the global used-word history. Day counters are not
+recomputed by that deletion.
 
 During SQLite import, compatibility triggers derive day rows from copied daily
 rows and sessions. `deriveWordleDayStats()` fills counters for days whose answer
@@ -491,9 +496,10 @@ and subtracts the global used-word count. The total omits words found only in
 `devaneios-wordlist.txt` and ignores bans. The used count includes both answer
 banks, so `remaining` does not measure the actual pool available to the picker.
 
-`forceNewWord()` replaces today's answer, deletes today's guild sessions, and
-resets the day counters. It records the new answer as used and keeps older
-used-word entries. It does not undo streak rows, achievement unlocks, or XP.
+`forceNewWord()` replaces today's answer, deletes today's guild sessions and
+drafts, and resets the day counters. It records the new answer as used and keeps
+older used-word entries. It does not undo streak rows, achievement unlocks, or
+XP.
 
 ## Current integration limits
 
@@ -511,7 +517,3 @@ An Activity board receives state on join and after its own guesses. There is no
 daily-reset event or notification of a guess accepted through the bot or another
 connection. A forced reset or date change can leave an open board showing stale
 guesses or answer length until it receives fresh initialization.
-
-The guess transaction captures its date once, but `updateStreak()` reads the date
-again. A request that crosses midnight can therefore use different dates for its
-session and streak update.

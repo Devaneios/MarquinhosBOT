@@ -1,11 +1,11 @@
+import { WORDLE_DRAWING_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { matchWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/engine/matchPatterns';
 import {
   missingWordlePatternWitnesses,
   requiredWordlePatternWitnesses,
   wordlePatternWitnessKey,
 } from '@marquinhos/domain/games/wordle/achievements/fixtures/witnessCoverage';
-import { WORDLE_PATTERN_CATALOG } from '@marquinhos/domain/games/wordle/achievements/patterns';
-import type { WordlePatternDefinition } from '@marquinhos/domain/games/wordle/achievements/types';
+import type { DrawingDefinition } from '@marquinhos/domain/games/wordle/achievements/types';
 import { computeFeedback } from '@marquinhos/domain/games/wordle/feedback';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -46,14 +46,14 @@ const witnessSchema = z.object({
 type Witness = z.infer<typeof witnessSchema>;
 
 /** One drawable form of a pattern: variant 0 is the base mask. */
-const variantMasks = (pattern: WordlePatternDefinition) => [
+const variantMasks = (pattern: DrawingDefinition) => [
   pattern.mask,
   ...(pattern.variants ?? []),
 ];
 const variantTemplate = (
-  pattern: WordlePatternDefinition,
+  pattern: DrawingDefinition,
   variant: number,
-): WordlePatternDefinition => ({
+): DrawingDefinition => ({
   ...pattern,
   mask: variantMasks(pattern)[variant] ?? pattern.mask,
   variants: [],
@@ -77,7 +77,7 @@ function chooseRows(
 }
 
 function findWitness(
-  pattern: WordlePatternDefinition,
+  pattern: DrawingDefinition,
   variant: number,
   color: Witness['color'],
   answer: string,
@@ -88,6 +88,10 @@ function findWitness(
 ): Witness | null {
   const rows = variantMasks(pattern)[variant] ?? pattern.mask;
   const width = rows[0]?.length ?? 0;
+  const winningRowIsPartOfDrawing =
+    color === 'correct' &&
+    rows.at(-1)?.length === answer.length &&
+    [...(rows.at(-1) ?? '')].every((cell) => cell === '#');
   for (let column = 0; column + width <= answer.length; column++) {
     // The drawing is the whole same-colored group, so no neighbor of the
     // mask, diagonals included, may share its color.
@@ -102,8 +106,8 @@ function findWitness(
         .map((c) => c + column)
         .filter((c) => c >= 0 && c < answer.length);
     });
-    const candidates = rows.map((mask, i) =>
-      feedback
+    const candidates = rows.map((mask, i) => {
+      const matchingGuesses = feedback
         .filter(
           (row) =>
             (color !== 'present' || !row.states.includes('correct')) &&
@@ -113,28 +117,36 @@ function findWitness(
             (touching[i] ?? []).every((c) => row.states[c] !== color),
         )
         .slice(0, rows.length + 1)
-        .map((row) => row.guess),
-    );
+        .map((row) => row.guess);
+      if (winningRowIsPartOfDrawing && i === rows.length - 1)
+        matchingGuesses.push(answer);
+      return matchingGuesses;
+    });
     if (candidates.some((row) => row.length === 0)) continue;
-    const selected = chooseRows(candidates, new Set([stripDiacritics(answer)]));
+    const selected = chooseRows(
+      candidates,
+      winningRowIsPartOfDrawing
+        ? new Set()
+        : new Set([stripDiacritics(answer)]),
+    );
     if (selected)
       return {
-        patternId: pattern.id,
+        patternId: pattern.patternId,
         ...(variant > 0 ? { variant } : {}),
         color,
         answer,
-        guesses: [...selected, answer],
+        guesses: winningRowIsPartOfDrawing ? selected : [...selected, answer],
         origin: [0, column],
       };
   }
   return null;
 }
 
-function search(patterns: readonly WordlePatternDefinition[]): Witness[] {
+function search(patterns: readonly DrawingDefinition[]): Witness[] {
   const pending = new Map(
     requiredWordlePatternWitnesses(patterns).map((requirement) => {
       const pattern = patterns.find(
-        (candidate) => candidate.id === requirement.patternId,
+        (candidate) => candidate.patternId === requirement.patternId,
       );
       if (!pattern) throw new Error(`Unknown pattern ${requirement.patternId}`);
       return [
@@ -209,11 +221,13 @@ function verify(witnesses: Witness[], selectedIds?: ReadonlySet<string>) {
     ? witnesses.filter((witness) => selectedIds.has(witness.patternId))
     : witnesses;
   const selectedPatterns = selectedIds
-    ? WORDLE_PATTERN_CATALOG.filter((pattern) => selectedIds.has(pattern.id))
-    : WORDLE_PATTERN_CATALOG;
+    ? WORDLE_DRAWING_CATALOG.filter((pattern) =>
+        selectedIds.has(pattern.patternId),
+      )
+    : WORDLE_DRAWING_CATALOG;
   for (const witness of selectedWitnesses) {
-    const pattern = WORDLE_PATTERN_CATALOG.find(
-      (p) => p.id === witness.patternId,
+    const pattern = WORDLE_DRAWING_CATALOG.find(
+      (p) => p.patternId === witness.patternId,
     );
     if (
       !pattern ||
@@ -248,7 +262,7 @@ function verify(witnesses: Witness[], selectedIds?: ReadonlySet<string>) {
     }
     const match = matchWordlePatterns(matrix, [
       variantTemplate(pattern, witness.variant ?? 0),
-    ]).find((found) => found.patternId === pattern.id);
+    ]).find((found) => found.patternId === pattern.patternId);
     if (
       !match ||
       match.color !== witness.color ||
@@ -264,7 +278,7 @@ function verify(witnesses: Witness[], selectedIds?: ReadonlySet<string>) {
     throw new Error(`Missing witnesses: ${missing.join(', ')}`);
   console.log(
     JSON.stringify({
-      patterns: WORDLE_PATTERN_CATALOG.length,
+      patterns: WORDLE_DRAWING_CATALOG.length,
       witnesses: witnesses.length,
       yellow: witnesses.filter((w) => w.color === 'present').length,
       sourceBanksVerified: true,
@@ -280,8 +294,8 @@ if (import.meta.main) {
     const patternId = process.argv[searchPatternIndex + 1];
     if (patternId === undefined)
       throw new Error('Pass a pattern id after --search-pattern.');
-    const selected = WORDLE_PATTERN_CATALOG.filter(
-      (pattern) => pattern.id === patternId,
+    const selected = WORDLE_DRAWING_CATALOG.filter(
+      (pattern) => pattern.patternId === patternId,
     );
     if (selected.length === 0)
       throw new Error(`Unknown Wordle pattern: ${patternId}`);
@@ -298,7 +312,7 @@ if (import.meta.main) {
       await format(JSON.stringify(witnesses), { parser: 'json' }),
     );
   } else if (process.argv.includes('--search')) {
-    const witnesses = search(WORDLE_PATTERN_CATALOG);
+    const witnesses = search(WORDLE_DRAWING_CATALOG);
     verify(witnesses);
     writeFileSync(
       fixturePath,

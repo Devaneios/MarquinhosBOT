@@ -16,6 +16,7 @@ router.put('/user-config', verifyActivityDiscordToken, (req, res) =>
 );
 
 router.post('/guess', checkToken, wordle.submitGuess.bind(wordle));
+router.post('/draft', checkToken, wordle.writeDraft.bind(wordle));
 router.get(
   '/achievements/:guildId/:userId',
   checkToken,

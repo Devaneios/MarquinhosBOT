@@ -156,7 +156,6 @@ describe('buildTermoAchievementsEmbed', () => {
   const client = { user: { displayAvatarURL: () => 'https://bot/avatar.png' } };
   const target = { displayName: 'Ana', avatarUrl: 'https://cdn/ana.png' };
   const overview: WordleAchievementsOverview = {
-    achievementVersion: 1,
     achievements,
     stats: {
       played: 12,
@@ -164,7 +163,7 @@ describe('buildTermoAchievementsEmbed', () => {
       winRate: 83,
       currentStreak: 3,
       bestStreak: 4,
-      distribution: [0, 1, 4, 3, 1, 1, 0],
+      distribution: [0, 1, 4, 3, 1, 1, 0, 0],
     },
   };
 

@@ -1,66 +1,159 @@
-import type { PatternSpec } from '../../types';
+import { discoveredDrawing } from '../../engine/predicates';
+import type { WordleAchievementDefinition } from '../../types';
 
-export const TETROMINOES = [
+export const TETROMINOES: readonly WordleAchievementDefinition[] = [
   {
-    id: 'tetromino_i',
-    family: 'tetromino',
+    id: 'wordle_v2_pattern_tetromino_i',
+    kind: 'drawing',
+    family: 'tetrominoes',
+    tier: 1,
     name: 'Tetraminó I',
-    mask: `
-      ####
-    `,
+    description:
+      'Forme tetraminó i com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'common',
+    icon: '🏅',
+    rewardXp: 25,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'tetromino_i',
+      family: 'tetromino',
+      mask: ['####'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0, 90, 180, 270],
+    },
   },
   {
-    id: 'tetromino_o',
-    family: 'tetromino',
+    id: 'wordle_v2_pattern_tetromino_o',
+    kind: 'drawing',
+    family: 'tetrominoes',
+    tier: 2,
     name: 'Tetraminó O',
-    mask: `
-      ##
-      ##
-    `,
+    description:
+      'Forme tetraminó o com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'common',
+    icon: '🏅',
+    rewardXp: 25,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'tetromino_o',
+      family: 'tetromino',
+      mask: ['##', '##'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0, 90, 180, 270],
+    },
   },
   {
-    id: 'tetromino_t',
-    family: 'tetromino',
+    id: 'wordle_v2_pattern_tetromino_t',
+    kind: 'drawing',
+    family: 'tetrominoes',
+    tier: 3,
     name: 'Tetraminó T',
-    mask: `
-      ###
-      .#.
-    `,
+    description:
+      'Forme tetraminó t com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'common',
+    icon: '🏅',
+    rewardXp: 25,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'tetromino_t',
+      family: 'tetromino',
+      mask: ['###', '.#.'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0, 90, 180, 270],
+    },
   },
   {
-    id: 'tetromino_j',
-    family: 'tetromino',
+    id: 'wordle_v2_pattern_tetromino_j',
+    kind: 'drawing',
+    family: 'tetrominoes',
+    tier: 4,
     name: 'Tetraminó J',
-    mask: `
-      #..
-      ###
-    `,
+    description:
+      'Forme tetraminó j com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'common',
+    icon: '🏅',
+    rewardXp: 25,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'tetromino_j',
+      family: 'tetromino',
+      mask: ['#..', '###'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0, 90, 180, 270],
+    },
   },
   {
-    id: 'tetromino_l',
-    family: 'tetromino',
+    id: 'wordle_v2_pattern_tetromino_l',
+    kind: 'drawing',
+    family: 'tetrominoes',
+    tier: 5,
     name: 'Tetraminó L',
-    mask: `
-      ..#
-      ###
-    `,
+    description:
+      'Forme tetraminó l com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'common',
+    icon: '🏅',
+    rewardXp: 25,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'tetromino_l',
+      family: 'tetromino',
+      mask: ['..#', '###'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0, 90, 180, 270],
+    },
   },
   {
-    id: 'tetromino_s',
-    family: 'tetromino',
+    id: 'wordle_v2_pattern_tetromino_s',
+    kind: 'drawing',
+    family: 'tetrominoes',
+    tier: 6,
     name: 'Tetraminó S',
-    mask: `
-      .##
-      ##.
-    `,
+    description:
+      'Forme tetraminó s com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'common',
+    icon: '🏅',
+    rewardXp: 25,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'tetromino_s',
+      family: 'tetromino',
+      mask: ['.##', '##.'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0, 90, 180, 270],
+    },
   },
   {
-    id: 'tetromino_z',
-    family: 'tetromino',
+    id: 'wordle_v2_pattern_tetromino_z',
+    kind: 'drawing',
+    family: 'tetrominoes',
+    tier: 7,
     name: 'Tetraminó Z',
-    mask: `
-      ##.
-      .##
-    `,
+    description:
+      'Forme tetraminó z com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'common',
+    icon: '🏅',
+    rewardXp: 25,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'tetromino_z',
+      family: 'tetromino',
+      mask: ['##.', '.##'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0, 90, 180, 270],
+    },
   },
-] satisfies readonly PatternSpec[];
+];

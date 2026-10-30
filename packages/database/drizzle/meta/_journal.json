@@ -57,6 +57,27 @@
       "when": 1793138528192,
       "tag": "0007_wordle_catalog_revision",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793321990459,
+      "tag": "0008_wordle_single_collection",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793322337421,
+      "tag": "0009_wordle_condition_nullable",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793323561412,
+      "tag": "0010_wordle_drafts",
+      "breakpoints": true
     }
   ]
 }

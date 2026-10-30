@@ -2,11 +2,10 @@ import { z } from 'zod';
 import {
   guessRowSchema,
   letterFeedbackSchema,
-  wordleAchievementProgressUpdateSchema,
-  wordleAchievementStatusSchema,
+  wordleAchievementUpdateSchema,
   wordleAchievementsOverviewSchema,
-  wordlePlayerStatsSchema,
-  wordleUnlockedAchievementSchema,
+  wordleDraftWriteResultSchema,
+  wordleDraftWriteSchema,
   wordleUserConfigSchema,
 } from '../../wordle';
 import { defineContract, envelope } from '../contract';
@@ -26,13 +25,7 @@ export const wordleGuessResultSchema = z.object({
   attempts: z.number(),
   wordLength: z.number(),
   streak: z.number().optional(),
-  achievementVersion: z.number().int().positive().optional(),
-  achievements: z.array(wordleAchievementStatusSchema).optional(),
-  unlockedAchievements: z.array(wordleUnlockedAchievementSchema).optional(),
-  stats: wordlePlayerStatsSchema.optional(),
-  achievementProgress: z
-    .array(wordleAchievementProgressUpdateSchema)
-    .optional(),
+  achievementUpdate: wordleAchievementUpdateSchema.optional(),
 });
 export type WordleGuessResult = z.output<typeof wordleGuessResultSchema>;
 
@@ -60,6 +53,7 @@ export const wordleSessionSchema = z.object({
   word_date: z.string(),
   guesses: z.array(guessRowSchema),
   solved: z.boolean(),
+  solved_from_draft: z.boolean(),
   attempts: z.number(),
   created_at: z.number(),
 });
@@ -136,6 +130,18 @@ export const submitGuess = defineContract({
     guess: requiredString,
   }),
   response: envelope(wordleGuessResultSchema),
+});
+
+export const writeDraft = defineContract({
+  method: 'POST',
+  path: '/api/wordle/draft',
+  body: z
+    .object({
+      userId: requiredString,
+      guildId: requiredString,
+    })
+    .merge(wordleDraftWriteSchema),
+  response: envelope(wordleDraftWriteResultSchema),
 });
 
 export const getStats = defineContract({

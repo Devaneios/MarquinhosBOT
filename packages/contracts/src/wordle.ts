@@ -15,7 +15,7 @@ const patternCellSchema = z.tuple([
   z.number().int().nonnegative(),
   z.number().int().nonnegative(),
 ]);
-const MAX_PATTERN_WIDTH = 5;
+const MAX_PATTERN_WIDTH = 6;
 const patternMaskSchema = z.array(z.string().regex(/^[#.]+$/)).min(1);
 const isRectangularMask = (mask: readonly string[]) =>
   mask.some((row) => row.includes('#')) &&
@@ -31,8 +31,9 @@ export const wordlePatternPreviewSchema = z
   .refine(
     (value) =>
       isRectangularMask(value.mask) &&
+      (value.mask[0]?.length ?? 0) <= MAX_PATTERN_WIDTH &&
       (value.variants ?? []).every(isRectangularMask),
-    'Pattern masks must be rectangular and contain a required cell',
+    `Pattern masks must be rectangular, contain a required cell, and be at most ${MAX_PATTERN_WIDTH} columns wide`,
   )
   .refine((value) => {
     const baseWidth = value.mask[0]?.length ?? 0;
@@ -102,14 +103,6 @@ export const wordleAchievementProgressSchema = z.object({
   current: z.number().int().nonnegative(),
   target: z.number().int().positive(),
 });
-export const wordleAchievementProgressUpdateSchema = z.object({
-  id: z.string(),
-  progress: wordleAchievementProgressSchema.nullable(),
-});
-export type WordleAchievementProgressUpdate = z.infer<
-  typeof wordleAchievementProgressUpdateSchema
->;
-
 export const wordleAchievementStatusSchema = wordleAchievementSchema.extend({
   unlockedAt: z.iso.datetime().nullable(),
   progress: wordleAchievementProgressSchema.nullable().default(null),
@@ -120,13 +113,9 @@ export type WordleAchievementStatus = z.infer<
   typeof wordleAchievementStatusSchema
 >;
 
-export const wordleUnlockedAchievementSchema = wordleAchievementSchema.extend({
-  unlockedAt: z.iso.datetime(),
-  matchEvidence: wordlePatternEvidenceSchema.nullable().optional(),
-});
-export type WordleUnlockedAchievement = z.infer<
-  typeof wordleUnlockedAchievementSchema
->;
+export type WordleUnlockedAchievement = WordleAchievementStatus & {
+  unlockedAt: string;
+};
 
 export const wordlePlayerStatsSchema = z.object({
   played: z.number().int().nonnegative(),
@@ -134,17 +123,56 @@ export const wordlePlayerStatsSchema = z.object({
   winRate: z.number().int().min(0).max(100),
   currentStreak: z.number().int().nonnegative(),
   bestStreak: z.number().int().nonnegative(),
-  distribution: z.array(z.number().int().nonnegative()).length(7),
+  distribution: z.array(z.number().int().nonnegative()).length(8),
 });
 export type WordlePlayerStats = z.infer<typeof wordlePlayerStatsSchema>;
 
 export const wordleAchievementsOverviewSchema = z.object({
-  achievementVersion: z.number().int().positive().default(1),
   achievements: z.array(wordleAchievementStatusSchema),
   stats: wordlePlayerStatsSchema,
 });
 export type WordleAchievementsOverview = z.infer<
   typeof wordleAchievementsOverviewSchema
+>;
+export const wordleAchievementUpdateSchema = z.object({
+  overview: wordleAchievementsOverviewSchema,
+  unlockedIds: z.array(z.string()),
+});
+export type WordleAchievementUpdate = z.infer<
+  typeof wordleAchievementUpdateSchema
+>;
+
+export const wordleDraftSchema = z.object({
+  date: z.iso.date(),
+  rowIndex: z.number().int().nonnegative(),
+  cells: z.array(z.string().max(1)).min(5).max(12),
+  activeIndex: z.number().int().min(0).max(11),
+  revision: z.number().int().positive(),
+});
+export type WordleDraft = z.infer<typeof wordleDraftSchema>;
+
+export const wordleDraftWriteSchema = z.object({
+  date: z.iso.date(),
+  rowIndex: z.number().int().nonnegative(),
+  cells: z.array(z.string().max(1)).min(5).max(12),
+  activeIndex: z.number().int().min(0).max(11),
+  expectedRevision: z.number().int().nonnegative(),
+});
+export type WordleDraftWrite = z.infer<typeof wordleDraftWriteSchema>;
+
+export const wordleDraftWriteResultSchema = z.discriminatedUnion('status', [
+  z.object({
+    status: z.literal('saved'),
+    draft: wordleDraftSchema,
+  }),
+  z.object({
+    status: z.literal('conflict'),
+    draft: wordleDraftSchema.nullable(),
+  }),
+  z.object({ status: z.literal('closed') }),
+]);
+export type WordleDraftWriteResult = z.infer<
+  typeof wordleDraftWriteResultSchema
 >;
 
 export const guessRowSchema = z.object({

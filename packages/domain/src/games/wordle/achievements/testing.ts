@@ -34,6 +34,7 @@ export function solvedDay(
   return {
     date,
     solved: true,
+    solvedFromDraft: false,
     attempts: guesses.length,
     guesses,
     startedAt,
@@ -69,6 +70,7 @@ export function failedDay(
   return {
     date,
     solved: false,
+    solvedFromDraft: false,
     attempts: guesses.length,
     guesses,
     startedAt: epoch(`${date}T15:00:00Z`),

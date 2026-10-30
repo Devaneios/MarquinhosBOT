@@ -1,15 +1,11 @@
+import type { LetterFeedback } from '@marquinhos/contracts/wordle';
 import { describe, expect, it } from 'bun:test';
+import { WORDLE_ACHIEVEMENT_CATALOG, WORDLE_DRAWING_CATALOG } from './catalog';
 import {
-  WORDLE_ACHIEVEMENT_CATALOG,
-  WORDLE_ACHIEVEMENT_VERSION,
-} from './catalog';
-import {
-  evaluateWordleAchievements,
+  analyzeWordleAchievements,
   type AchievementHistoryDay,
   type WordleEvaluationOptions,
 } from './engine/evaluate';
-import { wordleAchievementRuleSchema } from './engine/rules';
-import { WORDLE_PATTERN_CATALOG } from './patterns';
 import {
   achievementDay,
   epoch,
@@ -21,6 +17,15 @@ import {
 
 const today = '2026-10-24';
 const startedAt = epoch('2026-02-01T12:00:00Z');
+const greenWord = (word: string) => [
+  {
+    guess: word,
+    feedback: Array.from(
+      { length: word.length },
+      (): LetterFeedback => 'correct',
+    ),
+  },
+];
 const completed: AchievementHistoryDay[] = [
   ...solvedStreak('2025-01-01', 365, { firstSolverInGuild: true }),
   solvedDay('2026-01-01', {
@@ -33,6 +38,11 @@ const completed: AchievementHistoryDay[] = [
   solvedDay('2026-01-04', { guesses: rows('cccca', 'ccccc') }),
   failedDay('2026-01-05'),
   solvedDay('2026-01-06'),
+  solvedDay('2026-01-07', {
+    attempts: 0,
+    guesses: [],
+    solvedFromDraft: true,
+  }),
   solvedDay('2026-02-01', { startedAt, solvedAt: startedAt + 30 }),
   solvedDay('2026-02-02', { startedAt, solvedAt: startedAt + 3600 }),
   solvedDay('2026-02-03', { solvedAt: epoch('2026-02-03T03:00:00Z') }),
@@ -47,6 +57,15 @@ const completed: AchievementHistoryDay[] = [
     guesses: rows(...Array.from({ length: 19 }, () => 'apaaa'), 'ccccc'),
   }),
   solvedDay('2026-03-08', { guesses: rows('apaaaa', 'cccccc') }),
+  solvedDay('2026-03-09', { guesses: rows('aaaaa', 'ccccp', 'ccccc') }),
+  solvedDay('2026-03-10', { guesses: rows('aaaaa', 'aaaaa', 'ccccc') }),
+  solvedDay('2026-03-11', { guesses: rows('ccccp', 'cccca', 'ccccc') }),
+  solvedDay('2026-03-12', { guesses: rows('ppppp', 'ppppp', 'ccccc') }),
+  solvedDay('2026-03-13', { guesses: rows('ppppp', 'cccpp', 'ccccc') }),
+  solvedDay('2026-03-14', { guesses: greenWord('desejo') }),
+  solvedDay('2026-03-15', { guesses: greenWord('chuva') }),
+  solvedDay('2026-03-16', { guesses: greenWord('nenhuma') }),
+  solvedDay('2026-03-17', { guesses: greenWord('vitorioso') }),
 ].map((day) =>
   achievementDay(day, {
     answerHasAccent: true,
@@ -60,15 +79,16 @@ const cases: {
   name: string;
   days: readonly AchievementHistoryDay[];
   options: WordleEvaluationOptions;
+  persistedPatternIds?: readonly string[];
 }[] = [
   { name: 'empty history', days: [], options: { today } },
   {
     name: 'completed collection',
     days: completed,
-    options: {
-      today,
-      discoveryIds: new Set(WORDLE_PATTERN_CATALOG.map((p) => p.id)),
-    },
+    options: { today },
+    persistedPatternIds: WORDLE_DRAWING_CATALOG.map(
+      (drawing) => drawing.patternId,
+    ),
   },
   {
     name: 'partial history and one discovery',
@@ -76,7 +96,8 @@ const cases: {
       achievementDay(solvedDay('2026-10-23', { guesses: rows('ccccc') })),
       achievementDay(failedDay(today)),
     ],
-    options: { today, discoveryIds: new Set(['letter_a']) },
+    options: { today },
+    persistedPatternIds: ['letter_a'],
   },
   {
     name: 'duplicate future and malformed history',
@@ -109,42 +130,43 @@ const cases: {
 ];
 
 describe('achievement behavior contract', () => {
-  it('preserves the expanded catalog and exact serialized rules', () => {
-    expect(WORDLE_ACHIEVEMENT_VERSION).toBe(2);
+  it('preserves the complete metadata and drawing geometry projection', () => {
     expect(
-      WORDLE_ACHIEVEMENT_CATALOG.map((entry) => JSON.stringify(entry)).join(
-        '\n',
+      WORDLE_ACHIEVEMENT_CATALOG.map(({ evaluate: _evaluate, ...definition }) =>
+        JSON.stringify(definition),
+      ).join('\n'),
+    ).toMatchSnapshot();
+  });
+
+  it('preserves drawing geometry and its order', () => {
+    expect(
+      WORDLE_DRAWING_CATALOG.map((entry) => JSON.stringify(entry)).join('\n'),
+    ).toMatchSnapshot();
+  });
+
+  it('runs each complete definition through its pure evaluator', () => {
+    expect(
+      WORDLE_ACHIEVEMENT_CATALOG.every(
+        (definition) => typeof definition.evaluate === 'function',
       ),
-    ).toMatchSnapshot();
-  });
-
-  it('preserves normalized patterns and their order', () => {
-    expect(
-      WORDLE_PATTERN_CATALOG.map((entry) => JSON.stringify(entry)).join('\n'),
-    ).toMatchSnapshot();
-  });
-
-  it('exercises every rule kind with met and unmet results', () => {
-    const kinds = wordleAchievementRuleSchema.options.map(
-      (schema) => schema.shape.kind.value,
-    );
-    expect(
-      new Set(WORDLE_ACHIEVEMENT_CATALOG.map((entry) => entry.rule.kind)),
-    ).toEqual(new Set(kinds));
-    expect(
-      evaluateWordleAchievements([], { today }).every((result) => !result.met),
     ).toBe(true);
     expect(
-      evaluateWordleAchievements(completed, cases[1]!.options).every(
-        (result) => result.met,
-      ),
+      analyzeWordleAchievements([], { today })
+        .evaluate(new Set())
+        .every((result) => !result.met),
+    ).toBe(true);
+    expect(
+      analyzeWordleAchievements(completed, cases[1]!.options)
+        .evaluate(new Set(cases[1]!.persistedPatternIds))
+        .every((result) => result.met),
     ).toBe(true);
   });
 
   for (const sample of cases) {
     it(`preserves evaluation for ${sample.name}`, () => {
       expect(
-        evaluateWordleAchievements(sample.days, sample.options)
+        analyzeWordleAchievements(sample.days, sample.options)
+          .evaluate(new Set(sample.persistedPatternIds))
           .map((result) => JSON.stringify(result))
           .join('\n'),
       ).toMatchSnapshot();

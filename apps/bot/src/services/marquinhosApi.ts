@@ -17,6 +17,7 @@ import type {
   WordleLeaderboardPeriod,
 } from '@marquinhos/contracts/http/routes/wordle';
 import * as wordle from '@marquinhos/contracts/http/routes/wordle';
+import type { WordleDraftWrite } from '@marquinhos/contracts/wordle';
 import { reportError } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
 import { z } from 'zod';
@@ -67,6 +68,7 @@ export class MarquinhosApiService {
   private static instance: MarquinhosApiService;
   private client: HttpClient;
   private wordleConfigCache = new Map<string, string | null>();
+  private wordleDraftRevisions = new Map<string, number>();
 
   private constructor() {
     this.client = new HttpClient({
@@ -230,6 +232,38 @@ export class MarquinhosApiService {
     return callContract(this.client, wordle.submitGuess, {
       body: { userId, guildId, guess },
     });
+  }
+
+  async writeWordleDraft(
+    userId: string,
+    guildId: string,
+    draft: Omit<WordleDraftWrite, 'expectedRevision'>,
+    isCurrent: () => boolean = () => true,
+  ) {
+    const key = `${userId}:${guildId}:${draft.date}`;
+    let expectedRevision = this.wordleDraftRevisions.get(key) ?? 0;
+    let result = await callContract(this.client, wordle.writeDraft, {
+      body: { userId, guildId, ...draft, expectedRevision },
+    });
+    if (result.data.status === 'saved') {
+      if (isCurrent())
+        this.wordleDraftRevisions.set(key, result.data.draft.revision);
+    } else if (result.data.status === 'conflict') {
+      if (!isCurrent()) return result;
+      expectedRevision = result.data.draft?.revision ?? 0;
+      this.wordleDraftRevisions.set(key, expectedRevision);
+      if (result.data.draft) {
+        if (!isCurrent()) return result;
+        result = await callContract(this.client, wordle.writeDraft, {
+          body: { userId, guildId, ...draft, expectedRevision },
+        });
+        if (result.data.status === 'saved' && isCurrent())
+          this.wordleDraftRevisions.set(key, result.data.draft.revision);
+      }
+    } else if (isCurrent()) {
+      this.wordleDraftRevisions.delete(key);
+    }
+    return result;
   }
 
   async getWordleStats(guildId: string) {

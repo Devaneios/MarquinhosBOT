@@ -1,318 +1,395 @@
-import type { PatternSpec } from '../../types';
+import { discoveredDrawing } from '../../engine/predicates';
+import type { WordleAchievementDefinition } from '../../types';
 
-export const SHAPES = [
+export const SHAPES: readonly WordleAchievementDefinition[] = [
   {
-    id: 'square_outline',
-    family: 'shape',
+    id: 'wordle_v2_pattern_square_outline',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 1,
     name: 'Quadrado vazado',
-    mask: `
-      ###
-      #.#
-      ###
-    `,
-    variants: [
-      `
-        ####
-        #..#
-        ####
-      `,
-      `
-        ####
-        #..#
-        #..#
-        ####
-      `,
-      `
-        #####
-        #...#
-        #####
-      `,
-      `
-        #####
-        #...#
-        #...#
-        #####
-      `,
-    ],
+    description:
+      'Forme quadrado vazado com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'square_outline',
+      family: 'shape',
+      mask: ['###', '#.#', '###'],
+      variants: [
+        ['####', '#..#', '####'],
+        ['####', '#..#', '#..#', '####'],
+        ['#####', '#...#', '#####'],
+        ['#####', '#...#', '#...#', '#####'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'diamond_outline',
-    family: 'shape',
+    id: 'wordle_v2_pattern_diamond_outline',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 2,
     name: 'Losango',
-    mask: `
-      .#.
-      #.#
-      .#.
-    `,
-    variants: [
-      `
-        ..#..
-        .#.#.
-        #...#
-        .#.#.
-        ..#..
-      `,
-    ],
+    description:
+      'Forme losango com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'diamond_outline',
+      family: 'shape',
+      mask: ['.#.', '#.#', '.#.'],
+      variants: [['..#..', '.#.#.', '#...#', '.#.#.', '..#..']],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'cross',
-    family: 'shape',
+    id: 'wordle_v2_pattern_cross',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 3,
     name: 'Cruz',
-    mask: `
-      .#.
-      ###
-      .#.
-    `,
-    variants: [
-      `
-        .##.
-        ####
-        .##.
-      `,
-      `
-        ..#..
-        #####
-        ..#..
-      `,
-      `
-        ..#..
-        ..#..
-        #####
-        ..#..
-        ..#..
-      `,
-    ],
+    description:
+      'Forme cruz com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'cross',
+      family: 'shape',
+      mask: ['.#.', '###', '.#.'],
+      variants: [
+        ['.##.', '####', '.##.'],
+        ['..#..', '#####', '..#..'],
+        ['..#..', '..#..', '#####', '..#..', '..#..'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'heart',
-    family: 'shape',
+    id: 'wordle_v2_pattern_heart',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 4,
     name: 'Coração',
-    mask: `
-      #.#
-      ###
-      ###
-      .#.
-    `,
-    variants: [
-      `
-        #..#
-        ####
-        ####
-        .##.
-      `,
-      `
-        .#.#.
-        #####
-        #####
-        .###.
-        ..#..
-      `,
-      `
-        ##.##
-        #####
-        #####
-        .###.
-        ..#..
-      `,
-    ],
+    description:
+      'Forme coração com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'heart',
+      family: 'shape',
+      mask: ['#.#', '###', '###', '.#.'],
+      variants: [
+        ['#..#', '####', '####', '.##.'],
+        ['.#.#.', '#####', '#####', '.###.', '..#..'],
+        ['##.##', '#####', '#####', '.###.', '..#..'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'arrow_up',
-    family: 'shape',
+    id: 'wordle_v2_pattern_arrow_up',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 5,
     name: 'Seta para cima',
-    mask: `
-      .#.
-      ###
-      .#.
-      .#.
-    `,
-    variants: [
-      `
-        .##.
-        ####
-        .##.
-        .##.
-      `,
-      `
-        ..#..
-        #####
-        ..#..
-        ..#..
-      `,
-      `
-        ..#..
-        .###.
-        #####
-        ..#..
-        ..#..
-      `,
-    ],
+    description:
+      'Forme seta para cima com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'arrow_up',
+      family: 'shape',
+      mask: ['.#.', '###', '.#.', '.#.'],
+      variants: [
+        ['.##.', '####', '.##.', '.##.'],
+        ['..#..', '#####', '..#..', '..#..'],
+        ['..#..', '.###.', '#####', '..#..', '..#..'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'arrow_down',
-    family: 'shape',
+    id: 'wordle_v2_pattern_arrow_down',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 6,
     name: 'Seta para baixo',
-    mask: `
-      .#.
-      .#.
-      ###
-      .#.
-    `,
-    variants: [
-      `
-        .##.
-        .##.
-        ####
-        .##.
-      `,
-      `
-        ..#..
-        ..#..
-        #####
-        ..#..
-      `,
-      `
-        ..#..
-        ..#..
-        #####
-        .###.
-        ..#..
-      `,
-    ],
+    description:
+      'Forme seta para baixo com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'arrow_down',
+      family: 'shape',
+      mask: ['.#.', '.#.', '###', '.#.'],
+      variants: [
+        ['.##.', '.##.', '####', '.##.'],
+        ['..#..', '..#..', '#####', '..#..'],
+        ['..#..', '..#..', '#####', '.###.', '..#..'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'arrow_left',
-    family: 'shape',
+    id: 'wordle_v2_pattern_arrow_left',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 7,
     name: 'Seta para a esquerda',
-    mask: `
-      ..#
-      .##
-      ###
-      .##
-      ..#
-    `,
-    variants: [
-      `
-        ...#
-        ..##
-        ####
-        ..##
-        ...#
-      `,
-      `
-        ....#
-        ..###
-        #####
-        ..###
-        ....#
-      `,
-      `
-        ....#
-        ...##
-        #####
-        ...##
-        ....#
-      `,
-    ],
+    description:
+      'Forme seta para a esquerda com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'arrow_left',
+      family: 'shape',
+      mask: ['..#', '.##', '###', '.##', '..#'],
+      variants: [
+        ['...#', '..##', '####', '..##', '...#'],
+        ['....#', '..###', '#####', '..###', '....#'],
+        ['....#', '...##', '#####', '...##', '....#'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'arrow_right',
-    family: 'shape',
+    id: 'wordle_v2_pattern_arrow_right',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 8,
     name: 'Seta para a direita',
-    mask: `
-      #..
-      ##.
-      ###
-      ##.
-      #..
-    `,
-    variants: [
-      `
-        #...
-        ##..
-        ####
-        ##..
-        #...
-      `,
-      `
-        #....
-        ###..
-        #####
-        ###..
-        #....
-      `,
-      `
-        #....
-        ##...
-        #####
-        ##...
-        #....
-      `,
-    ],
+    description:
+      'Forme seta para a direita com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'arrow_right',
+      family: 'shape',
+      mask: ['#..', '##.', '###', '##.', '#..'],
+      variants: [
+        ['#...', '##..', '####', '##..', '#...'],
+        ['#....', '###..', '#####', '###..', '#....'],
+        ['#....', '##...', '#####', '##...', '#....'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'staircase',
-    family: 'shape',
+    id: 'wordle_v2_pattern_staircase',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 9,
     name: 'Escadinha',
-    mask: `
-      #..
-      ##.
-      ###
-    `,
-    variants: [
-      `
-        #...
-        ##..
-        ####
-      `,
-      `
-        #...
-        ##..
-        ###.
-        ####
-      `,
-      `
-        #....
-        ##...
-        ###..
-        ####.
-        #####
-      `,
-      `
-        #....
-        ##...
-        #####
-      `,
-    ],
+    description:
+      'Forme escadinha com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'staircase',
+      family: 'shape',
+      mask: ['#..', '##.', '###'],
+      variants: [
+        ['#...', '##..', '####'],
+        ['#...', '##..', '###.', '####'],
+        ['#....', '##...', '###..', '####.', '#####'],
+        ['#....', '##...', '#####'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'hourglass',
-    family: 'shape',
+    id: 'wordle_v2_pattern_hourglass',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 10,
     name: 'Ampulheta',
-    mask: `
-      ###
-      .#.
-      ###
-    `,
-    variants: [
-      `
-        ####
-        .##.
-        ####
-      `,
-      `
-        ####
-        .##.
-        .##.
-        ####
-      `,
-      `
-        #####
-        .###.
-        ..#..
-        .###.
-        #####
-      `,
-    ],
+    description:
+      'Forme ampulheta com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'hourglass',
+      family: 'shape',
+      mask: ['###', '.#.', '###'],
+      variants: [
+        ['####', '.##.', '####'],
+        ['####', '.##.', '.##.', '####'],
+        ['#####', '.###.', '..#..', '.###.', '#####'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
-] satisfies readonly PatternSpec[];
+  {
+    id: 'wordle_v2_pattern_triangle_5',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 11,
+    name: 'Triângulo de base 5',
+    description:
+      'Forme um triângulo de base 5 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'triangle_5',
+      family: 'shape',
+      mask: ['..#..', '.###.', '#####'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
+  },
+  {
+    id: 'wordle_v2_pattern_triangle_6',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 12,
+    name: 'Triângulo de base 6',
+    description:
+      'Forme um triângulo de base 6 com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'triangle_6',
+      family: 'shape',
+      mask: ['..##..', '.####.', '######'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
+  },
+  {
+    id: 'wordle_v2_pattern_staircase_right',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 13,
+    name: 'Escada para a direita',
+    description:
+      'Forme uma escada para a direita com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'staircase_right',
+      family: 'shape',
+      mask: ['..#', '.##', '###'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
+  },
+  {
+    id: 'wordle_v2_pattern_staircase_inverted',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 14,
+    name: 'Escada de cabeça para baixo',
+    description:
+      'Forme uma escada de cabeça para baixo, virada para a esquerda ou para a direita, com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'staircase_inverted',
+      family: 'shape',
+      mask: ['###', '##.', '#..'],
+      variants: [['###', '.##', '..#']],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
+  },
+  {
+    id: 'wordle_v2_pattern_hang_loose',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 15,
+    name: 'Hang loose',
+    description:
+      'Forme o sinal de hang loose com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'hang_loose',
+      family: 'shape',
+      mask: ['#...#', '#...#', '#...#', '#####', '.###.'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
+  },
+  {
+    id: 'wordle_v2_pattern_middle_finger',
+    kind: 'drawing',
+    family: 'shapes',
+    tier: 16,
+    name: 'Dedo do meio',
+    description:
+      'Forme o gesto do dedo do meio com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🏅',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'middle_finger',
+      family: 'shape',
+      mask: ['..#..', '..#..', '..#..', '#####', '.###.'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
+  },
+];

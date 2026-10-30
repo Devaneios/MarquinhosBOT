@@ -5,6 +5,12 @@ import {
   type WordleDayRecord,
   type WordlePlayerStats,
 } from '../../playerStats';
+import { WORDLE_PATTERN_FAMILIES } from '../families';
+import type {
+  ReadonlyAchievementDay,
+  ValidatedBoard,
+  WordleAchievementFacts,
+} from '../types';
 
 export const WORDLE_ACHIEVEMENT_TIME_ZONE = 'America/Recife';
 
@@ -17,26 +23,16 @@ export interface AchievementHistoryDay extends WordleDayRecord {
 export interface AchievementEvaluationOptions {
   today: string;
   timeZone?: string;
-  discoveryIds?: ReadonlySet<string>;
-}
-
-interface AchievementHistory {
-  stats: WordlePlayerStats;
-  solved: AchievementHistoryDay[];
-  played: AchievementHistoryDay[];
-  today: string;
-  discoveryIds: ReadonlySet<string>;
-  solvedHours: number[];
-  matrices: { day: AchievementHistoryDay; feedback: LetterFeedback[][] }[];
-  solvedMatrices: {
-    day: AchievementHistoryDay;
-    feedback: LetterFeedback[][];
-  }[];
 }
 
 function completeFeedback(
-  day: AchievementHistoryDay,
-): LetterFeedback[][] | null {
+  day: Pick<AchievementHistoryDay, 'attempts' | 'wordLength' | 'solved'> & {
+    readonly guesses: readonly {
+      readonly guess: string;
+      readonly feedback: readonly LetterFeedback[];
+    }[];
+  },
+): readonly (readonly LetterFeedback[])[] | null {
   if (
     day.guesses.length === 0 ||
     day.guesses.length !== day.attempts ||
@@ -55,7 +51,9 @@ function completeFeedback(
   return feedback;
 }
 
-function elapsedSeconds(day: WordleDayRecord): number | null {
+export function elapsedSeconds(
+  day: Pick<WordleDayRecord, 'startedAt' | 'solvedAt'>,
+): number | null {
   if (
     day.solvedAt === null ||
     !Number.isFinite(day.solvedAt) ||
@@ -67,7 +65,9 @@ function elapsedSeconds(day: WordleDayRecord): number | null {
   return day.solvedAt - day.startedAt;
 }
 
-function bestParticipationStreak(days: readonly WordleDayRecord[]): number {
+export function bestParticipationStreak(
+  days: readonly Pick<WordleDayRecord, 'date'>[],
+): number {
   let best = 0;
   let current = 0;
   let previous: number | undefined;
@@ -80,8 +80,8 @@ function bestParticipationStreak(days: readonly WordleDayRecord[]): number {
   return best;
 }
 
-function hasCalendarCoverage(
-  days: readonly WordleDayRecord[],
+export function hasCalendarCoverage(
+  days: readonly Pick<WordleDayRecord, 'date'>[],
   today: string,
   period: 'week' | 'month',
 ): boolean {
@@ -110,24 +110,29 @@ function hasCalendarCoverage(
 function localHour(epochSeconds: number, formatter: Intl.DateTimeFormat) {
   const part = formatter
     .formatToParts(new Date(epochSeconds * 1000))
-    .find((p) => p.type === 'hour');
+    .find((candidate) => candidate.type === 'hour');
   return Number(part?.value ?? 0) % 24;
 }
 
 export function prepareAchievementHistory(
   days: readonly AchievementHistoryDay[],
   options: AchievementEvaluationOptions,
-): AchievementHistory {
-  const played = [
+): WordleAchievementFacts {
+  const played: ReadonlyAchievementDay[] = [
     ...new Map(
       days
-        .filter((day) => day.attempts > 0 && day.date <= options.today)
+        .filter(
+          (day) =>
+            (day.attempts > 0 ||
+              (day.solved && day.solvedFromDraft && day.attempts === 0)) &&
+            day.date <= options.today,
+        )
         .sort((a, b) => a.date.localeCompare(b.date))
         .map((day) => [day.date, day]),
     ).values(),
   ];
   const solved = played.filter((day) => day.solved);
-  const matrices = played.flatMap((day) => {
+  const boards: ValidatedBoard[] = played.flatMap((day) => {
     const feedback = completeFeedback(day);
     return feedback === null ? [] : [{ day, feedback }];
   });
@@ -140,16 +145,22 @@ export function prepareAchievementHistory(
     if (day.solvedAt === null || !Number.isFinite(day.solvedAt)) return [];
     return [localHour(day.solvedAt, formatter)];
   });
-  return {
-    stats: computeWordlePlayerStats(played, { today: options.today }),
-    played,
+  const discoveredPatternCounts = Object.fromEntries(
+    WORDLE_PATTERN_FAMILIES.map((family) => [family, 0]),
+  ) as Record<(typeof WORDLE_PATTERN_FAMILIES)[number], number>;
+  const stats: WordlePlayerStats = computeWordlePlayerStats(played, {
     today: options.today,
-    discoveryIds: options.discoveryIds ?? new Set(),
+  });
+  return {
+    stats,
+    played,
+    participated: played.filter((day) => day.attempts > 0),
     solved,
-    matrices,
-    solvedMatrices: matrices.filter(({ day }) => day.solved),
+    boards,
+    solvedBoards: boards.filter(({ day }) => day.solved),
+    today: options.today,
+    discoveredPatternIds: new Set<string>(),
+    discoveredPatternCounts,
     solvedHours,
   };
 }
-
-export { bestParticipationStreak, elapsedSeconds, hasCalendarCoverage };

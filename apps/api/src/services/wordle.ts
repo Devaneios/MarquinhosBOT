@@ -6,11 +6,17 @@ import type {
   wordleReviewWordResultSchema,
   wordleSessionSchema,
 } from '@marquinhos/contracts/http/routes/wordle';
-import type { GuessRow } from '@marquinhos/contracts/wordle';
+import type {
+  GuessRow,
+  WordleDraft,
+  WordleDraftWrite,
+  WordleDraftWriteResult,
+} from '@marquinhos/contracts/wordle';
 import { db, type DbExecutor } from '@marquinhos/database/client';
 import {
   wordleConfig,
   wordleDays,
+  wordleDrafts,
   wordleSessions,
   wordleStreaks,
   wordleUsedWords,
@@ -19,16 +25,18 @@ import {
 import { computeFeedback } from '@marquinhos/domain/games/wordle/feedback';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 import { randomUUID } from 'crypto';
-import { and, asc, count, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gt, isNull, or, sql } from 'drizzle-orm';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import {
   buildUniqueDayGuesses,
   type WordleSessionGuessesRow,
 } from 'services/wordle/dayGuesses';
+import { lockWordleDay, lockWordlePlayer } from 'services/wordle/gameplayLock';
+import { updateWordleStreak } from 'services/wordle/streaks';
 import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
-import { getActiveWordleAchievementVersion } from 'services/wordle/WordleAchievementVersionService';
 import { getRecifeDate } from 'services/wordle/wordleDate';
+import { WordleDraftService } from 'services/wordle/WordleDraftService';
 import type { z } from 'zod';
 
 const logger = {
@@ -47,6 +55,10 @@ interface WordleDaily {
 }
 
 type WordleSession = z.input<typeof wordleSessionSchema>;
+
+class WordleCutoffPassed extends Error {}
+
+const WORDLE_CUTOFF_ERROR = 'O dia do jogo mudou. Envie o palpite novamente.';
 
 export type GuessResult = z.output<typeof wordleGuessResultSchema>;
 
@@ -175,6 +187,8 @@ const REVIEW_SEED_BATCH_SIZE = 5_000;
 type PickMode = 'force' | 'ifStale';
 
 export class WordleService {
+  constructor(private readonly today: () => string = getRecifeDate) {}
+
   async pickNewWord(
     guildId: string,
     wordDate: string,
@@ -279,6 +293,14 @@ export class WordleService {
                 eq(wordleSessions.word_date, wordDate),
               ),
             );
+          await tx
+            .delete(wordleDrafts)
+            .where(
+              and(
+                eq(wordleDrafts.guild_id, guildId),
+                eq(wordleDrafts.word_date, wordDate),
+              ),
+            );
         }
 
         await tx
@@ -352,155 +374,213 @@ export class WordleService {
     }
 
     const strippedGuess = stripDiacritics(canonicalGuess);
-    const today = getRecifeDate();
+    const today = this.today();
+    const drafts = new WordleDraftService();
+    await drafts.finalizePlayerBefore(userId, guildId, today);
     // Initialize before reserving a guess connection: word selection reads
     // through the pool and must also work when it has only one connection.
     await this.getDailyWord(guildId, today);
+    if (this.today() !== today) return { error: WORDLE_CUTOFF_ERROR };
     const now = Math.floor(Date.now() / 1000);
 
-    const outcome = await db.transaction(async (tx) => {
-      const [daily] = await tx
-        .select()
-        .from(wordleDays)
-        .where(
-          and(
-            eq(wordleDays.guild_id, guildId),
-            eq(wordleDays.word_date, today),
-          ),
-        )
-        .for('update');
-      if (!daily?.word || !daily.word_length) {
-        throw new Error(`Wordle day ${guildId}/${today} has no playable word`);
-      }
-      if (canonicalGuess.length !== daily.word_length) {
-        return {
-          error: `A palavra de hoje tem ${daily.word_length} letras. Sua tentativa tem ${canonicalGuess.length}.`,
-        };
-      }
-      const strippedWord = stripDiacritics(daily.word);
-
-      // The row must exist before it can be locked: create an empty session
-      // unless one is already there, then lock it for the read-modify-write.
-      // A concurrent first guess waits here instead of failing on the
-      // unique key.
-      const achievementVersion = await getActiveWordleAchievementVersion(
-        tx,
-        'share',
-      );
-      await tx
-        .insert(wordleSessions)
-        .values({
-          id: randomUUID(),
-          user_id: userId,
-          guild_id: guildId,
-          word_date: today,
-          guesses: '[]',
-          solved: false,
-          attempts: 0,
-          achievement_version: achievementVersion,
-          created_at: now,
-        })
-        .onConflictDoNothing();
-      const [sessionRow] = await tx
-        .select({
-          id: wordleSessions.id,
-          guesses: wordleSessions.guesses,
-          solved: wordleSessions.solved,
-          attempts: wordleSessions.attempts,
-        })
-        .from(wordleSessions)
-        .where(sessionOf(userId, guildId, today))
-        .for('update');
-      const session = sessionRow!;
-
-      if (session.solved) {
-        return { error: 'Você já acertou a palavra de hoje!' };
-      }
-
-      const previousGuesses: GuessRow[] = JSON.parse(session.guesses);
-
-      if (
-        previousGuesses.some((g) => stripDiacritics(g.guess) === strippedGuess)
-      ) {
-        return { error: 'Você já tentou essa palavra.' };
-      }
-
-      const feedback = computeFeedback(strippedGuess, strippedWord);
-      const solved = strippedGuess === strippedWord;
-      const newGuesses = [
-        ...previousGuesses,
-        { guess: canonicalGuess, feedback },
-      ];
-      const newAttempts = session.attempts + 1;
-      const sessionId = session.id;
-
-      await tx
-        .update(wordleSessions)
-        .set({
-          guesses: JSON.stringify(newGuesses),
-          solved,
-          solved_at: solved ? now : null,
-          attempts: newAttempts,
-        })
-        .where(eq(wordleSessions.id, sessionId));
-
-      // Update daily stats.
-      // players_count is incremented exactly once per user per day: on their first guess,
-      // regardless of whether that guess solves the puzzle. The previous CASE WHEN expression
-      // caused a bug where a user who solved on a later guess never incremented players_count
-      // (previousGuesses.length > 0 → $is_new_player = 0).
-      const isNewPlayer = previousGuesses.length === 0;
-      if (isNewPlayer || solved) {
-        await tx
-          .update(wordleDays)
-          .set({
-            ...(isNewPlayer
-              ? { players_count: sql`${wordleDays.players_count} + 1` }
-              : {}),
-            ...(solved
-              ? {
-                  winners_count: sql`${wordleDays.winners_count} + 1`,
-                  total_attempts: sql`${wordleDays.total_attempts} + ${newAttempts}`,
-                }
-              : {}),
-          })
+    let outcome: GuessResult | { error: string };
+    try {
+      outcome = await db.transaction(async (tx) => {
+        await lockWordlePlayer(tx, userId, guildId);
+        if (this.today() !== today) return { error: WORDLE_CUTOFF_ERROR };
+        await lockWordleDay(tx, guildId, today);
+        if (this.today() !== today) return { error: WORDLE_CUTOFF_ERROR };
+        const [daily] = await tx
+          .select()
+          .from(wordleDays)
           .where(
             and(
               eq(wordleDays.guild_id, guildId),
               eq(wordleDays.word_date, today),
             ),
+          )
+          .for('update');
+        if (!daily?.word || !daily.word_length) {
+          throw new Error(
+            `Wordle day ${guildId}/${today} has no playable word`,
           );
+        }
+        if (this.today() !== today) return { error: WORDLE_CUTOFF_ERROR };
+        if (canonicalGuess.length !== daily.word_length) {
+          return {
+            error: `A palavra de hoje tem ${daily.word_length} letras. Sua tentativa tem ${canonicalGuess.length}.`,
+          };
+        }
+        const strippedWord = stripDiacritics(daily.word);
+
+        // The row must exist before it can be locked: create an empty session
+        // unless one is already there, then lock it for the read-modify-write.
+        // A concurrent first guess waits here instead of failing on the
+        // unique key.
+        await tx
+          .insert(wordleSessions)
+          .values({
+            id: randomUUID(),
+            user_id: userId,
+            guild_id: guildId,
+            word_date: today,
+            guesses: '[]',
+            solved: false,
+            attempts: 0,
+            created_at: now,
+          })
+          .onConflictDoNothing();
+        const [sessionRow] = await tx
+          .select({
+            id: wordleSessions.id,
+            guesses: wordleSessions.guesses,
+            solved: wordleSessions.solved,
+            attempts: wordleSessions.attempts,
+          })
+          .from(wordleSessions)
+          .where(sessionOf(userId, guildId, today))
+          .for('update');
+        if (this.today() !== today) throw new WordleCutoffPassed();
+        const session = sessionRow!;
+
+        if (session.solved) {
+          return { error: 'Você já acertou a palavra de hoje!' };
+        }
+
+        const previousGuesses: GuessRow[] = JSON.parse(session.guesses);
+
+        if (
+          previousGuesses.some(
+            (g) => stripDiacritics(g.guess) === strippedGuess,
+          )
+        ) {
+          return { error: 'Você já tentou essa palavra.' };
+        }
+
+        const feedback = computeFeedback(strippedGuess, strippedWord);
+        const solved = strippedGuess === strippedWord;
+        const newGuesses = [
+          ...previousGuesses,
+          { guess: canonicalGuess, feedback },
+        ];
+        const newAttempts = session.attempts + 1;
+        const sessionId = session.id;
+
+        await tx
+          .update(wordleSessions)
+          .set({
+            guesses: JSON.stringify(newGuesses),
+            solved,
+            solved_at: solved ? now : null,
+            attempts: newAttempts,
+          })
+          .where(eq(wordleSessions.id, sessionId));
+
         if (solved) {
-          // Decided from the sessions, not winners_count: the day-row lock
-          // serialises solvers, and the counter can drift (backfills, deletions).
           await tx
-            .update(wordleSessions)
+            .delete(wordleDrafts)
+            .where(
+              and(
+                eq(wordleDrafts.user_id, userId),
+                eq(wordleDrafts.guild_id, guildId),
+                eq(wordleDrafts.word_date, today),
+              ),
+            );
+        } else {
+          await tx
+            .insert(wordleDrafts)
+            .values({
+              user_id: userId,
+              guild_id: guildId,
+              word_date: today,
+              row_index: newAttempts,
+              cells: Array(daily.word_length).fill(''),
+              active_index: 0,
+              revision: 1,
+              updated_at: now,
+            })
+            .onConflictDoUpdate({
+              target: [
+                wordleDrafts.user_id,
+                wordleDrafts.guild_id,
+                wordleDrafts.word_date,
+              ],
+              set: {
+                row_index: newAttempts,
+                cells: Array(daily.word_length).fill(''),
+                active_index: 0,
+                revision: sql`${wordleDrafts.revision} + 1`,
+                updated_at: now,
+                finalized_at: null,
+                award_reconciled_at: null,
+              },
+            });
+        }
+
+        // Update daily stats.
+        // players_count is incremented exactly once per user per day: on their first guess,
+        // regardless of whether that guess solves the puzzle. The previous CASE WHEN expression
+        // caused a bug where a user who solved on a later guess never incremented players_count
+        // (previousGuesses.length > 0 → $is_new_player = 0).
+        const isNewPlayer = previousGuesses.length === 0;
+        if (isNewPlayer || solved) {
+          await tx
+            .update(wordleDays)
             .set({
-              first_solver: sql`NOT EXISTS (
+              ...(isNewPlayer
+                ? { players_count: sql`${wordleDays.players_count} + 1` }
+                : {}),
+              ...(solved
+                ? {
+                    winners_count: sql`${wordleDays.winners_count} + 1`,
+                    total_attempts: sql`${wordleDays.total_attempts} + ${newAttempts}`,
+                  }
+                : {}),
+            })
+            .where(
+              and(
+                eq(wordleDays.guild_id, guildId),
+                eq(wordleDays.word_date, today),
+              ),
+            );
+          if (solved) {
+            // Decided from the sessions, not winners_count: the day-row lock
+            // serialises solvers, and the counter can drift (backfills, deletions).
+            await tx
+              .update(wordleSessions)
+              .set({
+                first_solver: sql`NOT EXISTS (
                 SELECT 1 FROM wordle_sessions other
                 WHERE other.guild_id = ${guildId} AND other.word_date = ${today}
                   AND other.first_solver AND other.id <> ${sessionId}
               )`,
-            })
-            .where(eq(wordleSessions.id, sessionId));
+              })
+              .where(eq(wordleSessions.id, sessionId));
+          }
         }
-      }
 
-      const result: GuessResult = {
-        guess: canonicalGuess,
-        feedback,
-        guesses: newGuesses,
-        solved,
-        attempts: newAttempts,
-        wordLength: daily.word_length,
-      };
+        const result: GuessResult = {
+          guess: canonicalGuess,
+          feedback,
+          guesses: newGuesses,
+          solved,
+          attempts: newAttempts,
+          wordLength: daily.word_length,
+        };
 
-      if (solved) {
-        result.streak = await this.updateStreak(userId, guildId, tx);
-      }
+        if (solved) {
+          result.streak = await this.updateStreak(userId, guildId, tx);
+        }
 
-      return result;
-    });
+        if (this.today() !== today) throw new WordleCutoffPassed();
+
+        return result;
+      });
+    } catch (error) {
+      if (error instanceof WordleCutoffPassed)
+        return { error: WORDLE_CUTOFF_ERROR };
+      throw error;
+    }
     if ('error' in outcome) return outcome;
 
     // Best-effort, after the guess commits: a failure here must not lose the
@@ -510,11 +590,7 @@ export class WordleService {
       const achievements = await db.transaction((tx) =>
         new WordleAchievementService().checkAndAward(userId, guildId, tx),
       );
-      outcome.unlockedAchievements = achievements.unlockedAchievements;
-      outcome.stats = achievements.stats;
-      outcome.achievementProgress = achievements.achievementProgress;
-      outcome.achievementVersion = achievements.achievementVersion;
-      outcome.achievements = achievements.achievements;
+      outcome.achievementUpdate = achievements;
     } catch (error) {
       logger.warn('wordle.achievements.award_failed', error);
     }
@@ -531,6 +607,7 @@ export class WordleService {
         id: wordleSessions.id,
         guesses: wordleSessions.guesses,
         solved: wordleSessions.solved,
+        solved_from_draft: wordleSessions.solved_from_draft,
         attempts: wordleSessions.attempts,
         created_at: wordleSessions.created_at,
       })
@@ -546,6 +623,7 @@ export class WordleService {
       word_date: today,
       guesses: JSON.parse(row.guesses),
       solved: row.solved,
+      solved_from_draft: row.solved_from_draft,
       attempts: row.attempts,
       created_at: row.created_at,
     };
@@ -691,6 +769,10 @@ export class WordleService {
           eq(wordleSessions.user_id, userId),
           eq(wordleSessions.guild_id, guildId),
           eq(wordleSessions.solved, true),
+          or(
+            gt(wordleSessions.attempts, 0),
+            eq(wordleSessions.solved_from_draft, true),
+          ),
         ),
       )
       .orderBy(desc(wordleSessions.word_date));
@@ -738,57 +820,35 @@ export class WordleService {
     guildId: string,
     exec: DbExecutor = db,
   ): Promise<number> {
-    const today = getRecifeDate();
+    return updateWordleStreak(userId, guildId, exec);
+  }
 
-    const row = await this.findStreak(userId, guildId, exec);
+  async getUserDraft(
+    userId: string,
+    guildId: string,
+  ): Promise<WordleDraft | null> {
+    const session = await this.getUserSession(userId, guildId);
+    return new WordleDraftService().getCurrentDraft(
+      userId,
+      guildId,
+      getRecifeDate(),
+      session?.attempts ?? 0,
+      session?.solved ?? false,
+    );
+  }
 
-    if (!row) {
-      const streak = await this.computeStreakFromHistory(
-        userId,
-        guildId,
-        today,
-        exec,
-      );
-      await exec.insert(wordleStreaks).values({
-        user_id: userId,
-        guild_id: guildId,
-        current_streak: streak,
-        max_streak: streak,
-        last_solved_date: today,
-      });
-      return streak;
-    }
+  async writeDraft(
+    userId: string,
+    guildId: string,
+    draft: WordleDraftWrite,
+  ): Promise<WordleDraftWriteResult> {
+    if (draft.date !== getRecifeDate()) return { status: 'closed' };
+    await this.getDailyWord(guildId, draft.date);
+    return new WordleDraftService().write(userId, guildId, draft);
+  }
 
-    if (row.last_solved_date === today) {
-      return row.current_streak;
-    }
-
-    const yesterday = this.getYesterday(today);
-    let newStreak: number;
-
-    if (row.last_solved_date === yesterday) {
-      newStreak = row.current_streak + 1;
-    } else {
-      newStreak = 1;
-    }
-
-    const newMax = Math.max(newStreak, row.max_streak);
-
-    await exec
-      .update(wordleStreaks)
-      .set({
-        current_streak: newStreak,
-        max_streak: newMax,
-        last_solved_date: today,
-      })
-      .where(
-        and(
-          eq(wordleStreaks.user_id, userId),
-          eq(wordleStreaks.guild_id, guildId),
-        ),
-      );
-
-    return newStreak;
+  async finalizeExpiredDrafts(): Promise<void> {
+    await new WordleDraftService().finalizeExpiredDrafts();
   }
 
   async getStreak(

@@ -45,15 +45,18 @@ export const achievements = pgTable(
     category: text('category').notNull(),
     rarity: text('rarity').notNull(),
     icon: text('icon').notNull(),
-    condition: text('condition').notNull(),
+    condition: text('condition'),
     reward_xp: integer('reward_xp').notNull().default(0),
-    wordle_version: integer('wordle_version'),
     archived_at: bigint('archived_at', { mode: 'number' }),
   },
   (t) => [
     check(
       'achievements_rarity_check',
       sql`${t.rarity} IN ('common','rare','epic','legendary')`,
+    ),
+    check(
+      'achievements_condition_required_check',
+      sql`${t.category} = 'wordle' OR ${t.condition} IS NOT NULL`,
     ),
   ],
 );

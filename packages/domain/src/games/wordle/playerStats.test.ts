@@ -18,13 +18,27 @@ describe('computeWordlePlayerStats', () => {
       winRate: 0,
       currentStreak: 0,
       bestStreak: 0,
-      distribution: [0, 0, 0, 0, 0, 0, 0],
+      distribution: [0, 0, 0, 0, 0, 0, 0, 0],
     });
   });
 
   it('ignores sessions without accepted guesses', () => {
     const empty = failedDay(TODAY, { attempts: 0, guesses: [] });
     expect(computeWordlePlayerStats([empty], { today: TODAY }).played).toBe(0);
+  });
+
+  it('counts a finalized zero-guess win as played without inventing a guess row', () => {
+    const zeroGuessWin = solvedDay(TODAY, {
+      attempts: 0,
+      guesses: [],
+      solvedFromDraft: true,
+    });
+    const stats = computeWordlePlayerStats([zeroGuessWin], { today: TODAY });
+
+    expect(stats.played).toBe(1);
+    expect(stats.wins).toBe(1);
+    expect(stats.distribution).toEqual([1, 0, 0, 0, 0, 0, 0, 0]);
+    expect(zeroGuessWin.guesses).toEqual([]);
   });
 
   it('counts played days, wins and a rounded win rate', () => {
@@ -39,7 +53,7 @@ describe('computeWordlePlayerStats', () => {
     expect(stats.winRate).toBe(67);
   });
 
-  it('buckets the guess distribution with seven or more attempts together', () => {
+  it('separates zero through six attempts and groups seven or more', () => {
     const days = [
       solvedDay('2026-10-01', { guesses: rows('ccccc') }),
       solvedDay('2026-10-02', { guesses: rows('aaaaa', 'ccccc') }),
@@ -47,10 +61,11 @@ describe('computeWordlePlayerStats', () => {
       solvedDay('2026-10-04', { attempts: 7 }),
       solvedDay('2026-10-05', { attempts: 25 }),
       failedDay('2026-10-06', { attempts: 3 }),
+      solvedDay('2026-10-07', { attempts: 3 }),
     ];
     expect(
       computeWordlePlayerStats(days, { today: TODAY }).distribution,
-    ).toEqual([1, 2, 0, 0, 0, 0, 2]);
+    ).toEqual([0, 1, 2, 1, 0, 0, 0, 2]);
   });
 
   it('keeps the current streak alive when the last solve was yesterday', () => {

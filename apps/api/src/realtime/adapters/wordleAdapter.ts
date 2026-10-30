@@ -1,4 +1,5 @@
 import {
+  clientMessageSchema,
   guessPayloadSchema,
   type WordleServerMessage,
 } from '@marquinhos/contracts/activity/games/wordle';
@@ -66,6 +67,32 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
             });
           },
         },
+        draft_update: {
+          rateLimit: { windowMs: 1000, max: 40 },
+          handle: async (auth, client, payload) => {
+            const parsed = clientMessageSchema.safeParse({
+              type: 'draft_update',
+              payload,
+            });
+            if (!parsed.success || parsed.data.type !== 'draft_update') {
+              sendMessage<WordleServerMessage>(client, {
+                type: 'draft_result',
+                payload: { status: 'closed' },
+              });
+              return;
+            }
+            const { requestId, ...draft } = parsed.data.payload;
+            const result = await service.writeDraft(
+              auth.userId,
+              auth.guildId,
+              draft,
+            );
+            sendMessage<WordleServerMessage>(client, {
+              type: 'draft_result',
+              payload: { ...result, requestId },
+            });
+          },
+        },
       },
     };
   },
@@ -81,7 +108,7 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
           userId: auth.userId,
           guildId: auth.guildId,
         });
-        return {};
+        return undefined;
       });
     // Non-player seats: maxPlayers: 64 makes them effectively unreachable via
     // normal simultaneous joins, but MatchRoom.switchGame() re-seats every
@@ -92,24 +119,29 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
     // has no player-registration concept to skip for a spectator, so
     // there's no harm in reading state for them — they get the same ack
     // shape a real player gets, with an empty session, instead of no ack.
-    const [daily, userSession, achievements] = await Promise.all([
+    const [daily, userSession, achievementOverview, draft] = await Promise.all([
       service.getDailyWord(auth.guildId),
       seat === 'player'
         ? service.getUserSession(auth.userId, auth.guildId)
         : null,
       overview,
+      seat === 'player'
+        ? service.getUserDraft(auth.userId, auth.guildId)
+        : null,
     ]);
     sendMessage<WordleServerMessage>(client, {
       type: 'init',
       payload: {
         wordLength: daily.word.length,
+        date: daily.word_date,
         guesses: userSession?.guesses ?? [],
         solved: userSession?.solved ?? false,
         attempts: userSession?.attempts ?? 0,
-        ...achievements,
+        draft,
+        ...(achievementOverview ? { achievementOverview } : {}),
       },
     });
   },
-  onLeave() {},
-  onDispose() {},
+  onLeave: () => undefined,
+  onDispose: () => undefined,
 };

@@ -20,7 +20,7 @@ export interface Achievement {
   category: string;
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
   icon: string;
-  condition: string;
+  condition: string | null;
   reward_xp: number;
 }
 

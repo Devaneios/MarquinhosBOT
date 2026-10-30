@@ -2596,5 +2596,105 @@
     "answer": "partes",
     "guesses": ["abarca", "bipene", "bebaça", "aperta", "bibaga", "partes"],
     "origin": [0, 0]
+  },
+  {
+    "patternId": "triangle_5",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["abrace", "cartar", "partem", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "triangle_5",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["bdélio", "besana", "aperta", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "triangle_6",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["certar", "cartel", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "triangle_6",
+    "color": "present",
+    "answer": "castro",
+    "guesses": ["becape", "borcar", "torças", "castro"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "staircase_right",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["abrace", "barabu", "parada", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "staircase_right",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["bdelar", "beagle", "aetita", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "staircase_inverted",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "paanga", "pcomos", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "staircase_inverted",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "apache", "ababuí", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "staircase_inverted",
+    "variant": 1,
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["parada", "barabu", "abrace", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "staircase_inverted",
+    "variant": 1,
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["aetita", "beagle", "bdelar", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "hang_loose",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["peagem", "pechém", "peguei", "partem", "cartar", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "hang_loose",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abacto", "abanto", "abaíra", "aperta", "besana", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "middle_finger",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["abrace", "abrais", "abrasa", "partem", "cartar", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "middle_finger",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abebra", "abecar", "bdélio", "aperta", "besana", "partes"],
+    "origin": [0, 0]
   }
 ]

@@ -39,7 +39,6 @@ export function WordleBoard({
     'playing' | 'settings' | 'achievements'
   >('playing');
   const {
-    achievementVersion,
     achievements,
     activeIndex,
     backspace,
@@ -55,6 +54,7 @@ export function WordleBoard({
     letterStates,
     moveFocus,
     onKeyDownCell,
+    onPasteCell,
     pressedKeys,
     registerGrid,
     registerInput,
@@ -139,7 +139,6 @@ export function WordleBoard({
   if (screen === 'achievements') {
     return (
       <WordleAchievementsScreen
-        key={achievementVersion}
         achievements={achievements}
         stats={stats}
         onBack={() => transitionTo('nav-back', () => setSubScreen('playing'))}
@@ -343,6 +342,7 @@ export function WordleBoard({
                     registerInput={registerInput}
                     onFocusCell={setActiveIndex}
                     onKeyDownCell={onKeyDownCell}
+                    onPasteCell={onPasteCell}
                   />
                 )}
               </div>

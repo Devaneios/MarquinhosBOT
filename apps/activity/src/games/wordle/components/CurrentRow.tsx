@@ -12,6 +12,7 @@ export function CurrentRow({
   registerInput,
   onFocusCell,
   onKeyDownCell,
+  onPasteCell,
 }: CurrentRowProps) {
   const { t } = useTranslation('wordle');
   return (
@@ -29,6 +30,7 @@ export function CurrentRow({
           disabled={disabled}
           onFocus={() => onFocusCell(index)}
           onKeyDown={(event) => onKeyDownCell(index, event)}
+          onPaste={(event) => onPasteCell(index, event)}
           onClick={() => onFocusCell(index)}
           inputMode="text"
           autoComplete="off"

@@ -1,49 +1,94 @@
-import type { achievementRaritySchema } from '@marquinhos/contracts/http/routes/gamification';
-import type { WordlePatternPreview } from '@marquinhos/contracts/wordle';
-import type { z } from 'zod';
-import type { WORDLE_ACHIEVEMENT_VERSION } from './catalog';
-import type { WordleAchievementRule } from './engine/rules';
+import type {
+  LetterFeedback,
+  WordlePatternPreview,
+} from '@marquinhos/contracts/wordle';
+import type { WordlePlayerStats } from '../playerStats';
+import type { AchievementHistoryDay } from './engine/history';
 import type { WordleAchievementFamily, WordlePatternFamily } from './families';
 
-export type AchievementRarity = z.infer<typeof achievementRaritySchema>;
+export type AchievementRarity = 'common' | 'rare' | 'epic' | 'legendary';
 
-export interface AchievementSpec {
-  id: `wordle_v${typeof WORDLE_ACHIEVEMENT_VERSION}_${string}`;
-  family: WordleAchievementFamily;
-  name: string;
-  description: string;
-  rarity: AchievementRarity;
-  rule: WordleAchievementRule;
-  icon?: string;
-  rewardXp?: number;
-  hidden?: boolean;
+export interface WordleAchievementResult {
+  readonly met: boolean;
+  readonly progress: {
+    readonly current: number;
+    readonly target: number;
+  } | null;
 }
 
-export interface WordleAchievementDefinition extends Omit<
-  AchievementSpec,
-  'id'
-> {
-  id: string;
-  tier: number;
-  icon: string;
-  rewardXp: number;
-  hidden: boolean;
-  patternPreview?: WordlePatternPreview;
+export type ReadonlyAchievementDay = Omit<
+  Readonly<AchievementHistoryDay>,
+  'guesses'
+> & {
+  readonly guesses: readonly {
+    readonly guess: string;
+    readonly feedback: readonly LetterFeedback[];
+  }[];
+};
+
+export type ReadonlyWordleStats = Omit<
+  Readonly<WordlePlayerStats>,
+  'distribution'
+> & {
+  readonly distribution: readonly number[];
+};
+
+export interface ValidatedBoard {
+  readonly day: ReadonlyAchievementDay;
+  readonly feedback: readonly (readonly LetterFeedback[])[];
 }
 
-export interface PatternSpec {
-  id: string;
-  family: WordlePatternFamily;
-  name: string;
-  mask: string;
-  /** Wider alternative drawings of the same pattern; the base mask is the minimum width. */
-  variants?: readonly string[];
-  colors?: WordlePatternPreview['colors'];
-  rotations?: WordlePatternPreview['rotations'];
+export interface WordleAchievementFacts {
+  readonly today: string;
+  readonly stats: ReadonlyWordleStats;
+  readonly played: readonly ReadonlyAchievementDay[];
+  readonly participated: readonly ReadonlyAchievementDay[];
+  readonly solved: readonly ReadonlyAchievementDay[];
+  readonly boards: readonly ValidatedBoard[];
+  readonly solvedBoards: readonly ValidatedBoard[];
+  readonly solvedHours: readonly number[];
+  readonly discoveredPatternIds: ReadonlySet<string>;
+  readonly discoveredPatternCounts: Readonly<
+    Record<WordlePatternFamily, number>
+  >;
 }
 
-export interface WordlePatternDefinition extends WordlePatternPreview {
-  id: string;
-  family: WordlePatternFamily;
-  name: string;
+export interface WordleAchievementMetadata {
+  readonly id: `wordle_v2_${string}`;
+  readonly family: WordleAchievementFamily;
+  readonly tier: number;
+  readonly name: string;
+  readonly description: string;
+  readonly rarity: AchievementRarity;
+  readonly icon: string;
+  readonly rewardXp: number;
+  readonly hidden: boolean;
 }
+
+export interface DrawingDefinition {
+  readonly patternId: string;
+  readonly family: WordlePatternFamily;
+  readonly mask: readonly string[];
+  readonly variants: readonly (readonly string[])[];
+  readonly colors: readonly WordlePatternPreview['colors'][number][];
+  readonly rotations: readonly WordlePatternPreview['rotations'][number][];
+}
+
+export type WordleAchievementDefinition = WordleAchievementMetadata &
+  (
+    | {
+        readonly kind: 'standard';
+        readonly drawing?: never;
+        readonly evaluate: (
+          facts: WordleAchievementFacts,
+        ) => WordleAchievementResult;
+      }
+    | {
+        readonly kind: 'drawing';
+        readonly drawing: DrawingDefinition;
+        readonly evaluate: (
+          facts: WordleAchievementFacts,
+          drawing: DrawingDefinition,
+        ) => WordleAchievementResult;
+      }
+  );

@@ -19,6 +19,7 @@ const previousErrorInteractions = new Map<
   string,
   ChatInputCommandInteraction
 >();
+const latestAutocompleteDraft = new Map<string, symbol>();
 
 export class TermoCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
@@ -190,15 +191,47 @@ export class TermoCommand extends MarquinhosCommand {
     if (!isDevelopmentChannelAllowed(interaction))
       return interaction.respond([]);
     const guess = interaction.options.getFocused().trim();
-    if (!guess || !interaction.guildId) {
+    if (!interaction.guildId) {
       await interaction.respond([]);
       return;
     }
-    if (guess.length < 5 || guess.length > 6) {
-      await interaction.respond([]);
-      return;
-    }
+    const guildId = interaction.guildId;
+    const userId = interaction.user.id;
+    const requestKey = JSON.stringify([userId, guildId]);
+    const requestToken = Symbol();
+    latestAutocompleteDraft.set(requestKey, requestToken);
+    const isLatestRequest = () =>
+      latestAutocompleteDraft.get(requestKey) === requestToken;
     try {
+      const [daily, session] = await Promise.all([
+        api.getWordleStats(guildId),
+        api.getUserWordleSession(userId, guildId),
+      ]);
+      const wordLength = daily.data.wordLength;
+      const letters = [...guess.toLocaleLowerCase('pt-BR')];
+      const oversized = letters.length > wordLength;
+      const cells = Array.from(
+        { length: wordLength },
+        (_, index) => letters[index] ?? '',
+      );
+      if (oversized) cells[wordLength - 1] = '';
+      if (isLatestRequest())
+        await api.writeWordleDraft(
+          userId,
+          guildId,
+          {
+            date: daily.data.wordDate,
+            rowIndex: session.data?.attempts ?? 0,
+            cells,
+            activeIndex: Math.min(letters.length, wordLength - 1),
+          },
+          isLatestRequest,
+        );
+
+      if (guess.length < 5 || guess.length > 6) {
+        await interaction.respond([]);
+        return;
+      }
       const response = await api.validateWordleGuess(
         interaction.guildId,
         guess,
@@ -211,6 +244,9 @@ export class TermoCommand extends MarquinhosCommand {
       await interaction.respond([{ name: guess, value: guess }]);
     } catch {
       await interaction.respond([]);
+    } finally {
+      if (latestAutocompleteDraft.get(requestKey) === requestToken)
+        latestAutocompleteDraft.delete(requestKey);
     }
   }
 }

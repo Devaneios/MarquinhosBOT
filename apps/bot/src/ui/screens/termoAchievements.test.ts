@@ -22,7 +22,7 @@ const veteran: TermoAchievementsCardInput = {
     winRate: 93,
     currentStreak: 12,
     bestStreak: 31,
-    distribution: [1, 9, 27, 24, 12, 5, 3],
+    distribution: [1, 9, 27, 24, 12, 5, 3, 0],
   },
   families: [
     { label: 'Vitórias', unlocked: 4, total: 6 },
@@ -47,7 +47,7 @@ const newcomer: TermoAchievementsCardInput = {
     winRate: 0,
     currentStreak: 0,
     bestStreak: 0,
-    distribution: [0, 0, 0, 0, 0, 0, 0],
+    distribution: [0, 0, 0, 0, 0, 0, 0, 0],
   },
   families: veteran.families.map((f) => ({ ...f, unlocked: 0 })),
 };
@@ -123,6 +123,36 @@ async function pixelCount(buffer: Buffer, rgb: [number, number, number]) {
 }
 
 describe('buildTermoAchievementDetailImage', () => {
+  it('renders the current capped progress for DEVANEIOS', async () => {
+    const devaneios: WordleAchievementStatus = {
+      id: 'wordle_v2_devaneios_rows',
+      name: 'DEVANEIOS',
+      description: 'Forme DEVANEIOS na mesma linha ao longo de vários dias.',
+      icon: '🔤',
+      rarity: 'legendary',
+      rewardXp: 300,
+      family: 'vocabulary',
+      tier: 3,
+      hidden: false,
+      unlockedAt: null,
+      progress: { current: 4, target: 9 },
+      holdersPercent: null,
+    };
+    const withProgress = await buildTermoAchievementDetailImage({
+      displayName: 'Ana',
+      achievement: devaneios,
+    });
+    const withoutProgress = await buildTermoAchievementDetailImage({
+      displayName: 'Ana',
+      achievement: { ...devaneios, progress: null },
+    });
+
+    expect(withProgress.equals(withoutProgress)).toBe(false);
+    expect((await sharp(withProgress).metadata()).height).toBeGreaterThan(
+      (await sharp(withoutProgress).metadata()).height,
+    );
+  });
+
   it('renders green and yellow previews with wildcard dots', async () => {
     const buffer = await buildTermoAchievementDetailImage({
       displayName: 'Ana',
@@ -133,6 +163,63 @@ describe('buildTermoAchievementDetailImage', () => {
     expect((await sharp(buffer).metadata()).width).toBe(480);
     expect(await pixelCount(buffer, [88, 129, 87])).toBeGreaterThan(2000);
     expect(await pixelCount(buffer, [192, 160, 84])).toBeGreaterThan(2000);
+  });
+
+  it('renders six-column drawing previews and saved feedback', async () => {
+    const sixColumn: WordleAchievementStatus = {
+      ...drawing,
+      id: 'wordle_v2_pattern_triangle_6',
+      name: 'Triângulo de base 6',
+      patternPreview: {
+        patternId: 'triangle_6',
+        mask: ['..##..', '.####.', '######'],
+        colors: ['correct', 'present'],
+        rotations: [0],
+      },
+    };
+    const preview = await buildTermoAchievementDetailImage({
+      displayName: 'Ana',
+      achievement: sixColumn,
+    });
+    expect((await sharp(preview).metadata()).width).toBe(480);
+    expect(await pixelCount(preview, [88, 129, 87])).toBeGreaterThan(2000);
+    expect(await pixelCount(preview, [192, 160, 84])).toBeGreaterThan(2000);
+
+    const evidence = await buildTermoAchievementDetailImage({
+      displayName: 'Ana',
+      achievement: {
+        ...sixColumn,
+        unlockedAt: '2026-10-28T12:00:00.000Z',
+        matchEvidence: {
+          patternId: 'triangle_6',
+          color: 'correct',
+          origin: [0, 0],
+          rotation: 0,
+          cells: [
+            [0, 2],
+            [0, 3],
+            [1, 1],
+            [1, 2],
+            [1, 3],
+            [1, 4],
+            [2, 0],
+            [2, 1],
+            [2, 2],
+            [2, 3],
+            [2, 4],
+            [2, 5],
+          ],
+          feedback: [
+            ['absent', 'absent', 'correct', 'correct', 'absent', 'absent'],
+            ['absent', 'correct', 'correct', 'correct', 'correct', 'absent'],
+            Array.from({ length: 6 }, () => 'correct' as const),
+          ],
+          date: '2026-10-28',
+        },
+      },
+    });
+    expect((await sharp(evidence).metadata()).width).toBe(480);
+    expect(await pixelCount(evidence, [88, 129, 87])).toBeGreaterThan(1500);
   });
 
   it('preserves saved feedback and outlines only the matching yellow cells', async () => {

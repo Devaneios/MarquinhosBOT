@@ -1,0 +1,2 @@
+ALTER TABLE "achievements" ALTER COLUMN "condition" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "achievements" ADD CONSTRAINT "achievements_condition_required_check" CHECK ("achievements"."category" = 'wordle' OR "achievements"."condition" IS NOT NULL);

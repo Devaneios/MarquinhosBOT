@@ -1,18 +1,23 @@
+import { wordlePatternEvidenceSchema } from '@marquinhos/contracts/wordle';
 import { db } from '@marquinhos/database/client';
 import {
   userAchievements,
+  userLevels,
   wordleDays,
   wordlePatternDiscoveries,
   wordleSessions,
 } from '@marquinhos/database/schema';
-import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
+import {
+  WORDLE_ACHIEVEMENT_CATALOG,
+  WORDLE_DRAWING_CATALOG,
+} from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { matchWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/engine/matchPatterns';
-import { WORDLE_PATTERN_CATALOG } from '@marquinhos/domain/games/wordle/achievements/patterns';
-import { afterAll, beforeAll, describe, expect, it, spyOn } from 'bun:test';
+import { computeFeedback } from '@marquinhos/domain/games/wordle/feedback';
+import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
 import {
-  achievementId,
   achievementXp,
   earnedAchievements,
   identity,
@@ -42,6 +47,19 @@ function guesses(mask: string[], color: 'correct' | 'present' = 'correct') {
   );
 }
 
+function guessesFor(answer: string, words: readonly string[]) {
+  const normalizedAnswer = stripDiacritics(answer);
+  return JSON.stringify(
+    words.map((word) => {
+      const guess = stripDiacritics(word);
+      return {
+        guess,
+        feedback: computeFeedback(guess, normalizedAnswer),
+      };
+    }),
+  );
+}
+
 function discoveryRows(userId: string, guildId: string) {
   return db
     .select()
@@ -55,7 +73,147 @@ function discoveryRows(userId: string, guildId: string) {
 }
 
 describe('Wordle discovery reconciliation', () => {
-  it('loads history once for rewards and returns read-only progress with lifetime statistics', async () => {
+  it('forms DEVANEIOS from accepted same-row feedback, isolates histories, and awards it once', async () => {
+    const { userId, guildId } = identity();
+    const sequence = [
+      { date: '2026-10-25', word: 'desejo' },
+      { date: '2026-10-26', word: 'chuva' },
+      { date: '2026-10-27', word: 'nenhuma' },
+      { date: '2026-10-28', word: 'vitorioso' },
+    ];
+
+    for (const { date, word } of sequence) {
+      await seedAchievementDay(userId, guildId, {
+        date,
+        attempts: 1,
+        solved: true,
+        width: word.length,
+        word,
+        guesses: guessesFor(word, [word]),
+      });
+    }
+
+    const overview = await service.getOverview(userId, guildId);
+    expect(
+      overview.achievements.find(
+        (achievement) => achievement.id === 'wordle_v2_devaneios_rows',
+      ),
+    ).toMatchObject({ unlockedAt: null, progress: { current: 9, target: 9 } });
+
+    const firstAward = await award(userId, guildId);
+    expect(firstAward.unlockedIds).toContain('wordle_v2_devaneios_rows');
+    const xpAfterFirstAward = await achievementXp(userId, guildId);
+    const retry = await award(userId, guildId);
+    expect(retry.unlockedIds).not.toContain('wordle_v2_devaneios_rows');
+    expect(await achievementXp(userId, guildId)).toBe(xpAfterFirstAward);
+    expect(
+      (await earnedAchievements(userId, guildId)).filter(
+        (achievement) =>
+          achievement.achievement_id === 'wordle_v2_devaneios_rows',
+      ),
+    ).toHaveLength(1);
+
+    const otherPlayer = identity();
+    await seedAchievementDay(otherPlayer.userId, guildId, {
+      date: '2026-10-26',
+      attempts: 1,
+      solved: true,
+      width: 'chuva'.length,
+      word: 'chuva',
+      guesses: guessesFor('chuva', ['chuva']),
+    });
+    const otherPlayerOverview = await service.getOverview(
+      otherPlayer.userId,
+      guildId,
+    );
+    expect(
+      otherPlayerOverview.achievements.find(
+        (achievement) => achievement.id === 'wordle_v2_devaneios_rows',
+      )?.progress,
+    ).toEqual({ current: 0, target: 9 });
+
+    const otherGuildOverview = await service.getOverview(
+      userId,
+      identity().guildId,
+    );
+    expect(
+      otherGuildOverview.achievements.find(
+        (achievement) => achievement.id === 'wordle_v2_devaneios_rows',
+      )?.progress,
+    ).toEqual({ current: 0, target: 9 });
+
+    const draftPlayer = identity();
+    await seedAchievementDay(draftPlayer.userId, guildId, {
+      date: '2026-10-25',
+      attempts: 1,
+      solved: true,
+      width: 'desejo'.length,
+      word: 'desejo',
+      guesses: guessesFor('desejo', ['desejo']),
+    });
+    await seedAchievementDay(draftPlayer.userId, guildId, {
+      date: '2026-10-26',
+      attempts: 0,
+      solved: true,
+      solvedFromDraft: true,
+      width: 'chuva'.length,
+      word: 'chuva',
+      guesses: '[]',
+    });
+    const draftOverview = await service.getOverview(
+      draftPlayer.userId,
+      guildId,
+    );
+    expect(
+      draftOverview.achievements.find(
+        (achievement) => achievement.id === 'wordle_v2_devaneios_rows',
+      )?.progress,
+    ).toEqual({ current: 2, target: 9 });
+  });
+
+  it('awards each newly confirmed gameplay goal from production feedback', async () => {
+    const cases = [
+      {
+        answer: 'partes',
+        guesses: ['bibico', 'bichon', 'partes'],
+        id: 'wordle_v2_blank_twice_then_solved',
+      },
+      {
+        answer: 'partes',
+        guesses: ['cartes', 'fartes', 'partes'],
+        id: 'wordle_v2_near_miss_twice',
+      },
+      {
+        answer: 'castro',
+        guesses: ['torças', 'traços', 'castro'],
+        id: 'wordle_v2_yellow_only_before_solve',
+      },
+      {
+        answer: 'castro',
+        guesses: ['torças', 'castor', 'castro'],
+        id: 'wordle_v2_anagrams_only_before_solve',
+      },
+      {
+        answer: 'partes',
+        guesses: ['bibico', 'cartes', 'partes'],
+        id: 'wordle_v2_solved_exactly_3',
+      },
+    ];
+
+    for (const example of cases) {
+      const { userId, guildId } = identity();
+      await seedAchievementDay(userId, guildId, {
+        attempts: example.guesses.length,
+        solved: true,
+        width: example.answer.length,
+        word: example.answer,
+        guesses: guessesFor(example.answer, example.guesses),
+      });
+      expect((await award(userId, guildId)).unlockedIds).toContain(example.id);
+    }
+  });
+
+  it('returns read-only progress with lifetime statistics before reconciling rewards', async () => {
     const { userId, guildId } = identity();
     await seedAchievementDay(userId, guildId, { attempts: 2 });
     await seedAchievementDay(userId, guildId, {
@@ -69,35 +227,26 @@ describe('Wordle discovery reconciliation', () => {
       winRate: 50,
       bestStreak: 1,
     });
-    expect(overview.stats.distribution).toEqual([0, 1, 0, 0, 0, 0, 0]);
-    const wins10 = achievementId(
-      (rule) => rule.kind === 'wins' && rule.count === 10,
-    );
+    expect(overview.stats.distribution).toEqual([0, 0, 1, 0, 0, 0, 0, 0]);
+    const wins10 = 'wordle_v2_wins_10';
     expect(
       overview.achievements.find((row) => row.id === wins10)?.progress,
     ).toEqual({ current: 1, target: 10 });
     expect(await earnedAchievements(userId, guildId)).toEqual([]);
     expect(await discoveryRows(userId, guildId)).toEqual([]);
-    const reads = spyOn(service, 'loadHistory');
-    try {
-      const result = await award(userId, guildId);
-      expect(reads).toHaveBeenCalledTimes(1);
-      expect(result.stats).toEqual(overview.stats);
-    } finally {
-      reads.mockRestore();
-    }
+    const result = await award(userId, guildId);
+    expect(result.overview.stats).toEqual(overview.stats);
   });
 
   it('keeps locked secret metadata concealed and reveals only earned conditions', async () => {
     const { userId, guildId } = identity();
     const secret = WORDLE_ACHIEVEMENT_CATALOG.find(
-      (row) =>
-        row.hidden && row.rule.kind === 'fast_solve' && row.rule.seconds === 30,
+      (row) => row.id === 'wordle_v2_secret_d6a09c31',
     );
     if (!secret) throw new Error('Secret definition missing');
-    const status = (await service.getAchievements(userId, guildId)).find(
-      (row) => row.id === secret.id,
-    );
+    const status = (
+      await service.getOverview(userId, guildId)
+    ).achievements.find((row) => row.id === secret.id);
     expect(status).toMatchObject({
       name: '',
       description: '',
@@ -111,53 +260,75 @@ describe('Wordle discovery reconciliation', () => {
       solvedAt: 120,
     });
     await award(userId, guildId);
-    const revealed = (await service.getAchievements(userId, guildId)).find(
-      (row) => row.id === secret.id,
-    );
+    const revealed = (
+      await service.getOverview(userId, guildId)
+    ).achievements.find((row) => row.id === secret.id);
     expect(revealed?.name).toBe(secret.name);
     expect(revealed?.unlockedAt).not.toBeNull();
   });
 
-  it('uses only active-version participants for holder percentages', async () => {
+  it('includes all players with accepted guesses in holder percentages', async () => {
     const { userId, guildId } = identity();
     await seedAchievementDay(userId, guildId);
     await seedAchievementDay('other-player', guildId, { solved: false });
-    await seedAchievementDay('old-player', guildId, { version: 1 });
+    await seedAchievementDay('old-player', guildId);
     await seedAchievementDay('empty-player', guildId, {
       attempts: 0,
       solved: false,
     });
     await award(userId, guildId);
-    const id = achievementId(
-      (rule) => rule.kind === 'wins' && rule.count === 1,
-    );
+    const id = 'wordle_v2_wins_1';
     expect(
-      (await service.getAchievements(userId, guildId)).find(
+      (await service.getOverview(userId, guildId)).achievements.find(
         (row) => row.id === id,
       )?.holdersPercent,
-    ).toBe(50);
+    ).toBe(33.33);
     expect(
-      (await service.getAchievements(userId, 'empty-guild')).every(
+      (await service.getOverview(userId, 'empty-guild')).achievements.every(
         (row) => row.holdersPercent === null,
       ),
     ).toBe(true);
   });
 
-  it('persists first yellow evidence once across colors, later dates and backfill retries', async () => {
+  it('counts historical and current sessions in stats and holder population', async () => {
+    const { userId, guildId } = identity();
+    const historicOnly = identity();
+    await seedAchievementDay(userId, guildId, {
+      date: '2025-12-31',
+      attempts: 1,
+    });
+    await seedAchievementDay(userId, guildId, {
+      date: '2026-01-01',
+      attempts: 1,
+    });
+    await seedAchievementDay(historicOnly.userId, guildId, {
+      date: '2025-12-30',
+      attempts: 1,
+    });
+
+    const result = await award(userId, guildId);
+    const overview = await service.getOverview(userId, guildId);
+    const firstWin = 'wordle_v2_wins_1';
+    expect(result.overview.stats).toMatchObject({ played: 2, wins: 2 });
+    expect(
+      overview.achievements.find((row) => row.id === firstWin)?.holdersPercent,
+    ).toBe(50);
+  });
+
+  it('persists first legal evidence once across colors, later dates and backfill retries', async () => {
     const { userId, guildId } = identity();
     await seedAchievementDay(userId, guildId, {
-      attempts: 1,
-      solved: false,
-      guesses: guesses(['####.'], 'present'),
+      attempts: 2,
+      width: 6,
+      word: 'partes',
+      guesses: guessesFor('partes', ['partam', 'partes']),
     });
     const first = await award(userId, guildId);
-    const id = achievementId(
-      (rule) => rule.kind === 'pattern' && rule.patternId === 'tetromino_i',
-    );
-    const badge = first.unlockedAchievements.find((row) => row.id === id);
+    const id = 'wordle_v2_pattern_tetromino_i';
+    const badge = first.overview.achievements.find((row) => row.id === id);
     expect(badge?.patternPreview?.patternId).toBe('tetromino_i');
     expect(badge?.matchEvidence).toMatchObject({
-      color: 'present',
+      color: 'correct',
       date: '2026-01-01',
     });
     const before = await discoveryRows(userId, guildId);
@@ -166,7 +337,9 @@ describe('Wordle discovery reconciliation', () => {
       date: '2026-01-02',
       attempts: 1,
       solved: false,
-      guesses: guesses(['#####']),
+      width: 6,
+      word: 'partes',
+      guesses: guessesFor('partes', ['partam']),
     });
     await service.backfill({ guildId, batchSize: 1 });
     expect(await discoveryRows(userId, guildId)).toEqual(before);
@@ -174,7 +347,7 @@ describe('Wordle discovery reconciliation', () => {
     expect(after).toEqual({ playersProcessed: 1, achievementsAwarded: 0 });
     expect(await achievementXp(userId, guildId)).toBe(xp);
     expect(
-      (await service.getAchievements(userId, guildId)).find(
+      (await service.getOverview(userId, guildId)).achievements.find(
         (row) => row.id === id,
       )?.matchEvidence,
     ).toEqual(badge?.matchEvidence);
@@ -201,13 +374,13 @@ describe('Wordle discovery reconciliation', () => {
       guesses: malformed,
     });
     const result = await award(userId, guildId);
-    expect(result.unlockedAchievements.map((row) => row.id)).toContain(
-      achievementId((rule) => rule.kind === 'wins' && rule.count === 1),
-    );
+    expect(result.unlockedIds).toContain('wordle_v2_wins_1');
     expect(await discoveryRows(userId, guildId)).toEqual([]);
     expect(
-      (await service.loadHistory(userId, guildId)).days[0]?.guesses,
-    ).toEqual([]);
+      result.overview.achievements.find((row) =>
+        row.id.startsWith('wordle_v2_pattern_'),
+      )?.matchEvidence,
+    ).toBeNull();
   });
 
   it('does not persist a drawing when a solved board lacks its winning row', async () => {
@@ -220,37 +393,82 @@ describe('Wordle discovery reconciliation', () => {
 
     const result = await award(userId, guildId);
 
-    expect(result.unlockedAchievements.map((row) => row.id)).toContain(
-      achievementId((rule) => rule.kind === 'wins' && rule.count === 1),
-    );
+    expect(result.unlockedIds).toContain('wordle_v2_wins_1');
     expect(await discoveryRows(userId, guildId)).toEqual([]);
   });
 
   it('retains evidence snapshots when saved gameplay is later changed', async () => {
     const { userId, guildId } = identity();
     await seedAchievementDay(userId, guildId, {
-      attempts: 1,
-      guesses: guesses(['#####']),
+      attempts: 2,
+      width: 6,
+      word: 'partes',
+      guesses: guessesFor('partes', ['partam', 'partes']),
     });
     await award(userId, guildId);
     const before = await discoveryRows(userId, guildId);
+    const evidence = before.find((row) => row.pattern_id === 'tetromino_i');
+    expect(evidence).toBeDefined();
+    expect(
+      wordlePatternEvidenceSchema.parse(evidence?.evidence).feedback,
+    ).not.toHaveLength(0);
     await db
       .update(wordleSessions)
       .set({ guesses: '[]', attempts: 10 })
       .where(eq(wordleSessions.user_id, userId));
     await award(userId, guildId);
+    await service.backfill({ guildId, batchSize: 1 });
     expect(await discoveryRows(userId, guildId)).toEqual(before);
   });
 
   it('rolls back discoveries together with unlocks and XP', async () => {
     const { userId, guildId } = identity();
     await seedAchievementDay(userId, guildId, {
-      attempts: 1,
-      guesses: guesses(['#####']),
+      attempts: 2,
+      width: 6,
+      word: 'partes',
+      guesses: guessesFor('partes', ['partam', 'partes']),
     });
     await expect(
       db.transaction(async (tx) => {
         await service.checkAndAward(userId, guildId, tx);
+        const discoveries = await tx
+          .select()
+          .from(wordlePatternDiscoveries)
+          .where(
+            and(
+              eq(wordlePatternDiscoveries.user_id, userId),
+              eq(wordlePatternDiscoveries.guild_id, guildId),
+            ),
+          );
+        const drawingId = 'wordle_v2_pattern_tetromino_i';
+        expect(
+          discoveries.some((row) => row.pattern_id === 'tetromino_i'),
+        ).toBe(true);
+
+        const unlocks = await tx
+          .select()
+          .from(userAchievements)
+          .where(
+            and(
+              eq(userAchievements.user_id, userId),
+              eq(userAchievements.guild_id, guildId),
+            ),
+          );
+        expect(unlocks.some((row) => row.achievement_id === drawingId)).toBe(
+          true,
+        );
+
+        const [level] = await tx
+          .select()
+          .from(userLevels)
+          .where(
+            and(
+              eq(userLevels.user_id, userId),
+              eq(userLevels.guild_id, guildId),
+            ),
+          );
+        expect(level?.total_xp ?? 0).toBeGreaterThan(0);
         throw new Error('rollback discoveries');
       }),
     ).rejects.toThrow('rollback discoveries');
@@ -262,8 +480,8 @@ describe('Wordle discovery reconciliation', () => {
   it('combines concurrent final tetromino discoveries before evaluating the collection', async () => {
     const { userId, guildId } = identity();
     const remaining = new Set(['tetromino_s', 'tetromino_z']);
-    for (const pattern of WORDLE_PATTERN_CATALOG.filter(
-      (row) => row.family === 'tetromino' && !remaining.has(row.id),
+    for (const pattern of WORDLE_DRAWING_CATALOG.filter(
+      (row) => row.family === 'tetromino' && !remaining.has(row.patternId),
     )) {
       const feedback = pattern.mask.map((row) =>
         [...row.padEnd(5, '.')].map((cell) =>
@@ -274,8 +492,7 @@ describe('Wordle discovery reconciliation', () => {
       await db.insert(wordlePatternDiscoveries).values({
         user_id: userId,
         guild_id: guildId,
-        version: 2,
-        pattern_id: pattern.id,
+        pattern_id: pattern.patternId,
         session_id: 'earlier-session',
         discovered_at: 1,
         evidence: { ...match, feedback, date: '2025-12-01' },
@@ -288,7 +505,6 @@ describe('Wordle discovery reconciliation', () => {
     const firstReady = new Promise<void>((resolve) => {
       firstDone = resolve;
     });
-    const reads = spyOn(service, 'loadHistory');
     for (const date of ['2026-01-01', '2026-01-02']) {
       await db.insert(wordleDays).values({
         guild_id: guildId,
@@ -308,7 +524,6 @@ describe('Wordle discovery reconciliation', () => {
         attempts: 2,
         solved: false,
         guesses: guesses(['.##', '##.']),
-        achievement_version: 2,
         created_at: 1,
       });
       const result = await service.checkAndAward(userId, guildId, tx);
@@ -326,29 +541,16 @@ describe('Wordle discovery reconciliation', () => {
         attempts: 2,
         solved: false,
         guesses: guesses(['##.', '.##']),
-        achievement_version: 2,
         created_at: 1,
       });
       return service.checkAndAward(userId, guildId, tx);
     });
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 30));
-      expect(reads).toHaveBeenCalledTimes(1);
-    } finally {
-      release();
-      reads.mockRestore();
-    }
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    release();
     const results = await Promise.all([first, second]);
-    const collectionId = achievementId(
-      (rule) =>
-        rule.kind === 'pattern_collection' && rule.family === 'tetromino',
-    );
-    expect(results[0].unlockedAchievements.map((row) => row.id)).not.toContain(
-      collectionId,
-    );
-    expect(results[1].unlockedAchievements.map((row) => row.id)).toContain(
-      collectionId,
-    );
+    const collectionId = 'wordle_v2_tetrominoes_all';
+    expect(results[0].unlockedIds).not.toContain(collectionId);
+    expect(results[1].unlockedIds).toContain(collectionId);
     const collection = await db
       .select()
       .from(userAchievements)
@@ -365,10 +567,10 @@ describe('Wordle discovery reconciliation', () => {
         row.pattern_id.startsWith('tetromino_'),
       ),
     ).toHaveLength(7);
-    expect((await award(userId, guildId)).unlockedAchievements).toEqual([]);
+    expect((await award(userId, guildId)).unlockedIds).toEqual([]);
   });
 
-  it('never invents missing solve timing and resolves guild first-solver ties across versions', async () => {
+  it('never invents missing solve timing and resolves guild first-solver ties', async () => {
     const { userId, guildId } = identity();
     await seedAchievementDay(userId, guildId, {
       id: `${guildId}-b`,
@@ -377,21 +579,21 @@ describe('Wordle discovery reconciliation', () => {
     await seedAchievementDay('first-player', guildId, {
       id: `${guildId}-a`,
       solvedAt: 150,
-      version: 1,
     });
     await seedAchievementDay(userId, guildId, { date: '2026-01-02' });
-    const history = await service.loadHistory(userId, guildId);
-    expect(history.days[0]).toMatchObject({
-      firstSolverInGuild: false,
-      solvedAt: 150,
-    });
-    expect(history.days[1]).toMatchObject({
-      firstSolverInGuild: false,
-      solvedAt: null,
-    });
+    const overview = await service.getOverview(userId, guildId);
+    const firstSolver = overview.achievements.find(
+      (row) => row.id === 'wordle_v2_first_solver_1',
+    );
+    expect(firstSolver?.progress?.current).toBe(0);
+    const firstPlayerOverview = await service.getOverview(
+      'first-player',
+      guildId,
+    );
     expect(
-      (await service.loadHistory('first-player', guildId)).days[0]
-        ?.firstSolverInGuild,
-    ).toBe(true);
+      firstPlayerOverview.achievements.find(
+        (row) => row.id === 'wordle_v2_first_solver_1',
+      )?.progress?.current,
+    ).toBe(1);
   });
 });

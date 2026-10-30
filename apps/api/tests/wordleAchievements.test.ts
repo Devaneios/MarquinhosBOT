@@ -14,7 +14,6 @@ import { WordleService } from 'services/wordle';
 import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
 import { getRecifeDate } from 'services/wordle/wordleDate';
 import {
-  achievementId,
   achievementXp,
   dateAt,
   earnedAchievements,
@@ -36,8 +35,8 @@ afterAll(async () => {
   await restoreCatalog?.();
 });
 
-describe('daily Wordle v2 achievements', () => {
-  it('synchronizes only the compatible catalog and preserves operator-owned generic defaults', async () => {
+describe('daily Wordle achievements', () => {
+  it('seeds the current catalog and preserves operator-owned generic defaults', async () => {
     const definition = WORDLE_ACHIEVEMENT_CATALOG[0]!;
     await db
       .update(achievements)
@@ -68,30 +67,27 @@ describe('daily Wordle v2 achievements', () => {
     }
   });
 
-  it('hides archived entries from generic and Wordle readers and rejects new rewards', async () => {
-    const definition = WORDLE_ACHIEVEMENT_CATALOG[0]!;
+  it('keeps generic archived entries hidden and blocks their rewards', async () => {
     const { userId, guildId } = identity();
     await db
       .update(achievements)
       .set({ archived_at: Date.now() })
-      .where(eq(achievements.id, definition.id));
+      .where(eq(achievements.id, 'commands_10'));
     try {
       expect(
-        (await awards.getAchievements(userId, guildId)).some(
-          (row) => row.id === definition.id,
-        ),
-      ).toBe(false);
-      expect(
         (await defaults.getAllAchievements()).some(
-          (row) => row.id === definition.id,
+          (row) => row.id === 'commands_10',
         ),
       ).toBe(false);
       expect(
-        await defaults.unlockAchievement(userId, guildId, definition.id),
+        await defaults.unlockAchievement(userId, guildId, 'commands_10'),
       ).toBe(false);
       expect(await achievementXp(userId, guildId)).toBe(0);
     } finally {
-      await defaults.initializeDefaults();
+      await db
+        .update(achievements)
+        .set({ archived_at: null })
+        .where(eq(achievements.id, 'commands_10'));
     }
   });
 
@@ -99,71 +95,47 @@ describe('daily Wordle v2 achievements', () => {
     const { userId, guildId } = identity();
     await seedAchievementDay(userId, guildId, { attempts: 1 });
     const result = await award(userId, guildId);
-    expect(result.achievementVersion).toBe(2);
-    expect(result.achievements).toHaveLength(WORDLE_ACHIEVEMENT_CATALOG.length);
-    expect(result.unlockedAchievements.map((row) => row.id)).toContain(
-      achievementId((rule) => rule.kind === 'wins' && rule.count === 1),
+    expect(result.overview.achievements).toHaveLength(
+      WORDLE_ACHIEVEMENT_CATALOG.length,
     );
-    expect(result.unlockedAchievements.map((row) => row.id)).toContain(
-      achievementId(
-        (rule) => rule.kind === 'solved_exactly' && rule.attempts === 1,
-      ),
-    );
-    expect(result.unlockedAchievements.map((row) => row.id)).not.toContain(
-      achievementId(
-        (rule) => rule.kind === 'solved_exactly' && rule.attempts === 2,
-      ),
-    );
-    for (const badge of result.unlockedAchievements)
+    expect(result.unlockedIds).toContain('wordle_v2_wins_1');
+    expect(result.unlockedIds).toContain('wordle_v2_solved_exactly_1');
+    expect(result.unlockedIds).not.toContain('wordle_v2_solved_exactly_2');
+    const xp = result.overview.achievements
+      .filter((badge) => result.unlockedIds.includes(badge.id))
+      .reduce((sum, badge) => sum + badge.rewardXp, 0);
+    for (const id of result.unlockedIds) {
+      const badge = result.overview.achievements.find((row) => row.id === id);
+      if (!badge?.unlockedAt) throw new Error(`Missing unlock time for ${id}`);
       expect(new Date(badge.unlockedAt).toISOString()).toBe(badge.unlockedAt);
-    const xp = result.unlockedAchievements.reduce(
-      (sum, badge) => sum + badge.rewardXp,
-      0,
-    );
-    expect(await achievementXp(userId, guildId)).toBe(xp);
-    expect((await award(userId, guildId)).unlockedAchievements).toEqual([]);
+    }
+    expect((await award(userId, guildId)).unlockedIds).toEqual([]);
     expect(await achievementXp(userId, guildId)).toBe(xp);
   });
 
   it('evaluates wins and efficient solves from eligible counters without requiring matrix evidence', async () => {
     const { userId, guildId } = identity();
     await seedAchievementDays(userId, guildId, 9);
-    const wins10 = achievementId(
-      (rule) => rule.kind === 'wins' && rule.count === 10,
-    );
-    expect(
-      (await award(userId, guildId)).unlockedAchievements.map((row) => row.id),
-    ).not.toContain(wins10);
+    const wins10 = 'wordle_v2_wins_10';
+    expect((await award(userId, guildId)).unlockedIds).not.toContain(wins10);
     await seedAchievementDay(userId, guildId, { date: dateAt(10) });
-    const ids = (await award(userId, guildId)).unlockedAchievements.map(
-      (row) => row.id,
-    );
+    const ids = (await award(userId, guildId)).unlockedIds;
     expect(ids).toContain(wins10);
-    expect(ids).toContain(
-      achievementId((rule) => rule.kind === 'wins_within' && rule.count === 10),
-    );
+    expect(ids).toContain('wordle_v2_wins_within_3_10');
   });
 
   it('counts accepted unsolved dates and ignores empty sessions', async () => {
     const { userId, guildId } = identity();
     await seedAchievementDays(userId, guildId, 7, false, 1);
-    const ids = (await award(userId, guildId)).unlockedAchievements.map(
-      (row) => row.id,
-    );
-    expect(ids).toContain(
-      achievementId((rule) => rule.kind === 'played' && rule.days === 7),
-    );
-    expect(ids).not.toContain(
-      achievementId((rule) => rule.kind === 'wins' && rule.count === 1),
-    );
+    const ids = (await award(userId, guildId)).unlockedIds;
+    expect(ids).toContain('wordle_v2_played_7');
+    expect(ids).not.toContain('wordle_v2_wins_1');
     const empty = identity();
     await seedAchievementDay(empty.userId, empty.guildId, {
       attempts: 0,
       solved: false,
     });
-    expect(
-      (await award(empty.userId, empty.guildId)).unlockedAchievements,
-    ).toEqual([]);
+    expect((await award(empty.userId, empty.guildId)).unlockedIds).toEqual([]);
   });
 
   it('does not bridge unsolved days or use the lifetime best for v2 streak rewards', async () => {
@@ -186,10 +158,8 @@ describe('daily Wordle v2 achievements', () => {
       max_streak: 100,
     });
     const result = await award(userId, guildId);
-    expect(result.stats.bestStreak).toBe(100);
-    expect(result.unlockedAchievements.map((row) => row.id)).not.toContain(
-      achievementId((rule) => rule.kind === 'streak' && rule.days === 3),
-    );
+    expect(result.overview.stats.bestStreak).toBe(100);
+    expect(result.unlockedIds).not.toContain('wordle_v2_streak_3');
   });
 
   it('isolates history, discoveries and unlocks across players and guilds', async () => {
@@ -200,9 +170,9 @@ describe('daily Wordle v2 achievements', () => {
       [userId, 'elsewhere'],
       ['other', guildId],
     ]) {
-      expect((await award(user!, guild!)).unlockedAchievements).toEqual([]);
+      expect((await award(user!, guild!)).unlockedIds).toEqual([]);
       expect(
-        (await awards.getAchievements(user!, guild!)).every(
+        (await awards.getOverview(user!, guild!)).achievements.every(
           (row) => row.unlockedAt === null,
         ),
       ).toBe(true);
@@ -215,13 +185,15 @@ describe('daily Wordle v2 achievements', () => {
     const results = await Promise.all(
       Array.from({ length: 3 }, () => award(userId, guildId)),
     );
-    const badges = results.flatMap((result) => result.unlockedAchievements);
-    expect(new Set(badges.map((row) => row.id)).size).toBe(badges.length);
+    const unlocks = results.flatMap((result) => result.unlockedIds);
+    expect(new Set(unlocks).size).toBe(unlocks.length);
     expect(await earnedAchievements(userId, guildId)).toHaveLength(
-      badges.length,
+      unlocks.length,
     );
     expect(await achievementXp(userId, guildId)).toBe(
-      badges.reduce((sum, badge) => sum + badge.rewardXp, 0),
+      results[0]!.overview.achievements
+        .filter((badge) => unlocks.includes(badge.id))
+        .reduce((sum, badge) => sum + badge.rewardXp, 0),
     );
   });
 
@@ -255,20 +227,24 @@ describe('Wordle guess award integration', () => {
     await seedDaily(guildId);
     const result = await service.submitGuess(userId, guildId, 'termo');
     if ('error' in result) throw new Error(result.error);
-    expect(result.achievementVersion).toBe(2);
-    expect(result.achievements).toHaveLength(WORDLE_ACHIEVEMENT_CATALOG.length);
-    const pattern = result.unlockedAchievements?.find(
-      (row) => row.patternPreview?.patternId === 'tetromino_i',
+    expect(result.achievementUpdate?.overview.achievements).toHaveLength(
+      WORDLE_ACHIEVEMENT_CATALOG.length,
+    );
+    const pattern = result.achievementUpdate?.overview.achievements.find(
+      (row) =>
+        row.patternPreview?.patternId === 'tetromino_i' &&
+        row.unlockedAt !== null,
     );
     expect(pattern).toBeUndefined();
     expect(await service.submitGuess(userId, guildId, 'termo')).toHaveProperty(
       'error',
     );
     expect(await achievementXp(userId, guildId)).toBe(
-      result.unlockedAchievements?.reduce(
-        (sum, badge) => sum + badge.rewardXp,
-        0,
-      ) ?? 0,
+      result.achievementUpdate?.overview.achievements
+        .filter((badge) =>
+          result.achievementUpdate?.unlockedIds.includes(badge.id),
+        )
+        .reduce((sum, badge) => sum + badge.rewardXp, 0) ?? 0,
     );
   });
 
@@ -287,13 +263,13 @@ describe('Wordle guess award integration', () => {
     }
     if ('error' in result) throw new Error(result.error);
     expect(result.solved).toBe(true);
-    expect(result.unlockedAchievements).toBeUndefined();
+    expect(result.achievementUpdate).toBeUndefined();
     expect((await service.getUserSession(userId, guildId))?.solved).toBe(true);
     expect(await earnedAchievements(userId, guildId)).toEqual([]);
     expect(await achievementXp(userId, guildId)).toBe(0);
-    expect(
-      (await award(userId, guildId)).unlockedAchievements.length,
-    ).toBeGreaterThan(0);
+    expect((await award(userId, guildId)).unlockedIds.length).toBeGreaterThan(
+      0,
+    );
   });
 
   it('derives first solver from all sessions even when day counters drift', async () => {

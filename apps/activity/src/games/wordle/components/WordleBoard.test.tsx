@@ -53,7 +53,13 @@ function initializeBoard() {
   act(() => {
     deliverMessage({
       type: 'init',
-      payload: { wordLength: 5, guesses: [], solved: false, attempts: 0 },
+      payload: {
+        wordLength: 5,
+        date: '2026-10-29',
+        guesses: [],
+        solved: false,
+        attempts: 0,
+      },
     });
   });
 }
@@ -83,7 +89,13 @@ describe('WordleBoard focus keyboard', () => {
     act(() => {
       deliverMessage({
         type: 'init',
-        payload: { wordLength: 5, guesses: [], solved: false, attempts: 0 },
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [],
+          solved: false,
+          attempts: 0,
+        },
       });
     });
 
@@ -150,20 +162,31 @@ describe('WordleBoard screen transitions', () => {
           type: 'init',
           payload: {
             wordLength: 5,
+            date: '2026-10-29',
             guesses: [],
             solved: false,
             attempts: 0,
-            achievements: [
-              {
-                id: 'wordle_first_win',
-                name: 'Primeira palavra',
-                description: 'Acerte sua primeira palavra.',
-                icon: '🟩',
-                rarity: 'common',
-                rewardXp: 25,
-                unlockedAt: null,
+            achievementOverview: {
+              stats: {
+                played: 0,
+                wins: 0,
+                winRate: 0,
+                currentStreak: 0,
+                bestStreak: 0,
+                distribution: [0, 0, 0, 0, 0, 0, 0, 0],
               },
-            ],
+              achievements: [
+                {
+                  id: 'wordle_first_win',
+                  name: 'Primeira palavra',
+                  description: 'Acerte sua primeira palavra.',
+                  icon: '🟩',
+                  rarity: 'common',
+                  rewardXp: 25,
+                  unlockedAt: null,
+                },
+              ],
+            },
           },
         });
       });
@@ -189,17 +212,30 @@ describe('WordleBoard screen transitions', () => {
             solved: true,
             attempts: 1,
             wordLength: 5,
-            unlockedAchievements: [
-              {
-                id: 'wordle_first_win',
-                name: 'Primeira palavra',
-                description: 'Acerte sua primeira palavra.',
-                icon: '🟩',
-                rarity: 'common',
-                rewardXp: 25,
-                unlockedAt: '2026-10-24T04:15:00.000Z',
+            achievementUpdate: {
+              overview: {
+                stats: {
+                  played: 1,
+                  wins: 1,
+                  winRate: 100,
+                  currentStreak: 1,
+                  bestStreak: 1,
+                  distribution: [1, 0, 0, 0, 0, 0, 0, 0],
+                },
+                achievements: [
+                  {
+                    id: 'wordle_first_win',
+                    name: 'Primeira palavra',
+                    description: 'Acerte sua primeira palavra.',
+                    icon: '🟩',
+                    rarity: 'common',
+                    rewardXp: 25,
+                    unlockedAt: '2026-10-24T04:15:00.000Z',
+                  },
+                ],
               },
-            ],
+              unlockedIds: ['wordle_first_win'],
+            },
           },
         });
       });
@@ -247,32 +283,45 @@ describe('WordleBoard screen transitions', () => {
           solved: true,
           attempts: 1,
           wordLength: 5,
-          unlockedAchievements: [
-            {
-              id: 'wordle_first_win',
-              family: 'wins',
-              tier: 1,
-              name: 'Primeira palavra',
-              description: 'Acerte sua primeira palavra.',
-              icon: '🟩',
-              rarity: 'common',
-              rewardXp: 25,
-              hidden: false,
-              unlockedAt: '2026-10-24T04:15:00.000Z',
+          achievementUpdate: {
+            overview: {
+              stats: {
+                played: 1,
+                wins: 1,
+                winRate: 100,
+                currentStreak: 1,
+                bestStreak: 1,
+                distribution: [1, 0, 0, 0, 0, 0, 0, 0],
+              },
+              achievements: [
+                {
+                  id: 'wordle_first_win',
+                  family: 'wins',
+                  tier: 1,
+                  name: 'Primeira palavra',
+                  description: 'Acerte sua primeira palavra.',
+                  icon: '🟩',
+                  rarity: 'common',
+                  rewardXp: 25,
+                  hidden: false,
+                  unlockedAt: '2026-10-24T04:15:00.000Z',
+                },
+                {
+                  id: 'wordle_solved_in_1',
+                  family: 'precision',
+                  tier: 3,
+                  name: 'Na mosca',
+                  description: 'Acerte na primeira tentativa.',
+                  icon: '🍀',
+                  rarity: 'epic',
+                  rewardXp: 100,
+                  hidden: false,
+                  unlockedAt: '2026-10-24T04:15:00.000Z',
+                },
+              ],
             },
-            {
-              id: 'wordle_solved_in_1',
-              family: 'precision',
-              tier: 3,
-              name: 'Na mosca',
-              description: 'Acerte na primeira tentativa.',
-              icon: '🍀',
-              rarity: 'epic',
-              rewardXp: 100,
-              hidden: false,
-              unlockedAt: '2026-10-24T04:15:00.000Z',
-            },
-          ],
+            unlockedIds: ['wordle_first_win', 'wordle_solved_in_1'],
+          },
         },
       });
     });

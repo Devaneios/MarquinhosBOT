@@ -12,7 +12,7 @@ import type {
   AchievementHistoryDay,
   WordleEvaluationOptions,
 } from './evaluate';
-import { evaluateWordleAchievements } from './evaluate';
+import { analyzeWordleAchievements } from './evaluate';
 
 const today = '2026-10-28';
 type Day = AchievementHistoryDay;
@@ -21,10 +21,11 @@ function result(
   id: string,
   days: readonly Day[],
   options: WordleEvaluationOptions = { today },
+  persistedPatternIds: ReadonlySet<string> = new Set(),
 ) {
-  return evaluateWordleAchievements(days, options).find(
-    (entry) => entry.id === id,
-  );
+  return analyzeWordleAchievements(days, options)
+    .evaluate(persistedPatternIds)
+    .find((entry) => entry.id === id);
 }
 
 const asDays = (...days: Parameters<typeof achievementDay>[0][]): Day[] =>
@@ -33,10 +34,14 @@ const asDays = (...days: Parameters<typeof achievementDay>[0][]): Day[] =>
 describe('evaluateWordleAchievements', () => {
   it('evaluates the full catalog in its declared order', () => {
     expect(
-      evaluateWordleAchievements([], { today }).map(({ id }) => id),
+      analyzeWordleAchievements([], { today })
+        .evaluate(new Set())
+        .map(({ id }) => id),
     ).toEqual(WORDLE_ACHIEVEMENT_CATALOG.map(({ id }) => id));
     expect(
-      evaluateWordleAchievements([], { today }).every(({ met }) => !met),
+      analyzeWordleAchievements([], { today })
+        .evaluate(new Set())
+        .every(({ met }) => !met),
     ).toBe(true);
   });
 
@@ -56,9 +61,9 @@ describe('evaluateWordleAchievements', () => {
     ).toBe(false);
     const optionsWithLifetimeStreak = { today, persistedBestStreak: 100 };
     expect(
-      evaluateWordleAchievements([], optionsWithLifetimeStreak).some(
-        ({ met }) => met,
-      ),
+      analyzeWordleAchievements([], optionsWithLifetimeStreak)
+        .evaluate(new Set())
+        .some(({ met }) => met),
     ).toBe(false);
   });
 
@@ -85,6 +90,13 @@ describe('evaluateWordleAchievements', () => {
     );
     expect(result('wordle_v2_blank_opening', valid)?.met).toBe(true);
     expect(result('wordle_v2_blank_opening', invalid)?.met).toBe(false);
+    for (const id of [
+      'wordle_v2_mixed_rows',
+      'wordle_v2_improvement',
+      'wordle_v2_near_miss',
+    ]) {
+      expect(result(id, invalid)?.met).toBe(false);
+    }
     expect(result('wordle_v2_all_yellow', asDays(failedDay(today)))?.met).toBe(
       false,
     );
@@ -122,13 +134,107 @@ describe('evaluateWordleAchievements', () => {
     ).toBe(false);
   });
 
+  it('requires at least two guesses and caps the fast-solve boundary at sixty seconds', () => {
+    const row = (seconds: number, guesses: string[]) =>
+      achievementDay(
+        solvedDay('2026-10-01', {
+          attempts: guesses.length,
+          startedAt: epoch('2026-10-01T03:00:00Z'),
+          solvedAt: epoch('2026-10-01T03:00:00Z') + seconds,
+          guesses: rows(...guesses),
+        }),
+      );
+    expect(
+      result(
+        'wordle_v2_fast_60',
+        asDays(
+          solvedDay('2026-10-01', {
+            attempts: 1,
+            startedAt: epoch('2026-10-01T03:00:00Z'),
+            solvedAt: epoch('2026-10-01T03:00:30Z'),
+            guesses: rows('ccccc'),
+          }),
+        ),
+      )?.met,
+    ).toBe(false);
+    expect(
+      result('wordle_v2_fast_60', asDays(row(60, ['apaaa', 'ccccc'])))?.met,
+    ).toBe(true);
+    expect(
+      result('wordle_v2_fast_60', asDays(row(61, ['apaaa', 'ccccc'])))?.met,
+    ).toBe(false);
+  });
+
   it('uses saved discovery identities for individual and collection progress', () => {
     const discoveries = new Set(['letter_a', 'letter_b', 'letter_c']);
-    const options = { today, discoveryIds: discoveries };
-    expect(result('wordle_v2_pattern_letter_a', [], options)?.met).toBe(true);
-    expect(result('wordle_v2_letters_5', [], options)?.progress).toEqual({
+    expect(
+      result('wordle_v2_pattern_letter_a', [], { today }, discoveries)?.met,
+    ).toBe(true);
+    expect(
+      result('wordle_v2_letters_5', [], { today }, discoveries)?.progress,
+    ).toEqual({
       current: 3,
       target: 5,
     });
+
+    const tetrominoIds = [
+      'tetromino_i',
+      'tetromino_o',
+      'tetromino_t',
+      'tetromino_j',
+      'tetromino_l',
+      'tetromino_s',
+      'tetromino_z',
+    ];
+    const six = new Set(tetrominoIds.slice(0, 6));
+    const seven = new Set(tetrominoIds);
+    expect(
+      result('wordle_v2_tetrominoes_all', [], { today }, six)?.progress,
+    ).toEqual({ current: 6, target: 7 });
+    expect(result('wordle_v2_tetrominoes_all', [], { today }, six)?.met).toBe(
+      false,
+    );
+    expect(result('wordle_v2_tetrominoes_all', [], { today }, seven)?.met).toBe(
+      true,
+    );
+  });
+
+  it('does not infer absent timing, answer traits, or answer widths', () => {
+    const missingEvidence = achievementDay(
+      solvedDay(today, {
+        startedAt: 0,
+        solvedAt: null,
+        guesses: rows('apaaa', 'ccccc'),
+      }),
+      {
+        wordLength: null,
+        answerHasAccent: null,
+        answerHasRepeatedLetters: null,
+      },
+    );
+    const days = [missingEvidence];
+    expect(result('wordle_v2_fast_60', days)?.met).toBe(false);
+    expect(result('wordle_v2_midnight', days)?.met).toBe(false);
+    expect(result('wordle_v2_repeated_letters', days)?.met).toBe(false);
+    expect(result('wordle_v2_accented_answer', days)?.met).toBe(false);
+    expect(result('wordle_v2_both_lengths', days)?.progress).toEqual({
+      current: 0,
+      target: 2,
+    });
+  });
+
+  it('requires solved answers at both supported lengths for the length variety', () => {
+    const fiveLetters = achievementDay(
+      solvedDay('2026-10-26', { guesses: rows('aaaaa', 'ccccc') }),
+    );
+    const sixLetters = achievementDay(
+      solvedDay('2026-10-27', { guesses: rows('aaaaaa', 'cccccc') }),
+    );
+    expect(result('wordle_v2_both_lengths', asDays(fiveLetters))?.met).toBe(
+      false,
+    );
+    expect(
+      result('wordle_v2_both_lengths', asDays(fiveLetters, sixLetters))?.met,
+    ).toBe(true);
   });
 });

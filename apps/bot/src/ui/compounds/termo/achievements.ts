@@ -23,7 +23,7 @@ export type TermoAchievementsCardInput = {
 };
 
 const RETRO_FONT = 'Press Start 2P';
-const DISTRIBUTION_LABELS = ['1', '2', '3', '4', '5', '6', '7+'];
+const DISTRIBUTION_LABELS = ['0', '1', '2', '3', '4', '5', '6', '7+'];
 const DISTRIBUTION_BAR_MAX = 300;
 const DISTRIBUTION_BAR_MIN = 22;
 const FAMILY_BAR_WIDTH = 230;
@@ -289,6 +289,27 @@ export function termoAchievementDetailCard(
       color: theme.colors.textMuted,
     }),
   ];
+  if (achievement.progress !== null) {
+    const current = Math.min(
+      achievement.progress.current,
+      achievement.progress.target,
+    );
+    const target = achievement.progress.target;
+    children.push(
+      sectionLabel(`PROGRESSO ${current}/${target}`, theme),
+      progressBar(
+        current,
+        target,
+        {
+          width: FAMILY_BAR_WIDTH,
+          label: `${current}/${target}`,
+          color: theme.colors.accent,
+          trackColor: theme.colors.card,
+        },
+        theme,
+      ),
+    );
+  }
   const evidence =
     achievement.unlockedAt === null
       ? null

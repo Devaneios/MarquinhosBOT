@@ -6,7 +6,7 @@ import {
   solvedDay,
   solvedStreak,
 } from '../testing';
-import { evaluateWordleAchievements } from './evaluate';
+import { analyzeWordleAchievements } from './evaluate';
 import type { AchievementHistoryDay } from './history';
 
 const today = '2026-10-28';
@@ -14,8 +14,9 @@ const history = (
   ...days: ReturnType<typeof solvedDay>[]
 ): AchievementHistoryDay[] => days.map((day) => achievementDay(day));
 const met = (id: string, days: readonly AchievementHistoryDay[]) =>
-  evaluateWordleAchievements(days, { today }).find((entry) => entry.id === id)
-    ?.met;
+  analyzeWordleAchievements(days, { today })
+    .evaluate(new Set())
+    .find((entry) => entry.id === id)?.met;
 
 describe('Wordle achievement history', () => {
   it('uses only eligible, distinct played dates for counts and streaks', () => {
@@ -59,14 +60,14 @@ describe('Wordle achievement history', () => {
       answerHasRepeatedLetters: true,
     });
     expect(
-      evaluateWordleAchievements([accented], { today }).find(
-        (entry) => entry.id === 'wordle_v2_accented_answer',
-      )?.met,
+      analyzeWordleAchievements([accented], { today })
+        .evaluate(new Set())
+        .find((entry) => entry.id === 'wordle_v2_accented_answer')?.met,
     ).toBe(true);
     expect(
-      evaluateWordleAchievements([{ ...accented, solved: false }], {
-        today,
-      }).find((entry) => entry.id === 'wordle_v2_accented_answer')?.met,
+      analyzeWordleAchievements([{ ...accented, solved: false }], { today })
+        .evaluate(new Set())
+        .find((entry) => entry.id === 'wordle_v2_accented_answer')?.met,
     ).toBe(false);
   });
 

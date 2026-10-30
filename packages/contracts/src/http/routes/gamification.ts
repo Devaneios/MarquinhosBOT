@@ -52,7 +52,7 @@ export const achievementSchema = z.object({
   category: z.string(),
   rarity: achievementRaritySchema,
   icon: z.string(),
-  condition: z.string(),
+  condition: z.string().nullable(),
   reward_xp: z.number(),
 });
 

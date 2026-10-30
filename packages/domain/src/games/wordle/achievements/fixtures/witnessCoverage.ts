@@ -1,4 +1,4 @@
-import type { WordlePatternDefinition } from '../types';
+import type { DrawingDefinition } from '../types';
 
 export type WordlePatternWitnessReference = {
   patternId: string;
@@ -19,12 +19,12 @@ export function wordlePatternWitnessKey(
 }
 
 export function requiredWordlePatternWitnesses(
-  patterns: readonly WordlePatternDefinition[],
+  patterns: readonly DrawingDefinition[],
 ): WordlePatternWitnessRequirement[] {
   return patterns.flatMap((pattern) =>
     [pattern.mask, ...(pattern.variants ?? [])].flatMap((_, variant) =>
       (['correct', 'present'] as const).map((color) => ({
-        patternId: pattern.id,
+        patternId: pattern.patternId,
         variant,
         color,
       })),
@@ -33,7 +33,7 @@ export function requiredWordlePatternWitnesses(
 }
 
 export function missingWordlePatternWitnesses(
-  patterns: readonly WordlePatternDefinition[],
+  patterns: readonly DrawingDefinition[],
   witnesses: readonly WordlePatternWitnessReference[],
 ): string[] {
   const available = new Set(witnesses.map(wordlePatternWitnessKey));

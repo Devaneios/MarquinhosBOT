@@ -1,751 +1,647 @@
-import type { PatternSpec } from '../../types';
+import { discoveredDrawing } from '../../engine/predicates';
+import type { WordleAchievementDefinition } from '../../types';
 
-export const LETTERS = [
+export const LETTERS: readonly WordleAchievementDefinition[] = [
   {
-    id: 'letter_a',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_a',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 1,
     name: 'Letra A',
-    mask: `
-      .#.
-      #.#
-      ###
-      #.#
-      #.#
-    `,
-    variants: [
-      `
-        .##.
-        #..#
-        ####
-        #..#
-        #..#
-      `,
-      `
-        .###.
-        #...#
-        #####
-        #...#
-        #...#
-      `,
-      `
-        ..#..
-        .#.#.
-        #...#
-        #####
-        #...#
-      `,
-      `
-        ..#..
-        .#.#.
-        #####
-        #...#
-        #...#
-      `,
-    ],
+    description:
+      'Forme letra a com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_a',
+      family: 'letter',
+      mask: ['.#.', '#.#', '###', '#.#', '#.#'],
+      variants: [
+        ['.##.', '#..#', '####', '#..#', '#..#'],
+        ['.###.', '#...#', '#####', '#...#', '#...#'],
+        ['..#..', '.#.#.', '#...#', '#####', '#...#'],
+        ['..#..', '.#.#.', '#####', '#...#', '#...#'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_b',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_b',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 2,
     name: 'Letra B',
-    mask: `
-      ##.
-      #.#
-      ##.
-      #.#
-      ##.
-    `,
-    variants: [
-      `
-        ###.
-        #..#
-        ###.
-        #..#
-        ###.
-      `,
-      `
-        ####.
-        #...#
-        ####.
-        #...#
-        ####.
-      `,
-      `
-        ####.
-        #...#
-        ###..
-        #...#
-        ####.
-      `,
-    ],
+    description:
+      'Forme letra b com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_b',
+      family: 'letter',
+      mask: ['##.', '#.#', '##.', '#.#', '##.'],
+      variants: [
+        ['###.', '#..#', '###.', '#..#', '###.'],
+        ['####.', '#...#', '####.', '#...#', '####.'],
+        ['####.', '#...#', '###..', '#...#', '####.'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_c',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_c',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 3,
     name: 'Letra C',
-    mask: `
-      .##
-      #..
-      #..
-      #..
-      .##
-    `,
-    variants: [
-      `
-        .###
-        #...
-        #...
-        #...
-        .###
-      `,
-      `
-        ####
-        #...
-        #...
-        #...
-        ####
-      `,
-      `
-        .####
-        #....
-        #....
-        #....
-        .####
-      `,
-      `
-        #####
-        #....
-        #....
-        #....
-        #####
-      `,
-    ],
+    description:
+      'Forme letra c com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_c',
+      family: 'letter',
+      mask: ['.##', '#..', '#..', '#..', '.##'],
+      variants: [
+        ['.###', '#...', '#...', '#...', '.###'],
+        ['####', '#...', '#...', '#...', '####'],
+        ['.####', '#....', '#....', '#....', '.####'],
+        ['#####', '#....', '#....', '#....', '#####'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_d',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_d',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 4,
     name: 'Letra D',
-    mask: `
-      ##.
-      #.#
-      #.#
-      #.#
-      ##.
-    `,
-    variants: [
-      `
-        ###.
-        #..#
-        #..#
-        #..#
-        ###.
-      `,
-      `
-        ####.
-        #...#
-        #...#
-        #...#
-        ####.
-      `,
-    ],
+    description:
+      'Forme letra d com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_d',
+      family: 'letter',
+      mask: ['##.', '#.#', '#.#', '#.#', '##.'],
+      variants: [
+        ['###.', '#..#', '#..#', '#..#', '###.'],
+        ['####.', '#...#', '#...#', '#...#', '####.'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_e',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_e',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 5,
     name: 'Letra E',
-    mask: `
-      ###
-      #..
-      ##.
-      #..
-      ###
-    `,
-    variants: [
-      `
-        ####
-        #...
-        ###.
-        #...
-        ####
-      `,
-      `
-        #####
-        #....
-        ####.
-        #....
-        #####
-      `,
-      `
-        #####
-        #....
-        #####
-        #....
-        #####
-      `,
-    ],
+    description:
+      'Forme letra e com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_e',
+      family: 'letter',
+      mask: ['###', '#..', '##.', '#..', '###'],
+      variants: [
+        ['####', '#...', '###.', '#...', '####'],
+        ['#####', '#....', '####.', '#....', '#####'],
+        ['#####', '#....', '#####', '#....', '#####'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_f',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_f',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 6,
     name: 'Letra F',
-    mask: `
-      ###
-      #..
-      ##.
-      #..
-      #..
-    `,
-    variants: [
-      `
-        ####
-        #...
-        ###.
-        #...
-        #...
-      `,
-      `
-        #####
-        #....
-        ####.
-        #....
-        #....
-      `,
-      `
-        #####
-        #....
-        #####
-        #....
-        #....
-      `,
-    ],
+    description:
+      'Forme letra f com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_f',
+      family: 'letter',
+      mask: ['###', '#..', '##.', '#..', '#..'],
+      variants: [
+        ['####', '#...', '###.', '#...', '#...'],
+        ['#####', '#....', '####.', '#....', '#....'],
+        ['#####', '#....', '#####', '#....', '#....'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_g',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_g',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 7,
     name: 'Letra G',
-    mask: `
-      .###.
-      #....
-      #.###
-      #...#
-      .###.
-    `,
-    variants: [
-      `
-        #####
-        #....
-        #..##
-        #...#
-        #####
-      `,
-      `
-        .####
-        #....
-        #.###
-        #...#
-        .###.
-      `,
-    ],
+    description:
+      'Forme letra g com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_g',
+      family: 'letter',
+      mask: ['.###.', '#....', '#.###', '#...#', '.###.'],
+      variants: [
+        ['#####', '#....', '#..##', '#...#', '#####'],
+        ['.####', '#....', '#.###', '#...#', '.###.'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_h',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_h',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 8,
     name: 'Letra H',
-    mask: `
-      #.#
-      #.#
-      ###
-      #.#
-      #.#
-    `,
-    variants: [
-      `
-        #..#
-        #..#
-        ####
-        #..#
-        #..#
-      `,
-      `
-        #...#
-        #...#
-        #####
-        #...#
-        #...#
-      `,
-    ],
+    description:
+      'Forme letra h com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_h',
+      family: 'letter',
+      mask: ['#.#', '#.#', '###', '#.#', '#.#'],
+      variants: [
+        ['#..#', '#..#', '####', '#..#', '#..#'],
+        ['#...#', '#...#', '#####', '#...#', '#...#'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_i',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_i',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 9,
     name: 'Letra I',
-    mask: `
-      ###
-      .#.
-      .#.
-      .#.
-      ###
-    `,
-    variants: [
-      `
-        ####
-        .##.
-        .##.
-        .##.
-        ####
-      `,
-      `
-        #####
-        ..#..
-        ..#..
-        ..#..
-        #####
-      `,
-    ],
+    description:
+      'Forme letra i com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_i',
+      family: 'letter',
+      mask: ['###', '.#.', '.#.', '.#.', '###'],
+      variants: [
+        ['####', '.##.', '.##.', '.##.', '####'],
+        ['#####', '..#..', '..#..', '..#..', '#####'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_j',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_j',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 10,
     name: 'Letra J',
-    mask: `
-      ..#
-      ..#
-      ..#
-      #.#
-      .#.
-    `,
-    variants: [
-      `
-        ...#
-        ...#
-        ...#
-        #..#
-        .##.
-      `,
-      `
-        ....#
-        ....#
-        ....#
-        #...#
-        .###.
-      `,
-    ],
+    description:
+      'Forme letra j com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_j',
+      family: 'letter',
+      mask: ['..#', '..#', '..#', '#.#', '.#.'],
+      variants: [
+        ['...#', '...#', '...#', '#..#', '.##.'],
+        ['....#', '....#', '....#', '#...#', '.###.'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_k',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_k',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 11,
     name: 'Letra K',
-    mask: `
-      #.#
-      #.#
-      ##.
-      #.#
-      #.#
-    `,
-    variants: [
-      `
-        #..#
-        #.#.
-        ##..
-        #.#.
-        #..#
-      `,
-      `
-        #...#
-        #..#.
-        ###..
-        #..#.
-        #...#
-      `,
-    ],
+    description:
+      'Forme letra k com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_k',
+      family: 'letter',
+      mask: ['#.#', '#.#', '##.', '#.#', '#.#'],
+      variants: [
+        ['#..#', '#.#.', '##..', '#.#.', '#..#'],
+        ['#...#', '#..#.', '###..', '#..#.', '#...#'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_l',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_l',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 12,
     name: 'Letra L',
-    mask: `
-      #..
-      #..
-      #..
-      #..
-      ###
-    `,
-    variants: [
-      `
-        #...
-        #...
-        #...
-        #...
-        ####
-      `,
-    ],
+    description:
+      'Forme letra l com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_l',
+      family: 'letter',
+      mask: ['#..', '#..', '#..', '#..', '###'],
+      variants: [['#...', '#...', '#...', '#...', '####']],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_m',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_m',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 13,
     name: 'Letra M',
-    mask: `
-      #...#
-      ##.##
-      #.#.#
-      #...#
-      #...#
-    `,
-    variants: [
-      `
-        #...#
-        ##.##
-        #.#.#
-        #.#.#
-        #...#
-      `,
-    ],
+    description:
+      'Forme letra m com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_m',
+      family: 'letter',
+      mask: ['#...#', '##.##', '#.#.#', '#...#', '#...#'],
+      variants: [['#...#', '##.##', '#.#.#', '#.#.#', '#...#']],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_n',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_n',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 14,
     name: 'Letra N',
-    mask: `
-      #...#
-      ##..#
-      #.#.#
-      #..##
-      #...#
-    `,
-    variants: [
-      `
-        ##..#
-        #.#.#
-        #.#.#
-        #..##
-        #...#
-      `,
-    ],
+    description:
+      'Forme letra n com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_n',
+      family: 'letter',
+      mask: ['#...#', '##..#', '#.#.#', '#..##', '#...#'],
+      variants: [['##..#', '#.#.#', '#.#.#', '#..##', '#...#']],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_o',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_o',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 15,
     name: 'Letra O',
-    mask: `
-      .#.
-      #.#
-      #.#
-      #.#
-      .#.
-    `,
+    description:
+      'Forme letra o com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_o',
+      family: 'letter',
+      mask: ['.#.', '#.#', '#.#', '#.#', '.#.'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_p',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_p',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 16,
     name: 'Letra P',
-    mask: `
-      ##.
-      #.#
-      ##.
-      #..
-      #..
-    `,
-    variants: [
-      `
-        ###.
-        #..#
-        ###.
-        #...
-        #...
-      `,
-      `
-        ####.
-        #...#
-        ####.
-        #....
-        #....
-      `,
-    ],
+    description:
+      'Forme letra p com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_p',
+      family: 'letter',
+      mask: ['##.', '#.#', '##.', '#..', '#..'],
+      variants: [
+        ['###.', '#..#', '###.', '#...', '#...'],
+        ['####.', '#...#', '####.', '#....', '#....'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_q',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_q',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 17,
     name: 'Letra Q',
-    mask: `
-      .###.
-      #...#
-      #.#.#
-      #..#.
-      .##.#
-    `,
-    variants: [
-      `
-        .###.
-        #...#
-        #...#
-        #..#.
-        .##.#
-      `,
-      `
-        .###.
-        #...#
-        #.#.#
-        #..##
-        .####
-      `,
-    ],
+    description:
+      'Forme letra q com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_q',
+      family: 'letter',
+      mask: ['.###.', '#...#', '#.#.#', '#..#.', '.##.#'],
+      variants: [
+        ['.###.', '#...#', '#...#', '#..#.', '.##.#'],
+        ['.###.', '#...#', '#.#.#', '#..##', '.####'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_r',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_r',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 18,
     name: 'Letra R',
-    mask: `
-      ####.
-      #...#
-      ####.
-      #..#.
-      #...#
-    `,
-    variants: [
-      `
-        ####.
-        #...#
-        ####.
-        #..#.
-        #..##
-      `,
-    ],
+    description:
+      'Forme letra r com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_r',
+      family: 'letter',
+      mask: ['####.', '#...#', '####.', '#..#.', '#...#'],
+      variants: [['####.', '#...#', '####.', '#..#.', '#..##']],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_s',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_s',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 19,
     name: 'Letra S',
-    mask: `
-      .##
-      #..
-      .#.
-      ..#
-      ##.
-    `,
-    variants: [
-      `
-        .###
-        #...
-        .##.
-        ...#
-        ###.
-      `,
-      `
-        .####
-        #....
-        .###.
-        ....#
-        ####.
-      `,
-    ],
+    description:
+      'Forme letra s com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_s',
+      family: 'letter',
+      mask: ['.##', '#..', '.#.', '..#', '##.'],
+      variants: [
+        ['.###', '#...', '.##.', '...#', '###.'],
+        ['.####', '#....', '.###.', '....#', '####.'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_t',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_t',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 20,
     name: 'Letra T',
-    mask: `
-      ###
-      .#.
-      .#.
-      .#.
-      .#.
-    `,
-    variants: [
-      `
-        ####
-        .##.
-        .##.
-        .##.
-        .##.
-      `,
-      `
-        #####
-        ..#..
-        ..#..
-        ..#..
-        ..#..
-      `,
-    ],
+    description:
+      'Forme letra t com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_t',
+      family: 'letter',
+      mask: ['###', '.#.', '.#.', '.#.', '.#.'],
+      variants: [
+        ['####', '.##.', '.##.', '.##.', '.##.'],
+        ['#####', '..#..', '..#..', '..#..', '..#..'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_u',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_u',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 21,
     name: 'Letra U',
-    mask: `
-      #.#
-      #.#
-      #.#
-      #.#
-      ###
-    `,
-    variants: [
-      `
-        #..#
-        #..#
-        #..#
-        #..#
-        ####
-      `,
-      `
-        #...#
-        #...#
-        #...#
-        #...#
-        .###.
-      `,
-    ],
+    description:
+      'Forme letra u com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_u',
+      family: 'letter',
+      mask: ['#.#', '#.#', '#.#', '#.#', '###'],
+      variants: [
+        ['#..#', '#..#', '#..#', '#..#', '####'],
+        ['#...#', '#...#', '#...#', '#...#', '.###.'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_v',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_v',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 22,
     name: 'Letra V',
-    mask: `
-      #.#
-      #.#
-      #.#
-      .#.
-      .#.
-    `,
-    variants: [
-      `
-        #..#
-        #..#
-        #..#
-        .##.
-        .##.
-      `,
-      `
-        #...#
-        #...#
-        #...#
-        .#.#.
-        ..#..
-      `,
-      `
-        #...#
-        #...#
-        .#.#.
-        .#.#.
-        ..#..
-      `,
-    ],
+    description:
+      'Forme letra v com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_v',
+      family: 'letter',
+      mask: ['#.#', '#.#', '#.#', '.#.', '.#.'],
+      variants: [
+        ['#..#', '#..#', '#..#', '.##.', '.##.'],
+        ['#...#', '#...#', '#...#', '.#.#.', '..#..'],
+        ['#...#', '#...#', '.#.#.', '.#.#.', '..#..'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_w',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_w',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 23,
     name: 'Letra W',
-    mask: `
-      #...#
-      #...#
-      #.#.#
-      #.#.#
-      .#.#.
-    `,
-    variants: [
-      `
-        #...#
-        #...#
-        #...#
-        #.#.#
-        .#.#.
-      `,
-    ],
+    description:
+      'Forme letra w com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_w',
+      family: 'letter',
+      mask: ['#...#', '#...#', '#.#.#', '#.#.#', '.#.#.'],
+      variants: [['#...#', '#...#', '#...#', '#.#.#', '.#.#.']],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_x',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_x',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 24,
     name: 'Letra X',
-    mask: `
-      #.#
-      #.#
-      .#.
-      #.#
-      #.#
-    `,
-    variants: [
-      `
-        #..#
-        #..#
-        .##.
-        #..#
-        #..#
-      `,
-      `
-        #...#
-        .#.#.
-        ..#..
-        .#.#.
-        #...#
-      `,
-    ],
+    description:
+      'Forme letra x com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_x',
+      family: 'letter',
+      mask: ['#.#', '#.#', '.#.', '#.#', '#.#'],
+      variants: [
+        ['#..#', '#..#', '.##.', '#..#', '#..#'],
+        ['#...#', '.#.#.', '..#..', '.#.#.', '#...#'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_y',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_y',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 25,
     name: 'Letra Y',
-    mask: `
-      #.#
-      #.#
-      .#.
-      .#.
-      .#.
-    `,
-    variants: [
-      `
-        #..#
-        #..#
-        .##.
-        .##.
-        .##.
-      `,
-      `
-        #...#
-        #...#
-        .#.#.
-        ..#..
-        ..#..
-      `,
-      `
-        #...#
-        .#.#.
-        ..#..
-        ..#..
-        ..#..
-      `,
-    ],
+    description:
+      'Forme letra y com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_y',
+      family: 'letter',
+      mask: ['#.#', '#.#', '.#.', '.#.', '.#.'],
+      variants: [
+        ['#..#', '#..#', '.##.', '.##.', '.##.'],
+        ['#...#', '#...#', '.#.#.', '..#..', '..#..'],
+        ['#...#', '.#.#.', '..#..', '..#..', '..#..'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
   {
-    id: 'letter_z',
-    family: 'letter',
+    id: 'wordle_v2_pattern_letter_z',
+    kind: 'drawing',
+    family: 'letters',
+    tier: 26,
     name: 'Letra Z',
-    mask: `
-      ###
-      ..#
-      .#.
-      #..
-      ###
-    `,
-    variants: [
-      `
-        ####
-        ...#
-        .##.
-        #...
-        ####
-      `,
-      `
-        #####
-        ....#
-        ..#..
-        #....
-        #####
-      `,
-      `
-        #####
-        ...#.
-        ..#..
-        .#...
-        #####
-      `,
-    ],
+    description:
+      'Forme letra z com células verdes ou amarelas. Outra célula da mesma cor ao redor, inclusive na diagonal, muda a figura. A linha vencedora só conta quando o desenho a ocupa.',
+    rarity: 'rare',
+    icon: '🔤',
+    rewardXp: 75,
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'letter_z',
+      family: 'letter',
+      mask: ['###', '..#', '.#.', '#..', '###'],
+      variants: [
+        ['####', '...#', '.##.', '#...', '####'],
+        ['#####', '....#', '..#..', '#....', '#####'],
+        ['#####', '...#.', '..#..', '.#...', '#####'],
+      ],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
   },
-] satisfies readonly PatternSpec[];
+];

@@ -9,14 +9,20 @@ import {
   userLevels,
   userStats,
 } from '@marquinhos/database/schema';
-import { WORDLE_ACHIEVEMENT_VERSION } from '@marquinhos/domain/games/wordle/achievements/catalog';
-import { and, asc, count, desc, eq, isNull, ne } from 'drizzle-orm';
+import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  inArray,
+  isNull,
+  ne,
+  sql,
+} from 'drizzle-orm';
 import { LevelingService } from 'services/gamification/LevelingService';
 import type { Achievement, UserAchievement } from 'services/gamification/types';
-import {
-  getActiveWordleAchievementVersion,
-  syncCompatibleWordleCatalog,
-} from 'services/wordle/WordleAchievementVersionService';
 
 const DEFAULT_ACHIEVEMENTS = [
   {
@@ -105,7 +111,34 @@ export class AchievementService {
         )
         .onConflictDoNothing();
     }
-    await syncCompatibleWordleCatalog(db);
+    await db
+      .insert(achievements)
+      .values(
+        WORDLE_ACHIEVEMENT_CATALOG.map((definition) => ({
+          id: definition.id,
+          name: definition.name,
+          description: definition.description,
+          category: 'wordle',
+          rarity: definition.rarity,
+          icon: definition.icon,
+          condition: null,
+          reward_xp: definition.rewardXp,
+          archived_at: null,
+        })),
+      )
+      .onConflictDoUpdate({
+        target: achievements.id,
+        set: {
+          name: sql`excluded.name`,
+          description: sql`excluded.description`,
+          category: sql`excluded.category`,
+          rarity: sql`excluded.rarity`,
+          icon: sql`excluded.icon`,
+          condition: sql`excluded.condition`,
+          reward_xp: sql`excluded.reward_xp`,
+          archived_at: null,
+        },
+      });
   }
 
   async checkAndAwardAchievements(
@@ -162,6 +195,8 @@ export class AchievementService {
     for (const achievement of candidates) {
       let condition: AchievementCondition;
       try {
+        if (achievement.condition === null)
+          throw new Error('Generic achievement condition is missing');
         condition = achievementConditionSchema.parse(
           JSON.parse(achievement.condition),
         );
@@ -210,65 +245,85 @@ export class AchievementService {
     achievementId: string,
     exec: DbExecutor = db,
   ): Promise<boolean> {
+    return (
+      (await this.unlockAchievements(userId, guildId, [achievementId], exec))
+        .length > 0
+    );
+  }
+
+  async unlockAchievements(
+    userId: string,
+    guildId: string,
+    achievementIds: readonly string[],
+    exec: DbExecutor = db,
+  ): Promise<readonly { id: string; unlockedAt: number }[]> {
     if (exec === db)
       return db.transaction((tx) =>
-        this.unlockAchievement(userId, guildId, achievementId, tx),
+        this.unlockAchievements(userId, guildId, achievementIds, tx),
       );
-    const [candidate] = await exec
-      .select({ category: achievements.category })
-      .from(achievements)
-      .where(eq(achievements.id, achievementId));
-    if (!candidate) return false;
-    if (
-      candidate.category === 'wordle' &&
-      (await getActiveWordleAchievementVersion(exec, 'share')) !==
-        WORDLE_ACHIEVEMENT_VERSION
-    )
-      return false;
-    const [achievement] = await exec
-      .select()
+    const requestedIds = [...new Set(achievementIds)];
+    if (requestedIds.length === 0) return [];
+
+    const definitions = await exec
+      .select({ id: achievements.id, reward_xp: achievements.reward_xp })
       .from(achievements)
       .where(
         and(
-          eq(achievements.id, achievementId),
+          inArray(achievements.id, requestedIds),
           isNull(achievements.archived_at),
         ),
       );
+    const eligibleIds = new Set(definitions.map((row) => row.id));
+    const rewardById = new Map(
+      definitions.map((row) => [row.id, row.reward_xp]),
+    );
+    const eligible = requestedIds.filter((id) => eligibleIds.has(id));
+    if (eligible.length === 0) return [];
 
-    if (!achievement) return false;
-    if (
-      achievement.category === 'wordle' &&
-      achievement.wordle_version !== WORDLE_ACHIEVEMENT_VERSION
-    )
-      return false;
     await this.levelingService.ensureUser(userId, guildId, exec);
 
-    // The primary key decides the race: only the insert that lands awards XP.
     const inserted = await exec
       .insert(userAchievements)
-      .values({
-        user_id: userId,
-        guild_id: guildId,
-        achievement_id: achievementId,
-        unlocked_at: Date.now(),
-      })
+      .values(
+        eligible.map((id) => ({
+          user_id: userId,
+          guild_id: guildId,
+          achievement_id: id,
+          unlocked_at: Date.now(),
+        })),
+      )
       .onConflictDoNothing()
-      .returning({ id: userAchievements.achievement_id });
+      .returning({
+        id: userAchievements.achievement_id,
+        unlockedAt: userAchievements.unlocked_at,
+      });
 
-    if (inserted.length === 0) return false;
+    if (inserted.length === 0) return [];
 
-    if (achievement.reward_xp > 0) {
+    const insertedIds = new Set(inserted.map((row) => row.id));
+    const rewardXp = eligible.reduce(
+      (total, id) =>
+        insertedIds.has(id)
+          ? total + Math.max(0, rewardById.get(id) ?? 0)
+          : total,
+      0,
+    );
+    if (rewardXp > 0) {
       await this.levelingService.addXpToUser(
         userId,
         guildId,
-        achievement.reward_xp,
+        rewardXp,
         exec,
         null,
       );
       await this.levelingService.applyLevelUps(userId, guildId, exec);
     }
 
-    return true;
+    const insertedById = new Map(inserted.map((row) => [row.id, row]));
+    return eligible.flatMap((id) => {
+      const row = insertedById.get(id);
+      return row ? [{ id: row.id, unlockedAt: row.unlockedAt }] : [];
+    });
   }
 
   async getUserAchievements(

@@ -51,8 +51,7 @@ type Row = Record<string, unknown>;
 
 function schemaTables(): PgTable[] {
   return (Object.values(schema) as unknown[]).filter(
-    (value): value is PgTable =>
-      is(value, PgTable) && value !== schema.wordleAchievementVersions,
+    (value): value is PgTable => is(value, PgTable),
   );
 }
 
@@ -91,18 +90,6 @@ function convert(column: PgColumn, value: unknown): unknown {
 }
 
 async function assertTargetEmpty(db: Db, tables: PgTable[]): Promise<void> {
-  const versions = await db.select().from(schema.wordleAchievementVersions);
-  const initial = versions[0];
-  if (
-    versions.length !== 1 ||
-    initial?.version !== 1 ||
-    !initial.active ||
-    initial.activated_at !== 0
-  ) {
-    throw new Error(
-      'Target has Wordle achievement activation data; refusing to import over live data',
-    );
-  }
   for (const table of tables) {
     const { name } = getTableConfig(table);
     if (SEEDED_TABLES.has(name)) continue;

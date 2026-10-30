@@ -6,18 +6,15 @@ import {
   wordleDays,
   wordleSessions,
 } from '@marquinhos/database/schema';
-import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { randomUUID } from 'crypto';
 import { and, eq, inArray } from 'drizzle-orm';
 import { AchievementService } from 'services/gamification/AchievementService';
 import { LevelingService } from 'services/gamification/LevelingService';
-import { activateWordleAchievements } from 'services/wordle/WordleAchievementVersionService';
 
 export async function installWordleAchievementCatalog() {
   const existing = new Set(
     (await db.select().from(achievements)).map((row) => row.id),
   );
-  await activateWordleAchievements();
   await new AchievementService(new LevelingService()).initializeDefaults();
   const genericIds = (await db.select().from(achievements))
     .filter((row) => row.category !== 'wordle' && !existing.has(row.id))
@@ -39,11 +36,11 @@ export async function seedAchievementDay(
     date?: string;
     attempts?: number;
     solved?: boolean;
+    solvedFromDraft?: boolean;
     startedAt?: number;
     solvedAt?: number | null;
     id?: string;
     guesses?: string;
-    version?: number;
     word?: string | null;
     width?: number;
   } = {},
@@ -67,10 +64,10 @@ export async function seedAchievementDay(
     word_date: date,
     attempts: options.attempts ?? 3,
     solved: options.solved ?? true,
+    solved_from_draft: options.solvedFromDraft ?? false,
     created_at: options.startedAt ?? 100,
     solved_at: options.solvedAt ?? null,
     guesses: options.guesses ?? '[]',
-    achievement_version: options.version ?? 2,
   });
 }
 
@@ -109,16 +106,4 @@ export function earnedAchievements(userId: string, guildId: string) {
         eq(userAchievements.guild_id, guildId),
       ),
     );
-}
-
-export function achievementId(
-  predicate: (
-    rule: (typeof WORDLE_ACHIEVEMENT_CATALOG)[number]['rule'],
-  ) => boolean,
-) {
-  const definition = WORDLE_ACHIEVEMENT_CATALOG.find((row) =>
-    predicate(row.rule),
-  );
-  if (!definition) throw new Error('Required achievement rule is missing');
-  return definition.id;
 }

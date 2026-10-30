@@ -37,6 +37,10 @@ async function seed(userId: string) {
     sql`INSERT INTO wordle_sessions (id, user_id, guild_id, word_date, created_at)
         VALUES (${`ws-${userId}`}, ${userId}, 'g', '2026-09-24', ${now})`,
   );
+  await db.execute(
+    sql`INSERT INTO wordle_drafts (user_id, guild_id, word_date, row_index, cells, active_index, revision, updated_at)
+        VALUES (${userId}, 'g', '2026-09-24', 0, '["t", "", "r", "", "o"]'::jsonb, 2, 1, ${now})`,
+  );
   const evidence = {
     patternId: 'tetromino_i',
     color: 'present',
@@ -52,8 +56,8 @@ async function seed(userId: string) {
     date: '2026-09-24',
   };
   await db.execute(sql`INSERT INTO wordle_pattern_discoveries
-    (user_id, guild_id, version, pattern_id, session_id, discovered_at, evidence)
-    VALUES (${userId}, 'g', 2, 'tetromino_i', ${`ws-${userId}`}, ${now}, ${JSON.stringify(evidence)}::jsonb)`);
+    (user_id, guild_id, pattern_id, session_id, discovered_at, evidence)
+    VALUES (${userId}, 'g', 'tetromino_i', ${`ws-${userId}`}, ${now}, ${JSON.stringify(evidence)}::jsonb)`);
   await db.execute(
     sql`INSERT INTO ai_traces (trace_id, user_id, guild_id, channel_id, content, created_at)
         VALUES (${`trace-${userId}`}, ${userId}, 'g', 'c', 'what I asked', ${now})`,
@@ -93,6 +97,7 @@ describe('UserService.deleteAllData', () => {
       ['users', 'id'],
       ['user_levels', 'user_id'],
       ['wordle_sessions', 'user_id'],
+      ['wordle_drafts', 'user_id'],
       ['wordle_pattern_discoveries', 'user_id'],
       ['ai_traces', 'user_id'],
       ['ai_thread_sessions', 'owner_user_id'],
@@ -113,7 +118,7 @@ describe('UserService.deleteAllData', () => {
     const awards = await db.transaction((tx) =>
       new WordleAchievementService().checkAndAward(USER, 'g', tx),
     );
-    expect(awards.unlockedAchievements).toEqual([]);
+    expect(awards.unlockedIds).toEqual([]);
     expect(await count('user_achievements', 'user_id', USER)).toBe(0);
     expect(await count('user_levels', 'user_id', USER)).toBe(0);
   });

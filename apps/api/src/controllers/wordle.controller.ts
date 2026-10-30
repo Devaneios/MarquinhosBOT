@@ -102,6 +102,23 @@ export default class WordleController {
     }
   }
 
+  async writeDraft(req: Request, res: Response): Promise<void> {
+    const input = parseRequest(contract.writeDraft, req);
+    if (!input) {
+      res.status(400).json({ message: 'Rascunho inválido.' });
+      return;
+    }
+    const { userId, guildId, ...draft } = input.body;
+    try {
+      sendContract(res, contract.writeDraft, {
+        data: await service.writeDraft(userId, guildId, draft),
+      });
+    } catch (error) {
+      console.error('WordleController.writeDraft error:', error);
+      res.status(500).json({ message: 'Erro interno.' });
+    }
+  }
+
   async getStats(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.getStats, req);
     if (!input) {
