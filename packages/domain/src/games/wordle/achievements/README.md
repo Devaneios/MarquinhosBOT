@@ -137,8 +137,12 @@ remain serialized and non-null.
 
 ## Retire an achievement
 
-Delete the complete object from `content/`. On the next API start, seeding
-archives every active Wordle row whose ID is no longer in the catalog. Archived
+Delete the complete object from `content/`. Catalog seeding archives every
+active Wordle catalog row (`condition = null`) whose ID is no longer in the
+catalog. Seeding runs on API start, on the `initializeDefaults` route, and at
+the start of every backfill, so always run those from the release that is live:
+an older checkout archives achievements that newer code still awards, until the
+next seed from current code restores them. Archived
 achievements disappear from listings and cannot be unlocked, but existing
 unlocks, pattern discoveries, and granted XP stay. Putting the same ID back
 restores it; players who already hold it keep their original unlock and get no

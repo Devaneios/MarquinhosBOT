@@ -112,8 +112,9 @@ export class AchievementService {
         )
         .onConflictDoNothing();
     }
-    // The catalog is authoritative: Wordle rows it no longer lists are archived,
-    // keeping their unlocks, and come back if the ID returns.
+    // The catalog is authoritative for its own rows (condition is null): those
+    // it no longer lists are archived, keeping their unlocks, and come back if
+    // the ID returns.
     await db.transaction(async (tx) => {
       await tx
         .update(achievements)
@@ -121,6 +122,7 @@ export class AchievementService {
         .where(
           and(
             eq(achievements.category, 'wordle'),
+            isNull(achievements.condition),
             isNull(achievements.archived_at),
             notInArray(
               achievements.id,

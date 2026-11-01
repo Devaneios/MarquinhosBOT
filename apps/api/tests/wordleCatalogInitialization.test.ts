@@ -3,6 +3,7 @@ import {
   achievements,
   userAchievements,
   userLevels,
+  userStats,
 } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { afterAll, describe, expect, it } from 'bun:test';
@@ -37,6 +38,11 @@ const retiredAchievement = {
   reward_xp: 75,
   archived_at: null,
 };
+const operatorWordleAchievement = {
+  ...operatorAchievement,
+  id: 'operator-owned-wordle',
+  category: 'wordle',
+};
 const player = { user_id: 'retirement-user', guild_id: 'retirement-guild' };
 const playerFilter = and(
   eq(userAchievements.user_id, player.user_id),
@@ -45,19 +51,26 @@ const playerFilter = and(
 
 afterAll(async () => {
   await db.delete(userAchievements).where(playerFilter);
-  await db
-    .delete(userLevels)
-    .where(
-      and(
-        eq(userLevels.user_id, player.user_id),
-        eq(userLevels.guild_id, player.guild_id),
-      ),
-    );
+  for (const table of [userLevels, userStats])
+    await db
+      .delete(table)
+      .where(
+        and(
+          eq(table.user_id, player.user_id),
+          eq(table.guild_id, player.guild_id),
+        ),
+      );
   await db
     .delete(achievements)
     .where(
-      inArray(achievements.id, [operatorAchievement.id, retiredAchievement.id]),
+      inArray(achievements.id, [
+        operatorAchievement.id,
+        operatorWordleAchievement.id,
+        retiredAchievement.id,
+      ]),
     );
+  // Restores any catalog row a failed test left archived.
+  await defaults.initializeDefaults();
 });
 
 describe('Wordle catalog initialization', () => {
@@ -113,12 +126,18 @@ describe('Wordle catalog initialization', () => {
 
   it('archives Wordle rows missing from the catalog and keeps their unlocks', async () => {
     await defaults.initializeDefaults();
-    await db.insert(achievements).values(retiredAchievement);
-    await db.insert(userAchievements).values({
-      ...player,
-      achievement_id: retiredAchievement.id,
-      unlocked_at: 1,
-    });
+    await db
+      .insert(achievements)
+      .values([retiredAchievement, operatorWordleAchievement])
+      .onConflictDoNothing();
+    await db
+      .insert(userAchievements)
+      .values({
+        ...player,
+        achievement_id: retiredAchievement.id,
+        unlocked_at: 1,
+      })
+      .onConflictDoNothing();
 
     await defaults.initializeDefaults();
     const [archived] = await db
@@ -147,11 +166,19 @@ describe('Wordle catalog initialization', () => {
       ),
     ).toBe(false);
 
-    const [operatorRow] = await db
-      .select()
+    const operatorRows = await db
+      .select({ archived_at: achievements.archived_at })
       .from(achievements)
-      .where(eq(achievements.id, operatorAchievement.id));
-    expect(operatorRow?.archived_at).toBeNull();
+      .where(
+        inArray(achievements.id, [
+          operatorAchievement.id,
+          operatorWordleAchievement.id,
+        ]),
+      );
+    expect(operatorRows).toEqual([
+      { archived_at: null },
+      { archived_at: null },
+    ]);
   });
 
   it('restores a returning catalog ID without granting its XP again', async () => {
