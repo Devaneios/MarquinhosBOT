@@ -135,6 +135,19 @@ Do not serialize evaluator functions. Wordle rows in the generic
 `achievements` table keep `condition = null`; generic achievement conditions
 remain serialized and non-null.
 
+## Retire an achievement
+
+Delete the complete object from `content/`. On the next API start, seeding
+archives every active Wordle row whose ID is no longer in the catalog. Archived
+achievements disappear from listings and cannot be unlocked, but existing
+unlocks, pattern discoveries, and granted XP stay. Putting the same ID back
+restores it; players who already hold it keep their original unlock and get no
+second XP grant.
+
+Never reuse a retired ID for a different goal, because its holders would
+silently inherit the new meaning. When removing a drawing, also review the
+targets in `content/collections.ts` and the fixture entries for its pattern ID.
+
 ## Seeding and backfill
 
 API startup seeds Wordle metadata from `WORDLE_ACHIEVEMENT_CATALOG` into the
