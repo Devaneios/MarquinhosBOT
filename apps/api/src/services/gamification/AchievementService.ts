@@ -19,6 +19,7 @@ import {
   inArray,
   isNull,
   ne,
+  notInArray,
   sql,
 } from 'drizzle-orm';
 import { LevelingService } from 'services/gamification/LevelingService';
@@ -111,34 +112,51 @@ export class AchievementService {
         )
         .onConflictDoNothing();
     }
-    await db
-      .insert(achievements)
-      .values(
-        WORDLE_ACHIEVEMENT_CATALOG.map((definition) => ({
-          id: definition.id,
-          name: definition.name,
-          description: definition.description,
-          category: 'wordle',
-          rarity: definition.rarity,
-          icon: definition.icon,
-          condition: null,
-          reward_xp: definition.rewardXp,
-          archived_at: null,
-        })),
-      )
-      .onConflictDoUpdate({
-        target: achievements.id,
-        set: {
-          name: sql`excluded.name`,
-          description: sql`excluded.description`,
-          category: sql`excluded.category`,
-          rarity: sql`excluded.rarity`,
-          icon: sql`excluded.icon`,
-          condition: sql`excluded.condition`,
-          reward_xp: sql`excluded.reward_xp`,
-          archived_at: null,
-        },
-      });
+    // The catalog is authoritative: Wordle rows it no longer lists are archived,
+    // keeping their unlocks, and come back if the ID returns.
+    await db.transaction(async (tx) => {
+      await tx
+        .update(achievements)
+        .set({ archived_at: Date.now() })
+        .where(
+          and(
+            eq(achievements.category, 'wordle'),
+            isNull(achievements.archived_at),
+            notInArray(
+              achievements.id,
+              WORDLE_ACHIEVEMENT_CATALOG.map(({ id }) => id),
+            ),
+          ),
+        );
+      await tx
+        .insert(achievements)
+        .values(
+          WORDLE_ACHIEVEMENT_CATALOG.map((definition) => ({
+            id: definition.id,
+            name: definition.name,
+            description: definition.description,
+            category: 'wordle',
+            rarity: definition.rarity,
+            icon: definition.icon,
+            condition: null,
+            reward_xp: definition.rewardXp,
+            archived_at: null,
+          })),
+        )
+        .onConflictDoUpdate({
+          target: achievements.id,
+          set: {
+            name: sql`excluded.name`,
+            description: sql`excluded.description`,
+            category: sql`excluded.category`,
+            rarity: sql`excluded.rarity`,
+            icon: sql`excluded.icon`,
+            condition: sql`excluded.condition`,
+            reward_xp: sql`excluded.reward_xp`,
+            archived_at: null,
+          },
+        });
+    });
   }
 
   async checkAndAwardAchievements(
