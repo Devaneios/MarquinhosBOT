@@ -228,6 +228,12 @@ export class MarquinhosApiService {
   }
 
   // Wordle/Termo API calls
+  async recordWordlePresence(userId: string, guildId: string) {
+    return callContract(this.client, wordle.recordPresence, {
+      body: { userId, guildId },
+    });
+  }
+
   async submitWordleGuess(userId: string, guildId: string, guess: string) {
     return callContract(this.client, wordle.submitGuess, {
       body: { userId, guildId, guess },

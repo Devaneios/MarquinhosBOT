@@ -1,4 +1,7 @@
+import { db } from '@marquinhos/database/client';
+import { wordleCommunityDailyPresence } from '@marquinhos/database/schema';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
+import { and, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { startContractServer } from '../helpers/contractServer';
 
@@ -29,6 +32,22 @@ beforeAll(async () => {
 afterAll(() => server.close());
 
 describe('wordle contracts', () => {
+  it('records a bot player opening the game without submitting a guess', async () => {
+    const userId = `open-${randomUUID()}`;
+    await callContract(server.http, wordle.recordPresence, {
+      body: { userId, guildId },
+    });
+    const rows = await db
+      .select()
+      .from(wordleCommunityDailyPresence)
+      .where(
+        and(
+          eq(wordleCommunityDailyPresence.user_id, userId),
+          eq(wordleCommunityDailyPresence.guild_id, guildId),
+        ),
+      );
+    expect(rows).toHaveLength(1);
+  });
   it('reports the daily stats for a fresh guild', async () => {
     const response = await callContract(server.http, wordle.getStats, {
       params: { guildId },

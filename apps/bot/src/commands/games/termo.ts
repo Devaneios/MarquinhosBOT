@@ -97,6 +97,7 @@ export class TermoCommand extends MarquinhosCommand {
     const guess = interaction.options.getString('palpite', false)?.trim();
 
     if (!guess) {
+      await api.recordWordlePresence(userId, interaction.guildId);
       const userAttemptsResponse = await api.getUserWordleSession(
         userId,
         interaction.guildId,

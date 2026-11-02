@@ -132,6 +132,13 @@ export const submitGuess = defineContract({
   response: envelope(wordleGuessResultSchema),
 });
 
+export const recordPresence = defineContract({
+  method: 'POST',
+  path: '/api/wordle/presence',
+  body: z.object({ userId: requiredString, guildId: requiredString }),
+  response: envelope(z.object({ recorded: z.literal(true) })),
+});
+
 export const writeDraft = defineContract({
   method: 'POST',
   path: '/api/wordle/draft',

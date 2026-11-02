@@ -25,6 +25,21 @@ interface UserConfigResponse {
 export default class WordleController {
   constructor(private readonly userConfig: WordleUserConfigStore) {}
 
+  async recordPresence(req: Request, res: Response): Promise<void> {
+    const input = parseRequest(contract.recordPresence, req);
+    if (!input) {
+      res.status(400).json({ message: 'userId e guildId são obrigatórios.' });
+      return;
+    }
+    try {
+      await service.recordParticipation(input.body.userId, input.body.guildId);
+      sendContract(res, contract.recordPresence, { data: { recorded: true } });
+    } catch (error) {
+      console.error('WordleController.recordPresence error:', error);
+      res.status(500).json({ message: 'Erro interno.' });
+    }
+  }
+
   async getAchievements(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.getAchievements, req);
     if (!input) {

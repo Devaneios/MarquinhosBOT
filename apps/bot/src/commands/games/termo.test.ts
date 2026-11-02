@@ -5,7 +5,12 @@ process.env.MARQUINHOS_TOKEN = 'test-token';
 process.env.MARQUINHOS_CLIENT_ID = 'test-client';
 
 const writes: unknown[][] = [];
+const visits: unknown[][] = [];
 const apiStub = {
+  getWordleConfig: async () => ({ data: { channelId: 'channel-1' } }),
+  recordWordlePresence: async (...args: unknown[]) => {
+    visits.push(args);
+  },
   getWordleStats: async () => ({
     data: { wordDate: '2026-10-29', wordLength: 5 },
   }),
@@ -25,6 +30,26 @@ mock.module('@marquinhos/config/developmentScope', () => ({
 }));
 
 const { TermoCommand } = await import('./termo');
+
+describe('Termo command', () => {
+  it('records participation when opened without a guess', async () => {
+    visits.length = 0;
+    const command = Object.create(TermoCommand.prototype) as InstanceType<
+      typeof TermoCommand
+    >;
+    const interaction = {
+      guildId: 'guild-1',
+      channelId: 'channel-1',
+      user: { id: 'user-1' },
+      guild: { channels: { fetch: async () => ({ isTextBased: () => true }) } },
+      deferReply: async () => undefined,
+      editReply: async () => undefined,
+      options: { getString: () => null },
+    };
+    await command.chatInputRun(interaction as never);
+    expect(visits).toEqual([['user-1', 'guild-1']]);
+  });
+});
 
 describe('Termo draft autocomplete', () => {
   it('stores the input delivered by autocomplete, including short and cleared values', async () => {
