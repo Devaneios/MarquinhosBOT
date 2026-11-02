@@ -9,6 +9,7 @@ export interface GlobalWordleSessionRow {
   guildId: string;
   date: string;
   guesses: string;
+  state?: string;
 }
 
 export interface GlobalWordleDraftRow {
@@ -74,7 +75,10 @@ export function auditGlobalWordleHistory(
   for (const group of sessionsByPlayerDate.values()) {
     if (group.length < 2) continue;
     duplicateSessionGroups++;
-    if (new Set(group.map((session) => session.guesses)).size === 1) {
+    if (
+      new Set(group.map((session) => session.state ?? session.guesses)).size ===
+      1
+    ) {
       identicalSessionGroups++;
     } else {
       divergentSessionGroups++;

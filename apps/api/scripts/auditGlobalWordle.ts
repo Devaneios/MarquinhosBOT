@@ -55,6 +55,13 @@ async function main() {
         guildId: row.guild_id,
         date: row.word_date,
         guesses: row.guesses,
+        state: JSON.stringify({
+          guesses: row.guesses,
+          solved: row.solved,
+          solvedFromDraft: row.solved_from_draft,
+          attempts: row.attempts,
+          solvedAt: row.solved_at,
+        }),
       })),
       drafts: drafts.map((row) => ({
         userId: row.user_id,

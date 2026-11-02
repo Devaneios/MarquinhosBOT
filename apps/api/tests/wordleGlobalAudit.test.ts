@@ -27,10 +27,34 @@ describe('auditGlobalWordleHistory', () => {
     const report = auditGlobalWordleHistory({
       days: [],
       sessions: [
-        { userId: 'u', guildId: 'a', date: '2026-01-01', guesses: '["a"]' },
-        { userId: 'u', guildId: 'b', date: '2026-01-01', guesses: '["a"]' },
-        { userId: 'v', guildId: 'a', date: '2026-01-01', guesses: '["b"]' },
-        { userId: 'v', guildId: 'b', date: '2026-01-01', guesses: '["c"]' },
+        {
+          userId: 'u',
+          guildId: 'a',
+          date: '2026-01-01',
+          guesses: '["a"]',
+          state: 'solved',
+        },
+        {
+          userId: 'u',
+          guildId: 'b',
+          date: '2026-01-01',
+          guesses: '["a"]',
+          state: 'solved',
+        },
+        {
+          userId: 'v',
+          guildId: 'a',
+          date: '2026-01-01',
+          guesses: '["c"]',
+          state: 'unsolved',
+        },
+        {
+          userId: 'v',
+          guildId: 'b',
+          date: '2026-01-01',
+          guesses: '["c"]',
+          state: 'solved',
+        },
       ],
     });
 
