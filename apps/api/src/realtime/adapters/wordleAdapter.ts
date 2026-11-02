@@ -6,7 +6,6 @@ import {
 import type { Client } from 'colyseus';
 import type { WsSessionPayload } from 'services/activity/wsSessionToken';
 import { WordleService } from 'services/wordle';
-import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
 import { logger } from 'utils/logger';
 import type {
   AdapterContext,
@@ -103,8 +102,8 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
     }
     // Achievements are optional in `init`: a failure there must not keep the
     // player out of the game.
-    const overview = new WordleAchievementService()
-      .getOverview(auth.userId, auth.guildId)
+    const overview = service
+      .getAchievementsOverview(auth.userId, auth.guildId, auth.userId)
       .catch((error: unknown) => {
         logger.error('wordle.achievements.overview_failed', {
           error,

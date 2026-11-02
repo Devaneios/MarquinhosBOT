@@ -14,9 +14,13 @@ import type {
 } from '@marquinhos/contracts/wordle';
 import { db, type DbExecutor } from '@marquinhos/database/client';
 import {
+  wordleCommunityDailyPresence,
   wordleConfig,
   wordleDays,
   wordleDrafts,
+  wordleGlobalDays,
+  wordleGlobalMigrationState,
+  wordleGlobalSessions,
   wordleSessions,
   wordleStreaks,
   wordleUsedWords,
@@ -38,7 +42,11 @@ import { WordleAchievementService } from 'services/wordle/WordleAchievementServi
 import { recordWordlePresence } from 'services/wordle/WordleCommunityService';
 import { getRecifeDate } from 'services/wordle/wordleDate';
 import { WordleDraftService } from 'services/wordle/WordleDraftService';
+import { WordleGlobalAchievementService } from 'services/wordle/WordleGlobalAchievementService';
 import { WordleGlobalDayService } from 'services/wordle/WordleGlobalDayService';
+import { WordleGlobalDraftService } from 'services/wordle/WordleGlobalDraftService';
+import { WordleGlobalGameCoordinator } from 'services/wordle/WordleGlobalGameCoordinator';
+import { WordleGlobalGameplayService } from 'services/wordle/WordleGlobalGameplayService';
 import type { z } from 'zod';
 
 const logger = {
@@ -189,6 +197,27 @@ const REVIEW_SEED_BATCH_SIZE = 5_000;
 type PickMode = 'force' | 'ifStale';
 
 export class WordleService {
+  async isGlobalActive(): Promise<boolean> {
+    const [state] = await db
+      .select({ id: wordleGlobalMigrationState.id })
+      .from(wordleGlobalMigrationState)
+      .where(eq(wordleGlobalMigrationState.id, 'legacy-wordle'));
+    return !!state;
+  }
+
+  async getAchievementsOverview(
+    userId: string,
+    guildId: string,
+    viewerId: string,
+  ) {
+    if (await this.isGlobalActive())
+      return new WordleGlobalAchievementService(db).getOverview(
+        userId,
+        guildId,
+        viewerId,
+      );
+    return new WordleAchievementService().getOverview(userId, guildId);
+  }
   async getGlobalDailyWord(wordDate: string = this.today()) {
     return new WordleGlobalDayService(
       db,
@@ -358,6 +387,49 @@ export class WordleService {
     guildId: string,
     today: string = getRecifeDate(),
   ): Promise<WordleDaily> {
+    if (await this.isGlobalActive()) {
+      const day = await this.getGlobalDailyWord(today);
+      const [stored] = await db
+        .select()
+        .from(wordleGlobalDays)
+        .where(eq(wordleGlobalDays.word_date, today));
+      const [counts] = await db
+        .select({
+          players: sql<number>`count(*) filter (where ${wordleGlobalSessions.attempts} > 0 or ${wordleGlobalSessions.solved_from_draft})::int`,
+          winners: sql<number>`count(*) filter (where ${wordleGlobalSessions.solved})::int`,
+          attempts: sql<number>`coalesce(sum(${wordleGlobalSessions.attempts}) filter (where ${wordleGlobalSessions.solved}), 0)::int`,
+        })
+        .from(wordleCommunityDailyPresence)
+        .innerJoin(
+          wordleGlobalSessions,
+          and(
+            eq(
+              wordleGlobalSessions.user_id,
+              wordleCommunityDailyPresence.user_id,
+            ),
+            eq(
+              wordleGlobalSessions.word_date,
+              wordleCommunityDailyPresence.word_date,
+            ),
+          ),
+        )
+        .where(
+          and(
+            eq(wordleCommunityDailyPresence.guild_id, guildId),
+            eq(wordleCommunityDailyPresence.word_date, today),
+          ),
+        );
+      return {
+        guild_id: guildId,
+        word: day.word,
+        word_date: today,
+        word_length: day.wordLength,
+        players_count: counts?.players ?? 0,
+        winners_count: counts?.winners ?? 0,
+        total_attempts: counts?.attempts ?? 0,
+        created_at: stored!.created_at,
+      };
+    }
     let row = await this.findDaily(guildId, today);
     if (!row || row.word === null || row.word_length === null) {
       await this.pickNewWord(guildId, today, 'ifStale');
@@ -388,6 +460,16 @@ export class WordleService {
     guess: string,
   ): Promise<GuessResult | { error: string }> {
     await this.recordParticipation(userId, guildId);
+    if (await this.isGlobalActive()) {
+      const date = this.today();
+      await new WordleGlobalDraftService(db).finalizePlayerBefore(userId, date);
+      await this.getGlobalDailyWord(date);
+      const coordinator = new WordleGlobalGameCoordinator(
+        new WordleGlobalGameplayService(db, resolveCanonical),
+        new WordleGlobalAchievementService(db),
+      );
+      return coordinator.submitGuess(userId, guildId, date, guess);
+    }
     const canonicalGuess = resolveCanonical(guess);
     if (!canonicalGuess) {
       return { error: 'Palavra não encontrada na lista de palavras válidas.' };
@@ -622,6 +704,30 @@ export class WordleService {
     guildId: string,
   ): Promise<WordleSession | null> {
     const today = getRecifeDate();
+    if (await this.isGlobalActive()) {
+      const [row] = await db
+        .select()
+        .from(wordleGlobalSessions)
+        .where(
+          and(
+            eq(wordleGlobalSessions.user_id, userId),
+            eq(wordleGlobalSessions.word_date, today),
+          ),
+        );
+      return row
+        ? {
+            id: row.id,
+            user_id: userId,
+            guild_id: guildId,
+            word_date: today,
+            guesses: JSON.parse(row.guesses),
+            solved: row.solved,
+            solved_from_draft: row.solved_from_draft,
+            attempts: row.attempts,
+            created_at: row.created_at,
+          }
+        : null;
+    }
     const [row] = await db
       .select({
         id: wordleSessions.id,
@@ -848,6 +954,13 @@ export class WordleService {
     guildId: string,
   ): Promise<WordleDraft | null> {
     const session = await this.getUserSession(userId, guildId);
+    if (await this.isGlobalActive())
+      return new WordleGlobalDraftService(db).getCurrentDraft(
+        userId,
+        getRecifeDate(),
+        session?.attempts ?? 0,
+        session?.solved ?? false,
+      );
     return new WordleDraftService().getCurrentDraft(
       userId,
       guildId,
@@ -864,10 +977,14 @@ export class WordleService {
   ): Promise<WordleDraftWriteResult> {
     if (draft.date !== getRecifeDate()) return { status: 'closed' };
     await this.getDailyWord(guildId, draft.date);
+    if (await this.isGlobalActive())
+      return new WordleGlobalDraftService(db).write(userId, draft);
     return new WordleDraftService().write(userId, guildId, draft);
   }
 
   async finalizeExpiredDrafts(): Promise<void> {
+    if (await this.isGlobalActive())
+      return new WordleGlobalDraftService(db).finalizeExpiredDrafts();
     await new WordleDraftService().finalizeExpiredDrafts();
   }
 

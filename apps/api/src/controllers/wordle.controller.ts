@@ -3,7 +3,6 @@ import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import type { Request, Response } from 'express';
 import type { DiscordUser } from 'services/discord';
 import { WordleService } from 'services/wordle';
-import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
 import { parseRequest, sendContract } from 'utils/contract';
 
 const service = new WordleService();
@@ -49,7 +48,7 @@ export default class WordleController {
     try {
       const { userId, guildId } = input.params;
       sendContract(res, contract.getAchievements, {
-        data: await new WordleAchievementService().getOverview(userId, guildId),
+        data: await service.getAchievementsOverview(userId, guildId, ''),
       });
     } catch (error) {
       console.error('WordleController.getAchievements error:', error);
