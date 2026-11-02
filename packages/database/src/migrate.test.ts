@@ -1,7 +1,15 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { sql } from 'drizzle-orm';
 import { runMigrations } from './migrate';
-import { users, wordleUserConfig } from './schema';
+import {
+  users,
+  wordleCommunityDailyPresence,
+  wordleCommunityParticipation,
+  wordleGlobalDays,
+  wordleGlobalSessions,
+  wordleShowcase,
+  wordleUserConfig,
+} from './schema';
 import { createTestDb, type TestDb } from './testing';
 
 let testDb: TestDb;
@@ -15,6 +23,89 @@ afterAll(async () => {
 });
 
 describe('baseline migrations', () => {
+  test('stores one global daily session and community presence separately', async () => {
+    await testDb.db.insert(wordleGlobalDays).values({
+      word_date: '2026-11-01',
+      word: 'termo',
+      word_length: 5,
+      created_at: 1,
+    });
+    await testDb.db.insert(wordleGlobalSessions).values({
+      id: 'global-session',
+      user_id: 'global-player',
+      word_date: '2026-11-01',
+      created_at: 1,
+    });
+    await testDb.db.insert(wordleCommunityParticipation).values({
+      guild_id: 'community-a',
+      user_id: 'global-player',
+      first_seen_at: 1,
+      last_seen_at: 1,
+    });
+    await testDb.db.insert(wordleCommunityDailyPresence).values({
+      guild_id: 'community-a',
+      user_id: 'global-player',
+      word_date: '2026-11-01',
+      first_seen_at: 1,
+    });
+    await testDb.db.insert(wordleCommunityDailyPresence).values({
+      guild_id: 'community-b',
+      user_id: 'global-player',
+      word_date: '2026-11-01',
+      first_seen_at: 2,
+    });
+
+    const sessions = await testDb.db.select().from(wordleGlobalSessions);
+    const presences = await testDb.db
+      .select()
+      .from(wordleCommunityDailyPresence);
+    expect(sessions).toHaveLength(1);
+    expect(presences).toHaveLength(2);
+  });
+
+  test('limits the global showcase to three distinct achievement ids', async () => {
+    await testDb.db.insert(wordleShowcase).values([
+      {
+        user_id: 'showcase-player',
+        slot: 1,
+        achievement_id: 'a',
+        updated_at: 1,
+      },
+      {
+        user_id: 'showcase-player',
+        slot: 2,
+        achievement_id: 'b',
+        updated_at: 1,
+      },
+      {
+        user_id: 'showcase-player',
+        slot: 3,
+        achievement_id: 'c',
+        updated_at: 1,
+      },
+    ]);
+    await expect(
+      testDb.db
+        .insert(wordleShowcase)
+        .values({
+          user_id: 'too-many',
+          slot: 4,
+          achievement_id: 'd',
+          updated_at: 1,
+        })
+        .execute(),
+    ).rejects.toThrow();
+    await expect(
+      testDb.db
+        .insert(wordleShowcase)
+        .values([
+          { user_id: 'duplicate', slot: 1, achievement_id: 'a', updated_at: 1 },
+          { user_id: 'duplicate', slot: 2, achievement_id: 'a', updated_at: 1 },
+        ])
+        .execute(),
+    ).rejects.toThrow();
+  });
+
   test('allows only one recorded first solver per guild and day', async () => {
     await testDb.db.execute(sql`
       INSERT INTO wordle_days (guild_id, word_date, is_legacy, created_at)

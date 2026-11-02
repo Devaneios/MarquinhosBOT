@@ -203,3 +203,97 @@ export const wordleUserConfig = pgTable(
     ),
   ],
 );
+
+// Global Wordle state is introduced alongside the legacy guild-scoped tables.
+// Writers move to these tables only after historical conflicts are resolved.
+export const wordleGlobalDays = pgTable(
+  'wordle_global_days',
+  {
+    word_date: text('word_date').primaryKey(),
+    word: text('word').notNull(),
+    word_length: integer('word_length').notNull(),
+    created_at: bigint('created_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    check('wordle_global_days_word_length_check', sql`${t.word_length} > 0`),
+    check(
+      'wordle_global_days_word_matches_length_check',
+      sql`char_length(${t.word}) = ${t.word_length}`,
+    ),
+  ],
+);
+
+export const wordleGlobalSessions = pgTable(
+  'wordle_global_sessions',
+  {
+    id: text('id').primaryKey(),
+    user_id: text('user_id').notNull(),
+    word_date: text('word_date').notNull(),
+    guesses: text('guesses').notNull().default('[]'),
+    solved: boolean('solved').notNull().default(false),
+    solved_from_draft: boolean('solved_from_draft').notNull().default(false),
+    solved_at: bigint('solved_at', { mode: 'number' }),
+    attempts: integer('attempts').notNull().default(0),
+    created_at: bigint('created_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    unique().on(t.user_id, t.word_date),
+    index('wordle_global_sessions_date_solve_idx').on(t.word_date, t.solved_at),
+    check(
+      'wordle_global_sessions_draft_win_check',
+      sql`NOT ${t.solved_from_draft} OR (${t.solved} AND ${t.attempts} = 0)`,
+    ),
+  ],
+);
+
+export const wordleCommunityParticipation = pgTable(
+  'wordle_community_participation',
+  {
+    guild_id: text('guild_id').notNull(),
+    user_id: text('user_id').notNull(),
+    first_seen_at: bigint('first_seen_at', { mode: 'number' }).notNull(),
+    last_seen_at: bigint('last_seen_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.guild_id, t.user_id] })],
+);
+
+export const wordleCommunityDailyPresence = pgTable(
+  'wordle_community_daily_presence',
+  {
+    guild_id: text('guild_id').notNull(),
+    user_id: text('user_id').notNull(),
+    word_date: text('word_date').notNull(),
+    first_seen_at: bigint('first_seen_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.guild_id, t.user_id, t.word_date] }),
+    index('wordle_community_presence_date_idx').on(t.guild_id, t.word_date),
+  ],
+);
+
+export const wordleCommunityFirstSolves = pgTable(
+  'wordle_community_first_solves',
+  {
+    guild_id: text('guild_id').notNull(),
+    word_date: text('word_date').notNull(),
+    user_id: text('user_id').notNull(),
+    session_id: text('session_id').notNull(),
+    solved_at: bigint('solved_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.guild_id, t.word_date] })],
+);
+
+export const wordleShowcase = pgTable(
+  'wordle_showcase',
+  {
+    user_id: text('user_id').notNull(),
+    slot: integer('slot').notNull(),
+    achievement_id: text('achievement_id').notNull(),
+    updated_at: bigint('updated_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.user_id, t.slot] }),
+    unique().on(t.user_id, t.achievement_id),
+    check('wordle_showcase_slot_check', sql`${t.slot} BETWEEN 1 AND 3`),
+  ],
+);
