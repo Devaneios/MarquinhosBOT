@@ -1,3 +1,4 @@
+import type { WordleAchievementsOverview } from '@marquinhos/contracts/wordle';
 import type { WordleGlobalGameplayService } from './WordleGlobalGameplayService';
 
 interface GlobalAwards {
@@ -5,6 +6,11 @@ interface GlobalAwards {
     userId: string,
     guildId: string,
   ): Promise<{ unlockedIds: string[] }>;
+  getOverview(
+    userId: string,
+    guildId: string,
+    viewerId: string,
+  ): Promise<WordleAchievementsOverview>;
 }
 
 /** Coordinates a committed guess and its retryable achievement evaluation. */
@@ -26,7 +32,11 @@ export class WordleGlobalGameCoordinator {
     if ('error' in result) return result;
     try {
       const award = await this.awards.checkAndAward(userId, guildId);
-      return { ...result, unlockedIds: award.unlockedIds };
+      const overview = await this.awards.getOverview(userId, guildId, userId);
+      return {
+        ...result,
+        achievementUpdate: { overview, unlockedIds: award.unlockedIds },
+      };
     } catch (error) {
       this.warn(error);
       return result;

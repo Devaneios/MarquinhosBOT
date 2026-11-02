@@ -49,7 +49,10 @@ describe('global game coordinator', () => {
     expect(result).toMatchObject({
       solved: true,
       attempts: 1,
-      unlockedIds: ['wordle_v2_solved_exactly_1'],
+      achievementUpdate: {
+        unlockedIds: ['wordle_v2_solved_exactly_1'],
+        overview: { stats: { played: 1, wins: 1 } },
+      },
     });
     expect(
       await testDb.db.select().from(wordleGlobalAchievements),
@@ -67,6 +70,9 @@ describe('global game coordinator', () => {
       gameplay,
       {
         checkAndAward: async () => {
+          throw new Error('unavailable');
+        },
+        getOverview: async () => {
           throw new Error('unavailable');
         },
       },
@@ -103,6 +109,9 @@ describe('global game coordinator', () => {
       checkAndAward: async () => {
         awardCalls++;
         return { unlockedIds: [] };
+      },
+      getOverview: async () => {
+        throw new Error('not expected');
       },
     });
     expect(

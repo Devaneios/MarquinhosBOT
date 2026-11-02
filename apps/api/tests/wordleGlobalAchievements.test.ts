@@ -2,6 +2,7 @@ import {
   achievements,
   userLevels,
   wordleCommunityFirstSolves,
+  wordleCommunityParticipation,
   wordleGlobalAchievements,
   wordleGlobalDays,
   wordleGlobalDiscoveries,
@@ -9,6 +10,7 @@ import {
   wordleGlobalSessions,
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
+import { matchWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/engine/matchPatterns';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { WordleGlobalAchievementService } from '../src/services/wordle/WordleGlobalAchievementService';
 
@@ -51,6 +53,92 @@ afterAll(async () => {
 });
 
 describe('global Wordle achievements', () => {
+  it('shows a global collection and withholds today’s evidence from other players', async () => {
+    const date = '2026-11-01';
+    const feedback = [
+      ['correct', 'correct', 'correct', 'correct', 'absent'],
+    ] as const;
+    const match = matchWordlePatterns(feedback).find(
+      (item) => item.patternId === 'tetromino_i',
+    )!;
+    await testDb.db.insert(achievements).values({
+      id: 'wordle_v2_pattern_tetromino_i',
+      name: 'I',
+      description: 'I',
+      category: 'wordle',
+      rarity: 'common',
+      icon: 'x',
+      reward_xp: 25,
+    });
+    await testDb.db.insert(wordleGlobalDays).values({
+      word_date: date,
+      word: 'termo',
+      word_length: 5,
+      created_at: 1,
+    });
+    await testDb.db.insert(wordleGlobalSessions).values({
+      id: 'profile-session',
+      user_id: 'profile-player',
+      word_date: date,
+      attempts: 1,
+      guesses: JSON.stringify([{ guess: 'terma', feedback: feedback[0] }]),
+      created_at: 1,
+    });
+    await testDb.db.insert(wordleGlobalAchievements).values({
+      user_id: 'profile-player',
+      achievement_id: 'wordle_v2_pattern_tetromino_i',
+      unlocked_at: 1000,
+    });
+    await testDb.db.insert(wordleGlobalDiscoveries).values({
+      user_id: 'profile-player',
+      pattern_id: 'tetromino_i',
+      session_id: 'profile-session',
+      discovered_at: 1000,
+      evidence: { ...match, feedback, date },
+    });
+    await testDb.db.insert(wordleCommunityParticipation).values([
+      {
+        user_id: 'profile-player',
+        guild_id: 'profile-guild',
+        first_seen_at: 1,
+        last_seen_at: 1,
+      },
+      {
+        user_id: 'friend',
+        guild_id: 'profile-guild',
+        first_seen_at: 1,
+        last_seen_at: 1,
+      },
+    ]);
+    const service = new WordleGlobalAchievementService(testDb.db, () =>
+      Date.parse('2026-11-01T15:00:00Z'),
+    );
+    const mine = await service.getOverview(
+      'profile-player',
+      'profile-guild',
+      'profile-player',
+    );
+    const theirs = await service.getOverview(
+      'profile-player',
+      'profile-guild',
+      'friend',
+    );
+    const self = mine.achievements.find(
+      (item) => item.id === 'wordle_v2_pattern_tetromino_i',
+    );
+    const publicItem = theirs.achievements.find(
+      (item) => item.id === 'wordle_v2_pattern_tetromino_i',
+    );
+    expect(mine.stats.played).toBe(1);
+    expect(self?.matchEvidence?.date).toBe(date);
+    expect(publicItem?.matchEvidence).toBeNull();
+    expect(publicItem?.holdersPercent).toBe(50);
+    expect(
+      theirs.achievements.find(
+        (item) => item.hidden && item.unlockedAt === null,
+      )?.name,
+    ).toBe('');
+  });
   it('counts a first solve in two communities as one global achievement day', async () => {
     await testDb.db.insert(achievements).values({
       id: 'wordle_v2_first_solver_1',
