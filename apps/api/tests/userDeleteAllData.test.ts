@@ -1,12 +1,14 @@
 import { db } from '@marquinhos/database/client';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
+import { randomUUID } from 'crypto';
 import { sql } from 'drizzle-orm';
 import { UserService } from 'services/user';
 import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
 import { installWordleAchievementCatalog } from './helpers/wordleAchievementCatalog';
 
-const USER = 'delete-me';
-const OTHER = 'keep-me';
+const RUN = randomUUID();
+const USER = `delete-me-${RUN}`;
+const OTHER = `keep-me-${RUN}`;
 let restoreCatalog: (() => Promise<void>) | undefined;
 beforeAll(async () => {
   restoreCatalog = await installWordleAchievementCatalog();
@@ -41,6 +43,17 @@ async function seed(userId: string) {
     sql`INSERT INTO wordle_drafts (user_id, guild_id, word_date, row_index, cells, active_index, revision, updated_at)
         VALUES (${userId}, 'g', '2026-09-24', 0, '["t", "", "r", "", "o"]'::jsonb, 2, 1, ${now})`,
   );
+  await db.execute(sql`INSERT INTO wordle_global_days
+    (word_date, word, word_length, created_at) VALUES ('2026-09-24', 'termo', 5, ${now})
+    ON CONFLICT (word_date) DO NOTHING`);
+  await db.execute(sql`INSERT INTO wordle_global_sessions
+    (id, user_id, word_date, created_at) VALUES (${`global-${userId}`}, ${userId}, '2026-09-24', ${now})`);
+  await db.execute(sql`INSERT INTO wordle_community_participation
+    (guild_id, user_id, first_seen_at, last_seen_at) VALUES ('g', ${userId}, ${now}, ${now})`);
+  await db.execute(sql`INSERT INTO wordle_community_daily_presence
+    (guild_id, user_id, word_date, first_seen_at) VALUES ('g', ${userId}, '2026-09-24', ${now})`);
+  await db.execute(sql`INSERT INTO wordle_showcase
+    (user_id, slot, achievement_id, updated_at) VALUES (${userId}, 1, 'wordle_v2_solve_1', ${now})`);
   const evidence = {
     patternId: 'tetromino_i',
     color: 'present',
@@ -99,6 +112,10 @@ describe('UserService.deleteAllData', () => {
       ['wordle_sessions', 'user_id'],
       ['wordle_drafts', 'user_id'],
       ['wordle_pattern_discoveries', 'user_id'],
+      ['wordle_global_sessions', 'user_id'],
+      ['wordle_community_participation', 'user_id'],
+      ['wordle_community_daily_presence', 'user_id'],
+      ['wordle_showcase', 'user_id'],
       ['ai_traces', 'user_id'],
       ['ai_thread_sessions', 'owner_user_id'],
     ] as const) {
