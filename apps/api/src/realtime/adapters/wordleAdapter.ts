@@ -98,6 +98,9 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
   },
 
   async onJoin(service, auth, client, seat: SeatRole) {
+    if (seat === 'player') {
+      await service.recordParticipation(auth.userId, auth.guildId);
+    }
     // Achievements are optional in `init`: a failure there must not keep the
     // player out of the game.
     const overview = new WordleAchievementService()

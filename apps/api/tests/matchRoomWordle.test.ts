@@ -1,5 +1,9 @@
+import { db } from '@marquinhos/database/client';
+import { wordleCommunityDailyPresence } from '@marquinhos/database/schema';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
+import { and, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
+import { getRecifeDate } from '../src/services/wordle/wordleDate';
 
 const { MatchRoom } = await import('../src/realtime/MatchRoom');
 const { bootColyseusTestServer, nextMessage, pendingMessages } =
@@ -99,6 +103,17 @@ describe('MatchRoom · wordle', () => {
     expect(init.guesses).toEqual([]);
     expect(init.solved).toBe(false);
     expect(init.attempts).toBe(0);
+    const presence = await db
+      .select()
+      .from(wordleCommunityDailyPresence)
+      .where(
+        and(
+          eq(wordleCommunityDailyPresence.user_id, 'user-a'),
+          eq(wordleCommunityDailyPresence.guild_id, `guild-init-${testRunId}`),
+          eq(wordleCommunityDailyPresence.word_date, getRecifeDate()),
+        ),
+      );
+    expect(presence).toHaveLength(1);
   });
 
   it('replies guess_result for a valid guess of the right length', async () => {

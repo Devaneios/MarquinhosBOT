@@ -35,6 +35,7 @@ import {
 import { lockWordleDay, lockWordlePlayer } from 'services/wordle/gameplayLock';
 import { updateWordleStreak } from 'services/wordle/streaks';
 import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
+import { recordWordlePresence } from 'services/wordle/WordleCommunityService';
 import { getRecifeDate } from 'services/wordle/wordleDate';
 import { WordleDraftService } from 'services/wordle/WordleDraftService';
 import type { z } from 'zod';
@@ -187,6 +188,15 @@ const REVIEW_SEED_BATCH_SIZE = 5_000;
 type PickMode = 'force' | 'ifStale';
 
 export class WordleService {
+  async recordParticipation(userId: string, guildId: string): Promise<void> {
+    await recordWordlePresence(
+      db,
+      userId,
+      guildId,
+      getRecifeDate(),
+      Math.floor(Date.now() / 1000),
+    );
+  }
   constructor(private readonly today: () => string = getRecifeDate) {}
 
   async pickNewWord(
@@ -368,6 +378,7 @@ export class WordleService {
     guildId: string,
     guess: string,
   ): Promise<GuessResult | { error: string }> {
+    await this.recordParticipation(userId, guildId);
     const canonicalGuess = resolveCanonical(guess);
     if (!canonicalGuess) {
       return { error: 'Palavra não encontrada na lista de palavras válidas.' };
