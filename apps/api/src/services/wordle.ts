@@ -47,6 +47,7 @@ import { WordleGlobalDayService } from 'services/wordle/WordleGlobalDayService';
 import { WordleGlobalDraftService } from 'services/wordle/WordleGlobalDraftService';
 import { WordleGlobalGameCoordinator } from 'services/wordle/WordleGlobalGameCoordinator';
 import { WordleGlobalGameplayService } from 'services/wordle/WordleGlobalGameplayService';
+import { WordleGlobalLeaderboardService } from 'services/wordle/WordleGlobalLeaderboardService';
 import type { z } from 'zod';
 
 const logger = {
@@ -1026,6 +1027,14 @@ export class WordleService {
     | { userId: string; totalDays: number; avgScore: number }[]
     | { userId: string; attempts: number; solved: boolean }[]
   > {
+    if (await this.isGlobalActive()) {
+      return new WordleGlobalLeaderboardService(db).getLeaderboard(
+        guildId,
+        period,
+        period === 'daily' ? (date ?? getRecifeDate()) : getRecifeDate(),
+        limit,
+      );
+    }
     if (period === 'daily') {
       const wordDate = date ?? getRecifeDate();
       const rows = await db
@@ -1115,6 +1124,11 @@ export class WordleService {
 
   async getGroupStreak(guildId: string): Promise<number> {
     const today = getRecifeDate();
+    if (await this.isGlobalActive())
+      return new WordleGlobalLeaderboardService(db).getGroupStreak(
+        guildId,
+        today,
+      );
     const yesterday = this.getYesterday(today);
 
     const rows = await db

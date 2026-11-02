@@ -18,6 +18,15 @@ try {
     'community-a',
     'porta',
   );
+  await service.recordParticipation('global-player', 'community-b');
+  const rankA = await service.getLeaderboard('community-a', 10, 'daily', date);
+  const rankB = await service.getLeaderboard('community-b', 10, 'daily', date);
+  const rankOther = await service.getLeaderboard(
+    'community-c',
+    10,
+    'daily',
+    date,
+  );
   const session = await service.getUserSession('global-player', 'community-b');
   const before = await service.getUserDraft('global-player', 'community-b');
   const saved = await service.writeDraft('global-player', 'community-b', {
@@ -33,6 +42,9 @@ try {
       dayA: dayA.word,
       dayB: dayB.word,
       played,
+      rankA,
+      rankB,
+      rankOther,
       session,
       before,
       saved,

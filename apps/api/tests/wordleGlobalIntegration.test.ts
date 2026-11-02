@@ -29,6 +29,13 @@ describe('global Wordle integration', () => {
     expect(result.dayA).toBe('termo');
     expect(result.dayB).toBe('termo');
     expect(result.played).toMatchObject({ attempts: 1, solved: false });
+    expect(result.rankA).toEqual([
+      { userId: 'global-player', attempts: 1, solved: false },
+    ]);
+    expect(result.rankB).toEqual([
+      { userId: 'global-player', attempts: 1, solved: false },
+    ]);
+    expect(result.rankOther).toEqual([]);
     expect(result.session).toMatchObject({
       attempts: 1,
       guesses: [{ guess: 'porta' }],
