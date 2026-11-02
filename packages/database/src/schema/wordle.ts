@@ -247,6 +247,27 @@ export const wordleGlobalSessions = pgTable(
   ],
 );
 
+export const wordleGlobalSessionOrigins = pgTable(
+  'wordle_global_session_origins',
+  {
+    source_session_id: text('source_session_id').primaryKey(),
+    global_session_id: text('global_session_id')
+      .notNull()
+      .references(() => wordleGlobalSessions.id, { onDelete: 'cascade' }),
+    guild_id: text('guild_id').notNull(),
+    word_date: text('word_date').notNull(),
+  },
+);
+
+export const wordleGlobalMigrationState = pgTable(
+  'wordle_global_migration_state',
+  {
+    id: text('id').primaryKey(),
+    source_digest: text('source_digest').notNull(),
+    completed_at: bigint('completed_at', { mode: 'number' }).notNull(),
+  },
+);
+
 export const wordleGlobalDrafts = pgTable(
   'wordle_global_drafts',
   {

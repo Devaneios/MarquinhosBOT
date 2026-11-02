@@ -35,3 +35,15 @@ bun apps/api/scripts/reconcileGlobalWordleAchievements.ts --user-id ID --guild-i
 A opção `--guild-id` determina o servidor que recebe o XP das conquistas recém-concedidas; use o servidor associado à jogada que precisa ser reconciliada. Repetir a operação não concede a mesma conquista global nem o mesmo XP novamente. O comando imprime apenas o número de conquistas concedidas. A aplicação em produção depende da migração e ativação da jornada global e não faz parte desta etapa.
 
 Não existe nesta etapa uma escolha automática entre respostas, sessões ou saldos conflitantes. O próximo passo é revisar a saída agregada e, se necessário, usar uma ferramenta de análise isolada que gere um manifesto sanitizado por conflito, sem aplicar alterações. A migração só deve ser escrita depois de definir regras para cada classe de divergência, testar repetição e restauração em snapshot e revisar o plano operacional.
+
+## Conversão em snapshot isolado
+
+A ferramenta de conversão utiliza uma transação serializável. Sem opções, ela executa os mesmos passos da conversão e desfaz a transação ao final:
+
+```sh
+bun apps/api/scripts/migrateGlobalWordle.ts
+```
+
+Para manter os resultados em uma cópia de teste, use `--apply`. Em caso de palavras, sessões ou rascunhos conflitantes, ela retorna categorias de conflito e não aplica nenhuma parte da conversão. O histórico antigo e os saldos de XP existentes não são alterados. Origens das sessões são guardadas e desbloqueios são consolidados sem conceder XP novamente. Evidências inválidas permanecem no histórico antigo e não são copiadas para a coleção global.
+
+A aplicação exige parar todos os escritores e workers da versão antiga antes da auditoria e durante a conversão; a trava da ferramenta não impede que binários antigos escrevam. Repetir sobre a mesma origem é seguro, mas qualquer alteração na origem após a conversão faz a ferramenta recusar uma nova execução. Antes de produção ainda é necessário resolver conflitos reais, validar equivalência do histórico, implementar e testar o caminho de ativação e a restauração, e obter instrução explícita para implantação.
