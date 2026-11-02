@@ -13,6 +13,7 @@ import {
   unique,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
+import { achievements } from './gamification';
 
 export const wordleUsedWords = pgTable('wordle_used_words', {
   word: text('word').primaryKey(),
@@ -331,5 +332,45 @@ export const wordleShowcase = pgTable(
     primaryKey({ columns: [t.user_id, t.slot] }),
     unique().on(t.user_id, t.achievement_id),
     check('wordle_showcase_slot_check', sql`${t.slot} BETWEEN 1 AND 3`),
+  ],
+);
+
+export const wordleGlobalAchievements = pgTable(
+  'wordle_global_achievements',
+  {
+    user_id: text('user_id').notNull(),
+    achievement_id: text('achievement_id')
+      .notNull()
+      .references(() => achievements.id),
+    unlocked_at: bigint('unlocked_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.user_id, t.achievement_id] })],
+);
+
+export const wordleGlobalDiscoveries = pgTable(
+  'wordle_global_discoveries',
+  {
+    user_id: text('user_id').notNull(),
+    pattern_id: text('pattern_id').notNull(),
+    session_id: text('session_id').notNull(),
+    discovered_at: bigint('discovered_at', { mode: 'number' }).notNull(),
+    evidence: jsonb('evidence').$type<unknown>().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.user_id, t.pattern_id] })],
+);
+
+export const wordleGlobalOccurrences = pgTable(
+  'wordle_global_occurrences',
+  {
+    user_id: text('user_id').notNull(),
+    word_date: text('word_date').notNull(),
+    pattern_id: text('pattern_id').notNull(),
+    session_id: text('session_id').notNull(),
+    occurred_at: bigint('occurred_at', { mode: 'number' }).notNull(),
+    evidence: jsonb('evidence').$type<unknown>().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.user_id, t.word_date, t.pattern_id] }),
+    index('wordle_global_occurrences_date_idx').on(t.word_date),
   ],
 );

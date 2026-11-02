@@ -5,8 +5,11 @@ import {
   users,
   wordleCommunityDailyPresence,
   wordleCommunityParticipation,
+  wordleGlobalAchievements,
   wordleGlobalDays,
+  wordleGlobalDiscoveries,
   wordleGlobalDrafts,
+  wordleGlobalOccurrences,
   wordleGlobalSessions,
   wordleShowcase,
   wordleUserConfig,
@@ -24,6 +27,65 @@ afterAll(async () => {
 });
 
 describe('baseline migrations', () => {
+  test('stores global achievements once and permits repeat discoveries on different days', async () => {
+    await testDb.db.execute(
+      sql`INSERT INTO achievements (id, name, description, category, rarity, icon, reward_xp) VALUES ('achievement', 'test', 'test', 'wordle', 'common', 'x', 0)`,
+    );
+    await testDb.db.insert(wordleGlobalAchievements).values({
+      user_id: 'collector',
+      achievement_id: 'achievement',
+      unlocked_at: 1,
+    });
+    await expect(
+      testDb.db
+        .insert(wordleGlobalAchievements)
+        .values({
+          user_id: 'collector',
+          achievement_id: 'achievement',
+          unlocked_at: 2,
+        })
+        .execute(),
+    ).rejects.toThrow();
+    await testDb.db.insert(wordleGlobalDiscoveries).values({
+      user_id: 'collector',
+      pattern_id: 'pattern',
+      session_id: 'one',
+      discovered_at: 1,
+      evidence: { color: 'present' },
+    });
+    await expect(
+      testDb.db
+        .insert(wordleGlobalDiscoveries)
+        .values({
+          user_id: 'collector',
+          pattern_id: 'pattern',
+          session_id: 'two',
+          discovered_at: 2,
+          evidence: { color: 'correct' },
+        })
+        .execute(),
+    ).rejects.toThrow();
+    await testDb.db.insert(wordleGlobalOccurrences).values([
+      {
+        user_id: 'collector',
+        word_date: '2026-11-01',
+        pattern_id: 'pattern',
+        session_id: 'one',
+        occurred_at: 1,
+        evidence: { color: 'present' },
+      },
+      {
+        user_id: 'collector',
+        word_date: '2026-11-02',
+        pattern_id: 'pattern',
+        session_id: 'two',
+        occurred_at: 2,
+        evidence: { color: 'correct' },
+      },
+    ]);
+    const occurrences = await testDb.db.select().from(wordleGlobalOccurrences);
+    expect(occurrences).toHaveLength(2);
+  });
   test('keeps one global draft per player and date', async () => {
     const draft = {
       user_id: 'draft-player',
