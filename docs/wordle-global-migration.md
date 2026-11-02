@@ -26,4 +26,12 @@ O XP é compartilhado com outros sistemas e armazenado por jogador e servidor. D
 
 ## Estado e limites
 
+O código da jornada global inclui uma reconciliação individual de conquistas para uso em ambiente de desenvolvimento e testes. Após a ativação futura da jornada global, ela poderá recuperar uma avaliação que falhou depois de um palpite salvo:
+
+```sh
+bun apps/api/scripts/reconcileGlobalWordleAchievements.ts --user-id ID --guild-id ID
+```
+
+A opção `--guild-id` determina o servidor que recebe o XP das conquistas recém-concedidas; use o servidor associado à jogada que precisa ser reconciliada. Repetir a operação não concede a mesma conquista global nem o mesmo XP novamente. O comando imprime apenas o número de conquistas concedidas. A aplicação em produção depende da migração e ativação da jornada global e não faz parte desta etapa.
+
 Não existe nesta etapa uma escolha automática entre respostas, sessões ou saldos conflitantes. O próximo passo é revisar a saída agregada e, se necessário, usar uma ferramenta de análise isolada que gere um manifesto sanitizado por conflito, sem aplicar alterações. A migração só deve ser escrita depois de definir regras para cada classe de divergência, testar repetição e restauração em snapshot e revisar o plano operacional.
