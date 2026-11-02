@@ -246,6 +246,42 @@ export const wordleGlobalSessions = pgTable(
   ],
 );
 
+export const wordleGlobalDrafts = pgTable(
+  'wordle_global_drafts',
+  {
+    user_id: text('user_id').notNull(),
+    word_date: text('word_date').notNull(),
+    row_index: integer('row_index').notNull(),
+    cells: jsonb('cells').$type<string[]>().notNull(),
+    active_index: integer('active_index').notNull(),
+    revision: integer('revision').notNull(),
+    updated_at: bigint('updated_at', { mode: 'number' }).notNull(),
+    finalized_at: bigint('finalized_at', { mode: 'number' }),
+    award_reconciled_at: bigint('award_reconciled_at', { mode: 'number' }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.user_id, t.word_date] }),
+    check('wordle_global_drafts_row_index_check', sql`${t.row_index} >= 0`),
+    check(
+      'wordle_global_drafts_active_index_check',
+      sql`${t.active_index} BETWEEN 0 AND 11`,
+    ),
+    check('wordle_global_drafts_revision_check', sql`${t.revision} > 0`),
+    check(
+      'wordle_global_drafts_cells_check',
+      sql`jsonb_typeof(${t.cells}) = 'array' AND jsonb_array_length(${t.cells}) BETWEEN 5 AND 12`,
+    ),
+    index('wordle_global_drafts_pending_finalization_idx')
+      .on(t.word_date)
+      .where(sql`${t.finalized_at} IS NULL`),
+    index('wordle_global_drafts_pending_award_idx')
+      .on(t.word_date)
+      .where(
+        sql`${t.finalized_at} IS NOT NULL AND ${t.award_reconciled_at} IS NULL`,
+      ),
+  ],
+);
+
 export const wordleCommunityParticipation = pgTable(
   'wordle_community_participation',
   {

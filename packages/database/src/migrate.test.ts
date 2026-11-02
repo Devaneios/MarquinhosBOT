@@ -6,6 +6,7 @@ import {
   wordleCommunityDailyPresence,
   wordleCommunityParticipation,
   wordleGlobalDays,
+  wordleGlobalDrafts,
   wordleGlobalSessions,
   wordleShowcase,
   wordleUserConfig,
@@ -23,6 +24,25 @@ afterAll(async () => {
 });
 
 describe('baseline migrations', () => {
+  test('keeps one global draft per player and date', async () => {
+    const draft = {
+      user_id: 'draft-player',
+      word_date: '2026-11-02',
+      row_index: 0,
+      cells: ['t', '', '', '', ''],
+      active_index: 1,
+      revision: 1,
+      updated_at: 1,
+    };
+    await testDb.db.insert(wordleGlobalDrafts).values(draft);
+    await expect(
+      testDb.db.insert(wordleGlobalDrafts).values(draft).execute(),
+    ).rejects.toThrow();
+    const rows = await testDb.db.select().from(wordleGlobalDrafts);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.cells).toEqual(draft.cells);
+  });
+
   test('stores one global daily session and community presence separately', async () => {
     await testDb.db.insert(wordleGlobalDays).values({
       word_date: '2026-11-01',

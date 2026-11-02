@@ -85,6 +85,13 @@
       "when": 1793658561494,
       "tag": "0011_wordle_global_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793658804782,
+      "tag": "0012_wordle_global_drafts",
+      "breakpoints": true
     }
   ]
 }
