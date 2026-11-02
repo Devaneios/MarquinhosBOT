@@ -4,6 +4,19 @@ import { expect, it } from 'bun:test';
 import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
 
+it('initializes the global word using the existing word banks', async () => {
+  const { WordleService } = await import('../src/services/wordle');
+  const service = new WordleService();
+  const date = '2035-08-21';
+  const [a, b] = await Promise.all([
+    service.getGlobalDailyWord(date),
+    service.getGlobalDailyWord(date),
+  ]);
+  expect(a).toEqual(b);
+  expect(a.word.length).toBeGreaterThanOrEqual(5);
+  expect(a.word.length).toBeLessThanOrEqual(6);
+});
+
 it('initializes a missing day without exhausting a single-connection pool', async () => {
   const guildId = randomUUID();
   // A separate process reads DATABASE_POOL_MAX before importing the DB client.

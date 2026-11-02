@@ -38,6 +38,7 @@ import { WordleAchievementService } from 'services/wordle/WordleAchievementServi
 import { recordWordlePresence } from 'services/wordle/WordleCommunityService';
 import { getRecifeDate } from 'services/wordle/wordleDate';
 import { WordleDraftService } from 'services/wordle/WordleDraftService';
+import { WordleGlobalDayService } from 'services/wordle/WordleGlobalDayService';
 import type { z } from 'zod';
 
 const logger = {
@@ -188,6 +189,14 @@ const REVIEW_SEED_BATCH_SIZE = 5_000;
 type PickMode = 'force' | 'ifStale';
 
 export class WordleService {
+  async getGlobalDailyWord(wordDate: string = this.today()) {
+    return new WordleGlobalDayService(
+      db,
+      getWordlist(),
+      getDevaneiosWordlist(),
+    ).getOrCreate(wordDate);
+  }
+
   async recordParticipation(userId: string, guildId: string): Promise<void> {
     await recordWordlePresence(
       db,
