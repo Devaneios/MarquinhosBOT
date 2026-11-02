@@ -1,4 +1,5 @@
 import { sendTermoStatusBroadcast } from '@marquinhos/commands/games/termoLeaderboardImage';
+import { collectVerifiedLeaderboard } from '@marquinhos/commands/games/termoLeaderboardMembers';
 import { GuildConfig } from '@marquinhos/config/guild';
 import { GameManager } from '@marquinhos/game/core/GameManager';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
@@ -303,26 +304,23 @@ export class AdminCommand extends MarquinhosCommand {
           let groupStreak: number;
 
           if (period === 'daily') {
-            const response = await api.getWordleLeaderboard(
-              interaction.guildId!,
-              period,
+            const response = await collectVerifiedLeaderboard(
+              (offset) =>
+                api.getWordleLeaderboard(
+                  interaction.guildId!,
+                  period,
+                  undefined,
+                  offset,
+                ),
+              (user) => guild.members.fetch({ user }),
             );
             groupStreak = response.groupStreak;
-            const rawEntries = response.data;
-            const userIds = rawEntries.map((e) => e.userId);
-            const membersCollection =
-              userIds.length > 0
-                ? await guild.members.fetch({ user: userIds }).catch(() => null)
-                : null;
             entries = await Promise.all(
-              rawEntries.map(async (e, i) => {
-                const member = membersCollection?.get(e.userId);
-                const avatar = member
-                  ? await fetchAvatarBuffer(member)
-                  : undefined;
+              response.entries.map(async ({ entry: e, member }, i) => {
+                const avatar = await fetchAvatarBuffer(member);
                 return {
                   rank: i + 1,
-                  displayName: member?.displayName ?? `<@${e.userId}>`,
+                  displayName: member.displayName,
                   attempts: e.attempts,
                   solved: e.solved,
                   avatar,
@@ -330,29 +328,28 @@ export class AdminCommand extends MarquinhosCommand {
               }),
             );
           } else {
-            const response = await api.getWordleLeaderboard(
-              interaction.guildId!,
-              period,
+            const response = await collectVerifiedLeaderboard(
+              (offset) =>
+                api.getWordleLeaderboard(
+                  interaction.guildId!,
+                  period,
+                  undefined,
+                  offset,
+                ),
+              (user) => guild.members.fetch({ user }),
             );
             groupStreak = response.groupStreak;
-            const rawEntries = response.data;
-            const userIds = rawEntries.map((e) => e.userId);
-            const membersCollection =
-              userIds.length > 0
-                ? await guild.members.fetch({ user: userIds }).catch(() => null)
-                : null;
             const ranks = denseRanks(
-              rawEntries.map((e) => `${e.avgScore}:${e.totalDays}`),
+              response.entries.map(
+                ({ entry: e }) => `${e.avgScore}:${e.totalDays}`,
+              ),
             );
             entries = await Promise.all(
-              rawEntries.map(async (e, i) => {
-                const member = membersCollection?.get(e.userId);
-                const avatar = member
-                  ? await fetchAvatarBuffer(member)
-                  : undefined;
+              response.entries.map(async ({ entry: e, member }, i) => {
+                const avatar = await fetchAvatarBuffer(member);
                 return {
                   rank: ranks[i],
-                  displayName: member?.displayName ?? `<@${e.userId}>`,
+                  displayName: member.displayName,
                   avgScore: e.avgScore,
                   totalDays: e.totalDays,
                   avatar,

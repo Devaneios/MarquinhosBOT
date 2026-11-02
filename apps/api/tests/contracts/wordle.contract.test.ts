@@ -98,12 +98,17 @@ describe('wordle contracts', () => {
       params: { guildId },
       query: { period: 'all-time' },
     });
+    const nextPage = await callContract(server.http, wordle.getLeaderboard, {
+      params: { guildId },
+      query: { period: 'daily', offset: 1 },
+    });
 
     expect(dayGuesses.data?.wordLength).toBe(validGuess.length);
     expect(daily.data).toEqual([
       { userId: 'u1', attempts: 1, solved: expect.any(Boolean) },
     ]);
     expect(typeof daily.groupStreak).toBe('number');
+    expect(nextPage.data).toEqual([]);
     expect(Array.isArray(allTime.data)).toBe(true);
   });
 

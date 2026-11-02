@@ -32,6 +32,7 @@ export class WordleGlobalLeaderboardService {
     period: Period,
     today: string,
     limit: number,
+    offset = 0,
   ): Promise<GlobalDailyEntry[] | GlobalRankedEntry[]> {
     if (period === 'daily') {
       const rows = await this.database
@@ -70,7 +71,8 @@ export class WordleGlobalLeaderboardService {
           asc(wordleGlobalSessions.created_at),
           asc(wordleGlobalSessions.user_id),
         )
-        .limit(limit);
+        .limit(limit)
+        .offset(offset);
       return rows;
     }
     const from =
@@ -106,7 +108,7 @@ export class WordleGlobalLeaderboardService {
         WHERE played.user_id = m.user_id AND played.word_date BETWEEN greatest(m.joined_on, ${from}) AND ${today}
           AND (played.attempts > 0 OR played.solved_from_draft)
       )
-      GROUP BY m.user_id ORDER BY avg_score ASC, m.user_id ASC LIMIT ${limit}`);
+      GROUP BY m.user_id ORDER BY avg_score ASC, m.user_id ASC LIMIT ${limit} OFFSET ${offset}`);
     return rows.map((row) => ({
       userId: row.user_id,
       totalDays: row.total_days,

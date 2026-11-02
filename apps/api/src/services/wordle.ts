@@ -1023,6 +1023,7 @@ export class WordleService {
     limit = 10,
     period: 'all-time' | 'weekly' | 'monthly' | 'daily' = 'all-time',
     date?: string,
+    offset = 0,
   ): Promise<
     | { userId: string; totalDays: number; avgScore: number }[]
     | { userId: string; attempts: number; solved: boolean }[]
@@ -1033,6 +1034,7 @@ export class WordleService {
         period,
         period === 'daily' ? (date ?? getRecifeDate()) : getRecifeDate(),
         limit,
+        offset,
       );
     }
     if (period === 'daily') {
@@ -1054,8 +1056,10 @@ export class WordleService {
           desc(wordleSessions.solved),
           asc(wordleSessions.attempts),
           asc(wordleSessions.created_at),
+          asc(wordleSessions.user_id),
         )
-        .limit(limit);
+        .limit(limit)
+        .offset(offset);
       return rows.map((row) => ({
         userId: row.user_id,
         attempts: row.attempts,
@@ -1112,8 +1116,8 @@ export class WordleService {
         AND s.guild_id = ${guildId}
         AND s.word_date = d.word_date
       GROUP BY p.user_id
-      ORDER BY avg_score ASC
-      LIMIT ${limit}`);
+      ORDER BY avg_score ASC, p.user_id ASC
+      LIMIT ${limit} OFFSET ${offset}`);
 
     return rows.map((row) => ({
       userId: row.user_id,

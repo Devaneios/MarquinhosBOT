@@ -10,6 +10,7 @@ import {
   type Client,
   type TextChannel,
 } from 'discord.js';
+import { collectVerifiedLeaderboard } from './termoLeaderboardMembers';
 import { buildTermoWinActionRow } from './termoResponse';
 
 const api = MarquinhosApiService.getInstance();
@@ -28,27 +29,23 @@ export async function buildDailyLeaderboardAttachment(
   guildId: string,
   wordDate?: string,
 ): Promise<DailyLeaderboardImage | null> {
-  const response = await api.getWordleLeaderboard(guildId, 'daily', wordDate);
-  const rawEntries = response.data;
-  const { groupStreak } = response;
-
-  if (!rawEntries || rawEntries.length === 0) return null;
-
   const guild = client.guilds.cache.get(guildId);
   if (!guild) return null;
-
-  const userIds = rawEntries.map((e) => e.userId);
-  const membersCollection = await guild.members
-    .fetch({ user: userIds })
-    .catch(() => null);
+  const { entries: verified, groupStreak } = await collectVerifiedLeaderboard(
+    (offset) =>
+      offset === 0
+        ? api.getWordleLeaderboard(guildId, 'daily', wordDate)
+        : api.getWordleLeaderboard(guildId, 'daily', wordDate, offset),
+    (user) => guild.members.fetch({ user }),
+  );
+  if (verified.length === 0) return null;
 
   const entries: DailyEntry[] = await Promise.all(
-    rawEntries.map(async (e, i) => {
-      const member = membersCollection?.get(e.userId);
-      const avatar = member ? await fetchAvatarBuffer(member) : undefined;
+    verified.map(async ({ entry: e, member }, i) => {
+      const avatar = await fetchAvatarBuffer(member);
       return {
         rank: i + 1,
-        displayName: member?.displayName ?? `<@${e.userId}>`,
+        displayName: member.displayName,
         attempts: e.attempts,
         solved: e.solved,
         avatar,

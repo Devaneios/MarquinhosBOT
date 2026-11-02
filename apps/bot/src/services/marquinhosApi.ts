@@ -370,22 +370,30 @@ export class MarquinhosApiService {
     guildId: string,
     period: 'daily',
     date?: string,
+    offset?: number,
   ): Promise<{ data: DailyLeaderboardEntry[]; groupStreak: number }>;
   async getWordleLeaderboard(
     guildId: string,
     period: 'weekly' | 'monthly' | 'all-time',
+    date?: undefined,
+    offset?: number,
   ): Promise<{ data: RankedLeaderboardEntry[]; groupStreak: number }>;
   async getWordleLeaderboard(
     guildId: string,
     period: WordleLeaderboardPeriod,
     date?: string,
+    offset?: number,
   ): Promise<{
     data: DailyLeaderboardEntry[] | RankedLeaderboardEntry[];
     groupStreak: number;
   }> {
     const result = await callContract(this.client, wordle.getLeaderboard, {
       params: { guildId },
-      query: date ? { period, date } : { period },
+      query: {
+        period,
+        ...(date ? { date } : {}),
+        ...(offset === undefined ? {} : { offset }),
+      },
     });
     const entries =
       period === 'daily'

@@ -80,6 +80,39 @@ afterAll(async () => {
 });
 
 describe('global community rankings', () => {
+  it('supports stable pages so the bot can skip departed members', async () => {
+    await recordWordlePresence(
+      testDb.db,
+      'a',
+      'paged',
+      '2026-11-02',
+      first + 86400,
+    );
+    await recordWordlePresence(
+      testDb.db,
+      'c',
+      'paged',
+      '2026-11-02',
+      first + 86400,
+    );
+    const service = new WordleGlobalLeaderboardService(testDb.db);
+    const page1 = await service.getLeaderboard(
+      'paged',
+      'daily',
+      '2026-11-02',
+      1,
+      0,
+    );
+    const page2 = await service.getLeaderboard(
+      'paged',
+      'daily',
+      '2026-11-02',
+      1,
+      1,
+    );
+    expect(page1.map((entry) => entry.userId)).toEqual(['a']);
+    expect(page2.map((entry) => entry.userId)).toEqual(['c']);
+  });
   it('shows only players present in the requested community on the date', async () => {
     const service = new WordleGlobalLeaderboardService(testDb.db);
     expect(

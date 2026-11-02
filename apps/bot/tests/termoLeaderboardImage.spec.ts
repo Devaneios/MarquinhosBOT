@@ -91,6 +91,23 @@ describe('buildDailyLeaderboardAttachment', () => {
     getLeaderboardSpy.mockRestore();
   });
 
+  it('returns null when the ranked player is no longer a member', async () => {
+    const spy = spyOn(
+      MarquinhosApiService.prototype,
+      'getWordleLeaderboard',
+    ).mockResolvedValue({
+      data: [{ userId: 'departed', attempts: 3, solved: true }],
+      groupStreak: 0,
+    } as any);
+    expect(
+      await buildDailyLeaderboardAttachment(
+        fakeClient('guild-1', fakeGuild([])),
+        'guild-1',
+      ),
+    ).toBeNull();
+    spy.mockRestore();
+  });
+
   it('builds a non-empty image buffer and returns the group streak', async () => {
     globalThis.fetch = (async () =>
       new Response(new Uint8Array([1, 2, 3]), {
@@ -130,6 +147,30 @@ describe('sendTermoStatusBroadcast', () => {
   function fakeChannel() {
     return { send: mock(async () => {}) };
   }
+
+  it('does not publish if Discord membership cannot be verified', async () => {
+    const spy = spyOn(
+      MarquinhosApiService.prototype,
+      'getWordleLeaderboard',
+    ).mockResolvedValue({
+      data: [{ userId: 'u1', attempts: 3, solved: true }],
+      groupStreak: 0,
+    } as any);
+    const guild = fakeGuild([]);
+    guild.members.fetch = async () => {
+      throw new Error('Discord unavailable');
+    };
+    const channel = fakeChannel();
+    await expect(
+      sendTermoStatusBroadcast(
+        fakeClient('guild-1', guild),
+        'guild-1',
+        channel as any,
+      ),
+    ).rejects.toThrow('Discord unavailable');
+    expect(channel.send).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
 
   it('does not send and returns false when there is nothing to show yet', async () => {
     const getLeaderboardSpy = spyOn(

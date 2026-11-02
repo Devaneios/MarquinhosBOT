@@ -194,6 +194,7 @@ export const getLeaderboard = defineContract({
   params: guildParams,
   query: z.object({
     period: wordleLeaderboardPeriodSchema.catch('all-time'),
+    offset: z.coerce.number().int().min(0).max(100000).optional(),
     // Daily only: the word date to rank instead of today, for the final
     // ranking posted just after midnight.
     date: z
