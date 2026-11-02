@@ -1,6 +1,7 @@
 import {
   achievements,
   userLevels,
+  wordleCommunityFirstSolves,
   wordleGlobalAchievements,
   wordleGlobalDays,
   wordleGlobalDiscoveries,
@@ -50,6 +51,67 @@ afterAll(async () => {
 });
 
 describe('global Wordle achievements', () => {
+  it('counts a first solve in two communities as one global achievement day', async () => {
+    await testDb.db.insert(achievements).values({
+      id: 'wordle_v2_first_solver_1',
+      name: 'Primeiro',
+      description: 'Primeiro acerto',
+      category: 'wordle',
+      rarity: 'common',
+      icon: 'x',
+      reward_xp: 25,
+    });
+    await testDb.db.insert(wordleGlobalDays).values({
+      word_date: '2026-01-04',
+      word: 'termo',
+      word_length: 5,
+      created_at: 1,
+    });
+    await testDb.db.insert(wordleGlobalSessions).values({
+      id: 'first-solver-session',
+      user_id: 'first-solver',
+      word_date: '2026-01-04',
+      solved: true,
+      attempts: 2,
+      created_at: 100,
+      solved_at: 101,
+      guesses: JSON.stringify([
+        {
+          guess: 'porta',
+          feedback: ['absent', 'present', 'present', 'absent', 'absent'],
+        },
+        {
+          guess: 'termo',
+          feedback: ['correct', 'correct', 'correct', 'correct', 'correct'],
+        },
+      ]),
+    });
+    await testDb.db.insert(wordleCommunityFirstSolves).values([
+      {
+        guild_id: 'first-a',
+        word_date: '2026-01-04',
+        user_id: 'first-solver',
+        session_id: 'first-solver-session',
+        solved_at: 101,
+      },
+      {
+        guild_id: 'first-b',
+        word_date: '2026-01-04',
+        user_id: 'first-solver',
+        session_id: 'first-solver-session',
+        solved_at: 101,
+      },
+    ]);
+    const service = new WordleGlobalAchievementService(testDb.db, () =>
+      Date.parse('2026-11-01T15:00:00Z'),
+    );
+    expect(
+      (await service.checkAndAward('first-solver', 'first-a')).unlockedIds,
+    ).toEqual(['wordle_v2_first_solver_1']);
+    expect(
+      (await service.checkAndAward('first-solver', 'first-b')).unlockedIds,
+    ).toEqual([]);
+  });
   it('grants an achievement and its XP once across concurrent communities', async () => {
     const service = new WordleGlobalAchievementService(testDb.db, () =>
       Date.parse('2026-11-01T15:00:00Z'),
@@ -62,10 +124,16 @@ describe('global Wordle achievements', () => {
       'wordle_v2_solved_exactly_1',
     ]);
     expect(
-      await testDb.db.select().from(wordleGlobalAchievements),
+      (await testDb.db.select().from(wordleGlobalAchievements)).filter(
+        (row) => row.user_id === 'player',
+      ),
     ).toHaveLength(1);
     const levels = await testDb.db.select().from(userLevels);
-    expect(levels.reduce((total, row) => total + row.total_xp, 0)).toBe(75);
+    expect(
+      levels
+        .filter((row) => row.user_id === 'player')
+        .reduce((total, row) => total + row.total_xp, 0),
+    ).toBe(75);
   });
 
   it('records repeat occurrences while preserving the first discovery evidence', async () => {

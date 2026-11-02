@@ -1,9 +1,11 @@
 import {
+  wordleCommunityFirstSolves,
   wordleGlobalDays,
   wordleGlobalSessions,
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
+import { recordWordlePresence } from '../src/services/wordle/WordleCommunityService';
 import { WordleGlobalDraftService } from '../src/services/wordle/WordleGlobalDraftService';
 import { WordleGlobalGameplayService } from '../src/services/wordle/WordleGlobalGameplayService';
 
@@ -21,6 +23,89 @@ afterAll(async () => {
 });
 
 describe('global gameplay', () => {
+  it('records the first solve only for communities visited before the solve', async () => {
+    const timestamp = Math.floor(now / 1000);
+    await recordWordlePresence(
+      testDb.db,
+      'first',
+      'community-a',
+      date,
+      timestamp - 1,
+    );
+    await recordWordlePresence(
+      testDb.db,
+      'first',
+      'community-b',
+      date,
+      timestamp + 1,
+    );
+    await recordWordlePresence(
+      testDb.db,
+      'second',
+      'community-a',
+      date,
+      timestamp - 1,
+    );
+    await recordWordlePresence(
+      testDb.db,
+      'second',
+      'community-b',
+      date,
+      timestamp - 1,
+    );
+    const game = new WordleGlobalGameplayService(
+      testDb.db,
+      (word) => word,
+      () => now,
+    );
+    await game.submitGuess('first', date, 'termo');
+    await game.submitGuess('second', date, 'termo');
+    const solves = await testDb.db.select().from(wordleCommunityFirstSolves);
+    expect(solves.find((row) => row.guild_id === 'community-a')?.user_id).toBe(
+      'first',
+    );
+    expect(solves.find((row) => row.guild_id === 'community-b')?.user_id).toBe(
+      'second',
+    );
+    expect(solves).toHaveLength(2);
+  });
+
+  it('records one first solver when two players solve simultaneously', async () => {
+    const timestamp = Math.floor(now / 1000);
+    await Promise.all([
+      recordWordlePresence(
+        testDb.db,
+        'racer-a',
+        'simultaneous',
+        date,
+        timestamp - 1,
+      ),
+      recordWordlePresence(
+        testDb.db,
+        'racer-b',
+        'simultaneous',
+        date,
+        timestamp - 1,
+      ),
+    ]);
+    const game = new WordleGlobalGameplayService(
+      testDb.db,
+      (word) => word,
+      () => now,
+    );
+    const results = await Promise.all([
+      game.submitGuess('racer-a', date, 'termo'),
+      game.submitGuess('racer-b', date, 'termo'),
+    ]);
+    expect(results.every((result) => 'solved' in result && result.solved)).toBe(
+      true,
+    );
+    const solves = (
+      await testDb.db.select().from(wordleCommunityFirstSolves)
+    ).filter((row) => row.guild_id === 'simultaneous');
+    expect(solves).toHaveLength(1);
+    expect(['racer-a', 'racer-b']).toContain(solves[0]!.user_id);
+  });
   it('shares a session across callers and resolves the same daily word', async () => {
     const game = new WordleGlobalGameplayService(
       testDb.db,

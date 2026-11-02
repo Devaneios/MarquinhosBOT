@@ -1,13 +1,15 @@
 import type { GuessRow } from '@marquinhos/contracts/wordle';
 import type { Db } from '@marquinhos/database/client';
 import {
+  wordleCommunityDailyPresence,
+  wordleCommunityFirstSolves,
   wordleGlobalDays,
   wordleGlobalDrafts,
   wordleGlobalSessions,
 } from '@marquinhos/database/schema';
 import { computeFeedback } from '@marquinhos/domain/games/wordle/feedback';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, lte, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { lockGlobalWordlePlayer } from './gameplayLock';
 import { getWordleTimeZone } from './wordleDate';
@@ -130,6 +132,32 @@ export class WordleGlobalGameplayService {
             attempts,
           })
           .where(eq(wordleGlobalSessions.id, session.id));
+        if (solved) {
+          const communities = await tx
+            .select({ guildId: wordleCommunityDailyPresence.guild_id })
+            .from(wordleCommunityDailyPresence)
+            .where(
+              and(
+                eq(wordleCommunityDailyPresence.user_id, userId),
+                eq(wordleCommunityDailyPresence.word_date, date),
+                lte(wordleCommunityDailyPresence.first_seen_at, now),
+              ),
+            );
+          if (communities.length > 0) {
+            await tx
+              .insert(wordleCommunityFirstSolves)
+              .values(
+                communities.map(({ guildId }) => ({
+                  guild_id: guildId,
+                  word_date: date,
+                  user_id: userId,
+                  session_id: session.id,
+                  solved_at: now,
+                })),
+              )
+              .onConflictDoNothing();
+          }
+        }
         const draftKey = and(
           eq(wordleGlobalDrafts.user_id, userId),
           eq(wordleGlobalDrafts.word_date, date),
