@@ -173,6 +173,7 @@ const challengeSchema = z.object({
   closesAt: z.number(),
   status: z.enum(['open', 'closed']),
   participants: z.array(z.string()),
+  joined: z.boolean(),
 });
 export const listChallenges = defineContract({
   method: 'GET',

@@ -14,13 +14,17 @@ export class WordleChallengesController {
     >,
   ) {}
   async list(req: Request, res: Response): Promise<void> {
+    if (!req.user) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
     const input = parseRequest(contract.listChallenges, req);
     if (!input) {
       res.status(400).json({ message: 'Invalid community' });
       return;
     }
     sendContract(res, contract.listChallenges, {
-      data: await this.service.list(input.params.guildId),
+      data: await this.service.list(input.params.guildId, req.user.id),
     });
   }
   async create(req: Request, res: Response): Promise<void> {

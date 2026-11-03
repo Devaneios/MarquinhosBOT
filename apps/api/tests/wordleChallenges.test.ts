@@ -68,6 +68,7 @@ it('allows a known figure, late entry and only verified occurrences during the i
   now = 200;
   await challenges.join(invite.id, 'a', 'guest');
   await challenges.join(invite.id, 'a', 'guest');
+  expect((await challenges.get(invite.id, 'a', 'guest')).joined).toBe(true);
   await challenges.join(invite.id, 'a', 'old');
   expect((await challenges.get(invite.id, 'a')).participants).toEqual([
     'guest',

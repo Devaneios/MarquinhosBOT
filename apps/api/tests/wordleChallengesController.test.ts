@@ -31,6 +31,7 @@ it('creates and joins challenges only as the authenticated player', async () => 
         closesAt: 3,
         status: 'open',
         participants: [],
+        joined: true,
       };
     },
     join: async (...args) => {

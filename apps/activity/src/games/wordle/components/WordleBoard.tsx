@@ -19,6 +19,11 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getWordleAlbum } from '../api/wordleAlbumApi';
+import {
+  createWordleChallenge,
+  joinWordleChallenge,
+  listWordleChallenges,
+} from '../api/wordleChallengesApi';
 import { getWordleGoals } from '../api/wordleGoalsApi';
 import { equipWordleReward, getWordleRewards } from '../api/wordleRewardsApi';
 import {
@@ -70,6 +75,19 @@ export function WordleBoard({
   );
   const loadGoals = useCallback(
     () => getWordleGoals(accessToken!, guildId!),
+    [accessToken, guildId],
+  );
+  const loadChallenges = useCallback(
+    () => listWordleChallenges(accessToken!, guildId!),
+    [accessToken, guildId],
+  );
+  const createChallenge = useCallback(
+    (pattern: string, closesAt: number) =>
+      createWordleChallenge(accessToken!, guildId!, pattern, closesAt),
+    [accessToken, guildId],
+  );
+  const joinChallenge = useCallback(
+    (id: string) => joinWordleChallenge(accessToken!, guildId!, id),
     [accessToken, guildId],
   );
   const loadRewards = useCallback(
@@ -203,6 +221,16 @@ export function WordleBoard({
       <WordleAlbumScreen
         load={loadAlbum}
         goals={userId ? { load: loadGoals, userId } : undefined}
+        challenges={
+          accessToken && guildId
+            ? {
+                achievements,
+                load: loadChallenges,
+                create: createChallenge,
+                join: joinChallenge,
+              }
+            : undefined
+        }
         onBack={() => transitionTo('nav-back', () => setSubScreen('playing'))}
       />
     );

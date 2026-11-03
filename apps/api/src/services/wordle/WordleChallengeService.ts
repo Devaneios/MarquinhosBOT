@@ -64,7 +64,7 @@ export class WordleChallengeService {
         .values({ challenge_id: created!.id, user_id: userId, joined_at: now });
       return created!;
     });
-    return this.get(row.id, guildId);
+    return this.get(row.id, guildId, userId);
   }
 
   async join(id: string, guildId: string, userId: string): Promise<void> {
@@ -89,7 +89,7 @@ export class WordleChallengeService {
     });
   }
 
-  async get(id: string, guildId: string) {
+  async get(id: string, guildId: string, viewerId?: string) {
     const [challenge] = await this.database
       .select()
       .from(wordlePatternChallenges)
@@ -152,15 +152,18 @@ export class WordleChallengeService {
           ? ('closed' as const)
           : ('open' as const),
       participants,
+      joined:
+        viewerId !== undefined &&
+        joins.some((join) => join.user_id === viewerId),
     };
   }
 
-  async list(guildId: string) {
+  async list(guildId: string, viewerId?: string) {
     const rows = await this.database
       .select({ id: wordlePatternChallenges.id })
       .from(wordlePatternChallenges)
       .where(eq(wordlePatternChallenges.guild_id, guildId))
       .orderBy(asc(wordlePatternChallenges.opens_at));
-    return Promise.all(rows.map((row) => this.get(row.id, guildId)));
+    return Promise.all(rows.map((row) => this.get(row.id, guildId, viewerId)));
   }
 }
