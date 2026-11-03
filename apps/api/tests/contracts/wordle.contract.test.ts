@@ -94,6 +94,7 @@ describe('wordle contracts', () => {
   it('serves day guesses and both leaderboard shapes', async () => {
     const dayGuesses = await callContract(server.http, wordle.getDayGuesses, {
       params: { guildId },
+      query: {},
     });
     const daily = await callContract(server.http, wordle.getLeaderboard, {
       params: { guildId },

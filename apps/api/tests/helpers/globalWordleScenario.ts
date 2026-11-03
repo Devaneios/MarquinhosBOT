@@ -1,5 +1,9 @@
 import { closeDefaultDb, db } from '@marquinhos/database/client';
-import { wordleGlobalDays } from '@marquinhos/database/schema';
+import {
+  wordleCommunityDailyPresence,
+  wordleGlobalDays,
+  wordleGlobalSessions,
+} from '@marquinhos/database/schema';
 import { WordleService } from '../../src/services/wordle';
 import { getRecifeDate } from '../../src/services/wordle/wordleDate';
 import { migrateGlobalWordle } from '../../src/services/wordle/WordleGlobalMigrationService';
@@ -37,6 +41,43 @@ try {
     expectedRevision: 1,
   });
   const after = await service.getUserDraft('global-player', 'community-a');
+  const yesterday = new Date(`${date}T12:00:00Z`);
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  const previousDate = yesterday.toISOString().slice(0, 10);
+  await db.insert(wordleGlobalDays).values({
+    word_date: previousDate,
+    word: 'carta',
+    word_length: 5,
+    created_at: 1,
+  });
+  await db.insert(wordleGlobalSessions).values({
+    id: 'previous-session',
+    user_id: 'previous-player',
+    word_date: previousDate,
+    attempts: 1,
+    created_at: 1,
+    guesses: JSON.stringify([
+      {
+        guess: 'porta',
+        feedback: ['absent', 'absent', 'correct', 'absent', 'correct'],
+      },
+    ]),
+  });
+  await db.insert(wordleCommunityDailyPresence).values({
+    guild_id: 'community-a',
+    user_id: 'previous-player',
+    word_date: previousDate,
+    first_seen_at: 1,
+  });
+  const closedDay = await service.getDayGuesses('community-a', previousDate);
+  const unrelatedDay = await service.getDayGuesses('community-c', previousDate);
+  let forced = false;
+  try {
+    await service.forceNewWord('community-a');
+    forced = true;
+  } catch {}
+  const rotatedA = await service.rotateDailyWord('community-a');
+  const rotatedB = await service.rotateDailyWord('community-b');
   console.log(
     JSON.stringify({
       dayA: dayA.word,
@@ -49,6 +90,11 @@ try {
       before,
       saved,
       after,
+      closedDay,
+      unrelatedDay,
+      forced,
+      rotatedA,
+      rotatedB,
     }),
   );
 } finally {

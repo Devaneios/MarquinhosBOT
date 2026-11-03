@@ -1,3 +1,4 @@
+import { HttpError } from '@marquinhos/api-client/bot';
 import { sendTermoStatusBroadcast } from '@marquinhos/commands/games/termoLeaderboardImage';
 import { collectVerifiedLeaderboard } from '@marquinhos/commands/games/termoLeaderboardMembers';
 import { GuildConfig } from '@marquinhos/config/guild';
@@ -244,6 +245,12 @@ export class AdminCommand extends MarquinhosCommand {
             );
           }
         } catch (err) {
+          if (err instanceof HttpError && err.response?.status === 409) {
+            await interaction.editReply({
+              content: '❌ A palavra global só muda na virada do dia.',
+            });
+            return;
+          }
           logger.warn('admin termo novo: Error generating word:', err);
           await interaction.editReply({
             content: '❌ Erro ao gerar nova palavra.',

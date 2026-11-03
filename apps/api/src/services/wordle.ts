@@ -196,6 +196,7 @@ const REVIEW_SEED_BATCH_SIZE = 5_000;
 
 /** `ifStale` keeps a word another caller already picked for `wordDate`. */
 type PickMode = 'force' | 'ifStale';
+export class GlobalWordleCannotForce extends Error {}
 
 export class WordleService {
   async isGlobalActive(): Promise<boolean> {
@@ -852,8 +853,51 @@ export class WordleService {
     };
   }
 
-  async getDayGuesses(guildId: string): Promise<DayGuesses | null> {
-    const daily = await this.findDaily(guildId, getRecifeDate());
+  async getDayGuesses(
+    guildId: string,
+    date = getRecifeDate(),
+  ): Promise<DayGuesses | null> {
+    if (await this.isGlobalActive()) {
+      if (date < getRecifeDate()) await this.finalizeExpiredDrafts();
+      const [day] = await db
+        .select()
+        .from(wordleGlobalDays)
+        .where(eq(wordleGlobalDays.word_date, date));
+      if (!day) return null;
+      const rows = await db
+        .select({ guesses: wordleGlobalSessions.guesses })
+        .from(wordleCommunityDailyPresence)
+        .innerJoin(
+          wordleGlobalSessions,
+          and(
+            eq(
+              wordleGlobalSessions.user_id,
+              wordleCommunityDailyPresence.user_id,
+            ),
+            eq(
+              wordleGlobalSessions.word_date,
+              wordleCommunityDailyPresence.word_date,
+            ),
+          ),
+        )
+        .where(
+          and(
+            eq(wordleCommunityDailyPresence.guild_id, guildId),
+            eq(wordleCommunityDailyPresence.word_date, date),
+          ),
+        )
+        .orderBy(
+          asc(wordleGlobalSessions.created_at),
+          asc(wordleGlobalSessions.user_id),
+        );
+      return {
+        word: day.word,
+        wordDate: day.word_date,
+        wordLength: day.word_length,
+        guesses: buildUniqueDayGuesses(day.word, rows),
+      };
+    }
+    const daily = await this.findDaily(guildId, date);
 
     if (!daily?.word || !daily.word_length) return null;
 
@@ -1160,8 +1204,17 @@ export class WordleService {
   }
 
   async forceNewWord(guildId: string): Promise<ForceNewWordResult> {
+    if (await this.isGlobalActive())
+      throw new GlobalWordleCannotForce(
+        'A palavra global não pode ser trocada antes da virada.',
+      );
     const today = getRecifeDate();
     return this.pickNewWord(guildId, today, 'force');
+  }
+
+  async rotateDailyWord(guildId: string): Promise<ForceNewWordResult> {
+    if (await this.isGlobalActive()) return this.getGlobalDailyWord();
+    return this.forceNewWord(guildId);
   }
 
   async setConfig(guildId: string, channelId: string): Promise<void> {

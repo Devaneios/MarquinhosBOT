@@ -30,8 +30,11 @@ import { ResearchOrchestrator } from 'services/aiChat/research/ResearchOrchestra
 import { DockerodeSandboxClient } from 'services/aiChat/sandbox/DockerodeSandboxClient';
 import { SandboxManager } from 'services/aiChat/sandbox/SandboxManager';
 import { GamificationService } from 'services/gamification';
-import { getValidationSet, loadBannedWords } from 'services/wordle';
-import { WordleDraftService } from 'services/wordle/WordleDraftService';
+import {
+  getValidationSet,
+  loadBannedWords,
+  WordleService,
+} from 'services/wordle';
 import { logger } from 'utils/logger';
 
 validateProductionEnvironment();
@@ -164,7 +167,7 @@ try {
   // that will never move.
   await new ResearchOrchestrator().reapStaleJobs();
   await loadBannedWords();
-  await new WordleDraftService().finalizeExpiredDrafts();
+  await new WordleService().finalizeExpiredDrafts();
 } catch (err) {
   console.error('Fatal: gamification initialization failed', err);
   process.exit(1);
@@ -174,7 +177,7 @@ startMaintenance(db);
 
 const WORDLE_DRAFT_FINALIZATION_INTERVAL_MS = 30_000;
 setInterval(() => {
-  new WordleDraftService().finalizeExpiredDrafts().catch((err: unknown) => {
+  new WordleService().finalizeExpiredDrafts().catch((err: unknown) => {
     logger.error('wordle.draft_finalization_failed', { error: err });
   });
 }, WORDLE_DRAFT_FINALIZATION_INTERVAL_MS);

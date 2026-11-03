@@ -1,4 +1,5 @@
 import { announceTermoWin } from '@marquinhos/commands/games/announceTermoWin';
+import { previousRecifeDate } from '@marquinhos/commands/games/termoDate';
 import {
   buildDailyLeaderboardAttachment,
   sendTermoStatusBroadcast,
@@ -94,14 +95,11 @@ async function rotateTermoWord(client: Client<true>): Promise<void> {
 
         // This runs just after midnight, when "today" is already the new,
         // empty day, so the final ranking asks for the day that ended.
-        const endedWordDate = await sendTermoCrossword(
-          client,
-          guildId,
-          channel,
-        );
+        const endedWordDate = previousRecifeDate();
+        await sendTermoCrossword(client, guildId, channel, endedWordDate);
         await sendTermoLeaderboard(client, guildId, channel, endedWordDate);
 
-        const result = await api.forceNewWordleWord(guildId);
+        const result = await api.rotateDailyWord(guildId);
         const data = result.data;
 
         const shortTrashTalks = [
@@ -193,9 +191,10 @@ async function sendTermoCrossword(
   client: Client<true>,
   guildId: string,
   channel: TextChannel,
+  date: string,
 ): Promise<string | undefined> {
   try {
-    const response = await api.getWordleDayGuesses(guildId);
+    const response = await api.getWordleDayGuesses(guildId, date);
     const data = response.data;
     if (!data) return undefined;
 

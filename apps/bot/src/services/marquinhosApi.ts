@@ -276,9 +276,10 @@ export class MarquinhosApiService {
     return callContract(this.client, wordle.getStats, { params: { guildId } });
   }
 
-  async getWordleDayGuesses(guildId: string) {
+  async getWordleDayGuesses(guildId: string, date?: string) {
     return callContract(this.client, wordle.getDayGuesses, {
       params: { guildId },
+      query: { date },
     });
   }
 
@@ -290,6 +291,12 @@ export class MarquinhosApiService {
 
   async forceNewWordleWord(guildId: string) {
     return callContract(this.client, wordle.forceNewWord, {
+      body: { guildId },
+    });
+  }
+
+  async rotateDailyWord(guildId: string) {
+    return callContract(this.client, wordle.rotateDailyWord, {
       body: { guildId },
     });
   }

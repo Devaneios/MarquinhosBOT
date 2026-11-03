@@ -3,7 +3,7 @@ import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import { db } from '@marquinhos/database/client';
 import type { Request, Response } from 'express';
 import type { DiscordUser } from 'services/discord';
-import { WordleService } from 'services/wordle';
+import { GlobalWordleCannotForce, WordleService } from 'services/wordle';
 import { WordleRewardsService } from 'services/wordle/WordleRewardsService';
 import { WordleShowcaseService } from 'services/wordle/WordleShowcaseService';
 import { parseRequest, sendContract } from 'utils/contract';
@@ -192,7 +192,7 @@ export default class WordleController {
     const { guildId } = input.params;
 
     try {
-      const data = await service.getDayGuesses(guildId);
+      const data = await service.getDayGuesses(guildId, input.query.date);
       sendContract(res, contract.getDayGuesses, { data });
     } catch (err) {
       console.error('WordleController.getDayGuesses error:', err);
@@ -213,7 +213,27 @@ export default class WordleController {
       const stats = await service.getDailyStats(guildId);
       sendContract(res, contract.forceNewWord, { data: { ...result, stats } });
     } catch (err) {
+      if (err instanceof GlobalWordleCannotForce) {
+        res.status(409).json({ message: err.message });
+        return;
+      }
       console.error('WordleController.forceNewWord error:', err);
+      res.status(500).json({ message: 'Erro interno.' });
+    }
+  }
+
+  async rotateDailyWord(req: Request, res: Response): Promise<void> {
+    const input = parseRequest(contract.rotateDailyWord, req);
+    if (!input) {
+      res.status(400).json({ message: 'guildId é obrigatório.' });
+      return;
+    }
+    try {
+      sendContract(res, contract.rotateDailyWord, {
+        data: await service.rotateDailyWord(input.body.guildId),
+      });
+    } catch (error) {
+      console.error('WordleController.rotateDailyWord error:', error);
       res.status(500).json({ message: 'Erro interno.' });
     }
   }

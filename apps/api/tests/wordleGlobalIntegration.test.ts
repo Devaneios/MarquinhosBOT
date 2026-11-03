@@ -46,5 +46,13 @@ describe('global Wordle integration', () => {
       cells: ['t', '', '', '', ''],
       revision: 2,
     });
+    expect(result.closedDay).toMatchObject({
+      word: 'carta',
+      guesses: [{ guess: 'porta' }],
+    });
+    expect(result.unrelatedDay.guesses).toEqual([]);
+    expect(result.forced).toBe(false);
+    expect(result.rotatedA.word).toBe('termo');
+    expect(result.rotatedB).toEqual(result.rotatedA);
   });
 });

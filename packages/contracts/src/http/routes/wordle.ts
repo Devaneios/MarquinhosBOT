@@ -249,7 +249,15 @@ export const getDayGuesses = defineContract({
   method: 'GET',
   path: '/api/wordle/day-guesses/:guildId',
   params: guildParams,
+  query: z.object({ date: z.iso.date().optional() }),
   response: envelope(wordleDayGuessesSchema.nullable()),
+});
+
+export const rotateDailyWord = defineContract({
+  method: 'POST',
+  path: '/api/wordle/rotate',
+  body: z.object({ guildId: requiredString }),
+  response: envelope(forceNewWordResultSchema),
 });
 
 export const forceNewWord = defineContract({
