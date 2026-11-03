@@ -79,7 +79,11 @@ export default class WordleController {
           ...overview,
           achievements: publicAchievements,
           showcase: await showcase.get(userId),
-          cosmetics: { title: cosmetics.title, frame: cosmetics.frame },
+          cosmetics: {
+            title: cosmetics.title,
+            frame: cosmetics.frame,
+            badges: cosmetics.badges,
+          },
         },
       });
     } catch (error) {

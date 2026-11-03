@@ -105,6 +105,8 @@
   "goalProgress": "{{current}} / {{target}} participações",
   "goalPersonalBadge": "Você contribuiu e recebeu o emblema desta meta.",
   "rewardsTitle": "Recompensas pessoais",
+  "goalBadgesTitle": "Emblemas de metas comunitárias",
+  "goalBadgeOrigin": "Comunidade {{guildId}}",
   "rewardsLoading": "Carregando recompensas…",
   "rewardsError": "Não foi possível carregar ou atualizar as recompensas.",
   "rewardsEmpty": "Você ainda não desbloqueou títulos ou molduras.",

@@ -6,6 +6,7 @@ import {
   wordleAchievementsOverviewSchema,
   wordleDraftWriteResultSchema,
   wordleDraftWriteSchema,
+  wordleGoalBadgeSchema,
   wordlePatternEvidenceSchema,
   wordleUserConfigSchema,
 } from '../../wordle';
@@ -134,6 +135,7 @@ const rewardsStateSchema = z.object({
   owned: z.array(z.string()),
   title: z.string().nullable(),
   frame: z.string().nullable(),
+  badges: z.array(wordleGoalBadgeSchema),
 });
 export const getRewards = defineContract({
   method: 'GET',

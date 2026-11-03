@@ -127,12 +127,23 @@ export const wordlePlayerStatsSchema = z.object({
 });
 export type WordlePlayerStats = z.infer<typeof wordlePlayerStatsSchema>;
 
+export const wordleGoalBadgeSchema = z.object({
+  goalId: z.string(),
+  guildId: z.string(),
+  grantedAt: z.number(),
+  startsAt: z.number(),
+  endsAt: z.number(),
+});
 export const wordleAchievementsOverviewSchema = z.object({
   achievements: z.array(wordleAchievementStatusSchema),
   stats: wordlePlayerStatsSchema,
   showcase: z.array(z.string()).max(3).optional(),
   cosmetics: z
-    .object({ title: z.string().nullable(), frame: z.string().nullable() })
+    .object({
+      title: z.string().nullable(),
+      frame: z.string().nullable(),
+      badges: z.array(wordleGoalBadgeSchema).optional(),
+    })
     .optional(),
 });
 export type WordleAchievementsOverview = z.infer<

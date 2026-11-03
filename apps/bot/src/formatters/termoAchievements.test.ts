@@ -196,6 +196,29 @@ describe('buildTermoAchievementsEmbed', () => {
     expect(json).not.toContain('❔');
   });
 
+  it('shows community badges on the player profile', () => {
+    const json = buildTermoAchievementsEmbed(client, target, {
+      ...overview,
+      cosmetics: {
+        title: null,
+        frame: null,
+        badges: [
+          {
+            goalId: 'goal',
+            guildId: 'other',
+            startsAt: 10,
+            endsAt: 20,
+            grantedAt: 20,
+          },
+        ],
+      },
+    }).toJSON();
+    expect(
+      json.fields?.find((field) => field.name === '🏅 Metas comunitárias')
+        ?.value,
+    ).toBe('1 emblema conquistado');
+  });
+
   it('invites newcomers to play instead of listing nothing', () => {
     const json = buildTermoAchievementsEmbed(client, target, {
       ...overview,
