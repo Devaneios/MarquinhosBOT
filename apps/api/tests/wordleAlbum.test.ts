@@ -1,5 +1,6 @@
 import { getAlbum } from '@marquinhos/contracts/http/routes/wordle';
 import {
+  wordleAlbumMilestones,
   wordleCommunityDailyPresence,
   wordleGlobalOccurrences,
 } from '@marquinhos/database/schema';
@@ -59,12 +60,24 @@ describe('community album', () => {
     expect(await album.contributions('c')).toEqual([]);
   });
   it('builds catalog pages without exposing session evidence', async () => {
+    await testDb.db.insert(wordleAlbumMilestones).values({
+      guild_id: 'a',
+      family: 'letters',
+      pattern_ids: ['letter_a'],
+      completed_at: 10,
+      revised_at: null,
+      status: 'completed',
+    });
     const pages = await album.pages('a');
     expect(pages.length).toBeGreaterThan(0);
     expect(pages.some((page) => page.patternId === 'letter_a')).toBe(true);
     expect(
       pages.find((page) => page.patternId === 'letter_a')?.contributors,
     ).toEqual(['player']);
+    expect(
+      pages.find((page) => page.patternId === 'letter_a')?.familyMilestone
+        ?.status,
+    ).toBe('completed');
     expect(JSON.stringify(pages)).not.toContain('evidence');
     expect(getAlbum.response.safeParse({ data: pages }).success).toBe(true);
   });

@@ -14,6 +14,13 @@ it('shows community progress, a pattern, and the first recorded contributor', as
           icon: '🔤',
           mask: ['.#.', '###'],
           contributorCount: 1,
+          familyMilestone: {
+            family: 'letters',
+            patternIds: ['a'],
+            completedAt: 10,
+            revisedAt: null,
+            status: 'completed',
+          },
           contributors: ['123'],
           firstContribution: {
             occurrenceId: 'event',
@@ -28,6 +35,7 @@ it('shows community progress, a pattern, and the first recorded contributor', as
   );
   await screen.findByRole('button', { name: /Letra A/ });
   expect(screen.getByText('1 de 1 figuras')).toBeDefined();
+  expect(screen.getByText('Marco da família concluído')).toBeDefined();
   fireEvent.click(screen.getByRole('button', { name: /Letra A/ }));
   expect(screen.getByText(/Primeira contribuição registrada/)).toBeDefined();
   expect(screen.getByRole('img', { name: /Letra A/ })).toBeDefined();

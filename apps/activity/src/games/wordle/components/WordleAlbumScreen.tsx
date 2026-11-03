@@ -69,6 +69,17 @@ export function WordleAlbumScreen({
               <h2 className="font-semibold">
                 {t(`families.${family}`, { defaultValue: family })}
               </h2>
+              {pages.find((page) => page.family === family)
+                ?.familyMilestone && (
+                <p className="text-sm text-marquinhos-text-dim">
+                  {t(
+                    pages.find((page) => page.family === family)
+                      ?.familyMilestone?.status === 'completed'
+                      ? 'albumMilestoneCompleted'
+                      : 'albumMilestoneRevised',
+                  )}
+                </p>
+              )}
               <div className="mt-2 flex flex-wrap gap-2">
                 {pages
                   .filter((page) => page.family === family)

@@ -143,6 +143,15 @@ export const getAlbum = defineContract({
         mask: z.array(z.string()),
         contributorCount: z.number().int().nonnegative(),
         contributors: z.array(z.string()),
+        familyMilestone: z
+          .object({
+            family: z.string(),
+            patternIds: z.array(z.string()),
+            completedAt: z.number(),
+            revisedAt: z.number().nullable(),
+            status: z.enum(['completed', 'revised']),
+          })
+          .nullable(),
         firstContribution: z
           .object({
             occurrenceId: z.string(),

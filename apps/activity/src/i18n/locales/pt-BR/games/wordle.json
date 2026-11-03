@@ -41,6 +41,8 @@
   "albumAvailable": "Esta página ainda está disponível.",
   "albumContributorList": "IDs de participantes: {{users}}",
   "albumOpen": "Abrir álbum da comunidade",
+  "albumMilestoneCompleted": "Marco da família concluído",
+  "albumMilestoneRevised": "Marco da família revisado após correção das contribuições",
   "achievementsSubtitle": "Desbloqueie medalhas jogando o Terminhos todos os dias.",
   "achievementsAriaLabel": "Abrir conquistas do Terminhos",
   "achievementsProgress": "{{unlocked}} de {{total}} desbloqueadas",

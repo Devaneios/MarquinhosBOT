@@ -4,6 +4,7 @@ import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achi
 import type { AlbumContribution } from '@marquinhos/domain/games/wordle/community/album';
 import { buildAlbumPages } from '@marquinhos/domain/games/wordle/community/album';
 import { eq, sql } from 'drizzle-orm';
+import { WordleAlbumMilestoneService } from './WordleAlbumMilestoneService';
 
 export class WordleAlbumService {
   constructor(private readonly database: Db) {}
@@ -57,11 +58,17 @@ export class WordleAlbumService {
       definitions,
       await this.contributions(guildId),
     );
+    const milestones = await new WordleAlbumMilestoneService(
+      this.database,
+    ).reconcile(guildId, definitions);
     return projected.map((page, index) => ({
       ...page,
       name: definitions[index]!.name,
       icon: definitions[index]!.icon,
       mask: definitions[index]!.mask,
+      familyMilestone:
+        milestones.find((milestone) => milestone.family === page.family) ??
+        null,
     }));
   }
 }
