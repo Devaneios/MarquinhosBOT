@@ -33,7 +33,42 @@ describe('community leaderboard membership', () => {
         async () => {
           throw new Error('Discord unavailable');
         },
+        [0, 0],
       ),
     ).rejects.toThrow('Discord unavailable');
+  });
+  it('retries a transient Discord failure', async () => {
+    let calls = 0;
+    const result = await collectVerifiedLeaderboard(
+      async () => ({ data: [{ userId: 'u' }], groupStreak: 0 }),
+      async (userIds) => {
+        if (++calls === 1) throw new Error('rate limited');
+        return new Map(userIds.map((id) => [id, { name: id }]));
+      },
+      [0, 0],
+    );
+    expect(calls).toBe(2);
+    expect(result.entries.map(({ entry }) => entry.userId)).toEqual(['u']);
+  });
+  it('keeps the first position of a player repeated across pages', async () => {
+    const pages = [
+      Array.from({ length: 10 }, (_, index) => `u${index}`),
+      ['u9', 'u10'],
+    ];
+    const result = await collectVerifiedLeaderboard(
+      async (offset) => ({
+        data: (pages[offset / 10] ?? []).map((userId) => ({ userId })),
+        groupStreak: 0,
+      }),
+      async (userIds) =>
+        new Map(
+          userIds.filter((id) => id !== 'u0').map((id) => [id, { name: id }]),
+        ),
+      [0, 0],
+    );
+    expect(result.entries.map(({ entry }) => entry.userId)).toEqual([
+      ...pages[0]!.slice(1),
+      'u10',
+    ]);
   });
 });

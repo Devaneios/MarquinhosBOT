@@ -145,7 +145,14 @@ async function rotateTermoWord(client: Client<true>): Promise<void> {
         // empty day, so the final ranking asks for the day that ended.
         const endedWordDate = previousRecifeDate();
         await sendTermoCrossword(client, guildId, channel, endedWordDate);
-        await sendTermoLeaderboard(client, guildId, channel, endedWordDate);
+        if (
+          !(await sendTermoLeaderboard(client, guildId, channel, endedWordDate))
+        )
+          pendingLeaderboards.set(guildId, {
+            channel,
+            wordDate: endedWordDate,
+            retries: 0,
+          });
 
         const result = await api.rotateDailyWord(guildId);
         const data = result.data;
@@ -270,19 +277,59 @@ async function sendTermoCrossword(
   }
 }
 
+// Final rankings that could not be verified against Discord at midnight.
+// The win announcer's tick retries them for about ten minutes.
+const pendingLeaderboards = new Map<
+  string,
+  { channel: TextChannel; wordDate: string; retries: number }
+>();
+const MAX_LEADERBOARD_RETRIES = 40;
+let retryingLeaderboards = false;
+
+async function retryPendingLeaderboards(client: Client<true>): Promise<void> {
+  if (retryingLeaderboards) return;
+  retryingLeaderboards = true;
+  try {
+    for (const [guildId, pending] of pendingLeaderboards) {
+      if (
+        await sendTermoLeaderboard(
+          client,
+          guildId,
+          pending.channel,
+          pending.wordDate,
+        )
+      ) {
+        pendingLeaderboards.delete(guildId);
+      } else if (++pending.retries >= MAX_LEADERBOARD_RETRIES) {
+        pendingLeaderboards.delete(guildId);
+        reportError(
+          new Error(`Terminhos ranking for ${pending.wordDate} not sent`),
+          {
+            origin: `ready.retryPendingLeaderboards:${guildId}`,
+            logLevel: 'error',
+          },
+        );
+      }
+    }
+  } finally {
+    retryingLeaderboards = false;
+  }
+}
+
+// Resolves false when the ranking should be retried.
 async function sendTermoLeaderboard(
   client: Client<true>,
   guildId: string,
   channel: TextChannel,
   wordDate: string | undefined,
-): Promise<void> {
+): Promise<boolean> {
   try {
     const leaderboard = await buildDailyLeaderboardAttachment(
       client,
       guildId,
       wordDate,
     );
-    if (!leaderboard) return;
+    if (!leaderboard) return true;
 
     const attachment = new AttachmentBuilder(leaderboard.buffer, {
       name: 'terminhos-ranking.png',
@@ -294,11 +341,13 @@ async function sendTermoLeaderboard(
       .setImage('attachment://terminhos-ranking.png');
 
     await channel.send({ embeds: [embed], files: [attachment] });
+    return true;
   } catch (err) {
     logger.warn(
       `Terminhos: failed to send leaderboard for guild ${guildId}:`,
       err,
     );
+    return false;
   }
 }
 
@@ -406,7 +455,10 @@ async function broadcastTermoWins(client: Client<true>): Promise<void> {
 
 function startTermoWinAnnouncer(client: Client<true>): void {
   const FIFTEEN_SECONDS = 15 * 1000;
-  setInterval(() => broadcastTermoWins(client), FIFTEEN_SECONDS);
+  setInterval(() => {
+    void broadcastTermoWins(client);
+    void retryPendingLeaderboards(client);
+  }, FIFTEEN_SECONDS);
 }
 
 function startTermoStatsBroadcast(client: Client<true>): void {
