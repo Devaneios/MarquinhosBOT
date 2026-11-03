@@ -3,9 +3,13 @@ import {
   wordleCommunityDailyPresence,
   wordleCommunityGoals,
   wordleGlobalAcceptedGuesses,
+  wordleGoalAwards,
+  wordleGoalContributions,
+  wordleGoalDecorations,
 } from '@marquinhos/database/schema';
-import { and, asc, eq, gte, lt } from 'drizzle-orm';
+import { and, asc, eq, gte, lt, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
+import { lockGoalFactsForClosing } from './goalFactLock';
 
 export class WordleGoalsService {
   constructor(
@@ -71,6 +75,16 @@ export class WordleGoalsService {
         ),
       );
     if (!goal) throw new Error('Goal not found');
+    if (goal.status === 'completed' || goal.status === 'expired') {
+      const facts = await this.database
+        .select({ userId: wordleGoalContributions.user_id })
+        .from(wordleGoalContributions)
+        .where(eq(wordleGoalContributions.goal_id, goalId));
+      return {
+        count: facts.length,
+        contributors: [...new Set(facts.map((fact) => fact.userId))].sort(),
+      };
+    }
     const facts = await this.database
       .selectDistinct({
         userId: wordleGlobalAcceptedGuesses.user_id,
@@ -102,6 +116,70 @@ export class WordleGoalsService {
       count: facts.length,
       contributors: [...new Set(facts.map((fact) => fact.userId))].sort(),
     };
+  }
+
+  async close(goalId: string, guildId: string) {
+    return this.database.transaction(async (tx) => {
+      await lockGoalFactsForClosing(tx);
+      const [goal] = await tx
+        .select()
+        .from(wordleCommunityGoals)
+        .where(
+          and(
+            eq(wordleCommunityGoals.id, goalId),
+            eq(wordleCommunityGoals.guild_id, guildId),
+          ),
+        )
+        .for('update');
+      if (!goal) throw new Error('Goal not found');
+      if (goal.status === 'completed' || goal.status === 'expired')
+        return this.map(goal);
+      const now = this.now();
+      if (now < goal.ends_at) throw new Error('Goal is still active');
+      await tx
+        .update(wordleCommunityGoals)
+        .set({ status: 'finalizing' })
+        .where(eq(wordleCommunityGoals.id, goalId));
+      await tx.execute(sql`
+        INSERT INTO wordle_goal_contributions (goal_id, guild_id, user_id, word_date, session_id, attempt)
+        SELECT DISTINCT ON (e.user_id, e.word_date) ${goalId}, p.guild_id, e.user_id, e.word_date, e.session_id, e.attempt
+        FROM wordle_global_accepted_guesses e
+        INNER JOIN wordle_community_daily_presence p ON p.user_id = e.user_id AND p.word_date = e.word_date
+        WHERE p.guild_id = ${guildId} AND p.recorded_at_ms < ${goal.ends_at}
+          AND e.accepted_at >= ${goal.starts_at} AND e.accepted_at < ${goal.ends_at}
+        ORDER BY e.user_id, e.word_date, e.accepted_at, e.session_id, e.attempt
+        ON CONFLICT (goal_id, user_id, word_date) DO NOTHING
+      `);
+      const contributions = await tx
+        .select({ userId: wordleGoalContributions.user_id })
+        .from(wordleGoalContributions)
+        .where(eq(wordleGoalContributions.goal_id, goalId));
+      const completed = contributions.length >= goal.target;
+      if (completed) {
+        const users = [...new Set(contributions.map((row) => row.userId))];
+        if (users.length)
+          await tx
+            .insert(wordleGoalAwards)
+            .values(
+              users.map((userId) => ({
+                goal_id: goalId,
+                user_id: userId,
+                granted_at: now,
+              })),
+            )
+            .onConflictDoNothing();
+        await tx
+          .insert(wordleGoalDecorations)
+          .values({ goal_id: goalId, guild_id: guildId, granted_at: now })
+          .onConflictDoNothing();
+      }
+      const [updated] = await tx
+        .update(wordleCommunityGoals)
+        .set({ status: completed ? 'completed' : 'expired' })
+        .where(eq(wordleCommunityGoals.id, goalId))
+        .returning();
+      return this.map(updated!);
+    });
   }
 
   private map(row: typeof wordleCommunityGoals.$inferSelect) {

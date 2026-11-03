@@ -155,6 +155,13 @@
       "when": 1793665000005,
       "tag": "0021_wordle_presence_recorded_at",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793665000006,
+      "tag": "0022_wordle_goal_results",
+      "breakpoints": true
     }
   ]
 }

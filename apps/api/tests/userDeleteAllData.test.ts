@@ -75,6 +75,15 @@ async function seed(userId: string) {
   await db.execute(
     sql`INSERT INTO wordle_equipped_rewards (user_id, kind, reward_id) VALUES (${userId}, 'title', 'title_alphabetist')`,
   );
+  await db.execute(
+    sql`INSERT INTO wordle_community_goals (id, guild_id, target, starts_at, ends_at, status, created_at) VALUES (${`goal-${userId}`}, 'g', 1, 1, 2, 'completed', 0)`,
+  );
+  await db.execute(
+    sql`INSERT INTO wordle_goal_awards (goal_id, user_id, granted_at) VALUES (${`goal-${userId}`}, ${userId}, ${now})`,
+  );
+  await db.execute(
+    sql`INSERT INTO wordle_goal_contributions (goal_id, guild_id, user_id, word_date, session_id, attempt) VALUES (${`goal-${userId}`}, 'g', ${userId}, '2026-09-24', ${`global-${userId}`}, 1)`,
+  );
   const evidence = {
     patternId: 'tetromino_i',
     color: 'present',
@@ -117,6 +126,9 @@ afterAll(async () => {
   await db.execute(
     sql`DELETE FROM wordle_days WHERE guild_id = 'g' AND word_date = '2026-09-24'`,
   );
+  await db.execute(
+    sql`DELETE FROM wordle_community_goals WHERE id IN (${`goal-${USER}`}, ${`goal-${OTHER}`})`,
+  );
   await restoreCatalog?.();
 });
 
@@ -140,6 +152,8 @@ describe('UserService.deleteAllData', () => {
       ['wordle_global_discoveries', 'user_id'],
       ['wordle_global_occurrences', 'user_id'],
       ['wordle_album_contributions', 'user_id'],
+      ['wordle_goal_contributions', 'user_id'],
+      ['wordle_goal_awards', 'user_id'],
       ['wordle_personal_rewards', 'user_id'],
       ['wordle_equipped_rewards', 'user_id'],
       ['wordle_community_participation', 'user_id'],

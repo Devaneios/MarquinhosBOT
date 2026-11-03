@@ -3,6 +3,8 @@ import {
   wordleGlobalAcceptedGuesses,
   wordleGlobalDays,
   wordleGlobalSessions,
+  wordleGoalAwards,
+  wordleGoalDecorations,
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, expect, it } from 'bun:test';
@@ -121,5 +123,93 @@ it('prevents closing while a fact writer is still in flight', async () => {
       sql`SELECT pg_try_advisory_xact_lock(hashtextextended('wordle-goal-facts', 0)) AS acquired`,
     );
     expect(rows[0]?.acquired).toBe(true);
+  });
+});
+
+it('closes only after the deadline, snapshots eligible facts and grants rewards once', async () => {
+  let now = 100;
+  const goals = new WordleGoalsService(testDb.db, () => now);
+  const goal = await goals.create('a', 1, 200, 500);
+  await expect(goals.close(goal.id, 'a')).rejects.toThrow();
+  now = 500;
+  expect(await goals.close(goal.id, 'a')).toMatchObject({
+    status: 'completed',
+  });
+  expect(await goals.close(goal.id, 'a')).toMatchObject({
+    status: 'completed',
+  });
+  expect(
+    (await testDb.db.select().from(wordleGoalAwards))
+      .filter((row) => row.goal_id === goal.id)
+      .map((row) => row.user_id),
+  ).toEqual(['one']);
+  expect(
+    (await testDb.db.select().from(wordleGoalDecorations)).filter(
+      (row) => row.goal_id === goal.id,
+    ),
+  ).toHaveLength(1);
+  const empty = await goals.create('empty', 1, 600, 700);
+  now = 700;
+  expect(await goals.close(empty.id, 'empty')).toMatchObject({
+    status: 'expired',
+  });
+  expect(
+    (await testDb.db.select().from(wordleGoalDecorations)).filter(
+      (row) => row.goal_id === empty.id,
+    ),
+  ).toHaveLength(0);
+});
+
+it('waits for an in-flight accepted fact before closing', async () => {
+  let now = 100;
+  const goals = new WordleGoalsService(testDb.db, () => now);
+  const goal = await goals.create('race', 1, 200, 500);
+  await testDb.db.insert(wordleGlobalSessions).values({
+    id: 's3',
+    user_id: 'three',
+    word_date: '2026-10-01',
+    created_at: 1,
+  });
+  await testDb.db.insert(wordleCommunityDailyPresence).values({
+    guild_id: 'race',
+    user_id: 'three',
+    word_date: '2026-10-01',
+    first_seen_at: 0,
+    recorded_at_ms: 0,
+  });
+  let release!: () => void;
+  let ready!: () => void;
+  const entered = new Promise<void>((resolve) => {
+    ready = resolve;
+  });
+  const wait = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const writer = testDb.db.transaction(async (tx) => {
+    await lockGoalFactsForWrite(tx);
+    await tx.insert(wordleGlobalAcceptedGuesses).values({
+      session_id: 's3',
+      user_id: 'three',
+      word_date: '2026-10-01',
+      attempt: 1,
+      accepted_at: 250,
+    });
+    ready();
+    await wait;
+  });
+  await entered;
+  now = 500;
+  const closing = goals.close(goal.id, 'race');
+  const early = await Promise.race([
+    closing.then(() => 'closed'),
+    new Promise<string>((resolve) => setTimeout(() => resolve('waiting'), 30)),
+  ]);
+  expect(early).toBe('waiting');
+  release();
+  await writer;
+  expect(await closing).toMatchObject({ status: 'completed' });
+  expect(await goals.progress(goal.id, 'race')).toEqual({
+    count: 1,
+    contributors: ['three'],
   });
 });

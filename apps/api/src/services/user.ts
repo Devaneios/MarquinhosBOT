@@ -23,6 +23,7 @@ import {
   wordleGlobalDrafts,
   wordleGlobalOccurrences,
   wordleGlobalSessions,
+  wordleGoalAwards,
   wordlePatternDiscoveries,
   wordlePersonalRewards,
   wordleSessions,
@@ -37,6 +38,7 @@ import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { DiscordService } from 'services/discord';
 import { LastfmService } from 'services/lastfm';
 import { SpotifyService } from 'services/spotify';
+import { lockGoalFactsForWrite } from 'services/wordle/goalFactLock';
 import { decryptToken, encryptToken } from 'utils/crypto';
 
 dotenv.config();
@@ -66,6 +68,7 @@ const USER_OWNED_TABLES: readonly (readonly [
   [wordleGlobalSessions, wordleGlobalSessions.user_id],
   [wordleGlobalDrafts, wordleGlobalDrafts.user_id],
   [wordleGlobalAchievements, wordleGlobalAchievements.user_id],
+  [wordleGoalAwards, wordleGoalAwards.user_id],
   [wordlePersonalRewards, wordlePersonalRewards.user_id],
   [wordleGlobalDiscoveries, wordleGlobalDiscoveries.user_id],
   [wordleGlobalOccurrences, wordleGlobalOccurrences.user_id],
@@ -154,6 +157,7 @@ export class UserService {
 
   async deleteAllData(id: string) {
     await db.transaction(async (tx) => {
+      await lockGoalFactsForWrite(tx);
       for (const [table, column] of USER_OWNED_TABLES) {
         await tx.delete(table).where(eq(column, id));
       }

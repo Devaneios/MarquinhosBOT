@@ -531,3 +531,55 @@ export const wordleCommunityGoals = pgTable(
     index('wordle_community_goals_guild_idx').on(t.guild_id, t.starts_at),
   ],
 );
+
+export const wordleGoalContributions = pgTable(
+  'wordle_goal_contributions',
+  {
+    goal_id: text('goal_id')
+      .notNull()
+      .references(() => wordleCommunityGoals.id, { onDelete: 'cascade' }),
+    guild_id: text('guild_id').notNull(),
+    user_id: text('user_id').notNull(),
+    word_date: text('word_date').notNull(),
+    session_id: text('session_id').notNull(),
+    attempt: integer('attempt').notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.goal_id, t.user_id, t.word_date] }),
+    foreignKey({
+      columns: [t.session_id, t.attempt],
+      foreignColumns: [
+        wordleGlobalAcceptedGuesses.session_id,
+        wordleGlobalAcceptedGuesses.attempt,
+      ],
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [t.guild_id, t.user_id, t.word_date],
+      foreignColumns: [
+        wordleCommunityDailyPresence.guild_id,
+        wordleCommunityDailyPresence.user_id,
+        wordleCommunityDailyPresence.word_date,
+      ],
+    }).onDelete('cascade'),
+  ],
+);
+
+export const wordleGoalAwards = pgTable(
+  'wordle_goal_awards',
+  {
+    goal_id: text('goal_id')
+      .notNull()
+      .references(() => wordleCommunityGoals.id, { onDelete: 'cascade' }),
+    user_id: text('user_id').notNull(),
+    granted_at: bigint('granted_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.goal_id, t.user_id] })],
+);
+
+export const wordleGoalDecorations = pgTable('wordle_goal_decorations', {
+  goal_id: text('goal_id')
+    .primaryKey()
+    .references(() => wordleCommunityGoals.id, { onDelete: 'cascade' }),
+  guild_id: text('guild_id').notNull(),
+  granted_at: bigint('granted_at', { mode: 'number' }).notNull(),
+});
