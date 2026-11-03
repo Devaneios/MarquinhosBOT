@@ -18,6 +18,7 @@ import {
   ViewTransition,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getWordleAlbum } from '../api/wordleAlbumApi';
 import {
   getWordleShowcase,
   updateWordleShowcase,
@@ -33,6 +34,7 @@ import { useWordleBoard } from '../state/useWordleBoard';
 import { CurrentRow } from './CurrentRow';
 import { GuessRow } from './GuessRow';
 import { WordleAchievementsScreen } from './WordleAchievementsScreen';
+import { WordleAlbumScreen } from './WordleAlbumScreen';
 import { WordleSettingsScreen } from './WordleSettingsScreen';
 
 export function WordleBoard({
@@ -40,11 +42,13 @@ export function WordleBoard({
   config,
   onSaveConfig,
   accessToken,
+  guildId,
 }: {
   session: WsSession;
   config: WordleUserConfig;
   onSaveConfig: (config: WordleUserConfig) => Promise<void>;
   accessToken?: string;
+  guildId?: string;
 }) {
   const navigateHome = useNavigateHome();
   const { t } = useTranslation(['wordle', 'common']);
@@ -56,8 +60,12 @@ export function WordleBoard({
     (ids: string[]) => updateWordleShowcase(accessToken!, ids),
     [accessToken],
   );
+  const loadAlbum = useCallback(
+    () => getWordleAlbum(accessToken!, guildId!),
+    [accessToken, guildId],
+  );
   const [subScreen, setSubScreen] = useState<
-    'playing' | 'settings' | 'achievements'
+    'playing' | 'settings' | 'achievements' | 'album'
   >('playing');
   const {
     achievements,
@@ -170,6 +178,15 @@ export function WordleBoard({
     );
   }
 
+  if (screen === 'album') {
+    return (
+      <WordleAlbumScreen
+        load={loadAlbum}
+        onBack={() => transitionTo('nav-back', () => setSubScreen('playing'))}
+      />
+    );
+  }
+
   const keyboard = (
     <Keyboard
       rows={keyboardRows}
@@ -207,6 +224,20 @@ export function WordleBoard({
         onBack={navigateHome}
         right={
           <>
+            {accessToken && guildId && (
+              <button
+                type="button"
+                className={`${backChipClass} px-3`}
+                aria-label={t('wordle:albumOpen')}
+                title={t('wordle:albumOpen')}
+                onClick={() => {
+                  suspendInput();
+                  transitionTo('nav-forward', () => setSubScreen('album'));
+                }}
+              >
+                📖
+              </button>
+            )}
             <button
               type="button"
               className={`${backChipClass} px-3`}

@@ -7,6 +7,7 @@ export type AlbumContribution = {
 };
 export type AlbumPage = AlbumPattern & {
   contributorCount: number;
+  contributors: string[];
   firstContribution: AlbumContribution | null;
 };
 
@@ -35,9 +36,11 @@ export function buildAlbumPages(
             ? 1
             : 0),
     );
+    const contributors = [...new Set(rows.map((row) => row.userId))];
     return {
       ...pattern,
-      contributorCount: new Set(rows.map((row) => row.userId)).size,
+      contributorCount: contributors.length,
+      contributors,
       firstContribution: rows[0] ?? null,
     };
   });

@@ -142,6 +142,7 @@ export const getAlbum = defineContract({
         icon: z.string(),
         mask: z.array(z.string()),
         contributorCount: z.number().int().nonnegative(),
+        contributors: z.array(z.string()),
         firstContribution: z
           .object({
             occurrenceId: z.string(),

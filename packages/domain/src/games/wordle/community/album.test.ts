@@ -18,6 +18,7 @@ describe('community album projection', () => {
         patternId: 'a',
         family: 'letters',
         contributorCount: 2,
+        contributors: ['first', 'second'],
         firstContribution: {
           occurrenceId: 'a',
           patternId: 'a',
@@ -29,6 +30,7 @@ describe('community album projection', () => {
         patternId: 'b',
         family: 'letters',
         contributorCount: 0,
+        contributors: [],
         firstContribution: null,
       },
     ]);

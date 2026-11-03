@@ -1,3 +1,4 @@
+import { getAlbum } from '@marquinhos/contracts/http/routes/wordle';
 import {
   wordleCommunityDailyPresence,
   wordleGlobalOccurrences,
@@ -22,7 +23,7 @@ describe('community album', () => {
     await testDb.db.insert(wordleGlobalOccurrences).values({
       user_id: 'player',
       word_date: '2026-10-01',
-      pattern_id: 'test-pattern',
+      pattern_id: 'letter_a',
       session_id: 'session',
       occurred_at: 100,
       evidence: {},
@@ -61,7 +62,11 @@ describe('community album', () => {
     const pages = await album.pages('a');
     expect(pages.length).toBeGreaterThan(0);
     expect(pages.some((page) => page.patternId === 'letter_a')).toBe(true);
+    expect(
+      pages.find((page) => page.patternId === 'letter_a')?.contributors,
+    ).toEqual(['player']);
     expect(JSON.stringify(pages)).not.toContain('evidence');
+    expect(getAlbum.response.safeParse({ data: pages }).success).toBe(true);
   });
   it('handles late presence and removes projections when the source is deleted', async () => {
     await testDb.db.insert(wordleCommunityDailyPresence).values({
@@ -82,7 +87,7 @@ describe('community album', () => {
       .where(
         and(
           eq(wordleGlobalOccurrences.user_id, 'player'),
-          eq(wordleGlobalOccurrences.pattern_id, 'test-pattern'),
+          eq(wordleGlobalOccurrences.pattern_id, 'letter_a'),
         ),
       );
     expect(await album.contributions('late')).toEqual([]);

@@ -49,6 +49,7 @@ export function WordleGame({
       config={userConfig.config}
       onSaveConfig={userConfig.save}
       accessToken={identity.accessToken}
+      guildId={identity.guildId}
     />
   );
 }
