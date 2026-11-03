@@ -19,6 +19,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getWordleAlbum } from '../api/wordleAlbumApi';
+import { getWordleGoals } from '../api/wordleGoalsApi';
 import { equipWordleReward, getWordleRewards } from '../api/wordleRewardsApi';
 import {
   getWordleShowcase,
@@ -44,12 +45,14 @@ export function WordleBoard({
   onSaveConfig,
   accessToken,
   guildId,
+  userId,
 }: {
   session: WsSession;
   config: WordleUserConfig;
   onSaveConfig: (config: WordleUserConfig) => Promise<void>;
   accessToken?: string;
   guildId?: string;
+  userId?: string;
 }) {
   const navigateHome = useNavigateHome();
   const { t } = useTranslation(['wordle', 'common']);
@@ -63,6 +66,10 @@ export function WordleBoard({
   );
   const loadAlbum = useCallback(
     () => getWordleAlbum(accessToken!, guildId!),
+    [accessToken, guildId],
+  );
+  const loadGoals = useCallback(
+    () => getWordleGoals(accessToken!, guildId!),
     [accessToken, guildId],
   );
   const loadRewards = useCallback(
@@ -195,6 +202,7 @@ export function WordleBoard({
     return (
       <WordleAlbumScreen
         load={loadAlbum}
+        goals={userId ? { load: loadGoals, userId } : undefined}
         onBack={() => transitionTo('nav-back', () => setSubScreen('playing'))}
       />
     );

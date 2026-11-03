@@ -2,13 +2,17 @@ import { MenuPanel, MenuScreen } from '@/games/shared/shell';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WordleAlbumPage } from '../api/wordleAlbumApi';
+import type { WordleGoal } from '../api/wordleGoalsApi';
+import { WordleGoalsPanel } from './WordleGoalsPanel';
 
 export function WordleAlbumScreen({
   load,
   onBack,
+  goals,
 }: {
   load: () => Promise<WordleAlbumPage[]>;
   onBack: () => void;
+  goals?: { load: () => Promise<WordleGoal[]>; userId: string };
 }) {
   const { t } = useTranslation('wordle');
   const [pages, setPages] = useState<WordleAlbumPage[] | null>(null);
@@ -46,6 +50,7 @@ export function WordleAlbumScreen({
       <p className="text-sm text-marquinhos-text-dim">
         {t('albumDescription')}
       </p>
+      {goals && <WordleGoalsPanel {...goals} />}
       {error ? (
         <div role="alert">
           {t('albumError')}{' '}
