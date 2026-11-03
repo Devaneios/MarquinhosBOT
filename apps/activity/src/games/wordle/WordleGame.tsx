@@ -48,6 +48,7 @@ export function WordleGame({
       session={session.session}
       config={userConfig.config}
       onSaveConfig={userConfig.save}
+      accessToken={identity.accessToken}
     />
   );
 }

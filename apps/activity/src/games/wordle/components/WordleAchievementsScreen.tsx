@@ -7,6 +7,7 @@ import { WORDLE_ACHIEVEMENT_FAMILIES } from '@marquinhos/domain/games/wordle/ach
 import { useEffect, useMemo, useState, ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WordlePatternDisplay } from './WordlePatternDisplay';
+import { WordleShowcaseEditor } from './WordleShowcaseEditor';
 
 const RARITY_CLASSES: Record<WordleAchievementStatus['rarity'], string> = {
   common: 'border-marquinhos-border bg-white/8 text-marquinhos-text-dim',
@@ -50,10 +51,15 @@ export function WordleAchievementsScreen({
   achievements,
   stats = null,
   onBack,
+  showcase,
 }: {
   achievements: WordleAchievementStatus[];
   stats?: WordlePlayerStats | null;
   onBack: () => void;
+  showcase?: {
+    load: () => Promise<string[]>;
+    save: (ids: string[]) => Promise<string[]>;
+  };
 }) {
   const { t } = useTranslation(['wordle', 'common']);
   const [filter, setFilter] = useState<AchievementFilter>('all');
@@ -170,6 +176,9 @@ export function WordleAchievementsScreen({
 
       <ViewTransition name="game-panel">
         <div className="flex flex-col gap-4">
+          {showcase && (
+            <WordleShowcaseEditor achievements={achievements} {...showcase} />
+          )}
           <MenuPanel className="max-w-2xl p-4 sm:p-5">
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">

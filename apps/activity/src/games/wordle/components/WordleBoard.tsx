@@ -9,8 +9,19 @@ import {
 } from '@/games/shared/shell';
 import { transitionTo, useNavigateHome } from '@/shared/motion/transitions';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
-import { useEffect, useMemo, useRef, useState, ViewTransition } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  ViewTransition,
+} from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  getWordleShowcase,
+  updateWordleShowcase,
+} from '../api/wordleShowcaseApi';
 import { playAchievementChime } from '../audio/achievementChime';
 import {
   ACHIEVEMENT_TOAST_MS,
@@ -28,13 +39,23 @@ export function WordleBoard({
   session,
   config,
   onSaveConfig,
+  accessToken,
 }: {
   session: WsSession;
   config: WordleUserConfig;
   onSaveConfig: (config: WordleUserConfig) => Promise<void>;
+  accessToken?: string;
 }) {
   const navigateHome = useNavigateHome();
   const { t } = useTranslation(['wordle', 'common']);
+  const loadShowcase = useCallback(
+    () => getWordleShowcase(accessToken!),
+    [accessToken],
+  );
+  const saveShowcase = useCallback(
+    (ids: string[]) => updateWordleShowcase(accessToken!, ids),
+    [accessToken],
+  );
   const [subScreen, setSubScreen] = useState<
     'playing' | 'settings' | 'achievements'
   >('playing');
@@ -141,6 +162,9 @@ export function WordleBoard({
       <WordleAchievementsScreen
         achievements={achievements}
         stats={stats}
+        showcase={
+          accessToken ? { load: loadShowcase, save: saveShowcase } : undefined
+        }
         onBack={() => transitionTo('nav-back', () => setSubScreen('playing'))}
       />
     );
