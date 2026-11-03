@@ -84,6 +84,12 @@ async function seed(userId: string) {
   await db.execute(
     sql`INSERT INTO wordle_goal_contributions (goal_id, guild_id, user_id, word_date, session_id, attempt) VALUES (${`goal-${userId}`}, 'g', ${userId}, '2026-09-24', ${`global-${userId}`}, 1)`,
   );
+  await db.execute(
+    sql`INSERT INTO wordle_pattern_challenges (id, guild_id, creator_user_id, pattern_id, opens_at, closes_at) VALUES (${`challenge-${userId}`}, 'g', ${userId}, 'letter_a', 1, 2)`,
+  );
+  await db.execute(
+    sql`INSERT INTO wordle_challenge_joins (challenge_id, user_id, joined_at) VALUES (${`challenge-${userId}`}, ${userId}, 1)`,
+  );
   const evidence = {
     patternId: 'tetromino_i',
     color: 'present',
@@ -129,6 +135,9 @@ afterAll(async () => {
   await db.execute(
     sql`DELETE FROM wordle_community_goals WHERE id IN (${`goal-${USER}`}, ${`goal-${OTHER}`})`,
   );
+  await db.execute(
+    sql`DELETE FROM wordle_pattern_challenges WHERE id IN (${`challenge-${USER}`}, ${`challenge-${OTHER}`})`,
+  );
   await restoreCatalog?.();
 });
 
@@ -154,6 +163,7 @@ describe('UserService.deleteAllData', () => {
       ['wordle_album_contributions', 'user_id'],
       ['wordle_goal_contributions', 'user_id'],
       ['wordle_goal_awards', 'user_id'],
+      ['wordle_challenge_joins', 'user_id'],
       ['wordle_personal_rewards', 'user_id'],
       ['wordle_equipped_rewards', 'user_id'],
       ['wordle_community_participation', 'user_id'],
@@ -169,6 +179,12 @@ describe('UserService.deleteAllData', () => {
       }).toEqual({ table, mine: 0, theirs: 1 });
     }
     expect(await count('ai_trace_events', 'trace_id', `trace-${USER}`)).toBe(0);
+    expect(
+      await count('wordle_pattern_challenges', 'creator_user_id', USER),
+    ).toBe(0);
+    expect(
+      await count('wordle_pattern_challenges', 'id', `challenge-${USER}`),
+    ).toBe(1);
     expect(await count('ai_thread_items', 'thread_id', `thread-${USER}`)).toBe(
       0,
     );

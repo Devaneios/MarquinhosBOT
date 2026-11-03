@@ -653,3 +653,34 @@ export const wordleNotifications = pgTable(
     ),
   ],
 );
+
+export const wordlePatternChallenges = pgTable(
+  'wordle_pattern_challenges',
+  {
+    id: text('id').primaryKey(),
+    guild_id: text('guild_id').notNull(),
+    creator_user_id: text('creator_user_id'),
+    pattern_id: text('pattern_id').notNull(),
+    opens_at: bigint('opens_at', { mode: 'number' }).notNull(),
+    closes_at: bigint('closes_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    check(
+      'wordle_pattern_challenge_window_check',
+      sql`${t.opens_at} < ${t.closes_at}`,
+    ),
+    index('wordle_pattern_challenge_guild_idx').on(t.guild_id, t.opens_at),
+  ],
+);
+
+export const wordleChallengeJoins = pgTable(
+  'wordle_challenge_joins',
+  {
+    challenge_id: text('challenge_id')
+      .notNull()
+      .references(() => wordlePatternChallenges.id, { onDelete: 'cascade' }),
+    user_id: text('user_id').notNull(),
+    joined_at: bigint('joined_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.challenge_id, t.user_id] })],
+);

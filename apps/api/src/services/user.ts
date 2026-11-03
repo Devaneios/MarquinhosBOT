@@ -14,6 +14,7 @@ import {
   userLevels,
   users,
   userStats,
+  wordleChallengeJoins,
   wordleCommunityDailyPresence,
   wordleCommunityFirstSolves,
   wordleCommunityParticipation,
@@ -24,6 +25,7 @@ import {
   wordleGlobalOccurrences,
   wordleGlobalSessions,
   wordleGoalAwards,
+  wordlePatternChallenges,
   wordlePatternDiscoveries,
   wordlePersonalRewards,
   wordleSessions,
@@ -68,6 +70,7 @@ const USER_OWNED_TABLES: readonly (readonly [
   [wordleGlobalSessions, wordleGlobalSessions.user_id],
   [wordleGlobalDrafts, wordleGlobalDrafts.user_id],
   [wordleGlobalAchievements, wordleGlobalAchievements.user_id],
+  [wordleChallengeJoins, wordleChallengeJoins.user_id],
   [wordleGoalAwards, wordleGoalAwards.user_id],
   [wordlePersonalRewards, wordlePersonalRewards.user_id],
   [wordleGlobalDiscoveries, wordleGlobalDiscoveries.user_id],
@@ -158,6 +161,10 @@ export class UserService {
   async deleteAllData(id: string) {
     await db.transaction(async (tx) => {
       await lockGoalFactsForWrite(tx);
+      await tx
+        .update(wordlePatternChallenges)
+        .set({ creator_user_id: null })
+        .where(eq(wordlePatternChallenges.creator_user_id, id));
       for (const [table, column] of USER_OWNED_TABLES) {
         await tx.delete(table).where(eq(column, id));
       }
