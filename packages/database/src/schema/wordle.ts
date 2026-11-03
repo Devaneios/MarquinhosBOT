@@ -4,6 +4,7 @@ import {
   bigserial,
   boolean,
   check,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -393,5 +394,40 @@ export const wordleGlobalOccurrences = pgTable(
   (t) => [
     primaryKey({ columns: [t.user_id, t.word_date, t.pattern_id] }),
     index('wordle_global_occurrences_date_idx').on(t.word_date),
+  ],
+);
+
+export const wordleAlbumContributions = pgTable(
+  'wordle_album_contributions',
+  {
+    guild_id: text('guild_id').notNull(),
+    user_id: text('user_id').notNull(),
+    word_date: text('word_date').notNull(),
+    pattern_id: text('pattern_id').notNull(),
+    occurred_at: bigint('occurred_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.guild_id, t.user_id, t.word_date, t.pattern_id] }),
+    foreignKey({
+      columns: [t.user_id, t.word_date, t.pattern_id],
+      foreignColumns: [
+        wordleGlobalOccurrences.user_id,
+        wordleGlobalOccurrences.word_date,
+        wordleGlobalOccurrences.pattern_id,
+      ],
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [t.guild_id, t.user_id, t.word_date],
+      foreignColumns: [
+        wordleCommunityDailyPresence.guild_id,
+        wordleCommunityDailyPresence.user_id,
+        wordleCommunityDailyPresence.word_date,
+      ],
+    }).onDelete('cascade'),
+    index('wordle_album_contributions_page_idx').on(
+      t.guild_id,
+      t.pattern_id,
+      t.occurred_at,
+    ),
   ],
 );

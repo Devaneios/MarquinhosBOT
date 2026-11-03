@@ -113,6 +113,13 @@
       "when": 1793659837836,
       "tag": "0015_wordle_global_migration_state",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793665000000,
+      "tag": "0016_wordle_album",
+      "breakpoints": true
     }
   ]
 }
