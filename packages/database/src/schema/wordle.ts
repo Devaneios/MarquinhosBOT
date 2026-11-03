@@ -684,3 +684,22 @@ export const wordleChallengeJoins = pgTable(
   },
   (t) => [primaryKey({ columns: [t.challenge_id, t.user_id] })],
 );
+
+export const wordleBingoCards = pgTable(
+  'wordle_bingo_cards',
+  {
+    id: text('id').primaryKey(),
+    guild_id: text('guild_id').notNull(),
+    version: integer('version').notNull(),
+    starts_at: bigint('starts_at', { mode: 'number' }).notNull(),
+    ends_at: bigint('ends_at', { mode: 'number' }).notNull(),
+    allow_multi: boolean('allow_multi').notNull(),
+    cells: jsonb('cells').$type<unknown>().notNull(),
+    created_at: bigint('created_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    check('wordle_bingo_window_check', sql`${t.starts_at} < ${t.ends_at}`),
+    check('wordle_bingo_version_check', sql`${t.version} > 0`),
+    index('wordle_bingo_guild_idx').on(t.guild_id, t.starts_at),
+  ],
+);
