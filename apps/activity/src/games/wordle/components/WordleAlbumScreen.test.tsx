@@ -38,5 +38,6 @@ it('shows community progress, a pattern, and the first recorded contributor', as
   expect(screen.getByText('Marco da família concluído')).toBeDefined();
   fireEvent.click(screen.getByRole('button', { name: /Letra A/ }));
   expect(screen.getByText(/Primeira contribuição registrada/)).toBeDefined();
+  expect(screen.getByText(/Página decorada pela comunidade/)).toBeDefined();
   expect(screen.getByRole('img', { name: /Letra A/ })).toBeDefined();
 });

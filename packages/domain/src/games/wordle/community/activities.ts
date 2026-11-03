@@ -97,6 +97,7 @@ export type BingoCard = {
 };
 export type BingoEvent = {
   id: string;
+  actionId?: string;
   guildId: string;
   userId: string;
   occurredAt: number;
@@ -115,6 +116,7 @@ export function bingoProgress(card: BingoCard, events: readonly BingoEvent[]) {
     throw new Error('Invalid bingo card');
   const counts = Array<number>(9).fill(0);
   const seen = new Set<string>();
+  const assignedActions = new Set<string>();
   const sorted = [...events].sort(
     (a, b) =>
       a.occurredAt - b.occurredAt || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
@@ -122,6 +124,7 @@ export function bingoProgress(card: BingoCard, events: readonly BingoEvent[]) {
   for (const event of sorted) {
     if (
       seen.has(event.id) ||
+      (!card.allowMulti && assignedActions.has(event.actionId ?? event.id)) ||
       event.guildId !== card.guildId ||
       event.occurredAt < card.startsAt ||
       event.occurredAt >= card.endsAt
@@ -139,6 +142,7 @@ export function bingoProgress(card: BingoCard, events: readonly BingoEvent[]) {
       )
         continue;
       counts[index] = counts[index]! + 1;
+      assignedActions.add(event.actionId ?? event.id);
       if (!card.allowMulti) break;
     }
   }

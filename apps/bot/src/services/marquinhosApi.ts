@@ -312,6 +312,24 @@ export class MarquinhosApiService {
     });
   }
 
+  async createWordleBingo(
+    guildId: string,
+    firstDate: string,
+    lastDate: string,
+    allowMulti: boolean,
+  ) {
+    return callContract(this.client, wordle.createBingo, {
+      body: { guildId, firstDate, lastDate, allowMulti },
+    });
+  }
+
+  async getWordleGallery(guildId: string, week: string) {
+    return callContract(this.client, wordle.getBotGallery, {
+      params: { guildId },
+      query: { week },
+    });
+  }
+
   async getWordleNotificationConfig(guildId: string) {
     return callContract(this.client, wordle.getNotificationConfig, {
       params: { guildId },

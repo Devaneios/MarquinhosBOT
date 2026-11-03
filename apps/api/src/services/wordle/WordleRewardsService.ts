@@ -1,7 +1,9 @@
 import type { Db } from '@marquinhos/database/client';
 import {
+  wordleCommunityGoals,
   wordleEquippedRewards,
   wordleGlobalAchievements,
+  wordleGoalAwards,
   wordlePersonalRewards,
 } from '@marquinhos/database/schema';
 import {
@@ -48,10 +50,26 @@ export class WordleRewardsService {
       .select()
       .from(wordleEquippedRewards)
       .where(eq(wordleEquippedRewards.user_id, userId));
+    const badges = await this.database
+      .select({
+        goalId: wordleGoalAwards.goal_id,
+        guildId: wordleCommunityGoals.guild_id,
+        grantedAt: wordleGoalAwards.granted_at,
+        startsAt: wordleCommunityGoals.starts_at,
+        endsAt: wordleCommunityGoals.ends_at,
+      })
+      .from(wordleGoalAwards)
+      .innerJoin(
+        wordleCommunityGoals,
+        eq(wordleCommunityGoals.id, wordleGoalAwards.goal_id),
+      )
+      .where(eq(wordleGoalAwards.user_id, userId))
+      .orderBy(asc(wordleGoalAwards.granted_at), asc(wordleGoalAwards.goal_id));
     return {
       owned: owned.map((row) => row.id),
       title: equipment.find((row) => row.kind === 'title')?.reward_id ?? null,
       frame: equipment.find((row) => row.kind === 'frame')?.reward_id ?? null,
+      badges,
     };
   }
 

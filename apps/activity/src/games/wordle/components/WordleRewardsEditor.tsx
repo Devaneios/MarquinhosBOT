@@ -91,6 +91,21 @@ export function WordleRewardsEditor({
           </div>
         );
       })}
+      {state && state.badges.length > 0 && (
+        <div className="mt-4">
+          <h3 className="font-semibold">{t('goalBadgesTitle')}</h3>
+          <ul>
+            {state.badges.map((badge) => (
+              <li key={badge.goalId}>
+                {t('goalBadgeOrigin', { guildId: badge.guildId })} ·{' '}
+                {new Date(badge.grantedAt).toLocaleDateString('pt-BR', {
+                  timeZone: 'America/Recife',
+                })}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
   );
 }

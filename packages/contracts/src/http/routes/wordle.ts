@@ -6,6 +6,8 @@ import {
   wordleAchievementsOverviewSchema,
   wordleDraftWriteResultSchema,
   wordleDraftWriteSchema,
+  wordleGoalBadgeSchema,
+  wordlePatternEvidenceSchema,
   wordleUserConfigSchema,
 } from '../../wordle';
 import { defineContract, envelope } from '../contract';
@@ -133,6 +135,7 @@ const rewardsStateSchema = z.object({
   owned: z.array(z.string()),
   title: z.string().nullable(),
   frame: z.string().nullable(),
+  badges: z.array(wordleGoalBadgeSchema),
 });
 export const getRewards = defineContract({
   method: 'GET',
@@ -162,6 +165,119 @@ export const listGoals = defineContract({
       }),
     ),
   ),
+});
+
+const challengeSchema = z.object({
+  id: requiredString,
+  guildId: requiredString,
+  creatorId: z.string().nullable(),
+  patternId: requiredString,
+  opensAt: z.number(),
+  closesAt: z.number(),
+  status: z.enum(['open', 'closed']),
+  participants: z.array(z.string()),
+  joined: z.boolean(),
+});
+export const listChallenges = defineContract({
+  method: 'GET',
+  path: '/api/wordle/challenges/:guildId',
+  params: guildParams,
+  response: envelope(z.array(challengeSchema)),
+});
+export const createChallenge = defineContract({
+  method: 'POST',
+  path: '/api/wordle/challenges/:guildId',
+  params: guildParams,
+  body: z
+    .object({
+      patternId: requiredString,
+      closesAt: z.number().int().positive(),
+    })
+    .strict(),
+  response: envelope(challengeSchema),
+});
+export const joinChallenge = defineContract({
+  method: 'POST',
+  path: '/api/wordle/challenges/:guildId/:challengeId/join',
+  params: z.object({ guildId: requiredString, challengeId: requiredString }),
+  response: envelope(z.object({ joined: z.literal(true) })),
+});
+
+const bingoConditionSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('participation'),
+    target: z.number().int().positive(),
+  }),
+  z.object({
+    kind: z.literal('pattern'),
+    family: requiredString,
+    target: z.number().int().positive(),
+  }),
+]);
+const bingoCardSchema = z.object({
+  id: requiredString,
+  guildId: requiredString,
+  version: z.number().int().positive(),
+  startsAt: z.number(),
+  endsAt: z.number(),
+  allowMulti: z.boolean(),
+  status: z.enum(['scheduled', 'active', 'closed']),
+  cells: z
+    .array(z.object({ id: requiredString, condition: bingoConditionSchema }))
+    .length(9),
+  progress: z.object({
+    counts: z.array(z.number().int().nonnegative()).length(9),
+    filled: z.array(z.boolean()).length(9),
+    lines: z.array(z.array(z.number().int().min(0).max(8)).length(3)),
+    complete: z.boolean(),
+  }),
+});
+export const listBingo = defineContract({
+  method: 'GET',
+  path: '/api/wordle/bingo/:guildId',
+  params: guildParams,
+  response: envelope(z.array(bingoCardSchema)),
+});
+export const createBingo = defineContract({
+  method: 'POST',
+  path: '/api/wordle/admin/bingo',
+  body: z
+    .object({
+      guildId: requiredString,
+      firstDate: z.iso.date(),
+      lastDate: z.iso.date(),
+      allowMulti: z.boolean(),
+    })
+    .strict(),
+  response: envelope(bingoCardSchema),
+});
+
+const gallerySchema = z.object({
+  weekKey: z.iso.date(),
+  entries: z.array(
+    z.object({
+      userId: requiredString,
+      family: requiredString,
+      date: z.iso.date(),
+      sourceAt: z.number(),
+      patternId: requiredString,
+      name: requiredString,
+      evidence: wordlePatternEvidenceSchema,
+    }),
+  ),
+});
+export const getGallery = defineContract({
+  method: 'GET',
+  path: '/api/wordle/gallery/:guildId',
+  params: guildParams,
+  response: envelope(gallerySchema),
+});
+export const getBotGallery = defineContract({
+  method: 'GET',
+  path: '/api/wordle/admin/gallery/:guildId',
+  params: guildParams,
+  query: z.object({ week: z.iso.date() }),
+  response: envelope(gallerySchema),
 });
 export const createGoal = defineContract({
   method: 'POST',

@@ -23,7 +23,7 @@ it('uses only the authenticated identity for reconciliation and equipment', asyn
     reconcile: async (user) => {
       calls.push(user);
     },
-    get: async () => ({ owned: [], title: null, frame: null }),
+    get: async () => ({ owned: [], title: null, frame: null, badges: [] }),
     equip: async (...args) => {
       calls.push(args);
     },
@@ -49,7 +49,7 @@ it('uses only the authenticated identity for reconciliation and equipment', asyn
 it('rejects unauthenticated and unowned equipment', async () => {
   const controller = new WordleRewardsController({
     reconcile: async () => {},
-    get: async () => ({ owned: [], title: null, frame: null }),
+    get: async () => ({ owned: [], title: null, frame: null, badges: [] }),
     equip: async () => {
       throw new InvalidWordleReward();
     },

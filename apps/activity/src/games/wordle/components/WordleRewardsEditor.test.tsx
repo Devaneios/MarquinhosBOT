@@ -9,6 +9,7 @@ it('equips and removes an owned title', async () => {
       owned: ['title_alphabetist'],
       title: rewardId,
       frame: null,
+      badges: [],
     }),
   );
   render(
@@ -17,6 +18,7 @@ it('equips and removes an owned title', async () => {
         owned: ['title_alphabetist'],
         title: null,
         frame: null,
+        badges: [],
       })}
       equip={equip}
     />,
@@ -31,4 +33,29 @@ it('equips and removes an owned title', async () => {
     await screen.findByRole('button', { name: 'Remover Alfabetista' }),
   );
   await waitFor(() => expect(equip).toHaveBeenCalledWith('title', null));
+});
+
+it('shows badges earned in another community', async () => {
+  render(
+    <WordleRewardsEditor
+      load={async () => ({
+        owned: [],
+        title: null,
+        frame: null,
+        badges: [
+          {
+            goalId: 'goal',
+            guildId: '123',
+            grantedAt: 20,
+            startsAt: 10,
+            endsAt: 20,
+          },
+        ],
+      })}
+      equip={async () => {
+        throw new Error('unexpected');
+      }}
+    />,
+  );
+  expect(await screen.findByText(/Comunidade 123/)).toBeTruthy();
 });

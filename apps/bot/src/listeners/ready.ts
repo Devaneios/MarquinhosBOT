@@ -78,6 +78,7 @@ function startTermoCommunityNotifications(client: Client<true>): void {
                   return null;
                 return channel;
               },
+              async (week) => (await api.getWordleGallery(guildId, week)).data,
             );
             if (!sent) break;
           }

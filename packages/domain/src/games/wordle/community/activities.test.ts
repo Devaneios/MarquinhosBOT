@@ -130,3 +130,44 @@ it('fills multiple bingo cells only when the card permits it', () => {
     bingoProgress(card, [{ ...event, guildId: 'b' }]).filled.filter(Boolean),
   ).toHaveLength(0);
 });
+
+it('does not use one guess as both a participation and a drawing unless allowed', () => {
+  const cells = Array.from({ length: 9 }, (_, index) => ({
+    id: String(index),
+    condition:
+      index === 0
+        ? { kind: 'participation' as const, target: 1 }
+        : { kind: 'pattern' as const, family: 'letter', target: 1 },
+  }));
+  const card = {
+    guildId: 'a',
+    version: 1,
+    startsAt: 100,
+    endsAt: 200,
+    allowMulti: false,
+    cells,
+  };
+  const events = [
+    {
+      id: 'p',
+      actionId: 'guess',
+      guildId: 'a',
+      userId: 'one',
+      occurredAt: 150,
+      kind: 'participation' as const,
+    },
+    {
+      id: 'd',
+      actionId: 'guess',
+      guildId: 'a',
+      userId: 'one',
+      occurredAt: 150,
+      kind: 'pattern' as const,
+      family: 'letter',
+    },
+  ];
+  expect(bingoProgress(card, events).filled.filter(Boolean)).toHaveLength(1);
+  expect(
+    bingoProgress({ ...card, allowMulti: true }, events).filled.filter(Boolean),
+  ).toHaveLength(9);
+});

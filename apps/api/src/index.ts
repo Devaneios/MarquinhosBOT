@@ -35,6 +35,7 @@ import {
   loadBannedWords,
   WordleService,
 } from 'services/wordle';
+import { WordleGalleryService } from 'services/wordle/WordleGalleryService';
 import { WordleGoalsService } from 'services/wordle/WordleGoalsService';
 import { WordleNotificationService } from 'services/wordle/WordleNotificationService';
 import { logger } from 'utils/logger';
@@ -198,6 +199,10 @@ async function reconcileWordleGoals(): Promise<void> {
     [
       'wordle.notification.weekly_failed',
       () => notifications.queueWeeklySummaries(),
+    ],
+    [
+      'wordle.gallery.weekly_failed',
+      () => new WordleGalleryService(db).queuePreviousWeek(),
     ],
   ];
   try {

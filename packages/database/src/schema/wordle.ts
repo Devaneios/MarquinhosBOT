@@ -653,3 +653,53 @@ export const wordleNotifications = pgTable(
     ),
   ],
 );
+
+export const wordlePatternChallenges = pgTable(
+  'wordle_pattern_challenges',
+  {
+    id: text('id').primaryKey(),
+    guild_id: text('guild_id').notNull(),
+    creator_user_id: text('creator_user_id'),
+    pattern_id: text('pattern_id').notNull(),
+    opens_at: bigint('opens_at', { mode: 'number' }).notNull(),
+    closes_at: bigint('closes_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    check(
+      'wordle_pattern_challenge_window_check',
+      sql`${t.opens_at} < ${t.closes_at}`,
+    ),
+    index('wordle_pattern_challenge_guild_idx').on(t.guild_id, t.opens_at),
+  ],
+);
+
+export const wordleChallengeJoins = pgTable(
+  'wordle_challenge_joins',
+  {
+    challenge_id: text('challenge_id')
+      .notNull()
+      .references(() => wordlePatternChallenges.id, { onDelete: 'cascade' }),
+    user_id: text('user_id').notNull(),
+    joined_at: bigint('joined_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.challenge_id, t.user_id] })],
+);
+
+export const wordleBingoCards = pgTable(
+  'wordle_bingo_cards',
+  {
+    id: text('id').primaryKey(),
+    guild_id: text('guild_id').notNull(),
+    version: integer('version').notNull(),
+    starts_at: bigint('starts_at', { mode: 'number' }).notNull(),
+    ends_at: bigint('ends_at', { mode: 'number' }).notNull(),
+    allow_multi: boolean('allow_multi').notNull(),
+    cells: jsonb('cells').$type<unknown>().notNull(),
+    created_at: bigint('created_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    check('wordle_bingo_window_check', sql`${t.starts_at} < ${t.ends_at}`),
+    check('wordle_bingo_version_check', sql`${t.version} > 0`),
+    index('wordle_bingo_guild_idx').on(t.guild_id, t.starts_at),
+  ],
+);

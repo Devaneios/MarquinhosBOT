@@ -163,6 +163,14 @@ export function buildTermoAchievementsEmbed(
         : summary.recent.map(recentLine).join('\n'),
   });
 
+  const goalBadges = overview.cosmetics?.badges ?? [];
+  if (goalBadges.length > 0) {
+    embed.addFields({
+      name: '🏅 Metas comunitárias',
+      value: `${goalBadges.length} ${goalBadges.length === 1 ? 'emblema conquistado' : 'emblemas conquistados'}`,
+    });
+  }
+
   if (summary.nextGoals.length > 0) {
     embed.addFields({
       name: 'Próximas metas',
