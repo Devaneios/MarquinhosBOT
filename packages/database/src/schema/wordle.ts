@@ -614,6 +614,7 @@ export const wordleNotifications = pgTable(
     event_key: text('event_key').notNull(),
     payload: jsonb('payload').$type<Record<string, string>>().notNull(),
     eligible_at: bigint('eligible_at', { mode: 'number' }).notNull(),
+    deliver_individual: boolean('deliver_individual').notNull().default(true),
     status: text('status')
       .$type<'pending' | 'sending' | 'delivered' | 'uncertain'>()
       .notNull(),

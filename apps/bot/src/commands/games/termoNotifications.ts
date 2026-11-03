@@ -44,12 +44,16 @@ export async function deliverWordleNotification(
       item.drawing.patternId === event.payload.patternId &&
       !item.hidden,
   );
+  const count = (value: string | undefined) =>
+    /^\d{1,8}$/.test(value ?? '') ? Number(value) : 0;
+  const pages = count(event.payload.pages);
+  const goals = count(event.payload.goals);
   const content =
     event.kind === 'page'
       ? `📖 A comunidade preencheu uma página do álbum${pattern ? `: ${pattern.name}` : '.'}`
       : event.kind === 'goal'
         ? '🎉 A comunidade concluiu uma meta do Terminhos!'
-        : '📚 Confira os marcos da comunidade desta semana no Terminhos.';
+        : `📚 Resumo semanal: ${pages} ${pages === 1 ? 'página' : 'páginas'} do álbum e ${goals} ${goals === 1 ? 'meta concluída' : 'metas concluídas'}.`;
   let sent: { id: string };
   try {
     sent = await channel.send({

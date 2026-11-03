@@ -190,7 +190,9 @@ async function reconcileWordleGoals(): Promise<void> {
   reconcilingWordleGoals = true;
   try {
     await new WordleGoalsService(db).processDue();
-    await new WordleNotificationService(db).reapStale(120_000);
+    const notifications = new WordleNotificationService(db);
+    await notifications.reapStale(120_000);
+    await notifications.queueWeeklySummaries();
   } catch {
     logger.warn('wordle.goal.scheduler_failed');
   } finally {

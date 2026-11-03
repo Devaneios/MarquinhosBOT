@@ -2,7 +2,10 @@ import { wordleNotifications } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, expect, it } from 'bun:test';
 import { eq } from 'drizzle-orm';
-import { WordleNotificationService } from '../src/services/wordle/WordleNotificationService';
+import {
+  previousWordleWeek,
+  WordleNotificationService,
+} from '../src/services/wordle/WordleNotificationService';
 
 let testDb: TestDb;
 let now = 1000;
@@ -125,4 +128,49 @@ it('allows a safe retry only when nothing was sent', async () => {
   const second = await notifications.claim('retry');
   expect(second?.id).toBe(first?.id);
   expect(second?.leaseId).not.toBe(first?.leaseId);
+});
+
+it('sends one nonempty weekly summary without enabling individual announcements', async () => {
+  now = 1500;
+  await notifications.configure('weekly', {
+    channelId: 'channel',
+    collective: false,
+    weekly: true,
+  });
+  expect(
+    await notifications.enqueue(
+      'weekly',
+      'goal',
+      'goal:weekly',
+      { goalId: 'weekly' },
+      1600,
+    ),
+  ).toBe(true);
+  expect(await notifications.claim('weekly')).toBeNull();
+  now = 3000;
+  expect(await notifications.queueWeekly('weekly', 'week-1', 1000, 2000)).toBe(
+    true,
+  );
+  expect(await notifications.queueWeekly('weekly', 'week-1', 1000, 2000)).toBe(
+    false,
+  );
+  expect(await notifications.queueWeekly('weekly', 'empty', 2000, 2500)).toBe(
+    false,
+  );
+  const summary = await notifications.claim('weekly');
+  expect(summary).toMatchObject({
+    kind: 'weekly',
+    payload: { goals: '1', pages: '0' },
+  });
+});
+
+it('uses a completed Monday-to-Monday week in the Wordle time zone', () => {
+  expect(previousWordleWeek(Date.parse('2026-11-02T03:00:00Z'))).toEqual({
+    weekKey: '2026-10-26',
+    startsAt: Date.parse('2026-10-26T03:00:00Z'),
+    endsAt: Date.parse('2026-11-02T03:00:00Z'),
+  });
+  expect(previousWordleWeek(Date.parse('2026-11-02T02:59:59Z')).weekKey).toBe(
+    '2026-10-19',
+  );
 });

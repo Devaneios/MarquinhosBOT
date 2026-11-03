@@ -61,3 +61,24 @@ it('marks an ambiguous send uncertain and confirms a successful delivery', async
     allowedMentions: { parse: [] },
   });
 });
+
+it('shows the aggregate counts in the weekly summary', async () => {
+  const send = mock(async (_message: unknown) => ({ id: 'message' }));
+  const api = {
+    claimWordleNotification: async () => ({
+      data: {
+        ...event,
+        kind: 'weekly' as const,
+        payload: { pages: '2', goals: '1', week: '2026-10-26' },
+      },
+    }),
+    settleWordleNotification: async () => ({ data: { recorded: true } }),
+  };
+  await deliverWordleNotification('a', api, async () => ({
+    guildId: 'a',
+    send,
+  }));
+  expect(send.mock.calls[0]![0]).toMatchObject({
+    content: expect.stringContaining('2 páginas'),
+  });
+});
