@@ -36,6 +36,12 @@ router.post('/admin/notifications/:guildId/claim', checkToken, (req, res) =>
 router.post('/admin/notifications/:guildId/settle', checkToken, (req, res) =>
   notifications.settle(req, res),
 );
+router.get('/admin/notifications/:guildId/uncertain', checkToken, (req, res) =>
+  notifications.uncertain(req, res),
+);
+router.post('/admin/notifications/:guildId/resolve', checkToken, (req, res) =>
+  notifications.resolve(req, res),
+);
 const goals = new WordleGoalsController(
   new WordleGoalsService(db),
   new DiscordService().isGuildMember,

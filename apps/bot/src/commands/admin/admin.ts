@@ -158,6 +158,42 @@ export class AdminCommand extends MarquinhosCommand {
                     )
                     .addChannelTypes(ChannelType.GuildText),
                 ),
+            )
+            .addSubcommand((sub) =>
+              sub
+                .setName('incertos')
+                .setDescription('Lista anúncios que precisam de conferência'),
+            )
+            .addSubcommand((sub) =>
+              sub
+                .setName('conciliar')
+                .setDescription(
+                  'Registra o resultado da conferência de um anúncio',
+                )
+                .addStringOption((opt) =>
+                  opt
+                    .setName('id')
+                    .setDescription('ID do anúncio listado em incertos')
+                    .setRequired(true),
+                )
+                .addStringOption((opt) =>
+                  opt
+                    .setName('resultado')
+                    .setDescription('Confirme após verificar o canal')
+                    .setRequired(true)
+                    .addChoices(
+                      { name: 'Mensagem encontrada', value: 'found' },
+                      {
+                        name: 'Confirmado que não foi enviada',
+                        value: 'confirmed_absent',
+                      },
+                    ),
+                )
+                .addStringOption((opt) =>
+                  opt
+                    .setName('mensagem')
+                    .setDescription('ID da mensagem encontrada, quando houver'),
+                ),
             ),
         )
         .addSubcommandGroup((group) =>
@@ -187,6 +223,76 @@ export class AdminCommand extends MarquinhosCommand {
     }
 
     if (subgroup === 'termo') {
+      if (sub === 'incertos' || sub === 'conciliar') {
+        if (
+          !interaction.guildId ||
+          !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
+        ) {
+          await interaction.reply({
+            content: '❌ Somente administradores podem conciliar anúncios.',
+            flags: MessageFlags.Ephemeral,
+          });
+          return;
+        }
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+        try {
+          if (sub === 'incertos') {
+            const rows = (
+              await api.listUncertainWordleNotifications(interaction.guildId)
+            ).data;
+            const lines = rows.map(
+              (row) =>
+                `• \`${row.id}\` · ${row.kind} · ${row.channelId ? `<#${row.channelId}>` : 'sem canal'}`,
+            );
+            await interaction.editReply({
+              content: lines.length
+                ? `Confira cada canal antes de conciliar:\n${lines.join('\n')}`.slice(
+                    0,
+                    1900,
+                  )
+                : 'Nenhum anúncio aguardando conferência.',
+            });
+          } else {
+            const id = interaction.options.getString('id', true);
+            const result = interaction.options.getString('resultado', true);
+            const messageId = interaction.options.getString('mensagem');
+            if (
+              result === 'found' &&
+              (!messageId || !/^\d{1,20}$/.test(messageId))
+            ) {
+              await interaction.editReply({
+                content: '❌ Informe o ID da mensagem encontrada no Discord.',
+              });
+              return;
+            }
+            if (result !== 'found' && result !== 'confirmed_absent') {
+              await interaction.editReply({
+                content: '❌ Resultado inválido.',
+              });
+              return;
+            }
+            const body =
+              result === 'found'
+                ? ({ id, result, messageId: messageId! } as const)
+                : ({ id, result } as const);
+            const response = await api.resolveWordleNotification(
+              interaction.guildId,
+              body,
+            );
+            await interaction.editReply({
+              content: response.data.recorded
+                ? '✅ Conferência registrada.'
+                : '❌ Anúncio não encontrado ou já conciliado.',
+            });
+          }
+        } catch (error) {
+          logger.warn('admin termo conciliacao failed', error);
+          await interaction.editReply({
+            content: '❌ Não foi possível consultar ou conciliar os anúncios.',
+          });
+        }
+        return;
+      }
       if (sub === 'anuncios') {
         if (
           !interaction.guildId ||

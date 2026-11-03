@@ -343,6 +343,23 @@ export class MarquinhosApiService {
     });
   }
 
+  async listUncertainWordleNotifications(guildId: string) {
+    return callContract(this.client, wordle.listUncertainNotifications, {
+      params: { guildId },
+    });
+  }
+  async resolveWordleNotification(
+    guildId: string,
+    body:
+      | { id: string; result: 'found'; messageId: string }
+      | { id: string; result: 'confirmed_absent' },
+  ) {
+    return callContract(this.client, wordle.resolveNotification, {
+      params: { guildId },
+      body,
+    });
+  }
+
   async setWordleConfig(guildId: string, channelId: string) {
     const data = await callContract(this.client, wordle.setConfig, {
       body: { guildId, channelId },

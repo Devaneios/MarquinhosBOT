@@ -200,3 +200,21 @@ For live acceptance, use a test guild and follow this sequence.
 For migration work, follow the audit and rollback steps in
 [deployment](deployment.md). Check the [current integration limits](wordle.md#current-integration-limits)
 before testing midnight rotation or a board left open across a reset.
+
+## Anúncios comunitários
+
+Os anúncios e o resumo semanal começam desativados. Um administrador configura
+`/admin termo anuncios`, escolhendo as opções e, se desejar, um canal. Sem canal
+ou sem permissão de envio, eventos elegíveis permanecem pendentes. Páginas do
+álbum só entram na fila de envio depois da virada da partida associada. O resumo
+semanal inclui marcos elegíveis da semana encerrada e não é criado se não houver
+novidades.
+
+O envio usa uma chave por evento e um nonce estável. O Discord pode deduplicar
+tentativas próximas, mas isso não comprova entrega exatamente uma vez. Se o envio
+ou a confirmação falhar de forma ambígua, a fila registra o evento como incerto
+e não o reenvia automaticamente. O administrador consulta `/admin termo incertos`,
+confere o canal indicado e usa `/admin termo conciliar`: informe o ID da mensagem
+quando ela existir, ou escolha a opção de ausência somente após confirmar que
+nenhuma mensagem foi enviada. A segunda opção libera uma nova tentativa. Evite
+liberá-la enquanto houver uma solicitação de envio ainda em andamento.

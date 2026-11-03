@@ -15,6 +15,31 @@ export class WordleNotificationsController {
       data: await this.service.getConfig(input.params.guildId),
     });
   }
+  async uncertain(req: Request, res: Response): Promise<void> {
+    const input = parseRequest(contract.listUncertainNotifications, req);
+    if (!input) {
+      res.status(400).json({ message: 'Invalid community' });
+      return;
+    }
+    sendContract(res, contract.listUncertainNotifications, {
+      data: await this.service.uncertain(input.params.guildId),
+    });
+  }
+  async resolve(req: Request, res: Response): Promise<void> {
+    const input = parseRequest(contract.resolveNotification, req);
+    if (!input) {
+      res.status(400).json({ message: 'Invalid reconciliation' });
+      return;
+    }
+    const { id, result } = input.body;
+    const recorded = await this.service.resolve(
+      input.params.guildId,
+      id,
+      result,
+      result === 'found' ? input.body.messageId : undefined,
+    );
+    sendContract(res, contract.resolveNotification, { data: { recorded } });
+  }
   async configure(req: Request, res: Response): Promise<void> {
     const input = parseRequest(contract.setNotificationConfig, req);
     if (!input) {

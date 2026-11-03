@@ -319,17 +319,41 @@ export class WordleNotificationService {
       .returning({ id: wordleNotifications.id });
     return rows.length;
   }
+  async uncertain(guildId: string) {
+    const rows = await this.database
+      .select()
+      .from(wordleNotifications)
+      .where(
+        and(
+          eq(wordleNotifications.guild_id, guildId),
+          eq(wordleNotifications.status, 'uncertain'),
+        ),
+      )
+      .orderBy(asc(wordleNotifications.created_at))
+      .limit(25);
+    return rows.map((row) => ({
+      id: row.id,
+      kind: row.event_type,
+      eventKey: row.event_key,
+      channelId: row.channel_id,
+      startedAt: row.lease_started_at,
+    }));
+  }
   async resolve(
     guildId: string,
     id: string,
     result: 'found' | 'confirmed_absent',
-  ): Promise<void> {
-    await this.database
+    messageId?: string,
+  ): Promise<boolean> {
+    if (result === 'found' && !messageId)
+      throw new Error('A Discord message ID is required');
+    const rows = await this.database
       .update(wordleNotifications)
       .set({
         status: result === 'found' ? 'delivered' : 'pending',
         lease_id: null,
         lease_started_at: null,
+        message_id: result === 'found' ? messageId! : null,
       })
       .where(
         and(
@@ -337,6 +361,8 @@ export class WordleNotificationService {
           eq(wordleNotifications.guild_id, guildId),
           eq(wordleNotifications.status, 'uncertain'),
         ),
-      );
+      )
+      .returning({ id: wordleNotifications.id });
+    return rows.length > 0;
   }
 }

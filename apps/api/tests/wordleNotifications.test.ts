@@ -57,7 +57,15 @@ it('queues opted-in events once and waits for a configured channel', async () =>
   ).toBe('sending');
   await notifications.ambiguous('a', claimed!.id, claimed!.leaseId);
   expect(await notifications.claim('a')).toBeNull();
-  await notifications.resolve('a', claimed!.id, 'found');
+  expect((await notifications.uncertain('a')).map((item) => item.id)).toEqual([
+    claimed!.id,
+  ]);
+  expect(
+    await notifications.resolve('other', claimed!.id, 'found', 'message'),
+  ).toBe(false);
+  expect(
+    await notifications.resolve('a', claimed!.id, 'found', 'message'),
+  ).toBe(true);
   expect(await notifications.claim('a')).toBeNull();
 });
 

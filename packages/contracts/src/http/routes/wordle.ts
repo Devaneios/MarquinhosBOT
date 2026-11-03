@@ -232,6 +232,37 @@ export const settleNotification = defineContract({
   ]),
   response: envelope(z.object({ recorded: z.boolean() })),
 });
+
+export const listUncertainNotifications = defineContract({
+  method: 'GET',
+  path: '/api/wordle/admin/notifications/:guildId/uncertain',
+  params: guildParams,
+  response: envelope(
+    z.array(
+      z.object({
+        id: requiredString,
+        kind: z.enum(['page', 'goal', 'weekly']),
+        eventKey: requiredString,
+        channelId: z.string().nullable(),
+        startedAt: z.number().nullable(),
+      }),
+    ),
+  ),
+});
+export const resolveNotification = defineContract({
+  method: 'POST',
+  path: '/api/wordle/admin/notifications/:guildId/resolve',
+  params: guildParams,
+  body: z.discriminatedUnion('result', [
+    z.object({
+      id: requiredString,
+      result: z.literal('found'),
+      messageId: requiredString,
+    }),
+    z.object({ id: requiredString, result: z.literal('confirmed_absent') }),
+  ]),
+  response: envelope(z.object({ recorded: z.boolean() })),
+});
 export const updateReward = defineContract({
   method: 'PUT',
   path: '/api/wordle/rewards',

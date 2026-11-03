@@ -228,6 +228,37 @@ describe('wordle contracts', () => {
       },
     });
     expect(result.data.recorded).toBe(true);
+    await new WordleNotificationService(db).enqueue(
+      guildId,
+      'goal',
+      'goal:uncertain',
+      { goalId: 'uncertain' },
+      1,
+    );
+    const next = (
+      await callContract(server.http, wordle.claimNotification, {
+        params: { guildId },
+      })
+    ).data!;
+    await callContract(server.http, wordle.settleNotification, {
+      params: { guildId },
+      body: { id: next.id, leaseId: next.leaseId, result: 'ambiguous' },
+    });
+    expect(
+      (
+        await callContract(server.http, wordle.listUncertainNotifications, {
+          params: { guildId },
+        })
+      ).data.map((entry) => entry.id),
+    ).toContain(next.id);
+    expect(
+      (
+        await callContract(server.http, wordle.resolveNotification, {
+          params: { guildId },
+          body: { id: next.id, result: 'found', messageId: 'discord-message' },
+        })
+      ).data.recorded,
+    ).toBe(true);
   });
 
   it('claims an announcement once and reports streaks', async () => {
