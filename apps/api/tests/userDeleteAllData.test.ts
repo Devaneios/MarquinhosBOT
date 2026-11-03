@@ -63,6 +63,15 @@ async function seed(userId: string) {
     (user_id, pattern_id, session_id, discovered_at, evidence) VALUES (${userId}, 'test-pattern', ${`global-${userId}`}, ${now}, '{}'::jsonb)`);
   await db.execute(sql`INSERT INTO wordle_global_occurrences
     (user_id, word_date, pattern_id, session_id, occurred_at, evidence) VALUES (${userId}, '2026-09-24', 'test-pattern', ${`global-${userId}`}, ${now}, '{}'::jsonb)`);
+  await db.execute(
+    sql`INSERT INTO wordle_album_contributions (guild_id, user_id, word_date, pattern_id, occurred_at) VALUES ('g', ${userId}, '2026-09-24', 'test-pattern', ${now})`,
+  );
+  await db.execute(
+    sql`INSERT INTO wordle_personal_rewards (user_id, reward_id, granted_at) VALUES (${userId}, 'title_alphabetist', ${now})`,
+  );
+  await db.execute(
+    sql`INSERT INTO wordle_equipped_rewards (user_id, kind, reward_id) VALUES (${userId}, 'title', 'title_alphabetist')`,
+  );
   const evidence = {
     patternId: 'tetromino_i',
     color: 'present',
@@ -126,6 +135,9 @@ describe('UserService.deleteAllData', () => {
       ['wordle_global_achievements', 'user_id'],
       ['wordle_global_discoveries', 'user_id'],
       ['wordle_global_occurrences', 'user_id'],
+      ['wordle_album_contributions', 'user_id'],
+      ['wordle_personal_rewards', 'user_id'],
+      ['wordle_equipped_rewards', 'user_id'],
       ['wordle_community_participation', 'user_id'],
       ['wordle_community_daily_presence', 'user_id'],
       ['wordle_showcase', 'user_id'],

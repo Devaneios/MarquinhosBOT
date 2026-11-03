@@ -127,6 +127,13 @@
       "when": 1793665000001,
       "tag": "0017_wordle_album_milestones",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793665000002,
+      "tag": "0018_wordle_rewards",
+      "breakpoints": true
     }
   ]
 }

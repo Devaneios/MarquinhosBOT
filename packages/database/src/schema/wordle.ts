@@ -450,3 +450,36 @@ export const wordleAlbumMilestones = pgTable(
     ),
   ],
 );
+
+export const wordlePersonalRewards = pgTable(
+  'wordle_personal_rewards',
+  {
+    user_id: text('user_id').notNull(),
+    reward_id: text('reward_id').notNull(),
+    granted_at: bigint('granted_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.user_id, t.reward_id] })],
+);
+
+export const wordleEquippedRewards = pgTable(
+  'wordle_equipped_rewards',
+  {
+    user_id: text('user_id').notNull(),
+    kind: text('kind').$type<'title' | 'frame'>().notNull(),
+    reward_id: text('reward_id').notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.user_id, t.kind] }),
+    check(
+      'wordle_equipped_reward_kind_check',
+      sql`${t.kind} IN ('title', 'frame')`,
+    ),
+    foreignKey({
+      columns: [t.user_id, t.reward_id],
+      foreignColumns: [
+        wordlePersonalRewards.user_id,
+        wordlePersonalRewards.reward_id,
+      ],
+    }).onDelete('cascade'),
+  ],
+);
