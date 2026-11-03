@@ -1,12 +1,20 @@
 import { expect, it } from 'bun:test';
 import { WordleGoalsController } from '../src/controllers/wordleGoals.controller';
 
-function response() {
-  return {
-    code: 200,
+it('lists the progress of the requested community', async () => {
+  const calls: string[] = [];
+  const controller = new WordleGoalsController({
+    listWithProgress: async (guildId) => {
+      calls.push(guildId);
+      return [];
+    },
+    createForDates: async () => {
+      throw new Error();
+    },
+  });
+  const res = {
     body: undefined as unknown,
-    status(code: number) {
-      this.code = code;
+    status() {
       return this;
     },
     json(body: unknown) {
@@ -14,40 +22,7 @@ function response() {
       return this;
     },
   };
-}
-
-it('allows only verified community members to read goal progress', async () => {
-  let reads = 0;
-  const store = {
-    listWithProgress: async () => {
-      reads++;
-      return [];
-    },
-    createForDates: async () => {
-      throw new Error();
-    },
-  };
-  const denied = new WordleGoalsController(store, async () => false);
-  const res = response();
-  await denied.list(
-    {
-      user: { id: 'user' },
-      params: { guildId: 'a' },
-      headers: { authorization: 'Bearer token' },
-    },
-    res,
-  );
-  expect(res.code).toBe(403);
-  expect(reads).toBe(0);
-  const allowed = new WordleGoalsController(store, async () => true);
-  const ok = response();
-  await allowed.list(
-    {
-      user: { id: 'user' },
-      params: { guildId: 'a' },
-      headers: { authorization: 'Bearer token' },
-    },
-    ok,
-  );
-  expect(ok.body).toEqual({ data: [] });
+  await controller.list('a', res);
+  expect(calls).toEqual(['a']);
+  expect(res.body).toEqual({ data: [] });
 });

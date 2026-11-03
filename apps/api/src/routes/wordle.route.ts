@@ -7,6 +7,7 @@ import { WordleRewardsController } from 'controllers/wordleRewards.controller';
 import { WordleShowcaseController } from 'controllers/wordleShowcase.controller';
 import express from 'express';
 import { checkToken } from 'middlewares/botAuth';
+import { requireGuildMember } from 'middlewares/guildMembership';
 import { verifyActivityDiscordToken } from 'middlewares/userAuth';
 import { DiscordService } from 'services/discord';
 import { WordleAlbumService } from 'services/wordle/WordleAlbumService';
@@ -42,22 +43,25 @@ router.get('/admin/notifications/:guildId/uncertain', checkToken, (req, res) =>
 router.post('/admin/notifications/:guildId/resolve', checkToken, (req, res) =>
   notifications.resolve(req, res),
 );
-const goals = new WordleGoalsController(
-  new WordleGoalsService(db),
+const goals = new WordleGoalsController(new WordleGoalsService(db));
+const verifyGuildMember = requireGuildMember(
   new DiscordService().isGuildMember,
 );
 
-router.get('/goals/:guildId', verifyActivityDiscordToken, (req, res) =>
-  goals.list(req, res),
+router.get(
+  '/goals/:guildId',
+  verifyActivityDiscordToken,
+  verifyGuildMember,
+  (req, res) => goals.list(req.params.guildId, res),
 );
 router.post('/admin/goals', checkToken, (req, res) => goals.create(req, res));
-const album = new WordleAlbumController(
-  new WordleAlbumService(db),
-  new DiscordService().isGuildMember,
-);
+const album = new WordleAlbumController(new WordleAlbumService(db));
 
-router.get('/album/:guildId', verifyActivityDiscordToken, (req, res) =>
-  album.get(req, res),
+router.get(
+  '/album/:guildId',
+  verifyActivityDiscordToken,
+  verifyGuildMember,
+  (req, res) => album.get(req.params.guildId, res),
 );
 
 router.get('/showcase', verifyActivityDiscordToken, (req, res) =>

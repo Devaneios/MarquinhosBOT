@@ -6,11 +6,6 @@ import {
 } from 'services/wordle/WordleGoalsService';
 import { parseRequest, sendContract } from 'utils/contract';
 
-interface GoalRequest {
-  user?: { id: string };
-  params: { guildId?: string };
-  headers: { authorization?: string };
-}
 interface GoalResponse {
   status(code: number): { json(payload: unknown): unknown };
 }
@@ -21,34 +16,10 @@ export class WordleGoalsController {
       WordleGoalsService,
       'listWithProgress' | 'createForDates'
     >,
-    private readonly isMember: (
-      token: string,
-      guildId: string,
-    ) => Promise<boolean>,
   ) {}
 
-  async list(req: GoalRequest, res: GoalResponse): Promise<void> {
-    if (!req.user) {
-      res.status(401).json({ message: 'Unauthorized' });
-      return;
-    }
-    const [scheme, token] = (req.headers.authorization ?? '').split(' ');
-    const guildId = req.params.guildId;
-    if (!guildId || scheme !== 'Bearer' || !token) {
-      res.status(400).json({ message: 'Invalid request' });
-      return;
-    }
-    let member: boolean;
-    try {
-      member = await this.isMember(token, guildId);
-    } catch {
-      res.status(503).json({ message: 'Discord membership unavailable' });
-      return;
-    }
-    if (!member) {
-      res.status(403).json({ message: 'Not a community member' });
-      return;
-    }
+  /** Membership is checked by `requireGuildMember` on the route. */
+  async list(guildId: string, res: GoalResponse): Promise<void> {
     sendContract(res, contract.listGoals, {
       data: await this.store.listWithProgress(guildId),
     });
