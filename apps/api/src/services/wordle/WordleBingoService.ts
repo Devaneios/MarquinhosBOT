@@ -243,6 +243,7 @@ export class WordleBingoService {
     return {
       id: row.id,
       ...card,
+      cells,
       status:
         this.now() < row.starts_at
           ? ('scheduled' as const)

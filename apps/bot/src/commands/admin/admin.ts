@@ -194,6 +194,29 @@ export class AdminCommand extends MarquinhosCommand {
                     .setName('mensagem')
                     .setDescription('ID da mensagem encontrada, quando houver'),
                 ),
+            )
+            .addSubcommand((sub) =>
+              sub
+                .setName('bingo')
+                .setDescription('Agenda uma cartela comunitária de bingo')
+                .addStringOption((opt) =>
+                  opt
+                    .setName('inicio')
+                    .setDescription('Primeiro dia, AAAA-MM-DD (Recife)')
+                    .setRequired(true),
+                )
+                .addStringOption((opt) =>
+                  opt
+                    .setName('fim')
+                    .setDescription('Último dia, AAAA-MM-DD (Recife)')
+                    .setRequired(true),
+                )
+                .addBooleanOption((opt) =>
+                  opt
+                    .setName('multiplas')
+                    .setDescription('Uma ação pode preencher várias casas?')
+                    .setRequired(true),
+                ),
             ),
         )
         .addSubcommandGroup((group) =>
@@ -223,6 +246,40 @@ export class AdminCommand extends MarquinhosCommand {
     }
 
     if (subgroup === 'termo') {
+      if (sub === 'bingo') {
+        if (
+          !interaction.guildId ||
+          !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
+        ) {
+          await interaction.reply({
+            content: '❌ Somente administradores podem agendar o bingo.',
+            flags: MessageFlags.Ephemeral,
+          });
+          return;
+        }
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+        try {
+          const firstDate = interaction.options.getString('inicio', true);
+          const lastDate = interaction.options.getString('fim', true);
+          const allowMulti = interaction.options.getBoolean('multiplas', true);
+          await api.createWordleBingo(
+            interaction.guildId,
+            firstDate,
+            lastDate,
+            allowMulti,
+          );
+          await interaction.editReply({
+            content: `✅ Bingo agendado de ${firstDate} a ${lastDate} (horário de Recife).`,
+          });
+        } catch (error) {
+          logger.warn('admin termo bingo failed', error);
+          await interaction.editReply({
+            content:
+              '❌ Não foi possível agendar o bingo. Confira as datas futuras.',
+          });
+        }
+        return;
+      }
       if (sub === 'incertos' || sub === 'conciliar') {
         if (
           !interaction.guildId ||

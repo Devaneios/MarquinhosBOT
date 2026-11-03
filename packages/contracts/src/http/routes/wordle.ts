@@ -199,6 +199,55 @@ export const joinChallenge = defineContract({
   params: z.object({ guildId: requiredString, challengeId: requiredString }),
   response: envelope(z.object({ joined: z.literal(true) })),
 });
+
+const bingoConditionSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('participation'),
+    target: z.number().int().positive(),
+  }),
+  z.object({
+    kind: z.literal('pattern'),
+    family: requiredString,
+    target: z.number().int().positive(),
+  }),
+]);
+const bingoCardSchema = z.object({
+  id: requiredString,
+  guildId: requiredString,
+  version: z.number().int().positive(),
+  startsAt: z.number(),
+  endsAt: z.number(),
+  allowMulti: z.boolean(),
+  status: z.enum(['scheduled', 'active', 'closed']),
+  cells: z
+    .array(z.object({ id: requiredString, condition: bingoConditionSchema }))
+    .length(9),
+  progress: z.object({
+    counts: z.array(z.number().int().nonnegative()).length(9),
+    filled: z.array(z.boolean()).length(9),
+    lines: z.array(z.array(z.number().int().min(0).max(8)).length(3)),
+    complete: z.boolean(),
+  }),
+});
+export const listBingo = defineContract({
+  method: 'GET',
+  path: '/api/wordle/bingo/:guildId',
+  params: guildParams,
+  response: envelope(z.array(bingoCardSchema)),
+});
+export const createBingo = defineContract({
+  method: 'POST',
+  path: '/api/wordle/admin/bingo',
+  body: z
+    .object({
+      guildId: requiredString,
+      firstDate: z.iso.date(),
+      lastDate: z.iso.date(),
+      allowMulti: z.boolean(),
+    })
+    .strict(),
+  response: envelope(bingoCardSchema),
+});
 export const createGoal = defineContract({
   method: 'POST',
   path: '/api/wordle/admin/goals',

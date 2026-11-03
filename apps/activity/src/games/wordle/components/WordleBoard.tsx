@@ -19,6 +19,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getWordleAlbum } from '../api/wordleAlbumApi';
+import { listWordleBingo } from '../api/wordleBingoApi';
 import {
   createWordleChallenge,
   joinWordleChallenge,
@@ -75,6 +76,10 @@ export function WordleBoard({
   );
   const loadGoals = useCallback(
     () => getWordleGoals(accessToken!, guildId!),
+    [accessToken, guildId],
+  );
+  const loadBingo = useCallback(
+    () => listWordleBingo(accessToken!, guildId!),
     [accessToken, guildId],
   );
   const loadChallenges = useCallback(
@@ -221,6 +226,7 @@ export function WordleBoard({
       <WordleAlbumScreen
         load={loadAlbum}
         goals={userId ? { load: loadGoals, userId } : undefined}
+        bingo={accessToken && guildId ? loadBingo : undefined}
         challenges={
           accessToken && guildId
             ? {

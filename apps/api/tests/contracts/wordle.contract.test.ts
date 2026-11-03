@@ -183,6 +183,25 @@ describe('wordle contracts', () => {
     });
   });
 
+  it('creates a fixed community bingo card for a future range', async () => {
+    const result = await callContract(server.http, wordle.createBingo, {
+      body: {
+        guildId,
+        firstDate: '2099-01-01',
+        lastDate: '2099-01-02',
+        allowMulti: false,
+      },
+    });
+    expect(result.data).toMatchObject({
+      guildId,
+      version: 1,
+      status: 'scheduled',
+      allowMulti: false,
+    });
+    expect(result.data.cells).toHaveLength(9);
+    expect(result.data.progress.filled.filter(Boolean)).toHaveLength(0);
+  });
+
   it('configures, claims and settles a notification for the right community', async () => {
     const config = { channelId: 'channel', collective: true, weekly: false };
     await callContract(server.http, wordle.setNotificationConfig, {
