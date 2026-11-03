@@ -163,6 +163,41 @@ export const listGoals = defineContract({
     ),
   ),
 });
+
+const challengeSchema = z.object({
+  id: requiredString,
+  guildId: requiredString,
+  creatorId: z.string().nullable(),
+  patternId: requiredString,
+  opensAt: z.number(),
+  closesAt: z.number(),
+  status: z.enum(['open', 'closed']),
+  participants: z.array(z.string()),
+});
+export const listChallenges = defineContract({
+  method: 'GET',
+  path: '/api/wordle/challenges/:guildId',
+  params: guildParams,
+  response: envelope(z.array(challengeSchema)),
+});
+export const createChallenge = defineContract({
+  method: 'POST',
+  path: '/api/wordle/challenges/:guildId',
+  params: guildParams,
+  body: z
+    .object({
+      patternId: requiredString,
+      closesAt: z.number().int().positive(),
+    })
+    .strict(),
+  response: envelope(challengeSchema),
+});
+export const joinChallenge = defineContract({
+  method: 'POST',
+  path: '/api/wordle/challenges/:guildId/:challengeId/join',
+  params: z.object({ guildId: requiredString, challengeId: requiredString }),
+  response: envelope(z.object({ joined: z.literal(true) })),
+});
 export const createGoal = defineContract({
   method: 'POST',
   path: '/api/wordle/admin/goals',

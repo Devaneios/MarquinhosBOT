@@ -1,6 +1,7 @@
 import { db } from '@marquinhos/database/client';
 import WordleController from 'controllers/wordle.controller';
 import { WordleAlbumController } from 'controllers/wordleAlbum.controller';
+import { WordleChallengesController } from 'controllers/wordleChallenges.controller';
 import { WordleGoalsController } from 'controllers/wordleGoals.controller';
 import { WordleNotificationsController } from 'controllers/wordleNotifications.controller';
 import { WordleRewardsController } from 'controllers/wordleRewards.controller';
@@ -11,6 +12,7 @@ import { requireGuildMember } from 'middlewares/guildMembership';
 import { verifyActivityDiscordToken } from 'middlewares/userAuth';
 import { DiscordService } from 'services/discord';
 import { WordleAlbumService } from 'services/wordle/WordleAlbumService';
+import { WordleChallengeService } from 'services/wordle/WordleChallengeService';
 import { WordleGoalsService } from 'services/wordle/WordleGoalsService';
 import { WordleNotificationService } from 'services/wordle/WordleNotificationService';
 import { WordleRewardsService } from 'services/wordle/WordleRewardsService';
@@ -46,6 +48,27 @@ router.post('/admin/notifications/:guildId/resolve', checkToken, (req, res) =>
 const goals = new WordleGoalsController(new WordleGoalsService(db));
 const verifyGuildMember = requireGuildMember(
   new DiscordService().isGuildMember,
+);
+const challenges = new WordleChallengesController(
+  new WordleChallengeService(db),
+);
+router.get(
+  '/challenges/:guildId',
+  verifyActivityDiscordToken,
+  verifyGuildMember,
+  (req, res) => challenges.list(req, res),
+);
+router.post(
+  '/challenges/:guildId',
+  verifyActivityDiscordToken,
+  verifyGuildMember,
+  (req, res) => challenges.create(req, res),
+);
+router.post(
+  '/challenges/:guildId/:challengeId/join',
+  verifyActivityDiscordToken,
+  verifyGuildMember,
+  (req, res) => challenges.join(req, res),
 );
 
 router.get(
