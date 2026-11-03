@@ -141,6 +141,13 @@
       "when": 1793665000003,
       "tag": "0019_wordle_accepted_guesses",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793665000004,
+      "tag": "0020_wordle_community_goals",
+      "breakpoints": true
     }
   ]
 }

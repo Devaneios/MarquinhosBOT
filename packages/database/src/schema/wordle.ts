@@ -501,3 +501,30 @@ export const wordleEquippedRewards = pgTable(
     }).onDelete('cascade'),
   ],
 );
+
+export const wordleCommunityGoals = pgTable(
+  'wordle_community_goals',
+  {
+    id: text('id').primaryKey(),
+    guild_id: text('guild_id').notNull(),
+    target: integer('target').notNull(),
+    starts_at: bigint('starts_at', { mode: 'number' }).notNull(),
+    ends_at: bigint('ends_at', { mode: 'number' }).notNull(),
+    status: text('status')
+      .$type<'scheduled' | 'active' | 'finalizing' | 'completed' | 'expired'>()
+      .notNull(),
+    created_at: bigint('created_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    check('wordle_community_goal_target_check', sql`${t.target} > 0`),
+    check(
+      'wordle_community_goal_window_check',
+      sql`${t.starts_at} < ${t.ends_at}`,
+    ),
+    check(
+      'wordle_community_goal_status_check',
+      sql`${t.status} IN ('scheduled', 'active', 'finalizing', 'completed', 'expired')`,
+    ),
+    index('wordle_community_goals_guild_idx').on(t.guild_id, t.starts_at),
+  ],
+);
