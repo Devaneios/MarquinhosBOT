@@ -8,6 +8,7 @@ import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 import { WordleAlbumService } from '../src/services/wordle/WordleAlbumService';
+import { recordWordlePresence } from '../src/services/wordle/WordleCommunityService';
 
 let testDb: TestDb;
 let album: WordleAlbumService;
@@ -82,14 +83,7 @@ describe('community album', () => {
     expect(getAlbum.response.safeParse({ data: pages }).success).toBe(true);
   });
   it('handles late presence and removes projections when the source is deleted', async () => {
-    await testDb.db.insert(wordleCommunityDailyPresence).values({
-      guild_id: 'late',
-      user_id: 'player',
-      word_date: '2026-10-01',
-      first_seen_at: 4,
-    });
-    expect(await album.contributions('late')).toEqual([]);
-    await album.reconcile();
+    await recordWordlePresence(testDb.db, 'player', 'late', '2026-10-01', 4);
     expect(await album.contributions('late')).toHaveLength(1);
     await testDb.db
       .delete(wordleCommunityDailyPresence)

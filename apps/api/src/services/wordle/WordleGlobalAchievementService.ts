@@ -21,8 +21,10 @@ import type { AchievementHistoryDay } from '@marquinhos/domain/games/wordle/achi
 import { computeWordlePlayerStats } from '@marquinhos/domain/games/wordle/playerStats';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 import { and, asc, countDistinct, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { logger } from 'utils/logger';
 import { z } from 'zod';
 import { LevelingService } from '../gamification/LevelingService';
+import { WordleAlbumService } from './WordleAlbumService';
 import { getWordleTimeZone } from './wordleDate';
 
 function parseGuesses(raw: string) {
@@ -184,7 +186,7 @@ export class WordleGlobalAchievementService {
     userId: string,
     guildId: string,
   ): Promise<{ unlockedIds: string[] }> {
-    return this.database.transaction(async (tx) => {
+    const outcome = await this.database.transaction(async (tx) => {
       await tx.execute(
         sql`SELECT pg_advisory_xact_lock(hashtextextended(${JSON.stringify(['wordle-global-achievements', userId])}, 0))`,
       );
@@ -278,5 +280,11 @@ export class WordleGlobalAchievementService {
       }
       return { unlockedIds };
     });
+    try {
+      await new WordleAlbumService(this.database).reconcileUser(userId);
+    } catch {
+      logger.warn('wordle.album.achievement_projection_failed');
+    }
+    return outcome;
   }
 }

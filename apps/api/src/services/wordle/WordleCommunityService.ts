@@ -4,6 +4,8 @@ import {
   wordleCommunityParticipation,
 } from '@marquinhos/database/schema';
 import { sql } from 'drizzle-orm';
+import { logger } from 'utils/logger';
+import { WordleAlbumService } from './WordleAlbumService';
 
 /** Records a player opening or playing in a community, without creating a session. */
 export async function recordWordlePresence(
@@ -51,4 +53,9 @@ export async function recordWordlePresence(
         },
       });
   });
+  try {
+    await new WordleAlbumService(database).pages(guildId);
+  } catch {
+    logger.warn('wordle.album.presence_projection_failed');
+  }
 }

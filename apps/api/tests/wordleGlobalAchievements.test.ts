@@ -1,6 +1,8 @@
 import {
   achievements,
   userLevels,
+  wordleAlbumContributions,
+  wordleCommunityDailyPresence,
   wordleCommunityFirstSolves,
   wordleCommunityParticipation,
   wordleGlobalAchievements,
@@ -253,6 +255,20 @@ describe('global Wordle achievements', () => {
         created_at: 3,
       },
     ]);
+    await testDb.db.insert(wordleCommunityDailyPresence).values([
+      {
+        guild_id: 'guild-a',
+        user_id: 'pattern-player',
+        word_date: '2026-01-02',
+        first_seen_at: 1,
+      },
+      {
+        guild_id: 'guild-b',
+        user_id: 'pattern-player',
+        word_date: '2026-01-02',
+        first_seen_at: 1,
+      },
+    ]);
     const service = new WordleGlobalAchievementService(testDb.db, () =>
       Date.parse('2026-11-01T15:00:00Z'),
     );
@@ -275,6 +291,16 @@ describe('global Wordle achievements', () => {
     expect(occurrences.map((row) => row.session_id).sort()).toEqual([
       'pattern-one',
       'pattern-two',
+    ]);
+    const projected = (
+      await testDb.db.select().from(wordleAlbumContributions)
+    ).filter(
+      (row) =>
+        row.user_id === 'pattern-player' && row.pattern_id === 'tetromino_i',
+    );
+    expect(projected.map((row) => row.guild_id).sort()).toEqual([
+      'guild-a',
+      'guild-b',
     ]);
   });
 });

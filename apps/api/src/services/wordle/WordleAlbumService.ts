@@ -1,5 +1,8 @@
 import type { Db } from '@marquinhos/database/client';
-import { wordleAlbumContributions } from '@marquinhos/database/schema';
+import {
+  wordleAlbumContributions,
+  wordleCommunityDailyPresence,
+} from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import type { AlbumContribution } from '@marquinhos/domain/games/wordle/community/album';
 import { buildAlbumPages } from '@marquinhos/domain/games/wordle/community/album';
@@ -37,6 +40,14 @@ export class WordleAlbumService {
       userId: row.user_id,
       occurredAt: row.occurred_at,
     }));
+  }
+
+  async reconcileUser(userId: string): Promise<void> {
+    const guilds = await this.database
+      .selectDistinct({ guildId: wordleCommunityDailyPresence.guild_id })
+      .from(wordleCommunityDailyPresence)
+      .where(eq(wordleCommunityDailyPresence.user_id, userId));
+    for (const { guildId } of guilds) await this.pages(guildId);
   }
 
   async pages(guildId: string) {
