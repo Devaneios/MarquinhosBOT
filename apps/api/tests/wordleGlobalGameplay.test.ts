@@ -1,5 +1,6 @@
 import {
   wordleCommunityFirstSolves,
+  wordleGlobalAcceptedGuesses,
   wordleGlobalDays,
   wordleGlobalSessions,
 } from '@marquinhos/database/schema';
@@ -117,6 +118,20 @@ describe('global gameplay', () => {
     const second = await game.submitGuess('player', date, 'termo');
     expect(second).toMatchObject({ solved: true, attempts: 2 });
     expect((await game.getSession('player', date))?.guesses).toHaveLength(2);
+    const events = (
+      await testDb.db.select().from(wordleGlobalAcceptedGuesses)
+    ).filter((event) => event.user_id === 'player');
+    expect(events.map((event) => [event.attempt, event.accepted_at])).toEqual([
+      [1, now],
+      [2, now],
+    ]);
+    expect(JSON.stringify(events)).not.toContain('porta');
+    await game.submitGuess('player', date, 'termo');
+    expect(
+      (await testDb.db.select().from(wordleGlobalAcceptedGuesses)).filter(
+        (event) => event.user_id === 'player',
+      ),
+    ).toHaveLength(2);
   });
 
   it('serializes simultaneous guesses into one session', async () => {

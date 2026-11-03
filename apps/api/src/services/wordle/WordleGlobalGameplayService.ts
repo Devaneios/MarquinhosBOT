@@ -3,6 +3,7 @@ import type { Db } from '@marquinhos/database/client';
 import {
   wordleCommunityDailyPresence,
   wordleCommunityFirstSolves,
+  wordleGlobalAcceptedGuesses,
   wordleGlobalDays,
   wordleGlobalDrafts,
   wordleGlobalSessions,
@@ -89,7 +90,8 @@ export class WordleGlobalGameplayService {
           return {
             error: `A palavra de hoje tem ${day.word_length} letras. Sua tentativa tem ${canonical.length}.`,
           };
-        const now = Math.floor(this.now() / 1000);
+        const acceptedAt = this.now();
+        const now = Math.floor(acceptedAt / 1000);
         await tx
           .insert(wordleGlobalSessions)
           .values({
@@ -132,6 +134,13 @@ export class WordleGlobalGameplayService {
             attempts,
           })
           .where(eq(wordleGlobalSessions.id, session.id));
+        await tx.insert(wordleGlobalAcceptedGuesses).values({
+          session_id: session.id,
+          user_id: userId,
+          word_date: date,
+          attempt: attempts,
+          accepted_at: acceptedAt,
+        });
         if (solved) {
           const communities = await tx
             .select({ guildId: wordleCommunityDailyPresence.guild_id })

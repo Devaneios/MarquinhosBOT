@@ -248,6 +248,24 @@ export const wordleGlobalSessions = pgTable(
   ],
 );
 
+export const wordleGlobalAcceptedGuesses = pgTable(
+  'wordle_global_accepted_guesses',
+  {
+    session_id: text('session_id')
+      .notNull()
+      .references(() => wordleGlobalSessions.id, { onDelete: 'cascade' }),
+    user_id: text('user_id').notNull(),
+    word_date: text('word_date').notNull(),
+    attempt: integer('attempt').notNull(),
+    accepted_at: bigint('accepted_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.session_id, t.attempt] }),
+    check('wordle_global_accepted_guess_attempt_check', sql`${t.attempt} > 0`),
+    index('wordle_global_accepted_guesses_time_idx').on(t.accepted_at),
+  ],
+);
+
 export const wordleGlobalSessionOrigins = pgTable(
   'wordle_global_session_origins',
   {

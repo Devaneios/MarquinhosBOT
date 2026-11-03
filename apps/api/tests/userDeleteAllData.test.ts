@@ -48,6 +48,9 @@ async function seed(userId: string) {
     ON CONFLICT (word_date) DO NOTHING`);
   await db.execute(sql`INSERT INTO wordle_global_sessions
     (id, user_id, word_date, created_at) VALUES (${`global-${userId}`}, ${userId}, '2026-09-24', ${now})`);
+  await db.execute(
+    sql`INSERT INTO wordle_global_accepted_guesses (session_id, user_id, word_date, attempt, accepted_at) VALUES (${`global-${userId}`}, ${userId}, '2026-09-24', 1, ${now})`,
+  );
   await db.execute(sql`INSERT INTO wordle_global_drafts
     (user_id, word_date, row_index, cells, active_index, revision, updated_at)
     VALUES (${userId}, '2026-09-24', 0, '["", "", "", "", ""]'::jsonb, 0, 1, ${now})`);
@@ -131,6 +134,7 @@ describe('UserService.deleteAllData', () => {
       ['wordle_drafts', 'user_id'],
       ['wordle_pattern_discoveries', 'user_id'],
       ['wordle_global_sessions', 'user_id'],
+      ['wordle_global_accepted_guesses', 'user_id'],
       ['wordle_global_drafts', 'user_id'],
       ['wordle_global_achievements', 'user_id'],
       ['wordle_global_discoveries', 'user_id'],

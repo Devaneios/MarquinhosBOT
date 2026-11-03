@@ -134,6 +134,13 @@
       "when": 1793665000002,
       "tag": "0018_wordle_rewards",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793665000003,
+      "tag": "0019_wordle_accepted_guesses",
+      "breakpoints": true
     }
   ]
 }
