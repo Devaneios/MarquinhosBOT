@@ -6,6 +6,7 @@ import {
 import { sql } from 'drizzle-orm';
 import { logger } from 'utils/logger';
 import { WordleAlbumService } from './WordleAlbumService';
+import { lockGoalFactsForWrite } from './goalFactLock';
 
 /** Records a player opening or playing in a community, without creating a session. */
 export async function recordWordlePresence(
@@ -16,6 +17,7 @@ export async function recordWordlePresence(
   timestamp: number,
 ): Promise<void> {
   await database.transaction(async (tx) => {
+    await lockGoalFactsForWrite(tx);
     await tx
       .insert(wordleCommunityParticipation)
       .values({

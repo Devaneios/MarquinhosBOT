@@ -4,7 +4,7 @@ import {
   wordleCommunityGoals,
   wordleGlobalAcceptedGuesses,
 } from '@marquinhos/database/schema';
-import { and, asc, eq, gte, lt, sql } from 'drizzle-orm';
+import { and, asc, eq, gte, lt } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 
 export class WordleGoalsService {
@@ -95,7 +95,7 @@ export class WordleGoalsService {
           eq(wordleCommunityDailyPresence.guild_id, guildId),
           gte(wordleGlobalAcceptedGuesses.accepted_at, goal.starts_at),
           lt(wordleGlobalAcceptedGuesses.accepted_at, goal.ends_at),
-          sql`${wordleCommunityDailyPresence.first_seen_at} * 1000 < ${goal.ends_at}`,
+          lt(wordleCommunityDailyPresence.recorded_at_ms, goal.ends_at),
         ),
       );
     return {

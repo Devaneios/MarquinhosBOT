@@ -148,6 +148,13 @@
       "when": 1793665000004,
       "tag": "0020_wordle_community_goals",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793665000005,
+      "tag": "0021_wordle_presence_recorded_at",
+      "breakpoints": true
     }
   ]
 }

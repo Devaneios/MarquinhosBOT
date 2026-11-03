@@ -13,6 +13,7 @@ import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics'
 import { and, eq, lte, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { lockGlobalWordlePlayer } from './gameplayLock';
+import { lockGoalFactsForWrite } from './goalFactLock';
 import { getWordleTimeZone } from './wordleDate';
 
 class GlobalGameCutoff extends Error {}
@@ -78,6 +79,7 @@ export class WordleGlobalGameplayService {
     if (date !== this.today()) return { error: cutoffMessage };
     try {
       return await this.database.transaction(async (tx) => {
+        await lockGoalFactsForWrite(tx);
         await lockGlobalWordlePlayer(tx, userId, date);
         if (date !== this.today()) return { error: cutoffMessage };
         const [day] = await tx

@@ -341,6 +341,9 @@ export const wordleCommunityDailyPresence = pgTable(
     user_id: text('user_id').notNull(),
     word_date: text('word_date').notNull(),
     first_seen_at: bigint('first_seen_at', { mode: 'number' }).notNull(),
+    recorded_at_ms: bigint('recorded_at_ms', { mode: 'number' })
+      .notNull()
+      .default(sql`floor(extract(epoch from clock_timestamp()) * 1000)`),
   },
   (t) => [
     primaryKey({ columns: [t.guild_id, t.user_id, t.word_date] }),

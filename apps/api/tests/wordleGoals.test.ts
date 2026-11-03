@@ -6,7 +6,9 @@ import {
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, expect, it } from 'bun:test';
+import { sql } from 'drizzle-orm';
 import { WordleGoalsService } from '../src/services/wordle/WordleGoalsService';
+import { lockGoalFactsForWrite } from '../src/services/wordle/goalFactLock';
 
 let testDb: TestDb;
 let service: WordleGoalsService;
@@ -57,18 +59,21 @@ it('counts one accepted participation per player and date for each eligible comm
       user_id: 'one',
       word_date: '2026-10-01',
       first_seen_at: 0,
+      recorded_at_ms: 0,
     },
     {
       guild_id: 'b',
       user_id: 'two',
       word_date: '2026-10-01',
       first_seen_at: 0,
+      recorded_at_ms: 0,
     },
     {
       guild_id: 'b',
       user_id: 'one',
       word_date: '2026-10-01',
       first_seen_at: 0,
+      recorded_at_ms: 0,
     },
   ]);
   expect(await service.progress(goal.id, 'a')).toEqual({
@@ -99,4 +104,22 @@ it('creates a goal with a fixed positive target and a future time window', async
   });
   expect(await service.list('guild')).toEqual([goal]);
   expect(await service.list('other')).toEqual([]);
+});
+
+it('prevents closing while a fact writer is still in flight', async () => {
+  await testDb.db.transaction(async (writer) => {
+    await lockGoalFactsForWrite(writer);
+    await testDb.db.transaction(async (closer) => {
+      const rows = await closer.execute<{ acquired: boolean }>(
+        sql`SELECT pg_try_advisory_xact_lock(hashtextextended('wordle-goal-facts', 0)) AS acquired`,
+      );
+      expect(rows[0]?.acquired).toBe(false);
+    });
+  });
+  await testDb.db.transaction(async (closer) => {
+    const rows = await closer.execute<{ acquired: boolean }>(
+      sql`SELECT pg_try_advisory_xact_lock(hashtextextended('wordle-goal-facts', 0)) AS acquired`,
+    );
+    expect(rows[0]?.acquired).toBe(true);
+  });
 });
