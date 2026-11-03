@@ -46,6 +46,15 @@ describe('global Wordle integration', () => {
       cells: ['t', '', '', '', ''],
       revision: 2,
     });
+    expect(result.won).toMatchObject({ solved: true, streak: 1 });
+    expect(result.unannouncedA).toMatchObject([
+      { userId: 'global-player', attempts: 2 },
+    ]);
+    expect(result.unannouncedB).toMatchObject([{ userId: 'global-player' }]);
+    expect(result.unannouncedLate).toEqual([]);
+    expect(result.claims).toEqual([true, false, false]);
+    expect(result.announcedA).toEqual([]);
+    expect(result.streak).toEqual({ currentStreak: 1, maxStreak: 1 });
     expect(result.closedDay).toMatchObject({
       word: 'carta',
       guesses: [{ guess: 'porta' }],

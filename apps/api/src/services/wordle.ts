@@ -43,6 +43,7 @@ import { recordWordlePresence } from 'services/wordle/WordleCommunityService';
 import { getRecifeDate } from 'services/wordle/wordleDate';
 import { WordleDraftService } from 'services/wordle/WordleDraftService';
 import { WordleGlobalAchievementService } from 'services/wordle/WordleGlobalAchievementService';
+import { WordleGlobalAnnouncementService } from 'services/wordle/WordleGlobalAnnouncementService';
 import { WordleGlobalDayService } from 'services/wordle/WordleGlobalDayService';
 import { WordleGlobalDraftService } from 'services/wordle/WordleGlobalDraftService';
 import { WordleGlobalGameCoordinator } from 'services/wordle/WordleGlobalGameCoordinator';
@@ -470,7 +471,18 @@ export class WordleService {
         new WordleGlobalGameplayService(db, resolveCanonical),
         new WordleGlobalAchievementService(db),
       );
-      return coordinator.submitGuess(userId, guildId, date, guess);
+      const result = await coordinator.submitGuess(
+        userId,
+        guildId,
+        date,
+        guess,
+      );
+      if ('error' in result || !result.solved) return result;
+      const streak =
+        ('achievementUpdate' in result
+          ? result.achievementUpdate.overview.stats.currentStreak
+          : undefined) ?? (await this.getStreak(userId, guildId)).currentStreak;
+      return { ...result, streak };
     }
     const canonicalGuess = resolveCanonical(guess);
     if (!canonicalGuess) {
@@ -766,6 +778,12 @@ export class WordleService {
   // win as unannounced and both send it.
   async markAnnounced(userId: string, guildId: string): Promise<boolean> {
     const today = getRecifeDate();
+    if (await this.isGlobalActive())
+      return new WordleGlobalAnnouncementService(db).claim(
+        userId,
+        guildId,
+        today,
+      );
     const now = Math.floor(Date.now() / 1000);
     const claimed = await db
       .update(wordleSessions)
@@ -789,6 +807,11 @@ export class WordleService {
     }[]
   > {
     const today = getRecifeDate();
+    if (await this.isGlobalActive())
+      return new WordleGlobalAnnouncementService(db).unannounced(
+        guildId,
+        today,
+      );
     const rows = await db
       .select({
         user_id: wordleSessions.user_id,
@@ -1039,6 +1062,15 @@ export class WordleService {
     userId: string,
     guildId: string,
   ): Promise<{ currentStreak: number; maxStreak: number }> {
+    if (await this.isGlobalActive()) {
+      const stats = await new WordleGlobalAchievementService(db).getStats(
+        userId,
+      );
+      return {
+        currentStreak: stats.currentStreak,
+        maxStreak: stats.bestStreak,
+      };
+    }
     const row = await this.findStreak(userId, guildId);
 
     if (!row) {

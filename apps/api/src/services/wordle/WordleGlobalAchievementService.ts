@@ -15,6 +15,7 @@ import {
   wordleGlobalDiscoveries,
   wordleGlobalOccurrences,
   wordleGlobalSessions,
+  wordleStreaks,
 } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { analyzeWordleAchievements } from '@marquinhos/domain/games/wordle/achievements/engine/evaluate';
@@ -59,12 +60,17 @@ export class WordleGlobalAchievementService {
       .from(wordleCommunityFirstSolves)
       .where(eq(wordleCommunityFirstSolves.user_id, userId));
     const firstDates = new Set(firstSolves.map((row) => row.date));
+    const [legacy] = await exec
+      .select({ best: sql<number | null>`max(${wordleStreaks.max_streak})` })
+      .from(wordleStreaks)
+      .where(eq(wordleStreaks.user_id, userId));
     const now = this.now();
     const options = {
       today: new Intl.DateTimeFormat('sv-SE', {
         timeZone: getWordleTimeZone(),
       }).format(new Date(now)),
       timeZone: getWordleTimeZone(),
+      persistedBestStreak: legacy?.best ?? 0,
     };
     const history: AchievementHistoryDay[] = rows.map(({ session, day }) => {
       const normalized = stripDiacritics(day.word);
@@ -184,6 +190,11 @@ export class WordleGlobalAchievementService {
         stats: computeWordlePlayerStats(history, options),
       });
     });
+  }
+
+  async getStats(userId: string) {
+    const { history, options } = await this.loadHistory(userId, this.database);
+    return computeWordlePlayerStats(history, options);
   }
 
   async checkAndAward(

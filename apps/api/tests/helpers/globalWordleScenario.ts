@@ -41,6 +41,27 @@ try {
     expectedRevision: 1,
   });
   const after = await service.getUserDraft('global-player', 'community-a');
+  const won = await service.submitGuess(
+    'global-player',
+    'community-a',
+    'termo',
+  );
+  await db.insert(wordleCommunityDailyPresence).values({
+    guild_id: 'community-late',
+    user_id: 'global-player',
+    word_date: date,
+    first_seen_at: Math.floor(Date.now() / 1000) + 60,
+  });
+  const unannouncedA = await service.getUnannouncedWins('community-a');
+  const unannouncedB = await service.getUnannouncedWins('community-b');
+  const unannouncedLate = await service.getUnannouncedWins('community-late');
+  const claims = [
+    await service.markAnnounced('global-player', 'community-a'),
+    await service.markAnnounced('global-player', 'community-a'),
+    await service.markAnnounced('global-player', 'community-late'),
+  ];
+  const announcedA = await service.getUnannouncedWins('community-a');
+  const streak = await service.getStreak('global-player', 'community-b');
   const yesterday = new Date(`${date}T12:00:00Z`);
   yesterday.setUTCDate(yesterday.getUTCDate() - 1);
   const previousDate = yesterday.toISOString().slice(0, 10);
@@ -90,6 +111,13 @@ try {
       before,
       saved,
       after,
+      won,
+      unannouncedA,
+      unannouncedB,
+      unannouncedLate,
+      claims,
+      announcedA,
+      streak,
       closedDay,
       unrelatedDay,
       forced,

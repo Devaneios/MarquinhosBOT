@@ -190,6 +190,13 @@
       "when": 1793665000010,
       "tag": "0026_wordle_occurrence_time",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1793665000011,
+      "tag": "0027_wordle_win_announcements",
+      "breakpoints": true
     }
   ]
 }

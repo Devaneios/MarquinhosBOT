@@ -3,6 +3,7 @@ import {
   userAchievements,
   userLevels,
   wordleCommunityDailyPresence,
+  wordleCommunityWinAnnouncements,
   wordleDays,
   wordleDrafts,
   wordleGlobalAchievements,
@@ -15,7 +16,7 @@ import {
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { matchWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/engine/matchPatterns';
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { migrateGlobalWordle } from '../src/services/wordle/WordleGlobalMigrationService';
 
 let testDb: TestDb;
@@ -152,6 +153,32 @@ describe('global Wordle migration', () => {
     expect(await testDb.db.select().from(wordleGlobalSessions)).toHaveLength(1);
   });
 
+  it('keeps legacy win announcements so they are not repeated', async () => {
+    await seed();
+    await testDb.db.update(wordleSessions).set({
+      solved: true,
+      solved_at: 200,
+      attempts: 1,
+      guesses: JSON.stringify([
+        { guess: 'termo', feedback: Array(5).fill('correct') },
+      ]),
+    });
+    await testDb.db
+      .update(wordleSessions)
+      .set({ announced_at: 210 })
+      .where(eq(wordleSessions.id, 's1'));
+    await migrateGlobalWordle(testDb.db);
+    expect(
+      await testDb.db.select().from(wordleCommunityWinAnnouncements),
+    ).toEqual([
+      {
+        guild_id: 'a',
+        user_id: 'u',
+        word_date: '2026-01-01',
+        announced_at: 210,
+      },
+    ]);
+  });
   it('gives a draft-only player presence in the draft community', async () => {
     await seed();
     await testDb.db.insert(wordleDrafts).values({

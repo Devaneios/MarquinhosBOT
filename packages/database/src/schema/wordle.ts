@@ -363,6 +363,17 @@ export const wordleCommunityFirstSolves = pgTable(
   (t) => [primaryKey({ columns: [t.guild_id, t.word_date] })],
 );
 
+export const wordleCommunityWinAnnouncements = pgTable(
+  'wordle_community_win_announcements',
+  {
+    guild_id: text('guild_id').notNull(),
+    user_id: text('user_id').notNull(),
+    word_date: text('word_date').notNull(),
+    announced_at: bigint('announced_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.guild_id, t.user_id, t.word_date] })],
+);
+
 export const wordleShowcase = pgTable(
   'wordle_showcase',
   {

@@ -9,6 +9,7 @@ import {
   wordleCommunityDailyPresence,
   wordleCommunityFirstSolves,
   wordleCommunityParticipation,
+  wordleCommunityWinAnnouncements,
   wordleDays,
   wordleDrafts,
   wordleGlobalAchievements,
@@ -80,6 +81,7 @@ export async function migrateGlobalWordle(
         tx.select().from(wordleGlobalOccurrences).limit(1),
         tx.select().from(wordleGlobalSessionOrigins).limit(1),
         tx.select().from(wordleCommunityFirstSolves).limit(1),
+        tx.select().from(wordleCommunityWinAnnouncements).limit(1),
       ]);
       if (targets.some((rows) => rows.length))
         throw new Error('Global migration target is not empty');
@@ -249,6 +251,13 @@ export async function migrateGlobalWordle(
             origin.word_date,
             origin.created_at,
           );
+          if (origin.announced_at !== null)
+            await tx.insert(wordleCommunityWinAnnouncements).values({
+              guild_id: origin.guild_id,
+              user_id: origin.user_id,
+              word_date: origin.word_date,
+              announced_at: origin.announced_at,
+            });
         }
       }
       for (const group of draftGroups.values()) {
