@@ -37,6 +37,7 @@ import { CurrentRow } from './CurrentRow';
 import { GuessRow } from './GuessRow';
 import { WordleAchievementsScreen } from './WordleAchievementsScreen';
 import { WordleAlbumScreen } from './WordleAlbumScreen';
+import { WordleConnectingAnimation } from './WordleConnectingAnimation';
 import { WordleSettingsScreen } from './WordleSettingsScreen';
 
 export function WordleBoard({
@@ -168,7 +169,9 @@ export function WordleBoard({
     return connectionState === 'error' || connectionState === 'disconnected' ? (
       <ErrorScreen message={t('common:connectionLost')} onBack={navigateHome} />
     ) : (
-      <ConnectingScreen subtitleKey="connectingSubtitle" subtitleNs="wordle" />
+      <ConnectingScreen subtitleKey="connectingSubtitle" subtitleNs="wordle">
+        <WordleConnectingAnimation />
+      </ConnectingScreen>
     );
   }
 

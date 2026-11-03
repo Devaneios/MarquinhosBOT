@@ -15,12 +15,14 @@ export function Tile({
   size = 'sm',
   order,
   motion,
+  className,
 }: {
   letter: string;
   feedback?: LetterFeedback;
   size?: 'sm' | 'lg';
   order: number;
   motion?: TileMotion;
+  className?: string;
 }) {
   const colors = feedback ? FEEDBACK_COLORS[feedback] : null;
   return (
@@ -38,6 +40,7 @@ export function Tile({
           : letter
             ? 'border-marquinhos-border-hover'
             : 'border-marquinhos-border/60',
+        className,
       )}
       style={
         {
