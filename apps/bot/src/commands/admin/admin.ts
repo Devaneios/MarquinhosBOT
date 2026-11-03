@@ -1,4 +1,6 @@
 import { HttpError } from '@marquinhos/api-client/bot';
+import { buildWordleConversation } from '@marquinhos/commands/games/termoConversation';
+import { previousRecifeDate } from '@marquinhos/commands/games/termoDate';
 import { sendTermoStatusBroadcast } from '@marquinhos/commands/games/termoLeaderboardImage';
 import { collectVerifiedLeaderboard } from '@marquinhos/commands/games/termoLeaderboardMembers';
 import { GuildConfig } from '@marquinhos/config/guild';
@@ -217,6 +219,19 @@ export class AdminCommand extends MarquinhosCommand {
                     .setDescription('Uma ação pode preencher várias casas?')
                     .setRequired(true),
                 ),
+            )
+            .addSubcommand((sub) =>
+              sub
+                .setName('conversa')
+                .setDescription(
+                  'Inicia uma conversa sobre uma partida encerrada',
+                )
+                .addStringOption((opt) =>
+                  opt
+                    .setName('dia')
+                    .setDescription('Data da partida encerrada, AAAA-MM-DD')
+                    .setRequired(true),
+                ),
             ),
         )
         .addSubcommandGroup((group) =>
@@ -246,6 +261,58 @@ export class AdminCommand extends MarquinhosCommand {
     }
 
     if (subgroup === 'termo') {
+      if (sub === 'conversa') {
+        if (
+          !interaction.guildId ||
+          !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
+        ) {
+          await interaction.reply({
+            content: '❌ Somente administradores podem iniciar a conversa.',
+            flags: MessageFlags.Ephemeral,
+          });
+          return;
+        }
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+        try {
+          const date = interaction.options.getString('dia', true);
+          const content = buildWordleConversation(date, previousRecifeDate());
+          if (!content) {
+            await interaction.editReply({
+              content: '❌ Escolha uma data válida que já terminou em Recife.',
+            });
+            return;
+          }
+          const config = await api.getWordleConfig(interaction.guildId);
+          const channel = config.data.channelId
+            ? asTextChannel(
+                interaction.client.channels.cache.get(config.data.channelId),
+              )
+            : null;
+          if (!channel || channel.guildId !== interaction.guildId) {
+            await interaction.editReply({
+              content: '❌ Configure um canal do Terminhos neste servidor.',
+            });
+            return;
+          }
+          const day = await api.getWordleDayGuesses(interaction.guildId, date);
+          if (!day.data || day.data.wordDate !== date) {
+            await interaction.editReply({
+              content: '❌ Não há partida registrada para essa data.',
+            });
+            return;
+          }
+          await channel.send({ content, allowedMentions: { parse: [] } });
+          await interaction.editReply({
+            content: `✅ Conversa publicada em <#${channel.id}>.`,
+          });
+        } catch (error) {
+          logger.warn('admin termo conversa failed', error);
+          await interaction.editReply({
+            content: '❌ Não foi possível iniciar a conversa.',
+          });
+        }
+        return;
+      }
       if (sub === 'bingo') {
         if (
           !interaction.guildId ||
