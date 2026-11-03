@@ -1,6 +1,14 @@
 import { db } from '@marquinhos/database/client';
 import { wordleCommunityDailyPresence } from '@marquinhos/database/schema';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  spyOn,
+} from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { getRecifeDate } from '../src/services/wordle/wordleDate';
@@ -11,7 +19,8 @@ const { bootColyseusTestServer, nextMessage, pendingMessages } =
 const { mintWsSessionToken } =
   await import('../src/services/activity/wsSessionToken');
 const { roomKey } = await import('services/activity/roomKey');
-const { getValidationSet } = await import('../src/services/wordle');
+const { getValidationSet, WordleService } =
+  await import('../src/services/wordle');
 
 type ColyseusTestServer = import('@colyseus/testing').ColyseusTestServer;
 
@@ -114,6 +123,26 @@ describe('MatchRoom · wordle', () => {
         ),
       );
     expect(presence).toHaveLength(1);
+  });
+
+  it('still sends init when presence cannot be recorded', async () => {
+    const presence = spyOn(
+      WordleService.prototype,
+      'recordParticipation',
+    ).mockRejectedValue(new Error('database unavailable'));
+    try {
+      const session = sessionFor('user-presence-down', 'guild-presence-down');
+      const room = await colyseus.createRoom('match', {
+        game: 'wordle',
+        roomKey: session.roomKey,
+      });
+      const client = await colyseus.connectTo(room, session);
+      const init = await nextMessage<{ attempts: number }>(client, 'init');
+      expect(init.attempts).toBe(0);
+      expect(presence).toHaveBeenCalled();
+    } finally {
+      presence.mockRestore();
+    }
   });
 
   it('replies guess_result for a valid guess of the right length', async () => {

@@ -49,6 +49,36 @@ describe('Termo command', () => {
     await command.chatInputRun(interaction as never);
     expect(visits).toEqual([['user-1', 'guild-1']]);
   });
+  it('still shows the session when presence cannot be recorded', async () => {
+    const record = apiStub.recordWordlePresence;
+    apiStub.recordWordlePresence = async () => {
+      throw new Error('api down');
+    };
+    const replies: unknown[] = [];
+    const command = Object.create(TermoCommand.prototype) as InstanceType<
+      typeof TermoCommand
+    >;
+    try {
+      await command.chatInputRun({
+        guildId: 'guild-1',
+        channelId: 'channel-1',
+        user: { id: 'user-1' },
+        guild: {
+          channels: { fetch: async () => ({ isTextBased: () => true }) },
+        },
+        deferReply: async () => undefined,
+        editReply: async (reply: unknown) => {
+          replies.push(reply);
+        },
+        options: { getString: () => null },
+      } as never);
+    } finally {
+      apiStub.recordWordlePresence = record;
+    }
+    expect(replies).toEqual([
+      { content: '❌ Você ainda não tentou nenhuma vez.' },
+    ]);
+  });
 });
 
 describe('Termo draft autocomplete', () => {

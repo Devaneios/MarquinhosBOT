@@ -124,8 +124,11 @@ export class WordleGoalsService {
       try {
         await this.close(goal.id, goal.guildId);
         processed++;
-      } catch {
-        logger.warn('wordle.goal.reconciliation_failed');
+      } catch (error) {
+        logger.warn('wordle.goal.reconciliation_failed', {
+          error,
+          goalId: goal.id,
+        });
       }
     }
     return processed;

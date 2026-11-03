@@ -57,7 +57,7 @@ export async function recordWordlePresence(
   });
   try {
     await new WordleAlbumService(database).pages(guildId);
-  } catch {
-    logger.warn('wordle.album.presence_projection_failed');
+  } catch (error) {
+    logger.warn('wordle.album.presence_projection_failed', { error, guildId });
   }
 }

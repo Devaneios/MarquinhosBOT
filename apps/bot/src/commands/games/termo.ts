@@ -97,7 +97,14 @@ export class TermoCommand extends MarquinhosCommand {
     const guess = interaction.options.getString('palpite', false)?.trim();
 
     if (!guess) {
-      await api.recordWordlePresence(userId, interaction.guildId);
+      await api
+        .recordWordlePresence(userId, interaction.guildId)
+        .catch((error: unknown) => {
+          logger.warn(
+            `Termo: failed to record presence for user ${userId}`,
+            error,
+          );
+        });
       const userAttemptsResponse = await api.getUserWordleSession(
         userId,
         interaction.guildId,

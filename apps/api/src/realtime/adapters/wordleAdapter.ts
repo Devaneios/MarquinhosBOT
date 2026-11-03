@@ -97,11 +97,19 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
   },
 
   async onJoin(service, auth, client, seat: SeatRole) {
+    // Presence and achievements are side effects of joining: a failure in
+    // either must not keep the player out of the game.
     if (seat === 'player') {
-      await service.recordParticipation(auth.userId, auth.guildId);
+      await service
+        .recordParticipation(auth.userId, auth.guildId)
+        .catch((error: unknown) => {
+          logger.error('wordle.presence_failed', {
+            error,
+            userId: auth.userId,
+            guildId: auth.guildId,
+          });
+        });
     }
-    // Achievements are optional in `init`: a failure there must not keep the
-    // player out of the game.
     const overview = service
       .getAchievementsOverview(auth.userId, auth.guildId, auth.userId)
       .catch((error: unknown) => {

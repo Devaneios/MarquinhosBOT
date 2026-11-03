@@ -188,13 +188,26 @@ let reconcilingWordleGoals = false;
 async function reconcileWordleGoals(): Promise<void> {
   if (reconcilingWordleGoals) return;
   reconcilingWordleGoals = true;
+  const notifications = new WordleNotificationService(db);
+  const steps: [string, () => Promise<unknown>][] = [
+    [
+      'wordle.goal.scheduler_failed',
+      () => new WordleGoalsService(db).processDue(),
+    ],
+    ['wordle.notification.reap_failed', () => notifications.reapStale(120_000)],
+    [
+      'wordle.notification.weekly_failed',
+      () => notifications.queueWeeklySummaries(),
+    ],
+  ];
   try {
-    await new WordleGoalsService(db).processDue();
-    const notifications = new WordleNotificationService(db);
-    await notifications.reapStale(120_000);
-    await notifications.queueWeeklySummaries();
-  } catch {
-    logger.warn('wordle.goal.scheduler_failed');
+    for (const [event, step] of steps) {
+      try {
+        await step();
+      } catch (error) {
+        logger.warn(event, { error });
+      }
+    }
   } finally {
     reconcilingWordleGoals = false;
   }

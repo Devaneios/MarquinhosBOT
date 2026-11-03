@@ -708,7 +708,7 @@ export class WordleService {
       );
       outcome.achievementUpdate = achievements;
     } catch (error) {
-      logger.warn('wordle.achievements.award_failed', error);
+      logger.warn('wordle.achievements.award_failed', { error });
     }
     return outcome;
   }

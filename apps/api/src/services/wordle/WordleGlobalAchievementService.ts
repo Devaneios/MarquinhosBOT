@@ -315,8 +315,11 @@ export class WordleGlobalAchievementService {
     });
     try {
       await new WordleAlbumService(this.database).reconcileUser(userId);
-    } catch {
-      logger.warn('wordle.album.achievement_projection_failed');
+    } catch (error) {
+      logger.warn('wordle.album.achievement_projection_failed', {
+        error,
+        userId,
+      });
     }
     return outcome;
   }
