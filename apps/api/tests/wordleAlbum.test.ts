@@ -3,12 +3,14 @@ import {
   wordleAlbumMilestones,
   wordleCommunityDailyPresence,
   wordleGlobalOccurrences,
+  wordleNotifications,
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 import { WordleAlbumService } from '../src/services/wordle/WordleAlbumService';
 import { recordWordlePresence } from '../src/services/wordle/WordleCommunityService';
+import { WordleNotificationService } from '../src/services/wordle/WordleNotificationService';
 
 let testDb: TestDb;
 let album: WordleAlbumService;
@@ -61,6 +63,11 @@ describe('community album', () => {
     expect(await album.contributions('c')).toEqual([]);
   });
   it('builds catalog pages without exposing session evidence', async () => {
+    await new WordleNotificationService(testDb.db).configure('a', {
+      channelId: null,
+      collective: true,
+      weekly: false,
+    });
     await testDb.db.insert(wordleAlbumMilestones).values({
       guild_id: 'a',
       family: 'letters',
@@ -81,6 +88,12 @@ describe('community album', () => {
     ).toBe('completed');
     expect(JSON.stringify(pages)).not.toContain('evidence');
     expect(getAlbum.response.safeParse({ data: pages }).success).toBe(true);
+    await album.pages('a');
+    const events = (await testDb.db.select().from(wordleNotifications)).filter(
+      (row) => row.guild_id === 'a' && row.event_key === 'page:letter_a',
+    );
+    expect(events).toHaveLength(1);
+    expect(events[0]?.eligible_at).toBe(Date.parse('2026-10-02T03:00:00Z'));
   });
   it('handles late presence and removes projections when the source is deleted', async () => {
     await recordWordlePresence(testDb.db, 'player', 'late', '2026-10-01', 4);
@@ -97,6 +110,14 @@ describe('community album', () => {
           eq(wordleGlobalOccurrences.pattern_id, 'letter_a'),
         ),
       );
+    await new WordleNotificationService(testDb.db).configure('a', {
+      channelId: 'channel',
+      collective: true,
+      weekly: false,
+    });
+    expect(
+      await new WordleNotificationService(testDb.db).claim('a'),
+    ).toBeNull();
     expect(await album.contributions('late')).toEqual([]);
     expect(await album.contributions('a')).toEqual([]);
     await album.reconcile();

@@ -453,6 +453,18 @@ export const wordleAlbumContributions = pgTable(
   ],
 );
 
+export const wordleAlbumPages = pgTable(
+  'wordle_album_pages',
+  {
+    guild_id: text('guild_id').notNull(),
+    pattern_id: text('pattern_id').notNull(),
+    first_recorded_at: bigint('first_recorded_at', {
+      mode: 'number',
+    }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.guild_id, t.pattern_id] })],
+);
+
 export const wordleAlbumMilestones = pgTable(
   'wordle_album_milestones',
   {

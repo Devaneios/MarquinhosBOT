@@ -5,11 +5,13 @@ import {
   wordleGlobalSessions,
   wordleGoalAwards,
   wordleGoalDecorations,
+  wordleNotifications,
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, expect, it } from 'bun:test';
 import { sql } from 'drizzle-orm';
 import { WordleGoalsService } from '../src/services/wordle/WordleGoalsService';
+import { WordleNotificationService } from '../src/services/wordle/WordleNotificationService';
 import { lockGoalFactsForWrite } from '../src/services/wordle/goalFactLock';
 
 let testDb: TestDb;
@@ -147,6 +149,11 @@ it('closes only after the deadline, snapshots eligible facts and grants rewards 
   let now = 100;
   const goals = new WordleGoalsService(testDb.db, () => now);
   const goal = await goals.create('a', 1, 200, 500);
+  await new WordleNotificationService(testDb.db, () => now).configure('a', {
+    channelId: null,
+    collective: true,
+    weekly: false,
+  });
   await expect(goals.close(goal.id, 'a')).rejects.toThrow();
   now = 500;
   expect(await goals.close(goal.id, 'a')).toMatchObject({
@@ -163,6 +170,11 @@ it('closes only after the deadline, snapshots eligible facts and grants rewards 
   expect(
     (await testDb.db.select().from(wordleGoalDecorations)).filter(
       (row) => row.goal_id === goal.id,
+    ),
+  ).toHaveLength(1);
+  expect(
+    (await testDb.db.select().from(wordleNotifications)).filter(
+      (row) => row.event_key === `goal:${goal.id}`,
     ),
   ).toHaveLength(1);
   const empty = await goals.create('empty', 1, 600, 700);

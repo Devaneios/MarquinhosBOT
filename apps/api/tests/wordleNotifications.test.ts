@@ -53,7 +53,7 @@ it('marks expired leases uncertain so a crash cannot silently resend', async () 
     collective: true,
     weekly: false,
   });
-  await notifications.enqueue('b', 'page', 'page:p', { patternId: 'p' }, 1000);
+  await notifications.enqueue('b', 'goal', 'goal:p', { goalId: 'p' }, 1000);
   const claimed = await notifications.claim('b');
   now += 120_000;
   expect(await notifications.reapStale(60_000)).toBe(1);

@@ -3,7 +3,7 @@ import {
   wordleNotificationConfig,
   wordleNotifications,
 } from '@marquinhos/database/schema';
-import { and, asc, eq, lt, lte, or } from 'drizzle-orm';
+import { and, asc, eq, lt, lte, or, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 
 type Config = {
@@ -109,6 +109,7 @@ export class WordleNotificationService {
             eq(wordleNotifications.guild_id, guildId),
             eq(wordleNotifications.status, 'pending'),
             lte(wordleNotifications.eligible_at, this.now()),
+            sql`(${wordleNotifications.event_type} <> 'page' OR EXISTS (SELECT 1 FROM wordle_album_contributions c WHERE c.guild_id = ${wordleNotifications.guild_id} AND c.pattern_id = ${wordleNotifications.payload}->>'patternId'))`,
             eventFilter,
           ),
         )

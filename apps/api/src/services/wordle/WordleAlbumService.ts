@@ -1,13 +1,20 @@
 import type { Db } from '@marquinhos/database/client';
 import {
   wordleAlbumContributions,
+  wordleAlbumPages,
   wordleCommunityDailyPresence,
 } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
-import type { AlbumContribution } from '@marquinhos/domain/games/wordle/community/album';
+import type {
+  AlbumContribution,
+  AlbumPage,
+} from '@marquinhos/domain/games/wordle/community/album';
 import { buildAlbumPages } from '@marquinhos/domain/games/wordle/community/album';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
+import { z } from 'zod';
 import { WordleAlbumMilestoneService } from './WordleAlbumMilestoneService';
+import { WordleNotificationService } from './WordleNotificationService';
+import { getWordleDayEndEpoch } from './wordleDate';
 
 export class WordleAlbumService {
   constructor(private readonly database: Db) {}
@@ -50,6 +57,55 @@ export class WordleAlbumService {
     for (const { guildId } of guilds) await this.pages(guildId);
   }
 
+  private async recordPages(
+    guildId: string,
+    pages: AlbumPage[],
+  ): Promise<void> {
+    await this.database.transaction(async (tx) => {
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(hashtextextended(${JSON.stringify(['wordle-album-pages', guildId])}, 0))`,
+      );
+      for (const page of pages) {
+        if (!page.firstContribution) continue;
+        const [sourceRow] = await tx
+          .select({ patternId: wordleAlbumContributions.pattern_id })
+          .from(wordleAlbumContributions)
+          .where(
+            and(
+              eq(wordleAlbumContributions.guild_id, guildId),
+              eq(wordleAlbumContributions.pattern_id, page.patternId),
+            ),
+          )
+          .limit(1)
+          .for('update');
+        if (!sourceRow) continue;
+        const inserted = await tx
+          .insert(wordleAlbumPages)
+          .values({
+            guild_id: guildId,
+            pattern_id: page.patternId,
+            first_recorded_at: page.firstContribution.occurredAt,
+          })
+          .onConflictDoNothing()
+          .returning({ patternId: wordleAlbumPages.pattern_id });
+        if (!inserted.length) continue;
+        const source = z
+          .tuple([z.string(), z.iso.date(), z.string()])
+          .safeParse(JSON.parse(page.firstContribution.occurrenceId));
+        if (!source.success) continue;
+        const eligibleAt = (getWordleDayEndEpoch(source.data[1]) + 1) * 1000;
+        await new WordleNotificationService(this.database).enqueueWithin(
+          tx,
+          guildId,
+          'page',
+          `page:${page.patternId}`,
+          { patternId: page.patternId },
+          eligibleAt,
+        );
+      }
+    });
+  }
+
   async pages(guildId: string) {
     await this.reconcile(guildId);
     const definitions = WORDLE_ACHIEVEMENT_CATALOG.flatMap((definition) =>
@@ -69,6 +125,7 @@ export class WordleAlbumService {
       definitions,
       await this.contributions(guildId),
     );
+    await this.recordPages(guildId, projected);
     const milestones = await new WordleAlbumMilestoneService(
       this.database,
     ).reconcile(guildId, definitions);

@@ -169,6 +169,13 @@
       "when": 1793665000007,
       "tag": "0023_wordle_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793665000008,
+      "tag": "0024_wordle_album_pages",
+      "breakpoints": true
     }
   ]
 }

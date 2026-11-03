@@ -14,6 +14,7 @@ import { logger } from 'utils/logger';
 import { z } from 'zod';
 import { lockGoalFactsForClosing } from './goalFactLock';
 import { getWordleDayEndEpoch } from './wordleDate';
+import { WordleNotificationService } from './WordleNotificationService';
 
 export class InvalidWordleGoal extends Error {}
 
@@ -241,6 +242,10 @@ export class WordleGoalsService {
           .insert(wordleGoalDecorations)
           .values({ goal_id: goalId, guild_id: guildId, granted_at: now })
           .onConflictDoNothing();
+        await new WordleNotificationService(
+          this.database,
+          this.now,
+        ).enqueueWithin(tx, guildId, 'goal', `goal:${goalId}`, { goalId }, now);
       }
       const [updated] = await tx
         .update(wordleCommunityGoals)
