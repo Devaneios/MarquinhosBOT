@@ -232,6 +232,20 @@ export class WordleGlobalAchievementService {
           event.acceptedAt,
         ]),
       );
+      const recorded = new Set(
+        (
+          await tx
+            .select({
+              date: wordleGlobalOccurrences.word_date,
+              patternId: wordleGlobalOccurrences.pattern_id,
+            })
+            .from(wordleGlobalOccurrences)
+            .where(eq(wordleGlobalOccurrences.user_id, userId))
+        ).map((row) => JSON.stringify([row.date, row.patternId])),
+      );
+      // Patterns are matched per board, so analysing each day on its own in
+      // memory is cheap; only occurrences not stored yet are written.
+      const occurrences: (typeof wordleGlobalOccurrences.$inferInsert)[] = [];
       for (const day of history) {
         const source = sessionByDate.get(day.date);
         if (!source) continue;
@@ -240,23 +254,29 @@ export class WordleGlobalAchievementService {
           options,
         ).discoverPatterns(new Set());
         for (const match of matches) {
+          if (recorded.has(JSON.stringify([day.date, match.patternId])))
+            continue;
           const evidence = wordlePatternEvidenceSchema.parse(match);
           const row = Math.max(...evidence.cells.map(([index]) => index)) + 1;
-          const sourceAt =
-            acceptedTimes.get(JSON.stringify([source, row])) ?? null;
-          await tx
-            .insert(wordleGlobalOccurrences)
-            .values({
-              user_id: userId,
-              word_date: day.date,
-              pattern_id: match.patternId,
-              session_id: source,
-              occurred_at: now,
-              source_at: sourceAt,
-              evidence,
-            })
-            .onConflictDoNothing();
+          occurrences.push({
+            user_id: userId,
+            word_date: day.date,
+            pattern_id: match.patternId,
+            session_id: source,
+            occurred_at: now,
+            source_at: acceptedTimes.get(JSON.stringify([source, row])) ?? null,
+            evidence,
+          });
         }
+      }
+      const newDates = new Set<string>();
+      for (let at = 0; at < occurrences.length; at += 500) {
+        const inserted = await tx
+          .insert(wordleGlobalOccurrences)
+          .values(occurrences.slice(at, at + 500))
+          .onConflictDoNothing()
+          .returning({ date: wordleGlobalOccurrences.word_date });
+        for (const { date } of inserted) newDates.add(date);
       }
       for (const match of analysis.discoverPatterns(known)) {
         const source = sessionByDate.get(match.date);
@@ -277,7 +297,7 @@ export class WordleGlobalAchievementService {
         .evaluate(known)
         .filter((item) => item.met)
         .map((item) => item.id);
-      if (eligibleIds.length === 0) return { unlockedIds: [] };
+      if (eligibleIds.length === 0) return { unlockedIds: [], newDates };
       const definitions = await tx
         .select({ id: achievements.id, reward: achievements.reward_xp })
         .from(achievements)
@@ -288,7 +308,7 @@ export class WordleGlobalAchievementService {
             isNull(achievements.archived_at),
           ),
         );
-      if (definitions.length === 0) return { unlockedIds: [] };
+      if (definitions.length === 0) return { unlockedIds: [], newDates };
       const inserted = await tx
         .insert(wordleGlobalAchievements)
         .values(
@@ -311,16 +331,19 @@ export class WordleGlobalAchievementService {
         await leveling.addXpToUser(userId, guildId, xp, tx, null);
         await leveling.applyLevelUps(userId, guildId, tx);
       }
-      return { unlockedIds };
+      return { unlockedIds, newDates };
     });
     try {
-      await new WordleAlbumService(this.database).reconcileUser(userId);
+      await new WordleAlbumService(this.database).reconcileUser(
+        userId,
+        outcome.newDates,
+      );
     } catch (error) {
       logger.warn('wordle.album.achievement_projection_failed', {
         error,
         userId,
       });
     }
-    return outcome;
+    return { unlockedIds: outcome.unlockedIds };
   }
 }

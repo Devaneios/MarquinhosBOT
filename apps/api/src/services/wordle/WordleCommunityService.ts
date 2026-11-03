@@ -16,7 +16,7 @@ export async function recordWordlePresence(
   date: string,
   timestamp: number,
 ): Promise<void> {
-  await database.transaction(async (tx) => {
+  const firstVisit = await database.transaction(async (tx) => {
     await lockGoalFactsForWrite(tx);
     await tx
       .insert(wordleCommunityParticipation)
@@ -36,7 +36,7 @@ export async function recordWordlePresence(
           last_seen_at: sql`greatest(${wordleCommunityParticipation.last_seen_at}, ${timestamp})`,
         },
       });
-    await tx
+    const [presence] = await tx
       .insert(wordleCommunityDailyPresence)
       .values({
         user_id: userId,
@@ -53,8 +53,13 @@ export async function recordWordlePresence(
         set: {
           first_seen_at: sql`least(${wordleCommunityDailyPresence.first_seen_at}, ${timestamp})`,
         },
-      });
+      })
+      .returning({ inserted: sql<boolean>`xmax = 0` });
+    return presence?.inserted === true;
   });
+  // The album only gains contributions here when this community sees the
+  // player for the first time that day.
+  if (!firstVisit) return;
   try {
     await new WordleAlbumService(database).pages(guildId);
   } catch (error) {

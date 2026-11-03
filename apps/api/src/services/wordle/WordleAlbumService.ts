@@ -10,7 +10,7 @@ import type {
   AlbumPage,
 } from '@marquinhos/domain/games/wordle/community/album';
 import { buildAlbumPages } from '@marquinhos/domain/games/wordle/community/album';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { WordleAlbumMilestoneService } from './WordleAlbumMilestoneService';
 import { WordleNotificationService } from './WordleNotificationService';
@@ -54,11 +54,21 @@ export class WordleAlbumService {
     }));
   }
 
-  async reconcileUser(userId: string): Promise<void> {
+  /** Projects a player's new occurrences into the communities they were in that day. */
+  async reconcileUser(
+    userId: string,
+    dates: ReadonlySet<string>,
+  ): Promise<void> {
+    if (dates.size === 0) return;
     const guilds = await this.database
       .selectDistinct({ guildId: wordleCommunityDailyPresence.guild_id })
       .from(wordleCommunityDailyPresence)
-      .where(eq(wordleCommunityDailyPresence.user_id, userId));
+      .where(
+        and(
+          eq(wordleCommunityDailyPresence.user_id, userId),
+          inArray(wordleCommunityDailyPresence.word_date, [...dates]),
+        ),
+      );
     for (const { guildId } of guilds) await this.pages(guildId);
   }
 
