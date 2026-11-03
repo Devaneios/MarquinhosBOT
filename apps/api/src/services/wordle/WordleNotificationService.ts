@@ -38,6 +38,20 @@ export class WordleNotificationService {
       });
   }
 
+  async getConfig(guildId: string): Promise<Config> {
+    const [row] = await this.database
+      .select()
+      .from(wordleNotificationConfig)
+      .where(eq(wordleNotificationConfig.guild_id, guildId));
+    return row
+      ? {
+          channelId: row.channel_id,
+          collective: row.collective,
+          weekly: row.weekly,
+        }
+      : { channelId: null, collective: false, weekly: false };
+  }
+
   async enqueue(
     guildId: string,
     kind: Kind,
@@ -142,29 +156,71 @@ export class WordleNotificationService {
     });
   }
 
-  async confirm(id: string, leaseId: string, messageId: string): Promise<void> {
-    await this.database
+  async confirm(
+    guildId: string,
+    id: string,
+    leaseId: string,
+    messageId: string,
+  ): Promise<boolean> {
+    const rows = await this.database
       .update(wordleNotifications)
       .set({ status: 'delivered', message_id: messageId })
       .where(
         and(
           eq(wordleNotifications.id, id),
-          eq(wordleNotifications.status, 'sending'),
+          eq(wordleNotifications.guild_id, guildId),
+          or(
+            eq(wordleNotifications.status, 'sending'),
+            eq(wordleNotifications.status, 'uncertain'),
+          ),
           eq(wordleNotifications.lease_id, leaseId),
         ),
-      );
+      )
+      .returning({ id: wordleNotifications.id });
+    return rows.length > 0;
   }
-  async ambiguous(id: string, leaseId: string): Promise<void> {
-    await this.database
+  async ambiguous(
+    guildId: string,
+    id: string,
+    leaseId: string,
+  ): Promise<boolean> {
+    const rows = await this.database
       .update(wordleNotifications)
       .set({ status: 'uncertain' })
       .where(
         and(
           eq(wordleNotifications.id, id),
+          eq(wordleNotifications.guild_id, guildId),
           eq(wordleNotifications.status, 'sending'),
           eq(wordleNotifications.lease_id, leaseId),
         ),
-      );
+      )
+      .returning({ id: wordleNotifications.id });
+    return rows.length > 0;
+  }
+  async release(
+    guildId: string,
+    id: string,
+    leaseId: string,
+  ): Promise<boolean> {
+    const rows = await this.database
+      .update(wordleNotifications)
+      .set({
+        status: 'pending',
+        lease_id: null,
+        lease_started_at: null,
+        channel_id: null,
+      })
+      .where(
+        and(
+          eq(wordleNotifications.guild_id, guildId),
+          eq(wordleNotifications.id, id),
+          eq(wordleNotifications.lease_id, leaseId),
+          eq(wordleNotifications.status, 'sending'),
+        ),
+      )
+      .returning({ id: wordleNotifications.id });
+    return rows.length > 0;
   }
   async reapStale(leaseMs: number): Promise<number> {
     const rows = await this.database
@@ -180,6 +236,7 @@ export class WordleNotificationService {
     return rows.length;
   }
   async resolve(
+    guildId: string,
     id: string,
     result: 'found' | 'confirmed_absent',
   ): Promise<void> {
@@ -193,6 +250,7 @@ export class WordleNotificationService {
       .where(
         and(
           eq(wordleNotifications.id, id),
+          eq(wordleNotifications.guild_id, guildId),
           eq(wordleNotifications.status, 'uncertain'),
         ),
       );

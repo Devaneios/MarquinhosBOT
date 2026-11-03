@@ -36,6 +36,7 @@ import {
   WordleService,
 } from 'services/wordle';
 import { WordleGoalsService } from 'services/wordle/WordleGoalsService';
+import { WordleNotificationService } from 'services/wordle/WordleNotificationService';
 import { logger } from 'utils/logger';
 
 validateProductionEnvironment();
@@ -189,6 +190,7 @@ async function reconcileWordleGoals(): Promise<void> {
   reconcilingWordleGoals = true;
   try {
     await new WordleGoalsService(db).processDue();
+    await new WordleNotificationService(db).reapStale(120_000);
   } catch {
     logger.warn('wordle.goal.scheduler_failed');
   } finally {

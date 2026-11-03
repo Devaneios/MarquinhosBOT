@@ -2,6 +2,7 @@ import { db } from '@marquinhos/database/client';
 import WordleController from 'controllers/wordle.controller';
 import { WordleAlbumController } from 'controllers/wordleAlbum.controller';
 import { WordleGoalsController } from 'controllers/wordleGoals.controller';
+import { WordleNotificationsController } from 'controllers/wordleNotifications.controller';
 import { WordleRewardsController } from 'controllers/wordleRewards.controller';
 import { WordleShowcaseController } from 'controllers/wordleShowcase.controller';
 import express from 'express';
@@ -10,6 +11,7 @@ import { verifyActivityDiscordToken } from 'middlewares/userAuth';
 import { DiscordService } from 'services/discord';
 import { WordleAlbumService } from 'services/wordle/WordleAlbumService';
 import { WordleGoalsService } from 'services/wordle/WordleGoalsService';
+import { WordleNotificationService } from 'services/wordle/WordleNotificationService';
 import { WordleRewardsService } from 'services/wordle/WordleRewardsService';
 import { WordleShowcaseService } from 'services/wordle/WordleShowcaseService';
 import { WordleUserConfigService } from 'services/wordleUserConfig';
@@ -18,6 +20,22 @@ const router = express.Router();
 const wordle = new WordleController(new WordleUserConfigService(db));
 const showcase = new WordleShowcaseController(new WordleShowcaseService(db));
 const rewards = new WordleRewardsController(new WordleRewardsService(db));
+const notifications = new WordleNotificationsController(
+  new WordleNotificationService(db),
+);
+
+router.get('/admin/notifications/:guildId', checkToken, (req, res) =>
+  notifications.config(req, res),
+);
+router.put('/admin/notifications/:guildId', checkToken, (req, res) =>
+  notifications.configure(req, res),
+);
+router.post('/admin/notifications/:guildId/claim', checkToken, (req, res) =>
+  notifications.claim(req, res),
+);
+router.post('/admin/notifications/:guildId/settle', checkToken, (req, res) =>
+  notifications.settle(req, res),
+);
 const goals = new WordleGoalsController(
   new WordleGoalsService(db),
   new DiscordService().isGuildMember,

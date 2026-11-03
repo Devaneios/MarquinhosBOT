@@ -8,6 +8,7 @@ import {
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
+import { WordleNotificationService } from '../../src/services/wordle/WordleNotificationService';
 import { startContractServer } from '../helpers/contractServer';
 
 const { callContract } = await import('@marquinhos/api-client/bot');
@@ -180,6 +181,53 @@ describe('wordle contracts', () => {
       target: 3,
       status: 'scheduled',
     });
+  });
+
+  it('configures, claims and settles a notification for the right community', async () => {
+    const config = { channelId: 'channel', collective: true, weekly: false };
+    await callContract(server.http, wordle.setNotificationConfig, {
+      params: { guildId },
+      body: config,
+    });
+    expect(
+      (
+        await callContract(server.http, wordle.getNotificationConfig, {
+          params: { guildId },
+        })
+      ).data,
+    ).toEqual(config);
+    await new WordleNotificationService(db).enqueue(
+      guildId,
+      'goal',
+      'goal:contract',
+      { goalId: 'contract' },
+      1,
+    );
+    const claimed = (
+      await callContract(server.http, wordle.claimNotification, {
+        params: { guildId },
+      })
+    ).data!;
+    const wrong = await callContract(server.http, wordle.settleNotification, {
+      params: { guildId: 'wrong' },
+      body: {
+        id: claimed.id,
+        leaseId: claimed.leaseId,
+        result: 'delivered',
+        messageId: 'm',
+      },
+    });
+    expect(wrong.data.recorded).toBe(false);
+    const result = await callContract(server.http, wordle.settleNotification, {
+      params: { guildId },
+      body: {
+        id: claimed.id,
+        leaseId: claimed.leaseId,
+        result: 'delivered',
+        messageId: 'm',
+      },
+    });
+    expect(result.data.recorded).toBe(true);
   });
 
   it('claims an announcement once and reports streaks', async () => {

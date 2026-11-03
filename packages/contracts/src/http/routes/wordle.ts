@@ -176,6 +176,62 @@ export const createGoal = defineContract({
     .strict(),
   response: envelope(goalSchema),
 });
+
+const notificationConfigSchema = z.object({
+  channelId: z.string().min(1).nullable(),
+  collective: z.boolean(),
+  weekly: z.boolean(),
+});
+export const getNotificationConfig = defineContract({
+  method: 'GET',
+  path: '/api/wordle/admin/notifications/:guildId',
+  params: guildParams,
+  response: envelope(notificationConfigSchema),
+});
+export const setNotificationConfig = defineContract({
+  method: 'PUT',
+  path: '/api/wordle/admin/notifications/:guildId',
+  params: guildParams,
+  body: notificationConfigSchema,
+  response: envelope(notificationConfigSchema),
+});
+export const claimNotification = defineContract({
+  method: 'POST',
+  path: '/api/wordle/admin/notifications/:guildId/claim',
+  params: guildParams,
+  response: envelope(
+    z
+      .object({
+        id: requiredString,
+        eventKey: requiredString,
+        kind: z.enum(['page', 'goal', 'weekly']),
+        payload: z.record(z.string(), z.string()),
+        status: z.literal('sending'),
+        leaseId: requiredString,
+        channelId: requiredString,
+      })
+      .nullable(),
+  ),
+});
+export const settleNotification = defineContract({
+  method: 'POST',
+  path: '/api/wordle/admin/notifications/:guildId/settle',
+  params: guildParams,
+  body: z.discriminatedUnion('result', [
+    z.object({
+      id: requiredString,
+      leaseId: requiredString,
+      result: z.literal('delivered'),
+      messageId: requiredString,
+    }),
+    z.object({
+      id: requiredString,
+      leaseId: requiredString,
+      result: z.enum(['not_sent', 'ambiguous']),
+    }),
+  ]),
+  response: envelope(z.object({ recorded: z.boolean() })),
+});
 export const updateReward = defineContract({
   method: 'PUT',
   path: '/api/wordle/rewards',
