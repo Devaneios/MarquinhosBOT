@@ -35,6 +35,7 @@ import {
   loadBannedWords,
   WordleService,
 } from 'services/wordle';
+import { WordleGoalsService } from 'services/wordle/WordleGoalsService';
 import { logger } from 'utils/logger';
 
 validateProductionEnvironment();
@@ -181,6 +182,23 @@ setInterval(() => {
     logger.error('wordle.draft_finalization_failed', { error: err });
   });
 }, WORDLE_DRAFT_FINALIZATION_INTERVAL_MS);
+
+let reconcilingWordleGoals = false;
+async function reconcileWordleGoals(): Promise<void> {
+  if (reconcilingWordleGoals) return;
+  reconcilingWordleGoals = true;
+  try {
+    await new WordleGoalsService(db).processDue();
+  } catch {
+    logger.warn('wordle.goal.scheduler_failed');
+  } finally {
+    reconcilingWordleGoals = false;
+  }
+}
+void reconcileWordleGoals();
+setInterval(() => {
+  void reconcileWordleGoals();
+}, 30_000);
 
 const SANDBOX_SWEEP_INTERVAL_MS = 5 * 60_000;
 const sandboxManager = new SandboxManager(new DockerodeSandboxClient());

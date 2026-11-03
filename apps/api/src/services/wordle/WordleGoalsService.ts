@@ -7,8 +7,10 @@ import {
   wordleGoalContributions,
   wordleGoalDecorations,
 } from '@marquinhos/database/schema';
-import { and, asc, eq, gte, lt, sql } from 'drizzle-orm';
+import { goalStateAt } from '@marquinhos/domain/games/wordle/community/goals';
+import { and, asc, eq, gte, inArray, lt, lte, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
+import { logger } from 'utils/logger';
 import { lockGoalFactsForClosing } from './goalFactLock';
 
 export class WordleGoalsService {
@@ -58,7 +60,40 @@ export class WordleGoalsService {
         asc(wordleCommunityGoals.starts_at),
         asc(wordleCommunityGoals.id),
       );
-    return rows.map((row) => this.map(row));
+    return rows.map((row) => {
+      const goal = this.map(row);
+      return { ...goal, status: goalStateAt(goal, this.now()) };
+    });
+  }
+
+  async processDue(): Promise<number> {
+    const due = await this.database
+      .select({
+        id: wordleCommunityGoals.id,
+        guildId: wordleCommunityGoals.guild_id,
+      })
+      .from(wordleCommunityGoals)
+      .where(
+        and(
+          lte(wordleCommunityGoals.ends_at, this.now()),
+          inArray(wordleCommunityGoals.status, [
+            'scheduled',
+            'active',
+            'finalizing',
+          ]),
+        ),
+      )
+      .orderBy(asc(wordleCommunityGoals.ends_at), asc(wordleCommunityGoals.id));
+    let processed = 0;
+    for (const goal of due) {
+      try {
+        await this.close(goal.id, goal.guildId);
+        processed++;
+      } catch {
+        logger.warn('wordle.goal.reconciliation_failed');
+      }
+    }
+    return processed;
   }
 
   async progress(

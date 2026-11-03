@@ -213,3 +213,16 @@ it('waits for an in-flight accepted fact before closing', async () => {
     contributors: ['three'],
   });
 });
+
+it('reconciles due goals idempotently and leaves future goals scheduled', async () => {
+  let now = 100;
+  const goals = new WordleGoalsService(testDb.db, () => now);
+  const due = await goals.create('process', 1, 200, 300);
+  const future = await goals.create('process', 1, 400, 500);
+  now = 300;
+  expect(await goals.processDue()).toBeGreaterThanOrEqual(1);
+  expect(await goals.processDue()).toBe(0);
+  const list = await goals.list('process');
+  expect(list.find((goal) => goal.id === due.id)?.status).toBe('expired');
+  expect(list.find((goal) => goal.id === future.id)?.status).toBe('scheduled');
+});
