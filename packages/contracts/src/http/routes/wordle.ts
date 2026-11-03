@@ -129,6 +129,32 @@ export const getShowcase = defineContract({
   response: envelope(z.array(requiredString).max(3)),
 });
 
+export const getAlbum = defineContract({
+  method: 'GET',
+  path: '/api/wordle/album/:guildId',
+  params: guildParams,
+  response: envelope(
+    z.array(
+      z.object({
+        patternId: requiredString,
+        family: requiredString,
+        name: z.string(),
+        icon: z.string(),
+        mask: z.array(z.string()),
+        contributorCount: z.number().int().nonnegative(),
+        firstContribution: z
+          .object({
+            occurrenceId: z.string(),
+            patternId: z.string(),
+            userId: z.string(),
+            occurredAt: z.number(),
+          })
+          .nullable(),
+      }),
+    ),
+  ),
+});
+
 export const updateShowcase = defineContract({
   method: 'PUT',
   path: '/api/wordle/showcase',

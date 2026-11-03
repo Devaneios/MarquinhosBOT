@@ -57,6 +57,12 @@ describe('community album', () => {
     ).toEqual(['player']);
     expect(await album.contributions('c')).toEqual([]);
   });
+  it('builds catalog pages without exposing session evidence', async () => {
+    const pages = await album.pages('a');
+    expect(pages.length).toBeGreaterThan(0);
+    expect(pages.some((page) => page.patternId === 'letter_a')).toBe(true);
+    expect(JSON.stringify(pages)).not.toContain('evidence');
+  });
   it('handles late presence and removes projections when the source is deleted', async () => {
     await testDb.db.insert(wordleCommunityDailyPresence).values({
       guild_id: 'late',
