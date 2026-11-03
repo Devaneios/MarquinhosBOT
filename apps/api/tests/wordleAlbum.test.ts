@@ -3,6 +3,7 @@ import {
   wordleAlbumMilestones,
   wordleCommunityDailyPresence,
   wordleGlobalOccurrences,
+  wordleGlobalSessions,
   wordleNotifications,
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
@@ -61,6 +62,53 @@ describe('community album', () => {
       (await album.contributions('b')).map((entry) => entry.userId),
     ).toEqual(['player']);
     expect(await album.contributions('c')).toEqual([]);
+  });
+  it('dates contributions by when the guess was played, not when it was evaluated', async () => {
+    await testDb.db.insert(wordleGlobalSessions).values({
+      id: 'draft-session',
+      user_id: 'drafter',
+      word_date: '2026-10-03',
+      solved: true,
+      solved_from_draft: true,
+      solved_at: 50,
+      created_at: 1,
+    });
+    await testDb.db.insert(wordleGlobalOccurrences).values([
+      {
+        user_id: 'early',
+        word_date: '2026-10-03',
+        pattern_id: 'letter_a',
+        session_id: 'early-session',
+        occurred_at: 9_000_000,
+        source_at: 1_000,
+        evidence: {},
+      },
+      {
+        user_id: 'drafter',
+        word_date: '2026-10-03',
+        pattern_id: 'letter_a',
+        session_id: 'draft-session',
+        occurred_at: 8_000_000,
+        evidence: {},
+      },
+    ]);
+    await testDb.db.insert(wordleCommunityDailyPresence).values(
+      ['early', 'drafter'].map((user_id) => ({
+        guild_id: 'timed',
+        user_id,
+        word_date: '2026-10-03',
+        first_seen_at: 1,
+      })),
+    );
+    await album.reconcile('timed');
+    expect(
+      Object.fromEntries(
+        (await album.contributions('timed')).map((entry) => [
+          entry.userId,
+          entry.occurredAt,
+        ]),
+      ),
+    ).toEqual({ early: 1_000, drafter: 50_000 });
   });
   it('builds catalog pages without exposing session evidence', async () => {
     await new WordleNotificationService(testDb.db).configure('a', {

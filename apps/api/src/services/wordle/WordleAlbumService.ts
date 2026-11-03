@@ -22,9 +22,14 @@ export class WordleAlbumService {
   async reconcile(guildId?: string): Promise<void> {
     await this.database.execute(sql`
       INSERT INTO wordle_album_contributions (guild_id, user_id, word_date, pattern_id, occurred_at)
-      SELECT p.guild_id, o.user_id, o.word_date, o.pattern_id, o.occurred_at
+      SELECT p.guild_id, o.user_id, o.word_date, o.pattern_id,
+        -- When the guess was played, not when achievements were evaluated:
+        -- the guess's accept time, else the (seconds) solve time for draft
+        -- wins and imported history, else the evaluation time.
+        coalesce(o.source_at, s.solved_at * 1000, o.occurred_at)
       FROM wordle_global_occurrences o
       INNER JOIN wordle_community_daily_presence p ON p.user_id = o.user_id AND p.word_date = o.word_date
+      LEFT JOIN wordle_global_sessions s ON s.id = o.session_id
       ${guildId === undefined ? sql`` : sql`WHERE p.guild_id = ${guildId}`}
       ON CONFLICT (guild_id, user_id, word_date, pattern_id)
       DO UPDATE SET occurred_at = EXCLUDED.occurred_at
