@@ -125,12 +125,17 @@ export function WordleAlbumScreen({
           ))}
           {selected && (
             <section
-              className="mt-4 border border-marquinhos-border p-3"
+              className={`mt-4 border p-3 ${selected.contributorCount > 0 ? 'border-marquinhos-accent bg-marquinhos-accent/10' : 'border-marquinhos-border'}`}
               aria-label={selected.name}
             >
               <h2 className="font-semibold">
                 {selected.icon} {selected.name}
               </h2>
+              {selected.contributorCount > 0 && (
+                <p className="text-sm text-marquinhos-accent">
+                  ✦ {t('albumDecorated')}
+                </p>
+              )}
               <div
                 role="img"
                 aria-label={selected.name}

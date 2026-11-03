@@ -39,6 +39,7 @@
   "albumContributors_other": "{{count}} participantes",
   "albumFirst": "Primeira contribuição registrada: {{user}}",
   "albumAvailable": "Esta página ainda está disponível.",
+  "albumDecorated": "Página decorada pela comunidade",
   "albumContributorList": "IDs de participantes: {{users}}",
   "albumOpen": "Abrir álbum da comunidade",
   "albumMilestoneCompleted": "Marco da família concluído",
