@@ -323,6 +323,13 @@ export class MarquinhosApiService {
     });
   }
 
+  async getWordleGallery(guildId: string, week: string) {
+    return callContract(this.client, wordle.getBotGallery, {
+      params: { guildId },
+      query: { week },
+    });
+  }
+
   async getWordleNotificationConfig(guildId: string) {
     return callContract(this.client, wordle.getNotificationConfig, {
       params: { guildId },

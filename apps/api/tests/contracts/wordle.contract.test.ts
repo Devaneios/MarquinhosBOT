@@ -202,6 +202,14 @@ describe('wordle contracts', () => {
     expect(result.data.progress.filled.filter(Boolean)).toHaveLength(0);
   });
 
+  it('returns an empty gallery for a completed week with no entries', async () => {
+    const result = await callContract(server.http, wordle.getBotGallery, {
+      params: { guildId },
+      query: { week: '2020-01-06' },
+    });
+    expect(result.data).toEqual({ weekKey: '2020-01-06', entries: [] });
+  });
+
   it('configures, claims and settles a notification for the right community', async () => {
     const config = { channelId: 'channel', collective: true, weekly: false };
     await callContract(server.http, wordle.setNotificationConfig, {

@@ -82,3 +82,37 @@ it('shows the aggregate counts in the weekly summary', async () => {
     content: expect.stringContaining('2 páginas'),
   });
 });
+
+it('publishes a gallery only when its closed week still has entries', async () => {
+  const send = mock(async (_message: unknown) => ({ id: 'message' }));
+  const settle = mock(async () => ({ data: { recorded: true } }));
+  const api = {
+    claimWordleNotification: async () => ({
+      data: {
+        ...event,
+        kind: 'weekly' as const,
+        payload: { gallery: '1', week: '2026-10-26' },
+      },
+    }),
+    settleWordleNotification: settle,
+  };
+  const channel = async () => ({ guildId: 'a', send });
+  await deliverWordleNotification('a', api, channel, async () => ({
+    weekKey: '2026-10-26',
+    entries: [],
+  }));
+  expect(send).not.toHaveBeenCalled();
+  expect(settle).toHaveBeenCalledWith('a', {
+    id: 'id',
+    leaseId: 'lease',
+    result: 'not_sent',
+  });
+  await deliverWordleNotification('a', api, channel, async () => ({
+    weekKey: '2026-10-26',
+    entries: [{ userId: '123', name: 'Letra A', date: '2026-10-30' }],
+  }));
+  expect(send.mock.calls[0]![0]).toMatchObject({
+    content: expect.stringContaining('Letra A'),
+    allowedMentions: { parse: [] },
+  });
+});

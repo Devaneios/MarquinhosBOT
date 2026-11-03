@@ -3,21 +3,66 @@ import type { Db } from '@marquinhos/database/client';
 import {
   wordleCommunityDailyPresence,
   wordleGlobalOccurrences,
+  wordleNotificationConfig,
 } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { galleryEntries } from '@marquinhos/domain/games/wordle/community/activities';
 import { and, eq, gte, lt } from 'drizzle-orm';
-import { previousWordleWeek } from './WordleNotificationService';
-import { getWordleTimeZone } from './wordleDate';
+import { z } from 'zod';
+import {
+  previousWordleWeek,
+  WordleNotificationService,
+} from './WordleNotificationService';
+import { getWordleDayEndEpoch, getWordleTimeZone } from './wordleDate';
 
+export class InvalidWordleGallery extends Error {}
 export class WordleGalleryService {
   constructor(
     private readonly database: Db,
     private readonly now: () => number = Date.now,
   ) {}
+  async queuePreviousWeek(): Promise<number> {
+    const guilds = await this.database
+      .select({ guildId: wordleNotificationConfig.guild_id })
+      .from(wordleNotificationConfig)
+      .where(eq(wordleNotificationConfig.weekly, true));
+    let queued = 0;
+    for (const { guildId } of guilds) {
+      const gallery = await this.previousWeek(guildId);
+      if (!gallery.entries.length) continue;
+      if (
+        await new WordleNotificationService(this.database, this.now).enqueue(
+          guildId,
+          'weekly',
+          `gallery:${gallery.weekKey}`,
+          { gallery: '1', week: gallery.weekKey },
+          this.now(),
+        )
+      )
+        queued++;
+    }
+    return queued;
+  }
   async previousWeek(guildId: string) {
+    return this.forWeek(guildId, previousWordleWeek(this.now()).weekKey);
+  }
+  async forWeek(guildId: string, weekKey: string) {
+    if (!z.iso.date().safeParse(weekKey).success)
+      throw new InvalidWordleGallery('Invalid gallery week');
+    const monday = new Date(`${weekKey}T12:00:00Z`);
+    if (monday.getUTCDay() !== 1)
+      throw new InvalidWordleGallery('Invalid gallery week');
+    const priorSunday = new Date(monday);
+    priorSunday.setUTCDate(priorSunday.getUTCDate() - 1);
+    const sunday = new Date(monday);
+    sunday.setUTCDate(sunday.getUTCDate() + 6);
+    const startsAt =
+      (getWordleDayEndEpoch(priorSunday.toISOString().slice(0, 10)) + 1) * 1000;
+    const endsAt =
+      (getWordleDayEndEpoch(sunday.toISOString().slice(0, 10)) + 1) * 1000;
     const now = this.now();
-    const { weekKey, startsAt, endsAt } = previousWordleWeek(now);
+    if (endsAt > now)
+      throw new InvalidWordleGallery('Gallery week is still open');
     const today = new Intl.DateTimeFormat('sv-SE', {
       timeZone: getWordleTimeZone(),
     }).format(new Date(now));

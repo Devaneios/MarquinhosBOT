@@ -274,6 +274,7 @@ export const getBotGallery = defineContract({
   method: 'GET',
   path: '/api/wordle/admin/gallery/:guildId',
   params: guildParams,
+  query: z.object({ week: z.iso.date() }),
   response: envelope(gallerySchema),
 });
 export const createGoal = defineContract({

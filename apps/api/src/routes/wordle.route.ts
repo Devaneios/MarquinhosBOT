@@ -64,13 +64,9 @@ router.get(
   verifyGuildMember,
   (req, res) => gallery.get(req.params.guildId, res),
 );
-router.get('/admin/gallery/:guildId', checkToken, (req, res) => {
-  if (typeof req.params.guildId !== 'string') {
-    res.status(400).json({ message: 'Invalid community' });
-    return;
-  }
-  return gallery.get(req.params.guildId, res);
-});
+router.get('/admin/gallery/:guildId', checkToken, (req, res) =>
+  gallery.getForWeek(req, res),
+);
 router.get(
   '/bingo/:guildId',
   verifyActivityDiscordToken,

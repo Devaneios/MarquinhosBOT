@@ -2,10 +2,12 @@ import { getGallery } from '@marquinhos/contracts/http/routes/wordle';
 import {
   wordleCommunityDailyPresence,
   wordleGlobalOccurrences,
+  wordleNotifications,
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, expect, it } from 'bun:test';
 import { WordleGalleryService } from '../src/services/wordle/WordleGalleryService';
+import { WordleNotificationService } from '../src/services/wordle/WordleNotificationService';
 
 let testDb: TestDb;
 const now = Date.parse('2026-11-02T03:00:00Z');
@@ -77,4 +79,18 @@ it('shows one verified closed-day occurrence per person and never publishes an e
     evidence,
   });
   expect((await service.previousWeek('b')).entries).toEqual([]);
+  expect((await service.forWeek('a', '2026-10-26')).entries).toHaveLength(1);
+  await expect(service.forWeek('a', '2026-11-02')).rejects.toThrow();
+  await new WordleNotificationService(testDb.db, () => now).configure('a', {
+    channelId: null,
+    collective: false,
+    weekly: true,
+  });
+  expect(await service.queuePreviousWeek()).toBe(1);
+  expect(await service.queuePreviousWeek()).toBe(0);
+  expect(
+    (await testDb.db.select().from(wordleNotifications)).filter(
+      (item) => item.event_key === 'gallery:2026-10-26',
+    ),
+  ).toHaveLength(1);
 });
