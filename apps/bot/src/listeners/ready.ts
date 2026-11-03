@@ -4,6 +4,7 @@ import {
   buildDailyLeaderboardAttachment,
   sendTermoStatusBroadcast,
 } from '@marquinhos/commands/games/termoLeaderboardImage';
+import { deliverWordleNotification } from '@marquinhos/commands/games/termoNotifications';
 import { buildTermoWinActionRow } from '@marquinhos/commands/games/termoResponse';
 import { env } from '@marquinhos/config/environment';
 import { GuildConfig } from '@marquinhos/config/guild';
@@ -21,8 +22,10 @@ import { resourcePath } from '@marquinhos/utils/resources';
 import { Listener } from '@sapphire/framework';
 import {
   AttachmentBuilder,
+  ChannelType,
   Client,
   Events,
+  PermissionFlagsBits,
   TextChannel,
   ThreadAutoArchiveDuration,
 } from 'discord.js';
@@ -43,8 +46,53 @@ export class ReadyListener extends Listener<typeof Events.ClientReady> {
     startTermoScheduler(client);
     startTermoStatsBroadcast(client);
     startTermoWinAnnouncer(client);
+    startTermoCommunityNotifications(client);
     startWednesdayImageScheduler(client);
   }
+}
+
+function startTermoCommunityNotifications(client: Client<true>): void {
+  let running = false;
+  const poll = async () => {
+    if (running) return;
+    running = true;
+    try {
+      for (const [guildId, guild] of client.guilds.cache) {
+        try {
+          for (let i = 0; i < 5; i++) {
+            const sent = await deliverWordleNotification(
+              guildId,
+              api,
+              async (channelId) => {
+                const channel = await guild.channels.fetch(channelId);
+                if (
+                  !channel ||
+                  channel.type !== ChannelType.GuildText ||
+                  !channel
+                    .permissionsFor(client.user)
+                    ?.has([
+                      PermissionFlagsBits.ViewChannel,
+                      PermissionFlagsBits.SendMessages,
+                    ])
+                )
+                  return null;
+                return channel;
+              },
+            );
+            if (!sent) break;
+          }
+        } catch (error) {
+          logger.warn('Terminhos: community notification failed', error);
+        }
+      }
+    } finally {
+      running = false;
+    }
+  };
+  void poll();
+  setInterval(() => {
+    void poll();
+  }, 60_000);
 }
 
 function startBichoGame(client: Client<true>) {

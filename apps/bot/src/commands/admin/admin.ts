@@ -22,6 +22,7 @@ import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import {
   AttachmentBuilder,
+  ChannelType,
   EmbedBuilder,
   MessageFlags,
   PermissionFlagsBits,
@@ -132,6 +133,31 @@ export class AdminCommand extends MarquinhosCommand {
                     .setDescription('Último dia, AAAA-MM-DD (Recife)')
                     .setRequired(true),
                 ),
+            )
+            .addSubcommand((sub) =>
+              sub
+                .setName('anuncios')
+                .setDescription('Configura anúncios comunitários do Terminhos')
+                .addBooleanOption((opt) =>
+                  opt
+                    .setName('coletivo')
+                    .setDescription('Anunciar páginas e metas concluídas')
+                    .setRequired(true),
+                )
+                .addBooleanOption((opt) =>
+                  opt
+                    .setName('resumo')
+                    .setDescription('Ativar resumo semanal')
+                    .setRequired(true),
+                )
+                .addChannelOption((opt) =>
+                  opt
+                    .setName('canal')
+                    .setDescription(
+                      'Canal de anúncios; omita para manter pendentes',
+                    )
+                    .addChannelTypes(ChannelType.GuildText),
+                ),
             ),
         )
         .addSubcommandGroup((group) =>
@@ -161,6 +187,38 @@ export class AdminCommand extends MarquinhosCommand {
     }
 
     if (subgroup === 'termo') {
+      if (sub === 'anuncios') {
+        if (
+          !interaction.guildId ||
+          !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
+        ) {
+          await interaction.reply({
+            content: '❌ Somente administradores podem configurar anúncios.',
+            flags: MessageFlags.Ephemeral,
+          });
+          return;
+        }
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+        try {
+          const channel = interaction.options.getChannel('canal');
+          await api.setWordleNotificationConfig(interaction.guildId, {
+            channelId: channel?.id ?? null,
+            collective: interaction.options.getBoolean('coletivo', true),
+            weekly: interaction.options.getBoolean('resumo', true),
+          });
+          await interaction.editReply({
+            content: channel
+              ? `✅ Preferências salvas para <#${channel.id}>.`
+              : '✅ Preferências salvas. Os anúncios ficarão pendentes até um canal ser configurado.',
+          });
+        } catch (error) {
+          logger.warn('admin termo anuncios: configuration failed', error);
+          await interaction.editReply({
+            content: '❌ Não foi possível salvar as preferências.',
+          });
+        }
+        return;
+      }
       if (sub === 'meta') {
         if (
           !interaction.guildId ||
