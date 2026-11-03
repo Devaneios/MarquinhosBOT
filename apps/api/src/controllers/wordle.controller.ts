@@ -1,11 +1,14 @@
 import * as contract from '@marquinhos/contracts/http/routes/wordle';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
+import { db } from '@marquinhos/database/client';
 import type { Request, Response } from 'express';
 import type { DiscordUser } from 'services/discord';
 import { WordleService } from 'services/wordle';
+import { WordleShowcaseService } from 'services/wordle/WordleShowcaseService';
 import { parseRequest, sendContract } from 'utils/contract';
 
 const service = new WordleService();
+const showcase = new WordleShowcaseService(db);
 
 export interface WordleUserConfigStore {
   get(userId: string): Promise<WordleUserConfig>;
@@ -220,7 +223,17 @@ export default class WordleController {
         offset,
       );
       const groupStreak = await service.getGroupStreak(guildId);
-      sendContract(res, contract.getLeaderboard, { data, groupStreak });
+      const icons = await showcase.getIcons(data.map((entry) => entry.userId));
+      const entries = data.map((entry) => ({
+        ...entry,
+        ...(icons.has(entry.userId)
+          ? { showcase: icons.get(entry.userId) }
+          : {}),
+      })) as typeof data;
+      sendContract(res, contract.getLeaderboard, {
+        data: entries,
+        groupStreak,
+      });
     } catch (err) {
       console.error('WordleController.getLeaderboard error:', err);
       res.status(500).json({ message: 'Erro interno.' });

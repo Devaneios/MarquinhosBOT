@@ -82,6 +82,7 @@ export const dailyLeaderboardEntrySchema = z.object({
   userId: z.string(),
   attempts: z.number(),
   solved: z.boolean(),
+  showcase: z.array(z.string()).max(3).optional(),
 });
 export type DailyLeaderboardEntry = z.output<
   typeof dailyLeaderboardEntrySchema
@@ -91,6 +92,7 @@ export const rankedLeaderboardEntrySchema = z.object({
   userId: z.string(),
   totalDays: z.number(),
   avgScore: z.number(),
+  showcase: z.array(z.string()).max(3).optional(),
 });
 export type RankedLeaderboardEntry = z.output<
   typeof rankedLeaderboardEntrySchema

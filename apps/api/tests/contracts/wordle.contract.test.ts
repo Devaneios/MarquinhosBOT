@@ -1,5 +1,10 @@
 import { db } from '@marquinhos/database/client';
-import { wordleCommunityDailyPresence } from '@marquinhos/database/schema';
+import {
+  achievements,
+  wordleCommunityDailyPresence,
+  wordleGlobalAchievements,
+  wordleShowcase,
+} from '@marquinhos/database/schema';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
@@ -119,6 +124,29 @@ describe('wordle contracts', () => {
     });
 
     expect(earlier.data).toEqual([]);
+  });
+
+  it('includes the selected achievement icons in leaderboard order', async () => {
+    const id = `showcase-${randomUUID()}`;
+    await db.insert(achievements).values({
+      id,
+      name: 'Test',
+      description: 'Test',
+      category: 'wordle',
+      rarity: 'common',
+      icon: '⭐',
+    });
+    await db
+      .insert(wordleGlobalAchievements)
+      .values({ user_id: 'u1', achievement_id: id, unlocked_at: 1 });
+    await db
+      .insert(wordleShowcase)
+      .values({ user_id: 'u1', achievement_id: id, slot: 1, updated_at: 1 });
+    const result = await callContract(server.http, wordle.getLeaderboard, {
+      params: { guildId },
+      query: { period: 'daily' },
+    });
+    expect(result.data[0]?.showcase).toEqual(['⭐']);
   });
 
   it('stores and reads the channel config', async () => {

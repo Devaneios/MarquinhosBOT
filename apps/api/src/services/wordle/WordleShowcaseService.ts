@@ -1,5 +1,6 @@
 import type { Db } from '@marquinhos/database/client';
 import {
+  achievements,
   wordleGlobalAchievements,
   wordleShowcase,
 } from '@marquinhos/database/schema';
@@ -17,6 +18,23 @@ export class WordleShowcaseService {
       .where(eq(wordleShowcase.user_id, userId))
       .orderBy(asc(wordleShowcase.slot));
     return rows.map((row) => row.id);
+  }
+
+  async getIcons(userIds: string[]): Promise<Map<string, string[]>> {
+    const icons = new Map<string, string[]>();
+    if (!userIds.length) return icons;
+    const rows = await this.database
+      .select({ userId: wordleShowcase.user_id, icon: achievements.icon })
+      .from(wordleShowcase)
+      .innerJoin(
+        achievements,
+        eq(achievements.id, wordleShowcase.achievement_id),
+      )
+      .where(inArray(wordleShowcase.user_id, userIds))
+      .orderBy(asc(wordleShowcase.user_id), asc(wordleShowcase.slot));
+    for (const row of rows)
+      icons.set(row.userId, [...(icons.get(row.userId) ?? []), row.icon]);
+    return icons;
   }
 
   async replace(userId: string, ids: string[]): Promise<void> {

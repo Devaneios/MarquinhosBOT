@@ -34,6 +34,14 @@ afterAll(async () => {
 });
 
 describe('global Wordle showcase', () => {
+  it('returns ordered public icons only for requested players', async () => {
+    await service.replace('player', ['two', 'one']);
+    expect(await service.getIcons(['player', 'another-player'])).toEqual(
+      new Map([['player', ['two', 'one']]]),
+    );
+    expect(await service.getIcons([])).toEqual(new Map());
+    await service.replace('player', []);
+  });
   it('stores ordered owned achievements and supports replacement and clearing', async () => {
     expect(await service.get('player')).toEqual([]);
     await service.replace('player', ['two', 'one', 'three']);
