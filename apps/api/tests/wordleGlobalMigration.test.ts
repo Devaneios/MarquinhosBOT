@@ -152,6 +152,27 @@ describe('global Wordle migration', () => {
     expect(await testDb.db.select().from(wordleGlobalSessions)).toHaveLength(1);
   });
 
+  it('gives a draft-only player presence in the draft community', async () => {
+    await seed();
+    await testDb.db.insert(wordleDrafts).values({
+      user_id: 'drafter',
+      guild_id: 'b',
+      word_date: '2026-01-01',
+      row_index: 0,
+      cells: ['t', 'e', 'r', 'm', 'o'],
+      active_index: 4,
+      revision: 1,
+      updated_at: 150,
+    });
+    await migrateGlobalWordle(testDb.db);
+    expect(
+      (await testDb.db.select().from(wordleCommunityDailyPresence)).filter(
+        (row) => row.user_id === 'drafter',
+      ),
+    ).toMatchObject([
+      { guild_id: 'b', word_date: '2026-01-01', first_seen_at: 150 },
+    ]);
+  });
   it('does not migrate conflicting drafts or award records partially', async () => {
     await seed();
     await testDb.db.insert(wordleDrafts).values([

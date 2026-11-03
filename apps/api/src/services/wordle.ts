@@ -1022,8 +1022,10 @@ export class WordleService {
   ): Promise<WordleDraftWriteResult> {
     if (draft.date !== getRecifeDate()) return { status: 'closed' };
     await this.getDailyWord(guildId, draft.date);
-    if (await this.isGlobalActive())
+    if (await this.isGlobalActive()) {
+      await this.recordParticipation(userId, guildId);
       return new WordleGlobalDraftService(db).write(userId, draft);
+    }
     return new WordleDraftService().write(userId, guildId, draft);
   }
 

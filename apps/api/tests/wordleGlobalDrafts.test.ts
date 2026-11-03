@@ -53,6 +53,32 @@ describe('global drafts', () => {
     );
     expect(session).toBeUndefined();
   });
+  it('settles a winning draft whose player has no community presence', async () => {
+    await new WordleGlobalDraftService(testDb.db, () => now).write(
+      'no-presence',
+      { ...draft, cells: ['t', 'e', 'r', 'm', 'o'], activeIndex: 4 },
+    );
+    let awards = 0;
+    const finalizer = new WordleGlobalDraftService(
+      testDb.db,
+      () => now + 86400000,
+      async () => {
+        awards++;
+      },
+    );
+    await finalizer.finalizePlayerBefore('no-presence', '2026-11-02');
+    const [row] = await testDb.db
+      .select()
+      .from(wordleGlobalDrafts)
+      .where(eq(wordleGlobalDrafts.user_id, 'no-presence'));
+    expect(row?.finalized_at).not.toBeNull();
+    expect(row?.award_reconciled_at).not.toBeNull();
+    expect(awards).toBe(0);
+    const session = (await testDb.db.select().from(wordleGlobalSessions)).find(
+      (session) => session.user_id === 'no-presence',
+    );
+    expect(session).toMatchObject({ solved: true, solved_from_draft: true });
+  });
   it('does not turn a draft into a win after an accepted guess', async () => {
     const writer = new WordleGlobalDraftService(testDb.db, () => now);
     await testDb.db.insert(wordleGlobalSessions).values({

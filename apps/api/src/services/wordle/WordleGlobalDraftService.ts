@@ -14,6 +14,7 @@ import {
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 import { and, asc, eq, isNull, lt, lte, or } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
+import { logger } from 'utils/logger';
 import { WordleGlobalAchievementService } from './WordleGlobalAchievementService';
 import { lockGlobalWordlePlayer } from './gameplayLock';
 import { getWordleDayEndEpoch, getWordleTimeZone } from './wordleDate';
@@ -250,7 +251,22 @@ export class WordleGlobalDraftService {
           asc(wordleCommunityDailyPresence.guild_id),
         )
         .limit(1);
-      return { guildId: context?.guildId ?? null };
+      if (!context) {
+        // Without a community there is nowhere to grant XP; achievements
+        // still unlock from the full history on the player's next guess.
+        await tx
+          .update(wordleGlobalDrafts)
+          .set({ award_reconciled_at: finalizedAt })
+          .where(
+            and(
+              eq(wordleGlobalDrafts.user_id, userId),
+              eq(wordleGlobalDrafts.word_date, date),
+            ),
+          );
+        logger.warn('wordle.draft.award_without_context', { userId, date });
+        return { guildId: null };
+      }
+      return { guildId: context.guildId };
     });
     if (!outcome.guildId) return;
     try {

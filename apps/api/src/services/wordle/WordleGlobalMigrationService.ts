@@ -177,6 +177,49 @@ export async function migrateGlobalWordle(
           created_at: source.created_at,
         });
       }
+      const recordPresence = async (
+        guildId: string,
+        userId: string,
+        wordDate: string,
+        seenAt: number,
+      ) => {
+        await tx
+          .insert(wordleCommunityParticipation)
+          .values({
+            guild_id: guildId,
+            user_id: userId,
+            first_seen_at: seenAt,
+            last_seen_at: seenAt,
+          })
+          .onConflictDoUpdate({
+            target: [
+              wordleCommunityParticipation.guild_id,
+              wordleCommunityParticipation.user_id,
+            ],
+            set: {
+              first_seen_at: sql`least(${wordleCommunityParticipation.first_seen_at}, ${seenAt})`,
+              last_seen_at: sql`greatest(${wordleCommunityParticipation.last_seen_at}, ${seenAt})`,
+            },
+          });
+        await tx
+          .insert(wordleCommunityDailyPresence)
+          .values({
+            guild_id: guildId,
+            user_id: userId,
+            word_date: wordDate,
+            first_seen_at: seenAt,
+          })
+          .onConflictDoUpdate({
+            target: [
+              wordleCommunityDailyPresence.guild_id,
+              wordleCommunityDailyPresence.user_id,
+              wordleCommunityDailyPresence.word_date,
+            ],
+            set: {
+              first_seen_at: sql`least(${wordleCommunityDailyPresence.first_seen_at}, ${seenAt})`,
+            },
+          });
+      };
       const globalIdBySource = new Map<string, string>();
       for (const group of preview.sessions) {
         const source = byId.get(group.canonicalId)!;
@@ -200,46 +243,23 @@ export async function migrateGlobalWordle(
             guild_id: origin.guild_id,
             word_date: origin.word_date,
           });
-          await tx
-            .insert(wordleCommunityParticipation)
-            .values({
-              guild_id: origin.guild_id,
-              user_id: origin.user_id,
-              first_seen_at: origin.created_at,
-              last_seen_at: origin.created_at,
-            })
-            .onConflictDoUpdate({
-              target: [
-                wordleCommunityParticipation.guild_id,
-                wordleCommunityParticipation.user_id,
-              ],
-              set: {
-                first_seen_at: sql`least(${wordleCommunityParticipation.first_seen_at}, ${origin.created_at})`,
-                last_seen_at: sql`greatest(${wordleCommunityParticipation.last_seen_at}, ${origin.created_at})`,
-              },
-            });
-          await tx
-            .insert(wordleCommunityDailyPresence)
-            .values({
-              guild_id: origin.guild_id,
-              user_id: origin.user_id,
-              word_date: origin.word_date,
-              first_seen_at: origin.created_at,
-            })
-            .onConflictDoUpdate({
-              target: [
-                wordleCommunityDailyPresence.guild_id,
-                wordleCommunityDailyPresence.user_id,
-                wordleCommunityDailyPresence.word_date,
-              ],
-              set: {
-                first_seen_at: sql`least(${wordleCommunityDailyPresence.first_seen_at}, ${origin.created_at})`,
-              },
-            });
+          await recordPresence(
+            origin.guild_id,
+            origin.user_id,
+            origin.word_date,
+            origin.created_at,
+          );
         }
       }
       for (const group of draftGroups.values()) {
         const source = group[0]!;
+        for (const draft of group)
+          await recordPresence(
+            draft.guild_id,
+            draft.user_id,
+            draft.word_date,
+            draft.updated_at,
+          );
         await tx.insert(wordleGlobalDrafts).values({
           user_id: source.user_id,
           word_date: source.word_date,
