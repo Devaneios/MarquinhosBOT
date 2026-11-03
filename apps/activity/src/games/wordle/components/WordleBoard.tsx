@@ -19,6 +19,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getWordleAlbum } from '../api/wordleAlbumApi';
+import { equipWordleReward, getWordleRewards } from '../api/wordleRewardsApi';
 import {
   getWordleShowcase,
   updateWordleShowcase,
@@ -63,6 +64,15 @@ export function WordleBoard({
   const loadAlbum = useCallback(
     () => getWordleAlbum(accessToken!, guildId!),
     [accessToken, guildId],
+  );
+  const loadRewards = useCallback(
+    () => getWordleRewards(accessToken!),
+    [accessToken],
+  );
+  const equipReward = useCallback(
+    (kind: 'title' | 'frame', id: string | null) =>
+      equipWordleReward(accessToken!, kind, id),
+    [accessToken],
   );
   const [subScreen, setSubScreen] = useState<
     'playing' | 'settings' | 'achievements' | 'album'
@@ -172,6 +182,9 @@ export function WordleBoard({
         stats={stats}
         showcase={
           accessToken ? { load: loadShowcase, save: saveShowcase } : undefined
+        }
+        rewards={
+          accessToken ? { load: loadRewards, equip: equipReward } : undefined
         }
         onBack={() => transitionTo('nav-back', () => setSubScreen('playing'))}
       />

@@ -21,6 +21,8 @@ export type TermoAchievementsCardInput = {
   total: number;
   families: TermoAchievementsFamilyRow[];
   showcase?: { icon: string; name: string }[];
+  title?: string;
+  frame?: boolean;
 };
 
 const RETRO_FONT = 'Press Start 2P';
@@ -54,6 +56,15 @@ function header(input: TermoAchievementsCardInput, theme: Theme): CanvasNode {
             fontSize: theme.fontSizes.xl,
             color: theme.colors.textPrimary,
           }),
+          ...(input.title
+            ? [
+                Text(input.title, {
+                  fontFamily: theme.fontFamilies.body,
+                  fontSize: theme.fontSizes.sm,
+                  color: theme.colors.accent,
+                }),
+              ]
+            : []),
         ],
       }),
       Text(`${input.unlocked}/${input.total}`, {
@@ -241,7 +252,9 @@ export function termoAchievementsCard(
       distribution(input.stats, theme),
       families(input.families, theme),
     ],
-    theme,
+    input.frame
+      ? { ...theme, colors: { ...theme.colors, border: theme.colors.accent } }
+      : theme,
   );
 }
 

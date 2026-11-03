@@ -100,6 +100,38 @@ describe('buildTermoAchievementsReply', () => {
     ).toBe(false);
   });
 
+  it('shows equipped cosmetics on the profile card', async () => {
+    const target = {
+      id: 'user-1',
+      displayName: 'Ana',
+      avatarUrl: 'https://cdn/ana.png',
+    };
+    const plain = await buildTermoAchievementsReply(
+      { user: null },
+      'guild-1',
+      target,
+      { getWordleAchievements: async () => ({ data: overview }) } as never,
+    );
+    const decorated = await buildTermoAchievementsReply(
+      { user: null },
+      'guild-1',
+      target,
+      {
+        getWordleAchievements: async () => ({
+          data: {
+            ...overview,
+            cosmetics: { title: 'title_alphabetist', frame: 'frame_century' },
+          },
+        }),
+      } as never,
+    );
+    expect(
+      (decorated.files[0]!.attachment as Buffer).equals(
+        plain.files[0]!.attachment as Buffer,
+      ),
+    ).toBe(false);
+  });
+
   it('selects a drawing by name and renders its preview instead of the overview', async () => {
     const reply = await buildTermoAchievementsReply(
       { user: null },

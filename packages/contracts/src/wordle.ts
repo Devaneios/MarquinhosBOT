@@ -131,6 +131,9 @@ export const wordleAchievementsOverviewSchema = z.object({
   achievements: z.array(wordleAchievementStatusSchema),
   stats: wordlePlayerStatsSchema,
   showcase: z.array(z.string()).max(3).optional(),
+  cosmetics: z
+    .object({ title: z.string().nullable(), frame: z.string().nullable() })
+    .optional(),
 });
 export type WordleAchievementsOverview = z.infer<
   typeof wordleAchievementsOverviewSchema

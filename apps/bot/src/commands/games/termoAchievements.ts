@@ -1,4 +1,5 @@
 import type { WordleAchievementsOverview } from '@marquinhos/contracts/wordle';
+import { WORDLE_PERSONAL_REWARDS } from '@marquinhos/domain/games/wordle/community/rewards';
 import {
   buildTermoAchievementDetailEmbed,
   buildTermoAchievementsEmbed,
@@ -102,6 +103,11 @@ export async function buildTermoAchievementsReply(
     unlocked: summary.unlocked,
     total: summary.total,
     families: summary.families,
+    title: WORDLE_PERSONAL_REWARDS.find(
+      (reward) =>
+        reward.kind === 'title' && reward.id === overview.cosmetics?.title,
+    )?.name,
+    frame: overview.cosmetics?.frame === 'frame_century',
     showcase: (overview.showcase ?? []).flatMap((id) => {
       const item = overview.achievements.find(
         (achievement) =>

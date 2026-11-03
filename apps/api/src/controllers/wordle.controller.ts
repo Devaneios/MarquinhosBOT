@@ -4,11 +4,13 @@ import { db } from '@marquinhos/database/client';
 import type { Request, Response } from 'express';
 import type { DiscordUser } from 'services/discord';
 import { WordleService } from 'services/wordle';
+import { WordleRewardsService } from 'services/wordle/WordleRewardsService';
 import { WordleShowcaseService } from 'services/wordle/WordleShowcaseService';
 import { parseRequest, sendContract } from 'utils/contract';
 
 const service = new WordleService();
 const showcase = new WordleShowcaseService(db);
+const rewards = new WordleRewardsService(db);
 
 export interface WordleUserConfigStore {
   get(userId: string): Promise<WordleUserConfig>;
@@ -55,8 +57,14 @@ export default class WordleController {
         guildId,
         '',
       );
+      await rewards.reconcile(userId);
+      const cosmetics = await rewards.get(userId);
       sendContract(res, contract.getAchievements, {
-        data: { ...overview, showcase: await showcase.get(userId) },
+        data: {
+          ...overview,
+          showcase: await showcase.get(userId),
+          cosmetics: { title: cosmetics.title, frame: cosmetics.frame },
+        },
       });
     } catch (error) {
       console.error('WordleController.getAchievements error:', error);

@@ -6,7 +6,9 @@ import type {
 import { WORDLE_ACHIEVEMENT_FAMILIES } from '@marquinhos/domain/games/wordle/achievements/families';
 import { useEffect, useMemo, useState, ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { WordleRewardsState } from '../api/wordleRewardsApi';
 import { WordlePatternDisplay } from './WordlePatternDisplay';
+import { WordleRewardsEditor } from './WordleRewardsEditor';
 import { WordleShowcaseEditor } from './WordleShowcaseEditor';
 
 const RARITY_CLASSES: Record<WordleAchievementStatus['rarity'], string> = {
@@ -52,6 +54,7 @@ export function WordleAchievementsScreen({
   stats = null,
   onBack,
   showcase,
+  rewards,
 }: {
   achievements: WordleAchievementStatus[];
   stats?: WordlePlayerStats | null;
@@ -59,6 +62,13 @@ export function WordleAchievementsScreen({
   showcase?: {
     load: () => Promise<string[]>;
     save: (ids: string[]) => Promise<string[]>;
+  };
+  rewards?: {
+    load: () => Promise<WordleRewardsState>;
+    equip: (
+      kind: 'title' | 'frame',
+      id: string | null,
+    ) => Promise<WordleRewardsState>;
   };
 }) {
   const { t } = useTranslation(['wordle', 'common']);
@@ -179,6 +189,7 @@ export function WordleAchievementsScreen({
           {showcase && (
             <WordleShowcaseEditor achievements={achievements} {...showcase} />
           )}
+          {rewards && <WordleRewardsEditor {...rewards} />}
           <MenuPanel className="max-w-2xl p-4 sm:p-5">
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
