@@ -12,6 +12,7 @@ export type DailyEntry = {
   attempts: number;
   solved: boolean;
   avatar?: Buffer;
+  showcase?: string[];
 };
 
 export type RankedEntry = {
@@ -20,6 +21,7 @@ export type RankedEntry = {
   avgScore: number;
   totalDays: number;
   avatar?: Buffer;
+  showcase?: string[];
 };
 
 type Entry = DailyEntry | RankedEntry;
@@ -344,8 +346,17 @@ function listRow(entry: Entry, theme: Theme): CanvasNode {
       Box({
         flexGrow: 1,
         marginLeft: theme.spacing.xs,
-        children: [nameText(entry.displayName, muted, theme)],
+        children: [nameText(truncateName(entry.displayName, 18), muted, theme)],
       }),
+      ...(entry.showcase?.length
+        ? [
+            Text(entry.showcase.join(' '), {
+              fontFamily: theme.fontFamilies.body,
+              fontSize: theme.fontSizes.md,
+              color: theme.colors.textPrimary,
+            }),
+          ]
+        : []),
       Row({
         gap: theme.spacing.sm,
         alignItems: Style.Align.Center,
@@ -659,6 +670,7 @@ export function termoLeaderboardCard(
   let listEntries: Entry[] = entries;
   if (showPodium) {
     ({ groups: podiumGroups, rest: listEntries } = splitPodium(entries));
+    if (entries.some((entry) => entry.showcase?.length)) listEntries = entries;
   }
 
   const headerChildren: CanvasNode[] = [retroHeader(period, theme)];
@@ -719,6 +731,15 @@ export function termoLeaderboardCard(
   }
 
   cardContent.push(retroDivider());
+  if (entries.some((entry) => entry.showcase?.length)) {
+    cardContent.push(
+      Text('Veja detalhes em /termo-conquistas', {
+        fontFamily: theme.fontFamilies.body,
+        fontSize: theme.fontSizes.sm,
+        color: theme.colors.textMuted,
+      }),
+    );
+  }
   cardContent.push(footer(theme));
 
   return Column({

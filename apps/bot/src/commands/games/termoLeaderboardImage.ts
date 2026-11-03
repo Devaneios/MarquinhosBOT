@@ -48,6 +48,7 @@ export async function buildDailyLeaderboardAttachment(
         displayName: member.displayName,
         attempts: e.attempts,
         solved: e.solved,
+        showcase: e.showcase,
         avatar,
       };
     }),

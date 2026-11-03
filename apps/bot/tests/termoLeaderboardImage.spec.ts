@@ -135,6 +135,27 @@ describe('buildDailyLeaderboardAttachment', () => {
     expect(result!.buffer.length).toBeGreaterThan(0);
     getLeaderboardSpy.mockRestore();
   });
+
+  it('renders selected icons for ranked community members', async () => {
+    const spy = spyOn(MarquinhosApiService.prototype, 'getWordleLeaderboard')
+      .mockResolvedValueOnce({
+        data: [{ userId: 'u1', attempts: 3, solved: true }],
+        groupStreak: 0,
+      } as any)
+      .mockResolvedValueOnce({
+        data: [
+          { userId: 'u1', attempts: 3, solved: true, showcase: ['🏆', '⭐'] },
+        ],
+        groupStreak: 0,
+      } as any);
+    const client = fakeClient('guild-1', fakeGuild(['u1']));
+    const plain = await buildDailyLeaderboardAttachment(client, 'guild-1');
+    const featured = await buildDailyLeaderboardAttachment(client, 'guild-1');
+    expect(plain).not.toBeNull();
+    expect(featured).not.toBeNull();
+    expect(featured!.buffer.equals(plain!.buffer)).toBe(false);
+    spy.mockRestore();
+  });
 });
 
 describe('sendTermoStatusBroadcast', () => {

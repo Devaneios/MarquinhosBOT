@@ -323,6 +323,7 @@ export class AdminCommand extends MarquinhosCommand {
                   displayName: member.displayName,
                   attempts: e.attempts,
                   solved: e.solved,
+                  showcase: e.showcase,
                   avatar,
                 };
               }),
@@ -352,6 +353,7 @@ export class AdminCommand extends MarquinhosCommand {
                   displayName: member.displayName,
                   avgScore: e.avgScore,
                   totalDays: e.totalDays,
+                  showcase: e.showcase,
                   avatar,
                 };
               }),
