@@ -1,18 +1,21 @@
 import { db } from '@marquinhos/database/client';
 import WordleController from 'controllers/wordle.controller';
 import { WordleAlbumController } from 'controllers/wordleAlbum.controller';
+import { WordleRewardsController } from 'controllers/wordleRewards.controller';
 import { WordleShowcaseController } from 'controllers/wordleShowcase.controller';
 import express from 'express';
 import { checkToken } from 'middlewares/botAuth';
 import { verifyActivityDiscordToken } from 'middlewares/userAuth';
 import { DiscordService } from 'services/discord';
 import { WordleAlbumService } from 'services/wordle/WordleAlbumService';
+import { WordleRewardsService } from 'services/wordle/WordleRewardsService';
 import { WordleShowcaseService } from 'services/wordle/WordleShowcaseService';
 import { WordleUserConfigService } from 'services/wordleUserConfig';
 
 const router = express.Router();
 const wordle = new WordleController(new WordleUserConfigService(db));
 const showcase = new WordleShowcaseController(new WordleShowcaseService(db));
+const rewards = new WordleRewardsController(new WordleRewardsService(db));
 const album = new WordleAlbumController(
   new WordleAlbumService(db),
   new DiscordService().isGuildMember,
@@ -24,6 +27,12 @@ router.get('/album/:guildId', verifyActivityDiscordToken, (req, res) =>
 
 router.get('/showcase', verifyActivityDiscordToken, (req, res) =>
   showcase.get(req, res),
+);
+router.get('/rewards', verifyActivityDiscordToken, (req, res) =>
+  rewards.get(req, res),
+);
+router.put('/rewards', verifyActivityDiscordToken, (req, res) =>
+  rewards.update(req, res),
 );
 router.put('/showcase', verifyActivityDiscordToken, (req, res) =>
   showcase.update(req, res),

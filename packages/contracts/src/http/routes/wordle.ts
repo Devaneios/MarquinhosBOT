@@ -129,6 +129,28 @@ export const getShowcase = defineContract({
   response: envelope(z.array(requiredString).max(3)),
 });
 
+const rewardsStateSchema = z.object({
+  owned: z.array(z.string()),
+  title: z.string().nullable(),
+  frame: z.string().nullable(),
+});
+export const getRewards = defineContract({
+  method: 'GET',
+  path: '/api/wordle/rewards',
+  response: envelope(rewardsStateSchema),
+});
+export const updateReward = defineContract({
+  method: 'PUT',
+  path: '/api/wordle/rewards',
+  body: z
+    .object({
+      kind: z.enum(['title', 'frame']),
+      rewardId: requiredString.nullable(),
+    })
+    .strict(),
+  response: envelope(rewardsStateSchema),
+});
+
 export const getAlbum = defineContract({
   method: 'GET',
   path: '/api/wordle/album/:guildId',
