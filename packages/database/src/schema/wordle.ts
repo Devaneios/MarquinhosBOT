@@ -583,3 +583,48 @@ export const wordleGoalDecorations = pgTable('wordle_goal_decorations', {
   guild_id: text('guild_id').notNull(),
   granted_at: bigint('granted_at', { mode: 'number' }).notNull(),
 });
+
+export const wordleNotificationConfig = pgTable('wordle_notification_config', {
+  guild_id: text('guild_id').primaryKey(),
+  channel_id: text('channel_id'),
+  collective: boolean('collective').notNull().default(false),
+  weekly: boolean('weekly').notNull().default(false),
+});
+
+export const wordleNotifications = pgTable(
+  'wordle_notifications',
+  {
+    id: text('id').primaryKey(),
+    guild_id: text('guild_id').notNull(),
+    event_type: text('event_type')
+      .$type<'page' | 'goal' | 'weekly'>()
+      .notNull(),
+    event_key: text('event_key').notNull(),
+    payload: jsonb('payload').$type<Record<string, string>>().notNull(),
+    eligible_at: bigint('eligible_at', { mode: 'number' }).notNull(),
+    status: text('status')
+      .$type<'pending' | 'sending' | 'delivered' | 'uncertain'>()
+      .notNull(),
+    lease_id: text('lease_id'),
+    lease_started_at: bigint('lease_started_at', { mode: 'number' }),
+    channel_id: text('channel_id'),
+    message_id: text('message_id'),
+    created_at: bigint('created_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    unique().on(t.guild_id, t.event_key),
+    check(
+      'wordle_notification_status_check',
+      sql`${t.status} IN ('pending', 'sending', 'delivered', 'uncertain')`,
+    ),
+    check(
+      'wordle_notification_type_check',
+      sql`${t.event_type} IN ('page', 'goal', 'weekly')`,
+    ),
+    index('wordle_notifications_pending_idx').on(
+      t.guild_id,
+      t.status,
+      t.eligible_at,
+    ),
+  ],
+);
