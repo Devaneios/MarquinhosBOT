@@ -26,6 +26,7 @@ import { z } from 'zod';
 import { LevelingService } from '../gamification/LevelingService';
 import { WordleAlbumService } from './WordleAlbumService';
 import { getWordleTimeZone } from './wordleDate';
+import { visibleWordleEvidence } from './wordleEvidenceVisibility';
 
 function parseGuesses(raw: string) {
   try {
@@ -140,10 +141,12 @@ export class WordleGlobalAchievementService {
         const drawing =
           definition.kind === 'drawing' ? definition.drawing : undefined;
         const witness = drawing ? evidence.get(drawing.patternId) : undefined;
-        const visibleWitness =
-          witness && (viewerId === userId || witness.date < options.today)
-            ? witness
-            : null;
+        const visibleWitness = visibleWordleEvidence(
+          witness,
+          userId,
+          viewerId,
+          options.today,
+        );
         return {
           id: definition.id,
           family: definition.family,

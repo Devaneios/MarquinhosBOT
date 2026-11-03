@@ -4,6 +4,8 @@ import { db } from '@marquinhos/database/client';
 import type { Request, Response } from 'express';
 import type { DiscordUser } from 'services/discord';
 import { GlobalWordleCannotForce, WordleService } from 'services/wordle';
+import { getRecifeDate } from 'services/wordle/wordleDate';
+import { visibleWordleEvidence } from 'services/wordle/wordleEvidenceVisibility';
 import { WordleRewardsService } from 'services/wordle/WordleRewardsService';
 import { WordleShowcaseService } from 'services/wordle/WordleShowcaseService';
 import { parseRequest, sendContract } from 'utils/contract';
@@ -59,9 +61,23 @@ export default class WordleController {
       );
       await rewards.reconcile(userId);
       const cosmetics = await rewards.get(userId);
+      const publicAchievements = overview.achievements.map((achievement) =>
+        achievement.matchEvidence === undefined
+          ? achievement
+          : {
+              ...achievement,
+              matchEvidence: visibleWordleEvidence(
+                achievement.matchEvidence,
+                userId,
+                '',
+                getRecifeDate(),
+              ),
+            },
+      );
       sendContract(res, contract.getAchievements, {
         data: {
           ...overview,
+          achievements: publicAchievements,
           showcase: await showcase.get(userId),
           cosmetics: { title: cosmetics.title, frame: cosmetics.frame },
         },
