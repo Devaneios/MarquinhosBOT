@@ -9,6 +9,7 @@ import {
   achievements,
   wordleCommunityFirstSolves,
   wordleCommunityParticipation,
+  wordleGlobalAcceptedGuesses,
   wordleGlobalAchievements,
   wordleGlobalDays,
   wordleGlobalDiscoveries,
@@ -206,6 +207,20 @@ export class WordleGlobalAchievementService {
       const sessionByDate = new Map(
         rows.map(({ session }) => [session.word_date, session.id]),
       );
+      const accepted = await tx
+        .select({
+          sessionId: wordleGlobalAcceptedGuesses.session_id,
+          attempt: wordleGlobalAcceptedGuesses.attempt,
+          acceptedAt: wordleGlobalAcceptedGuesses.accepted_at,
+        })
+        .from(wordleGlobalAcceptedGuesses)
+        .where(eq(wordleGlobalAcceptedGuesses.user_id, userId));
+      const acceptedTimes = new Map(
+        accepted.map((event) => [
+          JSON.stringify([event.sessionId, event.attempt]),
+          event.acceptedAt,
+        ]),
+      );
       for (const day of history) {
         const source = sessionByDate.get(day.date);
         if (!source) continue;
@@ -215,6 +230,9 @@ export class WordleGlobalAchievementService {
         ).discoverPatterns(new Set());
         for (const match of matches) {
           const evidence = wordlePatternEvidenceSchema.parse(match);
+          const row = Math.max(...evidence.cells.map(([index]) => index)) + 1;
+          const sourceAt =
+            acceptedTimes.get(JSON.stringify([source, row])) ?? null;
           await tx
             .insert(wordleGlobalOccurrences)
             .values({
@@ -223,6 +241,7 @@ export class WordleGlobalAchievementService {
               pattern_id: match.patternId,
               session_id: source,
               occurred_at: now,
+              source_at: sourceAt,
               evidence,
             })
             .onConflictDoNothing();

@@ -410,6 +410,7 @@ export const wordleGlobalOccurrences = pgTable(
     pattern_id: text('pattern_id').notNull(),
     session_id: text('session_id').notNull(),
     occurred_at: bigint('occurred_at', { mode: 'number' }).notNull(),
+    source_at: bigint('source_at', { mode: 'number' }),
     evidence: jsonb('evidence').$type<unknown>().notNull(),
   },
   (t) => [

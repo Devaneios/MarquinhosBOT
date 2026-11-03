@@ -5,6 +5,7 @@ import {
   wordleCommunityDailyPresence,
   wordleCommunityFirstSolves,
   wordleCommunityParticipation,
+  wordleGlobalAcceptedGuesses,
   wordleGlobalAchievements,
   wordleGlobalDays,
   wordleGlobalDiscoveries,
@@ -269,6 +270,13 @@ describe('global Wordle achievements', () => {
         first_seen_at: 1,
       },
     ]);
+    await testDb.db.insert(wordleGlobalAcceptedGuesses).values({
+      session_id: 'pattern-one',
+      user_id: 'pattern-player',
+      word_date: '2026-01-02',
+      attempt: 1,
+      accepted_at: 1000,
+    });
     const service = new WordleGlobalAchievementService(testDb.db, () =>
       Date.parse('2026-11-01T15:00:00Z'),
     );
@@ -292,6 +300,12 @@ describe('global Wordle achievements', () => {
       'pattern-one',
       'pattern-two',
     ]);
+    expect(
+      occurrences.find((row) => row.session_id === 'pattern-one')?.source_at,
+    ).toBe(1000);
+    expect(
+      occurrences.find((row) => row.session_id === 'pattern-two')?.source_at,
+    ).toBeNull();
     const projected = (
       await testDb.db.select().from(wordleAlbumContributions)
     ).filter(

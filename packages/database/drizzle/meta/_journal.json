@@ -183,6 +183,13 @@
       "when": 1793665000009,
       "tag": "0025_wordle_notification_digest",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793665000010,
+      "tag": "0026_wordle_occurrence_time",
+      "breakpoints": true
     }
   ]
 }
