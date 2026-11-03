@@ -3,6 +3,7 @@ import type { DiscordIdentity } from '@/platform/discord/auth';
 import { useNavigateHome } from '@/shared/motion/transitions';
 import {} from 'react-router-dom';
 import { WordleBoard } from './components/WordleBoard';
+import { WordleConnectingAnimation } from './components/WordleConnectingAnimation';
 import { useWordleSession } from './session/useWordleSession';
 import { useWordleUserConfig } from './state/useWordleUserConfig';
 
@@ -19,7 +20,9 @@ export function WordleGame({
 
   if (session.status === 'connecting' || userConfig.status === 'loading') {
     return (
-      <ConnectingScreen subtitleKey="connectingSubtitle" subtitleNs="wordle" />
+      <ConnectingScreen subtitleKey="connectingSubtitle" subtitleNs="wordle">
+        <WordleConnectingAnimation />
+      </ConnectingScreen>
     );
   }
 
