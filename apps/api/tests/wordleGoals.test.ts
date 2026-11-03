@@ -108,6 +108,23 @@ it('creates a goal with a fixed positive target and a future time window', async
   expect(await service.list('other')).toEqual([]);
 });
 
+it('uses local day boundaries for an inclusive date range', async () => {
+  const goals = new WordleGoalsService(testDb.db, () =>
+    Date.parse('2026-10-30T00:00:00Z'),
+  );
+  const goal = await goals.createForDates(
+    'dates',
+    1,
+    '2026-11-01',
+    '2026-11-02',
+  );
+  expect(goal.startsAt).toBe(Date.parse('2026-11-01T03:00:00Z'));
+  expect(goal.endsAt).toBe(Date.parse('2026-11-03T03:00:00Z'));
+  await expect(
+    goals.createForDates('dates', 1, '2026-11-02', '2026-11-01'),
+  ).rejects.toThrow();
+});
+
 it('prevents closing while a fact writer is still in flight', async () => {
   await testDb.db.transaction(async (writer) => {
     await lockGoalFactsForWrite(writer);

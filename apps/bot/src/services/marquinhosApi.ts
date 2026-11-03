@@ -301,6 +301,17 @@ export class MarquinhosApiService {
     });
   }
 
+  async createWordleGoal(
+    guildId: string,
+    target: number,
+    firstDate: string,
+    lastDate: string,
+  ) {
+    return callContract(this.client, wordle.createGoal, {
+      body: { guildId, target, firstDate, lastDate },
+    });
+  }
+
   async setWordleConfig(guildId: string, channelId: string) {
     const data = await callContract(this.client, wordle.setConfig, {
       body: { guildId, channelId },

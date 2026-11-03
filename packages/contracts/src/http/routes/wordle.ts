@@ -139,6 +139,43 @@ export const getRewards = defineContract({
   path: '/api/wordle/rewards',
   response: envelope(rewardsStateSchema),
 });
+
+const goalSchema = z.object({
+  id: requiredString,
+  guildId: requiredString,
+  target: z.number().int().positive(),
+  startsAt: z.number(),
+  endsAt: z.number(),
+  status: z.enum(['scheduled', 'active', 'finalizing', 'completed', 'expired']),
+});
+export const listGoals = defineContract({
+  method: 'GET',
+  path: '/api/wordle/goals/:guildId',
+  params: guildParams,
+  response: envelope(
+    z.array(
+      goalSchema.extend({
+        progress: z.object({
+          count: z.number().int().nonnegative(),
+          contributors: z.array(z.string()),
+        }),
+      }),
+    ),
+  ),
+});
+export const createGoal = defineContract({
+  method: 'POST',
+  path: '/api/wordle/admin/goals',
+  body: z
+    .object({
+      guildId: requiredString,
+      target: z.number().int().positive().max(100000),
+      firstDate: z.iso.date(),
+      lastDate: z.iso.date(),
+    })
+    .strict(),
+  response: envelope(goalSchema),
+});
 export const updateReward = defineContract({
   method: 'PUT',
   path: '/api/wordle/rewards',

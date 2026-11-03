@@ -166,6 +166,22 @@ describe('wordle contracts', () => {
     expect(config.data).toEqual({ channelId: 'channel-1' });
   });
 
+  it('creates a goal for a future range through the bot contract', async () => {
+    const result = await callContract(server.http, wordle.createGoal, {
+      body: {
+        guildId,
+        target: 3,
+        firstDate: '2099-01-01',
+        lastDate: '2099-01-02',
+      },
+    });
+    expect(result.data).toMatchObject({
+      guildId,
+      target: 3,
+      status: 'scheduled',
+    });
+  });
+
   it('claims an announcement once and reports streaks', async () => {
     const first = await callContract(server.http, wordle.markAnnounced, {
       body: { userId: 'u1', guildId },

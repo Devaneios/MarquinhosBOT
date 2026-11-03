@@ -11,13 +11,37 @@ import { goalStateAt } from '@marquinhos/domain/games/wordle/community/goals';
 import { and, asc, eq, gte, inArray, lt, lte, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { logger } from 'utils/logger';
+import { z } from 'zod';
 import { lockGoalFactsForClosing } from './goalFactLock';
+import { getWordleDayEndEpoch } from './wordleDate';
+
+export class InvalidWordleGoal extends Error {}
 
 export class WordleGoalsService {
   constructor(
     private readonly database: Db,
     private readonly now: () => number = Date.now,
   ) {}
+
+  async createForDates(
+    guildId: string,
+    target: number,
+    firstDate: string,
+    lastDate: string,
+  ) {
+    if (
+      !z.iso.date().safeParse(firstDate).success ||
+      !z.iso.date().safeParse(lastDate).success ||
+      firstDate > lastDate
+    )
+      throw new InvalidWordleGoal('Invalid goal dates');
+    const previous = new Date(`${firstDate}T12:00:00Z`);
+    previous.setUTCDate(previous.getUTCDate() - 1);
+    const startsAt =
+      (getWordleDayEndEpoch(previous.toISOString().slice(0, 10)) + 1) * 1000;
+    const endsAt = (getWordleDayEndEpoch(lastDate) + 1) * 1000;
+    return this.create(guildId, target, startsAt, endsAt);
+  }
 
   async create(
     guildId: string,
@@ -35,7 +59,7 @@ export class WordleGoalsService {
       startsAt <= now ||
       startsAt >= endsAt
     )
-      throw new Error('Invalid community goal');
+      throw new InvalidWordleGoal('Invalid community goal');
     const [row] = await this.database
       .insert(wordleCommunityGoals)
       .values({
@@ -64,6 +88,16 @@ export class WordleGoalsService {
       const goal = this.map(row);
       return { ...goal, status: goalStateAt(goal, this.now()) };
     });
+  }
+
+  async listWithProgress(guildId: string) {
+    const goals = await this.list(guildId);
+    return Promise.all(
+      goals.map(async (goal) => ({
+        ...goal,
+        progress: await this.progress(goal.id, guildId),
+      })),
+    );
   }
 
   async processDue(): Promise<number> {

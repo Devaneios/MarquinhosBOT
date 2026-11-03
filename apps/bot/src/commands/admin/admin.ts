@@ -107,6 +107,31 @@ export class AdminCommand extends MarquinhosCommand {
                       { name: 'Histórico', value: 'all-time' },
                     ),
                 ),
+            )
+            .addSubcommand((sub) =>
+              sub
+                .setName('meta')
+                .setDescription('Agenda uma meta coletiva para o Terminhos')
+                .addIntegerOption((opt) =>
+                  opt
+                    .setName('alvo')
+                    .setDescription('Participações distintas necessárias')
+                    .setRequired(true)
+                    .setMinValue(1)
+                    .setMaxValue(100000),
+                )
+                .addStringOption((opt) =>
+                  opt
+                    .setName('inicio')
+                    .setDescription('Primeiro dia, AAAA-MM-DD (Recife)')
+                    .setRequired(true),
+                )
+                .addStringOption((opt) =>
+                  opt
+                    .setName('fim')
+                    .setDescription('Último dia, AAAA-MM-DD (Recife)')
+                    .setRequired(true),
+                ),
             ),
         )
         .addSubcommandGroup((group) =>
@@ -136,6 +161,41 @@ export class AdminCommand extends MarquinhosCommand {
     }
 
     if (subgroup === 'termo') {
+      if (sub === 'meta') {
+        if (
+          !interaction.guildId ||
+          !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
+        ) {
+          await interaction.reply({
+            content:
+              '❌ Somente administradores podem criar metas neste servidor.',
+            flags: MessageFlags.Ephemeral,
+          });
+          return;
+        }
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+        try {
+          const target = interaction.options.getInteger('alvo', true);
+          const firstDate = interaction.options.getString('inicio', true);
+          const lastDate = interaction.options.getString('fim', true);
+          await api.createWordleGoal(
+            interaction.guildId,
+            target,
+            firstDate,
+            lastDate,
+          );
+          await interaction.editReply({
+            content: `✅ Meta agendada: ${target} participações de ${firstDate} a ${lastDate} (horário de Recife).`,
+          });
+        } catch (error) {
+          logger.warn('admin termo meta: failed to create goal', error);
+          await interaction.editReply({
+            content:
+              '❌ Não foi possível agendar a meta. Confira o alvo e as datas futuras no formato AAAA-MM-DD.',
+          });
+        }
+        return;
+      }
       if (sub === 'canal') {
         const channel = interaction.options.getChannel('canal', true);
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
