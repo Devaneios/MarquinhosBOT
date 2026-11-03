@@ -1,3 +1,4 @@
+import { getGallery } from '@marquinhos/contracts/http/routes/wordle';
 import {
   wordleCommunityDailyPresence,
   wordleGlobalOccurrences,
@@ -68,6 +69,7 @@ it('shows one verified closed-day occurrence per person and never publishes an e
   const gallery = await service.previousWeek('a');
   expect(gallery.weekKey).toBe('2026-10-26');
   expect(gallery.entries).toHaveLength(1);
+  expect(getGallery.response.safeParse({ data: gallery }).success).toBe(true);
   expect(gallery.entries[0]).toMatchObject({
     userId: 'player',
     patternId: 'tetromino_i',

@@ -5,9 +5,11 @@ import { useTranslation } from 'react-i18next';
 import type { WordleAlbumPage } from '../api/wordleAlbumApi';
 import type { WordleBingoCard } from '../api/wordleBingoApi';
 import type { WordleChallenge } from '../api/wordleChallengesApi';
+import type { WordleGallery } from '../api/wordleGalleryApi';
 import type { WordleGoal } from '../api/wordleGoalsApi';
 import { WordleBingoPanel } from './WordleBingoPanel';
 import { WordleChallengesPanel } from './WordleChallengesPanel';
+import { WordleGalleryPanel } from './WordleGalleryPanel';
 import { WordleGoalsPanel } from './WordleGoalsPanel';
 
 export function WordleAlbumScreen({
@@ -16,6 +18,7 @@ export function WordleAlbumScreen({
   goals,
   challenges,
   bingo,
+  gallery,
 }: {
   load: () => Promise<WordleAlbumPage[]>;
   onBack: () => void;
@@ -27,6 +30,7 @@ export function WordleAlbumScreen({
     join: (id: string) => Promise<void>;
   };
   bingo?: () => Promise<WordleBingoCard[]>;
+  gallery?: () => Promise<WordleGallery>;
 }) {
   const { t } = useTranslation('wordle');
   const [pages, setPages] = useState<WordleAlbumPage[] | null>(null);
@@ -67,6 +71,7 @@ export function WordleAlbumScreen({
       {goals && <WordleGoalsPanel {...goals} />}
       {challenges && <WordleChallengesPanel {...challenges} />}
       {bingo && <WordleBingoPanel load={bingo} />}
+      {gallery && <WordleGalleryPanel load={gallery} />}
       {error ? (
         <div role="alert">
           {t('albumError')}{' '}

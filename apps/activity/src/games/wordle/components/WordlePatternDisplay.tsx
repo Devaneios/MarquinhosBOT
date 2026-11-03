@@ -13,9 +13,11 @@ const CELL_COLORS = {
 export function WordlePatternDisplay({
   preview,
   evidence,
+  shared = false,
 }: {
   preview?: WordlePatternPreview;
   evidence?: WordlePatternEvidence | null;
+  shared?: boolean;
 }) {
   const { t } = useTranslation('wordle');
   const matched = new Set(
@@ -79,9 +81,12 @@ export function WordlePatternDisplay({
           <div className="max-h-64 overflow-y-auto p-1">
             <div
               role="img"
-              aria-label={t('patternEvidenceLabel', {
-                color: t(`patternColor.${evidence.color}`),
-              })}
+              aria-label={t(
+                shared ? 'galleryEvidenceLabel' : 'patternEvidenceLabel',
+                {
+                  color: t(`patternColor.${evidence.color}`),
+                },
+              )}
               className="grid w-fit gap-1"
               style={{
                 gridTemplateColumns: `repeat(${evidence.feedback[0]?.length ?? 1}, 1.5rem)`,

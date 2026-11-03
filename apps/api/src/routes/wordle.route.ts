@@ -3,6 +3,7 @@ import WordleController from 'controllers/wordle.controller';
 import { WordleAlbumController } from 'controllers/wordleAlbum.controller';
 import { WordleBingoController } from 'controllers/wordleBingo.controller';
 import { WordleChallengesController } from 'controllers/wordleChallenges.controller';
+import { WordleGalleryController } from 'controllers/wordleGallery.controller';
 import { WordleGoalsController } from 'controllers/wordleGoals.controller';
 import { WordleNotificationsController } from 'controllers/wordleNotifications.controller';
 import { WordleRewardsController } from 'controllers/wordleRewards.controller';
@@ -15,6 +16,7 @@ import { DiscordService } from 'services/discord';
 import { WordleAlbumService } from 'services/wordle/WordleAlbumService';
 import { WordleBingoService } from 'services/wordle/WordleBingoService';
 import { WordleChallengeService } from 'services/wordle/WordleChallengeService';
+import { WordleGalleryService } from 'services/wordle/WordleGalleryService';
 import { WordleGoalsService } from 'services/wordle/WordleGoalsService';
 import { WordleNotificationService } from 'services/wordle/WordleNotificationService';
 import { WordleRewardsService } from 'services/wordle/WordleRewardsService';
@@ -55,6 +57,20 @@ const challenges = new WordleChallengesController(
   new WordleChallengeService(db),
 );
 const bingo = new WordleBingoController(new WordleBingoService(db));
+const gallery = new WordleGalleryController(new WordleGalleryService(db));
+router.get(
+  '/gallery/:guildId',
+  verifyActivityDiscordToken,
+  verifyGuildMember,
+  (req, res) => gallery.get(req.params.guildId, res),
+);
+router.get('/admin/gallery/:guildId', checkToken, (req, res) => {
+  if (typeof req.params.guildId !== 'string') {
+    res.status(400).json({ message: 'Invalid community' });
+    return;
+  }
+  return gallery.get(req.params.guildId, res);
+});
 router.get(
   '/bingo/:guildId',
   verifyActivityDiscordToken,

@@ -25,6 +25,7 @@ import {
   joinWordleChallenge,
   listWordleChallenges,
 } from '../api/wordleChallengesApi';
+import { getWordleGallery } from '../api/wordleGalleryApi';
 import { getWordleGoals } from '../api/wordleGoalsApi';
 import { equipWordleReward, getWordleRewards } from '../api/wordleRewardsApi';
 import {
@@ -80,6 +81,10 @@ export function WordleBoard({
   );
   const loadBingo = useCallback(
     () => listWordleBingo(accessToken!, guildId!),
+    [accessToken, guildId],
+  );
+  const loadGallery = useCallback(
+    () => getWordleGallery(accessToken!, guildId!),
     [accessToken, guildId],
   );
   const loadChallenges = useCallback(
@@ -227,6 +232,7 @@ export function WordleBoard({
         load={loadAlbum}
         goals={userId ? { load: loadGoals, userId } : undefined}
         bingo={accessToken && guildId ? loadBingo : undefined}
+        gallery={accessToken && guildId ? loadGallery : undefined}
         challenges={
           accessToken && guildId
             ? {

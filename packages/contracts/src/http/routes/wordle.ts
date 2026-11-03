@@ -6,6 +6,7 @@ import {
   wordleAchievementsOverviewSchema,
   wordleDraftWriteResultSchema,
   wordleDraftWriteSchema,
+  wordlePatternEvidenceSchema,
   wordleUserConfigSchema,
 } from '../../wordle';
 import { defineContract, envelope } from '../contract';
@@ -247,6 +248,33 @@ export const createBingo = defineContract({
     })
     .strict(),
   response: envelope(bingoCardSchema),
+});
+
+const gallerySchema = z.object({
+  weekKey: z.iso.date(),
+  entries: z.array(
+    z.object({
+      userId: requiredString,
+      family: requiredString,
+      date: z.iso.date(),
+      sourceAt: z.number(),
+      patternId: requiredString,
+      name: requiredString,
+      evidence: wordlePatternEvidenceSchema,
+    }),
+  ),
+});
+export const getGallery = defineContract({
+  method: 'GET',
+  path: '/api/wordle/gallery/:guildId',
+  params: guildParams,
+  response: envelope(gallerySchema),
+});
+export const getBotGallery = defineContract({
+  method: 'GET',
+  path: '/api/wordle/admin/gallery/:guildId',
+  params: guildParams,
+  response: envelope(gallerySchema),
 });
 export const createGoal = defineContract({
   method: 'POST',
