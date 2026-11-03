@@ -1,6 +1,10 @@
 import type { Db } from '@marquinhos/database/client';
-import { wordleCommunityGoals } from '@marquinhos/database/schema';
-import { asc, eq } from 'drizzle-orm';
+import {
+  wordleCommunityDailyPresence,
+  wordleCommunityGoals,
+  wordleGlobalAcceptedGuesses,
+} from '@marquinhos/database/schema';
+import { and, asc, eq, gte, lt, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 
 export class WordleGoalsService {
@@ -51,6 +55,53 @@ export class WordleGoalsService {
         asc(wordleCommunityGoals.id),
       );
     return rows.map((row) => this.map(row));
+  }
+
+  async progress(
+    goalId: string,
+    guildId: string,
+  ): Promise<{ count: number; contributors: string[] }> {
+    const [goal] = await this.database
+      .select()
+      .from(wordleCommunityGoals)
+      .where(
+        and(
+          eq(wordleCommunityGoals.id, goalId),
+          eq(wordleCommunityGoals.guild_id, guildId),
+        ),
+      );
+    if (!goal) throw new Error('Goal not found');
+    const facts = await this.database
+      .selectDistinct({
+        userId: wordleGlobalAcceptedGuesses.user_id,
+        date: wordleGlobalAcceptedGuesses.word_date,
+      })
+      .from(wordleGlobalAcceptedGuesses)
+      .innerJoin(
+        wordleCommunityDailyPresence,
+        and(
+          eq(
+            wordleCommunityDailyPresence.user_id,
+            wordleGlobalAcceptedGuesses.user_id,
+          ),
+          eq(
+            wordleCommunityDailyPresence.word_date,
+            wordleGlobalAcceptedGuesses.word_date,
+          ),
+        ),
+      )
+      .where(
+        and(
+          eq(wordleCommunityDailyPresence.guild_id, guildId),
+          gte(wordleGlobalAcceptedGuesses.accepted_at, goal.starts_at),
+          lt(wordleGlobalAcceptedGuesses.accepted_at, goal.ends_at),
+          sql`${wordleCommunityDailyPresence.first_seen_at} * 1000 < ${goal.ends_at}`,
+        ),
+      );
+    return {
+      count: facts.length,
+      contributors: [...new Set(facts.map((fact) => fact.userId))].sort(),
+    };
   }
 
   private map(row: typeof wordleCommunityGoals.$inferSelect) {
