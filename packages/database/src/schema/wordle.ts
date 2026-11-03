@@ -431,3 +431,22 @@ export const wordleAlbumContributions = pgTable(
     ),
   ],
 );
+
+export const wordleAlbumMilestones = pgTable(
+  'wordle_album_milestones',
+  {
+    guild_id: text('guild_id').notNull(),
+    family: text('family').notNull(),
+    pattern_ids: jsonb('pattern_ids').$type<string[]>().notNull(),
+    completed_at: bigint('completed_at', { mode: 'number' }).notNull(),
+    revised_at: bigint('revised_at', { mode: 'number' }),
+    status: text('status').$type<'completed' | 'revised'>().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.guild_id, t.family] }),
+    check(
+      'wordle_album_milestone_status_check',
+      sql`${t.status} IN ('completed', 'revised')`,
+    ),
+  ],
+);
