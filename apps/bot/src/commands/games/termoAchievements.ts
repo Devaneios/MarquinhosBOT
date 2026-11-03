@@ -102,6 +102,13 @@ export async function buildTermoAchievementsReply(
     unlocked: summary.unlocked,
     total: summary.total,
     families: summary.families,
+    showcase: (overview.showcase ?? []).flatMap((id) => {
+      const item = overview.achievements.find(
+        (achievement) =>
+          achievement.id === id && achievement.unlockedAt !== null,
+      );
+      return item ? [{ icon: item.icon, name: item.name }] : [];
+    }),
   });
   return {
     embeds: [buildTermoAchievementsEmbed(client, target, overview, imageName)],
@@ -139,7 +146,7 @@ export class TermoAchievementsCommand extends MarquinhosCommand {
   override async chatInputRun(interaction: ChatInputCommandInteraction) {
     if (!interaction.guildId || !interaction.guild) {
       await interaction.reply({
-        content: '❌ As conquistas do Terminhos só existem em servidores.',
+        content: '❌ Use este comando em um servidor para consultar o perfil.',
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -158,6 +165,13 @@ export class TermoAchievementsCommand extends MarquinhosCommand {
     const member = await interaction.guild.members
       .fetch(user.id)
       .catch(() => null);
+    if (!member && user.id !== interaction.user.id) {
+      await interaction.editReply({
+        content:
+          '❌ Não foi possível confirmar que essa pessoa participa deste servidor.',
+      });
+      return;
+    }
 
     try {
       const reply = await buildTermoAchievementsReply(

@@ -147,6 +147,10 @@ describe('wordle contracts', () => {
       query: { period: 'daily' },
     });
     expect(result.data[0]?.showcase).toEqual(['⭐']);
+    const profile = await callContract(server.http, wordle.getAchievements, {
+      params: { guildId, userId: 'u1' },
+    });
+    expect(profile.data.showcase).toEqual([id]);
   });
 
   it('stores and reads the channel config', async () => {

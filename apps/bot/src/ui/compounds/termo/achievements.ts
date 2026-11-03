@@ -20,6 +20,7 @@ export type TermoAchievementsCardInput = {
   unlocked: number;
   total: number;
   families: TermoAchievementsFamilyRow[];
+  showcase?: { icon: string; name: string }[];
 };
 
 const RETRO_FONT = 'Press Start 2P';
@@ -218,6 +219,24 @@ export function termoAchievementsCard(
   return card(
     [
       header(input, theme),
+      ...(input.showcase?.length
+        ? [
+            Column({
+              width: '100%',
+              gap: theme.spacing.xs,
+              children: [
+                sectionLabel('VITRINE', theme),
+                ...input.showcase.map((item) =>
+                  Text(`${item.icon}  ${item.name}`, {
+                    fontFamily: theme.fontFamilies.body,
+                    fontSize: theme.fontSizes.md,
+                    color: theme.colors.textPrimary,
+                  }),
+                ),
+              ],
+            }),
+          ]
+        : []),
       statsRow(input.stats, theme),
       distribution(input.stats, theme),
       families(input.families, theme),

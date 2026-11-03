@@ -71,6 +71,35 @@ describe('buildTermoAchievementsReply', () => {
     ).rejects.toThrow('api down');
   });
 
+  it('shows the selected global showcase on the profile card', async () => {
+    const target = {
+      id: 'user-1',
+      displayName: 'Ana',
+      avatarUrl: 'https://cdn/ana.png',
+    };
+    const plain = await buildTermoAchievementsReply(
+      { user: null },
+      'guild-1',
+      target,
+      { getWordleAchievements: async () => ({ data: overview }) } as never,
+    );
+    const featured = await buildTermoAchievementsReply(
+      { user: null },
+      'guild-1',
+      target,
+      {
+        getWordleAchievements: async () => ({
+          data: { ...overview, showcase: ['wordle_first_win'] },
+        }),
+      } as never,
+    );
+    expect(
+      (featured.files[0]!.attachment as Buffer).equals(
+        plain.files[0]!.attachment as Buffer,
+      ),
+    ).toBe(false);
+  });
+
   it('selects a drawing by name and renders its preview instead of the overview', async () => {
     const reply = await buildTermoAchievementsReply(
       { user: null },

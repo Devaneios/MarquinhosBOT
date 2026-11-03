@@ -50,8 +50,13 @@ export default class WordleController {
     }
     try {
       const { userId, guildId } = input.params;
+      const overview = await service.getAchievementsOverview(
+        userId,
+        guildId,
+        '',
+      );
       sendContract(res, contract.getAchievements, {
-        data: await service.getAchievementsOverview(userId, guildId, ''),
+        data: { ...overview, showcase: await showcase.get(userId) },
       });
     } catch (error) {
       console.error('WordleController.getAchievements error:', error);

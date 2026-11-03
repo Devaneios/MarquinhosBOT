@@ -130,6 +130,7 @@ export type WordlePlayerStats = z.infer<typeof wordlePlayerStatsSchema>;
 export const wordleAchievementsOverviewSchema = z.object({
   achievements: z.array(wordleAchievementStatusSchema),
   stats: wordlePlayerStatsSchema,
+  showcase: z.array(z.string()).max(3).optional(),
 });
 export type WordleAchievementsOverview = z.infer<
   typeof wordleAchievementsOverviewSchema
