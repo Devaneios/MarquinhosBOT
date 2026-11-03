@@ -6,6 +6,7 @@ import {
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
+import { eq } from 'drizzle-orm';
 import { recordWordlePresence } from '../src/services/wordle/WordleCommunityService';
 import { WordleGlobalDraftService } from '../src/services/wordle/WordleGlobalDraftService';
 import { WordleGlobalGameplayService } from '../src/services/wordle/WordleGlobalGameplayService';
@@ -106,6 +107,42 @@ describe('global gameplay', () => {
     ).filter((row) => row.guild_id === 'simultaneous');
     expect(solves).toHaveLength(1);
     expect(['racer-a', 'racer-b']).toContain(solves[0]!.user_id);
+  });
+  it('does not queue one player behind another player’s guess', async () => {
+    const game = new WordleGlobalGameplayService(
+      testDb.db,
+      (word) => word,
+      () => now,
+    );
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let locked!: () => void;
+    const lockTaken = new Promise<void>((resolve) => {
+      locked = resolve;
+    });
+    // Another player's guess, paused while it holds its day-row lock.
+    const other = testDb.db.transaction(async (tx) => {
+      await tx
+        .select()
+        .from(wordleGlobalDays)
+        .where(eq(wordleGlobalDays.word_date, date))
+        .for('share');
+      locked();
+      await held;
+    });
+    await lockTaken;
+    try {
+      const result = await Promise.race([
+        game.submitGuess('unblocked', date, 'porta'),
+        new Promise((resolve) => setTimeout(() => resolve('blocked'), 2000)),
+      ]);
+      expect(result).toMatchObject({ attempts: 1 });
+    } finally {
+      release();
+      await other;
+    }
   });
   it('shares a session across callers and resolves the same daily word', async () => {
     const game = new WordleGlobalGameplayService(

@@ -82,11 +82,14 @@ export class WordleGlobalGameplayService {
         await lockGoalFactsForWrite(tx);
         await lockGlobalWordlePlayer(tx, userId, date);
         if (date !== this.today()) return { error: cutoffMessage };
+        // Share, not update: today's guesses read only the player's own rows
+        // (serialized by the player lock), so players need not queue behind
+        // each other. Draft finalization still locks the day exclusively.
         const [day] = await tx
           .select()
           .from(wordleGlobalDays)
           .where(eq(wordleGlobalDays.word_date, date))
-          .for('update');
+          .for('share');
         if (!day) throw new Error('Global Wordle day is not initialized');
         if (canonical.length !== day.word_length)
           return {

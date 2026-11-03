@@ -18,6 +18,17 @@ export class WordleGlobalDayService {
   async getOrCreate(
     date: string,
   ): Promise<{ word: string; wordDate: string; wordLength: number }> {
+    // Days are never changed once created, so an existing one needs no lock.
+    const [stored] = await this.database
+      .select()
+      .from(wordleGlobalDays)
+      .where(eq(wordleGlobalDays.word_date, date));
+    if (stored)
+      return {
+        word: stored.word,
+        wordDate: date,
+        wordLength: stored.word_length,
+      };
     return this.database.transaction(async (tx) => {
       // Serialize selection across dates as the used-word pool is global too.
       await tx.execute(

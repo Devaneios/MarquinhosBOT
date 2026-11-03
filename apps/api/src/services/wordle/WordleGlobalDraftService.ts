@@ -320,7 +320,7 @@ export class WordleGlobalDraftService {
           .select()
           .from(wordleGlobalDays)
           .where(eq(wordleGlobalDays.word_date, input.date))
-          .for('update');
+          .for('share');
         if (
           input.date !== dayAt(this.now()) ||
           !day ||

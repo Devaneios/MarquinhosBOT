@@ -5,6 +5,7 @@ import {
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
+import { sql } from 'drizzle-orm';
 import { WordleGlobalDayService } from '../src/services/wordle/WordleGlobalDayService';
 
 let testDb: TestDb;
@@ -31,6 +32,41 @@ describe('global daily word', () => {
     expect(results[0]).toEqual(results[1]);
     expect(await testDb.db.select().from(wordleGlobalDays)).toHaveLength(1);
     expect(await testDb.db.select().from(wordleUsedWords)).toHaveLength(1);
+  });
+  it('reads an existing day without waiting for word selection', async () => {
+    const service = new WordleGlobalDayService(
+      testDb.db,
+      ['termo', 'carta'],
+      [],
+      () => 0,
+      () => 1000,
+    );
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let locked!: () => void;
+    const lockTaken = new Promise<void>((resolve) => {
+      locked = resolve;
+    });
+    const selecting = testDb.db.transaction(async (tx) => {
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(hashtextextended('wordle-global-word-selection', 0))`,
+      );
+      locked();
+      await held;
+    });
+    await lockTaken;
+    try {
+      const result = await Promise.race([
+        service.getOrCreate('2026-11-01'),
+        new Promise((resolve) => setTimeout(() => resolve('blocked'), 2000)),
+      ]);
+      expect(result).toMatchObject({ wordDate: '2026-11-01' });
+    } finally {
+      release();
+      await selecting;
+    }
   });
   it('excludes banned and already used words across days', async () => {
     await testDb.db
