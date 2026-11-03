@@ -121,6 +121,19 @@ export const updateUserConfig = defineContract({
   response: z.object({ data: wordleUserConfigSchema }),
 });
 
+export const getShowcase = defineContract({
+  method: 'GET',
+  path: '/api/wordle/showcase',
+  response: envelope(z.array(requiredString).max(3)),
+});
+
+export const updateShowcase = defineContract({
+  method: 'PUT',
+  path: '/api/wordle/showcase',
+  body: z.object({ achievements: z.array(requiredString).max(3) }).strict(),
+  response: envelope(z.array(requiredString).max(3)),
+});
+
 export const submitGuess = defineContract({
   method: 'POST',
   path: '/api/wordle/guess',

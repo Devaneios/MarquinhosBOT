@@ -1,12 +1,22 @@
 import { db } from '@marquinhos/database/client';
 import WordleController from 'controllers/wordle.controller';
+import { WordleShowcaseController } from 'controllers/wordleShowcase.controller';
 import express from 'express';
 import { checkToken } from 'middlewares/botAuth';
 import { verifyActivityDiscordToken } from 'middlewares/userAuth';
+import { WordleShowcaseService } from 'services/wordle/WordleShowcaseService';
 import { WordleUserConfigService } from 'services/wordleUserConfig';
 
 const router = express.Router();
 const wordle = new WordleController(new WordleUserConfigService(db));
+const showcase = new WordleShowcaseController(new WordleShowcaseService(db));
+
+router.get('/showcase', verifyActivityDiscordToken, (req, res) =>
+  showcase.get(req, res),
+);
+router.put('/showcase', verifyActivityDiscordToken, (req, res) =>
+  showcase.update(req, res),
+);
 
 router.get('/user-config', verifyActivityDiscordToken, (req, res) =>
   wordle.getUserConfig(req, res),
