@@ -50,7 +50,7 @@ export function WordleChallengesPanel({
     setError(false);
     try {
       const created = await create(pattern, closesAt);
-      setItems((current) => [...(current ?? []), created]);
+      setItems((current) => [created, ...(current ?? [])]);
       setDeadline('');
     } catch {
       setError(true);

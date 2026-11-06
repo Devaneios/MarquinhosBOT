@@ -7,7 +7,7 @@ import { matchMaker } from 'colyseus';
 import ActivityController from 'controllers/activity.controller';
 import { roomKey } from 'services/activity/roomKey';
 import { verifyWsSessionToken } from 'services/activity/wsSessionToken';
-import type { DiscordService } from 'services/discord';
+import { DiscordService } from 'services/discord';
 
 function makeReq(body: Record<string, unknown>) {
   return { body } as any;
@@ -258,6 +258,37 @@ describe('ActivityController.getWsSessionToken', () => {
 
     expect(called).toBe(false);
     expect(res.getStatus()).toBe(200);
+  });
+
+  it('requires guild membership for daily Wordle even in single-player mode', async () => {
+    const discord = new DiscordService();
+    discord.getDiscordUser = async () => ({ id: 'user-1' });
+    discord.isGuildMember = async (_token, guildId) => guildId === 'my-guild';
+    const controller = new ActivityController(discord);
+    const request = {
+      accessToken: 'tok_abc',
+      instanceId: 'inst-1',
+      mode: 'single',
+      game: 'wordle',
+    };
+    const denied = makeRes();
+    await controller.getWsSessionToken(
+      makeReq({ ...request, guildId: 'other-guild' }),
+      denied as any,
+    );
+    expect(denied.getStatus()).toBe(403);
+
+    const allowed = makeRes();
+    await controller.getWsSessionToken(
+      makeReq({ ...request, guildId: 'my-guild' }),
+      allowed as any,
+    );
+    const response = (allowed.getPayload() as { data: unknown }).data;
+    const session = wsSessionSchema.parse(response);
+    expect(verifyWsSessionToken(session.token)).toMatchObject({
+      guildId: 'my-guild',
+      guildMembershipVerified: true,
+    });
   });
 
   it('does not require guild membership for a local hot-seat session', async () => {

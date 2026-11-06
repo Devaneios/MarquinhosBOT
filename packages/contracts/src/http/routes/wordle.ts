@@ -343,7 +343,7 @@ export const settleNotification = defineContract({
     z.object({
       id: requiredString,
       leaseId: requiredString,
-      result: z.enum(['not_sent', 'ambiguous']),
+      result: z.enum(['not_sent', 'ambiguous', 'retry_later', 'skipped']),
     }),
   ]),
   response: envelope(z.object({ recorded: z.boolean() })),

@@ -8,8 +8,14 @@ import {
 } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { challengeParticipants } from '@marquinhos/domain/games/wordle/community/activities';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, gte, lt, or, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
+
+const DAY_MS = 86_400_000;
+const MAX_CHALLENGE_DURATION_MS = 30 * DAY_MS;
+const MAX_MEMBER_CHALLENGES_PER_DAY = 3;
+const MAX_OPEN_COMMUNITY_CHALLENGES = 20;
+const CHALLENGE_LIST_LIMIT = 25;
 
 export class InvalidWordleChallenge extends Error {}
 export class WordleChallengeService {
@@ -34,10 +40,14 @@ export class WordleChallengeService {
       !userId ||
       !definition ||
       !Number.isSafeInteger(closesAt) ||
-      closesAt <= now
+      closesAt <= now ||
+      closesAt > now + MAX_CHALLENGE_DURATION_MS
     )
       throw new InvalidWordleChallenge('Invalid challenge');
     const row = await this.database.transaction(async (tx) => {
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(hashtextextended(${JSON.stringify(['wordle-challenges', guildId])}, 0))`,
+      );
       const [owned] = await tx
         .select()
         .from(wordleGlobalAchievements)
@@ -46,8 +56,32 @@ export class WordleChallengeService {
             eq(wordleGlobalAchievements.user_id, userId),
             eq(wordleGlobalAchievements.achievement_id, definition.id),
           ),
-        );
+        )
+        .for('update');
       if (!owned) throw new InvalidWordleChallenge('Pattern not unlocked');
+      const open = gt(wordlePatternChallenges.closes_at, now);
+      const recentByMember = and(
+        eq(wordlePatternChallenges.creator_user_id, userId),
+        gt(wordlePatternChallenges.opens_at, now - DAY_MS),
+      );
+      const [counts] = await tx
+        .select({
+          open: sql<number>`count(*) filter (where ${open})::int`,
+          recentByMember: sql<number>`count(*) filter (where ${recentByMember})::int`,
+        })
+        .from(wordlePatternChallenges)
+        .where(
+          and(
+            eq(wordlePatternChallenges.guild_id, guildId),
+            or(open, recentByMember),
+          ),
+        );
+      if (
+        counts &&
+        (counts.open >= MAX_OPEN_COMMUNITY_CHALLENGES ||
+          counts.recentByMember >= MAX_MEMBER_CHALLENGES_PER_DAY)
+      )
+        throw new InvalidWordleChallenge('Challenge creation limit reached');
       const [created] = await tx
         .insert(wordlePatternChallenges)
         .values({
@@ -100,10 +134,18 @@ export class WordleChallengeService {
         ),
       );
     if (!challenge) throw new InvalidWordleChallenge('Challenge not found');
+    return this.details(challenge, viewerId);
+  }
+
+  private async details(
+    challenge: typeof wordlePatternChallenges.$inferSelect,
+    viewerId?: string,
+  ) {
+    const guildId = challenge.guild_id;
     const joins = await this.database
       .select()
       .from(wordleChallengeJoins)
-      .where(eq(wordleChallengeJoins.challenge_id, id));
+      .where(eq(wordleChallengeJoins.challenge_id, challenge.id));
     const occurrences = await this.database
       .select({
         userId: wordleGlobalOccurrences.user_id,
@@ -128,6 +170,9 @@ export class WordleChallengeService {
         and(
           eq(wordleCommunityDailyPresence.guild_id, guildId),
           eq(wordleGlobalOccurrences.pattern_id, challenge.pattern_id),
+          lt(wordleCommunityDailyPresence.recorded_at_ms, challenge.closes_at),
+          gte(wordleGlobalOccurrences.source_at, challenge.opens_at),
+          lt(wordleGlobalOccurrences.source_at, challenge.closes_at),
         ),
       );
     const participants = challengeParticipants(
@@ -160,10 +205,15 @@ export class WordleChallengeService {
 
   async list(guildId: string, viewerId?: string) {
     const rows = await this.database
-      .select({ id: wordlePatternChallenges.id })
+      .select()
       .from(wordlePatternChallenges)
       .where(eq(wordlePatternChallenges.guild_id, guildId))
-      .orderBy(asc(wordlePatternChallenges.opens_at));
-    return Promise.all(rows.map((row) => this.get(row.id, guildId, viewerId)));
+      .orderBy(
+        desc(gt(wordlePatternChallenges.closes_at, this.now())),
+        desc(wordlePatternChallenges.opens_at),
+        asc(wordlePatternChallenges.id),
+      )
+      .limit(CHALLENGE_LIST_LIMIT);
+    return Promise.all(rows.map((row) => this.details(row, viewerId)));
   }
 }

@@ -172,6 +172,54 @@ it('sends one nonempty weekly summary without enabling individual announcements'
   });
 });
 
+it('lets newer announcements proceed while a gallery is deferred or skipped', async () => {
+  now = 3000;
+  const guild = 'gallery-delivery';
+  await notifications.configure(guild, {
+    channelId: 'channel',
+    collective: true,
+    weekly: true,
+  });
+  const payload = { gallery: '1', week: '2026-10-26' };
+  await notifications.enqueue(
+    guild,
+    'weekly',
+    'gallery:2026-10-26',
+    payload,
+    1000,
+  );
+  await notifications.enqueue(guild, 'goal', 'goal:1', {}, 2000);
+  const gallery = (await notifications.claim(guild))!;
+  expect(gallery.eventKey).toBe('gallery:2026-10-26');
+  expect(
+    await notifications.release(
+      guild,
+      gallery.id,
+      gallery.leaseId,
+      'retry_later',
+    ),
+  ).toBe(true);
+  expect((await notifications.claim(guild))?.eventKey).toBe('goal:1');
+  expect(await notifications.claim(guild)).toBeNull();
+
+  now += 5 * 60_000;
+  const retry = (await notifications.claim(guild))!;
+  expect(retry.id).toBe(gallery.id);
+  expect(
+    await notifications.release(guild, retry.id, retry.leaseId, 'skipped'),
+  ).toBe(true);
+  expect(
+    await notifications.enqueue(
+      guild,
+      'weekly',
+      gallery.eventKey,
+      payload,
+      now,
+    ),
+  ).toBe(false);
+  expect(await notifications.claim(guild)).toBeNull();
+});
+
 it('uses a completed Monday-to-Monday week in the Wordle time zone', () => {
   expect(previousWordleWeek(Date.parse('2026-11-02T03:00:00Z'))).toEqual({
     weekKey: '2026-10-26',

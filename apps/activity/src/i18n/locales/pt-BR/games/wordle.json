@@ -77,7 +77,7 @@
   "bingoComplete": "Cartela completa!",
   "bingoLines_one": "{{count}} linha completa",
   "bingoLines_other": "{{count}} linhas completas",
-  "challengesDescription": "Convide a comunidade a encontrar uma figura após a abertura do desafio. Não há corrida nem XP extra.",
+  "challengesDescription": "Convide a comunidade a encontrar uma figura. O prazo é de até 30 dias, e cada jogador pode criar até 3 desafios por comunidade a cada 24 horas. Não há corrida nem XP extra.",
   "challengesLoading": "Carregando desafios…",
   "challengesError": "Não foi possível atualizar os desafios. Confira o prazo e tente novamente.",
   "challengesEmpty": "Nenhum desafio criado nesta comunidade.",

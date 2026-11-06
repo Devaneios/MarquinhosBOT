@@ -3,6 +3,7 @@ import sharp from 'sharp';
 import {
   buildCrosswordLayout,
   denseRanks,
+  solvedStatusBanner,
   termoAchievementDetailCard,
   termoAchievementsCard,
   termoCrosswordCard,
@@ -17,6 +18,7 @@ import {
   type TermoAchievementsCardInput,
   type TermoSolvedStatus,
 } from '../compounds/termo';
+import { card } from '../primitives';
 import { render } from '../render';
 import { defaultTheme, type Theme } from '../theme';
 
@@ -43,6 +45,13 @@ export async function buildResultImage(
   const theme = options?.theme ?? defaultTheme;
   return render([termoResultCard(guesses, theme)], {
     width: (32 + 4) * guesses[0].feedback.length + 24,
+    workerMode: false,
+  });
+}
+
+export async function buildWinSummaryImage(attempts: number): Promise<Buffer> {
+  return render([card([solvedStatusBanner({ attempts })])], {
+    width: 480,
     workerMode: false,
   });
 }

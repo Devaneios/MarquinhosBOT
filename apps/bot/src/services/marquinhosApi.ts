@@ -351,9 +351,7 @@ export class MarquinhosApiService {
   }
   async settleWordleNotification(
     guildId: string,
-    body:
-      | { id: string; leaseId: string; result: 'delivered'; messageId: string }
-      | { id: string; leaseId: string; result: 'not_sent' | 'ambiguous' },
+    body: ContractRequest<typeof wordle.settleNotification>['body'],
   ) {
     return callContract(this.client, wordle.settleNotification, {
       params: { guildId },

@@ -31,6 +31,7 @@ describe('wordle protocol', () => {
       userId: 'draft-user',
       instanceId: 'draft-inst',
       guildId: `guild-${randomUUID()}`,
+      guildMembershipVerified: true,
       mode: 'single',
       game: 'wordle',
     } as const;
@@ -104,6 +105,7 @@ describe('wordle protocol', () => {
       userId: 'user-a',
       instanceId: 'inst-1',
       guildId: `guild-${randomUUID()}`,
+      guildMembershipVerified: true,
       mode: 'single',
       game: 'wordle',
     } as const;

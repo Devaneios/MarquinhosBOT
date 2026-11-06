@@ -1,5 +1,8 @@
 import type { GuessRow } from '@marquinhos/contracts/wordle';
-import { buildResultImage } from '@marquinhos/ui/screens/termo';
+import {
+  buildResultImage,
+  buildWinSummaryImage,
+} from '@marquinhos/ui/screens/termo';
 import { baseEmbed } from '@marquinhos/utils/discord';
 import {
   AttachmentBuilder,
@@ -15,6 +18,7 @@ export interface TermoWinResult {
 
 export interface AnnounceTermoWinOptions {
   showPlayButton?: boolean;
+  image?: 'board' | 'summary';
 }
 
 export async function announceTermoWin(
@@ -22,13 +26,15 @@ export async function announceTermoWin(
   channel: GuildTextBasedChannel,
   name: string,
   result: TermoWinResult,
-  { showPlayButton }: AnnounceTermoWinOptions = {},
+  { showPlayButton, image = 'board' }: AnnounceTermoWinOptions = {},
 ): Promise<void> {
-  const resultBuffer = await buildResultImage(result.guesses);
-  const resultAttachment = new AttachmentBuilder(resultBuffer, {
+  const imageBuffer =
+    image === 'summary'
+      ? await buildWinSummaryImage(result.attempts)
+      : await buildResultImage(result.guesses);
+  const attachment = new AttachmentBuilder(imageBuffer, {
     name: 'resultado.png',
   });
-
   const solvedMessage =
     result.attempts === 1
       ? 'acertou de primeira!'
@@ -36,21 +42,20 @@ export async function announceTermoWin(
 
   const embed = baseEmbed(client)
     .setTitle(`${name} ${solvedMessage}`)
-    .setColor(0x588157)
-    .setImage('attachment://resultado.png');
+    .setColor(0x588157);
 
   await channel.send({
     embeds: [embed],
-    files: [resultAttachment],
+    files: [attachment],
     components: showPlayButton ? [buildTermoWinActionRow()] : [],
   });
 
-  if (result.guesses.length === 1) {
+  if (result.attempts === 1) {
     const msg = await channel.send(
       `TAPORRA ${name} EU NUNCA ACREDITEI! ESPERO QUE NUNCA MAIS CONSIGA!`,
     );
     msg.react(':marquinhosverao:1192666622356361367');
-  } else if (result.guesses.length === 2) {
+  } else if (result.attempts === 2) {
     const msg = await channel.send(
       `OLOCO ${name} QUASE HEIN! DA PRÓXIMA VAI SER NO MÍNIMO 5!`,
     );

@@ -149,7 +149,7 @@ export class AdminCommand extends MarquinhosCommand {
                 .addBooleanOption((opt) =>
                   opt
                     .setName('resumo')
-                    .setDescription('Ativar resumo semanal')
+                    .setDescription('Publicar resumo e galeria semanais')
                     .setRequired(true),
                 )
                 .addChannelOption((opt) =>

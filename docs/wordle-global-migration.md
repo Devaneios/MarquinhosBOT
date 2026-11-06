@@ -26,13 +26,13 @@ O XP é compartilhado com outros sistemas e armazenado por jogador e servidor. D
 
 ## Estado e limites
 
-O código da jornada global inclui uma reconciliação individual de conquistas para uso em ambiente de desenvolvimento e testes. Após a ativação futura da jornada global, ela poderá recuperar uma avaliação que falhou depois de um palpite salvo:
+Após a ativação da jornada global, use a reconciliação individual para recuperar uma avaliação que falhou depois de um palpite salvo:
 
 ```sh
 bun apps/api/scripts/reconcileGlobalWordleAchievements.ts --user-id ID --guild-id ID
 ```
 
-A opção `--guild-id` determina o servidor que recebe o XP das conquistas recém-concedidas; use o servidor associado à jogada que precisa ser reconciliada. Repetir a operação não concede a mesma conquista global nem o mesmo XP novamente. O comando imprime apenas o número de conquistas concedidas. A aplicação em produção depende da migração e ativação da jornada global e não faz parte desta etapa.
+A opção `--guild-id` determina o servidor que recebe o XP das conquistas recém-concedidas. Use o servidor associado à jogada que precisa ser reconciliada. Repetir a operação preserva os desbloqueios e o XP já concedidos. O comando imprime apenas o número de conquistas concedidas.
 
 Não existe nesta etapa uma escolha automática entre respostas, sessões ou saldos conflitantes. O próximo passo é revisar a saída agregada e, se necessário, usar uma ferramenta de análise isolada que gere um manifesto sanitizado por conflito, sem aplicar alterações. A migração só deve ser escrita depois de definir regras para cada classe de divergência, testar repetição e restauração em snapshot e revisar o plano operacional.
 
@@ -46,4 +46,19 @@ bun apps/api/scripts/migrateGlobalWordle.ts
 
 Para manter os resultados em uma cópia de teste, use `--apply`. Em caso de palavras, sessões ou rascunhos conflitantes, ela retorna categorias de conflito e não aplica nenhuma parte da conversão. O histórico antigo e os saldos de XP existentes não são alterados. Origens das sessões são guardadas e desbloqueios são consolidados sem conceder XP novamente. Evidências inválidas permanecem no histórico antigo e não são copiadas para a coleção global.
 
-A aplicação exige parar todos os escritores e workers da versão antiga antes da auditoria e durante a conversão; a trava da ferramenta não impede que binários antigos escrevam. Repetir sobre a mesma origem é seguro, mas qualquer alteração na origem após a conversão faz a ferramenta recusar uma nova execução. Antes de produção ainda é necessário resolver conflitos reais, validar equivalência do histórico, implementar e testar o caminho de ativação e a restauração, e obter instrução explícita para implantação.
+## Ordem do corte
+
+1. Restaure um backup representativo em PostgreSQL isolado. Aplique as migrações de schema da versão e aponte `DATABASE_URL` para a cópia. Rode a auditoria com acesso somente leitura, depois rode a conversão sem `--apply` com acesso de escrita.
+2. Resolva as divergências apontadas antes de continuar. Repita a conversão na cópia e confira sessões, presença por servidor, desbloqueios e saldos de XP. Teste a restauração do backup e o fluxo no Discord com dois servidores de teste.
+3. Na janela autorizada de corte, pare os escritores e workers antigos. Tire um backup do banco congelado, aplique as migrações de schema da versão e repita a auditoria e o dry run com as mesmas versões ensaiadas. A trava do script coordena conversões concorrentes. A parada dos escritores mantém a origem estável.
+4. Execute a conversão com `--apply`. Ela grava a linha `legacy-wordle` em `wordle_global_migration_state`, que ativa a jornada global no código novo. As migrações de schema executadas no startup criam a tabela de controle.
+5. Inicie API, bot e Activity da versão compatível. Confirme que o mesmo jogador vê a mesma partida em dois servidores e que o progresso aparece somente nas comunidades elegíveis. Teste um anúncio no canal com opt-in e acompanhe as falhas de projeção e entrega no log.
+6. Se a validação falhar, mantenha os escritores parados. Antes de restaurar o backup, preserve uma cópia de qualquer escrita aceita depois do corte. Restaure o banco e a versão correspondentes antes de reabrir o tráfego.
+
+Repetir a conversão sobre a mesma origem é seguro. Uma mudança na origem após a conversão faz a ferramenta recusar uma nova execução.
+
+Para aplicar somente as migrações de schema, rode na raiz do repositório com `DATABASE_URL` apontando para o banco da etapa:
+
+```sh
+pnpm --filter marquinhos-web-api exec bun -e 'import { runMigrations } from "@marquinhos/database/migrate"; import { closeDefaultDb } from "@marquinhos/database/client"; await runMigrations(); await closeDefaultDb();'
+```

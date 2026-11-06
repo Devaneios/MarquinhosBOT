@@ -18,6 +18,7 @@ import {
   wordleCommunityDailyPresence,
   wordleCommunityFirstSolves,
   wordleCommunityParticipation,
+  wordleCommunityWinAnnouncements,
   wordleDrafts,
   wordleGlobalAchievements,
   wordleGlobalDiscoveries,
@@ -77,6 +78,7 @@ const USER_OWNED_TABLES: readonly (readonly [
   [wordleGlobalOccurrences, wordleGlobalOccurrences.user_id],
   [wordleCommunityDailyPresence, wordleCommunityDailyPresence.user_id],
   [wordleCommunityFirstSolves, wordleCommunityFirstSolves.user_id],
+  [wordleCommunityWinAnnouncements, wordleCommunityWinAnnouncements.user_id],
   [wordleCommunityParticipation, wordleCommunityParticipation.user_id],
   [wordleShowcase, wordleShowcase.user_id],
   [wordleDrafts, wordleDrafts.user_id],
@@ -161,13 +163,13 @@ export class UserService {
   async deleteAllData(id: string) {
     await db.transaction(async (tx) => {
       await lockGoalFactsForWrite(tx);
+      for (const [table, column] of USER_OWNED_TABLES) {
+        await tx.delete(table).where(eq(column, id));
+      }
       await tx
         .update(wordlePatternChallenges)
         .set({ creator_user_id: null })
         .where(eq(wordlePatternChallenges.creator_user_id, id));
-      for (const [table, column] of USER_OWNED_TABLES) {
-        await tx.delete(table).where(eq(column, id));
-      }
     });
   }
 

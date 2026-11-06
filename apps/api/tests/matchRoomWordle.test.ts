@@ -50,6 +50,7 @@ function sessionFor(userId: string, guildId: string) {
     userId,
     instanceId,
     guildId: `${guildId}-${testRunId}`,
+    guildMembershipVerified: true,
     mode,
     game,
   });
@@ -64,6 +65,46 @@ function pickWordOfLength(length: number): string {
 }
 
 describe('MatchRoom · wordle', () => {
+  it('rejects a private token for another game without verified membership', async () => {
+    const identity = {
+      userId: 'unverified-user',
+      instanceId: 'inst-1',
+      guildId: 'other-guild',
+      mode: 'single',
+      game: 'pong',
+    } as const;
+    const room = await colyseus.createRoom('match', {
+      game: 'wordle',
+      roomKey: roomKey({ ...identity, game: 'wordle' }),
+    });
+    await expect(
+      colyseus.connectTo(room, {
+        token: mintWsSessionToken(identity),
+        roomKey: roomKey(identity),
+      }),
+    ).rejects.toThrow('Guild membership');
+  });
+
+  it('rejects switching an unverified private room into Wordle', async () => {
+    const identity = {
+      userId: 'unverified-host',
+      instanceId: 'inst-1',
+      guildId: 'other-guild',
+      mode: 'single',
+      game: 'pong',
+    } as const;
+    const token = mintWsSessionToken(identity);
+    const options = { token, roomKey: roomKey(identity) };
+    const room = await colyseus.createRoom('match', options);
+    const client = await colyseus.connectTo(room, options);
+    client.send('switch_game', { game: 'wordle' });
+    expect(
+      await nextMessage<{ error: string }>(client, 'action_rejected'),
+    ).toEqual({
+      error: 'Guild membership is required for Wordle',
+    });
+  });
+
   it('rejects a join with an invalid session token', async () => {
     const room = await colyseus.createRoom('match', {
       game: 'wordle',

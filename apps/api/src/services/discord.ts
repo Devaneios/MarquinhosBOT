@@ -84,6 +84,12 @@ export class DiscordService {
   };
 
   isGuildMember = async (token: string, guildId: string): Promise<boolean> => {
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      token === 'mock-access-token'
+    ) {
+      return guildId === '123456789012345678';
+    }
     try {
       const response = await fetch(
         `https://discord.com/api/users/@me/guilds/${encodeURIComponent(guildId)}/member`,

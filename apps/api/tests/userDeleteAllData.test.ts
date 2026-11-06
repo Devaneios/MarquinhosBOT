@@ -58,6 +58,9 @@ async function seed(userId: string) {
     (guild_id, user_id, first_seen_at, last_seen_at) VALUES ('g', ${userId}, ${now}, ${now})`);
   await db.execute(sql`INSERT INTO wordle_community_daily_presence
     (guild_id, user_id, word_date, first_seen_at) VALUES ('g', ${userId}, '2026-09-24', ${now})`);
+  await db.execute(sql`INSERT INTO wordle_community_win_announcements
+    (guild_id, user_id, word_date, announced_at)
+    VALUES ('g', ${userId}, '2026-09-24', ${now})`);
   await db.execute(sql`INSERT INTO wordle_showcase
     (user_id, slot, achievement_id, updated_at) VALUES (${userId}, 1, 'wordle_v2_solve_1', ${now})`);
   await db.execute(sql`INSERT INTO wordle_global_achievements
@@ -168,6 +171,7 @@ describe('UserService.deleteAllData', () => {
       ['wordle_equipped_rewards', 'user_id'],
       ['wordle_community_participation', 'user_id'],
       ['wordle_community_daily_presence', 'user_id'],
+      ['wordle_community_win_announcements', 'user_id'],
       ['wordle_showcase', 'user_id'],
       ['ai_traces', 'user_id'],
       ['ai_thread_sessions', 'owner_user_id'],

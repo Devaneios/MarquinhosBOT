@@ -74,13 +74,18 @@ export class WordleNotificationsController {
         leaseId,
         input.body.messageId,
       );
-    else if (result === 'not_sent')
-      recorded = await this.service.release(input.params.guildId, id, leaseId);
-    else
+    else if (result === 'ambiguous')
       recorded = await this.service.ambiguous(
         input.params.guildId,
         id,
         leaseId,
+      );
+    else
+      recorded = await this.service.release(
+        input.params.guildId,
+        id,
+        leaseId,
+        result,
       );
     sendContract(res, contract.settleNotification, { data: { recorded } });
   }

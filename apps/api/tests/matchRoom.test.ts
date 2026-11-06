@@ -2247,6 +2247,7 @@ describe('MatchRoom', () => {
         guildId,
         mode,
         game: 'wordle',
+        guildMembershipVerified: true,
         roomId,
       });
       return { key, token };

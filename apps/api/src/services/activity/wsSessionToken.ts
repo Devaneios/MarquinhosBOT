@@ -15,6 +15,7 @@ const wsSessionPayloadSchema = z
     displayName: z.string().min(1).max(80).optional(),
     instanceId: z.string(),
     guildId: z.string(),
+    guildMembershipVerified: z.literal(true).optional(),
     mode: activityModeSchema,
     game: gameIdSchema,
     difficulty: z.enum(BOT_DIFFICULTIES).optional(),

@@ -62,25 +62,24 @@ export async function deliverWordleNotification(
         : `📚 Resumo semanal: ${pages} ${pages === 1 ? 'página' : 'páginas'} do álbum e ${goals} ${goals === 1 ? 'meta concluída' : 'metas concluídas'}.`;
   let components: Message['components'];
   if (event.kind === 'weekly' && event.payload.gallery === '1') {
+    const week = event.payload.week;
     let gallery: Awaited<ReturnType<NonNullable<typeof loadGallery>>> | null =
       null;
     try {
-      if (loadGallery && event.payload.week)
-        gallery = await loadGallery(event.payload.week);
+      if (loadGallery && week) gallery = await loadGallery(week);
     } catch {
       /* retry when the source is available */
     }
-    const entries =
-      gallery?.weekKey === event.payload.week
-        ? gallery.entries.filter((entry) => /^\d{1,20}$/.test(entry.userId))
-        : [];
-    if (!entries.length) {
-      await api.settleWordleNotification(guildId, {
+    const entries = gallery?.entries.filter((entry) =>
+      /^\d{1,20}$/.test(entry.userId),
+    );
+    if (!week || !gallery || gallery.weekKey !== week || !entries?.length) {
+      const settled = await api.settleWordleNotification(guildId, {
         id: event.id,
         leaseId: event.leaseId,
-        result: 'not_sent',
+        result: !week || gallery?.weekKey === week ? 'skipped' : 'retry_later',
       });
-      return false;
+      return settled.data.recorded;
     }
     const lines = entries
       .slice(0, 15)
@@ -88,7 +87,7 @@ export async function deliverWordleNotification(
         (entry) =>
           `• <@${entry.userId}> — ${entry.name} (${entry.date.split('-').reverse().join('/')})`,
       );
-    content = `🖼️ Galeria da semana iniciada em ${gallery!.weekKey.split('-').reverse().join('/')}\n${lines.join('\n')}${entries.length > lines.length ? `\nE mais ${entries.length - lines.length} participantes.` : ''}`;
+    content = `🖼️ Galeria da semana iniciada em ${week.split('-').reverse().join('/')}\n${lines.join('\n')}${entries.length > lines.length ? `\nE mais ${entries.length - lines.length} participantes.` : ''}`;
     components = [buildTermoWinActionRow()];
   }
   let sent: { id: string };

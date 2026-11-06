@@ -49,6 +49,13 @@ const SWITCHABLE_GAMES: ReadonlySet<GameId> = new Set(
   ),
 );
 
+const WORDLE_MEMBERSHIP_ERROR = 'Guild membership is required for Wordle';
+
+function canPlayCommunityWordle(session: WsSessionPayload): boolean {
+  // Multiplayer session tokens already require a guild membership check.
+  return session.mode === 'multi' || session.guildMembershipVerified === true;
+}
+
 export class MatchRoom extends Room<{
   client: AuthedClient;
   metadata: MatchRoomMetadata;
@@ -120,6 +127,9 @@ export class MatchRoom extends Room<{
     if (!session) throw new Error('Invalid or expired session token');
     if (roomKey(session) !== options.roomKey) {
       throw new Error('Room key does not match session identity');
+    }
+    if (this.game === 'wordle' && !canPlayCommunityWordle(session)) {
+      throw new Error(WORDLE_MEMBERSHIP_ERROR);
     }
     return session;
   }
@@ -338,6 +348,15 @@ export class MatchRoom extends Room<{
         client.send(ACTION_REJECTED, {
           error: 'Unknown or unswitchable game',
         });
+        return;
+      }
+      if (
+        game === 'wordle' &&
+        this.clients.some(
+          (member) => !canPlayCommunityWordle(requireAuth(member)),
+        )
+      ) {
+        client.send(ACTION_REJECTED, { error: WORDLE_MEMBERSHIP_ERROR });
         return;
       }
       this.switchGame(game);

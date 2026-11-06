@@ -33,6 +33,7 @@ afterAll(async () => {
 });
 
 it('allows a known figure, late entry and only verified occurrences during the invitation', async () => {
+  now = 100;
   await expect(
     challenges.create('a', 'unknown', 'letter_a', 300),
   ).rejects.toThrow();
@@ -63,6 +64,7 @@ it('allows a known figure, late entry and only verified occurrences during the i
       user_id,
       word_date: '2026-10-01',
       first_seen_at: 1,
+      recorded_at_ms: 100,
     })),
   );
   now = 200;
@@ -77,4 +79,48 @@ it('allows a known figure, late entry and only verified occurrences during the i
   now = 300;
   await expect(challenges.join(invite.id, 'a', 'late')).rejects.toThrow();
   expect((await challenges.get(invite.id, 'a')).status).toBe('closed');
+});
+
+it('does not add a participant who first visits the community after the challenge closes', async () => {
+  now = 1000;
+  const invite = await challenges.create(
+    'late-visit',
+    'owner',
+    'letter_a',
+    2000,
+  );
+  await challenges.join(invite.id, 'late-visit', 'visitor');
+  await testDb.db.insert(wordleGlobalOccurrences).values({
+    user_id: 'visitor',
+    word_date: '2026-10-02',
+    pattern_id: 'letter_a',
+    session_id: 'other-community',
+    occurred_at: 1500,
+    source_at: 1500,
+    evidence: {},
+  });
+  now = 2001;
+  await testDb.db.insert(wordleCommunityDailyPresence).values({
+    guild_id: 'late-visit',
+    user_id: 'visitor',
+    word_date: '2026-10-02',
+    first_seen_at: 2,
+    recorded_at_ms: now,
+  });
+  expect((await challenges.get(invite.id, 'late-visit')).participants).toEqual(
+    [],
+  );
+});
+
+it('limits simultaneous creations by the same member in one community', async () => {
+  now = 3000;
+  const created = await Promise.allSettled(
+    Array.from({ length: 4 }, () =>
+      challenges.create('creation-limit', 'owner', 'letter_a', 4000),
+    ),
+  );
+  expect(
+    created.filter((result) => result.status === 'fulfilled'),
+  ).toHaveLength(3);
+  expect(await challenges.list('creation-limit')).toHaveLength(3);
 });

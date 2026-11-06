@@ -97,15 +97,29 @@ it('publishes a gallery only when its closed week still has entries', async () =
     settleWordleNotification: settle,
   };
   const channel = async () => ({ guildId: 'a', send });
-  await deliverWordleNotification('a', api, channel, async () => ({
-    weekKey: '2026-10-26',
-    entries: [],
-  }));
+  const processed = await deliverWordleNotification(
+    'a',
+    api,
+    channel,
+    async () => ({ weekKey: '2026-10-26', entries: [] }),
+  );
+  expect(processed).toBe(true);
   expect(send).not.toHaveBeenCalled();
   expect(settle).toHaveBeenCalledWith('a', {
     id: 'id',
     leaseId: 'lease',
-    result: 'not_sent',
+    result: 'skipped',
+  });
+  expect(
+    await deliverWordleNotification('a', api, channel, async () => {
+      throw new Error('Gallery API unavailable');
+    }),
+  ).toBe(true);
+  expect(send).not.toHaveBeenCalled();
+  expect(settle).toHaveBeenLastCalledWith('a', {
+    id: 'id',
+    leaseId: 'lease',
+    result: 'retry_later',
   });
   await deliverWordleNotification('a', api, channel, async () => ({
     weekKey: '2026-10-26',

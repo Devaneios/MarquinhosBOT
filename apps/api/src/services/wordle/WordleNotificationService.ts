@@ -13,6 +13,7 @@ type Config = {
   weekly: boolean;
 };
 type Kind = 'page' | 'goal' | 'weekly';
+const GALLERY_RETRY_DELAY_MS = 5 * 60_000;
 
 export function previousWordleWeek(now: number): {
   weekKey: string;
@@ -286,6 +287,7 @@ export class WordleNotificationService {
     guildId: string,
     id: string,
     leaseId: string,
+    result: 'not_sent' | 'retry_later' | 'skipped' = 'not_sent',
   ): Promise<boolean> {
     const rows = await this.database
       .update(wordleNotifications)
@@ -294,6 +296,11 @@ export class WordleNotificationService {
         lease_id: null,
         lease_started_at: null,
         channel_id: null,
+        // Keep a skipped event's key so the scheduler cannot enqueue it again.
+        ...(result === 'skipped' ? { deliver_individual: false } : {}),
+        ...(result === 'retry_later'
+          ? { eligible_at: this.now() + GALLERY_RETRY_DELAY_MS }
+          : {}),
       })
       .where(
         and(
@@ -301,6 +308,12 @@ export class WordleNotificationService {
           eq(wordleNotifications.id, id),
           eq(wordleNotifications.lease_id, leaseId),
           eq(wordleNotifications.status, 'sending'),
+          result === 'not_sent'
+            ? undefined
+            : and(
+                eq(wordleNotifications.event_type, 'weekly'),
+                sql`${wordleNotifications.payload}->>'gallery' = '1'`,
+              ),
         ),
       )
       .returning({ id: wordleNotifications.id });

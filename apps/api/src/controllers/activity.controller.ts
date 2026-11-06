@@ -198,12 +198,8 @@ class ActivityController {
       if (!user?.id) {
         return res.status(401).json({ message: 'Invalid access token' });
       }
-      if (mode === 'multi') {
-        if (!roomId) {
-          return res
-            .status(400)
-            .json({ message: 'roomId is required for multi mode' });
-        }
+      const requiresGuildMembership = mode === 'multi' || game === 'wordle';
+      if (requiresGuildMembership) {
         const isMember = await this.discordService.isGuildMember(
           accessToken,
           guildId,
@@ -256,6 +252,9 @@ class ActivityController {
         guildId,
         mode,
         game,
+        ...(game === 'wordle' && mode !== 'multi'
+          ? { guildMembershipVerified: true }
+          : {}),
         ...(difficulty !== undefined ? { difficulty } : {}),
         ...(winningScore !== undefined ? { winningScore } : {}),
         ...(ruleset !== undefined ? { ruleset } : {}),
