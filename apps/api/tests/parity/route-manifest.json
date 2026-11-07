@@ -1,0 +1,2061 @@
+{
+  "generatedFrom": "Express router stacks and @marquinhos/contracts",
+  "routeCount": 97,
+  "contractCount": 97,
+  "routes": [
+    {
+      "id": "GET /api/health",
+      "method": "GET",
+      "path": "/api/health",
+      "mount": "/api/health",
+      "routerPath": "/",
+      "middlewareChain": [],
+      "successStatus": 200,
+      "contractExport": "health.health",
+      "contractMatches": [
+        "health.health"
+      ],
+      "examplePath": "/api/health",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "not-applicable: route has no auth guard",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/activities/token",
+      "method": "POST",
+      "path": "/api/activities/token",
+      "mount": "/api/activities",
+      "routerPath": "/token",
+      "middlewareChain": [
+        "rateLimit",
+        "validateContract"
+      ],
+      "successStatus": 200,
+      "contractExport": "activity.exchangeToken",
+      "contractMatches": [
+        "activity.exchangeToken"
+      ],
+      "examplePath": "/api/activities/token",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "not-applicable: route has no auth guard",
+        "authenticatedEmptyBody": "capture: contract middleware rejects before the handler"
+      }
+    },
+    {
+      "id": "POST /api/activities/ws-session",
+      "method": "POST",
+      "path": "/api/activities/ws-session",
+      "mount": "/api/activities",
+      "routerPath": "/ws-session",
+      "middlewareChain": [
+        "rateLimit",
+        "validateContract"
+      ],
+      "successStatus": 200,
+      "contractExport": "activity.wsSession",
+      "contractMatches": [
+        "activity.wsSession"
+      ],
+      "examplePath": "/api/activities/ws-session",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "not-applicable: route has no auth guard",
+        "authenticatedEmptyBody": "capture: contract middleware rejects before the handler"
+      }
+    },
+    {
+      "id": "POST /api/activities/pong/leaderboard",
+      "method": "POST",
+      "path": "/api/activities/pong/leaderboard",
+      "mount": "/api/activities",
+      "routerPath": "/pong/leaderboard",
+      "middlewareChain": [
+        "rateLimit",
+        "validateContract"
+      ],
+      "successStatus": 200,
+      "contractExport": "activity.pongLeaderboard",
+      "contractMatches": [
+        "activity.pongLeaderboard"
+      ],
+      "examplePath": "/api/activities/pong/leaderboard",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "not-applicable: route has no auth guard",
+        "authenticatedEmptyBody": "capture: contract middleware rejects before the handler"
+      }
+    },
+    {
+      "id": "POST /api/activities/pong/tournaments/create",
+      "method": "POST",
+      "path": "/api/activities/pong/tournaments/create",
+      "mount": "/api/activities",
+      "routerPath": "/pong/tournaments/create",
+      "middlewareChain": [
+        "rateLimit",
+        "validateContract"
+      ],
+      "successStatus": 201,
+      "contractExport": "activity.createPongTournament",
+      "contractMatches": [
+        "activity.createPongTournament"
+      ],
+      "examplePath": "/api/activities/pong/tournaments/create",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "not-applicable: route has no auth guard",
+        "authenticatedEmptyBody": "capture: contract middleware rejects before the handler"
+      }
+    },
+    {
+      "id": "POST /api/activities/pong/tournaments/list",
+      "method": "POST",
+      "path": "/api/activities/pong/tournaments/list",
+      "mount": "/api/activities",
+      "routerPath": "/pong/tournaments/list",
+      "middlewareChain": [
+        "rateLimit",
+        "validateContract"
+      ],
+      "successStatus": 200,
+      "contractExport": "activity.listPongTournaments",
+      "contractMatches": [
+        "activity.listPongTournaments"
+      ],
+      "examplePath": "/api/activities/pong/tournaments/list",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "not-applicable: route has no auth guard",
+        "authenticatedEmptyBody": "capture: contract middleware rejects before the handler"
+      }
+    },
+    {
+      "id": "POST /api/activities/pong/tournaments/report",
+      "method": "POST",
+      "path": "/api/activities/pong/tournaments/report",
+      "mount": "/api/activities",
+      "routerPath": "/pong/tournaments/report",
+      "middlewareChain": [
+        "rateLimit",
+        "validateContract"
+      ],
+      "successStatus": 200,
+      "contractExport": "activity.reportPongTournamentMatch",
+      "contractMatches": [
+        "activity.reportPongTournamentMatch"
+      ],
+      "examplePath": "/api/activities/pong/tournaments/report",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "not-applicable: route has no auth guard",
+        "authenticatedEmptyBody": "capture: contract middleware rejects before the handler"
+      }
+    },
+    {
+      "id": "POST /api/activities/deep-link",
+      "method": "POST",
+      "path": "/api/activities/deep-link",
+      "mount": "/api/activities",
+      "routerPath": "/deep-link",
+      "middlewareChain": [
+        "botAuth",
+        "validateContract"
+      ],
+      "successStatus": 200,
+      "contractExport": "activity.recordDeepLink",
+      "contractMatches": [
+        "activity.recordDeepLink"
+      ],
+      "examplePath": "/api/activities/deep-link",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "capture: contract middleware rejects before the handler"
+      }
+    },
+    {
+      "id": "POST /api/activities/deep-link/claim",
+      "method": "POST",
+      "path": "/api/activities/deep-link/claim",
+      "mount": "/api/activities",
+      "routerPath": "/deep-link/claim",
+      "middlewareChain": [
+        "rateLimit",
+        "validateContract"
+      ],
+      "successStatus": 200,
+      "contractExport": "activity.claimDeepLink",
+      "contractMatches": [
+        "activity.claimDeepLink"
+      ],
+      "examplePath": "/api/activities/deep-link/claim",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "not-applicable: route has no auth guard",
+        "authenticatedEmptyBody": "capture: contract middleware rejects before the handler"
+      }
+    },
+    {
+      "id": "POST /api/activities/rooms",
+      "method": "POST",
+      "path": "/api/activities/rooms",
+      "mount": "/api/activities",
+      "routerPath": "/rooms",
+      "middlewareChain": [
+        "rateLimit",
+        "validateContract"
+      ],
+      "successStatus": 200,
+      "contractExport": "activity.createRoom",
+      "contractMatches": [
+        "activity.createRoom"
+      ],
+      "examplePath": "/api/activities/rooms",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "not-applicable: route has no auth guard",
+        "authenticatedEmptyBody": "capture: contract middleware rejects before the handler"
+      }
+    },
+    {
+      "id": "POST /api/activities/rooms/list",
+      "method": "POST",
+      "path": "/api/activities/rooms/list",
+      "mount": "/api/activities",
+      "routerPath": "/rooms/list",
+      "middlewareChain": [
+        "rateLimit",
+        "validateContract"
+      ],
+      "successStatus": 200,
+      "contractExport": "activity.listRooms",
+      "contractMatches": [
+        "activity.listRooms"
+      ],
+      "examplePath": "/api/activities/rooms/list",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "not-applicable: route has no auth guard",
+        "authenticatedEmptyBody": "capture: contract middleware rejects before the handler"
+      }
+    },
+    {
+      "id": "GET /api/auth/login",
+      "method": "GET",
+      "path": "/api/auth/login",
+      "mount": "/api/auth",
+      "routerPath": "/login",
+      "middlewareChain": [],
+      "successStatus": 200,
+      "contractExport": "auth.login",
+      "contractMatches": [
+        "auth.login"
+      ],
+      "examplePath": "/api/auth/login",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "not-applicable: route has no auth guard",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/auth/refresh_token",
+      "method": "GET",
+      "path": "/api/auth/refresh_token",
+      "mount": "/api/auth",
+      "routerPath": "/refresh_token",
+      "middlewareChain": [],
+      "successStatus": 200,
+      "contractExport": "auth.refreshToken",
+      "contractMatches": [
+        "auth.refreshToken"
+      ],
+      "examplePath": "/api/auth/refresh_token",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "not-applicable: route has no auth guard",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/auth/discordLoginUrl",
+      "method": "GET",
+      "path": "/api/auth/discordLoginUrl",
+      "mount": "/api/auth",
+      "routerPath": "/discordLoginUrl",
+      "middlewareChain": [],
+      "successStatus": 200,
+      "contractExport": "auth.discordLoginUrl",
+      "contractMatches": [
+        "auth.discordLoginUrl"
+      ],
+      "examplePath": "/api/auth/discordLoginUrl",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "not-applicable: route has no auth guard",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/auth/lastfmLoginUrl",
+      "method": "GET",
+      "path": "/api/auth/lastfmLoginUrl",
+      "mount": "/api/auth",
+      "routerPath": "/lastfmLoginUrl",
+      "middlewareChain": [],
+      "successStatus": 200,
+      "contractExport": "auth.lastfmLoginUrl",
+      "contractMatches": [
+        "auth.lastfmLoginUrl"
+      ],
+      "examplePath": "/api/auth/lastfmLoginUrl",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "not-applicable: route has no auth guard",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/user/profile",
+      "method": "GET",
+      "path": "/api/user/profile",
+      "mount": "/api/user",
+      "routerPath": "/profile",
+      "middlewareChain": [
+        "discordUserAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "user.getProfile",
+      "contractMatches": [
+        "user.getProfile"
+      ],
+      "examplePath": "/api/user/profile",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/user/exists/:id",
+      "method": "GET",
+      "path": "/api/user/exists/:id",
+      "mount": "/api/user",
+      "routerPath": "/exists/:id",
+      "middlewareChain": [
+        "discordUserAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "user.exists",
+      "contractMatches": [
+        "user.exists"
+      ],
+      "examplePath": "/api/user/exists/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/user/lastfm-status",
+      "method": "GET",
+      "path": "/api/user/lastfm-status",
+      "mount": "/api/user",
+      "routerPath": "/lastfm-status",
+      "middlewareChain": [
+        "discordUserAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "user.lastfmStatus",
+      "contractMatches": [
+        "user.lastfmStatus"
+      ],
+      "examplePath": "/api/user/lastfm-status",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/user/enable-lastfm",
+      "method": "POST",
+      "path": "/api/user/enable-lastfm",
+      "mount": "/api/user",
+      "routerPath": "/enable-lastfm",
+      "middlewareChain": [
+        "discordUserAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "user.enableLastfm",
+      "contractMatches": [
+        "user.enableLastfm"
+      ],
+      "examplePath": "/api/user/enable-lastfm",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "DELETE /api/user/lastfm",
+      "method": "DELETE",
+      "path": "/api/user/lastfm",
+      "mount": "/api/user",
+      "routerPath": "/lastfm",
+      "middlewareChain": [
+        "discordUserAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "user.deleteLastfmData",
+      "contractMatches": [
+        "user.deleteLastfmData"
+      ],
+      "examplePath": "/api/user/lastfm",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "DELETE /api/user",
+      "method": "DELETE",
+      "path": "/api/user",
+      "mount": "/api/user",
+      "routerPath": "/",
+      "middlewareChain": [
+        "discordUserAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "user.deleteAllData",
+      "contractMatches": [
+        "user.deleteAllData"
+      ],
+      "examplePath": "/api/user",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "PATCH /api/user/toggle-scrobble",
+      "method": "PATCH",
+      "path": "/api/user/toggle-scrobble",
+      "mount": "/api/user",
+      "routerPath": "/toggle-scrobble",
+      "middlewareChain": [
+        "discordUserAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "user.toggleScrobbles",
+      "contractMatches": [
+        "user.toggleScrobbles"
+      ],
+      "examplePath": "/api/user/toggle-scrobble",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/user/top-artists/:period/:id",
+      "method": "GET",
+      "path": "/api/user/top-artists/:period/:id",
+      "mount": "/api/user",
+      "routerPath": "/top-artists/:period/:id",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "user.getTopArtists",
+      "contractMatches": [
+        "user.getTopArtists"
+      ],
+      "examplePath": "/api/user/top-artists/7day/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/user/top-albums/:period/:id",
+      "method": "GET",
+      "path": "/api/user/top-albums/:period/:id",
+      "mount": "/api/user",
+      "routerPath": "/top-albums/:period/:id",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "user.getTopAlbums",
+      "contractMatches": [
+        "user.getTopAlbums"
+      ],
+      "examplePath": "/api/user/top-albums/7day/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/user/top-tracks/:period/:id",
+      "method": "GET",
+      "path": "/api/user/top-tracks/:period/:id",
+      "mount": "/api/user",
+      "routerPath": "/top-tracks/:period/:id",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "user.getTopTracks",
+      "contractMatches": [
+        "user.getTopTracks"
+      ],
+      "examplePath": "/api/user/top-tracks/7day/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/scrobble/queue",
+      "method": "POST",
+      "path": "/api/scrobble/queue",
+      "mount": "/api/scrobble",
+      "routerPath": "/queue",
+      "middlewareChain": [
+        "botAuth",
+        "validateContract"
+      ],
+      "successStatus": 200,
+      "contractExport": "scrobble.addToQueue",
+      "contractMatches": [
+        "scrobble.addToQueue"
+      ],
+      "examplePath": "/api/scrobble/queue",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "capture: contract middleware rejects before the handler"
+      }
+    },
+    {
+      "id": "POST /api/scrobble/:id",
+      "method": "POST",
+      "path": "/api/scrobble/:id",
+      "mount": "/api/scrobble",
+      "routerPath": "/:id",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "scrobble.dispatch",
+      "contractMatches": [
+        "scrobble.dispatch"
+      ],
+      "examplePath": "/api/scrobble/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "DELETE /api/scrobble/:scrobbleId/:userId",
+      "method": "DELETE",
+      "path": "/api/scrobble/:scrobbleId/:userId",
+      "mount": "/api/scrobble",
+      "routerPath": "/:scrobbleId/:userId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "scrobble.removeUser",
+      "contractMatches": [
+        "scrobble.removeUser"
+      ],
+      "examplePath": "/api/scrobble/parity-scrobbleId/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/scrobble/:scrobbleId/:userId",
+      "method": "POST",
+      "path": "/api/scrobble/:scrobbleId/:userId",
+      "mount": "/api/scrobble",
+      "routerPath": "/:scrobbleId/:userId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "scrobble.addUser",
+      "contractMatches": [
+        "scrobble.addUser"
+      ],
+      "examplePath": "/api/scrobble/parity-scrobbleId/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/privacy-policy",
+      "method": "GET",
+      "path": "/api/privacy-policy",
+      "mount": "/api/privacy-policy",
+      "routerPath": "/",
+      "middlewareChain": [],
+      "successStatus": 200,
+      "contractExport": "privacyPolicy.privacyPolicy",
+      "contractMatches": [
+        "privacyPolicy.privacyPolicy"
+      ],
+      "examplePath": "/api/privacy-policy",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "not-applicable: route has no auth guard",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/ai-chat/respond",
+      "method": "POST",
+      "path": "/api/ai-chat/respond",
+      "mount": "/api/ai-chat",
+      "routerPath": "/respond",
+      "middlewareChain": [
+        "botAuth",
+        "validateContract"
+      ],
+      "successStatus": 200,
+      "contractExport": "aiChat.respond",
+      "contractMatches": [
+        "aiChat.respond"
+      ],
+      "examplePath": "/api/ai-chat/respond",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "capture: contract middleware rejects before the handler"
+      }
+    },
+    {
+      "id": "POST /api/ai-chat/thread/ask",
+      "method": "POST",
+      "path": "/api/ai-chat/thread/ask",
+      "mount": "/api/ai-chat",
+      "routerPath": "/thread/ask",
+      "middlewareChain": [
+        "botAuth",
+        "validateContract"
+      ],
+      "successStatus": 200,
+      "contractExport": "aiChat.askInThread",
+      "contractMatches": [
+        "aiChat.askInThread"
+      ],
+      "examplePath": "/api/ai-chat/thread/ask",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "capture: contract middleware rejects before the handler"
+      }
+    },
+    {
+      "id": "POST /api/ai-chat/research",
+      "method": "POST",
+      "path": "/api/ai-chat/research",
+      "mount": "/api/ai-chat",
+      "routerPath": "/research",
+      "middlewareChain": [
+        "botAuth",
+        "validateContract"
+      ],
+      "successStatus": 202,
+      "dynamicSuccessStatuses": [
+        200,
+        202
+      ],
+      "contractExport": "aiChat.startResearch",
+      "contractMatches": [
+        "aiChat.startResearch"
+      ],
+      "examplePath": "/api/ai-chat/research",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "capture: contract middleware rejects before the handler"
+      }
+    },
+    {
+      "id": "GET /api/ai-chat/research/:jobId",
+      "method": "GET",
+      "path": "/api/ai-chat/research/:jobId",
+      "mount": "/api/ai-chat",
+      "routerPath": "/research/:jobId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "aiChat.getResearchJob",
+      "contractMatches": [
+        "aiChat.getResearchJob"
+      ],
+      "examplePath": "/api/ai-chat/research/parity-jobId",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/ai-chat/traces",
+      "method": "GET",
+      "path": "/api/ai-chat/traces",
+      "mount": "/api/ai-chat",
+      "routerPath": "/traces",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "aiChat.listTraces",
+      "contractMatches": [
+        "aiChat.listTraces"
+      ],
+      "examplePath": "/api/ai-chat/traces",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/ai-chat/traces/:traceId",
+      "method": "GET",
+      "path": "/api/ai-chat/traces/:traceId",
+      "mount": "/api/ai-chat",
+      "routerPath": "/traces/:traceId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "aiChat.getTrace",
+      "contractMatches": [
+        "aiChat.getTrace"
+      ],
+      "examplePath": "/api/ai-chat/traces/parity-trace",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/emoji-reaction/choose",
+      "method": "POST",
+      "path": "/api/emoji-reaction/choose",
+      "mount": "/api/emoji-reaction",
+      "routerPath": "/choose",
+      "middlewareChain": [
+        "botAuth",
+        "validateContract"
+      ],
+      "successStatus": 200,
+      "contractExport": "emojiReaction.choose",
+      "contractMatches": [
+        "emojiReaction.choose"
+      ],
+      "examplePath": "/api/emoji-reaction/choose",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "capture: contract middleware rejects before the handler"
+      }
+    },
+    {
+      "id": "GET /api/gamification/xp-config",
+      "method": "GET",
+      "path": "/api/gamification/xp-config",
+      "mount": "/api/gamification",
+      "routerPath": "/xp-config",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "gamification.getXpConfig",
+      "contractMatches": [
+        "gamification.getXpConfig"
+      ],
+      "examplePath": "/api/gamification/xp-config",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/gamification/xp",
+      "method": "POST",
+      "path": "/api/gamification/xp",
+      "mount": "/api/gamification",
+      "routerPath": "/xp",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "gamification.addXp",
+      "contractMatches": [
+        "gamification.addXp"
+      ],
+      "examplePath": "/api/gamification/xp",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/gamification/level/:userId/:guildId",
+      "method": "GET",
+      "path": "/api/gamification/level/:userId/:guildId",
+      "mount": "/api/gamification",
+      "routerPath": "/level/:userId/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "gamification.getUserLevel",
+      "contractMatches": [
+        "gamification.getUserLevel"
+      ],
+      "examplePath": "/api/gamification/level/111111111111111111/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/gamification/leaderboard/:guildId",
+      "method": "GET",
+      "path": "/api/gamification/leaderboard/:guildId",
+      "mount": "/api/gamification",
+      "routerPath": "/leaderboard/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "gamification.getLeaderboard",
+      "contractMatches": [
+        "gamification.getLeaderboard"
+      ],
+      "examplePath": "/api/gamification/leaderboard/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/gamification/achievement/unlock",
+      "method": "POST",
+      "path": "/api/gamification/achievement/unlock",
+      "mount": "/api/gamification",
+      "routerPath": "/achievement/unlock",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "gamification.unlockAchievement",
+      "contractMatches": [
+        "gamification.unlockAchievement"
+      ],
+      "examplePath": "/api/gamification/achievement/unlock",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/gamification/achievements/:userId/:guildId",
+      "method": "GET",
+      "path": "/api/gamification/achievements/:userId/:guildId",
+      "mount": "/api/gamification",
+      "routerPath": "/achievements/:userId/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "gamification.getUserAchievements",
+      "contractMatches": [
+        "gamification.getUserAchievements"
+      ],
+      "examplePath": "/api/gamification/achievements/111111111111111111/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/gamification/achievements",
+      "method": "GET",
+      "path": "/api/gamification/achievements",
+      "mount": "/api/gamification",
+      "routerPath": "/achievements",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "gamification.getAllAchievements",
+      "contractMatches": [
+        "gamification.getAllAchievements"
+      ],
+      "examplePath": "/api/gamification/achievements",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/gamification/achievements",
+      "method": "POST",
+      "path": "/api/gamification/achievements",
+      "mount": "/api/gamification",
+      "routerPath": "/achievements",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 201,
+      "contractExport": "gamification.createAchievement",
+      "contractMatches": [
+        "gamification.createAchievement"
+      ],
+      "examplePath": "/api/gamification/achievements",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/gamification/achievements/initialize",
+      "method": "POST",
+      "path": "/api/gamification/achievements/initialize",
+      "mount": "/api/gamification",
+      "routerPath": "/achievements/initialize",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "gamification.initializeDefaults",
+      "contractMatches": [
+        "gamification.initializeDefaults"
+      ],
+      "examplePath": "/api/gamification/achievements/initialize",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/gamification/game-result",
+      "method": "POST",
+      "path": "/api/gamification/game-result",
+      "mount": "/api/gamification",
+      "routerPath": "/game-result",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "gamification.recordGameResult",
+      "contractMatches": [
+        "gamification.recordGameResult"
+      ],
+      "examplePath": "/api/gamification/game-result",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/gamification/game-stats/:userId/:guildId",
+      "method": "GET",
+      "path": "/api/gamification/game-stats/:userId/:guildId",
+      "mount": "/api/gamification",
+      "routerPath": "/game-stats/:userId/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "gamification.getUserGameStats",
+      "contractMatches": [
+        "gamification.getUserGameStats"
+      ],
+      "examplePath": "/api/gamification/game-stats/111111111111111111/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/gamification/game-leaderboard/:guildId/:gameType",
+      "method": "GET",
+      "path": "/api/gamification/game-leaderboard/:guildId/:gameType",
+      "mount": "/api/gamification",
+      "routerPath": "/game-leaderboard/:guildId/:gameType",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "gamification.getGameLeaderboard",
+      "contractMatches": [
+        "gamification.getGameLeaderboard"
+      ],
+      "examplePath": "/api/gamification/game-leaderboard/111111111111111111/wordle",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/evolutive-achievements/evolve/:userId/:guildId",
+      "method": "POST",
+      "path": "/api/evolutive-achievements/evolve/:userId/:guildId",
+      "mount": "/api/evolutive-achievements",
+      "routerPath": "/evolve/:userId/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "evolutiveAchievements.checkAndEvolve",
+      "contractMatches": [
+        "evolutiveAchievements.checkAndEvolve"
+      ],
+      "examplePath": "/api/evolutive-achievements/evolve/111111111111111111/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/evolutive-achievements/:userId/:guildId",
+      "method": "GET",
+      "path": "/api/evolutive-achievements/:userId/:guildId",
+      "mount": "/api/evolutive-achievements",
+      "routerPath": "/:userId/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "evolutiveAchievements.getUserEvolutiveAchievements",
+      "contractMatches": [
+        "evolutiveAchievements.getUserEvolutiveAchievements"
+      ],
+      "examplePath": "/api/evolutive-achievements/111111111111111111/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/evolutive-achievements/timeline/:userId/:guildId",
+      "method": "GET",
+      "path": "/api/evolutive-achievements/timeline/:userId/:guildId",
+      "mount": "/api/evolutive-achievements",
+      "routerPath": "/timeline/:userId/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "evolutiveAchievements.getEvolutionTimeline",
+      "contractMatches": [
+        "evolutiveAchievements.getEvolutionTimeline"
+      ],
+      "examplePath": "/api/evolutive-achievements/timeline/111111111111111111/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/games/maze/start",
+      "method": "POST",
+      "path": "/api/games/maze/start",
+      "mount": "/api/games/maze",
+      "routerPath": "/start",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "maze.startMaze",
+      "contractMatches": [
+        "maze.startMaze"
+      ],
+      "examplePath": "/api/games/maze/start",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/games/maze/:sessionId/move",
+      "method": "POST",
+      "path": "/api/games/maze/:sessionId/move",
+      "mount": "/api/games/maze",
+      "routerPath": "/:sessionId/move",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "maze.moveMaze",
+      "contractMatches": [
+        "maze.moveMaze"
+      ],
+      "examplePath": "/api/games/maze/parity-session/move",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/games/maze/:sessionId",
+      "method": "GET",
+      "path": "/api/games/maze/:sessionId",
+      "mount": "/api/games/maze",
+      "routerPath": "/:sessionId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "maze.getMaze",
+      "contractMatches": [
+        "maze.getMaze"
+      ],
+      "examplePath": "/api/games/maze/parity-session",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "DELETE /api/games/maze/:sessionId",
+      "method": "DELETE",
+      "path": "/api/games/maze/:sessionId",
+      "mount": "/api/games/maze",
+      "routerPath": "/:sessionId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "maze.abandonMaze",
+      "contractMatches": [
+        "maze.abandonMaze"
+      ],
+      "examplePath": "/api/games/maze/parity-session",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/admin/notifications/:guildId",
+      "method": "GET",
+      "path": "/api/wordle/admin/notifications/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/admin/notifications/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getNotificationConfig",
+      "contractMatches": [
+        "wordle.getNotificationConfig"
+      ],
+      "examplePath": "/api/wordle/admin/notifications/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "PUT /api/wordle/admin/notifications/:guildId",
+      "method": "PUT",
+      "path": "/api/wordle/admin/notifications/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/admin/notifications/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.setNotificationConfig",
+      "contractMatches": [
+        "wordle.setNotificationConfig"
+      ],
+      "examplePath": "/api/wordle/admin/notifications/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/notifications/:guildId/claim",
+      "method": "POST",
+      "path": "/api/wordle/admin/notifications/:guildId/claim",
+      "mount": "/api/wordle",
+      "routerPath": "/admin/notifications/:guildId/claim",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.claimNotification",
+      "contractMatches": [
+        "wordle.claimNotification"
+      ],
+      "examplePath": "/api/wordle/admin/notifications/111111111111111111/claim",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/notifications/:guildId/settle",
+      "method": "POST",
+      "path": "/api/wordle/admin/notifications/:guildId/settle",
+      "mount": "/api/wordle",
+      "routerPath": "/admin/notifications/:guildId/settle",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.settleNotification",
+      "contractMatches": [
+        "wordle.settleNotification"
+      ],
+      "examplePath": "/api/wordle/admin/notifications/111111111111111111/settle",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/admin/notifications/:guildId/uncertain",
+      "method": "GET",
+      "path": "/api/wordle/admin/notifications/:guildId/uncertain",
+      "mount": "/api/wordle",
+      "routerPath": "/admin/notifications/:guildId/uncertain",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.listUncertainNotifications",
+      "contractMatches": [
+        "wordle.listUncertainNotifications"
+      ],
+      "examplePath": "/api/wordle/admin/notifications/111111111111111111/uncertain",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/notifications/:guildId/resolve",
+      "method": "POST",
+      "path": "/api/wordle/admin/notifications/:guildId/resolve",
+      "mount": "/api/wordle",
+      "routerPath": "/admin/notifications/:guildId/resolve",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.resolveNotification",
+      "contractMatches": [
+        "wordle.resolveNotification"
+      ],
+      "examplePath": "/api/wordle/admin/notifications/111111111111111111/resolve",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/gallery/:guildId",
+      "method": "GET",
+      "path": "/api/wordle/gallery/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/gallery/:guildId",
+      "middlewareChain": [
+        "activityAuth",
+        "guildMember"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getGallery",
+      "contractMatches": [
+        "wordle.getGallery"
+      ],
+      "examplePath": "/api/wordle/gallery/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "skip: verification may call the Discord API",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/admin/gallery/:guildId",
+      "method": "GET",
+      "path": "/api/wordle/admin/gallery/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/admin/gallery/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getBotGallery",
+      "contractMatches": [
+        "wordle.getBotGallery"
+      ],
+      "examplePath": "/api/wordle/admin/gallery/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/bingo/:guildId",
+      "method": "GET",
+      "path": "/api/wordle/bingo/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/bingo/:guildId",
+      "middlewareChain": [
+        "activityAuth",
+        "guildMember"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.listBingo",
+      "contractMatches": [
+        "wordle.listBingo"
+      ],
+      "examplePath": "/api/wordle/bingo/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "skip: verification may call the Discord API",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/bingo",
+      "method": "POST",
+      "path": "/api/wordle/admin/bingo",
+      "mount": "/api/wordle",
+      "routerPath": "/admin/bingo",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 201,
+      "contractExport": "wordle.createBingo",
+      "contractMatches": [
+        "wordle.createBingo"
+      ],
+      "examplePath": "/api/wordle/admin/bingo",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/challenges/:guildId",
+      "method": "GET",
+      "path": "/api/wordle/challenges/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/challenges/:guildId",
+      "middlewareChain": [
+        "activityAuth",
+        "guildMember"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.listChallenges",
+      "contractMatches": [
+        "wordle.listChallenges"
+      ],
+      "examplePath": "/api/wordle/challenges/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "skip: verification may call the Discord API",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/wordle/challenges/:guildId",
+      "method": "POST",
+      "path": "/api/wordle/challenges/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/challenges/:guildId",
+      "middlewareChain": [
+        "activityAuth",
+        "guildMember"
+      ],
+      "successStatus": 201,
+      "contractExport": "wordle.createChallenge",
+      "contractMatches": [
+        "wordle.createChallenge"
+      ],
+      "examplePath": "/api/wordle/challenges/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "skip: verification may call the Discord API",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/wordle/challenges/:guildId/:challengeId/join",
+      "method": "POST",
+      "path": "/api/wordle/challenges/:guildId/:challengeId/join",
+      "mount": "/api/wordle",
+      "routerPath": "/challenges/:guildId/:challengeId/join",
+      "middlewareChain": [
+        "activityAuth",
+        "guildMember"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.joinChallenge",
+      "contractMatches": [
+        "wordle.joinChallenge"
+      ],
+      "examplePath": "/api/wordle/challenges/111111111111111111/parity-challengeId/join",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "skip: verification may call the Discord API",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/goals/:guildId",
+      "method": "GET",
+      "path": "/api/wordle/goals/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/goals/:guildId",
+      "middlewareChain": [
+        "activityAuth",
+        "guildMember"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.listGoals",
+      "contractMatches": [
+        "wordle.listGoals"
+      ],
+      "examplePath": "/api/wordle/goals/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "skip: verification may call the Discord API",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/goals",
+      "method": "POST",
+      "path": "/api/wordle/admin/goals",
+      "mount": "/api/wordle",
+      "routerPath": "/admin/goals",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 201,
+      "contractExport": "wordle.createGoal",
+      "contractMatches": [
+        "wordle.createGoal"
+      ],
+      "examplePath": "/api/wordle/admin/goals",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/album/:guildId",
+      "method": "GET",
+      "path": "/api/wordle/album/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/album/:guildId",
+      "middlewareChain": [
+        "activityAuth",
+        "guildMember"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getAlbum",
+      "contractMatches": [
+        "wordle.getAlbum"
+      ],
+      "examplePath": "/api/wordle/album/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "skip: verification may call the Discord API",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/showcase",
+      "method": "GET",
+      "path": "/api/wordle/showcase",
+      "mount": "/api/wordle",
+      "routerPath": "/showcase",
+      "middlewareChain": [
+        "activityAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getShowcase",
+      "contractMatches": [
+        "wordle.getShowcase"
+      ],
+      "examplePath": "/api/wordle/showcase",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "skip: verification may call the Discord API",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/rewards",
+      "method": "GET",
+      "path": "/api/wordle/rewards",
+      "mount": "/api/wordle",
+      "routerPath": "/rewards",
+      "middlewareChain": [
+        "activityAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getRewards",
+      "contractMatches": [
+        "wordle.getRewards"
+      ],
+      "examplePath": "/api/wordle/rewards",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "skip: verification may call the Discord API",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "PUT /api/wordle/rewards",
+      "method": "PUT",
+      "path": "/api/wordle/rewards",
+      "mount": "/api/wordle",
+      "routerPath": "/rewards",
+      "middlewareChain": [
+        "activityAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.updateReward",
+      "contractMatches": [
+        "wordle.updateReward"
+      ],
+      "examplePath": "/api/wordle/rewards",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "skip: verification may call the Discord API",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "PUT /api/wordle/showcase",
+      "method": "PUT",
+      "path": "/api/wordle/showcase",
+      "mount": "/api/wordle",
+      "routerPath": "/showcase",
+      "middlewareChain": [
+        "activityAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.updateShowcase",
+      "contractMatches": [
+        "wordle.updateShowcase"
+      ],
+      "examplePath": "/api/wordle/showcase",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "skip: verification may call the Discord API",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/user-config",
+      "method": "GET",
+      "path": "/api/wordle/user-config",
+      "mount": "/api/wordle",
+      "routerPath": "/user-config",
+      "middlewareChain": [
+        "activityAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getUserConfig",
+      "contractMatches": [
+        "wordle.getUserConfig"
+      ],
+      "examplePath": "/api/wordle/user-config",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "skip: verification may call the Discord API",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "PUT /api/wordle/user-config",
+      "method": "PUT",
+      "path": "/api/wordle/user-config",
+      "mount": "/api/wordle",
+      "routerPath": "/user-config",
+      "middlewareChain": [
+        "activityAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.updateUserConfig",
+      "contractMatches": [
+        "wordle.updateUserConfig"
+      ],
+      "examplePath": "/api/wordle/user-config",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "skip: verification may call the Discord API",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/wordle/guess",
+      "method": "POST",
+      "path": "/api/wordle/guess",
+      "mount": "/api/wordle",
+      "routerPath": "/guess",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.submitGuess",
+      "contractMatches": [
+        "wordle.submitGuess"
+      ],
+      "examplePath": "/api/wordle/guess",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/wordle/presence",
+      "method": "POST",
+      "path": "/api/wordle/presence",
+      "mount": "/api/wordle",
+      "routerPath": "/presence",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.recordPresence",
+      "contractMatches": [
+        "wordle.recordPresence"
+      ],
+      "examplePath": "/api/wordle/presence",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/wordle/draft",
+      "method": "POST",
+      "path": "/api/wordle/draft",
+      "mount": "/api/wordle",
+      "routerPath": "/draft",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.writeDraft",
+      "contractMatches": [
+        "wordle.writeDraft"
+      ],
+      "examplePath": "/api/wordle/draft",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/wordle/rotate",
+      "method": "POST",
+      "path": "/api/wordle/rotate",
+      "mount": "/api/wordle",
+      "routerPath": "/rotate",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.rotateDailyWord",
+      "contractMatches": [
+        "wordle.rotateDailyWord"
+      ],
+      "examplePath": "/api/wordle/rotate",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/achievements/:guildId/:userId",
+      "method": "GET",
+      "path": "/api/wordle/achievements/:guildId/:userId",
+      "mount": "/api/wordle",
+      "routerPath": "/achievements/:guildId/:userId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getAchievements",
+      "contractMatches": [
+        "wordle.getAchievements"
+      ],
+      "examplePath": "/api/wordle/achievements/111111111111111111/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/stats/:guildId",
+      "method": "GET",
+      "path": "/api/wordle/stats/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/stats/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getStats",
+      "contractMatches": [
+        "wordle.getStats"
+      ],
+      "examplePath": "/api/wordle/stats/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/session/:userId/:guildId",
+      "method": "GET",
+      "path": "/api/wordle/session/:userId/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/session/:userId/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getUserSession",
+      "contractMatches": [
+        "wordle.getUserSession"
+      ],
+      "examplePath": "/api/wordle/session/111111111111111111/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/day-guesses/:guildId",
+      "method": "GET",
+      "path": "/api/wordle/day-guesses/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/day-guesses/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getDayGuesses",
+      "contractMatches": [
+        "wordle.getDayGuesses"
+      ],
+      "examplePath": "/api/wordle/day-guesses/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/force-new-word",
+      "method": "POST",
+      "path": "/api/wordle/admin/force-new-word",
+      "mount": "/api/wordle",
+      "routerPath": "/admin/force-new-word",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.forceNewWord",
+      "contractMatches": [
+        "wordle.forceNewWord"
+      ],
+      "examplePath": "/api/wordle/admin/force-new-word",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/leaderboard/:guildId",
+      "method": "GET",
+      "path": "/api/wordle/leaderboard/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/leaderboard/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getLeaderboard",
+      "contractMatches": [
+        "wordle.getLeaderboard"
+      ],
+      "examplePath": "/api/wordle/leaderboard/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/validate/:guildId",
+      "method": "GET",
+      "path": "/api/wordle/validate/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/validate/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.validateGuess",
+      "contractMatches": [
+        "wordle.validateGuess"
+      ],
+      "examplePath": "/api/wordle/validate/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/wordle/config",
+      "method": "POST",
+      "path": "/api/wordle/config",
+      "mount": "/api/wordle",
+      "routerPath": "/config",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.setConfig",
+      "contractMatches": [
+        "wordle.setConfig"
+      ],
+      "examplePath": "/api/wordle/config",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/config/:guildId",
+      "method": "GET",
+      "path": "/api/wordle/config/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/config/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getConfig",
+      "contractMatches": [
+        "wordle.getConfig"
+      ],
+      "examplePath": "/api/wordle/config/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/wordle/mark-announced",
+      "method": "POST",
+      "path": "/api/wordle/mark-announced",
+      "mount": "/api/wordle",
+      "routerPath": "/mark-announced",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.markAnnounced",
+      "contractMatches": [
+        "wordle.markAnnounced"
+      ],
+      "examplePath": "/api/wordle/mark-announced",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/unannounced/:guildId",
+      "method": "GET",
+      "path": "/api/wordle/unannounced/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/unannounced/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getUnannouncedWins",
+      "contractMatches": [
+        "wordle.getUnannouncedWins"
+      ],
+      "examplePath": "/api/wordle/unannounced/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/streak/:userId/:guildId",
+      "method": "GET",
+      "path": "/api/wordle/streak/:userId/:guildId",
+      "mount": "/api/wordle",
+      "routerPath": "/streak/:userId/:guildId",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getStreak",
+      "contractMatches": [
+        "wordle.getStreak"
+      ],
+      "examplePath": "/api/wordle/streak/111111111111111111/111111111111111111",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/wordlist-pool-stats",
+      "method": "GET",
+      "path": "/api/wordle/wordlist-pool-stats",
+      "mount": "/api/wordle",
+      "routerPath": "/wordlist-pool-stats",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getWordlistPoolStats",
+      "contractMatches": [
+        "wordle.getWordlistPoolStats"
+      ],
+      "examplePath": "/api/wordle/wordlist-pool-stats",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "GET /api/wordle/review/next",
+      "method": "GET",
+      "path": "/api/wordle/review/next",
+      "mount": "/api/wordle",
+      "routerPath": "/review/next",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.getNextReviewWord",
+      "contractMatches": [
+        "wordle.getNextReviewWord"
+      ],
+      "examplePath": "/api/wordle/review/next",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    },
+    {
+      "id": "POST /api/wordle/review/decision",
+      "method": "POST",
+      "path": "/api/wordle/review/decision",
+      "mount": "/api/wordle",
+      "routerPath": "/review/decision",
+      "middlewareChain": [
+        "botAuth"
+      ],
+      "successStatus": 200,
+      "contractExport": "wordle.submitReviewDecision",
+      "contractMatches": [
+        "wordle.submitReviewDecision"
+      ],
+      "examplePath": "/api/wordle/review/decision",
+      "probes": {
+        "noAuthorization": "capture",
+        "wrongBearer": "capture",
+        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
+      }
+    }
+  ],
+  "unmatchedRoutes": [],
+  "unmatchedContracts": [],
+  "unclassifiedMiddleware": []
+}

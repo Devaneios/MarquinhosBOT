@@ -29,6 +29,7 @@ beforeAll(async () => {
 }, 30_000);
 
 afterAll(async () => {
+  await vite?.waitForRequestsIdle();
   await vite?.close();
   await api?.close();
   if (previousTarget === undefined) delete process.env.DEV_API_TARGET;

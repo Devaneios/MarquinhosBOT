@@ -1,0 +1,4428 @@
+{
+  "generatedFrom": "Express baseline",
+  "routeCount": 97,
+  "capturedCases": 201,
+  "skippedProbes": [
+    {
+      "id": "GET /api/wordle/gallery/:guildId :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "GET /api/wordle/bingo/:guildId :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "GET /api/wordle/challenges/:guildId :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "POST /api/wordle/challenges/:guildId :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "POST /api/wordle/challenges/:guildId/:challengeId/join :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "GET /api/wordle/goals/:guildId :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "GET /api/wordle/album/:guildId :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "GET /api/wordle/showcase :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "GET /api/wordle/rewards :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "PUT /api/wordle/rewards :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "PUT /api/wordle/showcase :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "GET /api/wordle/user-config :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "PUT /api/wordle/user-config :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    }
+  ],
+  "cases": [
+    {
+      "id": "GET /api/health :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/health",
+        "headers": {}
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/token :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/token",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.code",
+              "message": "Invalid input: expected string, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/token :: authenticated empty body",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/token",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.code",
+              "message": "Invalid input: expected string, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/ws-session :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/ws-session",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.instanceId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.mode",
+              "message": "Invalid option: expected one of \"single\"|\"multi\"|\"local\""
+            },
+            {
+              "path": "body.game",
+              "message": "Invalid option: expected one of \"pong\"|\"wordle\"|\"cards\"|\"tic-tac-toe\"|\"connect-four\"|\"hangman\"|\"battleship\"|\"checkers\"|\"rock-paper-scissors\"|\"wordle-race\"|\"minesweeper-versus\"|\"trivia-quiz\"|\"dominoes-block\"|\"word-search-race\"|\"bingo-speed\"|\"tower-unstable\"|\"boggle-word-race\"|\"word-chain\"|\"snake-game\""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/ws-session :: authenticated empty body",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/ws-session",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.instanceId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.mode",
+              "message": "Invalid option: expected one of \"single\"|\"multi\"|\"local\""
+            },
+            {
+              "path": "body.game",
+              "message": "Invalid option: expected one of \"pong\"|\"wordle\"|\"cards\"|\"tic-tac-toe\"|\"connect-four\"|\"hangman\"|\"battleship\"|\"checkers\"|\"rock-paper-scissors\"|\"wordle-race\"|\"minesweeper-versus\"|\"trivia-quiz\"|\"dominoes-block\"|\"word-search-race\"|\"bingo-speed\"|\"tower-unstable\"|\"boggle-word-race\"|\"word-chain\"|\"snake-game\""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/pong/leaderboard :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/pong/leaderboard",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.pool",
+              "message": "Invalid option: expected one of \"classic-1v1\"|\"quad-elimination\""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/pong/leaderboard :: authenticated empty body",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/pong/leaderboard",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.pool",
+              "message": "Invalid option: expected one of \"classic-1v1\"|\"quad-elimination\""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/pong/tournaments/create :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/pong/tournaments/create",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.name",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.format",
+              "message": "Invalid option: expected one of \"round-robin\"|\"double-elimination\"|\"swiss-playoff\""
+            },
+            {
+              "path": "body.pool",
+              "message": "Invalid option: expected one of \"classic-1v1\"|\"quad-elimination\""
+            },
+            {
+              "path": "body.playerIds",
+              "message": "Invalid input: expected array, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/pong/tournaments/create :: authenticated empty body",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/pong/tournaments/create",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.name",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.format",
+              "message": "Invalid option: expected one of \"round-robin\"|\"double-elimination\"|\"swiss-playoff\""
+            },
+            {
+              "path": "body.pool",
+              "message": "Invalid option: expected one of \"classic-1v1\"|\"quad-elimination\""
+            },
+            {
+              "path": "body.playerIds",
+              "message": "Invalid input: expected array, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/pong/tournaments/list :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/pong/tournaments/list",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/pong/tournaments/list :: authenticated empty body",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/pong/tournaments/list",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/pong/tournaments/report :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/pong/tournaments/report",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.matchId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.winnerId",
+              "message": "Invalid input: expected string, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/pong/tournaments/report :: authenticated empty body",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/pong/tournaments/report",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.matchId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.winnerId",
+              "message": "Invalid input: expected string, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/deep-link :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/deep-link",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/deep-link :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/deep-link",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/deep-link :: authenticated empty body",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/deep-link",
+        "headers": {
+          "authorization": "Bearer parity-capture-key",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.userId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.game",
+              "message": "Invalid option: expected one of \"pong\"|\"wordle\"|\"cards\"|\"tic-tac-toe\"|\"connect-four\"|\"hangman\"|\"battleship\"|\"checkers\"|\"rock-paper-scissors\"|\"wordle-race\"|\"minesweeper-versus\"|\"trivia-quiz\"|\"dominoes-block\"|\"word-search-race\"|\"bingo-speed\"|\"tower-unstable\"|\"boggle-word-race\"|\"word-chain\"|\"snake-game\""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/deep-link/claim :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/deep-link/claim",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/deep-link/claim :: authenticated empty body",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/deep-link/claim",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/rooms :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/rooms",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.instanceId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.game",
+              "message": "Invalid option: expected one of \"pong\"|\"wordle\"|\"cards\"|\"tic-tac-toe\"|\"connect-four\"|\"hangman\"|\"battleship\"|\"checkers\"|\"rock-paper-scissors\"|\"wordle-race\"|\"minesweeper-versus\"|\"trivia-quiz\"|\"dominoes-block\"|\"word-search-race\"|\"bingo-speed\"|\"tower-unstable\"|\"boggle-word-race\"|\"word-chain\"|\"snake-game\""
+            },
+            {
+              "path": "body.queueEnabled",
+              "message": "Invalid input: expected boolean, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/rooms :: authenticated empty body",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/rooms",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.instanceId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.game",
+              "message": "Invalid option: expected one of \"pong\"|\"wordle\"|\"cards\"|\"tic-tac-toe\"|\"connect-four\"|\"hangman\"|\"battleship\"|\"checkers\"|\"rock-paper-scissors\"|\"wordle-race\"|\"minesweeper-versus\"|\"trivia-quiz\"|\"dominoes-block\"|\"word-search-race\"|\"bingo-speed\"|\"tower-unstable\"|\"boggle-word-race\"|\"word-chain\"|\"snake-game\""
+            },
+            {
+              "path": "body.queueEnabled",
+              "message": "Invalid input: expected boolean, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/rooms/list :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/rooms/list",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.instanceId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/activities/rooms/list :: authenticated empty body",
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/rooms/list",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "19",
+          "ratelimit-reset": "<reset-seconds>"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.accessToken",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.instanceId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "GET /api/auth/login :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/auth/login",
+        "headers": {}
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Code not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/auth/refresh_token :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/auth/refresh_token",
+        "headers": {}
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Refresh token not found"
+        }
+      }
+    },
+    {
+      "id": "GET /api/auth/discordLoginUrl :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/auth/discordLoginUrl",
+        "headers": {}
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": "https://discord.com/oauth2/authorize?response_type=code&client_id=parity-discord-client-id&scope=identify+guilds.members.read&redirect_uri=https%3A%2F%2Fparity.example%2Fdiscord%2Fcallback&prompt=none"
+        }
+      }
+    },
+    {
+      "id": "GET /api/auth/lastfmLoginUrl :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/auth/lastfmLoginUrl",
+        "headers": {}
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": "https://www.last.fm/api/auth/?api_key=parity-lastfm-api-key&cb=https://parity.example/lastfm/callback"
+        }
+      }
+    },
+    {
+      "id": "GET /api/user/profile :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/user/profile",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/user/profile :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/user/profile",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Invalid or expired token"
+        }
+      }
+    },
+    {
+      "id": "GET /api/user/exists/:id :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/user/exists/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/user/exists/:id :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/user/exists/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Invalid or expired token"
+        }
+      }
+    },
+    {
+      "id": "GET /api/user/lastfm-status :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/user/lastfm-status",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/user/lastfm-status :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/user/lastfm-status",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Invalid or expired token"
+        }
+      }
+    },
+    {
+      "id": "POST /api/user/enable-lastfm :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/user/enable-lastfm",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/user/enable-lastfm :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/user/enable-lastfm",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Invalid or expired token"
+        }
+      }
+    },
+    {
+      "id": "DELETE /api/user/lastfm :: no Authorization",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/user/lastfm",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "DELETE /api/user/lastfm :: wrong bearer",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/user/lastfm",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Invalid or expired token"
+        }
+      }
+    },
+    {
+      "id": "DELETE /api/user :: no Authorization",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/user",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "DELETE /api/user :: wrong bearer",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/user",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Invalid or expired token"
+        }
+      }
+    },
+    {
+      "id": "PATCH /api/user/toggle-scrobble :: no Authorization",
+      "request": {
+        "method": "PATCH",
+        "path": "/api/user/toggle-scrobble",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "PATCH /api/user/toggle-scrobble :: wrong bearer",
+      "request": {
+        "method": "PATCH",
+        "path": "/api/user/toggle-scrobble",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Invalid or expired token"
+        }
+      }
+    },
+    {
+      "id": "GET /api/user/top-artists/:period/:id :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/user/top-artists/7day/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/user/top-artists/:period/:id :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/user/top-artists/7day/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/user/top-albums/:period/:id :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/user/top-albums/7day/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/user/top-albums/:period/:id :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/user/top-albums/7day/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/user/top-tracks/:period/:id :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/user/top-tracks/7day/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/user/top-tracks/:period/:id :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/user/top-tracks/7day/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/scrobble/queue :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/scrobble/queue",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/scrobble/queue :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/scrobble/queue",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/scrobble/queue :: authenticated empty body",
+      "request": {
+        "method": "POST",
+        "path": "/api/scrobble/queue",
+        "headers": {
+          "authorization": "Bearer parity-capture-key",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.playbackData",
+              "message": "Invalid input: expected object, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/scrobble/:id :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/scrobble/111111111111111111",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/scrobble/:id :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/scrobble/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "DELETE /api/scrobble/:scrobbleId/:userId :: no Authorization",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/scrobble/parity-scrobbleId/111111111111111111",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "DELETE /api/scrobble/:scrobbleId/:userId :: wrong bearer",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/scrobble/parity-scrobbleId/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/scrobble/:scrobbleId/:userId :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/scrobble/parity-scrobbleId/111111111111111111",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/scrobble/:scrobbleId/:userId :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/scrobble/parity-scrobbleId/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/privacy-policy :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/privacy-policy",
+        "headers": {}
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "title": "Política de Privacidade para MarquinhosBOT",
+          "date": "Atualizado 19 de agosto de 2023",
+          "body": "MarquinhosBOT (\"nós,\" \"nos,\" ou \"nosso\") está comprometido(a) em proteger a sua privacidade. Esta Política de Privacidade descreve como coletamos, usamos e protegemos as suas informações pessoais em relação ao uso do nosso bot no Discord.",
+          "sections": [
+            {
+              "title": "1. Coleta de Dados",
+              "body": "Coletamos as seguintes informações com o propósito de fornecer os nossos serviços: - Seu ID de usuário no Discord - Seu token de usuário no Discord (com o escopo \"identity\" apenas) - Seu token do Last.fm"
+            },
+            {
+              "title": "2. Propósito da Coleta de Dados",
+              "body": "Coletamos essas informações exclusivamente com o propósito de integrar MarquinhosBOT ao Last.fm. Essa integração nos permite registrar músicas tocadas por outro bot na sua conta do Last.fm."
+            },
+            {
+              "title": "3. Armazenamento de Dados",
+              "body": "Os seus dados são armazenados de forma segura em nosso servidor pessoal. Esses dados só podem ser acessados por meio dos comandos do bot. A API pode criar ou excluir dados, mas não pode acessar as informações."
+            },
+            {
+              "title": "4. Compartilhamento de Dados",
+              "body": "Não compartilhamos as suas informações pessoais com terceiros. Seus dados são usados exclusivamente para habilitar a integração com o Last.fm."
+            },
+            {
+              "title": "5. Direitos do Usuário",
+              "body": "Você não tem acesso direto aos seus dados por meio do bot, por questões de segurança. No entanto, você pode usar a interface web fornecida para excluir todas as suas informações armazenadas a qualquer momento."
+            },
+            {
+              "title": "6. Medidas de Segurança",
+              "body": "Tomamos medidas para garantir a segurança dos seus dados, incluindo a restrição de acesso ao banco de dados apenas ao bot. A API não pode acessar os dados armazenados."
+            },
+            {
+              "title": "7. Conformidade Legal",
+              "body": "Não coletamos dados que exijam conformidade legal específica."
+            },
+            {
+              "title": "8. Restrições de Idade",
+              "body": "Nosso serviço está sujeito às restrições de idade definidas pelo Discord. Não coletamos informações relacionadas à idade."
+            },
+            {
+              "title": "9. Atualizações da Política",
+              "body": "Comunicaremos as atualizações a esta Política de Privacidade por meio de mensagens diretas do bot, incluindo um link para a página da Política de Privacidade."
+            },
+            {
+              "title": "Informações de Contato",
+              "body": "Se tiver alguma dúvida ou preocupação sobre a nossa Política de Privacidade, você pode entrar em contato conosco através do nosso servidor no Discord: https://discord.gg/RKWBudnFe"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/ai-chat/respond :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/ai-chat/respond",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/ai-chat/respond :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/ai-chat/respond",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/ai-chat/respond :: authenticated empty body",
+      "request": {
+        "method": "POST",
+        "path": "/api/ai-chat/respond",
+        "headers": {
+          "authorization": "Bearer parity-capture-key",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.userId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.channelId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.content",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.recentMessages",
+              "message": "Invalid input: expected array, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/ai-chat/thread/ask :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/ai-chat/thread/ask",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/ai-chat/thread/ask :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/ai-chat/thread/ask",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/ai-chat/thread/ask :: authenticated empty body",
+      "request": {
+        "method": "POST",
+        "path": "/api/ai-chat/thread/ask",
+        "headers": {
+          "authorization": "Bearer parity-capture-key",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.threadId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.channelId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.userId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.content",
+              "message": "Invalid input: expected string, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "POST /api/ai-chat/research :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/ai-chat/research",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/ai-chat/research :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/ai-chat/research",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/ai-chat/research :: authenticated empty body",
+      "request": {
+        "method": "POST",
+        "path": "/api/ai-chat/research",
+        "headers": {
+          "authorization": "Bearer parity-capture-key",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.threadId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.guildId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.channelId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.userId",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.query",
+              "message": "Invalid input: expected string, received undefined"
+            },
+            {
+              "path": "body.idempotencyKey",
+              "message": "Invalid input: expected string, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "GET /api/ai-chat/research/:jobId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/ai-chat/research/parity-jobId",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/ai-chat/research/:jobId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/ai-chat/research/parity-jobId",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/ai-chat/traces :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/ai-chat/traces",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/ai-chat/traces :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/ai-chat/traces",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/ai-chat/traces/:traceId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/ai-chat/traces/parity-trace",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/ai-chat/traces/:traceId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/ai-chat/traces/parity-trace",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/emoji-reaction/choose :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/emoji-reaction/choose",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/emoji-reaction/choose :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/emoji-reaction/choose",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/emoji-reaction/choose :: authenticated empty body",
+      "request": {
+        "method": "POST",
+        "path": "/api/emoji-reaction/choose",
+        "headers": {
+          "authorization": "Bearer parity-capture-key",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Validation failed",
+          "errors": [
+            {
+              "path": "body.content",
+              "message": "Invalid input: expected string, received undefined"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "GET /api/gamification/xp-config :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/gamification/xp-config",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/gamification/xp-config :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/gamification/xp-config",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/gamification/xp :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/gamification/xp",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/gamification/xp :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/gamification/xp",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/gamification/level/:userId/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/gamification/level/111111111111111111/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/gamification/level/:userId/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/gamification/level/111111111111111111/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/gamification/leaderboard/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/gamification/leaderboard/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/gamification/leaderboard/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/gamification/leaderboard/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/gamification/achievement/unlock :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/gamification/achievement/unlock",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/gamification/achievement/unlock :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/gamification/achievement/unlock",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/gamification/achievements/:userId/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/gamification/achievements/111111111111111111/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/gamification/achievements/:userId/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/gamification/achievements/111111111111111111/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/gamification/achievements :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/gamification/achievements",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/gamification/achievements :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/gamification/achievements",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/gamification/achievements :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/gamification/achievements",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/gamification/achievements :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/gamification/achievements",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/gamification/achievements/initialize :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/gamification/achievements/initialize",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/gamification/achievements/initialize :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/gamification/achievements/initialize",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/gamification/game-result :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/gamification/game-result",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/gamification/game-result :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/gamification/game-result",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/gamification/game-stats/:userId/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/gamification/game-stats/111111111111111111/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/gamification/game-stats/:userId/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/gamification/game-stats/111111111111111111/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/gamification/game-leaderboard/:guildId/:gameType :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/gamification/game-leaderboard/111111111111111111/wordle",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/gamification/game-leaderboard/:guildId/:gameType :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/gamification/game-leaderboard/111111111111111111/wordle",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/evolutive-achievements/evolve/:userId/:guildId :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/evolutive-achievements/evolve/111111111111111111/111111111111111111",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/evolutive-achievements/evolve/:userId/:guildId :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/evolutive-achievements/evolve/111111111111111111/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/evolutive-achievements/:userId/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/evolutive-achievements/111111111111111111/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/evolutive-achievements/:userId/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/evolutive-achievements/111111111111111111/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/evolutive-achievements/timeline/:userId/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/evolutive-achievements/timeline/111111111111111111/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/evolutive-achievements/timeline/:userId/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/evolutive-achievements/timeline/111111111111111111/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/games/maze/start :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/games/maze/start",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/games/maze/start :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/games/maze/start",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/games/maze/:sessionId/move :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/games/maze/parity-session/move",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/games/maze/:sessionId/move :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/games/maze/parity-session/move",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/games/maze/:sessionId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/games/maze/parity-session",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/games/maze/:sessionId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/games/maze/parity-session",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "DELETE /api/games/maze/:sessionId :: no Authorization",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/games/maze/parity-session",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "DELETE /api/games/maze/:sessionId :: wrong bearer",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/games/maze/parity-session",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/admin/notifications/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/admin/notifications/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/admin/notifications/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/admin/notifications/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "PUT /api/wordle/admin/notifications/:guildId :: no Authorization",
+      "request": {
+        "method": "PUT",
+        "path": "/api/wordle/admin/notifications/111111111111111111",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "PUT /api/wordle/admin/notifications/:guildId :: wrong bearer",
+      "request": {
+        "method": "PUT",
+        "path": "/api/wordle/admin/notifications/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/notifications/:guildId/claim :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/admin/notifications/111111111111111111/claim",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/notifications/:guildId/claim :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/admin/notifications/111111111111111111/claim",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/notifications/:guildId/settle :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/admin/notifications/111111111111111111/settle",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/notifications/:guildId/settle :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/admin/notifications/111111111111111111/settle",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/admin/notifications/:guildId/uncertain :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/admin/notifications/111111111111111111/uncertain",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/admin/notifications/:guildId/uncertain :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/admin/notifications/111111111111111111/uncertain",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/notifications/:guildId/resolve :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/admin/notifications/111111111111111111/resolve",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/notifications/:guildId/resolve :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/admin/notifications/111111111111111111/resolve",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/gallery/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/gallery/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/gallery/:guildId :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "GET /api/wordle/admin/gallery/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/admin/gallery/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/admin/gallery/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/admin/gallery/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/bingo/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/bingo/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/bingo/:guildId :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "POST /api/wordle/admin/bingo :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/admin/bingo",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/bingo :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/admin/bingo",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/challenges/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/challenges/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/challenges/:guildId :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "POST /api/wordle/challenges/:guildId :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/challenges/111111111111111111",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/challenges/:guildId :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "POST /api/wordle/challenges/:guildId/:challengeId/join :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/challenges/111111111111111111/parity-challengeId/join",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/challenges/:guildId/:challengeId/join :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "GET /api/wordle/goals/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/goals/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/goals/:guildId :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "POST /api/wordle/admin/goals :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/admin/goals",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/goals :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/admin/goals",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/album/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/album/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/album/:guildId :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "GET /api/wordle/showcase :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/showcase",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/showcase :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "GET /api/wordle/rewards :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/rewards",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/rewards :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "PUT /api/wordle/rewards :: no Authorization",
+      "request": {
+        "method": "PUT",
+        "path": "/api/wordle/rewards",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "PUT /api/wordle/rewards :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "PUT /api/wordle/showcase :: no Authorization",
+      "request": {
+        "method": "PUT",
+        "path": "/api/wordle/showcase",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "PUT /api/wordle/showcase :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "GET /api/wordle/user-config :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/user-config",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/user-config :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "PUT /api/wordle/user-config :: no Authorization",
+      "request": {
+        "method": "PUT",
+        "path": "/api/wordle/user-config",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "PUT /api/wordle/user-config :: wrong bearer",
+      "skipped": "verification may call the Discord API"
+    },
+    {
+      "id": "POST /api/wordle/guess :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/guess",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/guess :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/guess",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/presence :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/presence",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/presence :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/presence",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/draft :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/draft",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/draft :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/draft",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/rotate :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/rotate",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/rotate :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/rotate",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/achievements/:guildId/:userId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/achievements/111111111111111111/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/achievements/:guildId/:userId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/achievements/111111111111111111/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/stats/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/stats/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/stats/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/stats/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/session/:userId/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/session/111111111111111111/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/session/:userId/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/session/111111111111111111/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/day-guesses/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/day-guesses/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/day-guesses/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/day-guesses/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/force-new-word :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/admin/force-new-word",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/admin/force-new-word :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/admin/force-new-word",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/leaderboard/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/leaderboard/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/leaderboard/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/leaderboard/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/validate/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/validate/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/validate/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/validate/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/config :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/config",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/config :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/config",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/config/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/config/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/config/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/config/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/mark-announced :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/mark-announced",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/mark-announced :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/mark-announced",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/unannounced/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/unannounced/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/unannounced/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/unannounced/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/streak/:userId/:guildId :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/streak/111111111111111111/111111111111111111",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/streak/:userId/:guildId :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/streak/111111111111111111/111111111111111111",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/wordlist-pool-stats :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/wordlist-pool-stats",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/wordlist-pool-stats :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/wordlist-pool-stats",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/review/next :: no Authorization",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/review/next",
+        "headers": {}
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "GET /api/wordle/review/next :: wrong bearer",
+      "request": {
+        "method": "GET",
+        "path": "/api/wordle/review/next",
+        "headers": {
+          "authorization": "Bearer wrong-token"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/review/decision :: no Authorization",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/review/decision",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not provided"
+        }
+      }
+    },
+    {
+      "id": "POST /api/wordle/review/decision :: wrong bearer",
+      "request": {
+        "method": "POST",
+        "path": "/api/wordle/review/decision",
+        "headers": {
+          "authorization": "Bearer wrong-token",
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Token not authorized"
+        }
+      }
+    },
+    {
+      "id": "extra :: unmatched path",
+      "request": {
+        "method": "GET",
+        "path": "/api/parity-unmatched",
+        "headers": {}
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "message": "Route not found"
+        }
+      }
+    },
+    {
+      "id": "extra :: health",
+      "request": {
+        "method": "GET",
+        "path": "/api/health",
+        "headers": {}
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "id": "extra :: privacy policy",
+      "request": {
+        "method": "GET",
+        "path": "/api/privacy-policy",
+        "headers": {}
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "title": "Política de Privacidade para MarquinhosBOT",
+          "date": "Atualizado 19 de agosto de 2023",
+          "body": "MarquinhosBOT (\"nós,\" \"nos,\" ou \"nosso\") está comprometido(a) em proteger a sua privacidade. Esta Política de Privacidade descreve como coletamos, usamos e protegemos as suas informações pessoais em relação ao uso do nosso bot no Discord.",
+          "sections": [
+            {
+              "title": "1. Coleta de Dados",
+              "body": "Coletamos as seguintes informações com o propósito de fornecer os nossos serviços: - Seu ID de usuário no Discord - Seu token de usuário no Discord (com o escopo \"identity\" apenas) - Seu token do Last.fm"
+            },
+            {
+              "title": "2. Propósito da Coleta de Dados",
+              "body": "Coletamos essas informações exclusivamente com o propósito de integrar MarquinhosBOT ao Last.fm. Essa integração nos permite registrar músicas tocadas por outro bot na sua conta do Last.fm."
+            },
+            {
+              "title": "3. Armazenamento de Dados",
+              "body": "Os seus dados são armazenados de forma segura em nosso servidor pessoal. Esses dados só podem ser acessados por meio dos comandos do bot. A API pode criar ou excluir dados, mas não pode acessar as informações."
+            },
+            {
+              "title": "4. Compartilhamento de Dados",
+              "body": "Não compartilhamos as suas informações pessoais com terceiros. Seus dados são usados exclusivamente para habilitar a integração com o Last.fm."
+            },
+            {
+              "title": "5. Direitos do Usuário",
+              "body": "Você não tem acesso direto aos seus dados por meio do bot, por questões de segurança. No entanto, você pode usar a interface web fornecida para excluir todas as suas informações armazenadas a qualquer momento."
+            },
+            {
+              "title": "6. Medidas de Segurança",
+              "body": "Tomamos medidas para garantir a segurança dos seus dados, incluindo a restrição de acesso ao banco de dados apenas ao bot. A API não pode acessar os dados armazenados."
+            },
+            {
+              "title": "7. Conformidade Legal",
+              "body": "Não coletamos dados que exijam conformidade legal específica."
+            },
+            {
+              "title": "8. Restrições de Idade",
+              "body": "Nosso serviço está sujeito às restrições de idade definidas pelo Discord. Não coletamos informações relacionadas à idade."
+            },
+            {
+              "title": "9. Atualizações da Política",
+              "body": "Comunicaremos as atualizações a esta Política de Privacidade por meio de mensagens diretas do bot, incluindo um link para a página da Política de Privacidade."
+            },
+            {
+              "title": "Informações de Contato",
+              "body": "Se tiver alguma dúvida ou preocupação sobre a nossa Política de Privacidade, você pode entrar em contato conosco através do nosso servidor no Discord: https://discord.gg/RKWBudnFe"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "extra :: CORS allowed origin",
+      "request": {
+        "method": "GET",
+        "path": "/api/health",
+        "headers": {
+          "origin": "https://allowed.example"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-allow-origin": "https://allowed.example",
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "id": "extra :: CORS denied origin",
+      "request": {
+        "method": "GET",
+        "path": "/api/health",
+        "headers": {
+          "origin": "https://denied.example"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "id": "extra :: Discord login URL",
+      "request": {
+        "method": "GET",
+        "path": "/api/auth/discordLoginUrl",
+        "headers": {}
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": "https://discord.com/oauth2/authorize?response_type=code&client_id=parity-discord-client-id&scope=identify+guilds.members.read&redirect_uri=https%3A%2F%2Fparity.example%2Fdiscord%2Fcallback&prompt=none"
+        }
+      }
+    },
+    {
+      "id": "extra :: shared activity rate limit across two routes",
+      "setupRequests": [
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/activities/token",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": "{}"
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "path": "/api/activities/ws-session",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": "{}"
+      },
+      "response": {
+        "status": 429,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "ratelimit-limit": "20",
+          "ratelimit-policy": "20;w=60",
+          "ratelimit-remaining": "0",
+          "ratelimit-reset": "<reset-seconds>",
+          "retry-after": "<retry-seconds>"
+        },
+        "body": {
+          "message": "Too many requests, please try again later."
+        }
+      }
+    }
+  ]
+}
