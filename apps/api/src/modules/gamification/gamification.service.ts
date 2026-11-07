@@ -1,4 +1,4 @@
-import { db, type DbExecutor } from '@marquinhos/database/client';
+import { db, type Db, type DbExecutor } from '@marquinhos/database/client';
 import {
   gameResults,
   userGameResults,
@@ -6,6 +6,8 @@ import {
   xpConfig,
   xpCooldowns,
 } from '@marquinhos/database/schema';
+import { Inject, Injectable } from '@nestjs/common';
+import { DB } from 'database/database.tokens';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { AchievementService } from 'modules/gamification/achievement.service';
 import { EvolutiveAchievementsService } from 'modules/gamification/evolutive-achievements.service';
@@ -17,8 +19,6 @@ import type {
   UserStats,
   XpConfig,
 } from 'modules/gamification/types';
-
-const evolutiveService = new EvolutiveAchievementsService();
 
 const DEFAULT_WIN_XP = 20;
 const DEFAULT_PARTICIPATE_XP = 5;
@@ -47,14 +47,16 @@ async function xpAmount(
   return row?.xp_amount ?? fallback;
 }
 
+@Injectable()
 export class GamificationService {
-  private readonly levelingService: LevelingService;
-  private achievementService: AchievementService;
-
-  constructor() {
-    this.levelingService = new LevelingService();
-    this.achievementService = new AchievementService(this.levelingService);
-  }
+  constructor(
+    private readonly levelingService: LevelingService = new LevelingService(),
+    private readonly achievementService: AchievementService = new AchievementService(
+      levelingService,
+    ),
+    private readonly evolutiveService: EvolutiveAchievementsService = new EvolutiveAchievementsService(),
+    @Inject(DB) private readonly database: Db = db,
+  ) {}
 
   async initializeDefaults(): Promise<void> {
     await this.levelingService.initializeDefaults();
@@ -76,7 +78,7 @@ export class GamificationService {
   ): Promise<AddXpResult> {
     await this.levelingService.ensureUser(userId, guildId);
 
-    const [config] = await db
+    const [config] = await this.database
       .select()
       .from(xpConfig)
       .where(eq(xpConfig.event_type, eventType));
@@ -88,7 +90,7 @@ export class GamificationService {
       // A row comes back only when this call earned the XP: a fresh insert,
       // or an update the cooldown allowed. Comparing timestamps instead would
       // grant every concurrent call made within the same millisecond.
-      const granted = await db
+      const granted = await this.database
         .insert(xpCooldowns)
         .values({
           user_id: userId,
@@ -119,7 +121,7 @@ export class GamificationService {
 
     const statColumn = STAT_BY_EVENT[eventType];
     if (statColumn) {
-      await db
+      await this.database
         .update(userStats)
         .set({ [statColumn]: sql`${userStats[statColumn]} + 1` })
         .where(
@@ -133,7 +135,7 @@ export class GamificationService {
     const userLevel = await this.levelingService.getUserLevel(userId, guildId);
     const unlockedAchievements =
       await this.achievementService.checkAndAwardAchievements(userId, guildId);
-    await evolutiveService.checkAndEvolveAll(userId, guildId);
+    await this.evolutiveService.checkAndEvolveAll(userId, guildId);
 
     return {
       userLevel,
@@ -145,7 +147,7 @@ export class GamificationService {
   }
 
   async recordGameResult(input: GameResultInput): Promise<void> {
-    await db.transaction(async (tx) => {
+    await this.database.transaction(async (tx) => {
       const now = Date.now();
       const winXp = await xpAmount(tx, 'game_win', DEFAULT_WIN_XP);
       const participateXp = await xpAmount(
@@ -244,7 +246,7 @@ export class GamificationService {
   }> {
     await this.levelingService.ensureUser(userId, guildId);
 
-    const [stats] = await db
+    const [stats] = await this.database
       .select()
       .from(userStats)
       .where(
@@ -252,7 +254,7 @@ export class GamificationService {
       );
 
     const gamesPlayed = sql<number>`count(*)::int`;
-    const byGame = await db
+    const byGame = await this.database
       .select({
         game_type: gameResults.game_type,
         games_played: gamesPlayed,
@@ -277,7 +279,7 @@ export class GamificationService {
 
   async getGameLeaderboard(guildId: string, gameType: string) {
     const totalXpEarned = sql<number>`sum(${userGameResults.xp_awarded})::int`;
-    return db
+    return this.database
       .select({
         user_id: userGameResults.user_id,
         games_played: sql<number>`count(*)::int`,

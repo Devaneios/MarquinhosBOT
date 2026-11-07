@@ -1,8 +1,10 @@
 import type { mazeViewportStateSchema } from '@marquinhos/contracts/http/routes/maze';
-import { db, type DbExecutor } from '@marquinhos/database/client';
+import { db, type Db, type DbExecutor } from '@marquinhos/database/client';
 import { mazeSessions } from '@marquinhos/database/schema';
 import { generateWallGrid } from '@marquinhos/domain/games/maze/wallGrid';
+import { Inject, Injectable } from '@nestjs/common';
 import crypto from 'crypto';
+import { DB } from 'database/database.tokens';
 import { and, eq } from 'drizzle-orm';
 import type { z } from 'zod';
 
@@ -137,7 +139,10 @@ function computeViewport(
   return viewport;
 }
 
+@Injectable()
 export class MazeService {
+  constructor(@Inject(DB) private readonly database: Db = db) {}
+
   async createMazeSession(
     userId: string,
     guildId: string,
@@ -155,7 +160,7 @@ export class MazeService {
     const startX = 1;
     const startY = 0;
 
-    await db.transaction(async (tx) => {
+    await this.database.transaction(async (tx) => {
       // Abandon any existing active session for this user in this guild
       await tx
         .update(mazeSessions)
@@ -196,7 +201,7 @@ export class MazeService {
     direction: string,
   ): Promise<MazeViewportState | null> {
     // Locked so two quick moves can't both start from the same position.
-    return db.transaction((tx) =>
+    return this.database.transaction((tx) =>
       this.applyMove(tx, sessionId, userId, direction),
     );
   }
@@ -312,7 +317,7 @@ export class MazeService {
   }
 
   async getMazeSession(sessionId: string): Promise<MazeViewportState | null> {
-    const [session] = await db
+    const [session] = await this.database
       .select()
       .from(mazeSessions)
       .where(eq(mazeSessions.id, sessionId));
@@ -327,7 +332,7 @@ export class MazeService {
   }
 
   async abandonMazeSession(sessionId: string, userId: string): Promise<void> {
-    await db
+    await this.database
       .update(mazeSessions)
       .set({ status: 'abandoned' })
       .where(

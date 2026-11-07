@@ -33,6 +33,7 @@ export class StartupService implements OnModuleInit, OnApplicationShutdown {
   constructor(
     @Inject(DB) private readonly database: Db,
     private readonly config: AppConfig,
+    private readonly gamificationService: GamificationService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -51,7 +52,7 @@ export class StartupService implements OnModuleInit, OnApplicationShutdown {
       }
     }
 
-    await new GamificationService().initializeDefaults();
+    await this.gamificationService.initializeDefaults();
     await new RateLimitService().seedDefaults();
     await new DailyQuotaService(AGENT_DAILY_QUOTA).seedDefaults();
     await new DailyQuotaService(RESEARCH_DAILY_QUOTA).seedDefaults();

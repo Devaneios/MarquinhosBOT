@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { randomUUID } from 'node:crypto';
-import { startContractServer } from '../helpers/contractServer';
+import { startNestContractServer } from '../helpers/contractServer';
 
 const { callContract } = await import('@marquinhos/api-client/bot');
 const gamification =
@@ -10,16 +10,13 @@ const evolutive =
 
 const guildId = `contract-${randomUUID()}`;
 
-let server: Awaited<ReturnType<typeof startContractServer>>;
+let server: Awaited<ReturnType<typeof startNestContractServer>>;
 
 beforeAll(async () => {
-  const { default: gamificationRouter } =
-    await import('../../src/routes/gamification.route');
-  const { default: evolutiveRouter } =
-    await import('../../src/routes/evolutiveAchievements.route');
-  server = await startContractServer((app) => {
-    app.use('/api/gamification', gamificationRouter);
-    app.use('/api/evolutive-achievements', evolutiveRouter);
+  const { GamificationModule } =
+    await import('modules/gamification/gamification.module');
+  server = await startNestContractServer({
+    imports: [GamificationModule],
   });
   await callContract(server.http, gamification.initializeDefaults, {});
 });

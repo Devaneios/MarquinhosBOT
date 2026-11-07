@@ -4,8 +4,10 @@ import {
   type evolutionResultSchema,
   type evolutiveAchievementSchema,
 } from '@marquinhos/contracts/http/routes/evolutiveAchievements';
-import { db } from '@marquinhos/database/client';
+import { db, type Db } from '@marquinhos/database/client';
 import { evolutiveAchievements, userStats } from '@marquinhos/database/schema';
+import { Inject, Injectable } from '@nestjs/common';
+import { DB } from 'database/database.tokens';
 import { and, asc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -150,10 +152,11 @@ const byUser = (userId: string, guildId: string) =>
   );
 
 async function getStats(
+  database: Db,
   userId: string,
   guildId: string,
 ): Promise<UserStatsRow | undefined> {
-  const [row] = await db
+  const [row] = await database
     .select({
       total_commands: userStats.total_commands,
       total_scrobbles: userStats.total_scrobbles,
@@ -167,11 +170,12 @@ async function getStats(
 }
 
 async function getRow(
+  database: Db,
   userId: string,
   guildId: string,
   baseId: string,
 ): Promise<EvolutiveRow | undefined> {
-  const [row] = await db
+  const [row] = await database
     .select()
     .from(evolutiveAchievements)
     .where(
@@ -180,12 +184,15 @@ async function getRow(
   return row;
 }
 
+@Injectable()
 export class EvolutiveAchievementsService {
+  constructor(@Inject(DB) private readonly database: Db = db) {}
+
   async checkAndEvolveAll(
     userId: string,
     guildId: string,
   ): Promise<EvolutionResult[]> {
-    const stats = await getStats(userId, guildId);
+    const stats = await getStats(this.database, userId, guildId);
 
     if (!stats) return [];
 
@@ -194,7 +201,7 @@ export class EvolutiveAchievementsService {
     for (const [baseId, def] of Object.entries(BASE_ACHIEVEMENTS)) {
       const statValue = stats[def.statKey];
 
-      let row = await getRow(userId, guildId, baseId);
+      let row = await getRow(this.database, userId, guildId, baseId);
 
       // Auto-initialize at tier 1 when the user first qualifies
       if (!row && statValue >= 1) {
@@ -206,7 +213,7 @@ export class EvolutiveAchievementsService {
             reason: 'Primeiro passo desbloqueado!',
           },
         ];
-        await db
+        await this.database
           .insert(evolutiveAchievements)
           .values({
             user_id: userId,
@@ -219,7 +226,7 @@ export class EvolutiveAchievementsService {
           })
           .onConflictDoNothing();
 
-        row = await getRow(userId, guildId, baseId);
+        row = await getRow(this.database, userId, guildId, baseId);
       }
 
       if (!row || row.current_tier >= 5) continue;
@@ -241,7 +248,7 @@ export class EvolutiveAchievementsService {
       });
 
       // Guarded on the tier we read so a concurrent evolution can't apply twice.
-      const evolved = await db
+      const evolved = await this.database
         .update(evolutiveAchievements)
         .set({
           current_tier: nextTierDef.tier,
@@ -273,12 +280,12 @@ export class EvolutiveAchievementsService {
     userId: string,
     guildId: string,
   ): Promise<EvolutiveAchievement[]> {
-    const rows = await db
+    const rows = await this.database
       .select()
       .from(evolutiveAchievements)
       .where(byUser(userId, guildId));
 
-    const stats = await getStats(userId, guildId);
+    const stats = await getStats(this.database, userId, guildId);
 
     return rows.flatMap((row: EvolutiveRow) => {
       const def = BASE_ACHIEVEMENTS[row.base_id];
@@ -312,7 +319,7 @@ export class EvolutiveAchievementsService {
     userId: string,
     guildId: string,
   ): Promise<{ baseId: string; name: string; events: EvolutionEvent[] }[]> {
-    const rows = await db
+    const rows = await this.database
       .select()
       .from(evolutiveAchievements)
       .where(byUser(userId, guildId))

@@ -2,7 +2,7 @@ import {
   achievementConditionSchema,
   type AchievementCondition,
 } from '@marquinhos/contracts/http/routes/gamification';
-import { db, type DbExecutor } from '@marquinhos/database/client';
+import { db, type Db, type DbExecutor } from '@marquinhos/database/client';
 import {
   achievements,
   userAchievements,
@@ -10,6 +10,8 @@ import {
   userStats,
 } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
+import { Inject, Injectable } from '@nestjs/common';
+import { DB } from 'database/database.tokens';
 import {
   and,
   asc,
@@ -88,21 +90,21 @@ const DEFAULT_ACHIEVEMENTS = [
   },
 ];
 
+@Injectable()
 export class AchievementService {
-  private levelingService: LevelingService;
-
-  constructor(levelingService: LevelingService) {
-    this.levelingService = levelingService;
-  }
+  constructor(
+    private readonly levelingService: LevelingService = new LevelingService(),
+    @Inject(DB) private readonly database: Db = db,
+  ) {}
 
   async initializeDefaults(): Promise<void> {
     // Generic defaults are seeded once; after that the rows are the operator's.
-    const [generic] = await db
+    const [generic] = await this.database
       .select({ count: count() })
       .from(achievements)
       .where(ne(achievements.category, 'wordle'));
     if (!generic?.count) {
-      await db
+      await this.database
         .insert(achievements)
         .values(
           DEFAULT_ACHIEVEMENTS.map((a) => ({
@@ -115,7 +117,7 @@ export class AchievementService {
     // The catalog is authoritative for its own rows (condition is null): those
     // it no longer lists are archived, keeping their unlocks, and come back if
     // the ID returns.
-    await db.transaction(async (tx) => {
+    await this.database.transaction(async (tx) => {
       await tx
         .update(achievements)
         .set({ archived_at: Date.now() })
@@ -164,7 +166,7 @@ export class AchievementService {
   async checkAndAwardAchievements(
     userId: string,
     guildId: string,
-    exec: DbExecutor = db,
+    exec: DbExecutor = this.database,
   ): Promise<string[]> {
     const [stats] = await exec
       .select()
@@ -263,7 +265,7 @@ export class AchievementService {
     userId: string,
     guildId: string,
     achievementId: string,
-    exec: DbExecutor = db,
+    exec: DbExecutor = this.database,
   ): Promise<boolean> {
     return (
       (await this.unlockAchievements(userId, guildId, [achievementId], exec))
@@ -275,10 +277,10 @@ export class AchievementService {
     userId: string,
     guildId: string,
     achievementIds: readonly string[],
-    exec: DbExecutor = db,
+    exec: DbExecutor = this.database,
   ): Promise<readonly { id: string; unlockedAt: number }[]> {
-    if (exec === db)
-      return db.transaction((tx) =>
+    if (exec === this.database)
+      return this.database.transaction((tx) =>
         this.unlockAchievements(userId, guildId, achievementIds, tx),
       );
     const requestedIds = [...new Set(achievementIds)];
@@ -350,7 +352,7 @@ export class AchievementService {
     userId: string,
     guildId: string,
   ): Promise<UserAchievement[]> {
-    return (await db
+    return (await this.database
       .select({
         user_id: userAchievements.user_id,
         guild_id: userAchievements.guild_id,
@@ -379,7 +381,7 @@ export class AchievementService {
   }
 
   async getAllAchievements(): Promise<Achievement[]> {
-    return (await db
+    return (await this.database
       .select()
       .from(achievements)
       .where(isNull(achievements.archived_at))
@@ -399,7 +401,7 @@ export class AchievementService {
     condition: AchievementCondition;
     reward_xp: number;
   }): Promise<Achievement> {
-    const [row] = await db
+    const [row] = await this.database
       .insert(achievements)
       .values({ ...data, condition: JSON.stringify(data.condition) })
       .returning();

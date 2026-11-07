@@ -1,20 +1,25 @@
-import { db, type DbExecutor } from '@marquinhos/database/client';
+import { db, type Db, type DbExecutor } from '@marquinhos/database/client';
 import { userLevels, userStats, xpConfig } from '@marquinhos/database/schema';
 import {
   DEFAULT_XP_CONFIG,
   requiredXpForLevel,
 } from '@marquinhos/domain/gamification/leveling';
+import { Inject, Injectable } from '@nestjs/common';
+import { DB } from 'database/database.tokens';
 import { and, count, desc, eq, sql } from 'drizzle-orm';
 import type { UserLevel, XpConfig } from 'modules/gamification/types';
 
 const byUser = (userId: string, guildId: string) =>
   and(eq(userLevels.user_id, userId), eq(userLevels.guild_id, guildId));
 
+@Injectable()
 export class LevelingService {
+  constructor(@Inject(DB) private readonly database: Db = db) {}
+
   async initializeDefaults(): Promise<void> {
-    const [row] = await db.select({ count: count() }).from(xpConfig);
+    const [row] = await this.database.select({ count: count() }).from(xpConfig);
     if (row && row.count > 0) return;
-    await db
+    await this.database
       .insert(xpConfig)
       .values(DEFAULT_XP_CONFIG.map((c) => ({ ...c })))
       .onConflictDoNothing();
@@ -22,13 +27,13 @@ export class LevelingService {
   }
 
   async getXpConfig(): Promise<XpConfig[]> {
-    return db.select().from(xpConfig);
+    return this.database.select().from(xpConfig);
   }
 
   async ensureUser(
     userId: string,
     guildId: string,
-    exec: DbExecutor = db,
+    exec: DbExecutor = this.database,
   ): Promise<void> {
     await exec
       .insert(userLevels)
@@ -43,7 +48,7 @@ export class LevelingService {
   async getUserLevel(
     userId: string,
     guildId: string,
-    exec: DbExecutor = db,
+    exec: DbExecutor = this.database,
   ): Promise<UserLevel> {
     await this.ensureUser(userId, guildId, exec);
     const [row] = await exec
@@ -56,7 +61,7 @@ export class LevelingService {
   async applyLevelUps(
     userId: string,
     guildId: string,
-    exec: DbExecutor = db,
+    exec: DbExecutor = this.database,
   ): Promise<boolean> {
     // On a transaction this nests as a savepoint.
     return exec.transaction((tx) => this.lockAndLevelUp(userId, guildId, tx));
@@ -94,7 +99,7 @@ export class LevelingService {
     guildId: string,
     limit: number = 10,
   ): Promise<UserLevel[]> {
-    return db
+    return this.database
       .select()
       .from(userLevels)
       .where(eq(userLevels.guild_id, guildId))
@@ -106,7 +111,7 @@ export class LevelingService {
     userId: string,
     guildId: string,
     amount: number,
-    exec: DbExecutor = db,
+    exec: DbExecutor = this.database,
     gainedAt: number | null = Date.now(),
   ): Promise<void> {
     await exec

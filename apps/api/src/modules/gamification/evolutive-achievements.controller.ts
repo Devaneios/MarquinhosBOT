@@ -1,70 +1,70 @@
+import type { ContractResponseInput } from '@marquinhos/contracts/http/contract';
 import * as contract from '@marquinhos/contracts/http/routes/evolutiveAchievements';
-import type { Request, Response } from 'express';
+import { Controller, Get, HttpCode, Post } from '@nestjs/common';
+import { BotAuth } from 'common/decorators/auth.decorators';
+import {
+  ContractInput,
+  type ContractInputValue,
+} from 'common/decorators/contract-input.decorator';
+import { OnRouteError } from 'common/decorators/on-route-error.decorator';
 import { EvolutiveAchievementsService } from 'modules/gamification/evolutive-achievements.service';
-import { parseRequest, sendContract } from 'utils/contract';
 
-const service = new EvolutiveAchievementsService();
+@Controller('evolutive-achievements')
+@BotAuth()
+export class EvolutiveAchievementsController {
+  constructor(private readonly service: EvolutiveAchievementsService) {}
 
-export const evolutiveAchievements = {
-  async checkAndEvolve(req: Request, res: Response): Promise<void> {
-    const input = parseRequest(contract.checkAndEvolve, req);
-    if (!input) {
-      res.status(400).json({ message: 'userId and guildId are required' });
-      return;
-    }
+  @Post('evolve/:userId/:guildId')
+  @HttpCode(200)
+  @OnRouteError({
+    event: 'evolutive_achievements.controller.check_and_evolve_failed',
+    message: 'Failed to check evolution',
+  })
+  async checkAndEvolve(
+    @ContractInput(contract.checkAndEvolve, 'userId and guildId are required')
+    input: ContractInputValue<typeof contract.checkAndEvolve>,
+  ): Promise<ContractResponseInput<typeof contract.checkAndEvolve>> {
     const { userId, guildId } = input.params;
-    try {
-      const evolutions = await service.checkAndEvolveAll(userId, guildId);
-      sendContract(res, contract.checkAndEvolve, { data: evolutions });
-    } catch (error) {
-      console.error('[evolutiveAchievements] checkAndEvolve error:', error);
-      res.status(500).json({ message: 'Failed to check evolution' });
-    }
-  },
+    const evolutions = await this.service.checkAndEvolveAll(userId, guildId);
+    return { data: evolutions };
+  }
 
+  @Get(':userId/:guildId')
+  @OnRouteError({
+    event: 'evolutive_achievements.controller.get_user_achievements_failed',
+    message: 'Failed to get evolutive achievements',
+  })
   async getUserEvolutiveAchievements(
-    req: Request,
-    res: Response,
-  ): Promise<void> {
-    const input = parseRequest(contract.getUserEvolutiveAchievements, req);
-    if (!input) {
-      res.status(400).json({ message: 'userId and guildId are required' });
-      return;
-    }
+    @ContractInput(
+      contract.getUserEvolutiveAchievements,
+      'userId and guildId are required',
+    )
+    input: ContractInputValue<typeof contract.getUserEvolutiveAchievements>,
+  ): Promise<
+    ContractResponseInput<typeof contract.getUserEvolutiveAchievements>
+  > {
     const { userId, guildId } = input.params;
-    try {
-      const achievements = await service.getUserEvolutiveAchievements(
-        userId,
-        guildId,
-      );
-      sendContract(res, contract.getUserEvolutiveAchievements, {
-        data: achievements,
-      });
-    } catch (error) {
-      console.error(
-        '[evolutiveAchievements] getUserEvolutiveAchievements error:',
-        error,
-      );
-      res.status(500).json({ message: 'Failed to get evolutive achievements' });
-    }
-  },
+    const achievements = await this.service.getUserEvolutiveAchievements(
+      userId,
+      guildId,
+    );
+    return { data: achievements };
+  }
 
-  async getEvolutionTimeline(req: Request, res: Response): Promise<void> {
-    const input = parseRequest(contract.getEvolutionTimeline, req);
-    if (!input) {
-      res.status(400).json({ message: 'userId and guildId are required' });
-      return;
-    }
+  @Get('timeline/:userId/:guildId')
+  @OnRouteError({
+    event: 'evolutive_achievements.controller.get_timeline_failed',
+    message: 'Failed to get evolution timeline',
+  })
+  async getEvolutionTimeline(
+    @ContractInput(
+      contract.getEvolutionTimeline,
+      'userId and guildId are required',
+    )
+    input: ContractInputValue<typeof contract.getEvolutionTimeline>,
+  ): Promise<ContractResponseInput<typeof contract.getEvolutionTimeline>> {
     const { userId, guildId } = input.params;
-    try {
-      const timeline = await service.getEvolutionTimeline(userId, guildId);
-      sendContract(res, contract.getEvolutionTimeline, { data: timeline });
-    } catch (error) {
-      console.error(
-        '[evolutiveAchievements] getEvolutionTimeline error:',
-        error,
-      );
-      res.status(500).json({ message: 'Failed to get evolution timeline' });
-    }
-  },
-};
+    const timeline = await this.service.getEvolutionTimeline(userId, guildId);
+    return { data: timeline };
+  }
+}

@@ -2,7 +2,7 @@
 
 ## Phase 0: baseline and safety net
 
-**Status: Phase 0 through Phase 3 complete; beginning Phase 4.**
+**Status: Phase 0 through Phase 4 complete; beginning Phase 5.**
 
 - Branch: `refactor/api-nestjs` (created from `main`, which was two commits ahead of `origin/main`).
 - Initial baseline: `pnpm run dev:test` exited 1 because all five gateway assertions passed but its `afterAll` hook timed out at 5 seconds. Diagnostic instrumentation showed 12 pending Vite client-environment transform requests; `vite.close()` waits for those requests.
@@ -67,3 +67,14 @@
 - The Nest Express adapter emits an empty response for a handler that returns literal `null`. `UserController.exists` uses a JSON-null sentinel so the response remains `200` with body `null`, matching the unchanged golden and existing API contract.
 - `bun run dev:test` passed: dev config 2 tests, Activity gateway 5, API 1,758 tests across 191 files, bot 257 across 45 files, and Activity 291 across 73 files. API parity is included and passed against the unchanged golden.
 - Workspace checks passed: `pnpm run typecheck`, `pnpm run lint`, and `pnpm run build`. Existing bot and Activity lint warnings remain unchanged.
+
+## Phase 4: Gamification and maze
+
+- Move-only checkpoint `faeef79` moved the gamification, evolutive-achievement, and maze services/controllers into feature modules and rewrote imports only.
+- Singleton audit: `GamificationService` holds only the Leveling, Achievement, EvolutiveAchievement, and database providers; the other services hold their injected database or collaborator. No provider has per-request mutable state. All controller dependencies are immutable constructor references.
+- Added `GamificationModule` and `MazeModule`, imported them into the app, and injected `GamificationService` into startup. Services now use the `DB` token. Temporary constructor defaults remain for existing plain game sessions and service tests; Phase 7/8 will remove them after those callers move to DI.
+- Converted all 12 gamification, 3 evolutive-achievement, and 4 maze routes to Nest controllers with contract inputs, exact custom validation messages, explicit POST statuses, and route error metadata. Removed the three Express router files and their legacy mounts.
+- Ported the gamification and maze HTTP contract tests to real Nest modules. Converted the maze controller validation tests to HTTP tests with the same response assertions, and added DI smoke coverage for `AppModule`, `GamificationModule`, and `MazeModule`.
+- A first test run exposed that sending JSON `null` through Express's strict JSON parser is rejected before controller validation. The HTTP test now sends `{}` to exercise the same missing-`userId` validation path; no production code or parity golden changed.
+- `bun run dev:test` passed: dev config 2 tests, Activity gateway 5, API 1,759 tests across 192 files, bot 257 across 45 files, and Activity 291 across 73 files. The API parity suite passed against the unchanged golden.
+- Workspace gates passed: `pnpm run typecheck`, `pnpm run lint`, and `pnpm run build`. Existing bot and Activity lint warnings remain unchanged.

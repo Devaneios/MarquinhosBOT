@@ -1,114 +1,139 @@
+import type { ContractResponseInput } from '@marquinhos/contracts/http/contract';
 import * as contract from '@marquinhos/contracts/http/routes/maze';
 import {
   MAZE_DIRECTIONS,
   MAZE_MODES,
   MAZE_SIZES,
 } from '@marquinhos/contracts/http/routes/maze';
-import type { Request, Response } from 'express';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  NotFoundException,
+  Param,
+  Post,
+} from '@nestjs/common';
+import { BotAuth } from 'common/decorators/auth.decorators';
+import { OnRouteError } from 'common/decorators/on-route-error.decorator';
 import { MazeService } from 'modules/maze/maze.service';
-import { sendContract } from 'utils/contract';
 
+@Controller('games/maze')
+@BotAuth()
 export class MazeController {
-  private service = new MazeService();
+  constructor(private readonly service: MazeService) {}
 
-  async startMaze(req: Request, res: Response) {
-    try {
-      const body = contract.startMaze.body.safeParse(req.body);
-      if (!body.success) {
-        const field = body.error.issues[0]?.path[0];
-        const message =
-          field === 'mode'
-            ? `mode must be one of: ${MAZE_MODES.join(', ')}`
-            : field === 'size'
-              ? `size must be one of: ${MAZE_SIZES.join(', ')}`
-              : 'userId and guildId are required';
-        return res.status(400).json({ message });
-      }
-
-      const { userId, guildId, mode, size } = body.data;
-      const data = await this.service.createMazeSession(
-        userId,
-        guildId,
-        mode,
-        size,
-      );
-      return sendContract(res, contract.startMaze, { data });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: 'Unknown Error' });
+  @Post('start')
+  @HttpCode(200)
+  @OnRouteError({
+    event: 'maze.controller.start_failed',
+    message: 'Unknown Error',
+  })
+  async startMaze(
+    @Body() bodyInput: unknown,
+  ): Promise<ContractResponseInput<typeof contract.startMaze>> {
+    const body = contract.startMaze.body.safeParse(bodyInput);
+    if (!body.success) {
+      const field = body.error.issues[0]?.path[0];
+      const message =
+        field === 'mode'
+          ? `mode must be one of: ${MAZE_MODES.join(', ')}`
+          : field === 'size'
+            ? `size must be one of: ${MAZE_SIZES.join(', ')}`
+            : 'userId and guildId are required';
+      throw new BadRequestException({ message });
     }
+
+    const { userId, guildId, mode, size } = body.data;
+    const data = await this.service.createMazeSession(
+      userId,
+      guildId,
+      mode,
+      size,
+    );
+    return { data };
   }
 
-  async moveMaze(req: Request, res: Response) {
-    try {
-      const params = contract.getMaze.params.safeParse(req.params);
-      if (!params.success) {
-        return res.status(400).json({ message: 'sessionId is required' });
-      }
-      const body = contract.moveMaze.body.safeParse(req.body);
-      if (!body.success) {
-        const message =
-          body.error.issues[0]?.path[0] === 'direction'
-            ? `direction must be one of: ${MAZE_DIRECTIONS.join(', ')}`
-            : 'userId is required';
-        return res.status(400).json({ message });
-      }
-
-      const data = await this.service.processMazeMove(
-        params.data.sessionId,
-        body.data.userId,
-        body.data.direction,
-      );
-      if (data === null) {
-        return res
-          .status(404)
-          .json({ message: 'Maze session not found or not active' });
-      }
-      return sendContract(res, contract.moveMaze, { data });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: 'Unknown Error' });
+  @Post(':sessionId/move')
+  @HttpCode(200)
+  @OnRouteError({
+    event: 'maze.controller.move_failed',
+    message: 'Unknown Error',
+  })
+  async moveMaze(
+    @Param() paramsInput: Record<string, string>,
+    @Body() bodyInput: unknown,
+  ): Promise<ContractResponseInput<typeof contract.moveMaze>> {
+    const params = contract.getMaze.params.safeParse(paramsInput);
+    if (!params.success) {
+      throw new BadRequestException({ message: 'sessionId is required' });
     }
-  }
-
-  async getMaze(req: Request, res: Response) {
-    try {
-      const params = contract.getMaze.params.safeParse(req.params);
-      if (!params.success) {
-        return res.status(400).json({ message: 'sessionId is required' });
-      }
-      const data = await this.service.getMazeSession(params.data.sessionId);
-      if (data === null) {
-        return res.status(404).json({ message: 'Maze session not found' });
-      }
-      return sendContract(res, contract.getMaze, { data });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: 'Unknown Error' });
+    const body = contract.moveMaze.body.safeParse(bodyInput);
+    if (!body.success) {
+      const message =
+        body.error.issues[0]?.path[0] === 'direction'
+          ? `direction must be one of: ${MAZE_DIRECTIONS.join(', ')}`
+          : 'userId is required';
+      throw new BadRequestException({ message });
     }
-  }
 
-  async abandonMaze(req: Request, res: Response) {
-    try {
-      const params = contract.getMaze.params.safeParse(req.params);
-      if (!params.success) {
-        return res.status(400).json({ message: 'sessionId is required' });
-      }
-      const body = contract.abandonMaze.body.safeParse(req.body);
-      if (!body.success) {
-        return res.status(400).json({ message: 'userId is required' });
-      }
-
-      await this.service.abandonMazeSession(
-        params.data.sessionId,
-        body.data.userId,
-      );
-      return sendContract(res, contract.abandonMaze, {
-        message: 'Maze session abandoned',
+    const data = await this.service.processMazeMove(
+      params.data.sessionId,
+      body.data.userId,
+      body.data.direction,
+    );
+    if (data === null) {
+      throw new NotFoundException({
+        message: 'Maze session not found or not active',
       });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: 'Unknown Error' });
     }
+    return { data };
+  }
+
+  @Get(':sessionId')
+  @OnRouteError({
+    event: 'maze.controller.get_failed',
+    message: 'Unknown Error',
+  })
+  async getMaze(
+    @Param() paramsInput: Record<string, string>,
+  ): Promise<ContractResponseInput<typeof contract.getMaze>> {
+    const params = contract.getMaze.params.safeParse(paramsInput);
+    if (!params.success) {
+      throw new BadRequestException({ message: 'sessionId is required' });
+    }
+    const data = await this.service.getMazeSession(params.data.sessionId);
+    if (data === null) {
+      throw new NotFoundException({ message: 'Maze session not found' });
+    }
+    return { data };
+  }
+
+  @Delete(':sessionId')
+  @HttpCode(200)
+  @OnRouteError({
+    event: 'maze.controller.abandon_failed',
+    message: 'Unknown Error',
+  })
+  async abandonMaze(
+    @Param() paramsInput: Record<string, string>,
+    @Body() bodyInput: unknown,
+  ): Promise<ContractResponseInput<typeof contract.abandonMaze>> {
+    const params = contract.getMaze.params.safeParse(paramsInput);
+    if (!params.success) {
+      throw new BadRequestException({ message: 'sessionId is required' });
+    }
+    const body = contract.abandonMaze.body.safeParse(bodyInput);
+    if (!body.success) {
+      throw new BadRequestException({ message: 'userId is required' });
+    }
+
+    await this.service.abandonMazeSession(
+      params.data.sessionId,
+      body.data.userId,
+    );
+    return { message: 'Maze session abandoned' };
   }
 }

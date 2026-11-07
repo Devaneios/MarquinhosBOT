@@ -1,16 +1,16 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { randomUUID } from 'node:crypto';
-import { startContractServer } from '../helpers/contractServer';
+import { startNestContractServer } from '../helpers/contractServer';
 
 const { callContract } = await import('@marquinhos/api-client/bot');
 const maze = await import('@marquinhos/contracts/http/routes/maze');
 
-let server: Awaited<ReturnType<typeof startContractServer>>;
+let server: Awaited<ReturnType<typeof startNestContractServer>>;
 
 beforeAll(async () => {
-  const { default: mazeRouter } = await import('../../src/routes/maze.route');
-  server = await startContractServer((app) => {
-    app.use('/api/games/maze', mazeRouter);
+  const { MazeModule } = await import('modules/maze/maze.module');
+  server = await startNestContractServer({
+    imports: [MazeModule],
   });
 });
 

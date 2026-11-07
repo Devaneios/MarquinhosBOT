@@ -4,27 +4,15 @@ import type { Router } from 'express';
 import type { Server } from 'node:http';
 
 export async function getLegacyRouteMounts() {
-  const [
-    health,
-    activity,
-    privacyPolicy,
-    aiChat,
-    emojiReaction,
-    gamification,
-    evolutiveAchievements,
-    maze,
-    wordle,
-  ] = await Promise.all([
-    import('routes/health.route'),
-    import('routes/activity.route'),
-    import('routes/privacyPolicy.route'),
-    import('routes/aiChat.route'),
-    import('routes/emojiReaction.route'),
-    import('routes/gamification.route'),
-    import('routes/evolutiveAchievements.route'),
-    import('routes/maze.route'),
-    import('routes/wordle.route'),
-  ]);
+  const [health, activity, privacyPolicy, aiChat, emojiReaction, wordle] =
+    await Promise.all([
+      import('routes/health.route'),
+      import('routes/activity.route'),
+      import('routes/privacyPolicy.route'),
+      import('routes/aiChat.route'),
+      import('routes/emojiReaction.route'),
+      import('routes/wordle.route'),
+    ]);
 
   return [
     { mount: '/api/health', router: health.default, contractModule: 'health' },
@@ -44,17 +32,6 @@ export async function getLegacyRouteMounts() {
       router: emojiReaction.default,
       contractModule: 'emojiReaction',
     },
-    {
-      mount: '/api/gamification',
-      router: gamification.default,
-      contractModule: 'gamification',
-    },
-    {
-      mount: '/api/evolutive-achievements',
-      router: evolutiveAchievements.default,
-      contractModule: 'evolutiveAchievements',
-    },
-    { mount: '/api/games/maze', router: maze.default, contractModule: 'maze' },
     { mount: '/api/wordle', router: wordle.default, contractModule: 'wordle' },
   ] satisfies {
     mount: string;
@@ -89,6 +66,8 @@ export async function startApi(
     { AuthModule },
     { HealthModule },
     { PrivacyPolicyModule },
+    { GamificationModule },
+    { MazeModule },
     { ScrobbleModule },
     { UserModule },
     { registerLegacyRoutes },
@@ -99,6 +78,8 @@ export async function startApi(
     import('modules/auth/auth.module'),
     import('modules/health/health.module'),
     import('modules/privacy-policy/privacy-policy.module'),
+    import('modules/gamification/gamification.module'),
+    import('modules/maze/maze.module'),
     import('modules/scrobble/scrobble.module'),
     import('modules/user/user.module'),
     import('../../src/legacyRoutes'),
@@ -110,6 +91,8 @@ export async function startApi(
       AuthModule,
       HealthModule,
       PrivacyPolicyModule,
+      GamificationModule,
+      MazeModule,
       ScrobbleModule,
       UserModule,
     ],
