@@ -5,7 +5,7 @@ import {
   MAZE_SIZES,
 } from '@marquinhos/contracts/http/routes/maze';
 import type { Request, Response } from 'express';
-import { MazeService } from 'services/maze';
+import { MazeService } from 'modules/maze/maze.service';
 import { sendContract } from 'utils/contract';
 
 export class MazeController {

@@ -4,7 +4,7 @@ import type {
   SnakePublicConfig,
   SnakeServerMessage,
 } from '@marquinhos/contracts/activity/games/snakeGame';
-import { GamificationService } from 'services/gamification';
+import { GamificationService } from 'modules/gamification/index';
 // Snake ticks at ~6.6 Hz (FIXED_DT_MS = 150) — well under the ≥10 Hz
 // threshold that requires a hand-written binary snapshot (§7.2), so state
 // goes out over the JSON `broadcast` path; previously the JSON payload was

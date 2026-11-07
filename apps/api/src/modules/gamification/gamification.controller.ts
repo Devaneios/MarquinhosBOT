@@ -4,8 +4,8 @@ import type {
   AddXpResult,
   UserAchievement,
   UserLevel,
-} from 'services/gamification';
-import { GamificationService } from 'services/gamification';
+} from 'modules/gamification/index';
+import { GamificationService } from 'modules/gamification/index';
 import { parseRequest, sendContract } from 'utils/contract';
 
 // Transform helpers — convert snake_case DB rows to camelCase for bot/web consumers

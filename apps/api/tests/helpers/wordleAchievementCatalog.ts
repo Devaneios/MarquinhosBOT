@@ -8,8 +8,8 @@ import {
 } from '@marquinhos/database/schema';
 import { randomUUID } from 'crypto';
 import { and, eq, inArray } from 'drizzle-orm';
-import { AchievementService } from 'services/gamification/AchievementService';
-import { LevelingService } from 'services/gamification/LevelingService';
+import { AchievementService } from 'modules/gamification/achievement.service';
+import { LevelingService } from 'modules/gamification/leveling.service';
 
 export async function installWordleAchievementCatalog() {
   const existing = new Set(

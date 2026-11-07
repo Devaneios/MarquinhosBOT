@@ -3,10 +3,10 @@ import {
   type CardsServerMessage,
 } from '@marquinhos/contracts/activity/games/cards';
 import type { WireMessage } from '@marquinhos/contracts/activity/protocol';
+import { GamificationService } from 'modules/gamification/gamification.service';
 import { cardGameRegistry } from 'services/activity/cards/cardGameRegistry';
 import { CardTableSession } from 'services/activity/cards/CardTableSession';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
-import { GamificationService } from 'services/gamification/GamificationService';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 import { sendMessage } from '../sendMessage';
 

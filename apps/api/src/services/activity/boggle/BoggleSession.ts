@@ -7,11 +7,11 @@ import {
   type BoggleEngineOptions,
   type SubmitResult,
 } from '@marquinhos/domain/games/boggle-word-race/BoggleEngine';
+import { GamificationService } from 'modules/gamification/index';
 import { getBoggleWordSet } from 'services/activity/boggle/boggleWords';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
-import { GamificationService } from 'services/gamification';
 
 interface BogglePlayer {
   userId: string;

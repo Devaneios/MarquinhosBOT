@@ -5,7 +5,7 @@ import {
   requiredXpForLevel,
 } from '@marquinhos/domain/gamification/leveling';
 import { and, count, desc, eq, sql } from 'drizzle-orm';
-import type { UserLevel, XpConfig } from 'services/gamification/types';
+import type { UserLevel, XpConfig } from 'modules/gamification/types';
 
 const byUser = (userId: string, guildId: string) =>
   and(eq(userLevels.user_id, userId), eq(userLevels.guild_id, guildId));

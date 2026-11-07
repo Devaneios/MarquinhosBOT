@@ -6,9 +6,9 @@ import {
   MinesweeperEngine,
   type MinesweeperEngineConfig,
 } from '@marquinhos/domain/games/minesweeper-versus/MinesweeperEngine';
+import { GamificationService } from 'modules/gamification/index';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
-import { GamificationService } from 'services/gamification';
 
 interface MinesweeperPlayer {
   userId: string;

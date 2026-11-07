@@ -20,11 +20,11 @@ import {
 } from '@marquinhos/domain/games/pong/PongArenaEngine';
 import { getPongRuleset } from '@marquinhos/domain/games/pong/PongRulesetRegistry';
 import type { PongInputState } from '@marquinhos/domain/games/pong/PongTypes';
+import { GamificationService } from 'modules/gamification/index';
 import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
 import type { BinaryActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
-import { GamificationService } from 'services/gamification';
 import { logger } from 'utils/logger';
 
 interface PongPlayer {

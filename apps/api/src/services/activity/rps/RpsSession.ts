@@ -7,10 +7,10 @@ import {
   RpsEngine,
   type RpsEngineConfig,
 } from '@marquinhos/domain/games/rock-paper-scissors/room/RpsEngine';
+import { GamificationService } from 'modules/gamification/index';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
-import { GamificationService } from 'services/gamification';
 
 const BOT_PICKS: RpsPick[] = ['rock', 'paper', 'scissors'];
 const DEFAULT_BOT_PICK_DELAY_MS = 600;

@@ -8,8 +8,8 @@ import {
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { afterAll, beforeAll, describe, expect, it, spyOn } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
-import { AchievementService } from 'services/gamification/AchievementService';
-import { LevelingService } from 'services/gamification/LevelingService';
+import { AchievementService } from 'modules/gamification/achievement.service';
+import { LevelingService } from 'modules/gamification/leveling.service';
 import { WordleService } from 'services/wordle';
 import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
 import { getRecifeDate } from 'services/wordle/wordleDate';

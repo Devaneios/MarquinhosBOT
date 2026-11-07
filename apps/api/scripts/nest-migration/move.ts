@@ -51,6 +51,46 @@ const MOVES: MoveEntry[] = [
     from: 'src/controllers/scrobble.controller.ts',
     to: 'src/modules/scrobble/scrobble.controller.ts',
   },
+  {
+    from: 'src/services/gamification/LevelingService.ts',
+    to: 'src/modules/gamification/leveling.service.ts',
+  },
+  {
+    from: 'src/services/gamification/AchievementService.ts',
+    to: 'src/modules/gamification/achievement.service.ts',
+  },
+  {
+    from: 'src/services/gamification/GamificationService.ts',
+    to: 'src/modules/gamification/gamification.service.ts',
+  },
+  {
+    from: 'src/services/gamification/types.ts',
+    to: 'src/modules/gamification/types.ts',
+  },
+  {
+    from: 'src/services/gamification.ts',
+    to: 'src/modules/gamification/index.ts',
+  },
+  {
+    from: 'src/services/evolutiveAchievements.ts',
+    to: 'src/modules/gamification/evolutive-achievements.service.ts',
+  },
+  {
+    from: 'src/services/maze.ts',
+    to: 'src/modules/maze/maze.service.ts',
+  },
+  {
+    from: 'src/controllers/gamification.controller.ts',
+    to: 'src/modules/gamification/gamification.controller.ts',
+  },
+  {
+    from: 'src/controllers/evolutiveAchievements.controller.ts',
+    to: 'src/modules/gamification/evolutive-achievements.controller.ts',
+  },
+  {
+    from: 'src/controllers/maze.controller.ts',
+    to: 'src/modules/maze/maze.controller.ts',
+  },
 ];
 
 const moveByAbsolutePath = new Map(

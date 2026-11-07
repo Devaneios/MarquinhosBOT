@@ -6,10 +6,10 @@ import type {
 } from '@marquinhos/contracts/activity/games/connectFour';
 import { ConnectFourBot } from '@marquinhos/domain/games/connect-four/ConnectFourBot';
 import { ConnectFourEngine } from '@marquinhos/domain/games/connect-four/ConnectFourEngine';
+import { GamificationService } from 'modules/gamification/index';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
-import { GamificationService } from 'services/gamification';
 
 interface ConnectFourPlayer {
   userId: string;

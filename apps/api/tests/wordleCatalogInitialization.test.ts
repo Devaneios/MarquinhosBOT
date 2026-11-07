@@ -8,8 +8,8 @@ import {
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { afterAll, describe, expect, it } from 'bun:test';
 import { and, eq, inArray } from 'drizzle-orm';
-import { AchievementService } from 'services/gamification/AchievementService';
-import { LevelingService } from 'services/gamification/LevelingService';
+import { AchievementService } from 'modules/gamification/achievement.service';
+import { LevelingService } from 'modules/gamification/leveling.service';
 
 const defaults = new AchievementService(new LevelingService());
 const byId = <T extends { id: string }>(rows: readonly T[]) =>

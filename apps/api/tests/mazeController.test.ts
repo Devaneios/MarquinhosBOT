@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { MazeController } from 'controllers/maze.controller';
+import { MazeController } from 'modules/maze/maze.controller';
 
 function makeReq(body: unknown, params: Record<string, string> = {}) {
   return { body, params } as any;

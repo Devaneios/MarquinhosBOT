@@ -2,8 +2,8 @@ import {
   answerPayloadSchema,
   type TriviaQuizServerMessage,
 } from '@marquinhos/contracts/activity/games/triviaQuiz';
+import { GamificationService } from 'modules/gamification/gamification.service';
 import { TriviaQuizSession } from 'services/activity/trivia-quiz/TriviaQuizSession';
-import { GamificationService } from 'services/gamification/GamificationService';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
 import { sendMessage } from '../sendMessage';
 

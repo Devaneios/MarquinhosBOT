@@ -6,10 +6,10 @@ import type {
 } from '@marquinhos/contracts/activity/games/triviaQuiz';
 import { TriviaQuizEngine } from '@marquinhos/domain/games/trivia-quiz/TriviaQuizEngine';
 import type { TriviaQuizState } from '@marquinhos/domain/games/trivia-quiz/types';
+import { GamificationService } from 'modules/gamification/index';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
 import { getQuestions } from 'services/activity/trivia-quiz/questions';
-import { GamificationService } from 'services/gamification';
 
 export interface TriviaQuizSessionIdentity {
   sessionKey: string;

@@ -7,16 +7,16 @@ import {
   xpCooldowns,
 } from '@marquinhos/database/schema';
 import { and, desc, eq, sql } from 'drizzle-orm';
-import { EvolutiveAchievementsService } from 'services/evolutiveAchievements';
-import { AchievementService } from 'services/gamification/AchievementService';
-import { LevelingService } from 'services/gamification/LevelingService';
+import { AchievementService } from 'modules/gamification/achievement.service';
+import { EvolutiveAchievementsService } from 'modules/gamification/evolutive-achievements.service';
+import { LevelingService } from 'modules/gamification/leveling.service';
 import type {
   AddXpResult,
   GameResultInput,
   UserLevel,
   UserStats,
   XpConfig,
-} from 'services/gamification/types';
+} from 'modules/gamification/types';
 
 const evolutiveService = new EvolutiveAchievementsService();
 

@@ -5,11 +5,11 @@ import type {
 } from '@marquinhos/contracts/activity/games/ticTacToe';
 import { TicTacToeBot } from '@marquinhos/domain/games/tic-tac-toe/room/TicTacToeBot';
 import { TicTacToeEngine } from '@marquinhos/domain/games/tic-tac-toe/room/TicTacToeEngine';
+import { GamificationService } from 'modules/gamification/index';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
-import { GamificationService } from 'services/gamification';
 
 interface TicTacToePlayer {
   userId: string;

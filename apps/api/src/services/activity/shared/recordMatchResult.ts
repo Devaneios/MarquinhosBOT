@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import type { GameResultInput } from 'services/gamification/types';
+import type { GameResultInput } from 'modules/gamification/types';
 import { logger } from 'utils/logger';
 
 interface GameResultRecorder {

@@ -25,7 +25,7 @@ import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics'
 import { and, asc, countDistinct, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { logger } from 'utils/logger';
 import { z } from 'zod';
-import { LevelingService } from '../gamification/LevelingService';
+import { LevelingService } from '../../modules/gamification/leveling.service';
 import { WordleAlbumService } from './WordleAlbumService';
 import { getWordleTimeZone } from './wordleDate';
 import { visibleWordleEvidence } from './wordleEvidenceVisibility';

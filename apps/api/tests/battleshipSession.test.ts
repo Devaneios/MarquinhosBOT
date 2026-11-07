@@ -1,11 +1,11 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import type { ShipPlacement } from '@marquinhos/contracts/activity/games/battleship';
 import { describe, expect, it } from 'bun:test';
+import type { GamificationService } from 'modules/gamification/index';
 import {
   BattleshipSession,
   type BattleshipSessionIdentity,
 } from 'services/activity/battleship/BattleshipSession';
-import type { GamificationService } from 'services/gamification';
 
 function identity(mode: ActivityMode = 'multi'): BattleshipSessionIdentity {
   return {

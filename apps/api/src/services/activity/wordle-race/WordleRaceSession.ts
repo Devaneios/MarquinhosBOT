@@ -4,10 +4,10 @@ import type {
   WordleRaceState,
 } from '@marquinhos/contracts/activity/games/wordleRace';
 import { WordleRaceEngine } from '@marquinhos/domain/games/wordle/race/WordleRaceEngine';
+import { GamificationService } from 'modules/gamification/index';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
-import { GamificationService } from 'services/gamification';
 import { pickRaceWord, resolveCanonical } from 'services/wordle';
 
 interface WordleRaceSessionIdentity {

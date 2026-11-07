@@ -69,7 +69,7 @@ describe('TicTacToeSession results', () => {
     const { db } = await import('@marquinhos/database/client');
     const { userGameResults } = await import('@marquinhos/database/schema');
     const { count, eq } = await import('drizzle-orm');
-    const { GamificationService } = await import('services/gamification');
+    const { GamificationService } = await import('modules/gamification/index');
     const session = new TicTacToeSession(
       {
         sessionKey: 'k',

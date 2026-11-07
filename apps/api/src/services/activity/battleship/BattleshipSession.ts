@@ -10,10 +10,10 @@ import {
   spectatorViewFor,
   viewFor,
 } from '@marquinhos/domain/games/battleship/masking';
+import { GamificationService } from 'modules/gamification/index';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
-import { GamificationService } from 'services/gamification';
 
 export interface BattleshipSessionIdentity {
   sessionKey: string;

@@ -22,8 +22,8 @@ import {
   notInArray,
   sql,
 } from 'drizzle-orm';
-import { LevelingService } from 'services/gamification/LevelingService';
-import type { Achievement, UserAchievement } from 'services/gamification/types';
+import { LevelingService } from 'modules/gamification/leveling.service';
+import type { Achievement, UserAchievement } from 'modules/gamification/types';
 
 const DEFAULT_ACHIEVEMENTS = [
   {

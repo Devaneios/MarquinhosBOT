@@ -36,8 +36,8 @@ import {
   or,
   sql,
 } from 'drizzle-orm';
-import { AchievementService } from 'services/gamification/AchievementService';
-import { LevelingService } from 'services/gamification/LevelingService';
+import { AchievementService } from 'modules/gamification/achievement.service';
+import { LevelingService } from 'modules/gamification/leveling.service';
 import { getRecifeDate, getWordleTimeZone } from 'services/wordle/wordleDate';
 import { z } from 'zod';
 

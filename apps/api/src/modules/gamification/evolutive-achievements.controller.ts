@@ -1,6 +1,6 @@
 import * as contract from '@marquinhos/contracts/http/routes/evolutiveAchievements';
 import type { Request, Response } from 'express';
-import { EvolutiveAchievementsService } from 'services/evolutiveAchievements';
+import { EvolutiveAchievementsService } from 'modules/gamification/evolutive-achievements.service';
 import { parseRequest, sendContract } from 'utils/contract';
 
 const service = new EvolutiveAchievementsService();

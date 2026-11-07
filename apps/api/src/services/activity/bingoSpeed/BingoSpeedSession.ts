@@ -6,10 +6,10 @@ import type {
   BingoSpeedState,
 } from '@marquinhos/contracts/activity/games/bingoSpeed';
 import { BingoSpeedEngine } from '@marquinhos/domain/games/bingo-speed/BingoSpeedEngine';
+import { GamificationService } from 'modules/gamification/index';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
-import { GamificationService } from 'services/gamification';
 
 interface BingoPlayer {
   userId: string;

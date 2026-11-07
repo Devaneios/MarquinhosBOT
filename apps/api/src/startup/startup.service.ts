@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { AppConfig } from 'config/app.config';
 import { DB } from 'database/database.tokens';
+import { GamificationService } from 'modules/gamification/index';
 import {
   AGENT_DAILY_QUOTA,
   DailyQuotaService,
@@ -18,7 +19,6 @@ import {
 import { describeStaticPrompts } from 'services/aiChat/promptRegistry';
 import { RateLimitService } from 'services/aiChat/RateLimitService';
 import { ResearchOrchestrator } from 'services/aiChat/research/ResearchOrchestrator';
-import { GamificationService } from 'services/gamification';
 import {
   getValidationSet,
   loadBannedWords,

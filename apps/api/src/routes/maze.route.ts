@@ -1,6 +1,6 @@
-import { MazeController } from 'controllers/maze.controller';
 import express from 'express';
 import { checkToken } from 'middlewares/botAuth';
+import { MazeController } from 'modules/maze/maze.controller';
 
 const router = express.Router();
 const maze = new MazeController();

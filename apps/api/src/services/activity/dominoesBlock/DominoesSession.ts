@@ -12,10 +12,10 @@ import {
   DominoesEngine,
   type DominoesState,
 } from '@marquinhos/domain/games/dominoes-block/DominoesEngine';
+import { GamificationService } from 'modules/gamification/index';
 import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
-import { GamificationService } from 'services/gamification';
 import { logger } from 'utils/logger';
 
 export interface GamificationLike {

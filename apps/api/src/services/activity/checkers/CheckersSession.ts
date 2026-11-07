@@ -7,11 +7,11 @@ import type {
 } from '@marquinhos/contracts/activity/games/checkers';
 import { chooseCheckersMove } from '@marquinhos/domain/games/checkers/CheckersBotAI';
 import { CheckersEngine } from '@marquinhos/domain/games/checkers/CheckersEngine';
+import { GamificationService } from 'modules/gamification/index';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
-import { GamificationService } from 'services/gamification';
 
 interface CheckersPlayer {
   userId: string;

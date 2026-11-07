@@ -4,10 +4,10 @@ import type {
   HangmanState,
 } from '@marquinhos/contracts/activity/games/hangman';
 import { HangmanEngine } from '@marquinhos/domain/games/hangman/HangmanEngine';
+import { GamificationService } from 'modules/gamification/index';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
-import { GamificationService } from 'services/gamification';
 
 interface HangmanPlayer {
   userId: string;

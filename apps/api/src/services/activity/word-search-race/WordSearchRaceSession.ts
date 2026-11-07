@@ -6,9 +6,9 @@ import type {
   WordSearchRaceState,
 } from '@marquinhos/contracts/activity/games/wordSearchRace';
 import { WordSearchRaceEngine } from '@marquinhos/domain/games/word-search-race/WordSearchRaceEngine';
+import { GamificationService } from 'modules/gamification/index';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
-import { GamificationService } from 'services/gamification';
 
 interface WordSearchRacePlayer {
   userId: string;

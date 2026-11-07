@@ -9,11 +9,11 @@ import {
 } from '@marquinhos/domain/games/tower-unstable/TowerBot';
 import { TowerEngine } from '@marquinhos/domain/games/tower-unstable/TowerEngine';
 import { SeededRng } from '@marquinhos/domain/shared/random/SeededRng';
+import { GamificationService } from 'modules/gamification/index';
 import type { ActionResult } from 'services/activity/shared/ActionResult';
 import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
 import { DisconnectGraceTimer } from 'services/activity/shared/DisconnectGraceTimer';
 import { recordMatchResult } from 'services/activity/shared/recordMatchResult';
-import { GamificationService } from 'services/gamification';
 
 interface TowerPlayer {
   userId: string;

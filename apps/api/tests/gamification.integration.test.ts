@@ -9,9 +9,9 @@ import {
 import { afterEach, beforeAll, describe, expect, it, spyOn } from 'bun:test';
 import { randomUUID } from 'crypto';
 import { and, eq } from 'drizzle-orm';
-import { GamificationService } from 'services/gamification';
-import { AchievementService } from 'services/gamification/AchievementService';
-import { LevelingService } from 'services/gamification/LevelingService';
+import { AchievementService } from 'modules/gamification/achievement.service';
+import { GamificationService } from 'modules/gamification/index';
+import { LevelingService } from 'modules/gamification/leveling.service';
 
 const COMMAND_XP = 5;
 const COMMAND_COOLDOWN_MS = 60_000;

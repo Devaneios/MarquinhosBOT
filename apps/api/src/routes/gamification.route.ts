@@ -1,6 +1,6 @@
-import GamificationController from 'controllers/gamification.controller';
 import express from 'express';
 import { checkToken } from 'middlewares/botAuth';
+import GamificationController from 'modules/gamification/gamification.controller';
 
 const router = express.Router();
 const gamification = new GamificationController();
