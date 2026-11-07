@@ -1,70 +1,80 @@
+import { Controller, Get } from '@nestjs/common';
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { checkToken } from 'middlewares/botAuth';
+import { BotAuth } from 'common/decorators/auth.decorators';
+import { BotAuthGuard } from 'common/guards/bot-auth.guard';
+import { HttpInfrastructureModule } from 'common/http/http-infrastructure.module';
+import { AppConfig } from 'config/app.config';
 import { encryptToken } from 'utils/crypto';
+import {
+  createNestHttpTestApp,
+  type NestHttpTestApp,
+} from './helpers/createNestHttpTestApp';
 
-function makeReq(headers: Record<string, string>) {
-  return { headers } as any;
+@Controller('bot-auth-probe')
+class BotAuthProbeController {
+  @Get()
+  @BotAuth()
+  check() {
+    return { authorized: true };
+  }
 }
 
-function makeRes() {
-  let capturedStatus: number | undefined;
-  const res: any = {
-    status(n: number) {
-      capturedStatus = n;
-      return { json: () => {} };
-    },
-    getStatus: () => capturedStatus,
-  };
-  return res;
-}
-
-describe('checkToken (botAuth middleware)', () => {
+describe('BotAuthGuard', () => {
   const VALID_KEY = 'test-api-key-abc123';
+  let api: NestHttpTestApp;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    process.env.NODE_ENV = 'test';
     process.env.MARQUINHOS_API_KEY = VALID_KEY;
+    api = await createNestHttpTestApp(
+      {
+        imports: [HttpInfrastructureModule],
+        controllers: [BotAuthProbeController],
+        providers: [BotAuthGuard],
+      },
+      (builder) =>
+        builder
+          .overrideProvider(AppConfig)
+          .useValue({ marquinhosApiKey: VALID_KEY }),
+    );
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await api?.close();
     delete process.env.MARQUINHOS_API_KEY;
   });
 
-  it('calls next() when Authorization header has valid Bearer token', () => {
-    const req = makeReq({ authorization: `Bearer ${VALID_KEY}` });
-    const res = makeRes();
-    let nextCalled = false;
-    checkToken(req, res, () => {
-      nextCalled = true;
+  it('accepts a valid Bearer token', async () => {
+    const response = await fetch(`${api.origin}/api/bot-auth-probe`, {
+      headers: { authorization: `Bearer ${VALID_KEY}` },
     });
-    expect(nextCalled).toBe(true);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ authorized: true });
   });
 
-  it('returns 401 when token does not match', () => {
-    const req = makeReq({ authorization: 'Bearer wrong-key' });
-    const res = makeRes();
-    checkToken(req, res, () => {});
-    expect(res.getStatus()).toBe(401);
+  it('returns 401 when token does not match', async () => {
+    const response = await fetch(`${api.origin}/api/bot-auth-probe`, {
+      headers: { authorization: 'Bearer wrong-key' },
+    });
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ message: 'Token not authorized' });
   });
 
-  it('ignores the old web-agent header and still requires the API key', () => {
+  it('ignores the old web-agent header and still requires the API key', async () => {
     const userToken = encryptToken('discord-access', Date.now() + 60_000);
-    const req = makeReq({
-      authorization: `Bearer ${userToken}`,
-      'marquinhos-agent': 'web',
+    const response = await fetch(`${api.origin}/api/bot-auth-probe`, {
+      headers: {
+        authorization: `Bearer ${userToken}`,
+        'marquinhos-agent': 'web',
+      },
     });
-    const res = makeRes();
-    let nextCalled = false;
-    checkToken(req, res, () => {
-      nextCalled = true;
-    });
-    expect(nextCalled).toBe(false);
-    expect(res.getStatus()).toBe(401);
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ message: 'Token not authorized' });
   });
 
-  it('returns 401 when Authorization header is missing', () => {
-    const req = makeReq({});
-    const res = makeRes();
-    checkToken(req, res, () => {});
-    expect(res.getStatus()).toBe(401);
+  it('returns 401 when Authorization header is missing', async () => {
+    const response = await fetch(`${api.origin}/api/bot-auth-probe`);
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ message: 'Token not provided' });
   });
 });

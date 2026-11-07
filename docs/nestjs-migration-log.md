@@ -2,7 +2,7 @@
 
 ## Phase 0: baseline and safety net
 
-**Status: Phase 0 and Phase 1 complete; beginning Phase 2.**
+**Status: Phase 0, Phase 1, and Phase 2 complete; beginning Phase 3.**
 
 - Branch: `refactor/api-nestjs` (created from `main`, which was two commits ahead of `origin/main`).
 - Initial baseline: `pnpm run dev:test` exited 1 because all five gateway assertions passed but its `afterAll` hook timed out at 5 seconds. Diagnostic instrumentation showed 12 pending Vite client-environment transform requests; `vite.close()` waits for those requests.
@@ -29,6 +29,7 @@
 ## Decisions and audits
 
 - **D5 — test-only Activity teardown:** wait for Vite's pending client transforms before closing the dev server. The user explicitly authorized this test-only `apps/activity` change to unblock the baseline; record it as the sole exception to the zero-diff app/activity gate.
+- **D1 — parser error responses:** malformed JSON now returns 400 `{ "message": "Invalid JSON body" }`, and oversized JSON returns 413 `{ "message": "Request body too large" }`. Bun 1.4.2 drops the parser `SyntaxError` cause while Nest maps it, so the filter recognizes Bun's parser message. The original Express golden is unchanged.
 
 - Phase 0 parity suite removes `RateLimit-Policy` from header comparisons because D2 explicitly permits its absence after migration. The original Express golden retains the captured header. Volatile `RateLimit-Reset` and `Retry-After` values are represented by stable placeholders.
 - The benchmark's single-guild load is intentionally retained for the after-migration comparison; do not tune the benchmark or the application between runs.
@@ -45,3 +46,12 @@
 - Missing-required-secret smoke test: production startup with `MARQUINHOS_API_KEY` empty exited with code 1 during ConfigModule validation, before binding a port.
 - Alpine artifact: `docker build -f apps/api/Dockerfile -t marquinhos-api-nest:phase1 .` succeeded. Its image healthcheck reported healthy and `/api/health` returned `200 {"status":"ok"}`.
 - Compatibility note: the prompt's Nest 12 `req.route` assumption does not hold with the shipped Express 5 adapter: its generated not-found wildcard sets `req.route`. `ApiExceptionFilter` therefore also recognizes Nest's generated `Cannot METHOD URL` 404 and still preserves 404 exceptions thrown by matched handlers.
+
+## Phase 2: Cross-cutting building blocks
+
+- Added `BotAuthGuard`, `ActivityAuthGuard`, `GuildMemberGuard`, composed auth/rate-limit decorators, `CurrentUser`, `ContractPipe`/`ContractInput`, `OnRouteError`, `RouteErrorInterceptor`, and the shared activity throttler guard. The global filter maps malformed JSON and oversized bodies to the approved D1 responses.
+- Moved health and privacy policy onto Nest controllers and removed their legacy router mounts. The old Express router modules remain only for Phase 0 manifest generation until the final migration cleanup.
+- Ported `botAuth.test.ts` and `guildMembership.test.ts` to Nest HTTP tests. Their prior status and membership-call assertions remain, with exact response bodies asserted as well.
+- Focused tests cover contract error aggregation, authenticated user attachment, guard outcomes, route-error messages, the two-route throttle bucket, and both D1 parser responses. `tests/parity/http-parity.test.ts` passed against the unchanged golden.
+- Full `bun run dev:test` exited 0: 2 dev config tests, 5 Activity gateway tests, 1,758 API tests across 191 files, 257 bot tests across 45 files, and 291 Activity tests across 73 files.
+- Workspace gates passed: `pnpm run typecheck`, `pnpm run lint`, and `pnpm run build`. Existing bot and Activity lint warnings remain unchanged.

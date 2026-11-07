@@ -35,6 +35,20 @@ export class ApiExceptionFilter implements ExceptionFilter {
     }
 
     const status = exception.getStatus();
+    if (status === 413) {
+      res.status(413).json({ message: 'Request body too large' });
+      return;
+    }
+    const malformedJson =
+      Reflect.get(exception, 'cause') instanceof SyntaxError ||
+      exception.message.startsWith('JSON Parse error:') ||
+      exception.message === 'Unexpected end of JSON input' ||
+      exception.message.includes('is not valid JSON');
+    if (status === 400 && malformedJson) {
+      res.status(400).json({ message: 'Invalid JSON body' });
+      return;
+    }
+
     // Nest 12's Express 5 adapter installs its not-found handler as a wildcard
     // route, so `req.route` is set for that handler too. Keep the legacy
     // unmatched-route response by recognizing Nest's generated NotFoundException.

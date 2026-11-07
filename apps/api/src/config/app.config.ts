@@ -27,4 +27,8 @@ export class AppConfig {
   get sqlitePath(): string | undefined {
     return this.config.get<string>('SQLITE_PATH');
   }
+
+  get marquinhosApiKey(): string | undefined {
+    return this.config.get<string>('MARQUINHOS_API_KEY');
+  }
 }

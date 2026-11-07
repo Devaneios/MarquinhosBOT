@@ -99,16 +99,20 @@ export async function startApi(
     { configureHttp },
     { NEST_APP_OPTIONS },
     { HttpInfrastructureModule },
+    { HealthModule },
+    { PrivacyPolicyModule },
     { registerLegacyRoutes },
   ] = await Promise.all([
     import('common/http/configure-http'),
     import('common/http/nest-app.options'),
     import('common/http/http-infrastructure.module'),
+    import('modules/health/health.module'),
+    import('modules/privacy-policy/privacy-policy.module'),
     import('../../src/legacyRoutes'),
   ]);
 
   const moduleRef = await Test.createTestingModule({
-    imports: [HttpInfrastructureModule],
+    imports: [HttpInfrastructureModule, HealthModule, PrivacyPolicyModule],
   }).compile();
   const app =
     moduleRef.createNestApplication<NestExpressApplication>(NEST_APP_OPTIONS);

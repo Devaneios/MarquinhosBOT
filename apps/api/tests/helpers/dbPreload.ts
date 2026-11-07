@@ -1,6 +1,7 @@
 import { closeDefaultDb } from '@marquinhos/database/client';
 import { createTestDb } from '@marquinhos/database/testing';
 import { afterAll } from 'bun:test';
+import 'reflect-metadata';
 
 // One throwaway database per test run backs the module-level `db` that
 // services import, the way SQLITE_PATH=:memory: used to.
