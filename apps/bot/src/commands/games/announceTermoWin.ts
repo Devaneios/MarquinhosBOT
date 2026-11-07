@@ -1,8 +1,5 @@
 import type { GuessRow } from '@marquinhos/contracts/wordle';
-import {
-  buildResultImage,
-  buildWinSummaryImage,
-} from '@marquinhos/ui/screens/termo';
+import { buildResultImage } from '@marquinhos/ui/screens/termo';
 import { baseEmbed } from '@marquinhos/utils/discord';
 import {
   AttachmentBuilder,
@@ -18,7 +15,6 @@ export interface TermoWinResult {
 
 export interface AnnounceTermoWinOptions {
   showPlayButton?: boolean;
-  image?: 'board' | 'summary';
 }
 
 export async function announceTermoWin(
@@ -26,12 +22,9 @@ export async function announceTermoWin(
   channel: GuildTextBasedChannel,
   name: string,
   result: TermoWinResult,
-  { showPlayButton, image = 'board' }: AnnounceTermoWinOptions = {},
+  { showPlayButton }: AnnounceTermoWinOptions = {},
 ): Promise<void> {
-  const imageBuffer =
-    image === 'summary'
-      ? await buildWinSummaryImage(result.attempts)
-      : await buildResultImage(result.guesses);
+  const imageBuffer = await buildResultImage(result.guesses);
   const attachment = new AttachmentBuilder(imageBuffer, {
     name: 'resultado.png',
   });
@@ -42,7 +35,8 @@ export async function announceTermoWin(
 
   const embed = baseEmbed(client)
     .setTitle(`${name} ${solvedMessage}`)
-    .setColor(0x588157);
+    .setColor(0x588157)
+    .setImage('attachment://resultado.png');
 
   await channel.send({
     embeds: [embed],

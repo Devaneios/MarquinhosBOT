@@ -3,7 +3,7 @@ import { expect, it } from 'bun:test';
 import { Client, type GuildTextBasedChannel } from 'discord.js';
 import { announceTermoWin } from './announceTermoWin';
 
-it('celebrates a win in public without sharing its board feedback', async () => {
+it('includes the result board in the public win announcement', async () => {
   const client = new Client({ intents: [] });
   const messages: unknown[] = [];
   const channel = {
@@ -15,9 +15,7 @@ it('celebrates a win in public without sharing its board feedback', async () => 
   const guesses: GuessRow[] = [{ guess: 'termo', feedback: ['correct'] }];
   const result = { attempts: 3, guesses };
 
-  await announceTermoWin(client, channel, 'Jogador', result, {
-    image: 'summary',
-  });
+  await announceTermoWin(client, channel, 'Jogador', result);
   expect(messages).toHaveLength(1);
   expect(messages[0]).toMatchObject({
     embeds: [

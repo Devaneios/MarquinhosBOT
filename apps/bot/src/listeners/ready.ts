@@ -432,7 +432,6 @@ async function broadcastTermoWins(client: Client<true>): Promise<void> {
 
           await announceTermoWin(client, channel, name, win, {
             showPlayButton: true,
-            image: 'summary',
           });
         } catch (err) {
           logger.warn(
