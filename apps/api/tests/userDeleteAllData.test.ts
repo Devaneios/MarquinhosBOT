@@ -2,7 +2,7 @@ import { db } from '@marquinhos/database/client';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { randomUUID } from 'crypto';
 import { sql } from 'drizzle-orm';
-import { UserService } from 'services/user';
+import { UserService } from 'modules/user/user.service';
 import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
 import { installWordleAchievementCatalog } from './helpers/wordleAchievementCatalog';
 

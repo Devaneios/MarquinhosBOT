@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import type { NextFunction, Request, Response } from 'express';
-import type { UserService } from 'services/user';
+import type { UserService } from 'modules/user/user.service';
 import { startContractServer } from '../helpers/contractServer';
 
 const { callContract } = await import('@marquinhos/api-client/bot');
@@ -42,7 +42,7 @@ let server: Awaited<ReturnType<typeof startContractServer>>;
 beforeAll(async () => {
   const { createUserRouter } = await import('../../src/routes/user.route');
   const { default: UserController } =
-    await import('../../src/controllers/user.controller');
+    await import('../../src/modules/user/user.controller');
   server = await startContractServer((app) => {
     app.use(
       '/api/user',

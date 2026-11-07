@@ -5,9 +5,9 @@ import {
 import { describe, expect, it } from 'bun:test';
 import { matchMaker } from 'colyseus';
 import ActivityController from 'controllers/activity.controller';
+import { DiscordService } from 'integrations/discord/discord.service';
 import { roomKey } from 'services/activity/roomKey';
 import { verifyWsSessionToken } from 'services/activity/wsSessionToken';
-import { DiscordService } from 'services/discord';
 
 function makeReq(body: Record<string, unknown>) {
   return { body } as any;

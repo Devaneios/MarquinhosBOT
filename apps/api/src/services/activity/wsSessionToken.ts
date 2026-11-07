@@ -3,8 +3,8 @@ import {
   gameIdSchema,
 } from '@marquinhos/contracts/activity/gameId';
 import { isPongRulesetId } from '@marquinhos/domain/games/pong/PongRulesetRegistry';
+import { decryptTokenFull, encryptToken } from 'common/crypto';
 import { cardGameRegistry } from 'services/activity/cards/cardGameRegistry';
-import { decryptTokenFull, encryptToken } from 'utils/crypto';
 import { z } from 'zod';
 
 const BOT_DIFFICULTIES = ['easy', 'normal', 'hard'] as const;

@@ -6,13 +6,16 @@ import {
 } from '@marquinhos/domain/games/pong/PongRulesetRegistry';
 import { matchMaker } from 'colyseus';
 import type { Request, Response } from 'express';
+import {
+  DiscordGuildMembershipError,
+  DiscordService,
+} from 'integrations/discord/discord.service';
 import { customAlphabet } from 'nanoid';
 import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
 import { PongTournamentService } from 'services/activity/pong/PongTournamentService';
 import { roomKey } from 'services/activity/roomKey';
 import { mintWsSessionToken } from 'services/activity/wsSessionToken';
 import { claimDeepLink, recordDeepLink } from 'services/activityDeepLink';
-import { DiscordGuildMembershipError, DiscordService } from 'services/discord';
 import { parseRequest, sendContract } from 'utils/contract';
 import { logger } from 'utils/logger';
 

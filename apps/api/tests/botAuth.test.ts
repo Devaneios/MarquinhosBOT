@@ -1,10 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
+import { encryptToken } from 'common/crypto';
 import { BotAuth } from 'common/decorators/auth.decorators';
 import { BotAuthGuard } from 'common/guards/bot-auth.guard';
 import { HttpInfrastructureModule } from 'common/http/http-infrastructure.module';
 import { AppConfig } from 'config/app.config';
-import { encryptToken } from 'utils/crypto';
 import {
   createNestHttpTestApp,
   type NestHttpTestApp,

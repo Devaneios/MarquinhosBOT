@@ -1,7 +1,7 @@
-import UserController from 'controllers/user.controller';
 import express, { type RequestHandler } from 'express';
 import { checkToken } from 'middlewares/botAuth';
 import { verifyDiscordToken } from 'middlewares/userAuth';
+import UserController from 'modules/user/user.controller';
 
 export function createUserRouter(
   userController = new UserController(),

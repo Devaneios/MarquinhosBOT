@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from 'bun:test';
+import type { DiscordService } from 'integrations/discord/discord.service';
 import { createActivityDiscordTokenVerifier } from 'middlewares/userAuth';
-import type { DiscordService } from 'services/discord';
 
 function makeResponse() {
   let statusCode: number | undefined;

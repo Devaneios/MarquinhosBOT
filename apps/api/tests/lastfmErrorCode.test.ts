@@ -1,6 +1,6 @@
 import { AxiosError, AxiosHeaders } from 'axios';
 import { describe, expect, it } from 'bun:test';
-import { getLastfmErrorCode } from 'services/lastfm';
+import { getLastfmErrorCode } from 'integrations/lastfm/lastfm.service';
 
 function axiosErrorWithData(data: unknown) {
   const config = { headers: new AxiosHeaders() };

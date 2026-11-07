@@ -26,7 +26,7 @@ import type {
   PlaybackData,
   Track,
 } from '@marquinhos/contracts/http/routes/scrobble';
-import { SpotifyService } from 'services/spotify';
+import { SpotifyService } from 'integrations/spotify/spotify.service';
 
 export class ParserService {
   spotifyService: SpotifyService;

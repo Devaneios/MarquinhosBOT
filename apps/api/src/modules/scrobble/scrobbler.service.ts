@@ -1,7 +1,7 @@
 import type { PlaybackData } from '@marquinhos/contracts/http/routes/scrobble';
-import { DiscordService } from 'services/discord';
-import { LastfmService } from 'services/lastfm';
-import { ParserService } from 'services/parser';
+import { DiscordService } from 'integrations/discord/discord.service';
+import { LastfmService } from 'integrations/lastfm/lastfm.service';
+import { ParserService } from 'modules/scrobble/parser.service';
 
 export class ScrobblerService {
   discordService: DiscordService;

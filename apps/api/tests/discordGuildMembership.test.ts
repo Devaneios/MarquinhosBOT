@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test';
-import { DiscordService } from 'services/discord';
+import { DiscordService } from 'integrations/discord/discord.service';
 
 const originalFetch = globalThis.fetch;
 

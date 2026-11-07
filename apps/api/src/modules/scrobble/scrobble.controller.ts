@@ -1,6 +1,6 @@
 import * as contract from '@marquinhos/contracts/http/routes/scrobble';
 import type { Request, Response } from 'express';
-import { ScrobblerService } from 'services/scrobbler';
+import { ScrobblerService } from 'modules/scrobble/scrobbler.service';
 import { parseRequest, sendContract } from 'utils/contract';
 import { logger } from 'utils/logger';
 

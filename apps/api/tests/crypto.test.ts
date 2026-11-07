@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test';
-import { decryptToken, decryptTokenFull, encryptToken } from 'utils/crypto';
+import { decryptToken, decryptTokenFull, encryptToken } from 'common/crypto';
 
 const originalSecret = process.env.MARQUINHOS_SECRET_KEY;
 

@@ -5,7 +5,10 @@ import { CurrentUser } from 'common/decorators/current-user.decorator';
 import { ActivityAuthGuard } from 'common/guards/activity-auth.guard';
 import { GuildMemberGuard } from 'common/guards/guild-member.guard';
 import { HttpInfrastructureModule } from 'common/http/http-infrastructure.module';
-import { DiscordService, type DiscordUser } from 'services/discord';
+import {
+  DiscordService,
+  type DiscordUser,
+} from 'integrations/discord/discord.service';
 import {
   createNestHttpTestApp,
   type NestHttpTestApp,

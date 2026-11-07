@@ -1,7 +1,7 @@
 import * as contract from '@marquinhos/contracts/http/routes/scrobble';
-import ScrobbleController from 'controllers/scrobble.controller';
 import express from 'express';
 import { checkToken } from 'middlewares/botAuth';
+import ScrobbleController from 'modules/scrobble/scrobble.controller';
 import { validateContract } from 'utils/contract';
 
 const router = express.Router();

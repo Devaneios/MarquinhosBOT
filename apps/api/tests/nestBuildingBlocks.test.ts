@@ -24,8 +24,11 @@ import { GuildMemberGuard } from 'common/guards/guild-member.guard';
 import { SharedBucketThrottlerGuard } from 'common/guards/shared-bucket-throttler.guard';
 import { RouteErrorInterceptor } from 'common/interceptors/route-error.interceptor';
 import { AppConfig } from 'config/app.config';
+import {
+  DiscordService,
+  type DiscordUser,
+} from 'integrations/discord/discord.service';
 import 'reflect-metadata';
-import { DiscordService, type DiscordUser } from 'services/discord';
 import { z } from 'zod';
 
 const inputContract = defineContract({

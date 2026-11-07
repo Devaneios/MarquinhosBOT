@@ -6,7 +6,10 @@ import {
   type ExecutionContext,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import { DiscordService, type DiscordUser } from 'services/discord';
+import {
+  DiscordService,
+  type DiscordUser,
+} from 'integrations/discord/discord.service';
 import { logger } from 'utils/logger';
 
 type AuthenticatedRequest = Request & { user?: DiscordUser };

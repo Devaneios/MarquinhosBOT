@@ -9,10 +9,10 @@ import { WordleNotificationsController } from 'controllers/wordleNotifications.c
 import { WordleRewardsController } from 'controllers/wordleRewards.controller';
 import { WordleShowcaseController } from 'controllers/wordleShowcase.controller';
 import express from 'express';
+import { DiscordService } from 'integrations/discord/discord.service';
 import { checkToken } from 'middlewares/botAuth';
 import { requireGuildMember } from 'middlewares/guildMembership';
 import { verifyActivityDiscordToken } from 'middlewares/userAuth';
-import { DiscordService } from 'services/discord';
 import { WordleAlbumService } from 'services/wordle/WordleAlbumService';
 import { WordleBingoService } from 'services/wordle/WordleBingoService';
 import { WordleChallengeService } from 'services/wordle/WordleChallengeService';

@@ -35,14 +35,14 @@ import {
   wordleUserConfig,
   xpCooldowns,
 } from '@marquinhos/database/schema';
+import { decryptToken, encryptToken } from 'common/crypto';
 import dotenv from 'dotenv';
 import { eq, not, sql } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
-import { DiscordService } from 'services/discord';
-import { LastfmService } from 'services/lastfm';
-import { SpotifyService } from 'services/spotify';
+import { DiscordService } from 'integrations/discord/discord.service';
+import { LastfmService } from 'integrations/lastfm/lastfm.service';
+import { SpotifyService } from 'integrations/spotify/spotify.service';
 import { lockGoalFactsForWrite } from 'services/wordle/goalFactLock';
-import { decryptToken, encryptToken } from 'utils/crypto';
 
 dotenv.config();
 

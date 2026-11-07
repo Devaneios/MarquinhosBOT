@@ -1,10 +1,10 @@
 import * as contract from '@marquinhos/contracts/http/routes/auth';
+import { decryptToken, encryptToken } from 'common/crypto';
 import type { Request, Response } from 'express';
-import { DiscordService } from 'services/discord';
-import { LastfmService } from 'services/lastfm';
-import { UserService } from 'services/user';
+import { DiscordService } from 'integrations/discord/discord.service';
+import { LastfmService } from 'integrations/lastfm/lastfm.service';
+import { UserService } from 'modules/user/user.service';
 import { parseRequest, sendContract } from 'utils/contract';
-import { decryptToken, encryptToken } from 'utils/crypto';
 import { logger } from 'utils/logger';
 
 class AuthController {

@@ -7,7 +7,7 @@ import {
   type ExecutionContext,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import { DiscordService } from 'services/discord';
+import { DiscordService } from 'integrations/discord/discord.service';
 
 @Injectable()
 export class GuildMemberGuard implements CanActivate {

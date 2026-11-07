@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { afterEach, describe, expect, it, spyOn } from 'bun:test';
-import AuthController from 'controllers/auth.controller';
+import { encryptToken } from 'common/crypto';
+import type { DiscordService } from 'integrations/discord/discord.service';
+import { LastfmService } from 'integrations/lastfm/lastfm.service';
 import { verifyDiscordToken } from 'middlewares/userAuth';
-import type { DiscordService } from 'services/discord';
-import { LastfmService } from 'services/lastfm';
-import { encryptToken } from 'utils/crypto';
+import AuthController from 'modules/auth/auth.controller';
 
 const SECRET = 'TOP-SECRET-VALUE';
 const originalFetch = globalThis.fetch;

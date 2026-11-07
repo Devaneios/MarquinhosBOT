@@ -1,7 +1,7 @@
 import type { RoomListing } from '@marquinhos/contracts/http/routes/activity';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
+import type { DiscordService } from 'integrations/discord/discord.service';
 import { randomUUID } from 'node:crypto';
-import type { DiscordService } from 'services/discord';
 import { startContractServer } from '../helpers/contractServer';
 
 const { callContract } = await import('@marquinhos/api-client/bot');

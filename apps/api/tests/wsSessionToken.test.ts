@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'bun:test';
+import { encryptToken } from 'common/crypto';
 import {
   mintWsSessionToken,
   verifyWsSessionToken,
 } from 'services/activity/wsSessionToken';
-import { encryptToken } from 'utils/crypto';
 
 describe('mintWsSessionToken / verifyWsSessionToken', () => {
   it('rejects minting a multi-mode token without a roomId', () => {

@@ -55,3 +55,10 @@
 - Focused tests cover contract error aggregation, authenticated user attachment, guard outcomes, route-error messages, the two-route throttle bucket, and both D1 parser responses. `tests/parity/http-parity.test.ts` passed against the unchanged golden.
 - Full `bun run dev:test` exited 0: 2 dev config tests, 5 Activity gateway tests, 1,758 API tests across 191 files, 257 bot tests across 45 files, and 291 Activity tests across 73 files.
 - Workspace gates passed: `pnpm run typecheck`, `pnpm run lint`, and `pnpm run build`. Existing bot and Activity lint warnings remain unchanged.
+
+## Phase 3: Identity and integrations
+
+- Move-only step completed for the crypto helper, Discord/Last.fm/Spotify integrations, parser/scrobbler/User services, and auth/user/scrobble controllers. The codemod rewrites relative and tsconfig-alias imports across `src`, `tests`, and `scripts`; no runtime logic changed in this step.
+- The first codemod pass exposed that extensionless relative specifiers need to be normalized before matching the move map. The codemod now normalizes source paths and safely reruns after files have moved; the contract tests' dynamic imports resolve to the new locations.
+- Move-step checks: API typecheck and lint passed. `pnpm test` was also attempted directly, but the host had no PostgreSQL listener on `127.0.0.1:5432`; this was an environment setup failure, not a test assertion failure. The repository's disposable test runner then passed: 2 dev config tests, 5 Activity gateway tests, 1,758 API tests across 191 files, 257 bot tests across 45 files, and 291 Activity tests across 73 files. The API suite includes the unchanged parity goldens.
+- The identity/integrations slice remains in progress: singleton audit, provider conversion, Nest controllers, and legacy route removal are still to be completed.

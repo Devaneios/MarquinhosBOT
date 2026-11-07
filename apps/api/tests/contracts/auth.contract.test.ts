@@ -1,12 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import type { DiscordService } from 'services/discord';
-import type { LastfmService } from 'services/lastfm';
-import type { UserService } from 'services/user';
+import type { DiscordService } from 'integrations/discord/discord.service';
+import type { LastfmService } from 'integrations/lastfm/lastfm.service';
+import type { UserService } from 'modules/user/user.service';
 import { startContractServer } from '../helpers/contractServer';
 
 const { callContract } = await import('@marquinhos/api-client/bot');
 const auth = await import('@marquinhos/contracts/http/routes/auth');
-const { encryptToken } = await import('../../src/utils/crypto');
+const { encryptToken } = await import('../../src/common/crypto');
 
 const tokens = {
   access_token: 'discord-access',
@@ -38,7 +38,7 @@ let server: Awaited<ReturnType<typeof startContractServer>>;
 beforeAll(async () => {
   const { createAuthRouter } = await import('../../src/routes/auth.route');
   const { default: AuthController } =
-    await import('../../src/controllers/auth.controller');
+    await import('../../src/modules/auth/auth.controller');
   server = await startContractServer((app) => {
     app.use(
       '/api/auth',

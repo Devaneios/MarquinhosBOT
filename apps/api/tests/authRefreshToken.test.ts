@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import AuthController from 'controllers/auth.controller';
+import AuthController from 'modules/auth/auth.controller';
 
 // Node lowercases incoming header names; Express's req.get() looks them up
 // case-insensitively, which this fake mirrors.

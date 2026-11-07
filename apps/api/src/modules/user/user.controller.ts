@@ -1,6 +1,6 @@
 import * as contract from '@marquinhos/contracts/http/routes/user';
 import type { Request, Response } from 'express';
-import { UserService } from 'services/user';
+import { UserService } from 'modules/user/user.service';
 import { parseRequest, sendContract } from 'utils/contract';
 import { logger } from 'utils/logger';
 

@@ -2,7 +2,7 @@ import * as contract from '@marquinhos/contracts/http/routes/wordle';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import { db } from '@marquinhos/database/client';
 import type { Request, Response } from 'express';
-import type { DiscordUser } from 'services/discord';
+import type { DiscordUser } from 'integrations/discord/discord.service';
 import { GlobalWordleCannotForce, WordleService } from 'services/wordle';
 import { getRecifeDate } from 'services/wordle/wordleDate';
 import { visibleWordleEvidence } from 'services/wordle/wordleEvidenceVisibility';

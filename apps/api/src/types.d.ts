@@ -1,4 +1,4 @@
-import type { DiscordUser } from 'services/discord';
+import type { DiscordUser } from 'integrations/discord/discord.service';
 
 export type LastfmSessionResponse = {
   sessionKey: string;

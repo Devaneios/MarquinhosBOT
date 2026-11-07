@@ -1,7 +1,7 @@
+import { decryptTokenFull } from 'common/crypto';
 import type { NextFunction, Request, Response } from 'express';
-import { DiscordService } from 'services/discord';
-import { UserService } from 'services/user';
-import { decryptTokenFull } from 'utils/crypto';
+import { DiscordService } from 'integrations/discord/discord.service';
+import { UserService } from 'modules/user/user.service';
 import { logger } from 'utils/logger';
 
 const discordService = new DiscordService();
