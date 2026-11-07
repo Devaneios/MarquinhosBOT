@@ -11,16 +11,16 @@ import {
 } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
-import { getRecifeDate } from '../src/services/wordle/wordleDate';
+import { getRecifeDate } from '../src/modules/wordle/services/wordle-date';
+import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 
-const { MatchRoom } = await import('../src/realtime/MatchRoom');
+const { createMatchRoom } = await import('../src/realtime/MatchRoom');
 const { bootColyseusTestServer, nextMessage, pendingMessages } =
   await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
-  await import('../src/services/activity/wsSessionToken');
-const { roomKey } = await import('services/activity/roomKey');
-const { getValidationSet, WordleService } =
-  await import('../src/services/wordle');
+  await import('../src/modules/activity/ws-session-token');
+const { roomKey } = await import('modules/activity/room-key');
+const { WordleService } = await import('../src/modules/wordle/wordle.service');
 
 type ColyseusTestServer = import('@colyseus/testing').ColyseusTestServer;
 
@@ -29,7 +29,9 @@ const testRunId = randomUUID();
 
 beforeAll(async () => {
   colyseus = await bootColyseusTestServer((server) => {
-    server.define('match', MatchRoom).filterBy(['roomKey']);
+    server
+      .define('match', createMatchRoom(testRoomDependencies))
+      .filterBy(['roomKey']);
   });
 });
 
@@ -58,7 +60,7 @@ function sessionFor(userId: string, guildId: string) {
 }
 
 function pickWordOfLength(length: number): string {
-  for (const w of getValidationSet()) {
+  for (const w of testRoomDependencies.wordBank.getValidationSet()) {
     if (w.length === length) return w;
   }
   throw new Error(`no validation word of length ${length} found`);

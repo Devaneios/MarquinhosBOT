@@ -1,113 +1,107 @@
-import { beforeAll, describe, expect, it } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
+import { DiscordService } from 'integrations/discord/discord.service';
+import { ACTIVITY_ROOM_QUERY } from 'modules/activity/activity.tokens';
+import {
+  requestController,
+  startNestControllerServer,
+} from './helpers/nestControllerServer';
 
-let ActivityController: typeof import('../src/controllers/activity.controller').default;
+const identityByToken: Record<string, string> = {
+  'tok-user-1': 'user-1',
+  'tok-user-2': 'user-2',
+  'tok-real-user': 'user-real',
+};
 
-function makeReq(body: Record<string, unknown>) {
-  return { body } as any;
-}
-
-function makeRes() {
-  let statusCode: number | undefined;
-  let payload: unknown;
-  const res = {
-    status(code: number) {
-      statusCode = code;
-      return res;
-    },
-    json(data: unknown) {
-      payload = data;
-      return res;
-    },
-    getStatus: () => statusCode,
-    getPayload: () => payload,
-  };
-  return res;
-}
+let server: Awaited<ReturnType<typeof startNestControllerServer>>;
 
 beforeAll(async () => {
-  ({ default: ActivityController } =
-    await import('../src/controllers/activity.controller'));
+  const { ActivityModule } = await import('modules/activity/activity.module');
+  server = await startNestControllerServer(
+    { imports: [ActivityModule] },
+    (builder) =>
+      builder
+        .overrideProvider(DiscordService)
+        .useValue({
+          getDiscordUser: async (token: string) => {
+            const id = identityByToken[token];
+            return id ? { id } : null;
+          },
+          isGuildMember: async () => true,
+        })
+        .overrideProvider(ACTIVITY_ROOM_QUERY)
+        .useValue(async () => []),
+  );
 });
 
-describe('ActivityController deep-link intent', () => {
-  it('records an intent and lets a matching claim consume it', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-    } as any;
-    const controller = new ActivityController(fakeService);
+afterAll(() => server.close());
 
-    const recordRes = makeRes();
-    await controller.recordDeepLinkIntent(
-      makeReq({ userId: 'user-1', guildId: 'guild-1', game: 'wordle' }),
-      recordRes as any,
-    );
-    expect(recordRes.getStatus()).toBe(200);
+async function post(path: string, body: unknown) {
+  return requestController(server, `/activities${path}`, {
+    method: 'POST',
+    body,
+    token: `Bearer ${server.activityToken}`,
+  });
+}
 
-    const claimRes = makeRes();
-    await controller.claimDeepLinkIntent(
-      makeReq({ accessToken: 'tok_abc', guildId: 'guild-1' }),
-      claimRes as any,
-    );
+describe('ActivityController deep-link intent HTTP routes', () => {
+  it('records an intent and lets a matching claim consume it once', async () => {
+    const guildId = `guild-${crypto.randomUUID()}`;
+    const recorded = await post('/deep-link', {
+      userId: 'user-1',
+      guildId,
+      game: 'wordle',
+    });
+    expect(recorded.status).toBe(200);
+    expect(recorded.body).toEqual({ data: { ok: true } });
 
-    expect(claimRes.getStatus()).toBe(200);
-    expect(claimRes.getPayload()).toEqual({ data: { game: 'wordle' } });
+    const first = await post('/deep-link/claim', {
+      accessToken: 'tok-user-1',
+      guildId,
+    });
+    const second = await post('/deep-link/claim', {
+      accessToken: 'tok-user-1',
+      guildId,
+    });
+    expect(first.status).toBe(200);
+    expect(first.body).toEqual({ data: { game: 'wordle' } });
+    expect(second.body).toEqual({ data: { game: null } });
   });
 
-  it('claim returns a null game when there is no pending intent', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-2' }),
-    } as any;
-    const controller = new ActivityController(fakeService);
-
-    const claimRes = makeRes();
-    await controller.claimDeepLinkIntent(
-      makeReq({ accessToken: 'tok_abc', guildId: 'guild-2' }),
-      claimRes as any,
-    );
-
-    expect(claimRes.getStatus()).toBe(200);
-    expect(claimRes.getPayload()).toEqual({ data: { game: null } });
+  it('returns a null game when there is no pending intent', async () => {
+    const response = await post('/deep-link/claim', {
+      accessToken: 'tok-user-2',
+      guildId: `guild-${crypto.randomUUID()}`,
+    });
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ data: { game: null } });
   });
 
-  it('claim returns 401 for an invalid access token instead of leaking intent state', async () => {
-    const fakeService = {
-      getDiscordUser: async () => null,
-    } as any;
-    const controller = new ActivityController(fakeService);
-
-    await controller.recordDeepLinkIntent(
-      makeReq({ userId: 'user-3', guildId: 'guild-3', game: 'wordle' }),
-      makeRes() as any,
-    );
-
-    const claimRes = makeRes();
-    await controller.claimDeepLinkIntent(
-      makeReq({ accessToken: 'bad-token', guildId: 'guild-3' }),
-      claimRes as any,
-    );
-
-    expect(claimRes.getStatus()).toBe(401);
+  it('returns 401 for an invalid access token without exposing intent state', async () => {
+    const guildId = `guild-${crypto.randomUUID()}`;
+    await post('/deep-link', {
+      userId: 'user-1',
+      guildId,
+      game: 'wordle',
+    });
+    const response = await post('/deep-link/claim', {
+      accessToken: 'bad-token',
+      guildId,
+    });
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ message: 'Invalid access token' });
   });
 
-  it('claim derives the user from the resolved Discord identity, not the request body', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-real' }),
-    } as any;
-    const controller = new ActivityController(fakeService);
-
-    await controller.recordDeepLinkIntent(
-      makeReq({ userId: 'user-real', guildId: 'guild-4', game: 'wordle' }),
-      makeRes() as any,
-    );
-
-    // Even though nothing in the claim body claims to be "user-real", the
-    // controller resolves identity via accessToken -> getDiscordUser.
-    const claimRes = makeRes();
-    await controller.claimDeepLinkIntent(
-      makeReq({ accessToken: 'tok_for_user_real', guildId: 'guild-4' }),
-      claimRes as any,
-    );
-
-    expect(claimRes.getPayload()).toEqual({ data: { game: 'wordle' } });
+  it('derives the claim identity from Discord rather than request input', async () => {
+    const guildId = `guild-${crypto.randomUUID()}`;
+    await post('/deep-link', {
+      userId: 'user-real',
+      guildId,
+      game: 'wordle',
+    });
+    const response = await post('/deep-link/claim', {
+      accessToken: 'tok-real-user',
+      guildId,
+    });
+    expect(response.body).toEqual({ data: { game: 'wordle' } });
   });
 });

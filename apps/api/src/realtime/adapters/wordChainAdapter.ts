@@ -3,8 +3,9 @@ import {
   type WordChainServerMessage,
 } from '@marquinhos/contracts/activity/games/wordChain';
 import { ACTION_REJECTED } from '@marquinhos/contracts/activity/protocol';
-import { WordChainSession } from 'services/activity/word-chain/WordChainSession';
+import { WordChainSession } from 'modules/activity/games/word-chain/word-chain-session';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const WORD_RATE_LIMIT_WINDOW_MS = 1000;
@@ -15,7 +16,7 @@ export const wordChainAdapter: GameRoomAdapter<WordChainSession> = {
   supportsBot: true,
   supportsQueue: false,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new WordChainSession(
       {
         sessionKey: ctx.roomKey,
@@ -27,6 +28,7 @@ export const wordChainAdapter: GameRoomAdapter<WordChainSession> = {
         broadcast: (_key, message) =>
           ctx.broadcast(message.type, message.payload),
       },
+      dependencies.gamification,
       { onSessionEnded: ctx.onSessionEnded },
     );
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { WordleRaceSession } from 'services/activity/wordle-race/WordleRaceSession';
-import { resolveCanonical } from 'services/wordle';
+import { WordleRaceSession } from 'modules/activity/games/wordle-race/wordle-race-session';
+import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 
 function targetWordOf(session: WordleRaceSession): string {
   return (
@@ -17,9 +17,13 @@ describe('WordleRaceSession target word', () => {
         { sessionKey: 'k', instanceId: 'i', guildId: 'g', mode: 'multi' },
         { broadcast: () => {} },
         { recordGameResult: () => {} } as never,
+        testRoomDependencies.wordBank,
       );
       const target = targetWordOf(session);
-      expect({ target, canonical: resolveCanonical(target) }).toEqual({
+      expect({
+        target,
+        canonical: testRoomDependencies.wordBank.resolveCanonical(target),
+      }).toEqual({
         target,
         canonical: target,
       });

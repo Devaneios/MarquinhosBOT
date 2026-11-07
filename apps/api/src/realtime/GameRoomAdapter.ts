@@ -2,7 +2,8 @@ import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import type { BotDifficulty } from '@marquinhos/contracts/activity/pong/types';
 import type { RoomMemberRole } from '@marquinhos/contracts/activity/room';
 import type { Client } from 'colyseus';
-import type { WsSessionPayload } from 'services/activity/wsSessionToken';
+import type { WsSessionPayload } from 'modules/activity/ws-session-token';
+import type { RoomDependencies } from './room-dependencies';
 
 export type SeatRole = RoomMemberRole;
 
@@ -42,7 +43,10 @@ export interface GameRoomAdapter<TSession> {
   supportsBot: boolean;
   supportsQueue: boolean;
 
-  setup(ctx: AdapterContext): {
+  setup(
+    ctx: AdapterContext,
+    dependencies: RoomDependencies,
+  ): {
     session: TSession;
     messageHandlers: Record<string, MessageHandler>;
     // Per-instance override of the static `maxPlayers` above, for adapters

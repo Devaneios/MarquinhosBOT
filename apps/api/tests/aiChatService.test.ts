@@ -1,15 +1,18 @@
 import { afterAll, beforeAll, describe, expect, it, mock } from 'bun:test';
-import { AgentToolLoopService } from 'services/aiChat/AgentToolLoopService';
-import { AiChatService } from 'services/aiChat/AiChatService';
-import type { AiTraceRecorder } from 'services/aiChat/AiTraceRecorder';
-import { GuardrailService } from 'services/aiChat/GuardrailService';
-import type { OpenAiClient } from 'services/aiChat/OpenAiClient';
+import { AgentToolLoopService } from 'modules/ai-chat/agent/agent-tool-loop.service';
+import { AiChatService } from 'modules/ai-chat/ai-chat.service';
+import { GuardrailService } from 'modules/ai-chat/guardrail.service';
+import type { OpenAiClient } from 'modules/ai-chat/openai.client';
 import {
   MAIN_CLASSIFY_SYSTEM_PROMPT,
   SUB_CLASSIFIERS,
-} from 'services/aiChat/prompts';
-import type { RateLimitService } from 'services/aiChat/RateLimitService';
-import type { AiChatResult } from 'services/aiChat/types';
+} from 'modules/ai-chat/prompts';
+import type { RateLimitService } from 'modules/ai-chat/rate-limit.service';
+import {
+  NOOP_TRACE,
+  type AiTraceRecorder,
+} from 'modules/ai-chat/trace/ai-trace-recorder.service';
+import type { AiChatResult } from 'modules/ai-chat/types';
 
 function fakeRateLimitService(allowed: boolean): RateLimitService {
   return { checkAndIncrement: () => allowed } as unknown as RateLimitService;
@@ -47,6 +50,26 @@ function fakeOpenAiClient(options: {
 
 function fakeAgentToolLoopService(result: AiChatResult): AgentToolLoopService {
   return { run: mock(async () => result) } as unknown as AgentToolLoopService;
+}
+
+function createAiChatService(
+  rateLimitService: RateLimitService,
+  guardrailService: GuardrailService,
+  openAiClient: OpenAiClient,
+  agentToolLoopService: AgentToolLoopService = fakeAgentToolLoopService({
+    status: 'ok',
+  }),
+  traceRecorder: AiTraceRecorder = {
+    start: () => NOOP_TRACE,
+  } as unknown as AiTraceRecorder,
+) {
+  return new AiChatService(
+    rateLimitService,
+    guardrailService,
+    openAiClient,
+    agentToolLoopService,
+    traceRecorder,
+  );
 }
 
 function recordingTrace() {
@@ -87,7 +110,7 @@ describe('AiChatService.respond', () => {
   });
 
   it('returns rate_limited without calling OpenAI when the limit is exceeded', async () => {
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(false),
       fakeGuardrailService(false),
       fakeOpenAiClient({}),
@@ -100,7 +123,7 @@ describe('AiChatService.respond', () => {
     const previousKey = process.env.OPENAI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     try {
-      const service = new AiChatService(
+      const service = createAiChatService(
         fakeRateLimitService(false),
         fakeGuardrailService(false),
         fakeOpenAiClient({}),
@@ -117,7 +140,7 @@ describe('AiChatService.respond', () => {
     const client = fakeOpenAiClient({
       chatResponses: ['boa tentativa, mas não cola comigo 😏'],
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(true),
       client,
@@ -148,7 +171,7 @@ describe('AiChatService.respond', () => {
       ],
       chatResponses: ['rascunho da resposta técnica'],
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(false),
       client,
@@ -174,7 +197,7 @@ describe('AiChatService.respond', () => {
       ],
       chatResponses: ['rascunho'],
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(false),
       client,
@@ -201,7 +224,7 @@ describe('AiChatService.respond', () => {
       structuredResults: [{ category: 'unclear' }, REVISION_OK],
       chatResponses: ['hein? não entendi nada.'],
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(false),
       client,
@@ -216,7 +239,7 @@ describe('AiChatService.respond', () => {
       structuredResults: [{ category: 'banana' }, REVISION_OK],
       chatResponses: ['hein?'],
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(false),
       client,
@@ -241,7 +264,7 @@ describe('AiChatService.respond', () => {
         ],
         chatResponses: ['rascunho'],
       });
-      const service = new AiChatService(
+      const service = createAiChatService(
         fakeRateLimitService(true),
         fakeGuardrailService(false),
         client,
@@ -260,7 +283,7 @@ describe('AiChatService.respond', () => {
       ],
       chatResponses: ['rascunho: Brasília.'],
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(false),
       client,
@@ -288,7 +311,7 @@ describe('AiChatService.respond', () => {
       ],
       chatResponses: ['A capital do Brasil é Brasília, definida em 1960...'],
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(false),
       client,
@@ -311,7 +334,7 @@ describe('AiChatService.respond', () => {
       ],
       chatResponses: ['rascunho técnico completo'],
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(false),
       client,
@@ -335,7 +358,7 @@ describe('AiChatService.respond', () => {
       ],
       chatResponses: ['rascunho casual'],
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(false),
       client,
@@ -353,7 +376,7 @@ describe('AiChatService.respond', () => {
     const client = fakeOpenAiClient({
       structuredResults: [new Error('timeout')],
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(false),
       client,
@@ -370,7 +393,7 @@ describe('AiChatService.respond', () => {
       ],
       chatResponses: [new Error('timeout')],
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(false),
       client,
@@ -388,7 +411,7 @@ describe('AiChatService.respond', () => {
       ],
       chatResponses: ['sei lá, parece bobagem.'],
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       new GuardrailService(),
       client,
@@ -425,7 +448,7 @@ describe('AiChatService.respond', () => {
       ],
       chatResponses: ['a capital é Brasília.'],
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       new GuardrailService(),
       client,
@@ -454,7 +477,7 @@ describe('AiChatService.respond', () => {
       ],
       chatResponses: ['ok.'],
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       new GuardrailService(),
       client,
@@ -488,7 +511,7 @@ describe('AiChatService.respond', () => {
       reply: 'os arquivos são a.ts e b.ts.',
       format: 'text',
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(false),
       client,
@@ -520,7 +543,7 @@ describe('AiChatService.respond', () => {
         throw new Error('docker daemon unreachable');
       }),
     } as unknown as AgentToolLoopService;
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(false),
       client,
@@ -547,7 +570,7 @@ describe('AiChatService tracing', () => {
       ],
       chatResponses: ['rascunho'],
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(false),
       client,
@@ -578,7 +601,7 @@ describe('AiChatService tracing', () => {
 
   it('finishes the trace with the error when the pipeline throws', async () => {
     const { trace, recorder } = recordingTrace();
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(false),
       fakeOpenAiClient({ structuredResults: [new Error('openai down')] }),
@@ -601,7 +624,7 @@ describe('AiChatService tracing', () => {
       category: 'agent_task',
       reply: 'pronto',
     });
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(true),
       fakeGuardrailService(false),
       fakeOpenAiClient({ structuredResults: [{ category: 'agent_task' }] }),
@@ -618,7 +641,7 @@ describe('AiChatService tracing', () => {
 
   it('never starts a trace when the request is rate limited', async () => {
     const { recorder } = recordingTrace();
-    const service = new AiChatService(
+    const service = createAiChatService(
       fakeRateLimitService(false),
       fakeGuardrailService(false),
       fakeOpenAiClient({}),

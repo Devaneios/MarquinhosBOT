@@ -7,7 +7,7 @@ import {
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, expect, it } from 'bun:test';
-import { WordleBingoService } from '../src/services/wordle/WordleBingoService';
+import { WordleBingoService } from '../src/modules/wordle/services/wordle-bingo.service';
 
 let testDb: TestDb;
 let bingo: WordleBingoService;

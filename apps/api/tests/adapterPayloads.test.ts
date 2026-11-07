@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test';
+import type { WsSessionPayload } from 'modules/activity/ws-session-token';
 import { battleshipAdapter } from 'realtime/adapters/battleshipAdapter';
 import { boggleAdapter } from 'realtime/adapters/boggleAdapter';
 import { cardTableAdapter } from 'realtime/adapters/cardTableAdapter';
@@ -17,7 +18,7 @@ import { wordChainAdapter } from 'realtime/adapters/wordChainAdapter';
 import { wordleRaceAdapter } from 'realtime/adapters/wordleRaceAdapter';
 import { wordSearchRaceAdapter } from 'realtime/adapters/wordSearchRaceAdapter';
 import type { AdapterContext, GameRoomAdapter } from 'realtime/GameRoomAdapter';
-import type { WsSessionPayload } from 'services/activity/wsSessionToken';
+import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 
 const auth: WsSessionPayload = {
   userId: 'user-1',
@@ -50,7 +51,7 @@ function harness<TSession>(
   returnValue: unknown,
   ctx: AdapterContext = makeCtx(),
 ) {
-  const { session, messageHandlers } = adapter.setup(ctx);
+  const { session, messageHandlers } = adapter.setup(ctx, testRoomDependencies);
   const calls: unknown[][] = [];
   (session as any)[method] = (...args: unknown[]) => {
     calls.push(args);

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import type { GuessResult } from 'services/wordle';
+import type { GuessResult, WordleService } from 'modules/wordle/wordle.service';
 
 import { db } from '@marquinhos/database/client';
 import {
@@ -9,7 +9,7 @@ import {
 } from '@marquinhos/database/schema';
 import { and, eq, sql } from 'drizzle-orm';
 
-const { WordleService } = await import('../src/services/wordle');
+import { createWordleTestService } from './helpers/wordleServices';
 
 function getRecifeDate(): string {
   const tz = process.env.WORDLE_TIMEZONE ?? 'America/Recife';
@@ -80,7 +80,7 @@ describe('WordleService.pickNewWord', () => {
     await db.execute(sql`DELETE FROM wordle_used_words`);
     await db.execute(sql`DELETE FROM wordle_sessions`);
     await db.execute(sql`DELETE FROM wordle_days`);
-    service = new WordleService();
+    service = createWordleTestService();
   });
 
   afterEach(async () => {
@@ -166,7 +166,7 @@ describe('WordleService.getGroupStreak', () => {
 
   beforeEach(async () => {
     await db.execute(sql`DELETE FROM wordle_sessions`);
-    service = new WordleService();
+    service = createWordleTestService();
   });
 
   it('returns 0 when no days have been played', async () => {
@@ -208,7 +208,7 @@ describe('WordleService.getLeaderboard with period', () => {
 
   beforeEach(async () => {
     await db.execute(sql`DELETE FROM wordle_sessions`);
-    service = new WordleService();
+    service = createWordleTestService();
   });
 
   it('daily: returns only todays sessions sorted by solved DESC, attempts ASC', async () => {
@@ -317,7 +317,7 @@ describe('WordleService.submitGuess', () => {
     await db.execute(sql`DELETE FROM wordle_sessions`);
     await db.execute(sql`DELETE FROM wordle_days`);
     await db.execute(sql`DELETE FROM wordle_streaks`);
-    service = new WordleService();
+    service = createWordleTestService();
 
     const { readFileSync } = require('fs');
     const { join } = require('path');
@@ -358,7 +358,7 @@ describe('WordleService.submitGuess', () => {
       getRecifeDate(),
       daysAhead(1),
     ];
-    const racingService = new WordleService(
+    const racingService = createWordleTestService(
       () => dates.shift() ?? daysAhead(1),
     );
 

@@ -13,7 +13,7 @@ import {
   AGENT_DAILY_QUOTA,
   DailyQuotaService,
   RESEARCH_DAILY_QUOTA,
-} from 'services/aiChat/DailyQuotaService';
+} from 'modules/ai-chat/daily-quota.service';
 
 let testDb: TestDb;
 

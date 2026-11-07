@@ -2,7 +2,7 @@ import {
   achievementConditionSchema,
   type AchievementCondition,
 } from '@marquinhos/contracts/http/routes/gamification';
-import { db, type Db, type DbExecutor } from '@marquinhos/database/client';
+import type { Db, DbExecutor } from '@marquinhos/database/client';
 import {
   achievements,
   userAchievements,
@@ -93,8 +93,8 @@ const DEFAULT_ACHIEVEMENTS = [
 @Injectable()
 export class AchievementService {
   constructor(
-    private readonly levelingService: LevelingService = new LevelingService(),
-    @Inject(DB) private readonly database: Db = db,
+    private readonly levelingService: LevelingService,
+    @Inject(DB) private readonly database: Db,
   ) {}
 
   async initializeDefaults(): Promise<void> {

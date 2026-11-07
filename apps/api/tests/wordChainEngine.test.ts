@@ -1,6 +1,6 @@
 import { WordChainEngine } from '@marquinhos/domain/games/word-chain/WordChainEngine';
 import { describe, expect, it } from 'bun:test';
-import { loadWordChainWords } from 'services/activity/word-chain/wordList';
+import { loadWordChainWords } from 'modules/activity/games/word-chain/word-list';
 
 describe('WordChainEngine', () => {
   it('initializes with empty players and no current word', () => {

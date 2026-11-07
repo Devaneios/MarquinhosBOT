@@ -1,13 +1,13 @@
 import type { Db } from '@marquinhos/database/client';
 import { agentSandboxSessions } from '@marquinhos/database/schema';
 import { describe, expect, it, mock, spyOn } from 'bun:test';
+import { logger } from 'common/logging/logger';
 import { and, eq } from 'drizzle-orm';
-import type { DockerClient } from 'services/aiChat/sandbox/DockerClient';
+import type { DockerClient } from 'modules/ai-chat/sandbox/docker-client';
 import {
   SandboxCapacityError,
   SandboxManager,
-} from 'services/aiChat/sandbox/SandboxManager';
-import { logger } from 'utils/logger';
+} from 'modules/ai-chat/sandbox/sandbox-manager.service';
 import { useTestDb } from './helpers/testDb';
 
 const testDb = useTestDb();

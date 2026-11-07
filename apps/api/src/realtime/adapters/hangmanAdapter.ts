@@ -2,9 +2,10 @@ import {
   guessPayloadSchema,
   type HangmanServerMessage,
 } from '@marquinhos/contracts/activity/games/hangman';
-import { HangmanSession } from 'services/activity/hangman/HangmanSession';
-import { getHangmanWord } from 'services/activity/hangman/wordList';
+import { HangmanSession } from 'modules/activity/games/hangman/hangman-session';
+import { getHangmanWord } from 'modules/activity/games/hangman/word-list';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const GUESS_RATE_LIMIT_WINDOW_MS = 1000;
@@ -15,7 +16,7 @@ export const hangmanAdapter: GameRoomAdapter<HangmanSession> = {
   supportsBot: false,
   supportsQueue: false,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new HangmanSession(
       {
         sessionKey: ctx.roomKey,
@@ -27,7 +28,7 @@ export const hangmanAdapter: GameRoomAdapter<HangmanSession> = {
         broadcast: (_key, message) =>
           ctx.broadcast(message.type, message.payload),
       },
-      undefined,
+      dependencies.gamification,
       getHangmanWord(),
       { onSessionEnded: ctx.onSessionEnded },
     );

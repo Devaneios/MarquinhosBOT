@@ -33,6 +33,7 @@ import type { Db, DbExecutor } from '@marquinhos/database/client';
 import { scrobblesQueue, users } from '@marquinhos/database/schema';
 import { Inject, Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { log } from 'common/logging/logger';
 import { AppConfig } from 'config/app.config';
 import crypto from 'crypto';
 import { DB } from 'database/database.tokens';
@@ -40,7 +41,6 @@ import { getUnixTime, parseISO } from 'date-fns';
 import { eq } from 'drizzle-orm';
 import type { LastfmSessionResponse } from 'types';
 import { URLSearchParams } from 'url';
-import { log } from 'utils/logger';
 import { z } from 'zod';
 // URLSearchParams is available globally in Node.js >= 15 but we import for clarity
 

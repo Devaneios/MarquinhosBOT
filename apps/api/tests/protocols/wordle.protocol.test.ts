@@ -1,13 +1,13 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
 import { randomUUID } from 'node:crypto';
+import { testRoomDependencies } from '../helpers/realtimeTestDependencies';
 
-const { MatchRoom } = await import('../../src/realtime/MatchRoom');
+const { createMatchRoom } = await import('../../src/realtime/MatchRoom');
 const { bootColyseusTestServer, nextMessage, unparsedMessages } =
   await import('../helpers/colyseusTestServer');
 const { mintWsSessionToken } =
-  await import('../../src/services/activity/wsSessionToken');
-const { roomKey } = await import('services/activity/roomKey');
-const { getValidationSet } = await import('../../src/services/wordle');
+  await import('../../src/modules/activity/ws-session-token');
+const { roomKey } = await import('modules/activity/room-key');
 const wordle = await import('@marquinhos/contracts/activity/games/wordle');
 
 type ColyseusTestServer = import('@colyseus/testing').ColyseusTestServer;
@@ -15,7 +15,9 @@ let colyseus: ColyseusTestServer;
 
 beforeAll(async () => {
   colyseus = await bootColyseusTestServer((server) => {
-    server.define('match', MatchRoom).filterBy(['roomKey']);
+    server
+      .define('match', createMatchRoom(testRoomDependencies))
+      .filterBy(['roomKey']);
   });
 });
 afterEach(async () => {
@@ -120,8 +122,9 @@ describe('wordle protocol', () => {
     });
     const init = await nextMessage<{ wordLength: number }>(client, 'init');
     const guess =
-      [...getValidationSet()].find((word) => word.length === init.wordLength) ??
-      '';
+      [...testRoomDependencies.wordBank.getValidationSet()].find(
+        (word) => word.length === init.wordLength,
+      ) ?? '';
 
     client.send('guess', { guess: 'x' });
     await nextMessage(client, 'guess_error');

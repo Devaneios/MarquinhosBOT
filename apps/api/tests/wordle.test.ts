@@ -1,13 +1,11 @@
 import { computeFeedback } from '@marquinhos/domain/games/wordle/feedback';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
-import { beforeAll, describe, expect, it } from 'bun:test';
-import { buildUniqueDayGuesses } from 'services/wordle/dayGuesses';
+import { describe, expect, it } from 'bun:test';
+import { buildUniqueDayGuesses } from 'modules/wordle/services/day-guesses';
+import { createWordleTestWordBankService } from './helpers/wordleServices';
 
-let resolveCanonical: typeof import('../src/services/wordle').resolveCanonical;
-
-beforeAll(async () => {
-  ({ resolveCanonical } = await import('../src/services/wordle'));
-});
+const wordBank = createWordleTestWordBankService();
+const resolveCanonical = wordBank.resolveCanonical.bind(wordBank);
 
 describe('computeFeedback', () => {
   it('returns all correct when guess matches answer exactly', () => {

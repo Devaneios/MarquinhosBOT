@@ -118,7 +118,7 @@ pnpm run dev:doctor
 ```
 
 The test command builds the current checkout and runs configuration tests,
-real Vite/Express/Colyseus gateway smoke tests, and the app test suites in
+real Vite/HTTP/Colyseus gateway smoke tests, and the app test suites in
 a disposable container. It uses dummy credentials and throwaway databases on the
 Compose PostgreSQL service;
 Discord login and the tunnel are not needed. Gateway tests run outside the
@@ -213,7 +213,7 @@ membership, dependency overrides, and permitted dependency build scripts.
 
 | Symptom                                      | Check                                                                             |
 | -------------------------------------------- | --------------------------------------------------------------------------------- |
-| Tunnel `/` returns Express `Route not found` | Cloudflare service must be `http://activity:5173`, not the API                    |
+| Tunnel `/` returns `Route not found`        | Cloudflare service must be `http://activity:5173`, not the API                    |
 | Vite says hostname is not allowed            | `DEV_PUBLIC_ORIGIN` must contain the tunnel hostname; restart Activity            |
 | API request returns HTML                     | Request must reach the Vite API proxy, not an old static gateway                  |
 | Bot never becomes ready                      | Token, application ID, intents, channel access, and bot logs                      |

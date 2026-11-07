@@ -5,8 +5,8 @@ import {
   type GameDefinition,
 } from '@marquinhos/domain/games/cards/core/GameDefinition';
 import { describe, expect, it, mock } from 'bun:test';
-import { CardTableSession } from 'services/activity/cards/CardTableSession';
-import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
+import { CardTableSession } from 'modules/activity/games/cards/card-table-session';
+import type { PerClientBroadcaster } from 'modules/activity/games/cards/per-client-broadcaster';
 
 interface StubState {
   players: string[];

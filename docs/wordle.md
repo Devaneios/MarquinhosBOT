@@ -13,19 +13,19 @@ The implementation is split across these modules.
 
 | Responsibility                                                                      | Source                                                                                                                                                                         |
 | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Daily answers, guesses, counters, streaks, rankings, announcements, and word review | [`WordleService`](../apps/api/src/services/wordle.ts)                                                                                                                          |
-| Day boundary                                                                        | [`wordleDate.ts`](../apps/api/src/services/wordle/wordleDate.ts)                                                                                                               |
+| Daily answers, guesses, counters, streaks, rankings, announcements, and word review | [`WordleService`](../apps/api/src/modules/wordle/wordle.service.ts)                                                                                                           |
+| Day boundary                                                                        | [`wordle-date.ts`](../apps/api/src/modules/wordle/services/wordle-date.ts)                                                                                                   |
 | HTTP contracts                                                                      | [`http/routes/wordle.ts`](../packages/contracts/src/http/routes/wordle.ts)                                                                                                     |
-| HTTP authentication and handlers                                                    | [`wordle.route.ts`](../apps/api/src/routes/wordle.route.ts), [`WordleController`](../apps/api/src/controllers/wordle.controller.ts)                                            |
+| HTTP authentication and handlers                                                    | [`WordleModule`](../apps/api/src/modules/wordle/wordle.module.ts), [`WordleController`](../apps/api/src/modules/wordle/controllers/wordle.controller.ts)                     |
 | Shared payloads and keyboard configuration                                          | [`contracts/wordle.ts`](../packages/contracts/src/wordle.ts)                                                                                                                   |
 | Activity messages                                                                   | [`activity/games/wordle.ts`](../packages/contracts/src/activity/games/wordle.ts)                                                                                               |
 | Colyseus integration                                                                | [`wordleAdapter`](../apps/api/src/realtime/adapters/wordleAdapter.ts)                                                                                                          |
 | Letter feedback and keyboard state                                                  | [`feedback.ts`](../packages/domain/src/games/wordle/feedback.ts), [`keyboardState.ts`](../packages/domain/src/games/wordle/keyboardState.ts)                                   |
 | Achievement definitions, pure evaluators, and history                               | [`achievements/`](../packages/domain/src/games/wordle/achievements), [`playerStats.ts`](../packages/domain/src/games/wordle/playerStats.ts)                                    |
-| Achievement persistence and rewards                                                 | [`WordleAchievementService`](../apps/api/src/services/wordle/WordleAchievementService.ts), [`AchievementService`](../apps/api/src/services/gamification/AchievementService.ts) |
+| Achievement persistence and rewards                                                 | [`WordleAchievementService`](../apps/api/src/modules/wordle/services/wordle-achievement.service.ts), [`AchievementService`](../apps/api/src/modules/gamification/achievement.service.ts) |
 | Database tables                                                                     | [`schema/wordle.ts`](../packages/database/src/schema/wordle.ts), [`schema/gamification.ts`](../packages/database/src/schema/gamification.ts)                                   |
 | Activity screens and state                                                          | [`games/wordle/`](../apps/activity/src/games/wordle)                                                                                                                           |
-| Player settings                                                                     | [`WordleUserConfigService`](../apps/api/src/services/wordleUserConfig.ts)                                                                                                      |
+| Player settings                                                                     | [`WordleUserConfigService`](../apps/api/src/modules/wordle/wordle-user-config.service.ts)                                                                                     |
 | Discord command and API client                                                      | [`termo.ts`](../apps/bot/src/commands/games/termo.ts), [`marquinhosApi.ts`](../apps/bot/src/services/marquinhosApi.ts)                                                         |
 | Discord images and scheduled messages                                               | [`screens/termo.ts`](../apps/bot/src/ui/screens/termo.ts), [`ready.ts`](../apps/bot/src/listeners/ready.ts)                                                                    |
 | Legacy import                                                                       | [`importSqlite.ts`](../packages/database/src/etl/importSqlite.ts)                                                                                                              |
@@ -260,13 +260,13 @@ milliseconds in the database and ISO datetime strings in Wordle payloads.
 
 ## HTTP contracts and authentication
 
-[`wordle.route.ts`](../apps/api/src/routes/wordle.route.ts) mounts at
-`/api/wordle`. Except for user settings, every route uses `checkToken` with the
+[`WordleModule`](../apps/api/src/modules/wordle/wordle.module.ts) serves
+`/api/wordle`. Except for user settings, every route uses `BotAuthGuard` with the
 server-side `MARQUINHOS_API_KEY` in the authorization header. The key authorizes
 the supplied user and guild IDs. The `/admin` path adds no separate role check.
 The bot registers `/admin` with Discord's Administrator permission by default.
 
-User settings use `verifyActivityDiscordToken` with a Discord access token in
+User settings use `ActivityAuthGuard` with a Discord access token in
 `Authorization: Bearer <token>`. The verified Discord user owns the settings row.
 The request does not select another user.
 
@@ -309,10 +309,11 @@ Its optional `date` accepts the `YYYY-MM-DD` shape and affects only `daily`.
 `getDayGuesses()` reads only today and does not create a day. Its output reveals
 the answer and removes answer-equivalent and duplicate guesses without regard
 to accents. Malformed entries are skipped by
-[`buildUniqueDayGuesses()`](../apps/api/src/services/wordle/dayGuesses.ts).
+[`buildUniqueDayGuesses()`](../apps/api/src/modules/wordle/services/day-guesses.ts).
 
 Invalid requests and rejected guesses return HTTP 400 with `{ message }`.
-Missing or invalid credentials return HTTP 401. Internal failures return HTTP 500. The Wordle-specific HTTP guess limiter in `index.ts` is commented out.
+Missing or invalid credentials return HTTP 401. Internal failures return HTTP 500.
+The Wordle-specific HTTP guess limiter remains disabled.
 
 ## Activity connection and screens
 
@@ -454,7 +455,7 @@ foreign key and removal of legacy objects belong to the later contract release
 described in [data model rollout](data-model.md#rollout-expand-then-contract).
 
 User IDs have no foreign key to a profile row. The
-[`UserService`](../apps/api/src/services/user.ts) deletion transaction explicitly
+[`UserService`](../apps/api/src/modules/user/user.service.ts) deletion transaction explicitly
 removes a user's sessions, drafts, streaks, settings, and achievement unlocks.
 It retains guild day rows and the global used-word history. Day counters are not
 recomputed by that deletion.
@@ -468,7 +469,7 @@ describes snapshots, startup failure, and rollback.
 
 ## Startup and deployment
 
-[`index.ts`](../apps/api/src/index.ts) applies migrations before accepting traffic.
+[`StartupService`](../apps/api/src/startup/startup.service.ts) applies migrations before accepting traffic.
 If `SQLITE_PATH` is configured, the one-time import runs next. Startup then
 initializes gamification defaults, including the Wordle catalog, and loads bans.
 It preloads `valid-guesses.txt` before the HTTP and Colyseus server starts. An

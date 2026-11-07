@@ -1,21 +1,20 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import { startContractServer } from '../helpers/contractServer';
+import { startNestContractServer } from '../helpers/contractServer';
 
 const { callContract } = await import('@marquinhos/api-client/bot');
 const { health } = await import('@marquinhos/contracts/http/routes/health');
 const { privacyPolicy } =
   await import('@marquinhos/contracts/http/routes/privacyPolicy');
 
-let server: Awaited<ReturnType<typeof startContractServer>>;
+let server: Awaited<ReturnType<typeof startNestContractServer>>;
 
 beforeAll(async () => {
-  const { default: healthRouter } =
-    await import('../../src/routes/health.route');
-  const { default: privacyPolicyRouter } =
-    await import('../../src/routes/privacyPolicy.route');
-  server = await startContractServer((app) => {
-    app.use('/api/health', healthRouter);
-    app.use('/api/privacy-policy', privacyPolicyRouter);
+  const [{ HealthModule }, { PrivacyPolicyModule }] = await Promise.all([
+    import('../../src/modules/health/health.module'),
+    import('../../src/modules/privacy-policy/privacy-policy.module'),
+  ]);
+  server = await startNestContractServer({
+    imports: [HealthModule, PrivacyPolicyModule],
   });
 });
 

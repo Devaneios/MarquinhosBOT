@@ -1,6 +1,9 @@
-import { closeDefaultDb } from '@marquinhos/database/client';
+import { NestFactory } from '@nestjs/core';
+import type { Db } from '@marquinhos/database/client';
 import { runMigrations } from '@marquinhos/database/migrate';
-import { WordleAchievementService } from '../src/services/wordle/WordleAchievementService';
+import { DB } from '../src/database/database.tokens';
+import { WordleAchievementService } from '../src/modules/wordle/services/wordle-achievement.service';
+import { ScriptsModule } from '../src/scripts/scripts.module';
 
 async function main() {
   const args = Bun.argv.slice(2);
@@ -20,15 +23,20 @@ async function main() {
     if (arg === '--guild-id' && !guildId)
       throw new Error('--guild-id requires a value');
   }
+  const app = await NestFactory.createApplicationContext(ScriptsModule, {
+    logger: false,
+  });
   try {
-    await runMigrations();
+    await runMigrations(app.get<Db>(DB));
     console.log(
       JSON.stringify(
-        await new WordleAchievementService().backfill({ guildId, batchSize }),
+        await app
+          .get(WordleAchievementService)
+          .backfill({ guildId, batchSize }),
       ),
     );
   } finally {
-    await closeDefaultDb();
+    await app.close();
   }
 }
 

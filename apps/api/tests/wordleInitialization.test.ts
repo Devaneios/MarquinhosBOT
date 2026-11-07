@@ -3,10 +3,10 @@ import { wordleDays, wordleUsedWords } from '@marquinhos/database/schema';
 import { expect, it } from 'bun:test';
 import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
+import { createWordleTestService } from './helpers/wordleServices';
 
 it('initializes the global word using the existing word banks', async () => {
-  const { WordleService } = await import('../src/services/wordle');
-  const service = new WordleService();
+  const service = createWordleTestService();
   const date = '2035-08-21';
   const [a, b] = await Promise.all([
     service.getGlobalDailyWord(date),
@@ -24,12 +24,16 @@ it('initializes a missing day without exhausting a single-connection pool', asyn
     [
       process.execPath,
       '--eval',
-      `import { closeDefaultDb } from '@marquinhos/database/client';
-       import { WordleService } from './src/services/wordle';
+      `import 'reflect-metadata';
+       import { Test } from '@nestjs/testing';
+       import { WordleModule } from './src/modules/wordle/wordle.module';
+       import { WordleService } from './src/modules/wordle/wordle.service';
+       const moduleRef = await Test.createTestingModule({ imports: [WordleModule] }).compile();
+       const service = moduleRef.get(WordleService);
        try {
-         await new WordleService().submitGuess('single-connection', ${JSON.stringify(guildId)}, 'termo');
+         await service.submitGuess('single-connection', ${JSON.stringify(guildId)}, 'termo');
        } finally {
-         await closeDefaultDb();
+         await moduleRef.close();
        }`,
     ],
     {

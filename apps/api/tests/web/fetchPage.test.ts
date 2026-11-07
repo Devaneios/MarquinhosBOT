@@ -3,7 +3,7 @@ import {
   createPageFetcher,
   FetchPageError,
   MAX_BODY_BYTES,
-} from 'services/aiChat/web/fetchPage';
+} from 'modules/ai-chat/web/fetch-page';
 
 function publicLookup() {
   return mock(async () => [{ address: '93.184.216.34', family: 4 }]);

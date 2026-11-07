@@ -2,8 +2,9 @@ import {
   inputPayloadSchema,
   type SnakeServerMessage,
 } from '@marquinhos/contracts/activity/games/snakeGame';
-import { SnakeSession } from 'services/activity/snake-game/SnakeSession';
+import { SnakeSession } from 'modules/activity/games/snake/snake-session';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const INPUT_RATE_LIMIT_WINDOW_MS = 1000;
@@ -27,7 +28,7 @@ export const snakeAdapter: GameRoomAdapter<SnakeSession> = {
   // bot but out of the approved v1 queue list" note as Task 13's Dominoes.
   supportsQueue: false,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new SnakeSession(
       {
         sessionKey: ctx.roomKey,
@@ -39,7 +40,7 @@ export const snakeAdapter: GameRoomAdapter<SnakeSession> = {
         broadcast: (_key, message) =>
           ctx.broadcast(message.type, message.payload),
       },
-      undefined,
+      dependencies.gamification,
       { width: 20, height: 20, initialSnakeLength: 3 },
       { onSessionEnded: ctx.onSessionEnded },
     );

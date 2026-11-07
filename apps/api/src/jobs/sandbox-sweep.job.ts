@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
-import { DockerodeSandboxClient } from 'services/aiChat/sandbox/DockerodeSandboxClient';
-import { SandboxManager } from 'services/aiChat/sandbox/SandboxManager';
-import { logger } from 'utils/logger';
+import { logger } from 'common/logging/logger';
+import { SandboxManager } from 'modules/ai-chat/sandbox/sandbox-manager.service';
 
 @Injectable()
 export class SandboxSweepJob {
-  private readonly sandbox = new SandboxManager(new DockerodeSandboxClient());
+  constructor(private readonly sandbox: SandboxManager) {}
 
   @Interval(5 * 60_000)
   async sweepIdleSessions(): Promise<void> {

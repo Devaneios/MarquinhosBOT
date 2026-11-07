@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
-import type { AiTraceRecorder } from 'services/aiChat/AiTraceRecorder';
-import type { DailyQuotaService } from 'services/aiChat/DailyQuotaService';
-import { GuardrailService } from 'services/aiChat/GuardrailService';
-import type { DeepResearchService } from 'services/aiChat/research/DeepResearchService';
-import { ResearchJobStore } from 'services/aiChat/research/ResearchJobStore';
-import { ResearchOrchestrator } from 'services/aiChat/research/ResearchOrchestrator';
-import { ThreadSessionStore } from 'services/aiChat/thread/ThreadSessionStore';
+import type { DailyQuotaService } from 'modules/ai-chat/daily-quota.service';
+import { GuardrailService } from 'modules/ai-chat/guardrail.service';
+import type { DeepResearchService } from 'modules/ai-chat/research/deep-research.service';
+import { ResearchJobStore } from 'modules/ai-chat/research/research-job.store';
+import { ResearchOrchestrator } from 'modules/ai-chat/research/research-orchestrator.service';
+import { ThreadSessionStore } from 'modules/ai-chat/thread/thread-session.store';
+import type { AiTraceRecorder } from 'modules/ai-chat/trace/ai-trace-recorder.service';
 import { useTestDb } from '../helpers/testDb';
 
 const testDb = useTestDb();

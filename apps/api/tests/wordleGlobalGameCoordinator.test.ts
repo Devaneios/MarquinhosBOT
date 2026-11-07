@@ -5,9 +5,9 @@ import {
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import { WordleGlobalAchievementService } from '../src/services/wordle/WordleGlobalAchievementService';
-import { WordleGlobalGameCoordinator } from '../src/services/wordle/WordleGlobalGameCoordinator';
-import { WordleGlobalGameplayService } from '../src/services/wordle/WordleGlobalGameplayService';
+import { WordleGlobalGameCoordinator } from '../src/modules/wordle/services/wordle-global-game-coordinator';
+import { WordleGlobalGameplayService } from '../src/modules/wordle/services/wordle-global-gameplay.service';
+import { createWordleTestGlobalAchievementService } from './helpers/wordleServices';
 
 let testDb: TestDb;
 const date = '2026-11-01';
@@ -38,8 +38,11 @@ describe('global game coordinator', () => {
       (guess) => guess,
       () => now,
     );
-    const awards = new WordleGlobalAchievementService(testDb.db, () => now);
-    const service = new WordleGlobalGameCoordinator(gameplay, awards, () => {});
+    const awards = createWordleTestGlobalAchievementService(
+      () => now,
+      testDb.db,
+    );
+    const service = new WordleGlobalGameCoordinator(gameplay, awards);
     const result = await service.submitGuess(
       'player',
       'server-a',
@@ -65,19 +68,18 @@ describe('global game coordinator', () => {
       (guess) => guess,
       () => now,
     );
-    const awards = new WordleGlobalAchievementService(testDb.db, () => now);
-    const failing = new WordleGlobalGameCoordinator(
-      gameplay,
-      {
-        checkAndAward: async () => {
-          throw new Error('unavailable');
-        },
-        getOverview: async () => {
-          throw new Error('unavailable');
-        },
-      },
-      () => {},
+    const awards = createWordleTestGlobalAchievementService(
+      () => now,
+      testDb.db,
     );
+    const failing = new WordleGlobalGameCoordinator(gameplay, {
+      checkAndAward: async () => {
+        throw new Error('unavailable');
+      },
+      getOverview: async () => {
+        throw new Error('unavailable');
+      },
+    });
     const result = await failing.submitGuess(
       'recover',
       'server-a',
@@ -89,7 +91,7 @@ describe('global game coordinator', () => {
       solved: true,
       attempts: 1,
     });
-    const retry = new WordleGlobalGameCoordinator(gameplay, awards, () => {});
+    const retry = new WordleGlobalGameCoordinator(gameplay, awards);
     expect((await retry.reconcile('recover', 'server-a')).unlockedIds).toEqual([
       'wordle_v2_solved_exactly_1',
     ]);

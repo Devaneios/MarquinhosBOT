@@ -1,5 +1,5 @@
 import { Injectable, type LoggerService } from '@nestjs/common';
-import { logger } from 'utils/logger';
+import { logger } from 'common/logging/logger';
 
 @Injectable()
 export class JsonLogger implements LoggerService {

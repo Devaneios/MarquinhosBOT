@@ -3,9 +3,10 @@ import {
   placeShipsPayloadSchema,
   type BattleshipServerMessage,
 } from '@marquinhos/contracts/activity/games/battleship';
-import { BattleshipSession } from 'services/activity/battleship/BattleshipSession';
-import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
+import { BattleshipSession } from 'modules/activity/games/battleship/battleship-session';
+import type { PerClientBroadcaster } from 'modules/activity/games/cards/per-client-broadcaster';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const FIRE_RATE_LIMIT_WINDOW_MS = 1000;
@@ -18,7 +19,7 @@ export const battleshipAdapter: GameRoomAdapter<BattleshipSession> = {
   supportsBot: true,
   supportsQueue: true,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const broadcaster: PerClientBroadcaster<BattleshipServerMessage> = {
       sendToPlayer: (userId, message) =>
         ctx.sendToPlayer(userId, message.type, message.payload),
@@ -34,7 +35,7 @@ export const battleshipAdapter: GameRoomAdapter<BattleshipSession> = {
         mode: ctx.mode,
       },
       broadcaster,
-      undefined,
+      dependencies.gamification,
       { onSessionEnded: ctx.onSessionEnded },
     );
 

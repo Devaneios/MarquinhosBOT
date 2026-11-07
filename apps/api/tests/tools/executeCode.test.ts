@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from 'bun:test';
-import { executeCodeTool } from 'services/aiChat/tools/executeCode';
+import { executeCodeTool } from 'modules/ai-chat/tools/execute-code';
 
 describe('executeCodeTool', () => {
   it('runs python code via python3 -c', async () => {

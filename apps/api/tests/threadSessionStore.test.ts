@@ -1,7 +1,7 @@
 import { aiThreadItems } from '@marquinhos/database/schema';
 import { beforeEach, describe, expect, it } from 'bun:test';
-import type { ConversationItem } from 'services/aiChat/llm/ResponsesClient';
-import { ThreadSessionStore } from 'services/aiChat/thread/ThreadSessionStore';
+import type { ConversationItem } from 'modules/ai-chat/llm/responses.client';
+import { ThreadSessionStore } from 'modules/ai-chat/thread/thread-session.store';
 import { useTestDb } from './helpers/testDb';
 
 const testDb = useTestDb();

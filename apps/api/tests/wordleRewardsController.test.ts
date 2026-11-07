@@ -1,69 +1,90 @@
-import { expect, it } from 'bun:test';
-import { WordleRewardsController } from '../src/controllers/wordleRewards.controller';
-import { InvalidWordleReward } from '../src/services/wordle/WordleRewardsService';
+import { afterAll, expect, it } from 'bun:test';
+import { WordleRewardsController } from '../src/modules/wordle/controllers/wordle-rewards.controller';
+import {
+  InvalidWordleReward,
+  WordleRewardsService,
+} from '../src/modules/wordle/services/wordle-rewards.service';
+import {
+  requestController,
+  startNestControllerServer,
+} from './helpers/nestControllerServer';
 
-function response() {
-  return {
-    code: 200,
-    body: undefined as unknown,
-    status(code: number) {
-      this.code = code;
-      return this;
+const calls: unknown[] = [];
+const server = await startNestControllerServer({
+  controllers: [WordleRewardsController],
+  providers: [
+    {
+      provide: WordleRewardsService,
+      useValue: {
+        reconcile: async (user: string) => calls.push(user),
+        get: async () => ({ owned: [], title: null, frame: null, badges: [] }),
+        equip: async (userId: string, kind: string, rewardId: string | null) =>
+          calls.push([userId, kind, rewardId]),
+      },
     },
-    json(body: unknown) {
-      this.body = body;
-      return this;
-    },
-  };
-}
+  ],
+});
+afterAll(() => server.close());
 
 it('uses only the authenticated identity for reconciliation and equipment', async () => {
-  const calls: unknown[] = [];
-  const controller = new WordleRewardsController({
-    reconcile: async (user) => {
-      calls.push(user);
-    },
-    get: async () => ({ owned: [], title: null, frame: null, badges: [] }),
-    equip: async (...args) => {
-      calls.push(args);
-    },
+  const read = await requestController(server, '/wordle/rewards');
+  const updated = await requestController(server, '/wordle/rewards', {
+    method: 'PUT',
+    body: { kind: 'title', rewardId: null },
   });
-  const res = response();
-  await controller.get({ user: { id: 'owner' } }, res);
-  await controller.update(
-    { user: { id: 'owner' }, body: { kind: 'title', rewardId: null } },
-    res,
-  );
   expect(calls).toEqual(['owner', 'owner', ['owner', 'title', null]]);
-  const forged = response();
-  await controller.update(
-    {
-      user: { id: 'owner' },
-      body: { kind: 'title', rewardId: null, userId: 'other' },
-    },
-    forged,
-  );
-  expect(forged.code).toBe(400);
+  expect(read.status).toBe(200);
+  expect(read.body).toEqual({
+    data: { owned: [], title: null, frame: null, badges: [] },
+  });
+  expect(updated.status).toBe(200);
+  expect(updated.body).toEqual({
+    data: { owned: [], title: null, frame: null, badges: [] },
+  });
+
+  const forged = await requestController(server, '/wordle/rewards', {
+    method: 'PUT',
+    body: { kind: 'title', rewardId: null, userId: 'other' },
+  });
+  expect(forged.status).toBe(400);
+  expect(forged.body).toEqual({ message: 'Invalid reward' });
 });
 
 it('rejects unauthenticated and unowned equipment', async () => {
-  const controller = new WordleRewardsController({
-    reconcile: async () => {},
-    get: async () => ({ owned: [], title: null, frame: null, badges: [] }),
-    equip: async () => {
-      throw new InvalidWordleReward();
-    },
+  const unauthorized = await requestController(server, '/wordle/rewards', {
+    token: '',
   });
-  const missing = response();
-  await controller.get({}, missing);
-  expect(missing.code).toBe(401);
-  const denied = response();
-  await controller.update(
-    {
-      user: { id: 'owner' },
+  expect(unauthorized.status).toBe(401);
+  expect(unauthorized.body).toEqual({ message: 'Token not provided' });
+
+  const moduleServer = await startNestControllerServer({
+    controllers: [WordleRewardsController],
+    providers: [
+      {
+        provide: WordleRewardsService,
+        useValue: {
+          reconcile: async () => {},
+          get: async () => ({
+            owned: [],
+            title: null,
+            frame: null,
+            badges: [],
+          }),
+          equip: async () => {
+            throw new InvalidWordleReward('Invalid reward');
+          },
+        },
+      },
+    ],
+  });
+  try {
+    const denied = await requestController(moduleServer, '/wordle/rewards', {
+      method: 'PUT',
       body: { kind: 'frame', rewardId: 'frame_century' },
-    },
-    denied,
-  );
-  expect(denied.code).toBe(400);
+    });
+    expect(denied.status).toBe(400);
+    expect(denied.body).toEqual({ message: 'Invalid reward' });
+  } finally {
+    await moduleServer.close();
+  }
 });

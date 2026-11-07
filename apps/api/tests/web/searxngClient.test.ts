@@ -1,5 +1,8 @@
 import { describe, expect, it, mock } from 'bun:test';
-import { SearxngClient, SearxngError } from 'services/aiChat/web/SearxngClient';
+import {
+  SearxngClient,
+  SearxngError,
+} from 'modules/ai-chat/web/searxng.client';
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {

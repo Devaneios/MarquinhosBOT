@@ -1,7 +1,7 @@
 import { aiChatConfig, aiChatUsage } from '@marquinhos/database/schema';
 import { beforeEach, describe, expect, it } from 'bun:test';
 import { asc, eq } from 'drizzle-orm';
-import { RateLimitService } from 'services/aiChat/RateLimitService';
+import { RateLimitService } from 'modules/ai-chat/rate-limit.service';
 import { useTestDb } from './helpers/testDb';
 
 const testDb = useTestDb();

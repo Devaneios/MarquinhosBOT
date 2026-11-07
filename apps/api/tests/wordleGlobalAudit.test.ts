@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { auditGlobalWordleHistory } from '../src/services/wordle/globalAudit';
+import { auditGlobalWordleHistory } from '../src/modules/wordle/services/global-audit';
 
 describe('auditGlobalWordleHistory', () => {
   it('counts duplicate days and conflicts without returning player data', () => {

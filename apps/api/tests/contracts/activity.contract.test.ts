@@ -1,8 +1,9 @@
 import type { RoomListing } from '@marquinhos/contracts/http/routes/activity';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import type { DiscordService } from 'integrations/discord/discord.service';
+import { DiscordService } from 'integrations/discord/discord.service';
+import { ACTIVITY_ROOM_QUERY } from 'modules/activity/activity.tokens';
 import { randomUUID } from 'node:crypto';
-import { startContractServer } from '../helpers/contractServer';
+import { startNestContractServer } from '../helpers/contractServer';
 
 const { callContract } = await import('@marquinhos/api-client/bot');
 const activity = await import('@marquinhos/contracts/http/routes/activity');
@@ -37,26 +38,20 @@ const fakeQueryRooms = async () => [
   { metadata: { roomId: 'HOSTLESS' } },
 ];
 
-let server: Awaited<ReturnType<typeof startContractServer>>;
+let server: Awaited<ReturnType<typeof startNestContractServer>>;
 
 beforeAll(async () => {
-  const { createActivityRouter } =
-    await import('../../src/routes/activity.route');
-  const { default: ActivityController } =
-    await import('../../src/controllers/activity.controller');
-  server = await startContractServer((app) => {
-    app.use(
-      '/api/activities',
-      createActivityRouter(
-        new ActivityController(
-          fakeDiscord,
-          fakeQueryRooms as unknown as ConstructorParameters<
-            typeof ActivityController
-          >[1],
-        ),
-      ),
-    );
-  });
+  const { ActivityModule } =
+    await import('../../src/modules/activity/activity.module');
+  server = await startNestContractServer(
+    { imports: [ActivityModule] },
+    (builder) =>
+      builder
+        .overrideProvider(DiscordService)
+        .useValue(fakeDiscord)
+        .overrideProvider(ACTIVITY_ROOM_QUERY)
+        .useValue(fakeQueryRooms),
+  );
 });
 
 afterAll(() => server.close());

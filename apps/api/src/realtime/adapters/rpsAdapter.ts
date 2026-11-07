@@ -2,8 +2,9 @@ import {
   pickPayloadSchema,
   type RpsServerMessage,
 } from '@marquinhos/contracts/activity/games/rockPaperScissors';
-import { RpsSession } from 'services/activity/rps/RpsSession';
+import { RpsSession } from 'modules/activity/games/rps/rps-session';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { broadcastMessage, sendMessage } from '../sendMessage';
 
 const PICK_RATE_LIMIT_WINDOW_MS = 1000;
@@ -14,7 +15,7 @@ export const rpsAdapter: GameRoomAdapter<RpsSession> = {
   supportsBot: true,
   supportsQueue: true,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new RpsSession(
       {
         sessionKey: ctx.roomKey,
@@ -26,7 +27,7 @@ export const rpsAdapter: GameRoomAdapter<RpsSession> = {
         broadcast: (_key, message) =>
           ctx.broadcast(message.type, message.payload),
       },
-      undefined,
+      dependencies.gamification,
       undefined,
       { onSessionEnded: ctx.onSessionEnded },
     );

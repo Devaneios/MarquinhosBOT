@@ -4,9 +4,9 @@ import {
   wordleGlobalDays,
   wordleGlobalSessions,
 } from '@marquinhos/database/schema';
-import { WordleService } from '../../src/services/wordle';
-import { getRecifeDate } from '../../src/services/wordle/wordleDate';
-import { migrateGlobalWordle } from '../../src/services/wordle/WordleGlobalMigrationService';
+import { getRecifeDate } from '../../src/modules/wordle/services/wordle-date';
+import { migrateGlobalWordle } from '../../src/modules/wordle/services/wordle-global-migration.service';
+import { createWordleTestService } from './wordleServices';
 
 try {
   const date = getRecifeDate();
@@ -14,7 +14,7 @@ try {
   await db
     .insert(wordleGlobalDays)
     .values({ word_date: date, word: 'termo', word_length: 5, created_at: 1 });
-  const service = new WordleService();
+  const service = createWordleTestService();
   const dayA = await service.getDailyWord('community-a');
   const dayB = await service.getDailyWord('community-b');
   const played = await service.submitGuess(

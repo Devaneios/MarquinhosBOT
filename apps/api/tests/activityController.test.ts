@@ -3,504 +3,397 @@ import {
   wsSessionSchema,
 } from '@marquinhos/contracts/http/routes/activity';
 import { describe, expect, it } from 'bun:test';
-import { matchMaker } from 'colyseus';
-import ActivityController from 'controllers/activity.controller';
-import { DiscordService } from 'integrations/discord/discord.service';
-import { roomKey } from 'services/activity/roomKey';
-import { verifyWsSessionToken } from 'services/activity/wsSessionToken';
+import {
+  DiscordGuildMembershipError,
+  DiscordService,
+} from 'integrations/discord/discord.service';
+import { ACTIVITY_ROOM_QUERY } from 'modules/activity/activity.tokens';
+import { roomKey } from 'modules/activity/room-key';
+import { verifyWsSessionToken } from 'modules/activity/ws-session-token';
+import {
+  requestController,
+  startNestControllerServer,
+} from './helpers/nestControllerServer';
 
-function makeReq(body: Record<string, unknown>) {
-  return { body } as any;
+type ControllerServer = Awaited<ReturnType<typeof startNestControllerServer>>;
+type FakeDiscord = Pick<
+  DiscordService,
+  'exchangeActivityCode' | 'getDiscordUser' | 'isGuildMember'
+>;
+
+function defaultDiscord(): FakeDiscord {
+  return {
+    exchangeActivityCode: async () => ({
+      access_token: 'tok_abc',
+      token_type: 'Bearer',
+      expires_in: 604800,
+      scope: 'identify',
+    }),
+    getDiscordUser: async () => ({ id: 'user-1' }),
+    isGuildMember: async () => true,
+  } as unknown as FakeDiscord;
 }
 
-function makeRes() {
-  let statusCode: number | undefined;
-  let payload: unknown;
-  const res = {
-    status(code: number) {
-      statusCode = code;
-      return res;
-    },
-    json(data: unknown) {
-      payload = data;
-      return res;
-    },
-    getStatus: () => statusCode,
-    getPayload: () => payload,
-  };
-  return res;
+async function withServer<T>(
+  run: (server: ControllerServer) => Promise<T>,
+  options: {
+    discord?: FakeDiscord;
+    queryRooms?: (...args: never[]) => Promise<unknown[]>;
+  } = {},
+): Promise<T> {
+  const { ActivityModule } = await import('modules/activity/activity.module');
+  const server = await startNestControllerServer(
+    { imports: [ActivityModule] },
+    (builder) =>
+      builder
+        .overrideProvider(DiscordService)
+        .useValue(options.discord ?? defaultDiscord())
+        .overrideProvider(ACTIVITY_ROOM_QUERY)
+        .useValue(options.queryRooms ?? (async () => [])),
+  );
+  try {
+    return await run(server);
+  } finally {
+    await server.close();
+  }
 }
 
-describe('ActivityController.exchangeToken', () => {
-  it('returns 200 with the access token from DiscordService', async () => {
-    const fakeService = {
-      exchangeActivityCode: async () => ({
-        access_token: 'tok_abc',
-        token_type: 'Bearer',
-        expires_in: 604800,
-        scope: 'identify',
-      }),
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
+function post(server: ControllerServer, path: string, body: unknown) {
+  return requestController(server, `/activities${path}`, {
+    method: 'POST',
+    body,
+    token: `Bearer ${server.activityToken}`,
+  });
+}
 
-    const req = makeReq({ code: 'auth-code-abc' });
-    const res = makeRes();
+const wsBody = {
+  accessToken: 'tok_abc',
+  instanceId: 'inst-1',
+  guildId: 'guild-1',
+  mode: 'single',
+  game: 'pong',
+} as const;
 
-    await controller.exchangeToken(req, res as any);
-
-    expect(res.getStatus()).toBe(200);
-    expect(res.getPayload()).toEqual({ data: { access_token: 'tok_abc' } });
+describe('ActivityController HTTP routes', () => {
+  it('exchanges an OAuth code and returns the access token', async () => {
+    await withServer(async (server) => {
+      const response = await post(server, '/token', { code: 'auth-code-abc' });
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ data: { access_token: 'tok_abc' } });
+    });
   });
 
-  it('returns 500 when DiscordService throws', async () => {
-    const fakeService = {
-      exchangeActivityCode: async () => {
-        throw new Error('discord down');
+  it('returns the handler error when Discord token exchange fails', async () => {
+    await withServer(
+      async (server) => {
+        const response = await post(server, '/token', { code: 'auth-code' });
+        expect(response.status).toBe(500);
+        expect(response.body).toEqual({ message: 'Unknown Error' });
       },
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-
-    const req = makeReq({ code: 'auth-code-abc' });
-    const res = makeRes();
-
-    await controller.exchangeToken(req, res as any);
-
-    expect(res.getStatus()).toBe(500);
+      {
+        discord: {
+          ...defaultDiscord(),
+          exchangeActivityCode: async () => {
+            throw new Error('discord down');
+          },
+        },
+      },
+    );
   });
-});
 
-describe('ActivityController.getWsSessionToken', () => {
-  it('returns 400 for a multi-mode session without a roomId', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async () => true,
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-    const res = makeRes();
+  it('returns contract validation errors for a multi session without a roomId', async () => {
+    await withServer(async (server) => {
+      const response = await post(server, '/ws-session', {
+        ...wsBody,
+        mode: 'multi',
+      });
+      expect(response.status).toBe(400);
+      expect(response.body).toMatchObject({ message: 'Validation failed' });
+    });
+  });
 
-    await controller.getWsSessionToken(
-      makeReq({
-        accessToken: 'tok_abc',
+  it('mints a session token bound to the resolved user and instance', async () => {
+    await withServer(async (server) => {
+      const response = await post(server, '/ws-session', wsBody);
+      expect(response.status).toBe(200);
+      const data = wsSessionSchema.parse(
+        (response.body as { data: unknown }).data,
+      );
+      expect(verifyWsSessionToken(data.token)).toEqual({
+        userId: 'user-1',
         instanceId: 'inst-1',
         guildId: 'guild-1',
-        mode: 'multi',
-        game: 'pong',
-      }),
-      res as any,
-    );
-
-    expect(res.getStatus()).toBe(400);
-  });
-
-  it('mints a WS session token bound to the resolved Discord user and instance', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async () => true,
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-
-    const req = makeReq({
-      accessToken: 'tok_abc',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-      mode: 'single',
-      game: 'pong',
-    });
-    const res = makeRes();
-
-    await controller.getWsSessionToken(req, res as any);
-
-    expect(res.getStatus()).toBe(200);
-    const payload = res.getPayload() as {
-      data: { token: string; roomKey: string };
-    };
-    expect(wsSessionSchema.safeParse(payload.data).success).toBe(true);
-    expect(verifyWsSessionToken(payload.data.token)).toEqual({
-      userId: 'user-1',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-      mode: 'single',
-      game: 'pong',
-    });
-    expect(payload.data.roomKey).toBe(
-      roomKey({
-        instanceId: 'inst-1',
-        game: 'pong',
         mode: 'single',
-        userId: 'user-1',
-      }),
+        game: 'pong',
+      });
+      expect(data.roomKey).toBe(
+        roomKey({
+          instanceId: 'inst-1',
+          game: 'pong',
+          mode: 'single',
+          userId: 'user-1',
+        }),
+      );
+    });
+  });
+
+  it('includes optional difficulty and Discord display name in the token', async () => {
+    await withServer(
+      async (server) => {
+        const response = await post(server, '/ws-session', {
+          ...wsBody,
+          mode: 'multi',
+          roomId: 'ROOM01',
+          difficulty: 'easy',
+        });
+        const data = (response.body as { data: { token: string } }).data;
+        expect(verifyWsSessionToken(data.token)).toMatchObject({
+          userId: 'user-1',
+          difficulty: 'easy',
+          displayName: 'Marquinhos',
+        });
+      },
+      {
+        discord: {
+          ...defaultDiscord(),
+          getDiscordUser: async () => ({
+            id: 'user-1',
+            global_name: 'Marquinhos',
+            username: 'fallback-name',
+          }),
+        },
+      },
     );
   });
 
-  it('includes an optional difficulty in the minted token', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async () => true,
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-
-    const req = makeReq({
-      accessToken: 'tok_abc',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-      mode: 'single',
-      game: 'pong',
-      difficulty: 'easy',
-    });
-    const res = makeRes();
-
-    await controller.getWsSessionToken(req, res as any);
-
-    const payload = res.getPayload() as { data: { token: string } };
-    expect(verifyWsSessionToken(payload.data.token)).toEqual({
-      userId: 'user-1',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-      mode: 'single',
-      game: 'pong',
-      difficulty: 'easy',
-    });
-  });
-
-  it('includes the Discord display name in the minted token', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({
-        id: 'user-1',
-        global_name: 'Marquinhos',
-        username: 'fallback-name',
-      }),
-      isGuildMember: async () => true,
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-    const req = makeReq({
-      accessToken: 'tok_abc',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-      mode: 'multi',
-      game: 'pong',
-      roomId: 'ROOM01',
-    });
-    const res = makeRes();
-
-    await controller.getWsSessionToken(req, res as any);
-
-    const payload = res.getPayload() as { data: { token: string } };
-    expect(verifyWsSessionToken(payload.data.token)?.displayName).toBe(
-      'Marquinhos',
+  it('returns 401 and the legacy message for an unresolved access token', async () => {
+    await withServer(
+      async (server) => {
+        const response = await post(server, '/ws-session', {
+          ...wsBody,
+          mode: 'multi',
+          roomId: 'ROOM01',
+        });
+        expect(response.status).toBe(401);
+        expect(response.body).toEqual({ message: 'Invalid access token' });
+      },
+      { discord: { ...defaultDiscord(), getDiscordUser: async () => null } },
     );
-  });
-
-  it('returns 401 when the access token does not resolve to a Discord user', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({}),
-      isGuildMember: async () => true,
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-
-    const req = makeReq({
-      accessToken: 'bad-token',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-      mode: 'multi',
-      game: 'pong',
-      roomId: 'ROOM01',
-    });
-    const res = makeRes();
-
-    await controller.getWsSessionToken(req, res as any);
-
-    expect(res.getStatus()).toBe(401);
   });
 
   it('returns 403 when the resolved user is not a member of the claimed guild', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async () => false,
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-
-    const req = makeReq({
-      accessToken: 'tok_abc',
-      instanceId: 'inst-1',
-      guildId: 'guild-not-mine',
-      mode: 'multi',
-      game: 'pong',
-      roomId: 'ROOM01',
-    });
-    const res = makeRes();
-
-    await controller.getWsSessionToken(req, res as any);
-
-    expect(res.getStatus()).toBe(403);
-  });
-
-  it('does not require guild membership for a solo (vs. bot) session', async () => {
-    let called = false;
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async () => {
-        called = true;
-        return false; // even a "no" must not block a mode that never reads guildId
+    await withServer(
+      async (server) => {
+        const response = await post(server, '/ws-session', {
+          ...wsBody,
+          mode: 'multi',
+          roomId: 'ROOM01',
+        });
+        expect(response.status).toBe(403);
+        expect(response.body).toEqual({
+          message: 'Not a member of the specified guild',
+        });
       },
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-
-    const req = makeReq({
-      accessToken: 'tok_abc',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-      mode: 'single',
-      game: 'pong',
-    });
-    const res = makeRes();
-
-    await controller.getWsSessionToken(req, res as any);
-
-    expect(called).toBe(false);
-    expect(res.getStatus()).toBe(200);
-  });
-
-  it('requires guild membership for daily Wordle even in single-player mode', async () => {
-    const discord = new DiscordService();
-    discord.getDiscordUser = async () => ({ id: 'user-1' });
-    discord.isGuildMember = async (_token, guildId) => guildId === 'my-guild';
-    const controller = new ActivityController(discord);
-    const request = {
-      accessToken: 'tok_abc',
-      instanceId: 'inst-1',
-      mode: 'single',
-      game: 'wordle',
-    };
-    const denied = makeRes();
-    await controller.getWsSessionToken(
-      makeReq({ ...request, guildId: 'other-guild' }),
-      denied as any,
-    );
-    expect(denied.getStatus()).toBe(403);
-
-    const allowed = makeRes();
-    await controller.getWsSessionToken(
-      makeReq({ ...request, guildId: 'my-guild' }),
-      allowed as any,
-    );
-    const response = (allowed.getPayload() as { data: unknown }).data;
-    const session = wsSessionSchema.parse(response);
-    expect(verifyWsSessionToken(session.token)).toMatchObject({
-      guildId: 'my-guild',
-      guildMembershipVerified: true,
-    });
-  });
-
-  it('does not require guild membership for a local hot-seat session', async () => {
-    let called = false;
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async () => {
-        called = true;
-        return false;
-      },
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-
-    const req = makeReq({
-      accessToken: 'tok_abc',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-      mode: 'local',
-      game: 'pong',
-    });
-    const res = makeRes();
-
-    await controller.getWsSessionToken(req, res as any);
-
-    expect(called).toBe(false);
-    expect(res.getStatus()).toBe(200);
-  });
-
-  it('checks membership against the guild claimed in the request, for the resolved user', async () => {
-    const seen: { token: string; guildId: string }[] = [];
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async (token: string, guildId: string) => {
-        seen.push({ token, guildId });
-        return true;
-      },
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-
-    const req = makeReq({
-      accessToken: 'tok_abc',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-      mode: 'multi',
-      game: 'pong',
-      roomId: 'ROOM01',
-    });
-    const res = makeRes();
-
-    await controller.getWsSessionToken(req, res as any);
-
-    expect(seen).toEqual([{ token: 'tok_abc', guildId: 'guild-1' }]);
-  });
-
-  it('returns 500 when DiscordService throws', async () => {
-    const fakeService = {
-      getDiscordUser: async () => {
-        throw new Error('discord down');
-      },
-      isGuildMember: async () => true,
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-
-    const req = makeReq({
-      accessToken: 'tok_abc',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-      mode: 'multi',
-      game: 'pong',
-      roomId: 'ROOM01',
-    });
-    const res = makeRes();
-
-    await controller.getWsSessionToken(req, res as any);
-
-    expect(res.getStatus()).toBe(500);
-  });
-
-  it('includes ruleset and options in the minted token for a cards session', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async () => true,
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-
-    const req = makeReq({
-      accessToken: 'tok_abc',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-      mode: 'multi',
-      game: 'cards',
-      ruleset: 'truco',
-      options: { seed: 7 },
-      roomId: 'ROOM01',
-    });
-    const res = makeRes();
-
-    await controller.getWsSessionToken(req, res as any);
-
-    const payload = res.getPayload() as {
-      data: { token: string; roomKey: string };
-    };
-    expect(verifyWsSessionToken(payload.data.token)).toEqual({
-      userId: 'user-1',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-      mode: 'multi',
-      game: 'cards',
-      ruleset: 'truco',
-      options: { seed: 7 },
-      roomId: 'ROOM01',
-    });
-    expect(payload.data.roomKey).toBe(
-      roomKey({
-        instanceId: 'inst-1',
-        game: 'cards',
-        mode: 'multi',
-        userId: 'user-1',
-        ruleset: 'truco',
-        roomId: 'ROOM01',
-      }),
+      { discord: { ...defaultDiscord(), isGuildMember: async () => false } },
     );
   });
 
-  it('returns 500 when the guild membership check throws', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async () => {
-        throw new Error('discord down');
+  it('does not check guild membership for solo and local Pong sessions', async () => {
+    let membershipChecks = 0;
+    await withServer(
+      async (server) => {
+        for (const mode of ['single', 'local'] as const) {
+          const response = await post(server, '/ws-session', {
+            ...wsBody,
+            mode,
+          });
+          expect(response.status).toBe(200);
+        }
+        expect(membershipChecks).toBe(0);
       },
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-
-    const req = makeReq({
-      accessToken: 'tok_abc',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-      mode: 'multi',
-      game: 'pong',
-      roomId: 'ROOM01',
-    });
-    const res = makeRes();
-
-    await controller.getWsSessionToken(req, res as any);
-
-    expect(res.getStatus()).toBe(500);
-  });
-});
-
-describe('ActivityController.listRooms', () => {
-  it('lists match rooms for this instance, mapped from room metadata', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async () => true,
-    } as unknown as DiscordService;
-    const queryRooms = (async (conditions: Record<string, unknown>) => {
-      expect(conditions).toEqual({
-        name: 'match',
-        instanceId: 'inst-1',
-        mode: 'multi',
-        locked: false,
-      });
-      return [
-        {
-          metadata: {
-            instanceId: 'inst-1',
-            roomId: 'ROOM01',
-            game: 'tic-tac-toe',
-            hostUserId: 'u2',
-            playerCount: 1,
-            spectatorCount: 0,
-            queueDepth: 0,
-            queueEnabled: false,
-            mode: 'multi',
+      {
+        discord: {
+          ...defaultDiscord(),
+          isGuildMember: async () => {
+            membershipChecks += 1;
+            return false;
           },
         },
-      ];
-    }) as unknown as typeof matchMaker.query;
-    const controller = new ActivityController(fakeService, queryRooms);
+      },
+    );
+  });
 
-    const req = makeReq({
-      accessToken: 'token',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-    });
-    const res = makeRes();
-
-    await controller.listRooms(req, res as any);
-
-    expect(res.getStatus()).toBe(200);
-    expect(res.getPayload()).toEqual({
-      data: [
-        {
+  it('requires guild membership for daily Wordle and marks it verified', async () => {
+    await withServer(
+      async (server) => {
+        const denied = await post(server, '/ws-session', {
+          accessToken: 'tok_abc',
           instanceId: 'inst-1',
-          roomId: 'ROOM01',
-          game: 'tic-tac-toe',
-          hostUserId: 'u2',
-          playerCount: 1,
-          spectatorCount: 0,
-          queueDepth: 0,
-          queueEnabled: false,
-          mode: 'multi',
+          guildId: 'other-guild',
+          mode: 'single',
+          game: 'wordle',
+        });
+        expect(denied.status).toBe(403);
+
+        const allowed = await post(server, '/ws-session', {
+          accessToken: 'tok_abc',
+          instanceId: 'inst-1',
+          guildId: 'my-guild',
+          mode: 'single',
+          game: 'wordle',
+        });
+        const session = wsSessionSchema.parse(
+          (allowed.body as { data: unknown }).data,
+        );
+        expect(verifyWsSessionToken(session.token)).toMatchObject({
+          guildId: 'my-guild',
+          guildMembershipVerified: true,
+        });
+      },
+      {
+        discord: {
+          ...defaultDiscord(),
+          isGuildMember: async (_token: string, guildId: string) =>
+            guildId === 'my-guild',
         },
-      ],
+      },
+    );
+  });
+
+  it('checks membership against the guild claimed in the request', async () => {
+    const seen: { token: string; guildId: string }[] = [];
+    await withServer(
+      async (server) => {
+        const response = await post(server, '/ws-session', {
+          ...wsBody,
+          mode: 'multi',
+          roomId: 'ROOM01',
+        });
+        expect(response.status).toBe(200);
+        expect(seen).toEqual([{ token: 'tok_abc', guildId: 'guild-1' }]);
+      },
+      {
+        discord: {
+          ...defaultDiscord(),
+          isGuildMember: async (token: string, guildId: string) => {
+            seen.push({ token, guildId });
+            return true;
+          },
+        },
+      },
+    );
+  });
+
+  it('maps Discord lookup and guild lookup failures to the legacy 500 body', async () => {
+    for (const discord of [
+      {
+        ...defaultDiscord(),
+        getDiscordUser: async () => {
+          throw new Error('discord down');
+        },
+      },
+      {
+        ...defaultDiscord(),
+        isGuildMember: async () => {
+          throw new Error('discord down');
+        },
+      },
+    ]) {
+      await withServer(
+        async (server) => {
+          const response = await post(server, '/ws-session', {
+            ...wsBody,
+            mode: 'multi',
+            roomId: 'ROOM01',
+          });
+          expect(response.status).toBe(500);
+          expect(response.body).toEqual({ message: 'Unknown Error' });
+        },
+        { discord },
+      );
+    }
+  });
+
+  it('includes ruleset, options, and roomId for a cards session', async () => {
+    await withServer(async (server) => {
+      const response = await post(server, '/ws-session', {
+        ...wsBody,
+        mode: 'multi',
+        game: 'cards',
+        ruleset: 'truco',
+        options: { seed: 7 },
+        roomId: 'ROOM01',
+      });
+      const data = (
+        response.body as {
+          data: { token: string; roomKey: string };
+        }
+      ).data;
+      expect(verifyWsSessionToken(data.token)).toEqual({
+        userId: 'user-1',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        mode: 'multi',
+        game: 'cards',
+        ruleset: 'truco',
+        options: { seed: 7 },
+        roomId: 'ROOM01',
+      });
+      expect(data.roomKey).toBe(
+        roomKey({
+          instanceId: 'inst-1',
+          game: 'cards',
+          mode: 'multi',
+          userId: 'user-1',
+          ruleset: 'truco',
+          roomId: 'ROOM01',
+        }),
+      );
     });
   });
 
-  it('skips rooms whose metadata has no host yet', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async () => true,
-    } as unknown as DiscordService;
+  it('lists valid room listings for the requested instance', async () => {
+    const listing = {
+      instanceId: 'inst-1',
+      roomId: 'ROOM01',
+      game: 'tic-tac-toe',
+      hostUserId: 'u2',
+      playerCount: 1,
+      spectatorCount: 0,
+      queueDepth: 0,
+      queueEnabled: false,
+      mode: 'multi',
+    };
+    await withServer(
+      async (server) => {
+        const response = await post(server, '/rooms/list', {
+          accessToken: 'tok_abc',
+          instanceId: 'inst-1',
+          guildId: 'guild-1',
+        });
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ data: [listing] });
+      },
+      {
+        queryRooms: async (conditions: {
+          name: string;
+          instanceId: string;
+          mode: string;
+          locked: boolean;
+        }) => {
+          expect(conditions).toEqual({
+            name: 'match',
+            instanceId: 'inst-1',
+            mode: 'multi',
+            locked: false,
+          });
+          return [{ metadata: listing }];
+        },
+      },
+    );
+  });
+
+  it('skips room listings without valid host metadata', async () => {
     const listing = {
       roomKey: 'multi:inst-1:ROOM01',
       instanceId: 'inst-1',
@@ -513,133 +406,138 @@ describe('ActivityController.listRooms', () => {
       queueEnabled: false,
       mode: 'multi',
     };
-    const queryRooms = (async () => [
-      { metadata: listing },
-      { metadata: { ...listing, roomId: 'ROOM02', hostUserId: null } },
-      { metadata: undefined },
-    ]) as unknown as typeof matchMaker.query;
-    const controller = new ActivityController(fakeService, queryRooms);
-
-    const req = makeReq({
-      accessToken: 'token',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-    });
-    const res = makeRes();
-
-    await controller.listRooms(req, res as any);
-
-    expect(res.getStatus()).toBe(200);
-    expect(res.getPayload()).toEqual({
-      data: [
-        {
+    await withServer(
+      async (server) => {
+        const response = await post(server, '/rooms/list', {
+          accessToken: 'tok_abc',
           instanceId: 'inst-1',
-          roomId: 'ROOM01',
-          game: 'tic-tac-toe',
-          hostUserId: 'u2',
-          playerCount: 1,
-          spectatorCount: 0,
-          queueDepth: 0,
-          queueEnabled: false,
-          mode: 'multi',
+          guildId: 'guild-1',
+        });
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({
+          data: [
+            {
+              instanceId: 'inst-1',
+              roomId: 'ROOM01',
+              game: 'tic-tac-toe',
+              hostUserId: 'u2',
+              playerCount: 1,
+              spectatorCount: 0,
+              queueDepth: 0,
+              queueEnabled: false,
+              mode: 'multi',
+            },
+          ],
+        });
+      },
+      {
+        queryRooms: async () => [
+          { metadata: listing },
+          { metadata: { ...listing, roomId: 'ROOM02', hostUserId: null } },
+          { metadata: undefined },
+        ],
+      },
+    );
+  });
+
+  it('returns the legacy 403 response when rooms are requested from another guild', async () => {
+    await withServer(
+      async (server) => {
+        const response = await post(server, '/rooms/list', {
+          accessToken: 'tok_abc',
+          instanceId: 'inst-1',
+          guildId: 'guild-1',
+        });
+        expect(response.status).toBe(403);
+        expect(response.body).toEqual({
+          message: 'Not a member of the specified guild',
+        });
+      },
+      { discord: { ...defaultDiscord(), isGuildMember: async () => false } },
+    );
+  });
+
+  it('maps Discord membership outages while listing rooms to 503', async () => {
+    await withServer(
+      async (server) => {
+        const response = await post(server, '/rooms/list', {
+          accessToken: 'tok_abc',
+          instanceId: 'inst-1',
+          guildId: 'guild-1',
+        });
+        expect(response.status).toBe(503);
+        expect(response.body).toEqual({
+          message: 'Discord membership service unavailable',
+        });
+      },
+      {
+        discord: {
+          ...defaultDiscord(),
+          isGuildMember: async () => {
+            throw new DiscordGuildMembershipError(503);
+          },
         },
-      ],
-    });
-  });
-
-  it('rejects with 403 when the user is not a guild member', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async () => false,
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService, async () => []);
-
-    const req = makeReq({
-      accessToken: 'token',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-    });
-    const res = makeRes();
-
-    await controller.listRooms(req, res as any);
-
-    expect(res.getStatus()).toBe(403);
-  });
-});
-
-describe('ActivityController.createRoom', () => {
-  it('mints a roomId and a multi-mode token/roomKey', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async () => true,
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-
-    const req = makeReq({
-      accessToken: 'token',
-      instanceId: 'inst-1',
-      guildId: 'guild-1',
-      game: 'tic-tac-toe',
-      queueEnabled: true,
-    });
-    const res = makeRes();
-
-    await controller.createRoom(req, res as any);
-
-    expect(res.getStatus()).toBe(200);
-    const payload = res.getPayload() as {
-      data: { roomId: string; token: string; roomKey: string };
-    };
-    expect(createdRoomSchema.safeParse(payload.data).success).toBe(true);
-    expect(typeof payload.data.roomId).toBe('string');
-    expect(payload.data.roomId.length).toBeGreaterThan(0);
-    expect(typeof payload.data.token).toBe('string');
-    expect(payload.data.roomKey).toBe(
-      `inst-1:${payload.data.roomId}:tic-tac-toe:multi`,
+      },
     );
   });
-  it('refuses to create a room in a guild the user is not in', async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async () => false,
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-    const res = makeRes();
 
-    await controller.createRoom(
-      makeReq({
-        accessToken: 'token',
-        instanceId: 'inst-1',
-        guildId: 'guild-1',
-        game: 'tic-tac-toe',
-        queueEnabled: false,
-      }),
-      res as any,
-    );
-
-    expect(res.getStatus()).toBe(403);
-  });
-
-  it("carries the creator's queue choice in the room's token", async () => {
-    const fakeService = {
-      getDiscordUser: async () => ({ id: 'user-1' }),
-      isGuildMember: async () => true,
-    } as unknown as DiscordService;
-    const controller = new ActivityController(fakeService);
-    const res = makeRes();
-
-    await controller.createRoom(
-      makeReq({
-        accessToken: 'token',
+  it('mints a multi-mode room token and room key', async () => {
+    await withServer(async (server) => {
+      const response = await post(server, '/rooms', {
+        accessToken: 'tok_abc',
         instanceId: 'inst-1',
         guildId: 'guild-1',
         game: 'tic-tac-toe',
         queueEnabled: true,
-      }),
-      res as any,
-    );
+      });
+      expect(response.status).toBe(200);
+      const data = createdRoomSchema.parse(
+        (response.body as { data: unknown }).data,
+      );
+      expect(data.roomId).toMatch(/^[A-HJ-NP-Z2-9]{6}$/);
+      expect(verifyWsSessionToken(data.token)).toMatchObject({
+        userId: 'user-1',
+        instanceId: 'inst-1',
+        guildId: 'guild-1',
+        mode: 'multi',
+        game: 'tic-tac-toe',
+        queueEnabled: true,
+      });
+      expect(data.roomKey).toBe(`inst-1:${data.roomId}:tic-tac-toe:multi`);
+    });
+  });
 
-    const payload = res.getPayload() as { data: { token: string } };
-    expect(verifyWsSessionToken(payload.data.token)?.queueEnabled).toBe(true);
+  it('refuses to create a room in a guild the user is not in', async () => {
+    await withServer(
+      async (server) => {
+        const response = await post(server, '/rooms', {
+          accessToken: 'tok_abc',
+          instanceId: 'inst-1',
+          guildId: 'guild-1',
+          game: 'tic-tac-toe',
+          queueEnabled: false,
+        });
+        expect(response.status).toBe(403);
+        expect(response.body).toEqual({
+          message: 'Not a member of the specified guild',
+        });
+      },
+      { discord: { ...defaultDiscord(), isGuildMember: async () => false } },
+    );
+  });
+
+  it('shares the 20 request bucket across different Activity routes', async () => {
+    await withServer(async (server) => {
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        const response = await post(server, '/token', { code: 'auth-code' });
+        expect(response.status).toBe(200);
+      }
+
+      const response = await post(server, '/ws-session', wsBody);
+      expect(response.status).toBe(429);
+      expect(response.body).toEqual({
+        message: 'Too many requests, please try again later.',
+      });
+    });
   });
 });

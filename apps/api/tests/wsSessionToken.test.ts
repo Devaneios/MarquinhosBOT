@@ -3,7 +3,7 @@ import { encryptToken } from 'common/crypto';
 import {
   mintWsSessionToken,
   verifyWsSessionToken,
-} from 'services/activity/wsSessionToken';
+} from 'modules/activity/ws-session-token';
 
 describe('mintWsSessionToken / verifyWsSessionToken', () => {
   it('rejects minting a multi-mode token without a roomId', () => {

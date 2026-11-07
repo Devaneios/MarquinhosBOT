@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { roomKey } from 'services/activity/roomKey';
+import { roomKey } from 'modules/activity/room-key';
 
 describe('roomKey', () => {
   it('scopes multi-mode sessions to instance and game, shared across users', () => {

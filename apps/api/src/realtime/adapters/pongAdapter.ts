@@ -9,8 +9,9 @@ import {
   getPongRuleset,
   isPongRulesetId,
 } from '@marquinhos/domain/games/pong/PongRulesetRegistry';
-import { PongSession } from 'services/activity/pong/PongSession';
+import { PongSession } from 'modules/activity/games/pong/pong-session';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const INPUT_RATE_LIMIT_WINDOW_MS = 1000;
@@ -53,7 +54,7 @@ export const pongAdapter: GameRoomAdapter<PongSession> = {
   supportsBot: true,
   supportsQueue: false,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new PongSession(
       {
         sessionKey: ctx.roomKey,
@@ -72,7 +73,8 @@ export const pongAdapter: GameRoomAdapter<PongSession> = {
         broadcastBinary: (_key, data) =>
           ctx.broadcastBinary('state', new Uint8Array(data)),
       },
-      undefined,
+      dependencies.pongCompetition,
+      dependencies.gamification,
       pongConfig(ctx),
       { onSessionEnded: ctx.onSessionEnded },
     );

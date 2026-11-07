@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from 'bun:test';
-import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
-import { TriviaQuizSession } from 'services/activity/trivia-quiz/TriviaQuizSession';
+import { TriviaQuizSession } from 'modules/activity/games/trivia-quiz/trivia-quiz-session';
+import type { ActivityBroadcaster } from 'modules/activity/shared/activity-broadcaster';
 
 describe('TriviaQuizSession', () => {
   function createMockBroadcaster(): ActivityBroadcaster {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { AGENT_CAPABILITIES } from 'services/aiChat/capabilities';
-import { AGENT_TOOLS } from 'services/aiChat/tools/registry';
+import { AGENT_CAPABILITIES } from 'modules/ai-chat/capabilities';
+import { AGENT_TOOLS } from 'modules/ai-chat/tools/registry';
 
 describe('AGENT_CAPABILITIES', () => {
   it('lists every registered tool, so the block cannot drift from the registry', () => {

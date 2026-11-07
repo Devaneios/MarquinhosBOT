@@ -10,11 +10,22 @@ import { afterEach, beforeAll, describe, expect, it, spyOn } from 'bun:test';
 import { randomUUID } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { AchievementService } from 'modules/gamification/achievement.service';
+import { EvolutiveAchievementsService } from 'modules/gamification/evolutive-achievements.service';
 import { GamificationService } from 'modules/gamification/index';
 import { LevelingService } from 'modules/gamification/leveling.service';
 
 const COMMAND_XP = 5;
 const COMMAND_COOLDOWN_MS = 60_000;
+
+function createGamificationService(): GamificationService {
+  const leveling = new LevelingService(db);
+  return new GamificationService(
+    leveling,
+    new AchievementService(leveling, db),
+    new EvolutiveAchievementsService(db),
+    db,
+  );
+}
 
 // Runs the real addXP against the shared test database; Date.now is pinned so
 // the cooldown window is deterministic.
@@ -49,8 +60,8 @@ describe('generic achievement conditions', () => {
     const userId = `user-${randomUUID()}`;
     const guildId = `guild-${randomUUID()}`;
     const achievementId = `commands-test-${randomUUID()}`;
-    const leveling = new LevelingService();
-    const service = new AchievementService(leveling);
+    const leveling = new LevelingService(db);
+    const service = new AchievementService(leveling, db);
     await leveling.ensureUser(userId, guildId);
     await db
       .update(userStats)
@@ -95,8 +106,8 @@ describe('generic achievement conditions', () => {
 });
 
 describe('achievement award batches', () => {
-  const leveling = new LevelingService();
-  const service = new AchievementService(leveling);
+  const leveling = new LevelingService(db);
+  const service = new AchievementService(leveling, db);
   const guildId = `batch-guild-${randomUUID()}`;
 
   async function define(id: string, rewardXp: number, category = 'wordle') {
@@ -281,7 +292,7 @@ describe('achievement award batches', () => {
 });
 
 describe('XP cooldown logic', () => {
-  const service = new GamificationService();
+  const service = createGamificationService();
   const guildId = () => `guild-${randomUUID()}`;
 
   it('grants XP on the first addXP call', async () => {
@@ -342,7 +353,7 @@ describe('XP cooldown logic', () => {
 });
 
 describe('recordGameResult', () => {
-  const service = new GamificationService();
+  const service = createGamificationService();
 
   it('awards XP once even when the same result is recorded twice at once', async () => {
     const guild = `guild-${randomUUID()}`;

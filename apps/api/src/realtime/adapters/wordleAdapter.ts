@@ -4,14 +4,15 @@ import {
   type WordleServerMessage,
 } from '@marquinhos/contracts/activity/games/wordle';
 import type { Client } from 'colyseus';
-import type { WsSessionPayload } from 'services/activity/wsSessionToken';
-import { WordleService } from 'services/wordle';
-import { logger } from 'utils/logger';
+import { logger } from 'common/logging/logger';
+import type { WsSessionPayload } from 'modules/activity/ws-session-token';
+import { WordleService } from 'modules/wordle/wordle.service';
 import type {
   AdapterContext,
   GameRoomAdapter,
   SeatRole,
 } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const GUESS_RATE_LIMIT_WINDOW_MS = 1000;
@@ -25,8 +26,8 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
   supportsBot: false,
   supportsQueue: false,
 
-  setup(_ctx: AdapterContext) {
-    const service = new WordleService();
+  setup(_ctx: AdapterContext, dependencies: RoomDependencies) {
+    const service = dependencies.wordle;
     return {
       session: service,
       messageHandlers: {

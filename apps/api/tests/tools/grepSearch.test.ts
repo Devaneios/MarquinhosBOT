@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from 'bun:test';
-import { grepSearchTool } from 'services/aiChat/tools/grepSearch';
+import { grepSearchTool } from 'modules/ai-chat/tools/grep-search';
 
 describe('grepSearchTool', () => {
   it('greps recursively against the given path', async () => {

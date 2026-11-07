@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { TicTacToeSession } from 'services/activity/ticTacToe/TicTacToeSession';
+import { TicTacToeSession } from 'modules/activity/games/tic-tac-toe/tic-tac-toe-session';
+import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 import { waitFor } from './helpers/waitFor';
 
 function noopBroadcaster() {
@@ -11,6 +12,7 @@ describe('TicTacToeSession.getWinnerUserId', () => {
     const session = new TicTacToeSession(
       { sessionKey: 'k', instanceId: 'i', guildId: 'g', mode: 'multi' },
       noopBroadcaster(),
+      testRoomDependencies.gamification,
     );
     session.addPlayer('user-x', {});
     session.addPlayer('user-o', {});
@@ -21,6 +23,7 @@ describe('TicTacToeSession.getWinnerUserId', () => {
     const session = new TicTacToeSession(
       { sessionKey: 'k', instanceId: 'i', guildId: 'g', mode: 'multi' },
       noopBroadcaster(),
+      testRoomDependencies.gamification,
     );
     session.addPlayer('user-x', {}); // X
     session.addPlayer('user-o', {}); // O
@@ -38,6 +41,7 @@ describe('TicTacToeSession.substitutePlayer', () => {
     const session = new TicTacToeSession(
       { sessionKey: 'k', instanceId: 'i', guildId: 'g', mode: 'multi' },
       noopBroadcaster(),
+      testRoomDependencies.gamification,
     );
     session.addPlayer('user-x', {}); // X
     session.addPlayer('user-o', {}); // O
@@ -58,6 +62,7 @@ describe('TicTacToeSession.substitutePlayer', () => {
     const session = new TicTacToeSession(
       { sessionKey: 'k', instanceId: 'i', guildId: 'g', mode: 'multi' },
       noopBroadcaster(),
+      testRoomDependencies.gamification,
     );
     session.addPlayer('user-x', {});
     expect(session.substitutePlayer('nobody', 'user-new', {})).toBeNull();
@@ -78,7 +83,7 @@ describe('TicTacToeSession results', () => {
         mode: 'multi',
       },
       noopBroadcaster(),
-      new GamificationService(),
+      testRoomDependencies.gamification,
     );
     session.addPlayer('rematch-x', {});
     session.addPlayer('rematch-o', {});

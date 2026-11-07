@@ -7,9 +7,11 @@ import {
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { eq } from 'drizzle-orm';
-import { recordWordlePresence } from '../src/services/wordle/WordleCommunityService';
-import { WordleGlobalDraftService } from '../src/services/wordle/WordleGlobalDraftService';
-import { WordleGlobalGameplayService } from '../src/services/wordle/WordleGlobalGameplayService';
+import { WordleGlobalGameplayService } from '../src/modules/wordle/services/wordle-global-gameplay.service';
+import {
+  createWordleTestGlobalDraftService,
+  createWordleTestPresence,
+} from './helpers/wordleServices';
 
 let testDb: TestDb;
 const date = '2026-11-01';
@@ -27,28 +29,28 @@ afterAll(async () => {
 describe('global gameplay', () => {
   it('records the first solve only for communities visited before the solve', async () => {
     const timestamp = Math.floor(now / 1000);
-    await recordWordlePresence(
+    await createWordleTestPresence(
       testDb.db,
       'first',
       'community-a',
       date,
       timestamp - 1,
     );
-    await recordWordlePresence(
+    await createWordleTestPresence(
       testDb.db,
       'first',
       'community-b',
       date,
       timestamp + 1,
     );
-    await recordWordlePresence(
+    await createWordleTestPresence(
       testDb.db,
       'second',
       'community-a',
       date,
       timestamp - 1,
     );
-    await recordWordlePresence(
+    await createWordleTestPresence(
       testDb.db,
       'second',
       'community-b',
@@ -75,14 +77,14 @@ describe('global gameplay', () => {
   it('records one first solver when two players solve simultaneously', async () => {
     const timestamp = Math.floor(now / 1000);
     await Promise.all([
-      recordWordlePresence(
+      createWordleTestPresence(
         testDb.db,
         'racer-a',
         'simultaneous',
         date,
         timestamp - 1,
       ),
-      recordWordlePresence(
+      createWordleTestPresence(
         testDb.db,
         'racer-b',
         'simultaneous',
@@ -216,7 +218,7 @@ describe('global gameplay', () => {
       (word) => word,
       () => now,
     );
-    const drafts = new WordleGlobalDraftService(testDb.db, () => now);
+    const drafts = createWordleTestGlobalDraftService(() => now, testDb.db);
     await drafts.write('draft-player', {
       date,
       rowIndex: 0,

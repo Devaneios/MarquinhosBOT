@@ -2,8 +2,9 @@ import {
   revealRequestSchema,
   type MinesweeperServerMessage,
 } from '@marquinhos/contracts/activity/games/minesweeperVersus';
-import { MinesweeperSession } from 'services/activity/minesweeper/MinesweeperSession';
+import { MinesweeperSession } from 'modules/activity/games/minesweeper/minesweeper-session';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const REVEAL_RATE_LIMIT_WINDOW_MS = 1000;
@@ -14,7 +15,7 @@ export const minesweeperAdapter: GameRoomAdapter<MinesweeperSession> = {
   supportsBot: false,
   supportsQueue: false,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new MinesweeperSession(
       {
         sessionKey: ctx.roomKey,
@@ -25,7 +26,7 @@ export const minesweeperAdapter: GameRoomAdapter<MinesweeperSession> = {
         broadcast: (_key, message) =>
           ctx.broadcast(message.type, message.payload),
       },
-      undefined,
+      dependencies.gamification,
       undefined,
       { onSessionEnded: ctx.onSessionEnded },
     );

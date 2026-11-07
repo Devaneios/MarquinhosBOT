@@ -1,64 +1,76 @@
-import { describe, expect, it, mock } from 'bun:test';
-import type { DiscordService } from 'integrations/discord/discord.service';
-import { createActivityDiscordTokenVerifier } from 'middlewares/userAuth';
+import { Controller, Get } from '@nestjs/common';
+import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
+import { ActivityAuth } from 'common/decorators/auth.decorators';
+import { CurrentUser } from 'common/decorators/current-user.decorator';
+import { ActivityAuthGuard } from 'common/guards/activity-auth.guard';
+import { HttpInfrastructureModule } from 'common/http/http-infrastructure.module';
+import {
+  DiscordService,
+  type DiscordUser,
+} from 'integrations/discord/discord.service';
+import {
+  createNestHttpTestApp,
+  type NestHttpTestApp,
+} from './helpers/createNestHttpTestApp';
 
-function makeResponse() {
-  let statusCode: number | undefined;
-  let payload: unknown;
-  const response = {
-    status(code: number) {
-      statusCode = code;
-      return response;
-    },
-    json(data: unknown) {
-      payload = data;
-      return response;
-    },
-    getStatus: () => statusCode,
-    getPayload: () => payload,
-  };
-  return response;
+@Controller('activity-token-probe')
+class ActivityTokenProbeController {
+  @Get()
+  @ActivityAuth()
+  check(@CurrentUser() user: DiscordUser) {
+    return { userId: user.id };
+  }
 }
 
-describe('createActivityDiscordTokenVerifier', () => {
-  it('validates a raw Activity access token and attaches its Discord user', async () => {
-    const getDiscordUser = mock(async (token: string) =>
-      token === 'activity-access-token' ? { id: 'user-1' } : null,
-    );
-    const verify = createActivityDiscordTokenVerifier({
-      getDiscordUser,
-    } as unknown as DiscordService);
-    const request = {
+describe('ActivityAuthGuard', () => {
+  let api: NestHttpTestApp;
+  let result: DiscordUser | null | Error;
+  let lookups: string[];
+
+  beforeEach(async () => {
+    process.env.NODE_ENV = 'test';
+    result = { id: 'user-1' };
+    lookups = [];
+    api = await createNestHttpTestApp({
+      imports: [HttpInfrastructureModule],
+      controllers: [ActivityTokenProbeController],
+      providers: [
+        ActivityAuthGuard,
+        {
+          provide: DiscordService,
+          useValue: {
+            getDiscordUser: async (token: string) => {
+              lookups.push(token);
+              if (result instanceof Error) throw result;
+              return result;
+            },
+          },
+        },
+      ],
+    });
+  });
+
+  afterEach(async () => {
+    await api?.close();
+  });
+
+  it('validates the raw Activity token and attaches its Discord user', async () => {
+    const response = await fetch(`${api.origin}/api/activity-token-probe`, {
       headers: { authorization: 'Bearer activity-access-token' },
-    };
-    const response = makeResponse();
-    const next = mock(() => {});
+    });
 
-    await verify(request as never, response as never, next);
-
-    expect(getDiscordUser).toHaveBeenCalledWith('activity-access-token');
-    expect(request).toEqual(
-      expect.objectContaining({
-        user: expect.objectContaining({ id: 'user-1' }),
-      }),
-    );
-    expect(next).toHaveBeenCalledTimes(1);
-    expect(response.getStatus()).toBeUndefined();
+    expect(lookups).toEqual(['activity-access-token']);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ userId: 'user-1' });
   });
 
   it('rejects an invalid raw Activity access token', async () => {
-    const verify = createActivityDiscordTokenVerifier({
-      getDiscordUser: async () => null,
-    } as unknown as DiscordService);
-    const response = makeResponse();
+    result = null;
+    const response = await fetch(`${api.origin}/api/activity-token-probe`, {
+      headers: { authorization: 'Bearer invalid-token' },
+    });
 
-    await verify(
-      { headers: { authorization: 'Bearer invalid-token' } } as never,
-      response as never,
-      mock(() => {}),
-    );
-
-    expect(response.getStatus()).toBe(401);
-    expect(response.getPayload()).toEqual({ message: 'Unauthorized' });
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ message: 'Unauthorized' });
   });
 });

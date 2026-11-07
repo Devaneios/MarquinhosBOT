@@ -5,9 +5,9 @@ import {
   type ArgumentsHost,
   type ExceptionFilter,
 } from '@nestjs/common';
+import { logger } from 'common/logging/logger';
 import { AppConfig } from 'config/app.config';
 import type { Request, Response } from 'express';
-import { logger } from 'utils/logger';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

@@ -1,6 +1,7 @@
 import type { BingoSpeedServerMessage } from '@marquinhos/contracts/activity/games/bingoSpeed';
-import { BingoSpeedSession } from 'services/activity/bingoSpeed/BingoSpeedSession';
+import { BingoSpeedSession } from 'modules/activity/games/bingo-speed/bingo-speed-session';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const CLAIM_RATE_LIMIT_WINDOW_MS = 1000;
@@ -14,7 +15,7 @@ export const bingoSpeedAdapter: GameRoomAdapter<BingoSpeedSession> = {
   supportsBot: false,
   supportsQueue: false,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new BingoSpeedSession(
       {
         sessionKey: ctx.roomKey,
@@ -26,7 +27,7 @@ export const bingoSpeedAdapter: GameRoomAdapter<BingoSpeedSession> = {
         broadcast: (_key, message) =>
           ctx.broadcast(message.type, message.payload),
       },
-      undefined,
+      dependencies.gamification,
       { onSessionEnded: ctx.onSessionEnded },
     );
 

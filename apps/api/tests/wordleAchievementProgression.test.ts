@@ -16,7 +16,6 @@ import { computeFeedback } from '@marquinhos/domain/games/wordle/feedback';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
-import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
 import {
   achievementXp,
   earnedAchievements,
@@ -24,8 +23,9 @@ import {
   installWordleAchievementCatalog,
   seedAchievementDay,
 } from './helpers/wordleAchievementCatalog';
+import { createWordleTestAchievementService } from './helpers/wordleServices';
 
-const service = new WordleAchievementService();
+const service = createWordleTestAchievementService();
 const award = (userId: string, guildId: string) =>
   db.transaction((tx) => service.checkAndAward(userId, guildId, tx));
 let restoreCatalog: (() => Promise<void>) | undefined;

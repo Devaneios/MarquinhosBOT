@@ -8,8 +8,8 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { OnRouteError } from 'common/decorators/on-route-error.decorator';
+import { logger } from 'common/logging/logger';
 import { catchError, type Observable } from 'rxjs';
-import { logger } from 'utils/logger';
 
 @Injectable()
 export class RouteErrorInterceptor implements NestInterceptor {

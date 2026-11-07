@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { isPathAllowed } from 'services/aiChat/tools/pathValidation';
+import { isPathAllowed } from 'modules/ai-chat/tools/path-validation';
 
 describe('isPathAllowed', () => {
   it('allows paths under /repo', () => {

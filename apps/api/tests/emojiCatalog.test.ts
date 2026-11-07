@@ -4,7 +4,7 @@ import {
   DEFAULT_FALLBACK_REACTABLE,
   resolveReactable,
   STANDARD_EMOJIS,
-} from 'services/aiChat/emojiCatalog';
+} from 'modules/emoji-reaction/emoji-catalog';
 
 describe('emojiCatalog', () => {
   it('loads the expected number of standard emojis', () => {

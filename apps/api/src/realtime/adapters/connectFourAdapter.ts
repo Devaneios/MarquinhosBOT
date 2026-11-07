@@ -2,8 +2,9 @@ import {
   dropPayloadSchema,
   type ConnectFourServerMessage,
 } from '@marquinhos/contracts/activity/games/connectFour';
-import { ConnectFourSession } from 'services/activity/connectFour/ConnectFourSession';
+import { ConnectFourSession } from 'modules/activity/games/connect-four/connect-four-session';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
@@ -14,7 +15,7 @@ export const connectFourAdapter: GameRoomAdapter<ConnectFourSession> = {
   supportsBot: true,
   supportsQueue: true,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new ConnectFourSession(
       {
         sessionKey: ctx.roomKey,
@@ -26,7 +27,7 @@ export const connectFourAdapter: GameRoomAdapter<ConnectFourSession> = {
         broadcast: (_key, message) =>
           ctx.broadcast(message.type, message.payload),
       },
-      undefined,
+      dependencies.gamification,
       { onSessionEnded: ctx.onSessionEnded },
     );
 

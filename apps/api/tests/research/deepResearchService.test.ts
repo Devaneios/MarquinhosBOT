@@ -1,22 +1,22 @@
 import { describe, expect, it, mock } from 'bun:test';
-import type { ResponsesClient } from 'services/aiChat/llm/ResponsesClient';
+import type { ResponsesClient } from 'modules/ai-chat/llm/responses.client';
 import {
   DeepResearchService,
   MAX_FRONTIER_DEPTH,
   MIN_RELEVANT_SOURCES,
   relaxQuery,
   sanitizeQuery,
-} from 'services/aiChat/research/DeepResearchService';
+} from 'modules/ai-chat/research/deep-research.service';
 import {
   FetchPageError,
   type FetchedPage,
   type PageFetcher,
-} from 'services/aiChat/web/fetchPage';
+} from 'modules/ai-chat/web/fetch-page';
 import {
   SearxngError,
   type SearchHit,
   type SearxngClient,
-} from 'services/aiChat/web/SearxngClient';
+} from 'modules/ai-chat/web/searxng.client';
 
 function hit(url: string, title = url): SearchHit {
   return { url, title, snippet: '', engines: ['google'], score: 1 };

@@ -1,25 +1,32 @@
-import { expect, it } from 'bun:test';
-import { WordleAlbumController } from '../src/controllers/wordleAlbum.controller';
+import { afterAll, expect, it } from 'bun:test';
+import { WordleAlbumController } from '../src/modules/wordle/controllers/wordle-album.controller';
+import { WordleAlbumService } from '../src/modules/wordle/services/wordle-album.service';
+import {
+  requestController,
+  startNestControllerServer,
+} from './helpers/nestControllerServer';
+
+const calls: string[] = [];
+const serverPromise = startNestControllerServer({
+  controllers: [WordleAlbumController],
+  providers: [
+    {
+      provide: WordleAlbumService,
+      useValue: {
+        pages: async (guild: string) => {
+          calls.push(guild);
+          return [];
+        },
+      },
+    },
+  ],
+});
+const server = await serverPromise;
+afterAll(() => server.close());
 
 it('returns the album of the requested community', async () => {
-  const calls: string[] = [];
-  const controller = new WordleAlbumController({
-    pages: async (guild) => {
-      calls.push(guild);
-      return [];
-    },
-  });
-  const res = {
-    body: undefined as unknown,
-    status() {
-      return this;
-    },
-    json(body: unknown) {
-      this.body = body;
-      return this;
-    },
-  };
-  await controller.get('community', res);
+  const response = await requestController(server, '/wordle/album/community');
   expect(calls).toEqual(['community']);
-  expect(res.body).toEqual({ data: [] });
+  expect(response.status).toBe(200);
+  expect(response.body).toEqual({ data: [] });
 });

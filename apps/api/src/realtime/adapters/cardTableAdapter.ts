@@ -3,11 +3,11 @@ import {
   type CardsServerMessage,
 } from '@marquinhos/contracts/activity/games/cards';
 import type { WireMessage } from '@marquinhos/contracts/activity/protocol';
-import { GamificationService } from 'modules/gamification/gamification.service';
-import { cardGameRegistry } from 'services/activity/cards/cardGameRegistry';
-import { CardTableSession } from 'services/activity/cards/CardTableSession';
-import type { PerClientBroadcaster } from 'services/activity/cards/PerClientBroadcaster';
+import { cardGameRegistry } from 'modules/activity/games/cards/card-game-registry';
+import { CardTableSession } from 'modules/activity/games/cards/card-table-session';
+import type { PerClientBroadcaster } from 'modules/activity/games/cards/per-client-broadcaster';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
@@ -24,7 +24,7 @@ export const cardTableAdapter: GameRoomAdapter<CardTableSession<unknown>> = {
   supportsBot: false,
   supportsQueue: false,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     if (!ctx.ruleset) throw new Error('A cards room requires a ruleset');
     const definition = cardGameRegistry.get(ctx.ruleset);
     if (!definition) throw new Error(`Unknown card ruleset: ${ctx.ruleset}`);
@@ -44,7 +44,7 @@ export const cardTableAdapter: GameRoomAdapter<CardTableSession<unknown>> = {
       },
       broadcaster,
       definition,
-      new GamificationService(),
+      dependencies.gamification,
       { onSessionEnded: ctx.onSessionEnded, setupOptions: ctx.options },
     );
 

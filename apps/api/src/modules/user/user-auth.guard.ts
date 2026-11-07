@@ -6,13 +6,13 @@ import {
   type ExecutionContext,
 } from '@nestjs/common';
 import { TokenCipherService } from 'common/crypto';
+import { logger } from 'common/logging/logger';
 import type { Request } from 'express';
 import {
   DiscordService,
   type DiscordUser,
 } from 'integrations/discord/discord.service';
 import { UserService } from 'modules/user/user.service';
-import { logger } from 'utils/logger';
 
 type AuthenticatedRequest = Request & { user?: DiscordUser };
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
+import type { WsSessionPayload } from 'modules/activity/ws-session-token';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
-import type { WsSessionPayload } from 'services/activity/wsSessionToken';
 
 const payload: WsSessionPayload = {
   userId: 'user-1',

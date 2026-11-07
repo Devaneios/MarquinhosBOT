@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
-import { KnowledgeBaseClient } from 'services/aiChat/KnowledgeBaseClient';
+import { KnowledgeBaseClient } from 'modules/ai-chat/knowledge-base.client';
 
 const ORIGINAL_ENV = { ...process.env };
 
@@ -28,7 +28,10 @@ describe('KnowledgeBaseClient.search', () => {
         chunks: [{ canal: 'kb-curada', autores: [], texto: 'trecho' }],
       }),
     );
-    const client = new KnowledgeBaseClient(fetchFn as unknown as typeof fetch);
+    const client = new KnowledgeBaseClient(fetchFn as unknown as typeof fetch, {
+      knowledgeBaseUrl: process.env.KNOWLEDGE_BASE_URL,
+      knowledgeBaseApiKey: process.env.KNOWLEDGE_BASE_API_KEY,
+    });
 
     const result = await client.search('quem é o fazendeiro?');
 
@@ -43,7 +46,10 @@ describe('KnowledgeBaseClient.search', () => {
     const fetchFn = mock(async () =>
       jsonResponse({ found: false, context: '', chunks: [] }),
     );
-    const client = new KnowledgeBaseClient(fetchFn as unknown as typeof fetch);
+    const client = new KnowledgeBaseClient(fetchFn as unknown as typeof fetch, {
+      knowledgeBaseUrl: process.env.KNOWLEDGE_BASE_URL,
+      knowledgeBaseApiKey: process.env.KNOWLEDGE_BASE_API_KEY,
+    });
 
     await client.search('quem é o zegabr?');
 
@@ -63,7 +69,10 @@ describe('KnowledgeBaseClient.search', () => {
   it('returns not-found without calling fetch when KNOWLEDGE_BASE_URL is unset', async () => {
     delete process.env.KNOWLEDGE_BASE_URL;
     const fetchFn = mock(async () => jsonResponse({}));
-    const client = new KnowledgeBaseClient(fetchFn as unknown as typeof fetch);
+    const client = new KnowledgeBaseClient(fetchFn as unknown as typeof fetch, {
+      knowledgeBaseUrl: process.env.KNOWLEDGE_BASE_URL,
+      knowledgeBaseApiKey: process.env.KNOWLEDGE_BASE_API_KEY,
+    });
 
     const result = await client.search('oi');
 
@@ -73,7 +82,10 @@ describe('KnowledgeBaseClient.search', () => {
 
   it('returns not-found when the response is not ok', async () => {
     const fetchFn = mock(async () => jsonResponse({}, false));
-    const client = new KnowledgeBaseClient(fetchFn as unknown as typeof fetch);
+    const client = new KnowledgeBaseClient(fetchFn as unknown as typeof fetch, {
+      knowledgeBaseUrl: process.env.KNOWLEDGE_BASE_URL,
+      knowledgeBaseApiKey: process.env.KNOWLEDGE_BASE_API_KEY,
+    });
 
     const result = await client.search('oi');
 
@@ -84,7 +96,10 @@ describe('KnowledgeBaseClient.search', () => {
     const fetchFn = mock(async () => {
       throw new Error('network down');
     });
-    const client = new KnowledgeBaseClient(fetchFn as unknown as typeof fetch);
+    const client = new KnowledgeBaseClient(fetchFn as unknown as typeof fetch, {
+      knowledgeBaseUrl: process.env.KNOWLEDGE_BASE_URL,
+      knowledgeBaseApiKey: process.env.KNOWLEDGE_BASE_API_KEY,
+    });
 
     const result = await client.search('oi');
 
@@ -93,7 +108,10 @@ describe('KnowledgeBaseClient.search', () => {
 
   it('returns not-found when the response body is malformed', async () => {
     const fetchFn = mock(async () => jsonResponse({ garbage: true }));
-    const client = new KnowledgeBaseClient(fetchFn as unknown as typeof fetch);
+    const client = new KnowledgeBaseClient(fetchFn as unknown as typeof fetch, {
+      knowledgeBaseUrl: process.env.KNOWLEDGE_BASE_URL,
+      knowledgeBaseApiKey: process.env.KNOWLEDGE_BASE_API_KEY,
+    });
 
     const result = await client.search('oi');
 

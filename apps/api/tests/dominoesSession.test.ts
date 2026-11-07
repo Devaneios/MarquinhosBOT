@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { DominoesSession } from 'services/activity/dominoesBlock/DominoesSession';
+import { DominoesSession } from 'modules/activity/games/dominoes-block/dominoes-session';
 
 function identity() {
   return {

@@ -1,4 +1,4 @@
-import { db, type Db, type DbExecutor } from '@marquinhos/database/client';
+import type { Db, DbExecutor } from '@marquinhos/database/client';
 import { userLevels, userStats, xpConfig } from '@marquinhos/database/schema';
 import {
   DEFAULT_XP_CONFIG,
@@ -14,7 +14,7 @@ const byUser = (userId: string, guildId: string) =>
 
 @Injectable()
 export class LevelingService {
-  constructor(@Inject(DB) private readonly database: Db = db) {}
+  constructor(@Inject(DB) private readonly database: Db) {}
 
   async initializeDefaults(): Promise<void> {
     const [row] = await this.database.select({ count: count() }).from(xpConfig);

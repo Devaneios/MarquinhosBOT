@@ -3,8 +3,9 @@ import {
   type CheckersServerMessage,
 } from '@marquinhos/contracts/activity/games/checkers';
 import { ACTION_REJECTED } from '@marquinhos/contracts/activity/protocol';
-import { CheckersSession } from 'services/activity/checkers/CheckersSession';
+import { CheckersSession } from 'modules/activity/games/checkers/checkers-session';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
@@ -15,7 +16,7 @@ export const checkersAdapter: GameRoomAdapter<CheckersSession> = {
   supportsBot: true,
   supportsQueue: true,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new CheckersSession(
       {
         sessionKey: ctx.roomKey,
@@ -27,7 +28,7 @@ export const checkersAdapter: GameRoomAdapter<CheckersSession> = {
         broadcast: (_key, message) =>
           ctx.broadcast(message.type, message.payload),
       },
-      undefined,
+      dependencies.gamification,
       { onSessionEnded: ctx.onSessionEnded },
     );
 

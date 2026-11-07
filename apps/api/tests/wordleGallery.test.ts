@@ -6,8 +6,8 @@ import {
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, expect, it } from 'bun:test';
-import { WordleGalleryService } from '../src/services/wordle/WordleGalleryService';
-import { WordleNotificationService } from '../src/services/wordle/WordleNotificationService';
+import { WordleNotificationService } from '../src/modules/wordle/services/wordle-notification.service';
+import { createWordleTestGalleryService } from './helpers/wordleServices';
 
 let testDb: TestDb;
 const now = Date.parse('2026-11-02T03:00:00Z');
@@ -19,7 +19,7 @@ afterAll(async () => {
 });
 
 it('shows one verified closed-day occurrence per person and never publishes an empty gallery', async () => {
-  const service = new WordleGalleryService(testDb.db, () => now);
+  const service = createWordleTestGalleryService(() => now, testDb.db);
   expect((await service.previousWeek('empty')).entries).toEqual([]);
   const sourceAt = Date.parse('2026-11-01T15:00:00Z');
   const evidence = {

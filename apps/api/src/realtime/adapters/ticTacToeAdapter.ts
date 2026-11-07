@@ -3,8 +3,9 @@ import {
   type TicTacToeServerMessage,
 } from '@marquinhos/contracts/activity/games/ticTacToe';
 import { ACTION_REJECTED } from '@marquinhos/contracts/activity/protocol';
-import { TicTacToeSession } from 'services/activity/ticTacToe/TicTacToeSession';
+import { TicTacToeSession } from 'modules/activity/games/tic-tac-toe/tic-tac-toe-session';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { broadcastMessage, sendMessage } from '../sendMessage';
 
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
@@ -15,7 +16,7 @@ export const ticTacToeAdapter: GameRoomAdapter<TicTacToeSession> = {
   supportsBot: true,
   supportsQueue: true,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new TicTacToeSession(
       {
         sessionKey: ctx.roomKey,
@@ -27,7 +28,7 @@ export const ticTacToeAdapter: GameRoomAdapter<TicTacToeSession> = {
         broadcast: (_key, message) =>
           ctx.broadcast(message.type, message.payload),
       },
-      undefined,
+      dependencies.gamification,
       { onSessionEnded: ctx.onSessionEnded },
     );
 

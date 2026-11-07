@@ -1,44 +1,6 @@
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
-import type { Router } from 'express';
 import type { Server } from 'node:http';
-
-export async function getLegacyRouteMounts() {
-  const [health, activity, privacyPolicy, aiChat, emojiReaction, wordle] =
-    await Promise.all([
-      import('routes/health.route'),
-      import('routes/activity.route'),
-      import('routes/privacyPolicy.route'),
-      import('routes/aiChat.route'),
-      import('routes/emojiReaction.route'),
-      import('routes/wordle.route'),
-    ]);
-
-  return [
-    { mount: '/api/health', router: health.default, contractModule: 'health' },
-    {
-      mount: '/api/activities',
-      router: activity.default,
-      contractModule: 'activity',
-    },
-    {
-      mount: '/api/privacy-policy',
-      router: privacyPolicy.default,
-      contractModule: 'privacyPolicy',
-    },
-    { mount: '/api/ai-chat', router: aiChat.default, contractModule: 'aiChat' },
-    {
-      mount: '/api/emoji-reaction',
-      router: emojiReaction.default,
-      contractModule: 'emojiReaction',
-    },
-    { mount: '/api/wordle', router: wordle.default, contractModule: 'wordle' },
-  ] satisfies {
-    mount: string;
-    router: Router;
-    contractModule: string;
-  }[];
-}
 
 export interface StartApiOptions {
   corsOrigins?: string[];
@@ -64,43 +26,52 @@ export async function startApi(
     { NEST_APP_OPTIONS },
     { HttpInfrastructureModule },
     { AuthModule },
+    { AiChatModule },
+    { EmojiReactionModule },
     { HealthModule },
     { PrivacyPolicyModule },
     { GamificationModule },
     { MazeModule },
     { ScrobbleModule },
     { UserModule },
-    { registerLegacyRoutes },
+    { WordleModule },
+    { ActivityModule },
   ] = await Promise.all([
     import('common/http/configure-http'),
     import('common/http/nest-app.options'),
     import('common/http/http-infrastructure.module'),
     import('modules/auth/auth.module'),
+    import('modules/ai-chat/ai-chat.module'),
+    import('modules/emoji-reaction/emoji-reaction.module'),
     import('modules/health/health.module'),
     import('modules/privacy-policy/privacy-policy.module'),
     import('modules/gamification/gamification.module'),
     import('modules/maze/maze.module'),
     import('modules/scrobble/scrobble.module'),
     import('modules/user/user.module'),
-    import('../../src/legacyRoutes'),
+    import('modules/wordle/wordle.module'),
+    import('modules/activity/activity.module'),
   ]);
 
   const moduleRef = await Test.createTestingModule({
     imports: [
       HttpInfrastructureModule,
       AuthModule,
+      AiChatModule,
+      EmojiReactionModule,
       HealthModule,
       PrivacyPolicyModule,
       GamificationModule,
       MazeModule,
       ScrobbleModule,
       UserModule,
+      ActivityModule,
+      WordleModule,
     ],
   }).compile();
   const app =
     moduleRef.createNestApplication<NestExpressApplication>(NEST_APP_OPTIONS);
   configureHttp(app, { silent: options.silent });
-  registerLegacyRoutes(app);
   await app.init();
   const http = await app.listen(0, '127.0.0.1');
   const address = http.address();

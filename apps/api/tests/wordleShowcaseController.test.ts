@@ -1,64 +1,72 @@
-import { describe, expect, it } from 'bun:test';
-import { WordleShowcaseController } from '../src/controllers/wordleShowcase.controller';
-import { InvalidWordleShowcase } from '../src/services/wordle/WordleShowcaseService';
+import { afterAll, describe, expect, it } from 'bun:test';
+import { WordleShowcaseController } from '../src/modules/wordle/controllers/wordle-showcase.controller';
+import {
+  InvalidWordleShowcase,
+  WordleShowcaseService,
+} from '../src/modules/wordle/services/wordle-showcase.service';
+import {
+  requestController,
+  startNestControllerServer,
+} from './helpers/nestControllerServer';
 
-function response() {
-  return {
-    code: 200,
-    body: undefined as unknown,
-    status(code: number) {
-      this.code = code;
-      return this;
+const calls: unknown[] = [];
+const server = await startNestControllerServer({
+  controllers: [WordleShowcaseController],
+  providers: [
+    {
+      provide: WordleShowcaseService,
+      useValue: {
+        get: async (userId: string) => {
+          calls.push(userId);
+          return ['one'];
+        },
+        replace: async (userId: string, ids: string[]) => {
+          calls.push([userId, ids]);
+          if (ids.includes('unowned')) {
+            throw new InvalidWordleShowcase('Invalid showcase');
+          }
+        },
+      },
     },
-    json(body: unknown) {
-      this.body = body;
-      return this;
-    },
-  };
-}
+  ],
+});
+afterAll(() => server.close());
 
 describe('Wordle showcase controller', () => {
   it('uses the authenticated identity for reading and writing', async () => {
-    const calls: unknown[] = [];
-    const controller = new WordleShowcaseController({
-      get: async (userId) => {
-        calls.push(userId);
-        return ['one'];
-      },
-      replace: async (userId, ids) => {
-        calls.push([userId, ids]);
-      },
+    const read = await requestController(server, '/wordle/showcase');
+    const update = await requestController(server, '/wordle/showcase', {
+      method: 'PUT',
+      body: { achievements: ['one'] },
     });
-    const res = response();
-    await controller.get({ user: { id: 'owner' } }, res);
-    expect(res.body).toEqual({ data: ['one'] });
-    await controller.update(
-      { user: { id: 'owner' }, body: { achievements: ['one'] } },
-      res,
-    );
     expect(calls).toEqual(['owner', ['owner', ['one']]]);
+    expect(read.status).toBe(200);
+    expect(read.body).toEqual({ data: ['one'] });
+    expect(update.status).toBe(200);
+    expect(update.body).toEqual({ data: ['one'] });
   });
+
   it('rejects unauthenticated and invalid edits', async () => {
-    const controller = new WordleShowcaseController({
-      get: async () => [],
-      replace: async () => {
-        throw new InvalidWordleShowcase();
-      },
+    const missing = await requestController(server, '/wordle/showcase', {
+      method: 'PUT',
+      body: { achievements: [] },
+      token: '',
     });
-    const missing = response();
-    await controller.update({ body: { achievements: [] } }, missing);
-    expect(missing.code).toBe(401);
-    const invalid = response();
-    await controller.update(
-      { user: { id: 'owner' }, body: { achievements: ['unowned'] } },
-      invalid,
-    );
-    expect(invalid.code).toBe(400);
-    const forged = response();
-    await controller.update(
-      { user: { id: 'owner' }, body: { achievements: [], userId: 'other' } },
-      forged,
-    );
-    expect(forged.code).toBe(400);
+    expect(missing.status).toBe(401);
+    expect(missing.body).toEqual({ message: 'Token not provided' });
+
+    const invalid = await requestController(server, '/wordle/showcase', {
+      method: 'PUT',
+      body: { achievements: ['unowned'] },
+    });
+    expect(invalid.status).toBe(400);
+    expect(invalid.body).toEqual({ message: 'Invalid showcase' });
+
+    const forged = await requestController(server, '/wordle/showcase', {
+      method: 'PUT',
+      body: { achievements: [], userId: 'other' },
+    });
+    expect(forged.status).toBe(400);
+    expect(forged.body).toEqual({ message: 'Invalid showcase' });
   });
 });

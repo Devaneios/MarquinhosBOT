@@ -1,13 +1,9 @@
-import { beforeAll, describe, expect, it } from 'bun:test';
-
-let WordleService: typeof import('../src/services/wordle').WordleService;
-
-beforeAll(async () => {
-  ({ WordleService } = await import('../src/services/wordle'));
-});
+import { describe, expect, it } from 'bun:test';
+import type { WordleService } from '../src/modules/wordle/wordle.service';
+import { createWordleTestService } from './helpers/wordleServices';
 
 async function solveDaily(
-  service: InstanceType<typeof WordleService>,
+  service: WordleService,
   userId: string,
   guildId: string,
 ) {
@@ -19,7 +15,7 @@ async function solveDaily(
 
 describe('WordleService announcement tracking', () => {
   it('returns a freshly solved session from getUnannouncedWins', async () => {
-    const service = new WordleService();
+    const service = createWordleTestService();
     const guildId = `guild-${crypto.randomUUID()}`;
     const userId = 'user-a';
 
@@ -30,7 +26,7 @@ describe('WordleService announcement tracking', () => {
   });
 
   it('excludes a session once markAnnounced has been called for it', async () => {
-    const service = new WordleService();
+    const service = createWordleTestService();
     const guildId = `guild-${crypto.randomUUID()}`;
     const userId = 'user-b';
 
@@ -41,7 +37,7 @@ describe('WordleService announcement tracking', () => {
   });
 
   it('returns true for the first claim and false for a repeat claim of the same win', async () => {
-    const service = new WordleService();
+    const service = createWordleTestService();
     const guildId = `guild-${crypto.randomUUID()}`;
     const userId = 'user-e';
 
@@ -52,21 +48,21 @@ describe('WordleService announcement tracking', () => {
   });
 
   it('returns false when claiming a win that was never solved', async () => {
-    const service = new WordleService();
+    const service = createWordleTestService();
     const guildId = `guild-${crypto.randomUUID()}`;
 
     expect(await service.markAnnounced('user-f', guildId)).toBe(false);
   });
 
   it('returns nothing for a guild with no solved sessions today', async () => {
-    const service = new WordleService();
+    const service = createWordleTestService();
     const guildId = `guild-${crypto.randomUUID()}`;
 
     expect(await service.getUnannouncedWins(guildId)).toEqual([]);
   });
 
   it('scopes unannounced wins to the given guild', async () => {
-    const service = new WordleService();
+    const service = createWordleTestService();
     const guildA = `guild-${crypto.randomUUID()}`;
     const guildB = `guild-${crypto.randomUUID()}`;
 

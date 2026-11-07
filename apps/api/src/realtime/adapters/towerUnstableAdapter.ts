@@ -3,8 +3,9 @@ import {
   type TowerServerMessage,
 } from '@marquinhos/contracts/activity/games/towerUnstable';
 import { ACTION_REJECTED } from '@marquinhos/contracts/activity/protocol';
-import { TowerSession } from 'services/activity/towerUnstable/TowerSession';
+import { TowerSession } from 'modules/activity/games/tower-unstable/tower-session';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { broadcastMessage, sendMessage } from '../sendMessage';
 
 const PULL_RATE_LIMIT_WINDOW_MS = 1000;
@@ -29,7 +30,7 @@ export const towerUnstableAdapter: GameRoomAdapter<TowerSession> = {
   supportsBot: true,
   supportsQueue: false,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new TowerSession(
       {
         sessionKey: ctx.roomKey,
@@ -41,7 +42,7 @@ export const towerUnstableAdapter: GameRoomAdapter<TowerSession> = {
         broadcast: (_key, message) =>
           ctx.broadcast(message.type, message.payload),
       },
-      undefined,
+      dependencies.gamification,
       { onSessionEnded: ctx.onSessionEnded },
     );
 

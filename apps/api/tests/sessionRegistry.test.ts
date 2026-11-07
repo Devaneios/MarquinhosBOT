@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { SessionRegistry } from 'services/activity/shared/SessionRegistry';
+import { SessionRegistry } from 'modules/activity/shared/session-registry';
 
 describe('SessionRegistry', () => {
   it('creates a session via the factory on first access', () => {

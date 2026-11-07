@@ -1,4 +1,4 @@
-import { db, type Db, type DbExecutor } from '@marquinhos/database/client';
+import type { Db, DbExecutor } from '@marquinhos/database/client';
 import {
   gameResults,
   userGameResults,
@@ -50,12 +50,10 @@ async function xpAmount(
 @Injectable()
 export class GamificationService {
   constructor(
-    private readonly levelingService: LevelingService = new LevelingService(),
-    private readonly achievementService: AchievementService = new AchievementService(
-      levelingService,
-    ),
-    private readonly evolutiveService: EvolutiveAchievementsService = new EvolutiveAchievementsService(),
-    @Inject(DB) private readonly database: Db = db,
+    private readonly levelingService: LevelingService,
+    private readonly achievementService: AchievementService,
+    private readonly evolutiveService: EvolutiveAchievementsService,
+    @Inject(DB) private readonly database: Db,
   ) {}
 
   async initializeDefaults(): Promise<void> {

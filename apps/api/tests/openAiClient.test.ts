@@ -1,8 +1,8 @@
 import { describe, expect, it, mock } from 'bun:test';
+import { OpenAiClient } from 'modules/ai-chat/openai.client';
+import { MAIN_CLASSIFY_SYSTEM_PROMPT } from 'modules/ai-chat/prompts';
+import type { TraceLlmEvent } from 'modules/ai-chat/trace/ai-trace-recorder.service';
 import type OpenAI from 'openai';
-import type { TraceLlmEvent } from 'services/aiChat/AiTraceRecorder';
-import { OpenAiClient } from 'services/aiChat/OpenAiClient';
-import { MAIN_CLASSIFY_SYSTEM_PROMPT } from 'services/aiChat/prompts';
 import { z } from 'zod';
 
 function fakeSdkClient(overrides: {

@@ -1,19 +1,19 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
-import type { ThreadAgentLoop } from 'services/aiChat/agent/ThreadAgentLoop';
-import type { AiTraceRecorder } from 'services/aiChat/AiTraceRecorder';
-import type { DailyQuotaService } from 'services/aiChat/DailyQuotaService';
-import { GuardrailService } from 'services/aiChat/GuardrailService';
+import type { ThreadAgentLoop } from 'modules/ai-chat/agent/thread-agent-loop';
+import type { DailyQuotaService } from 'modules/ai-chat/daily-quota.service';
+import { GuardrailService } from 'modules/ai-chat/guardrail.service';
 import type {
   ConversationItem,
   ResponsesClient,
-} from 'services/aiChat/llm/ResponsesClient';
-import type { RateLimitService } from 'services/aiChat/RateLimitService';
+} from 'modules/ai-chat/llm/responses.client';
+import type { RateLimitService } from 'modules/ai-chat/rate-limit.service';
 import {
   SandboxCapacityError,
   type SandboxManager,
-} from 'services/aiChat/sandbox/SandboxManager';
-import { AiThreadService } from 'services/aiChat/thread/AiThreadService';
-import { ThreadSessionStore } from 'services/aiChat/thread/ThreadSessionStore';
+} from 'modules/ai-chat/sandbox/sandbox-manager.service';
+import { AiThreadService } from 'modules/ai-chat/thread/ai-thread.service';
+import { ThreadSessionStore } from 'modules/ai-chat/thread/thread-session.store';
+import type { AiTraceRecorder } from 'modules/ai-chat/trace/ai-trace-recorder.service';
 import { useTestDb } from './helpers/testDb';
 
 const testDb = useTestDb();

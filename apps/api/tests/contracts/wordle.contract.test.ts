@@ -8,29 +8,26 @@ import {
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
-import { WordleNotificationService } from '../../src/services/wordle/WordleNotificationService';
-import { startContractServer } from '../helpers/contractServer';
+import { WordleNotificationService } from '../../src/modules/wordle/services/wordle-notification.service';
+import { WordleModule } from '../../src/modules/wordle/wordle.module';
+import { startNestContractServer } from '../helpers/contractServer';
+import { createWordleTestWordBankService } from '../helpers/wordleServices';
 
 const { callContract } = await import('@marquinhos/api-client/bot');
 const wordle = await import('@marquinhos/contracts/http/routes/wordle');
 
 const guildId = `contract-${randomUUID()}`;
 
-let server: Awaited<ReturnType<typeof startContractServer>>;
+let server: Awaited<ReturnType<typeof startNestContractServer>>;
 let validGuess = '';
 
 beforeAll(async () => {
-  const { default: wordleRouter } =
-    await import('../../src/routes/wordle.route');
-  const { getValidationSet } = await import('../../src/services/wordle');
-  server = await startContractServer((app) => {
-    app.use('/api/wordle', wordleRouter);
-  });
+  server = await startNestContractServer({ imports: [WordleModule] });
   const stats = await callContract(server.http, wordle.getStats, {
     params: { guildId },
   });
   validGuess =
-    [...getValidationSet()].find(
+    [...createWordleTestWordBankService().getValidationSet()].find(
       (word) => word.length === stats.data.wordLength,
     ) ?? '';
 });

@@ -1,12 +1,24 @@
-import { createDb } from '@marquinhos/database/client';
+import { createDb, type Db } from '@marquinhos/database/client';
 import { aiTraceEvents, aiTraces } from '@marquinhos/database/schema';
 import { afterEach, describe, expect, it, spyOn } from 'bun:test';
+import { logger } from 'common/logging/logger';
 import { asc } from 'drizzle-orm';
-import { AiTraceRecorder, NOOP_TRACE } from 'services/aiChat/AiTraceRecorder';
-import { logger } from 'utils/logger';
+import {
+  AiTraceRecorder,
+  NOOP_TRACE,
+} from 'modules/ai-chat/trace/ai-trace-recorder.service';
 import { useTestDb } from './helpers/testDb';
 
 const testDb = useTestDb();
+
+function createRecorder(db: Db = testDb.current.db) {
+  const config = {
+    get aiTraceEnabled() {
+      return process.env.AI_TRACE_ENABLED?.toLowerCase() !== 'false';
+    },
+  };
+  return new AiTraceRecorder(db, config as never);
+}
 
 const baseRequest = {
   userId: 'user1',
@@ -34,7 +46,7 @@ afterEach(() => {
 
 describe('AiTraceRecorder', () => {
   it('inserts a trace row on start and returns a usable trace id', async () => {
-    const recorder = new AiTraceRecorder(testDb.current.db);
+    const recorder = createRecorder(testDb.current.db);
     const trace = recorder.start(baseRequest);
 
     expect(trace.traceId).toMatch(/^[0-9a-f-]{36}$/);
@@ -46,7 +58,7 @@ describe('AiTraceRecorder', () => {
   });
 
   it('records llm, tool, exec and sandbox events in order with full payloads', async () => {
-    const recorder = new AiTraceRecorder(testDb.current.db);
+    const recorder = createRecorder(testDb.current.db);
     const trace = recorder.start(baseRequest);
 
     trace.sandbox({ action: 'session_created', containerId: 'c1' });
@@ -110,7 +122,7 @@ describe('AiTraceRecorder', () => {
   });
 
   it('accumulates token usage and writes the summary on finish', async () => {
-    const recorder = new AiTraceRecorder(testDb.current.db);
+    const recorder = createRecorder(testDb.current.db);
     const trace = recorder.start(baseRequest);
 
     trace.llm({
@@ -153,7 +165,7 @@ describe('AiTraceRecorder', () => {
   });
 
   it('serializes errors on finish instead of dropping them', async () => {
-    const recorder = new AiTraceRecorder(testDb.current.db);
+    const recorder = createRecorder(testDb.current.db);
     const trace = recorder.start(baseRequest);
 
     trace.finish({ status: 'error', error: new Error('docker unreachable') });
@@ -165,7 +177,7 @@ describe('AiTraceRecorder', () => {
   });
 
   it('stops tracking a trace once its finish has been written', async () => {
-    const recorder = new AiTraceRecorder(testDb.current.db);
+    const recorder = createRecorder(testDb.current.db);
     const tracked = () =>
       (recorder as unknown as { open: Set<unknown> }).open.size;
 
@@ -184,7 +196,7 @@ describe('AiTraceRecorder', () => {
   it('never throws or rejects when persistence fails', async () => {
     // Nothing listens on port 1, so every write fails to connect.
     const unreachable = createDb('postgres://postgres@127.0.0.1:1/none', 1);
-    const recorder = new AiTraceRecorder(unreachable.db);
+    const recorder = createRecorder(unreachable.db);
     const trace = recorder.start(baseRequest);
 
     expect(() =>
@@ -206,7 +218,7 @@ describe('AiTraceRecorder', () => {
   it('skips the remaining writes once the trace row failed to insert', async () => {
     const warn = spyOn(logger, 'warn').mockImplementation(() => {});
     try {
-      const recorder = new AiTraceRecorder(testDb.current.db);
+      const recorder = createRecorder(testDb.current.db);
       // Postgres rejects NUL bytes in text, so only the trace insert fails.
       const trace = recorder.start({ ...baseRequest, content: 'nul\u0000' });
       trace.sandbox({ action: 'session_created', containerId: 'c1' });
@@ -227,7 +239,7 @@ describe('AiTraceRecorder', () => {
 
   it('returns the noop trace and writes nothing when tracing is disabled', async () => {
     process.env.AI_TRACE_ENABLED = 'false';
-    const recorder = new AiTraceRecorder(testDb.current.db);
+    const recorder = createRecorder(testDb.current.db);
     const trace = recorder.start(baseRequest);
 
     trace.tool({

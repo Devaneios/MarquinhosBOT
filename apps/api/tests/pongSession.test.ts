@@ -1,11 +1,12 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import { decodeStateSnapshot } from '@marquinhos/contracts/activity/pong/codec';
 import { describe, expect, it } from 'bun:test';
-import type { GamificationService } from 'modules/gamification/index';
 import {
   PongSession,
   type PongSessionIdentity,
-} from 'services/activity/pong/PongSession';
+} from 'modules/activity/games/pong/pong-session';
+import type { GamificationService } from 'modules/gamification/index';
+import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 
 function identity(mode: ActivityMode = 'multi'): PongSessionIdentity {
   return {
@@ -46,7 +47,12 @@ function startClassic(session: PongSession): void {
 describe('PongSession', () => {
   it('assigns classic slots and admits overflow as spectators', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new PongSession(identity(), broadcaster);
+    const session = new PongSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.pongCompetition,
+      testRoomDependencies.gamification,
+    );
 
     expect(session.addPlayer('user-a', 'conn-a')).toBe('left');
     expect(session.addPlayer('user-b', 'conn-b')).toBe('right');
@@ -56,7 +62,12 @@ describe('PongSession', () => {
 
   it('restores the same assignment when a player reconnects', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new PongSession(identity(), broadcaster);
+    const session = new PongSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.pongCompetition,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-a', 'conn-a');
 
     session.pauseForDisconnect('user-a', 'conn-a');
@@ -71,7 +82,12 @@ describe('PongSession', () => {
 
   it('starts a multi match only after every required player is ready', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new PongSession(identity(), broadcaster);
+    const session = new PongSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.pongCompetition,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-a', 'conn-a');
     session.addPlayer('user-b', 'conn-b');
 
@@ -84,7 +100,12 @@ describe('PongSession', () => {
 
   it('preserves players and remaps slots when the host changes ruleset', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new PongSession(identity(), broadcaster);
+    const session = new PongSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.pongCompetition,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-a', 'conn-a');
     session.addPlayer('user-b', 'conn-b');
 
@@ -102,7 +123,12 @@ describe('PongSession', () => {
 
   it('rejects lobby configuration changes from non-host players', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new PongSession(identity(), broadcaster);
+    const session = new PongSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.pongCompetition,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-a', 'conn-a');
     session.addPlayer('user-b', 'conn-b');
 
@@ -113,9 +139,15 @@ describe('PongSession', () => {
 
   it('supports four distinct assignments in Quadrapong', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new PongSession(identity(), broadcaster, undefined, {
-      ruleset: 'quad-elimination',
-    });
+    const session = new PongSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.pongCompetition,
+      testRoomDependencies.gamification,
+      {
+        ruleset: 'quad-elimination',
+      },
+    );
 
     expect(['a', 'b', 'c', 'd'].map((id) => session.addPlayer(id, id))).toEqual(
       ['left', 'right', 'top', 'bottom'],
@@ -124,7 +156,12 @@ describe('PongSession', () => {
 
   it('routes sequence-numbered input and acknowledges it in snapshots', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new PongSession(identity(), broadcaster);
+    const session = new PongSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.pongCompetition,
+      testRoomDependencies.gamification,
+    );
     startClassic(session);
 
     session.handleInput('user-a', -1, 1);
@@ -140,7 +177,12 @@ describe('PongSession', () => {
 
   it('ignores stale input sequence numbers', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new PongSession(identity(), broadcaster);
+    const session = new PongSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.pongCompetition,
+      testRoomDependencies.gamification,
+    );
     startClassic(session);
 
     session.handleInput('user-a', -1, 2);
@@ -157,7 +199,12 @@ describe('PongSession', () => {
 
   it('lets local hot-seat input address both sides independently', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new PongSession(identity('local'), broadcaster);
+    const session = new PongSession(
+      identity('local'),
+      broadcaster,
+      testRoomDependencies.pongCompetition,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-a', 'conn-a');
     session.enableLocalTwoPlayer();
     session.start();
@@ -178,7 +225,12 @@ describe('PongSession', () => {
 
   it('starts supported solo rulesets with a bot slot', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new PongSession(identity('single'), broadcaster);
+    const session = new PongSession(
+      identity('single'),
+      broadcaster,
+      testRoomDependencies.pongCompetition,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-a', 'conn-a');
     session.enableBot('left', 'hard');
     session.start();
@@ -191,7 +243,12 @@ describe('PongSession', () => {
 
   it('broadcasts protocol v2 snapshots into the supplied room key', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new PongSession(identity(), broadcaster);
+    const session = new PongSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.pongCompetition,
+      testRoomDependencies.gamification,
+    );
     session.tick();
 
     expect(broadcaster.snapshots[0]!.ruleset).toBe('classic-1v1');
@@ -199,7 +256,12 @@ describe('PongSession', () => {
 
   it('pauses a live multi match during the reconnect grace window', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new PongSession(identity(), broadcaster);
+    const session = new PongSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.pongCompetition,
+      testRoomDependencies.gamification,
+    );
     startClassic(session);
 
     session.pauseForDisconnect('user-a', 'conn-a');
@@ -222,7 +284,8 @@ describe('PongSession', () => {
     const session = new PongSession(
       identity(),
       broadcaster,
-      undefined,
+      testRoomDependencies.pongCompetition,
+      testRoomDependencies.gamification,
       {},
       { disconnectGraceMs: 10 },
     );
@@ -247,7 +310,12 @@ describe('PongSession', () => {
     const gamification = {
       recordGameResult: (result: unknown) => recorded.push(result),
     } as unknown as GamificationService;
-    const session = new PongSession(identity(), broadcaster, gamification);
+    const session = new PongSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.pongCompetition,
+      gamification,
+    );
     startClassic(session);
 
     session.leave('user-b', 'conn-b');
@@ -276,6 +344,7 @@ describe('PongSession', () => {
     const session = new PongSession(
       identity('local'),
       broadcaster,
+      testRoomDependencies.pongCompetition,
       gamification,
     );
     session.addPlayer('user-a', 'conn-a');

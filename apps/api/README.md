@@ -1,7 +1,7 @@
 # Marquinhos Web API
 
-![Bun](https://img.shields.io/badge/bun-1.3-black?logo=bun)
-![TypeScript](https://img.shields.io/badge/typescript-5.1-blue?logo=typescript)
+![Bun](https://img.shields.io/badge/bun-1.4-black?logo=bun)
+![TypeScript](https://img.shields.io/badge/typescript-6.0-blue?logo=typescript)
 ![License](https://img.shields.io/badge/license-ISC-lightgrey)
 
 REST API backend for the Marquinhos Discord bot ecosystem. Serves gamification (XP, levels, achievements), Wordle, maze minigame, Last.fm scrobbling, and Discord OAuth for the companion bot and web app.
@@ -57,17 +57,20 @@ curl -X POST http://localhost:3000/api/gamification/xp \
 
 ### Route map
 
-| Mount                         | Router                           | Notes                                                  |
-| ----------------------------- | -------------------------------- | ------------------------------------------------------ |
-| `/api/auth`                   | `auth.route.ts`                  | Discord OAuth login/callback                           |
-| `/api/user`                   | `user.route.ts`                  | User profile/settings                                  |
-| `/api/scrobble`               | `scrobble.route.ts`              | Last.fm scrobble ingestion                             |
-| `/api/privacy-policy`         | `privacyPolicy.route.ts`         | Static policy content                                  |
-| `/api/gamification`           | `gamification.route.ts`          | XP, levels, leaderboard, game results                  |
-| `/api/evolutive-achievements` | `evolutiveAchievements.route.ts` | Tiered achievement progression                         |
-| `/api/games/maze`             | `maze.route.ts`                  | Maze minigame sessions                                 |
-| `/api/wordle`                 | `wordle.route.ts`                | Wordle guesses and word list review                    |
-| `/api/ai-chat`                | `aiChat.route.ts`                | Tag replies, `/ia` threads, deep research jobs, traces |
+| Mount                         | Nest module/controller                              | Notes                                         |
+| ----------------------------- | --------------------------------------------------- | --------------------------------------------- |
+| `/api/health`                 | `modules/health/health.controller.ts`              | Container and gateway health check           |
+| `/api/privacy-policy`         | `modules/privacy-policy/`                           | Static policy content                         |
+| `/api/auth`                   | `modules/auth/auth.controller.ts`                   | Discord OAuth login/callback                  |
+| `/api/user`                   | `modules/user/user.controller.ts`                  | User profile/settings                         |
+| `/api/scrobble`               | `modules/scrobble/scrobble.controller.ts`          | Last.fm scrobble ingestion                    |
+| `/api/gamification`           | `modules/gamification/gamification.controller.ts`  | XP, levels, leaderboard, game results         |
+| `/api/evolutive-achievements` | `modules/gamification/`                             | Tiered achievement progression               |
+| `/api/games/maze`             | `modules/maze/maze.controller.ts`                  | Maze minigame sessions                        |
+| `/api/wordle`                 | `modules/wordle/controllers/`                       | Wordle guesses and word list review           |
+| `/api/ai-chat`                | `modules/ai-chat/ai-chat.controller.ts`            | Threads, research jobs, and traces            |
+| `/api/emoji-reaction`         | `modules/emoji-reaction/`                            | Emoji choice                                  |
+| `/api/activities`             | `modules/activity/activity.controller.ts`           | Discord Activity and Colyseus session helpers |
 
 ### AI endpoints
 
@@ -82,31 +85,30 @@ curl -X POST http://localhost:3000/api/gamification/xp \
 
 ## Architecture / How it Works
 
-- **Runtime**: Express app on Bun, entry point `src/index.ts`.
-- **Auth**: bot routes (`middlewares/botAuth.ts`) accept only `MARQUINHOS_API_KEY`, checked with a timing-safe buffer comparison. User routes use `verifyDiscordToken` (`middlewares/userAuth.ts`), which decrypts the token, checks expiry, and fetches the user's Discord identity + guild role.
+- **Runtime**: NestJS 12 on Bun, using `@nestjs/platform-express`; `src/main.ts` boots HTTP and Colyseus on one listener.
+- **Auth**: `BotAuthGuard`, `DiscordUserAuthGuard`, and `ActivityAuthGuard` preserve the bot, web-user, and Activity token checks. Bot keys use a timing-safe buffer comparison.
 - **Persistence**: PostgreSQL through Drizzle (`postgres.js` driver) at `DATABASE_URL`. The schema lives in `packages/database/src/schema/`; `pnpm --filter @marquinhos/database db:generate` turns schema changes into SQL migrations under `packages/database/drizzle/`, which `runMigrations()` applies at boot. Periodic cleanups (scrobble queue TTL, AI trace/research/thread retention) run from `packages/database/src/maintenance.ts`. Tests get throwaway databases from `@marquinhos/database/testing`.
-- **Gamification**: `services/gamification.ts` handles XP awards, level-up detection, and cooldowns; `services/evolutiveAchievements.ts` tracks per-user stat counters and auto-evolves tiered achievements when thresholds are crossed. Both are wired into the same `addXP` call path.
-- **Wordle**: `WordleService` shares daily answers and player sessions between the bot and Activity. The image build generates `valid-guesses.txt` from `wordlist.txt`, `devaneios-wordlist.txt`, and their plural forms. Startup loads the validation bank into memory. See the [daily Wordle implementation reference](../../docs/wordle.md) and [operations guide](../../docs/wordle-operations.md).
+- **Gamification**: `modules/gamification/` handles XP awards, level-up detection, cooldowns, and tiered achievement progression through injected providers.
+- **Wordle**: `modules/wordle/` shares daily answers and player sessions between the bot and Activity. The image build generates `valid-guesses.txt` from `wordlist.txt`, `devaneios-wordlist.txt`, and their plural forms. Startup loads the validation bank into memory. See the [daily Wordle implementation reference](../../docs/wordle.md) and [operations guide](../../docs/wordle-operations.md).
 - **AI features**: three separate paths share one set of tools and one trace recorder.
   - _Tag flow_ (`AiChatService`): two-layer intent classification, persona response per category, then a revision pass. Runs on Chat Completions. Unchanged by the `/ia` work.
   - _Threads_ (`thread/AiThreadService`): one turn of an `/ia perguntar` conversation. No classification — it goes straight to an agentic loop with the full tool set. Runs on the **Responses API** so the model's own `reasoning` items (with `encrypted_content`) can be stored and replayed on later turns; `reasoning.context: 'all_turns'` is what carries the reasoning forward. Reasoning is never posted to Discord, only kept in context and in the trace. Transcripts live in `ai_thread_items` as raw API items, and are compacted into a summary once they pass `AI_THREAD_TOKEN_BUDGET`.
   - _Deep research_ (`research/DeepResearchService`): a frontier search with a reflection loop — plan facets and 8-16 sub-queries, search SearXNG in parallel, rank and dedupe hits, let an LLM triage step pick which results are worth reading, compress each page to the claims it serves plus the follow-up queries it opens, push those follow-ups back onto the frontier (up to 3 levels deep), and keep going until an evidence floor is met (2 rounds, 12 relevant sources, 2 sources per facet) — the reflection step can say what to chase next but cannot end the job early. Then a dedicated analysis pass cross-reads every source before the report is written. The per-source compression is what keeps the synthesis call inside the context window. Jobs run detached in-process (`research/ResearchOrchestrator`) because a pass takes minutes; the bot polls. `POST /research` is idempotent on `idempotencyKey` since the bot's HTTP client retries.
-- **Agent tools** (`services/aiChat/tools/`): `list_directory`, `grep_search`, `read_file` and `execute_code` run inside a Docker sandbox on `NetworkMode: none`; `search_web` and `fetch_url` run in the API process instead, which is what keeps arbitrary model-written code off the network. `web/fetchPage.ts` holds the SSRF screening, body cap and HTML→markdown conversion shared by `fetch_url` and the research reader.
-- **Rate limiting**: `express-rate-limit` is wired into `index.ts` but currently commented out — re-enable before exposing sensitive endpoints publicly. AI usage has its own daily limits in `ai_chat_config`: `user_daily_limit`, `global_daily_limit`, `agent_daily_limit`, and `research_daily_limit` (much lower — one research job spends dozens of LLM calls).
-- **Error handling**: a 404 catch-all and a 4-arg Express error handler sit at the bottom of the middleware stack; error details are only returned in the response body outside of `production`.
+- **Agent tools** (`modules/ai-chat/tools/`): `list_directory`, `grep_search`, `read_file` and `execute_code` run inside a Docker sandbox on `NetworkMode: none`; `search_web` and `fetch_url` run in the API process instead, keeping arbitrary model-written code off the network. `modules/ai-chat/web/fetch-page.ts` holds the SSRF screening, body cap and HTML-to-markdown conversion.
+- **Rate limiting**: Activity endpoints share a 20-request-per-minute IP bucket. AI usage has daily limits in `ai_chat_config` for users, agents, and research.
+- **Error handling**: Nest guards, the route-error interceptor, and the global API exception filter preserve the API response bodies. Morgan keeps request logging for matched and unmatched routes.
 
 ## Contributing
 
 ```bash
-bun run typecheck     # tsc --noEmit
-bun run lint          # eslint src/**/*.ts
-bun run format:check  # prettier --check
-bun test tests/**/*.spec.ts
+pnpm --filter marquinhos-web-api typecheck
+pnpm --filter marquinhos-web-api lint
+pnpm --filter marquinhos-web-api test
 ```
 
 - Husky + `lint-staged` run `prettier --write` and `eslint --fix` on staged `*.ts` files pre-commit.
 - Commit messages are linted with `commitlint` against the conventional-commits config — use `type(scope): message` (`feat:`, `fix:`, `chore:`, etc.).
-- Match existing patterns: controllers stay thin and delegate to `services/`, routes bind controller methods with `.bind(controller)`, and Zod schemas in `schemas/` validate request bodies via `validateRequest.ts`.
+- Keep controllers thin and resolve I/O-bound services through Nest modules. The shared `@marquinhos/contracts` package remains the HTTP source of truth; use `ContractInput` for request validation.
 - Open a PR against `main`; CI must pass typecheck, lint, and tests before merge.
 
 ## License

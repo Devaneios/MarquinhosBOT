@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AppConfig } from 'config/app.config';
+import { getTokenCipherConfig } from 'config/token-cipher.config';
 import {
   createCipheriv,
   createDecipheriv,
@@ -34,10 +35,7 @@ const ALGORITHM = 'aes-256-gcm';
 export function encryptToken(
   token: string,
   expiresAt?: number,
-  config: TokenCipherConfig = {
-    secret: process.env.MARQUINHOS_SECRET_KEY,
-    salt: process.env.MARQUINHOS_CRYPTO_SALT,
-  },
+  config: TokenCipherConfig = getTokenCipherConfig(),
 ): string | null {
   try {
     const key = getKey(config);
@@ -86,10 +84,7 @@ function decryptRaw(
 
 export function decryptToken(
   encryptedToken: string,
-  config: TokenCipherConfig = {
-    secret: process.env.MARQUINHOS_SECRET_KEY,
-    salt: process.env.MARQUINHOS_CRYPTO_SALT,
-  },
+  config: TokenCipherConfig = getTokenCipherConfig(),
 ): string | null {
   const raw = decryptRaw(encryptedToken, config);
   if (!raw) return null;
@@ -104,10 +99,7 @@ export function decryptToken(
 
 export function decryptTokenFull(
   encryptedToken: string,
-  config: TokenCipherConfig = {
-    secret: process.env.MARQUINHOS_SECRET_KEY,
-    salt: process.env.MARQUINHOS_CRYPTO_SALT,
-  },
+  config: TokenCipherConfig = getTokenCipherConfig(),
 ): { token: string; expiresAt?: number } | null {
   const raw = decryptRaw(encryptedToken, config);
   if (!raw) return null;

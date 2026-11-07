@@ -1,8 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import type { AiChatService } from 'services/aiChat/AiChatService';
-import type { ResearchOrchestrator } from 'services/aiChat/research/ResearchOrchestrator';
-import type { AiThreadService } from 'services/aiChat/thread/AiThreadService';
-import { startContractServer } from '../helpers/contractServer';
+import { AiChatModule } from 'modules/ai-chat/ai-chat.module';
+import type { AiChatService } from 'modules/ai-chat/ai-chat.service';
+import { AiChatService as AiChatServiceToken } from 'modules/ai-chat/ai-chat.service';
+import type { ResearchOrchestrator } from 'modules/ai-chat/research/research-orchestrator.service';
+import { ResearchOrchestrator as ResearchOrchestratorToken } from 'modules/ai-chat/research/research-orchestrator.service';
+import type { AiThreadService } from 'modules/ai-chat/thread/ai-thread.service';
+import { AiThreadService as AiThreadServiceToken } from 'modules/ai-chat/thread/ai-thread.service';
+import { AiTraceQuery } from 'modules/ai-chat/trace/ai-trace-query';
+import { startNestContractServer } from '../helpers/contractServer';
 
 const { callContract, HttpError } = await import('@marquinhos/api-client/bot');
 const aiChat = await import('@marquinhos/contracts/http/routes/aiChat');
@@ -42,27 +47,22 @@ const fakeResearch = {
       : null,
 } as unknown as ResearchOrchestrator;
 
-let server: Awaited<ReturnType<typeof startContractServer>>;
+let server: Awaited<ReturnType<typeof startNestContractServer>>;
 
 beforeAll(async () => {
-  const { createAiChatRouter } = await import('../../src/routes/aiChat.route');
-  const { default: AiChatController } =
-    await import('../../src/controllers/aiChat.controller');
-  const { AiTraceQuery } =
-    await import('../../src/services/aiChat/AiTraceQuery');
-  server = await startContractServer((app) => {
-    app.use(
-      '/api/ai-chat',
-      createAiChatRouter(
-        new AiChatController(
-          fakeChat,
-          new AiTraceQuery(),
-          fakeThreads,
-          fakeResearch,
-        ),
-      ),
-    );
-  });
+  server = await startNestContractServer(
+    { imports: [AiChatModule] },
+    (builder) =>
+      builder
+        .overrideProvider(AiChatServiceToken)
+        .useValue(fakeChat)
+        .overrideProvider(AiTraceQuery)
+        .useValue({ list: async () => [] })
+        .overrideProvider(AiThreadServiceToken)
+        .useValue(fakeThreads)
+        .overrideProvider(ResearchOrchestratorToken)
+        .useValue(fakeResearch),
+  );
 });
 
 afterAll(() => server.close());

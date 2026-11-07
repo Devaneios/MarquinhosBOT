@@ -5,8 +5,8 @@ import {
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, expect, it } from 'bun:test';
 import { eq } from 'drizzle-orm';
-import { WordleAlbumMilestoneService } from '../src/services/wordle/WordleAlbumMilestoneService';
-import { WordleAlbumService } from '../src/services/wordle/WordleAlbumService';
+import { WordleAlbumMilestoneService } from '../src/modules/wordle/services/wordle-album-milestone.service';
+import { createWordleTestAlbumService } from './helpers/wordleServices';
 
 let testDb: TestDb;
 beforeAll(async () => {
@@ -34,7 +34,7 @@ it('keeps a family milestone across retries and catalog growth and revises it af
       evidence: {},
     })),
   );
-  await new WordleAlbumService(testDb.db).reconcile('guild');
+  await createWordleTestAlbumService(testDb.db).reconcile('guild');
   let now = 100;
   const service = new WordleAlbumMilestoneService(testDb.db, () => now);
   const first = await service.reconcile('guild', [

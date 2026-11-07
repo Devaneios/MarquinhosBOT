@@ -5,12 +5,12 @@ import {
   type CanActivate,
   type ExecutionContext,
 } from '@nestjs/common';
+import { logger } from 'common/logging/logger';
 import type { Request } from 'express';
 import {
   DiscordService,
   type DiscordUser,
 } from 'integrations/discord/discord.service';
-import { logger } from 'utils/logger';
 
 type AuthenticatedRequest = Request & { user?: DiscordUser };
 

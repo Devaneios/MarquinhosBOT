@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 
-const { resolveCanonical } = await import('../../src/services/wordle');
+import { testRoomDependencies } from '../helpers/realtimeTestDependencies';
+const resolveCanonical = testRoomDependencies.wordBank.resolveCanonical.bind(
+  testRoomDependencies.wordBank,
+);
 const { WordleRaceEngine } =
   await import('@marquinhos/domain/games/wordle/race/WordleRaceEngine');
 

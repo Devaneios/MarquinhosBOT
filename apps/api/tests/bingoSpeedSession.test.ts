@@ -1,6 +1,7 @@
 import { describe, expect, it, mock } from 'bun:test';
-import { BingoSpeedSession } from 'services/activity/bingoSpeed/BingoSpeedSession';
-import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
+import { BingoSpeedSession } from 'modules/activity/games/bingo-speed/bingo-speed-session';
+import type { ActivityBroadcaster } from 'modules/activity/shared/activity-broadcaster';
+import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 
 describe('BingoSpeedSession', () => {
   function createMockBroadcaster() {
@@ -23,6 +24,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
+        testRoomDependencies.gamification,
       );
 
       const result = session.addPlayer('user1', {});
@@ -41,6 +43,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
+        testRoomDependencies.gamification,
       );
 
       const card = session.addPlayer('user1', {});
@@ -60,6 +63,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
+        testRoomDependencies.gamification,
       );
 
       const card1 = session.addPlayer('user1', {});
@@ -79,6 +83,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
+        testRoomDependencies.gamification,
       );
 
       const connection = {};
@@ -99,6 +104,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
+        testRoomDependencies.gamification,
       );
 
       const staleConn = {};
@@ -123,7 +129,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
-        undefined,
+        testRoomDependencies.gamification,
         { drawIntervalMs: 100 },
       );
 
@@ -152,7 +158,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
-        undefined,
+        testRoomDependencies.gamification,
         { drawIntervalMs: 100 },
       );
 
@@ -184,7 +190,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
-        undefined,
+        testRoomDependencies.gamification,
         { drawIntervalMs: 100 },
       );
 
@@ -215,6 +221,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
+        testRoomDependencies.gamification,
       );
 
       session.addPlayer('user1', {});
@@ -239,6 +246,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
+        testRoomDependencies.gamification,
       );
 
       const result = session.claimBingo('nonexistent');
@@ -257,6 +265,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
+        testRoomDependencies.gamification,
       );
 
       const card1 = session.addPlayer('user1', {});
@@ -291,6 +300,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
+        testRoomDependencies.gamification,
       );
 
       session.addPlayer('user1', {});
@@ -310,6 +320,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
+        testRoomDependencies.gamification,
       );
 
       const card = session.addPlayer('user1', {});
@@ -328,6 +339,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
+        testRoomDependencies.gamification,
       );
 
       const playerCard = session.getPlayerCard('nonexistent');
@@ -347,7 +359,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
-        undefined,
+        testRoomDependencies.gamification,
         { drawIntervalMs: 20, disconnectGraceMs: 500 },
       );
 
@@ -400,7 +412,7 @@ describe('BingoSpeedSession', () => {
           mode: 'multi',
         },
         broadcaster,
-        undefined,
+        testRoomDependencies.gamification,
         { drawIntervalMs: 100 },
       );
 

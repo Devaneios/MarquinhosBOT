@@ -4,7 +4,7 @@ import {
   type evolutionResultSchema,
   type evolutiveAchievementSchema,
 } from '@marquinhos/contracts/http/routes/evolutiveAchievements';
-import { db, type Db } from '@marquinhos/database/client';
+import type { Db } from '@marquinhos/database/client';
 import { evolutiveAchievements, userStats } from '@marquinhos/database/schema';
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
@@ -186,7 +186,7 @@ async function getRow(
 
 @Injectable()
 export class EvolutiveAchievementsService {
-  constructor(@Inject(DB) private readonly database: Db = db) {}
+  constructor(@Inject(DB) private readonly database: Db) {}
 
   async checkAndEvolveAll(
     userId: string,

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'bun:test';
 import {
   SnakeSession,
   type SnakeSessionIdentity,
-} from 'services/activity/snake-game/SnakeSession';
+} from 'modules/activity/games/snake/snake-session';
+import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 
 const MOCK_IDENTITY: SnakeSessionIdentity = {
   sessionKey: 'test:snake-game:multi:user1',
@@ -22,14 +23,22 @@ class MockBroadcaster {
 describe('SnakeSession', () => {
   it('initializes empty with no players', () => {
     const broadcaster = new MockBroadcaster();
-    const session = new SnakeSession(MOCK_IDENTITY, broadcaster as any);
+    const session = new SnakeSession(
+      MOCK_IDENTITY,
+      broadcaster as any,
+      testRoomDependencies.gamification,
+    );
 
     expect(session.playerCount).toBe(0);
   });
 
   it('adds a player and assigns them player ID', () => {
     const broadcaster = new MockBroadcaster();
-    const session = new SnakeSession(MOCK_IDENTITY, broadcaster as any);
+    const session = new SnakeSession(
+      MOCK_IDENTITY,
+      broadcaster as any,
+      testRoomDependencies.gamification,
+    );
 
     const id = session.addPlayer('user1', {});
 
@@ -39,7 +48,11 @@ describe('SnakeSession', () => {
 
   it('limits to 2 players in multi mode', () => {
     const broadcaster = new MockBroadcaster();
-    const session = new SnakeSession(MOCK_IDENTITY, broadcaster as any);
+    const session = new SnakeSession(
+      MOCK_IDENTITY,
+      broadcaster as any,
+      testRoomDependencies.gamification,
+    );
 
     session.addPlayer('user1', {});
     session.addPlayer('user2', {});
@@ -51,7 +64,11 @@ describe('SnakeSession', () => {
 
   it('returns public config with grid dimensions', () => {
     const broadcaster = new MockBroadcaster();
-    const session = new SnakeSession(MOCK_IDENTITY, broadcaster as any);
+    const session = new SnakeSession(
+      MOCK_IDENTITY,
+      broadcaster as any,
+      testRoomDependencies.gamification,
+    );
 
     const config = session.getPublicConfig();
 
@@ -61,7 +78,11 @@ describe('SnakeSession', () => {
 
   it('handles player input and updates direction', () => {
     const broadcaster = new MockBroadcaster();
-    const session = new SnakeSession(MOCK_IDENTITY, broadcaster as any);
+    const session = new SnakeSession(
+      MOCK_IDENTITY,
+      broadcaster as any,
+      testRoomDependencies.gamification,
+    );
 
     session.addPlayer('user1', {});
     session.handleInput('user1', 'up');
@@ -71,7 +92,11 @@ describe('SnakeSession', () => {
 
   it('detaches player on leave', () => {
     const broadcaster = new MockBroadcaster();
-    const session = new SnakeSession(MOCK_IDENTITY, broadcaster as any);
+    const session = new SnakeSession(
+      MOCK_IDENTITY,
+      broadcaster as any,
+      testRoomDependencies.gamification,
+    );
 
     const connection = {};
     session.addPlayer('user1', connection);
@@ -82,7 +107,11 @@ describe('SnakeSession', () => {
 
   it('starts game loop when second player joins in multi mode', (done) => {
     const broadcaster = new MockBroadcaster();
-    const session = new SnakeSession(MOCK_IDENTITY, broadcaster as any);
+    const session = new SnakeSession(
+      MOCK_IDENTITY,
+      broadcaster as any,
+      testRoomDependencies.gamification,
+    );
 
     session.addPlayer('user1', {});
     session.addPlayer('user2', {});
@@ -102,7 +131,11 @@ describe('SnakeSession', () => {
       ...MOCK_IDENTITY,
       mode: 'single',
     };
-    const session = new SnakeSession(singleIdentity, broadcaster as any);
+    const session = new SnakeSession(
+      singleIdentity,
+      broadcaster as any,
+      testRoomDependencies.gamification,
+    );
 
     session.addPlayer('user1', {});
     session.enableBot();

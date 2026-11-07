@@ -1,11 +1,12 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import type { ShipPlacement } from '@marquinhos/contracts/activity/games/battleship';
 import { describe, expect, it } from 'bun:test';
-import type { GamificationService } from 'modules/gamification/index';
 import {
   BattleshipSession,
   type BattleshipSessionIdentity,
-} from 'services/activity/battleship/BattleshipSession';
+} from 'modules/activity/games/battleship/battleship-session';
+import type { GamificationService } from 'modules/gamification/index';
+import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 
 function identity(mode: ActivityMode = 'multi'): BattleshipSessionIdentity {
   return {
@@ -58,7 +59,11 @@ const FLEET_B: ShipPlacement[] = [
 
 function placedSession() {
   const broadcaster = fakeBroadcaster();
-  const session = new BattleshipSession(identity(), broadcaster);
+  const session = new BattleshipSession(
+    identity(),
+    broadcaster,
+    testRoomDependencies.gamification,
+  );
   session.addPlayer('user-a', 'conn-a');
   session.addPlayer('user-b', 'conn-b');
   session.placeShips('user-a', FLEET_A);
@@ -105,14 +110,22 @@ function playToVictory(session: BattleshipSession) {
 describe('BattleshipSession', () => {
   it('assigns p1 to the first joiner and p2 to the second', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new BattleshipSession(identity(), broadcaster);
+    const session = new BattleshipSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
     expect(session.addPlayer('user-a', 'conn-a')).toBe('p1');
     expect(session.addPlayer('user-b', 'conn-b')).toBe('p2');
   });
 
   it('rejects a third player', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new BattleshipSession(identity(), broadcaster);
+    const session = new BattleshipSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-a', 'conn-a');
     session.addPlayer('user-b', 'conn-b');
     expect(session.addPlayer('user-c', 'conn-c')).toBeNull();
@@ -144,7 +157,11 @@ describe('BattleshipSession', () => {
 
   it('relays a placement validation error only to the sender', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new BattleshipSession(identity(), broadcaster);
+    const session = new BattleshipSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-a', 'conn-a');
     session.addPlayer('user-b', 'conn-b');
 

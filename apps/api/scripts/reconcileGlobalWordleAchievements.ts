@@ -1,5 +1,6 @@
-import { closeDefaultDb, db } from '@marquinhos/database/client';
-import { WordleGlobalAchievementService } from '../src/services/wordle/WordleGlobalAchievementService';
+import { NestFactory } from '@nestjs/core';
+import { ScriptsModule } from '../src/scripts/scripts.module';
+import { WordleGlobalAchievementService } from '../src/modules/wordle/services/wordle-global-achievement.service';
 
 async function main() {
   const args = Bun.argv.slice(2);
@@ -18,16 +19,18 @@ async function main() {
   ) {
     throw new Error('Expected --user-id ID --guild-id ID');
   }
+  const app = await NestFactory.createApplicationContext(ScriptsModule, {
+    logger: false,
+  });
   try {
-    const result = await new WordleGlobalAchievementService(db).checkAndAward(
-      args[1],
-      args[3],
-    );
+    const result = await app
+      .get(WordleGlobalAchievementService)
+      .checkAndAward(args[1], args[3]);
     console.log(
       JSON.stringify({ achievementsAwarded: result.unlockedIds.length }),
     );
   } finally {
-    await closeDefaultDb();
+    await app.close();
   }
 }
 

@@ -3,7 +3,7 @@ import { pongRankedMatches } from '@marquinhos/database/schema';
 import { calculateGlicko2 } from '@marquinhos/domain/games/pong/rating';
 import { describe, expect, it } from 'bun:test';
 import { count } from 'drizzle-orm';
-import { PongCompetitionService } from 'services/activity/pong/PongCompetitionService';
+import { PongCompetitionService } from 'modules/activity/games/pong/pong-competition.service';
 import { useTestDb } from './helpers/testDb';
 
 const testDb = useTestDb();

@@ -4,7 +4,8 @@ import { describe, expect, it } from 'bun:test';
 import {
   CheckersSession,
   type CheckersSessionIdentity,
-} from 'services/activity/checkers/CheckersSession';
+} from 'modules/activity/games/checkers/checkers-session';
+import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 
 function identity(mode: ActivityMode = 'multi'): CheckersSessionIdentity {
   return {
@@ -31,14 +32,22 @@ function emptyBoard() {
 
 describe('CheckersSession.getWinnerUserId', () => {
   it('returns null before a winner exists', () => {
-    const session = new CheckersSession(identity(), fakeBroadcaster());
+    const session = new CheckersSession(
+      identity(),
+      fakeBroadcaster(),
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-black', {});
     session.addPlayer('user-red', {});
     expect(session.getWinnerUserId()).toBe(null);
   });
 
   it('resolves the winning color back to the winning userId', () => {
-    const session = new CheckersSession(identity(), fakeBroadcaster());
+    const session = new CheckersSession(
+      identity(),
+      fakeBroadcaster(),
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-black', {}); // black
     session.addPlayer('user-red', {}); // red
 
@@ -64,7 +73,11 @@ describe('CheckersSession.getWinnerUserId', () => {
 describe('CheckersSession.leave', () => {
   it('forfeits to the remaining player on explicit leave mid-match', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new CheckersSession(identity(), broadcaster);
+    const session = new CheckersSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
     const conn1 = {};
     session.addPlayer('user-black', conn1); // black
     session.addPlayer('user-red', {}); // red
@@ -78,7 +91,11 @@ describe('CheckersSession.leave', () => {
 
 describe('CheckersSession.substitutePlayer', () => {
   it("reseats the incoming player into the outgoing player's exact color", () => {
-    const session = new CheckersSession(identity(), fakeBroadcaster());
+    const session = new CheckersSession(
+      identity(),
+      fakeBroadcaster(),
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-black', {}); // black
     session.addPlayer('user-red', {}); // red
 
@@ -110,7 +127,11 @@ describe('CheckersSession.substitutePlayer', () => {
   });
 
   it('returns false when the outgoing userId is not seated', () => {
-    const session = new CheckersSession(identity(), fakeBroadcaster());
+    const session = new CheckersSession(
+      identity(),
+      fakeBroadcaster(),
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-black', {});
     expect(session.substitutePlayer('nobody', 'user-new', {})).toBeNull();
   });

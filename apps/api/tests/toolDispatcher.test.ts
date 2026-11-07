@@ -2,12 +2,12 @@ import { describe, expect, it, mock } from 'bun:test';
 import {
   TOOL_RESULT_MAX_CHARS,
   ToolDispatcher,
-} from 'services/aiChat/agent/ToolDispatcher';
+} from 'modules/ai-chat/agent/tool-dispatcher';
+import type { SandboxManager } from 'modules/ai-chat/sandbox/sandbox-manager.service';
 import type {
   TraceExecEvent,
   TraceToolEvent,
-} from 'services/aiChat/AiTraceRecorder';
-import type { SandboxManager } from 'services/aiChat/sandbox/SandboxManager';
+} from 'modules/ai-chat/trace/ai-trace-recorder.service';
 
 function fakeSandbox(
   exec: () => Promise<{

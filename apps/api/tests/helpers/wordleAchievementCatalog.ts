@@ -15,7 +15,10 @@ export async function installWordleAchievementCatalog() {
   const existing = new Set(
     (await db.select().from(achievements)).map((row) => row.id),
   );
-  await new AchievementService(new LevelingService()).initializeDefaults();
+  await new AchievementService(
+    new LevelingService(db),
+    db,
+  ).initializeDefaults();
   const genericIds = (await db.select().from(achievements))
     .filter((row) => row.category !== 'wordle' && !existing.has(row.id))
     .map((row) => row.id);

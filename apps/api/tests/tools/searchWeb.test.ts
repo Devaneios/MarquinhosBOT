@@ -1,11 +1,11 @@
 import { describe, expect, it, mock } from 'bun:test';
-import { createSearchWebTool } from 'services/aiChat/tools/searchWeb';
-import type { AgentToolContext } from 'services/aiChat/tools/types';
+import { createSearchWebTool } from 'modules/ai-chat/tools/search-web';
+import type { AgentToolContext } from 'modules/ai-chat/tools/types';
 import {
   SearxngError,
   type SearchHit,
   type SearchOptions,
-} from 'services/aiChat/web/SearxngClient';
+} from 'modules/ai-chat/web/searxng.client';
 
 const ctx: AgentToolContext = {
   containerId: 'c1',

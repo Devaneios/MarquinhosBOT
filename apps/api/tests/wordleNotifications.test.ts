@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import {
   previousWordleWeek,
   WordleNotificationService,
-} from '../src/services/wordle/WordleNotificationService';
+} from '../src/modules/wordle/services/wordle-notification.service';
 
 let testDb: TestDb;
 let now = 1000;

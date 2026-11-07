@@ -18,7 +18,6 @@ export default [
       'tmp/**',
       'temp/**',
       'src/resources/**',
-      'tests/**/*.spec.ts',
     ],
   },
   // Configuration for TypeScript files
@@ -81,6 +80,108 @@ export default [
           project: './tsconfig.json',
         },
       },
+    },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@marquinhos/database/client',
+              message: 'Inject DB from database/database.tokens instead.',
+              allowTypeImports: true,
+            },
+            {
+              name: 'express',
+              message: 'Keep Express at the HTTP boundary and use type imports.',
+              allowTypeImports: true,
+            },
+          ],
+        },
+      ],
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'process',
+          property: 'env',
+          message: 'Read environment values through AppConfig.',
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "ImportSpecifier[imported.name='forwardRef']",
+          message: 'Module cycles must be removed instead of using forwardRef.',
+        },
+        {
+          selector: "CallExpression[callee.name='forwardRef']",
+          message: 'Module cycles must be removed instead of using forwardRef.',
+        },
+        {
+          selector: "MemberExpression[object.name='Scope'][property.name='REQUEST']",
+          message: 'Use the default singleton provider scope.',
+        },
+        {
+          selector: "MemberExpression[object.name='Scope'][property.name='TRANSIENT']",
+          message: 'Use the default singleton provider scope.',
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/config/**/*.{ts,tsx}', 'src/common/logging/logger.ts'],
+    rules: {
+      'no-restricted-properties': 'off',
+    },
+  },
+  {
+    files: ['src/database/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'express',
+              message: 'Keep Express at the HTTP boundary and use type imports.',
+              allowTypeImports: true,
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/modules/**/*.{ts,tsx}'],
+    ignores: ['src/modules/**/*.module.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "ImportSpecifier[imported.name='forwardRef']",
+          message: 'Module cycles must be removed instead of using forwardRef.',
+        },
+        {
+          selector: "CallExpression[callee.name='forwardRef']",
+          message: 'Module cycles must be removed instead of using forwardRef.',
+        },
+        {
+          selector: "MemberExpression[object.name='Scope'][property.name='REQUEST']",
+          message: 'Use the default singleton provider scope.',
+        },
+        {
+          selector: "MemberExpression[object.name='Scope'][property.name='TRANSIENT']",
+          message: 'Use the default singleton provider scope.',
+        },
+        {
+          selector:
+            'NewExpression[callee.name=/Service$/]:not([callee.name="TurndownService"])',
+          message: 'Resolve feature services through Nest dependency injection.',
+        },
+      ],
     },
   },
 ];

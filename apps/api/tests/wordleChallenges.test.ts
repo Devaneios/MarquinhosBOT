@@ -6,7 +6,7 @@ import {
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, expect, it } from 'bun:test';
-import { WordleChallengeService } from '../src/services/wordle/WordleChallengeService';
+import { WordleChallengeService } from '../src/modules/wordle/services/wordle-challenge.service';
 
 let testDb: TestDb;
 let now = 100;

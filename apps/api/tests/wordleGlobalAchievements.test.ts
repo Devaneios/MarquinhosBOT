@@ -15,7 +15,7 @@ import {
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { matchWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/engine/matchPatterns';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import { WordleGlobalAchievementService } from '../src/services/wordle/WordleGlobalAchievementService';
+import { createWordleTestGlobalAchievementService } from './helpers/wordleServices';
 
 let testDb: TestDb;
 beforeAll(async () => {
@@ -113,8 +113,9 @@ describe('global Wordle achievements', () => {
         last_seen_at: 1,
       },
     ]);
-    const service = new WordleGlobalAchievementService(testDb.db, () =>
-      Date.parse('2026-11-01T15:00:00Z'),
+    const service = createWordleTestGlobalAchievementService(
+      () => Date.parse('2026-11-01T15:00:00Z'),
+      testDb.db,
     );
     const mine = await service.getOverview(
       'profile-player',
@@ -193,8 +194,9 @@ describe('global Wordle achievements', () => {
         solved_at: 101,
       },
     ]);
-    const service = new WordleGlobalAchievementService(testDb.db, () =>
-      Date.parse('2026-11-01T15:00:00Z'),
+    const service = createWordleTestGlobalAchievementService(
+      () => Date.parse('2026-11-01T15:00:00Z'),
+      testDb.db,
     );
     expect(
       (await service.checkAndAward('first-solver', 'first-a')).unlockedIds,
@@ -204,8 +206,9 @@ describe('global Wordle achievements', () => {
     ).toEqual([]);
   });
   it('grants an achievement and its XP once across concurrent communities', async () => {
-    const service = new WordleGlobalAchievementService(testDb.db, () =>
-      Date.parse('2026-11-01T15:00:00Z'),
+    const service = createWordleTestGlobalAchievementService(
+      () => Date.parse('2026-11-01T15:00:00Z'),
+      testDb.db,
     );
     const outcomes = await Promise.all([
       service.checkAndAward('player', 'guild-a'),
@@ -277,8 +280,9 @@ describe('global Wordle achievements', () => {
       attempt: 1,
       accepted_at: 1000,
     });
-    const service = new WordleGlobalAchievementService(testDb.db, () =>
-      Date.parse('2026-11-01T15:00:00Z'),
+    const service = createWordleTestGlobalAchievementService(
+      () => Date.parse('2026-11-01T15:00:00Z'),
+      testDb.db,
     );
     await service.checkAndAward('pattern-player', 'guild-a');
     await service.checkAndAward('pattern-player', 'guild-b');

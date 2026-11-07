@@ -125,7 +125,7 @@ describe('failed requests carrying secrets', () => {
 describe('database errors', () => {
   it('keep bound parameters out of the structured log', async () => {
     const { DrizzleQueryError } = await import('drizzle-orm/errors');
-    const { logger } = await import('utils/logger');
+    const { logger } = await import('common/logging/logger');
     const lines = captureConsole();
 
     logger.error('db.failed', {
@@ -145,8 +145,9 @@ describe('database errors', () => {
 describe('error messages built from database errors', () => {
   it('never carry bound parameters', async () => {
     const { DrizzleQueryError } = await import('drizzle-orm/errors');
-    const { getErrorMessage } = await import('utils/errorHandling');
-    const { AiTraceRecorder } = await import('services/aiChat/AiTraceRecorder');
+    const { getErrorMessage } = await import('common/errors/error-handling');
+    const { AiTraceRecorder } =
+      await import('modules/ai-chat/trace/ai-trace-recorder.service');
     const { createDb } = await import('@marquinhos/database/client');
     const error = new DrizzleQueryError(
       'insert into "ai_traces" values ($1)',
@@ -159,7 +160,9 @@ describe('error messages built from database errors', () => {
 
     const lines = captureConsole();
     const unreachable = createDb('postgres://postgres@127.0.0.1:1/none', 1);
-    const recorder = new AiTraceRecorder(unreachable.db);
+    const recorder = new AiTraceRecorder(unreachable.db, {
+      aiTraceEnabled: true,
+    } as never);
     recorder.start({
       userId: 'u',
       guildId: 'g',

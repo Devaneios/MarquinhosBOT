@@ -7,9 +7,12 @@ import {
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { eq } from 'drizzle-orm';
-import { recordWordlePresence } from '../src/services/wordle/WordleCommunityService';
-import { WordleGlobalDraftService } from '../src/services/wordle/WordleGlobalDraftService';
-import { getWordleDayEndEpoch } from '../src/services/wordle/wordleDate';
+import { getWordleDayEndEpoch } from '../src/modules/wordle/services/wordle-date';
+import {
+  createWordleTestGlobalDraftService,
+  createWordleTestGlobalDraftServiceWithAward,
+  createWordleTestPresence,
+} from './helpers/wordleServices';
 
 let testDb: TestDb;
 const date = '2026-11-01';
@@ -33,7 +36,7 @@ const draft = {
 };
 describe('global drafts', () => {
   it('does not award a draft recorded after the day ended', async () => {
-    const writer = new WordleGlobalDraftService(testDb.db, () => now);
+    const writer = createWordleTestGlobalDraftService(() => now, testDb.db);
     await writer.write('late-draft', {
       ...draft,
       cells: ['t', 'e', 'r', 'm', 'o'],
@@ -43,10 +46,10 @@ describe('global drafts', () => {
       .update(wordleGlobalDrafts)
       .set({ updated_at: getWordleDayEndEpoch(date) + 1 })
       .where(eq(wordleGlobalDrafts.user_id, 'late-draft'));
-    await new WordleGlobalDraftService(
-      testDb.db,
+    await createWordleTestGlobalDraftServiceWithAward(
       () => now + 86400000,
       async () => {},
+      testDb.db,
     ).finalizePlayerBefore('late-draft', '2026-11-02');
     const session = (await testDb.db.select().from(wordleGlobalSessions)).find(
       (row) => row.user_id === 'late-draft',
@@ -54,17 +57,17 @@ describe('global drafts', () => {
     expect(session).toBeUndefined();
   });
   it('settles a winning draft whose player has no community presence', async () => {
-    await new WordleGlobalDraftService(testDb.db, () => now).write(
+    await createWordleTestGlobalDraftService(() => now, testDb.db).write(
       'no-presence',
       { ...draft, cells: ['t', 'e', 'r', 'm', 'o'], activeIndex: 4 },
     );
     let awards = 0;
-    const finalizer = new WordleGlobalDraftService(
-      testDb.db,
+    const finalizer = createWordleTestGlobalDraftServiceWithAward(
       () => now + 86400000,
       async () => {
         awards++;
       },
+      testDb.db,
     );
     await finalizer.finalizePlayerBefore('no-presence', '2026-11-02');
     const [row] = await testDb.db
@@ -80,7 +83,7 @@ describe('global drafts', () => {
     expect(session).toMatchObject({ solved: true, solved_from_draft: true });
   });
   it('does not turn a draft into a win after an accepted guess', async () => {
-    const writer = new WordleGlobalDraftService(testDb.db, () => now);
+    const writer = createWordleTestGlobalDraftService(() => now, testDb.db);
     await testDb.db.insert(wordleGlobalSessions).values({
       id: 'played-session',
       user_id: 'played',
@@ -95,12 +98,12 @@ describe('global drafts', () => {
       activeIndex: 4,
     });
     let awards = 0;
-    await new WordleGlobalDraftService(
-      testDb.db,
+    await createWordleTestGlobalDraftServiceWithAward(
       () => now + 86400000,
       async () => {
         awards++;
       },
+      testDb.db,
     ).finalizePlayerBefore('played', '2026-11-02');
     const session = (await testDb.db.select().from(wordleGlobalSessions)).find(
       (row) => row.user_id === 'played',
@@ -109,14 +112,14 @@ describe('global drafts', () => {
     expect(awards).toBe(0);
   });
   it('finalizes an existing empty session from a winning draft', async () => {
-    await recordWordlePresence(
+    await createWordleTestPresence(
       testDb.db,
       'empty-session',
       'empty-community',
       date,
       Math.floor(now / 1000),
     );
-    const writer = new WordleGlobalDraftService(testDb.db, () => now);
+    const writer = createWordleTestGlobalDraftService(() => now, testDb.db);
     await writer.write('empty-session', {
       ...draft,
       cells: ['t', 'e', 'r', 'm', 'o'],
@@ -129,10 +132,10 @@ describe('global drafts', () => {
       attempts: 0,
       created_at: 1,
     });
-    await new WordleGlobalDraftService(
-      testDb.db,
+    await createWordleTestGlobalDraftServiceWithAward(
       () => now + 86400000,
       async () => {},
+      testDb.db,
     ).finalizePlayerBefore('empty-session', '2026-11-02');
     const session = (await testDb.db.select().from(wordleGlobalSessions)).find(
       (row) => row.user_id === 'empty-session',
@@ -147,14 +150,14 @@ describe('global drafts', () => {
 
   it('assigns first solver to the earliest winning draft regardless of finalization order', async () => {
     const timestamp = Math.floor(now / 1000);
-    await recordWordlePresence(
+    await createWordleTestPresence(
       testDb.db,
       'early',
       'draft-order',
       date,
       timestamp,
     );
-    await recordWordlePresence(
+    await createWordleTestPresence(
       testDb.db,
       'late',
       'draft-order',
@@ -166,18 +169,18 @@ describe('global drafts', () => {
       cells: ['t', 'e', 'r', 'm', 'o'],
       activeIndex: 4,
     };
-    await new WordleGlobalDraftService(testDb.db, () => now).write(
+    await createWordleTestGlobalDraftService(() => now, testDb.db).write(
       'early',
       input,
     );
-    await new WordleGlobalDraftService(testDb.db, () => now + 1000).write(
+    await createWordleTestGlobalDraftService(() => now + 1000, testDb.db).write(
       'late',
       input,
     );
-    const finalizer = new WordleGlobalDraftService(
-      testDb.db,
+    const finalizer = createWordleTestGlobalDraftServiceWithAward(
       () => now + 86400000,
       async () => {},
+      testDb.db,
     );
     await finalizer.finalizePlayerBefore('late', '2026-11-02');
     await finalizer.finalizePlayerBefore('early', '2026-11-02');
@@ -188,14 +191,14 @@ describe('global drafts', () => {
   });
   it('finalizes a complete draft once and retries failed awards', async () => {
     const timestamp = Math.floor(now / 1000);
-    await recordWordlePresence(
+    await createWordleTestPresence(
       testDb.db,
       'draft-winner',
       'community',
       date,
       timestamp,
     );
-    const writer = new WordleGlobalDraftService(testDb.db, () => now);
+    const writer = createWordleTestGlobalDraftService(() => now, testDb.db);
     expect(
       (
         await writer.write('draft-winner', {
@@ -206,13 +209,13 @@ describe('global drafts', () => {
       ).status,
     ).toBe('saved');
     let attempts = 0;
-    const finalizer = new WordleGlobalDraftService(
-      testDb.db,
+    const finalizer = createWordleTestGlobalDraftServiceWithAward(
       () => now + 86400000,
       async () => {
         attempts++;
         if (attempts === 1) throw new Error('temporary');
       },
+      testDb.db,
     );
     await finalizer.finalizePlayerBefore('draft-winner', '2026-11-02');
     const [session] = (
@@ -233,7 +236,7 @@ describe('global drafts', () => {
     ).toHaveLength(1);
   });
   it('saves a single draft per player and rejects stale edits', async () => {
-    const service = new WordleGlobalDraftService(testDb.db, () => now);
+    const service = createWordleTestGlobalDraftService(() => now, testDb.db);
     const first = await service.write('player', draft);
     expect(first.status).toBe('saved');
     const stale = await service.write('player', draft);
@@ -244,7 +247,7 @@ describe('global drafts', () => {
   });
 
   it('serializes simultaneous writes from different clients', async () => {
-    const service = new WordleGlobalDraftService(testDb.db, () => now);
+    const service = createWordleTestGlobalDraftService(() => now, testDb.db);
     const results = await Promise.all([
       service.write('concurrent', draft),
       service.write('concurrent', draft),
@@ -264,7 +267,7 @@ describe('global drafts', () => {
       attempts: 1,
       created_at: 1,
     });
-    const service = new WordleGlobalDraftService(testDb.db, () => now);
+    const service = createWordleTestGlobalDraftService(() => now, testDb.db);
     expect(await service.write('solved', draft)).toEqual({ status: 'closed' });
     expect(
       await service.write('another', { ...draft, date: '2026-10-31' }),
@@ -273,8 +276,9 @@ describe('global drafts', () => {
 
   it('rolls back a draft when the day changes before commit', async () => {
     let calls = 0;
-    const service = new WordleGlobalDraftService(testDb.db, () =>
-      ++calls <= 5 ? now : now + 24 * 60 * 60 * 1000,
+    const service = createWordleTestGlobalDraftService(
+      () => (++calls <= 5 ? now : now + 24 * 60 * 60 * 1000),
+      testDb.db,
     );
     expect(await service.write('cutoff', draft)).toEqual({ status: 'closed' });
     expect(await service.getCurrentDraft('cutoff', date, 0, false)).toBeNull();

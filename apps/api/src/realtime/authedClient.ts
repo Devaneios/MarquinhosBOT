@@ -1,5 +1,5 @@
 import type { Client } from 'colyseus';
-import type { WsSessionPayload } from 'services/activity/wsSessionToken';
+import type { WsSessionPayload } from 'modules/activity/ws-session-token';
 
 export type AuthedClient = Client<{ auth: WsSessionPayload }>;
 

@@ -4,8 +4,8 @@ import {
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import { recordWordlePresence } from '../src/services/wordle/WordleCommunityService';
-import { WordleGlobalLeaderboardService } from '../src/services/wordle/WordleGlobalLeaderboardService';
+import { WordleGlobalLeaderboardService } from '../src/modules/wordle/services/wordle-global-leaderboard.service';
+import { createWordleTestPresence } from './helpers/wordleServices';
 
 let testDb: TestDb;
 const first = Math.floor(Date.parse('2026-11-01T15:00:00Z') / 1000);
@@ -59,15 +59,21 @@ beforeAll(async () => {
       created_at: first + 86400,
     },
   ]);
-  await recordWordlePresence(testDb.db, 'b', 'community', '2026-11-01', first);
-  await recordWordlePresence(
+  await createWordleTestPresence(
+    testDb.db,
+    'b',
+    'community',
+    '2026-11-01',
+    first,
+  );
+  await createWordleTestPresence(
     testDb.db,
     'a',
     'community',
     '2026-11-02',
     first + 86400,
   );
-  await recordWordlePresence(
+  await createWordleTestPresence(
     testDb.db,
     'c',
     'other',
@@ -81,14 +87,14 @@ afterAll(async () => {
 
 describe('global community rankings', () => {
   it('supports stable pages so the bot can skip departed members', async () => {
-    await recordWordlePresence(
+    await createWordleTestPresence(
       testDb.db,
       'a',
       'paged',
       '2026-11-02',
       first + 86400,
     );
-    await recordWordlePresence(
+    await createWordleTestPresence(
       testDb.db,
       'c',
       'paged',

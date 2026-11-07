@@ -2,8 +2,9 @@ import {
   playPayloadSchema,
   type DominoesServerMessage,
 } from '@marquinhos/contracts/activity/games/dominoesBlock';
-import { DominoesSession } from 'services/activity/dominoesBlock/DominoesSession';
+import { DominoesSession } from 'modules/activity/games/dominoes-block/dominoes-session';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const MOVE_RATE_LIMIT_WINDOW_MS = 1000;
@@ -23,7 +24,7 @@ export const dominoesAdapter: GameRoomAdapter<DominoesSession> = {
   // Task 5/6; not part of this task.
   supportsQueue: false,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new DominoesSession(
       {
         sessionKey: ctx.roomKey,
@@ -36,7 +37,7 @@ export const dominoesAdapter: GameRoomAdapter<DominoesSession> = {
         broadcastPublic: (message) =>
           ctx.broadcast(message.type, message.payload),
       },
-      undefined,
+      dependencies.gamification,
       { onSessionEnded: ctx.onSessionEnded },
     );
 

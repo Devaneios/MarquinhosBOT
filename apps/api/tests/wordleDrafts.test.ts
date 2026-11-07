@@ -8,20 +8,26 @@ import {
 import { afterAll, beforeAll, describe, expect, it, spyOn } from 'bun:test';
 import { randomUUID } from 'crypto';
 import { and, eq } from 'drizzle-orm';
-import { WordleService, resolveCanonical } from 'services/wordle';
-import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
-import { WordleDraftService } from 'services/wordle/WordleDraftService';
 import {
   getRecifeDate,
   getWordleDayEndEpoch,
-} from 'services/wordle/wordleDate';
+} from 'modules/wordle/services/wordle-date';
+import { WordleAchievementService } from '../src/modules/wordle/services/wordle-achievement.service';
 import {
   achievementXp,
   identity,
   installWordleAchievementCatalog,
 } from './helpers/wordleAchievementCatalog';
+import {
+  createWordleTestAchievementService,
+  createWordleTestDraftService,
+  createWordleTestService,
+  createWordleTestWordBankService,
+} from './helpers/wordleServices';
 
 const currentDate = getRecifeDate();
+const wordBank = createWordleTestWordBankService();
+const resolveCanonical = wordBank.resolveCanonical.bind(wordBank);
 const currentNow = Date.parse(`${currentDate}T15:00:00Z`);
 const shiftDate = (date: string, offset: number) => {
   const value = new Date(`${date}T12:00:00Z`);
@@ -89,10 +95,10 @@ describe('Wordle saved draft finalization', () => {
   it('clears same-day drafts when an administrator replaces the answer', async () => {
     const { userId, guildId } = identity();
     await seedDay(guildId, currentDate, 'termo');
-    const drafts = new WordleDraftService(() => currentNow);
+    const drafts = createWordleTestDraftService(() => currentNow);
     await drafts.write(userId, guildId, draftWrite(currentDate, 'termo'));
 
-    await new WordleService().forceNewWord(guildId);
+    await createWordleTestService().forceNewWord(guildId);
 
     expect(
       await drafts.getCurrentDraft(userId, guildId, currentDate),
@@ -106,7 +112,7 @@ describe('Wordle saved draft finalization', () => {
     const nextDate = shiftDate(currentDate, 1);
     const nextDateNow = Date.parse(`${nextDate}T15:00:00Z`);
     let clockReads = 0;
-    const drafts = new WordleDraftService(() => {
+    const drafts = createWordleTestDraftService(() => {
       clockReads += 1;
       return clockReads <= 2 ? currentNow : nextDateNow;
     });
@@ -126,7 +132,7 @@ describe('Wordle saved draft finalization', () => {
 
   it('keeps a correct draft private until cutoff, then records one zero-guess win and award', async () => {
     const { userId, guildId } = identity();
-    const day = new WordleDraftService(() => currentNow);
+    const day = createWordleTestDraftService(() => currentNow);
     await seedDay(guildId, currentDate, 'termo');
 
     const saved = await day.write(
@@ -149,7 +155,7 @@ describe('Wordle saved draft finalization', () => {
     expect(await achievementXp(userId, guildId)).toBe(0);
 
     const nextDay = shiftDate(currentDate, 1);
-    const finalizer = new WordleDraftService(() =>
+    const finalizer = createWordleTestDraftService(() =>
       Date.parse(`${nextDay}T15:00:00Z`),
     );
     await Promise.all([
@@ -191,7 +197,7 @@ describe('Wordle saved draft finalization', () => {
       );
     expect(draft?.finalized_at).not.toBeNull();
     expect(draft?.award_reconciled_at).not.toBeNull();
-    const overview = await new WordleAchievementService().getOverview(
+    const overview = await createWordleTestAchievementService().getOverview(
       userId,
       guildId,
     );
@@ -231,7 +237,7 @@ describe('Wordle saved draft finalization', () => {
 
   it('persists exact gaps and active position, and serializes revision conflicts', async () => {
     const { userId, guildId } = identity();
-    const drafts = new WordleDraftService(() => currentNow);
+    const drafts = createWordleTestDraftService(() => currentNow);
     await seedDay(guildId, currentDate, 'partes');
     const first = await drafts.write(
       userId,
@@ -291,7 +297,7 @@ describe('Wordle saved draft finalization', () => {
     const incomplete = identity();
     const changed = identity();
     const played = identity();
-    const drafts = new WordleDraftService(() => currentNow);
+    const drafts = createWordleTestDraftService(() => currentNow);
     await Promise.all(
       [incomplete, changed, played].map(({ guildId }) =>
         seedDay(guildId, currentDate, 'partes'),
@@ -323,14 +329,14 @@ describe('Wordle saved draft finalization', () => {
       draftWrite(currentDate, 'partes'),
     );
 
-    const submitted = await new WordleService().submitGuess(
+    const submitted = await createWordleTestService().submitGuess(
       played.userId,
       played.guildId,
       'cartes',
     );
     expect('error' in submitted).toBe(false);
     const nextDay = shiftDate(currentDate, 1);
-    const finalizer = new WordleDraftService(() =>
+    const finalizer = createWordleTestDraftService(() =>
       Date.parse(`${nextDay}T15:00:00Z`),
     );
     await Promise.all([
@@ -355,11 +361,11 @@ describe('Wordle saved draft finalization', () => {
 
   it('reconciles a finalized zero-win award after failure without duplicating it', async () => {
     const { userId, guildId } = identity();
-    const drafts = new WordleDraftService(() => currentNow);
+    const drafts = createWordleTestDraftService(() => currentNow);
     await seedDay(guildId, currentDate, 'termo');
     await drafts.write(userId, guildId, draftWrite(currentDate, 'termo'));
     const nextDay = shiftDate(currentDate, 1);
-    const finalizer = new WordleDraftService(() =>
+    const finalizer = createWordleTestDraftService(() =>
       Date.parse(`${nextDay}T15:00:00Z`),
     );
     const failure = spyOn(
@@ -395,7 +401,7 @@ describe('Wordle saved draft finalization', () => {
         ),
       );
     expect(row?.award_reconciled_at).not.toBeNull();
-    const overview = await new WordleAchievementService().getOverview(
+    const overview = await createWordleTestAchievementService().getOverview(
       userId,
       guildId,
     );
@@ -413,7 +419,7 @@ describe('Wordle saved draft finalization', () => {
     const guildId = randomUUID();
     const first = { userId: randomUUID(), guildId };
     const second = { userId: randomUUID(), guildId };
-    const drafts = new WordleDraftService(() => currentNow);
+    const drafts = createWordleTestDraftService(() => currentNow);
     await Promise.all(
       [first, second].map(({ guildId }) =>
         seedDay(guildId, currentDate, 'termo'),
@@ -448,7 +454,7 @@ describe('Wordle saved draft finalization', () => {
         ),
       );
     const nextDay = shiftDate(currentDate, 1);
-    const finalizer = new WordleDraftService(() =>
+    const finalizer = createWordleTestDraftService(() =>
       Date.parse(`${nextDay}T15:00:00Z`),
     );
     await Promise.all([
@@ -483,25 +489,27 @@ describe('Wordle saved draft finalization', () => {
       created_at: 1,
       solved_at: 2,
     });
-    const drafts = new WordleDraftService(() =>
+    const drafts = createWordleTestDraftService(() =>
       Date.parse(`${previousDate}T15:00:00Z`),
     );
     await drafts.write(userId, guildId, draftWrite(previousDate, 'termo'));
-    const finalizer = new WordleDraftService(() =>
+    const finalizer = createWordleTestDraftService(() =>
       Date.parse(`${currentDate}T15:00:00Z`),
     );
     await finalizer.finalizePlayerBefore(userId, guildId, currentDate);
 
     const answer = resolveCanonical('partes');
     expect(answer).toBe('partes');
-    const result = await new WordleService().submitGuess(
+    const result = await createWordleTestService().submitGuess(
       userId,
       guildId,
       answer!,
     );
     expect('error' in result).toBe(false);
     if (!('error' in result)) expect(result.streak).toBe(3);
-    expect(await new WordleService().getStreak(userId, guildId)).toMatchObject({
+    expect(
+      await createWordleTestService().getStreak(userId, guildId),
+    ).toMatchObject({
       currentStreak: 3,
       maxStreak: 3,
     });
@@ -510,15 +518,15 @@ describe('Wordle saved draft finalization', () => {
   it('serializes finalization against the first accepted guess', async () => {
     const { userId, guildId } = identity();
     await seedDay(guildId, currentDate, 'partes');
-    await new WordleDraftService(() => currentNow).write(
+    await createWordleTestDraftService(() => currentNow).write(
       userId,
       guildId,
       draftWrite(currentDate, 'partes'),
     );
     const nextDay = shiftDate(currentDate, 1);
     const [guess, _finalized] = await Promise.all([
-      new WordleService().submitGuess(userId, guildId, 'cartes'),
-      new WordleDraftService(() =>
+      createWordleTestService().submitGuess(userId, guildId, 'cartes'),
+      createWordleTestDraftService(() =>
         Date.parse(`${nextDay}T15:00:00Z`),
       ).finalizePlayerBefore(userId, guildId, nextDay),
     ]);
@@ -540,13 +548,13 @@ describe('Wordle saved draft finalization', () => {
   it('finalizes drafts from older dates when the process catches up after downtime', async () => {
     const { userId, guildId } = identity();
     await seedDay(guildId, currentDate, 'termo');
-    await new WordleDraftService(() => currentNow).write(
+    await createWordleTestDraftService(() => currentNow).write(
       userId,
       guildId,
       draftWrite(currentDate, 'termo'),
     );
     const nextDay = shiftDate(currentDate, 1);
-    await new WordleDraftService(() =>
+    await createWordleTestDraftService(() =>
       Date.parse(`${nextDay}T15:00:00Z`),
     ).finalizeExpiredDrafts();
     expect(await sessionFor(userId, guildId, currentDate)).toMatchObject({

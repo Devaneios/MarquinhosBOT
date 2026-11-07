@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import type { SpawnExec } from 'services/aiChat/sandbox/DockerodeSandboxClient';
-import { DockerodeSandboxClient } from 'services/aiChat/sandbox/DockerodeSandboxClient';
+import type { SpawnExec } from 'modules/ai-chat/sandbox/dockerode-sandbox.client';
+import { DockerodeSandboxClient } from 'modules/ai-chat/sandbox/dockerode-sandbox.client';
 
 const TIMEOUT_EXIT_CODE = 124;
 
@@ -9,7 +9,7 @@ function localSpawn(command: string[]): SpawnExec {
 }
 
 function clientWithSpawn(command: string[]): DockerodeSandboxClient {
-  return new DockerodeSandboxClient(undefined, localSpawn(command));
+  return new DockerodeSandboxClient({} as never, localSpawn(command));
 }
 
 describe('DockerodeSandboxClient.exec', () => {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
-import { ResearchJobStore } from 'services/aiChat/research/ResearchJobStore';
+import { ResearchJobStore } from 'modules/ai-chat/research/research-job.store';
 import { useTestDb } from '../helpers/testDb';
 
 const testDb = useTestDb();

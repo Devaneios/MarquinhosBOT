@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'bun:test';
 import { DiscordService } from 'integrations/discord/discord.service';
+import { createTestAppConfig } from './helpers/testAppConfig';
 
 const originalFetch = globalThis.fetch;
 
@@ -18,10 +19,9 @@ describe('DiscordService.isGuildMember', () => {
       { preconnect: originalFetch.preconnect },
     );
 
-    const member = await new DiscordService().isGuildMember(
-      'token',
-      'x/../../../../users/@me?',
-    );
+    const member = await new DiscordService(
+      createTestAppConfig(),
+    ).isGuildMember('token', 'x/../../../../users/@me?');
 
     expect(member).toBe(false);
     expect(urls).toEqual([

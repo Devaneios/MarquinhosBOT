@@ -3,7 +3,8 @@ import { describe, expect, it } from 'bun:test';
 import {
   ConnectFourSession,
   type ConnectFourSessionIdentity,
-} from 'services/activity/connectFour/ConnectFourSession';
+} from 'modules/activity/games/connect-four/connect-four-session';
+import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 
 function identity(mode: ActivityMode = 'multi'): ConnectFourSessionIdentity {
   return {
@@ -31,7 +32,11 @@ function fakeBroadcaster() {
 describe('ConnectFourSession', () => {
   it('assigns p1 to the first joiner and p2 to the second', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new ConnectFourSession(identity(), broadcaster);
+    const session = new ConnectFourSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
 
     expect(session.addPlayer('u1', {})).toBe('p1');
     expect(session.addPlayer('u2', {})).toBe('p2');
@@ -40,7 +45,11 @@ describe('ConnectFourSession', () => {
 
   it('rejects a third joiner', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new ConnectFourSession(identity(), broadcaster);
+    const session = new ConnectFourSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('u1', {});
     session.addPlayer('u2', {});
 
@@ -49,7 +58,11 @@ describe('ConnectFourSession', () => {
 
   it('rejects a move from a player not in the session', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new ConnectFourSession(identity(), broadcaster);
+    const session = new ConnectFourSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('u1', {});
     session.addPlayer('u2', {});
 
@@ -58,7 +71,11 @@ describe('ConnectFourSession', () => {
 
   it('rejects an out-of-turn move', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new ConnectFourSession(identity(), broadcaster);
+    const session = new ConnectFourSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('u1', {});
     session.addPlayer('u2', {});
 
@@ -68,7 +85,11 @@ describe('ConnectFourSession', () => {
 
   it('broadcasts state after every accepted move', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new ConnectFourSession(identity(), broadcaster);
+    const session = new ConnectFourSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('u1', {});
     session.addPlayer('u2', {});
 
@@ -83,7 +104,11 @@ describe('ConnectFourSession', () => {
 
   it('forfeits to the remaining player on explicit leave mid-match', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new ConnectFourSession(identity(), broadcaster);
+    const session = new ConnectFourSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
     const conn1 = {};
     session.addPlayer('u1', conn1);
     session.addPlayer('u2', {});
@@ -105,7 +130,7 @@ describe('ConnectFourSession', () => {
     const session = new ConnectFourSession(
       identity('single'),
       broadcaster,
-      undefined,
+      testRoomDependencies.gamification,
       {
         botMoveDelayMs: 5,
       },
@@ -127,7 +152,7 @@ describe('ConnectFourSession', () => {
     const session = new ConnectFourSession(
       identity('multi'),
       broadcaster,
-      undefined,
+      testRoomDependencies.gamification,
       {
         disconnectGraceMs: 20,
       },
@@ -147,7 +172,11 @@ describe('ConnectFourSession', () => {
 describe('ConnectFourSession.getWinnerUserId', () => {
   it('returns null before a winner exists', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new ConnectFourSession(identity(), broadcaster);
+    const session = new ConnectFourSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-p1', {});
     session.addPlayer('user-p2', {});
     expect(session.getWinnerUserId()).toBe(null);
@@ -155,7 +184,11 @@ describe('ConnectFourSession.getWinnerUserId', () => {
 
   it('resolves the winning disc back to the winning userId', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new ConnectFourSession(identity(), broadcaster);
+    const session = new ConnectFourSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-p1', {}); // p1
     session.addPlayer('user-p2', {}); // p2
 
@@ -174,7 +207,11 @@ describe('ConnectFourSession.getWinnerUserId', () => {
 describe('ConnectFourSession.substitutePlayer', () => {
   it("reseats the incoming player into the outgoing player's exact disc", () => {
     const broadcaster = fakeBroadcaster();
-    const session = new ConnectFourSession(identity(), broadcaster);
+    const session = new ConnectFourSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-p1', {}); // p1
     session.addPlayer('user-p2', {}); // p2
 
@@ -192,7 +229,11 @@ describe('ConnectFourSession.substitutePlayer', () => {
 
   it('returns false when the outgoing userId is not seated', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new ConnectFourSession(identity(), broadcaster);
+    const session = new ConnectFourSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-p1', {});
     expect(session.substitutePlayer('nobody', 'user-new', {})).toBeNull();
   });

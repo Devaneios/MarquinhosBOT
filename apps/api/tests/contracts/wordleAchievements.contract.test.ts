@@ -10,11 +10,11 @@ import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achi
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
-import wordleRouter from '../../src/routes/wordle.route';
-import { startContractServer } from '../helpers/contractServer';
+import { WordleModule } from '../../src/modules/wordle/wordle.module';
+import { startNestContractServer } from '../helpers/contractServer';
 import { installWordleAchievementCatalog } from '../helpers/wordleAchievementCatalog';
 
-let server: Awaited<ReturnType<typeof startContractServer>>;
+let server: Awaited<ReturnType<typeof startNestContractServer>>;
 let omitAuth = false;
 let restoreCatalog: (() => Promise<void>) | undefined;
 const guildId = randomUUID();
@@ -22,9 +22,7 @@ const userId = randomUUID();
 
 beforeAll(async () => {
   restoreCatalog = await installWordleAchievementCatalog();
-  server = await startContractServer((app) =>
-    app.use('/api/wordle', wordleRouter),
-  );
+  server = await startNestContractServer({ imports: [WordleModule] });
   server.http.interceptors.request.use((config) => {
     if (!omitAuth) return config;
     const headers = new Headers(config.headers);

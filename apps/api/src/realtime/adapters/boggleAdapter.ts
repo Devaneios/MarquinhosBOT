@@ -2,8 +2,9 @@ import {
   submitWordPayloadSchema,
   type BoggleServerMessage,
 } from '@marquinhos/contracts/activity/games/boggleWordRace';
-import { BoggleSession } from 'services/activity/boggle/BoggleSession';
+import { BoggleSession } from 'modules/activity/games/boggle/boggle-session';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const SUBMIT_RATE_LIMIT_WINDOW_MS = 1000;
@@ -14,7 +15,7 @@ export const boggleAdapter: GameRoomAdapter<BoggleSession> = {
   supportsBot: false,
   supportsQueue: false,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new BoggleSession(
       {
         sessionKey: ctx.roomKey,
@@ -26,7 +27,8 @@ export const boggleAdapter: GameRoomAdapter<BoggleSession> = {
         broadcast: (_key, message) =>
           ctx.broadcast(message.type, message.payload),
       },
-      undefined,
+      dependencies.gamification,
+      dependencies.boggleWordBank,
       { onSessionEnded: ctx.onSessionEnded },
     );
 

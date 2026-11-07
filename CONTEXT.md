@@ -12,6 +12,6 @@
 
 **Match room**: the single Colyseus room (`'match'`) every activity client joins. It picks a Room adapter by game id.
 
-**Room adapter**: the per-game module behind the Match room that builds the game's session and routes its messages. One per game, registered in `realtime/adapters/registry.ts`.
+**Room adapter**: the per-game module behind the Match room that builds the game's session and routes its messages. One per game, registered by `createAdapterRegistry()` in `apps/api/src/realtime/adapters/registry.ts` with dependencies supplied by `RealtimeModule`.
 
 **Session**: the server-side, per-match game state holder that wraps a domain engine and emits Game protocol messages.

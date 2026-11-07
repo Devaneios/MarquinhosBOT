@@ -7,9 +7,9 @@ import { DiscordService } from 'integrations/discord/discord.service';
 import { LastfmService } from 'integrations/lastfm/lastfm.service';
 import { SpotifyService } from 'integrations/spotify/spotify.service';
 import { UserService } from 'modules/user/user.service';
-import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
 import { createTestAppConfig } from './helpers/testAppConfig';
 import { installWordleAchievementCatalog } from './helpers/wordleAchievementCatalog';
+import { createWordleTestAchievementService } from './helpers/wordleServices';
 
 const RUN = randomUUID();
 const USER = `delete-me-${RUN}`;
@@ -209,7 +209,7 @@ describe('UserService.deleteAllData', () => {
       1,
     );
     const awards = await db.transaction((tx) =>
-      new WordleAchievementService().checkAndAward(USER, 'g', tx),
+      createWordleTestAchievementService().checkAndAward(USER, 'g', tx),
     );
     expect(awards.unlockedIds).toEqual([]);
     expect(await count('user_achievements', 'user_id', USER)).toBe(0);

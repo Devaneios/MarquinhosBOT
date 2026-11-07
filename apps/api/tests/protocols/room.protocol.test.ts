@@ -1,12 +1,13 @@
 import type { RoomState } from '@marquinhos/contracts/activity/room';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
+import { testRoomDependencies } from '../helpers/realtimeTestDependencies';
 
-const { MatchRoom } = await import('../../src/realtime/MatchRoom');
+const { createMatchRoom } = await import('../../src/realtime/MatchRoom');
 const { bootColyseusTestServer, nextMessage, unparsedMessages } =
   await import('../helpers/colyseusTestServer');
 const { mintWsSessionToken } =
-  await import('../../src/services/activity/wsSessionToken');
-const { roomKey } = await import('../../src/services/activity/roomKey');
+  await import('../../src/modules/activity/ws-session-token');
+const { roomKey } = await import('../../src/modules/activity/room-key');
 const ticTacToe =
   await import('@marquinhos/contracts/activity/games/ticTacToe');
 
@@ -15,7 +16,9 @@ let colyseus: ColyseusTestServer;
 
 beforeAll(async () => {
   colyseus = await bootColyseusTestServer((server) => {
-    server.define('match', MatchRoom).filterBy(['roomKey']);
+    server
+      .define('match', createMatchRoom(testRoomDependencies))
+      .filterBy(['roomKey']);
   });
 });
 afterEach(async () => {

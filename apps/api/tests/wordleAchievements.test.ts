@@ -10,9 +10,8 @@ import { afterAll, beforeAll, describe, expect, it, spyOn } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 import { AchievementService } from 'modules/gamification/achievement.service';
 import { LevelingService } from 'modules/gamification/leveling.service';
-import { WordleService } from 'services/wordle';
-import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
-import { getRecifeDate } from 'services/wordle/wordleDate';
+import { getRecifeDate } from 'modules/wordle/services/wordle-date';
+import type { WordleService } from 'modules/wordle/wordle.service';
 import {
   achievementXp,
   dateAt,
@@ -22,9 +21,13 @@ import {
   seedAchievementDay,
   seedAchievementDays,
 } from './helpers/wordleAchievementCatalog';
+import {
+  createWordleTestAchievementService,
+  createWordleTestService,
+} from './helpers/wordleServices';
 
-const awards = new WordleAchievementService();
-const defaults = new AchievementService(new LevelingService());
+const awards = createWordleTestAchievementService();
+const defaults = new AchievementService(new LevelingService(db), db);
 const award = (userId: string, guildId: string) =>
   db.transaction((tx) => awards.checkAndAward(userId, guildId, tx));
 let restoreCatalog: (() => Promise<void>) | undefined;
@@ -212,7 +215,7 @@ describe('daily Wordle achievements', () => {
 });
 
 describe('Wordle guess award integration', () => {
-  const service = new WordleService();
+  const service = createWordleTestService();
   const seedDaily = (guildId: string) =>
     db.insert(wordleDays).values({
       guild_id: guildId,

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { AppConfig } from 'config/app.config';
-import { createLegacyAppConfig } from 'config/legacy-app-config';
 import { URLSearchParams } from 'url';
 import { z } from 'zod';
 // URLSearchParams is available globally in Node.js >= 15 but we import for clarity
@@ -62,7 +61,7 @@ export function buildActivityTokenExchangeBody(
 
 @Injectable()
 export class DiscordService {
-  constructor(private readonly config: AppConfig = createLegacyAppConfig()) {}
+  constructor(private readonly config: AppConfig) {}
 
   getDiscordUser = async (token: string): Promise<DiscordUser | null> => {
     if (!this.config.isProduction && token === 'mock-access-token') {

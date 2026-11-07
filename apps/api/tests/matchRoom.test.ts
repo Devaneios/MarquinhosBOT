@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'bun:test';
+import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 
-const { MatchRoom } = await import('../src/realtime/MatchRoom');
+const { createMatchRoom } = await import('../src/realtime/MatchRoom');
 const {
   bootColyseusTestServer,
   drainMessages,
@@ -10,8 +11,8 @@ const {
   waitUntil,
 } = await import('./helpers/colyseusTestServer');
 const { mintWsSessionToken } =
-  await import('../src/services/activity/wsSessionToken');
-const { roomKey } = await import('services/activity/roomKey');
+  await import('../src/modules/activity/ws-session-token');
+const { roomKey } = await import('modules/activity/room-key');
 const { ACTION_REJECTED } =
   await import('@marquinhos/contracts/activity/protocol');
 const { ROOM_STATE } = await import('@marquinhos/contracts/activity/room');
@@ -89,7 +90,9 @@ async function concludedMatchWithQueue(roomId: string) {
 
 beforeAll(async () => {
   colyseus = await bootColyseusTestServer((server) => {
-    server.define('match', MatchRoom).filterBy(['roomKey']);
+    server
+      .define('match', createMatchRoom(testRoomDependencies))
+      .filterBy(['roomKey']);
   });
 });
 

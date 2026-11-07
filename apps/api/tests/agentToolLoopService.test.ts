@@ -4,20 +4,21 @@ import {
   AgentToolLoopService,
   MAX_ITERATIONS,
   MAX_TOOL_CALLS_TOTAL,
-} from 'services/aiChat/AgentToolLoopService';
+} from 'modules/ai-chat/agent/agent-tool-loop.service';
+import { ToolDispatcher } from 'modules/ai-chat/agent/tool-dispatcher';
+import type { DailyQuotaService } from 'modules/ai-chat/daily-quota.service';
+import { GuardrailService } from 'modules/ai-chat/guardrail.service';
+import type { OpenAiClient } from 'modules/ai-chat/openai.client';
+import {
+  SandboxCapacityError,
+  type SandboxManager,
+} from 'modules/ai-chat/sandbox/sandbox-manager.service';
 import type {
   TraceExecEvent,
   TraceSandboxEvent,
   TraceSummary,
   TraceToolEvent,
-} from 'services/aiChat/AiTraceRecorder';
-import type { DailyQuotaService } from 'services/aiChat/DailyQuotaService';
-import { GuardrailService } from 'services/aiChat/GuardrailService';
-import type { OpenAiClient } from 'services/aiChat/OpenAiClient';
-import {
-  SandboxCapacityError,
-  type SandboxManager,
-} from 'services/aiChat/sandbox/SandboxManager';
+} from 'modules/ai-chat/trace/ai-trace-recorder.service';
 
 function fakeDailyQuotaService(allowed: boolean): DailyQuotaService {
   return {
@@ -52,6 +53,23 @@ function fakeOpenAiClient(responses: unknown[]): OpenAiClient {
   } as unknown as OpenAiClient;
 }
 
+function createAgentToolLoopService(
+  quota: DailyQuotaService,
+  guardrail: GuardrailService,
+  sandbox: SandboxManager,
+  client: OpenAiClient,
+  now: () => number = Date.now,
+) {
+  return new AgentToolLoopService(
+    quota,
+    guardrail,
+    sandbox,
+    client,
+    now,
+    new ToolDispatcher(sandbox),
+  );
+}
+
 const baseRequest = {
   userId: 'user1',
   guildId: 'guild1',
@@ -63,7 +81,7 @@ const baseRequest = {
 describe('AgentToolLoopService.run', () => {
   it('returns rate_limited without touching the sandbox when the agent limit is exceeded', async () => {
     const sandbox = fakeSandboxManager();
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(false),
       new GuardrailService(),
       sandbox,
@@ -82,7 +100,7 @@ describe('AgentToolLoopService.run', () => {
         throw new SandboxCapacityError();
       },
     });
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       sandbox,
@@ -103,7 +121,7 @@ describe('AgentToolLoopService.run', () => {
         content: 'não precisei rodar nada, a resposta é 4.',
       },
     ]);
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       fakeSandboxManager(),
@@ -143,7 +161,7 @@ describe('AgentToolLoopService.run', () => {
       },
       { role: 'assistant', content: 'os arquivos são index.ts e foo.ts.' },
     ]);
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       sandbox,
@@ -189,7 +207,7 @@ describe('AgentToolLoopService.run', () => {
       },
       { role: 'assistant', content: 'pronto.' },
     ]);
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       sandbox,
@@ -227,7 +245,7 @@ describe('AgentToolLoopService.run', () => {
       },
       { role: 'assistant', content: 'não consegui listar, mas tudo bem.' },
     ]);
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       fakeSandboxManager(),
@@ -263,7 +281,7 @@ describe('AgentToolLoopService.run', () => {
     const client = fakeOpenAiClient(
       Array(MAX_ITERATIONS + 4).fill(alwaysToolCall),
     );
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       fakeSandboxManager(),
@@ -299,7 +317,7 @@ describe('AgentToolLoopService.run', () => {
       { role: 'assistant', content: null, tool_calls: manyToolCalls },
       { role: 'assistant', content: 'pronto.' },
     ]);
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       sandbox,
@@ -318,7 +336,7 @@ describe('AgentToolLoopService.run', () => {
     const client = fakeOpenAiClient([
       { role: 'assistant', content: longReply },
     ]);
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       fakeSandboxManager(),
@@ -333,7 +351,7 @@ describe('AgentToolLoopService.run', () => {
 
   it('decides format text when the final reply is 1800 characters or fewer', async () => {
     const client = fakeOpenAiClient([{ role: 'assistant', content: 'curto' }]);
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       fakeSandboxManager(),
@@ -367,7 +385,7 @@ describe('AgentToolLoopService.run', () => {
       },
       { role: 'assistant', content: 'ok.' },
     ]);
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       sandbox,
@@ -390,7 +408,7 @@ describe('AgentToolLoopService.run', () => {
 
   it('filters injection-flagged recentMessages out of the initial context', async () => {
     const client = fakeOpenAiClient([{ role: 'assistant', content: 'ok' }]);
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       fakeSandboxManager(),
@@ -427,7 +445,7 @@ describe('AgentToolLoopService.run', () => {
 
   it('drops repliedMessage from the initial context when it is an injection attempt', async () => {
     const client = fakeOpenAiClient([{ role: 'assistant', content: 'ok' }]);
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       fakeSandboxManager(),
@@ -494,7 +512,7 @@ describe('AgentToolLoopService tracing', () => {
     const sandbox = fakeSandboxManager({
       exec: async () => ({ stdout: '4\n', stderr: '', exitCode: 0 }),
     });
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       sandbox,
@@ -529,7 +547,7 @@ describe('AgentToolLoopService tracing', () => {
     const sandbox = fakeSandboxManager({
       exec: async () => ({ stdout: 'x'.repeat(9000), stderr: '', exitCode: 0 }),
     });
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       sandbox,
@@ -551,7 +569,7 @@ describe('AgentToolLoopService tracing', () => {
         throw new Error('container gone');
       },
     });
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       sandbox,
@@ -574,7 +592,7 @@ describe('AgentToolLoopService tracing', () => {
 
   it('records unknown tools and malformed arguments as failed tool calls', async () => {
     const trace = recordingTrace();
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       fakeSandboxManager(),
@@ -612,7 +630,7 @@ describe('AgentToolLoopService tracing', () => {
 
   it('records the acquired sandbox session and finishes the trace with the loop outcome', async () => {
     const trace = recordingTrace();
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       fakeSandboxManager(),
@@ -638,7 +656,7 @@ describe('AgentToolLoopService tracing', () => {
 
   it('records the capacity failure on the trace when no sandbox slot is free', async () => {
     const trace = recordingTrace();
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       fakeSandboxManager({
@@ -684,7 +702,7 @@ describe('AgentToolLoopService wall-clock deadline', () => {
       ...Array(MAX_ITERATIONS).fill(alwaysToolCall),
       { role: 'assistant', content: 'cheguei até Roma, faltou o Coliseu.' },
     ]);
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       fakeSandboxManager(),
@@ -705,7 +723,7 @@ describe('AgentToolLoopService wall-clock deadline', () => {
       alwaysToolCall,
       { role: 'assistant', content: 'Hops: Recife → Pernambuco → Roma.' },
     ]);
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       fakeSandboxManager(),
@@ -730,7 +748,7 @@ describe('AgentToolLoopService wall-clock deadline', () => {
       alwaysToolCall,
       { role: 'assistant', content: 'resumo final' },
     ]);
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       fakeSandboxManager(),
@@ -749,7 +767,7 @@ describe('AgentToolLoopService wall-clock deadline', () => {
 
   it('falls back to a plain message when the wrap-up call itself fails', async () => {
     const client = fakeOpenAiClient([new Error('openai down')]);
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       fakeSandboxManager(),
@@ -767,7 +785,7 @@ describe('AgentToolLoopService wall-clock deadline', () => {
     const client = fakeOpenAiClient([
       { role: 'assistant', content: 'pronto, aqui está.' },
     ]);
-    const service = new AgentToolLoopService(
+    const service = createAgentToolLoopService(
       fakeDailyQuotaService(true),
       new GuardrailService(),
       fakeSandboxManager(),

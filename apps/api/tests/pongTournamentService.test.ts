@@ -1,9 +1,18 @@
 import { pongRatings } from '@marquinhos/database/schema';
 import { describe, expect, it } from 'bun:test';
-import { PongTournamentService } from 'services/activity/pong/PongTournamentService';
+import { PongCompetitionService } from 'modules/activity/games/pong/pong-competition.service';
+import { PongTournamentService } from 'modules/activity/games/pong/pong-tournament.service';
 import { useTestDb } from './helpers/testDb';
 
 const testDb = useTestDb();
+
+function createService(): PongTournamentService {
+  const database = testDb.current.db;
+  return new PongTournamentService(
+    database,
+    new PongCompetitionService(database),
+  );
+}
 
 describe('PongTournamentService', () => {
   it('seeds and persists a round robin from current ratings', async () => {
@@ -18,7 +27,7 @@ describe('PongTournamentService', () => {
       wins: 5,
       updated_at: 1,
     });
-    const service = new PongTournamentService(testDb.current.db);
+    const service = createService();
 
     const tournament = (await service.create({
       guildId: 'guild-1',
@@ -37,7 +46,7 @@ describe('PongTournamentService', () => {
   });
 
   it('completes round robin after every scheduled match is reported', async () => {
-    const service = new PongTournamentService(testDb.current.db);
+    const service = createService();
     let tournament = (await service.create({
       guildId: 'guild-1',
       name: 'League',
@@ -61,7 +70,7 @@ describe('PongTournamentService', () => {
   });
 
   it('creates a seeded top-four playoff after the final Swiss round', async () => {
-    const service = new PongTournamentService(testDb.current.db);
+    const service = createService();
     let tournament = (await service.create({
       guildId: 'guild-1',
       name: 'Swiss Cup',
@@ -87,7 +96,7 @@ describe('PongTournamentService', () => {
   });
 
   it('rejects reports from users outside the match', async () => {
-    const service = new PongTournamentService(testDb.current.db);
+    const service = createService();
     const tournament = (await service.create({
       guildId: 'guild-1',
       name: 'Protected',
@@ -102,7 +111,7 @@ describe('PongTournamentService', () => {
   });
 
   it('requires a bracket reset when the lower finalist wins grand final one', async () => {
-    const service = new PongTournamentService(testDb.current.db);
+    const service = createService();
     let tournament = (await service.create({
       guildId: 'guild-1',
       name: 'Double',

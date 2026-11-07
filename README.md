@@ -21,8 +21,8 @@ opening and closing markers to display them.
 -->
 
 Everything lives here: the bot, API, Activity, shared packages, and database code.
-The project uses TypeScript, pnpm, Bun, and Turborepo, with Express and Colyseus
-on the API side and PostgreSQL for storage.
+The project uses TypeScript, pnpm, Bun, and Turborepo, with NestJS on its Express
+platform, Colyseus for realtime games, and PostgreSQL for storage.
 
 If you want to run it locally, start below. Discord credentials and the tunnel
 need some setup, so there's a separate [local development guide](docs/local-development.md)

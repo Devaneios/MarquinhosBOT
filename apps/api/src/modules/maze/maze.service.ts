@@ -1,5 +1,5 @@
 import type { mazeViewportStateSchema } from '@marquinhos/contracts/http/routes/maze';
-import { db, type Db, type DbExecutor } from '@marquinhos/database/client';
+import type { Db, DbExecutor } from '@marquinhos/database/client';
 import { mazeSessions } from '@marquinhos/database/schema';
 import { generateWallGrid } from '@marquinhos/domain/games/maze/wallGrid';
 import { Inject, Injectable } from '@nestjs/common';
@@ -141,7 +141,7 @@ function computeViewport(
 
 @Injectable()
 export class MazeService {
-  constructor(@Inject(DB) private readonly database: Db = db) {}
+  constructor(@Inject(DB) private readonly database: Db) {}
 
   async createMazeSession(
     userId: string,

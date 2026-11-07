@@ -1,3 +1,11 @@
+import { RequestMethod } from '@nestjs/common';
+import {
+  GUARDS_METADATA,
+  HTTP_CODE_METADATA,
+  METHOD_METADATA,
+  PATH_METADATA,
+} from '@nestjs/common/constants';
+import { DiscoveryService, ModulesContainer } from '@nestjs/core';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 
@@ -75,6 +83,78 @@ function canonicalHeaders(headers: Record<string, string>) {
   );
 }
 
+const METHOD_NAMES: Record<number, string> = {
+  [RequestMethod.GET]: 'GET',
+  [RequestMethod.POST]: 'POST',
+  [RequestMethod.PUT]: 'PUT',
+  [RequestMethod.DELETE]: 'DELETE',
+  [RequestMethod.PATCH]: 'PATCH',
+  [RequestMethod.OPTIONS]: 'OPTIONS',
+  [RequestMethod.HEAD]: 'HEAD',
+};
+
+const GUARD_NAMES: Record<string, string> = {
+  botAuth: 'BotAuthGuard',
+  discordUserAuth: 'DiscordUserAuthGuard',
+  activityAuth: 'ActivityAuthGuard',
+  guildMember: 'GuildMemberGuard',
+  rateLimit: 'SharedBucketThrottlerGuard',
+};
+
+function routeSegments(value: unknown): string[] {
+  const values = Array.isArray(value) ? value : [value];
+  return values.flatMap((part) =>
+    typeof part === 'string' ? part.split('/').filter(Boolean) : [],
+  );
+}
+
+function discoverNestRoutes() {
+  const discovery = new DiscoveryService(api.app.get(ModulesContainer));
+  return discovery
+    .getControllers()
+    .flatMap((wrapper) => {
+      const controller = wrapper.metatype;
+      if (!controller) return [];
+      const prototype = controller.prototype as Record<string, unknown>;
+      const controllerPath = Reflect.getMetadata(PATH_METADATA, controller);
+      return Object.getOwnPropertyNames(prototype).flatMap((name) => {
+        if (name === 'constructor') return [];
+        const handler = prototype[name];
+        if (typeof handler !== 'function') return [];
+        const routePath = Reflect.getMetadata(PATH_METADATA, handler);
+        const method = Reflect.getMetadata(METHOD_METADATA, handler) as
+          RequestMethod | undefined;
+        if (routePath === undefined || method === undefined) return [];
+
+        const methodName = METHOD_NAMES[method];
+        if (!methodName)
+          throw new Error(`Unknown Nest request method: ${method}`);
+        const path = `/${[
+          'api',
+          ...routeSegments(controllerPath),
+          ...routeSegments(routePath),
+        ].join('/')}`;
+        const classGuards =
+          Reflect.getMetadata(GUARDS_METADATA, controller) ?? [];
+        const handlerGuards =
+          Reflect.getMetadata(GUARDS_METADATA, handler) ?? [];
+        const status =
+          Reflect.getMetadata(HTTP_CODE_METADATA, handler) ??
+          (methodName === 'POST' ? 201 : 200);
+        return [
+          {
+            id: `${methodName} ${path}`,
+            status,
+            guards: [...classGuards, ...handlerGuards].map((guard: unknown) =>
+              typeof guard === 'function' ? guard.name : String(guard),
+            ),
+          },
+        ];
+      });
+    })
+    .sort((left, right) => left.id.localeCompare(right.id));
+}
+
 async function perform(
   method: string,
   path: string,
@@ -141,7 +221,7 @@ function normalizeHeader(name: string, value: string): string {
 }
 
 describe('HTTP parity safety net', () => {
-  test('the route manifest maps every Express route to exactly one contract', () => {
+  test('the route manifest maps every baseline route to exactly one contract', () => {
     expect(manifest.routeCount).toBe(97);
     expect(manifest.contractCount).toBe(97);
     expect(manifest.routes).toHaveLength(97);
@@ -155,7 +235,27 @@ describe('HTTP parity safety net', () => {
     expect(golden.skippedProbes).toHaveLength(13);
   });
 
-  test('the live Express HTTP responses match the committed baseline', async () => {
+  test('discovered Nest routes match the baseline paths, guards, and status codes', () => {
+    const actual = discoverNestRoutes();
+    expect(actual).toHaveLength(manifest.routeCount);
+    expect(new Set(actual.map((route) => route.id)).size).toBe(actual.length);
+
+    const actualById = new Map(actual.map((route) => [route.id, route]));
+    for (const expected of manifest.routes) {
+      const route = actualById.get(expected.id);
+      expect(route).toBeDefined();
+      expect(
+        expected.dynamicSuccessStatuses ?? [expected.successStatus],
+      ).toContain(route?.status);
+      expect(route?.guards).toEqual(
+        expected.middlewareChain
+          .filter((name: string) => name !== 'validateContract')
+          .map((name: string) => GUARD_NAMES[name]),
+      );
+    }
+  });
+
+  test('the live Nest HTTP responses match the committed baseline', async () => {
     for (const probe of executableProbes) {
       for (const setup of probe.setupRequests ?? []) {
         await perform(

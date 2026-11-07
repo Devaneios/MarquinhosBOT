@@ -1,10 +1,11 @@
 import type { ActivityMode } from '@marquinhos/contracts/activity/gameId';
 import { describe, expect, it } from 'bun:test';
-import type { GamificationService } from 'modules/gamification/index';
 import {
   WordSearchRaceSession,
   type WordSearchRaceSessionIdentity,
-} from 'services/activity/word-search-race/WordSearchRaceSession';
+} from 'modules/activity/games/word-search-race/word-search-race-session';
+import type { GamificationService } from 'modules/gamification/index';
+import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 
 function identity(mode: ActivityMode = 'multi'): WordSearchRaceSessionIdentity {
   return {
@@ -45,7 +46,11 @@ function wait(ms: number): Promise<void> {
 describe('WordSearchRaceSession', () => {
   it('rejects a selection from a player not registered in the room', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new WordSearchRaceSession(identity(), broadcaster);
+    const session = new WordSearchRaceSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
 
     const result = session.submitSelection(
       'ghost',
@@ -58,7 +63,11 @@ describe('WordSearchRaceSession', () => {
 
   it('broadcasts word_found with the finder and updated scores on a valid selection', () => {
     const broadcaster = fakeBroadcaster();
-    const session = new WordSearchRaceSession(identity(), broadcaster);
+    const session = new WordSearchRaceSession(
+      identity(),
+      broadcaster,
+      testRoomDependencies.gamification,
+    );
     session.addPlayer('user-a', {});
 
     const grid = session.getPublicState().grid;
@@ -148,7 +157,7 @@ describe('WordSearchRaceSession', () => {
     const session = new WordSearchRaceSession(
       identity(),
       broadcaster,
-      undefined,
+      testRoomDependencies.gamification,
       {
         onSessionEnded: () => {
           ended = true;

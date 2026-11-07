@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from 'bun:test';
-import { createSearchKnowledgeBaseTool } from 'services/aiChat/tools/searchKnowledgeBase';
-import type { AgentToolContext } from 'services/aiChat/tools/types';
+import { createSearchKnowledgeBaseTool } from 'modules/ai-chat/tools/search-knowledge-base';
+import type { AgentToolContext } from 'modules/ai-chat/tools/types';
 
 const ctx: AgentToolContext = {
   containerId: 'c1',
@@ -54,7 +54,13 @@ describe('searchKnowledgeBaseTool', () => {
   });
 
   it('exposes the AgentTool shape (name/description/parameters)', () => {
-    const tool = createSearchKnowledgeBaseTool();
+    const tool = createSearchKnowledgeBaseTool({
+      client: fakeClient(async () => ({
+        found: false,
+        context: '',
+        chunks: [],
+      })) as never,
+    });
     expect(tool.name).toBe('search_knowledge_base');
     expect(tool.description).toBeTruthy();
     expect(tool.parameters).toMatchObject({

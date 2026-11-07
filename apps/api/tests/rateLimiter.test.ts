@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { RateLimiter } from 'services/activity/shared/RateLimiter';
+import { RateLimiter } from 'modules/activity/shared/rate-limiter';
 
 describe('RateLimiter', () => {
   it('allows requests up to max within a window', () => {

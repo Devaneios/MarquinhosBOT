@@ -3,8 +3,9 @@ import {
   type WordleRaceServerMessage,
 } from '@marquinhos/contracts/activity/games/wordleRace';
 import { ACTION_REJECTED } from '@marquinhos/contracts/activity/protocol';
-import { WordleRaceSession } from 'services/activity/wordle-race/WordleRaceSession';
+import { WordleRaceSession } from 'modules/activity/games/wordle-race/wordle-race-session';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const GUESS_RATE_LIMIT_WINDOW_MS = 1000;
@@ -20,7 +21,7 @@ export const wordleRaceAdapter: GameRoomAdapter<WordleRaceSession> = {
   supportsBot: false,
   supportsQueue: false,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new WordleRaceSession(
       {
         sessionKey: ctx.roomKey,
@@ -32,7 +33,8 @@ export const wordleRaceAdapter: GameRoomAdapter<WordleRaceSession> = {
         broadcast: (_key, message) =>
           ctx.broadcast(message.type, message.payload),
       },
-      undefined,
+      dependencies.gamification,
+      dependencies.wordBank,
       { onSessionEnded: ctx.onSessionEnded },
     );
 

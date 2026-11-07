@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
-import type { ActivityBroadcaster } from 'services/activity/shared/ActivityBroadcaster';
-import { WordChainSession } from 'services/activity/word-chain/WordChainSession';
+import { WordChainSession } from 'modules/activity/games/word-chain/word-chain-session';
+import type { ActivityBroadcaster } from 'modules/activity/shared/activity-broadcaster';
+import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 
 type BroadcastMessage = { type: string; payload?: unknown };
 
@@ -18,6 +19,7 @@ describe('WordChainSession', () => {
         mode: 'multi',
       },
       broadcaster,
+      testRoomDependencies.gamification,
     );
 
     expect(session.playerCount).toBe(0);
@@ -37,6 +39,7 @@ describe('WordChainSession', () => {
         mode: 'multi',
       },
       broadcaster,
+      testRoomDependencies.gamification,
     );
 
     const result = session.addPlayer('user-1', {});
@@ -58,6 +61,7 @@ describe('WordChainSession', () => {
         mode: 'multi',
       },
       broadcaster,
+      testRoomDependencies.gamification,
     );
 
     session.addPlayer('user-1', {});
@@ -85,6 +89,7 @@ describe('WordChainSession', () => {
         mode: 'multi',
       },
       broadcaster,
+      testRoomDependencies.gamification,
     );
 
     session.addPlayer('user-1', {});
@@ -110,6 +115,7 @@ describe('WordChainSession', () => {
         mode: 'multi',
       },
       broadcaster,
+      testRoomDependencies.gamification,
     );
 
     session.addPlayer('user-1', {});
@@ -132,6 +138,7 @@ describe('WordChainSession', () => {
         mode: 'multi',
       },
       { broadcast: () => undefined },
+      testRoomDependencies.gamification,
     );
 
     const staleConn = {};
@@ -160,6 +167,7 @@ describe('WordChainSession', () => {
         mode: 'single',
       },
       { broadcast: () => undefined },
+      testRoomDependencies.gamification,
       { singleModeDisconnectGraceMs: 0 },
     );
 
@@ -180,6 +188,7 @@ describe('WordChainSession', () => {
         mode: 'multi',
       },
       { broadcast: () => undefined },
+      testRoomDependencies.gamification,
       { turnTimeoutMs: 20 },
     );
 
@@ -201,6 +210,7 @@ describe('WordChainSession', () => {
         mode: 'multi',
       },
       { broadcast: () => undefined },
+      testRoomDependencies.gamification,
       { turnTimeoutMs: 20 },
     );
 
@@ -230,6 +240,7 @@ describe('WordChainSession', () => {
         mode: 'multi',
       },
       { broadcast: () => undefined },
+      testRoomDependencies.gamification,
       { turnTimeoutMs: 20, disconnectGraceMs: 100 },
     );
 
@@ -270,6 +281,7 @@ describe('WordChainSession', () => {
         mode: 'multi',
       },
       { broadcast: () => undefined },
+      testRoomDependencies.gamification,
       { turnTimeoutMs: 20 },
     );
     // @ts-expect-error -- test-only injection of a fake gamification sink

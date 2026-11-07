@@ -2,9 +2,9 @@ import {
   answerPayloadSchema,
   type TriviaQuizServerMessage,
 } from '@marquinhos/contracts/activity/games/triviaQuiz';
-import { GamificationService } from 'modules/gamification/gamification.service';
-import { TriviaQuizSession } from 'services/activity/trivia-quiz/TriviaQuizSession';
+import { TriviaQuizSession } from 'modules/activity/games/trivia-quiz/trivia-quiz-session';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const ANSWER_RATE_LIMIT_WINDOW_MS = 1000;
@@ -15,7 +15,7 @@ export const triviaQuizAdapter: GameRoomAdapter<TriviaQuizSession> = {
   supportsBot: false,
   supportsQueue: false,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new TriviaQuizSession(
       {
         sessionKey: ctx.roomKey,
@@ -27,7 +27,7 @@ export const triviaQuizAdapter: GameRoomAdapter<TriviaQuizSession> = {
         broadcast: (_key, message) =>
           ctx.broadcast(message.type, message.payload),
       },
-      new GamificationService(),
+      dependencies.gamification,
     );
 
     return {

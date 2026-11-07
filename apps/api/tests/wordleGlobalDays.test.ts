@@ -6,7 +6,7 @@ import {
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { sql } from 'drizzle-orm';
-import { WordleGlobalDayService } from '../src/services/wordle/WordleGlobalDayService';
+import { WordleGlobalDayService } from '../src/modules/wordle/services/wordle-global-day.service';
 
 let testDb: TestDb;
 beforeAll(async () => {

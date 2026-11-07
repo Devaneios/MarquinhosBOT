@@ -11,7 +11,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { AchievementService } from 'modules/gamification/achievement.service';
 import { LevelingService } from 'modules/gamification/leveling.service';
 
-const defaults = new AchievementService(new LevelingService());
+const defaults = new AchievementService(new LevelingService(db), db);
 const byId = <T extends { id: string }>(rows: readonly T[]) =>
   [...rows].sort((left, right) => left.id.localeCompare(right.id));
 const catalogIds = WORDLE_ACHIEVEMENT_CATALOG.map(({ id }) => id);

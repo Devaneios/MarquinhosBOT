@@ -5,7 +5,6 @@ import { configureHttp } from 'common/http/configure-http';
 import { NEST_APP_OPTIONS } from 'common/http/nest-app.options';
 import { JsonLogger } from 'common/logging/json-logger.service';
 import { AppConfig } from 'config/app.config';
-import { registerLegacyRoutes } from 'legacyRoutes';
 import { GameServer } from 'realtime/game-server.service';
 import 'reflect-metadata';
 
@@ -16,7 +15,6 @@ async function bootstrap(): Promise<void> {
   );
   app.useLogger(app.get(JsonLogger));
   configureHttp(app);
-  registerLegacyRoutes(app);
   app.enableShutdownHooks();
   await app.init();
   await app.get(GameServer).listen(app.get(AppConfig).httpPort);

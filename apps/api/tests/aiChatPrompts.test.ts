@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { AGENT_CAPABILITIES } from 'services/aiChat/capabilities';
+import { AGENT_CAPABILITIES } from 'modules/ai-chat/capabilities';
 import {
   AGENT_TASK_SYSTEM_PROMPT,
   buildResponsePrompt,
@@ -13,9 +13,9 @@ import {
   revisionSchema,
   SIGNATURE_LINES,
   SUB_CLASSIFIERS,
-} from 'services/aiChat/prompts';
-import { AGENT_TOOLS } from 'services/aiChat/tools/registry';
-import type { ResponseCategory } from 'services/aiChat/types';
+} from 'modules/ai-chat/prompts';
+import { AGENT_TOOLS } from 'modules/ai-chat/tools/registry';
+import type { ResponseCategory } from 'modules/ai-chat/types';
 
 const ALL_CATEGORIES: ResponseCategory[] = [
   'general_question',

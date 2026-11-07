@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { getErrorMessage } from 'utils/errorHandling';
+import { getErrorMessage } from 'common/errors/error-handling';
 
 describe('getErrorMessage', () => {
   it('returns the message of an Error', () => {

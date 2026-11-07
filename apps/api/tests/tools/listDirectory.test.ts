@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from 'bun:test';
-import { listDirectoryTool } from 'services/aiChat/tools/listDirectory';
+import { listDirectoryTool } from 'modules/ai-chat/tools/list-directory';
 
 describe('listDirectoryTool', () => {
   it('lists files by execing ls -la against the given path', async () => {

@@ -4,8 +4,8 @@ import {
   MAX_BODY_BYTES,
   MAX_LINKS,
   MAX_TEXT_CHARS,
-} from 'services/aiChat/tools/fetchUrl';
-import type { AgentToolContext } from 'services/aiChat/tools/types';
+} from 'modules/ai-chat/tools/fetch-url';
+import type { AgentToolContext } from 'modules/ai-chat/tools/types';
 
 const ctx: AgentToolContext = {
   containerId: 'c1',

@@ -1,8 +1,8 @@
 import { describe, expect, it, mock } from 'bun:test';
+import { ResponsesClient } from 'modules/ai-chat/llm/responses.client';
+import { AGENT_TASK_SYSTEM_PROMPT } from 'modules/ai-chat/prompts';
+import type { TraceLlmEvent } from 'modules/ai-chat/trace/ai-trace-recorder.service';
 import type OpenAI from 'openai';
-import type { TraceLlmEvent } from 'services/aiChat/AiTraceRecorder';
-import { ResponsesClient } from 'services/aiChat/llm/ResponsesClient';
-import { AGENT_TASK_SYSTEM_PROMPT } from 'services/aiChat/prompts';
 import { z } from 'zod';
 
 function fakeSdk(create: (...args: unknown[]) => unknown) {

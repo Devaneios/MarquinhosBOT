@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { RpsSession } from 'services/activity/rps/RpsSession';
+import { RpsSession } from 'modules/activity/games/rps/rps-session';
+import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 
 function noopBroadcaster() {
   return { broadcast: () => {} };
@@ -10,6 +11,7 @@ describe('RpsSession.getWinnerUserId', () => {
     const session = new RpsSession(
       { sessionKey: 'k', instanceId: 'i', guildId: 'g', mode: 'multi' },
       noopBroadcaster(),
+      testRoomDependencies.gamification,
     );
     session.addPlayer('user-a', {});
     session.addPlayer('user-b', {});
@@ -20,7 +22,7 @@ describe('RpsSession.getWinnerUserId', () => {
     const session = new RpsSession(
       { sessionKey: 'k', instanceId: 'i', guildId: 'g', mode: 'multi' },
       noopBroadcaster(),
-      undefined,
+      testRoomDependencies.gamification,
       { bestOf: 1 },
     );
     session.addPlayer('user-a', {});
@@ -36,7 +38,7 @@ describe('RpsSession.substitutePlayer', () => {
     const session = new RpsSession(
       { sessionKey: 'k', instanceId: 'i', guildId: 'g', mode: 'multi' },
       noopBroadcaster(),
-      undefined,
+      testRoomDependencies.gamification,
       { bestOf: 1 },
     );
     session.addPlayer('user-a', {});
@@ -61,7 +63,7 @@ describe('RpsSession.substitutePlayer broadcasts', () => {
     const session = new RpsSession(
       { sessionKey: 'k', instanceId: 'i', guildId: 'g', mode: 'multi' },
       { broadcast: (_key, message) => sent.push(message.type) },
-      undefined,
+      testRoomDependencies.gamification,
       { bestOf: 1 },
     );
     session.addPlayer('user-a', {});

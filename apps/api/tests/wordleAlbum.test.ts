@@ -9,15 +9,18 @@ import {
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
-import { WordleAlbumService } from '../src/services/wordle/WordleAlbumService';
-import { recordWordlePresence } from '../src/services/wordle/WordleCommunityService';
-import { WordleNotificationService } from '../src/services/wordle/WordleNotificationService';
+import type { WordleAlbumService } from '../src/modules/wordle/services/wordle-album.service';
+import { WordleNotificationService } from '../src/modules/wordle/services/wordle-notification.service';
+import {
+  createWordleTestAlbumService,
+  createWordleTestPresence,
+} from './helpers/wordleServices';
 
 let testDb: TestDb;
 let album: WordleAlbumService;
 beforeAll(async () => {
   testDb = await createTestDb();
-  album = new WordleAlbumService(testDb.db);
+  album = createWordleTestAlbumService(testDb.db);
 });
 afterAll(async () => {
   await testDb.drop();
@@ -144,7 +147,13 @@ describe('community album', () => {
     expect(events[0]?.eligible_at).toBe(Date.parse('2026-10-02T03:00:00Z'));
   });
   it('handles late presence and removes projections when the source is deleted', async () => {
-    await recordWordlePresence(testDb.db, 'player', 'late', '2026-10-01', 4);
+    await createWordleTestPresence(
+      testDb.db,
+      'player',
+      'late',
+      '2026-10-01',
+      4,
+    );
     expect(await album.contributions('late')).toHaveLength(1);
     await testDb.db
       .delete(wordleCommunityDailyPresence)

@@ -6,9 +6,11 @@ import {
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it, spyOn } from 'bun:test';
-import { WordleAlbumService } from '../src/services/wordle/WordleAlbumService';
-import { recordWordlePresence } from '../src/services/wordle/WordleCommunityService';
-import { WordleGlobalAchievementService } from '../src/services/wordle/WordleGlobalAchievementService';
+import { WordleAlbumService } from '../src/modules/wordle/services/wordle-album.service';
+import {
+  createWordleTestGlobalAchievementService,
+  createWordleTestPresence,
+} from './helpers/wordleServices';
 
 let testDb: TestDb;
 beforeAll(async () => {
@@ -21,11 +23,11 @@ afterAll(async () => {
 describe('community participation', () => {
   it('records opening in each community once per day and keeps first and last activity', async () => {
     await Promise.all([
-      recordWordlePresence(testDb.db, 'player', 'a', '2026-11-01', 100),
-      recordWordlePresence(testDb.db, 'player', 'a', '2026-11-01', 200),
-      recordWordlePresence(testDb.db, 'player', 'b', '2026-11-01', 150),
+      createWordleTestPresence(testDb.db, 'player', 'a', '2026-11-01', 100),
+      createWordleTestPresence(testDb.db, 'player', 'a', '2026-11-01', 200),
+      createWordleTestPresence(testDb.db, 'player', 'b', '2026-11-01', 150),
     ]);
-    await recordWordlePresence(testDb.db, 'player', 'a', '2026-11-02', 300);
+    await createWordleTestPresence(testDb.db, 'player', 'a', '2026-11-02', 300);
     const members = await testDb.db.select().from(wordleCommunityParticipation);
     const days = await testDb.db.select().from(wordleCommunityDailyPresence);
     expect(members).toHaveLength(2);
@@ -42,8 +44,8 @@ describe('community participation', () => {
   it('projects the album only when a community or occurrence is new', async () => {
     const pages = spyOn(WordleAlbumService.prototype, 'pages');
     try {
-      await recordWordlePresence(testDb.db, 'repeat', 'r', '2026-11-05', 1);
-      await recordWordlePresence(testDb.db, 'repeat', 'r', '2026-11-05', 2);
+      await createWordleTestPresence(testDb.db, 'repeat', 'r', '2026-11-05', 1);
+      await createWordleTestPresence(testDb.db, 'repeat', 'r', '2026-11-05', 2);
       expect(pages).toHaveBeenCalledTimes(1);
 
       await testDb.db.insert(wordleGlobalDays).values({
@@ -65,8 +67,9 @@ describe('community participation', () => {
           },
         ]),
       });
-      const awards = new WordleGlobalAchievementService(testDb.db, () =>
-        Date.parse('2026-11-05T15:00:00Z'),
+      const awards = createWordleTestGlobalAchievementService(
+        () => Date.parse('2026-11-05T15:00:00Z'),
+        testDb.db,
       );
       pages.mockClear();
       await awards.checkAndAward('repeat', 'r');

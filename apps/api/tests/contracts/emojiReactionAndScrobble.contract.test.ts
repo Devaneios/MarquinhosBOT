@@ -1,11 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
+import { EmojiReactionModule } from 'modules/emoji-reaction/emoji-reaction.module';
+import { EmojiReactionService } from 'modules/emoji-reaction/emoji-reaction.service';
 import { ScrobbleModule } from 'modules/scrobble/scrobble.module';
 import { randomUUID } from 'node:crypto';
-import type { EmojiReactionService } from 'services/aiChat/EmojiReactionService';
-import {
-  startContractServer,
-  startNestContractServer,
-} from '../helpers/contractServer';
+import { startNestContractServer } from '../helpers/contractServer';
 
 const { callContract } = await import('@marquinhos/api-client/bot');
 const emojiReaction =
@@ -16,20 +14,15 @@ const fakeReactions = {
   chooseReactions: async () => ['😂', '🔥'],
 } as unknown as EmojiReactionService;
 
-let emojiServer: Awaited<ReturnType<typeof startContractServer>>;
+let emojiServer: Awaited<ReturnType<typeof startNestContractServer>>;
 let scrobbleServer: Awaited<ReturnType<typeof startNestContractServer>>;
 
 beforeAll(async () => {
-  const { createEmojiReactionRouter } =
-    await import('../../src/routes/emojiReaction.route');
-  const { default: EmojiReactionController } =
-    await import('../../src/controllers/emojiReaction.controller');
-  emojiServer = await startContractServer((app) => {
-    app.use(
-      '/api/emoji-reaction',
-      createEmojiReactionRouter(new EmojiReactionController(fakeReactions)),
-    );
-  });
+  emojiServer = await startNestContractServer(
+    { imports: [EmojiReactionModule] },
+    (builder) =>
+      builder.overrideProvider(EmojiReactionService).useValue(fakeReactions),
+  );
   scrobbleServer = await startNestContractServer({
     imports: [ScrobbleModule],
   });

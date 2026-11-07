@@ -1,4 +1,5 @@
-import { closeDefaultDb, db } from '@marquinhos/database/client';
+import { NestFactory } from '@nestjs/core';
+import type { Db } from '@marquinhos/database/client';
 import {
   achievements,
   userAchievements,
@@ -9,15 +10,21 @@ import {
   wordleSessions,
 } from '@marquinhos/database/schema';
 import { eq, inArray } from 'drizzle-orm';
-import { auditGlobalWordleHistory } from '../src/services/wordle/globalAudit';
+import { DB } from '../src/database/database.tokens';
+import { ScriptsModule } from '../src/scripts/scripts.module';
+import { auditGlobalWordleHistory } from '../src/modules/wordle/services/global-audit';
 
 async function main() {
+  const app = await NestFactory.createApplicationContext(ScriptsModule, {
+    logger: false,
+  });
   try {
+    const database = app.get<Db>(DB);
     const [days, sessions, drafts, wordleAchievementRows] = await Promise.all([
-      db.select().from(wordleDays),
-      db.select().from(wordleSessions),
-      db.select().from(wordleDrafts),
-      db
+      database.select().from(wordleDays),
+      database.select().from(wordleSessions),
+      database.select().from(wordleDrafts),
+      database
         .select({ id: achievements.id })
         .from(achievements)
         .where(eq(achievements.category, 'wordle')),
@@ -25,7 +32,7 @@ async function main() {
     const achievementIds = wordleAchievementRows.map((row) => row.id);
     const [earned, discoveries, levels] = await Promise.all([
       achievementIds.length
-        ? db
+        ? database
             .select({
               user_id: userAchievements.user_id,
               achievement_id: userAchievements.achievement_id,
@@ -33,13 +40,13 @@ async function main() {
             .from(userAchievements)
             .where(inArray(userAchievements.achievement_id, achievementIds))
         : Promise.resolve([]),
-      db
+      database
         .select({
           user_id: wordlePatternDiscoveries.user_id,
           pattern_id: wordlePatternDiscoveries.pattern_id,
         })
         .from(wordlePatternDiscoveries),
-      db
+      database
         .select({ user_id: userLevels.user_id, total_xp: userLevels.total_xp })
         .from(userLevels),
     ]);
@@ -90,7 +97,7 @@ async function main() {
 
     console.log(JSON.stringify(report, null, 2));
   } finally {
-    await closeDefaultDb();
+    await app.close();
   }
 }
 

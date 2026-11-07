@@ -2,8 +2,9 @@ import {
   selectPayloadSchema,
   type WordSearchRaceServerMessage,
 } from '@marquinhos/contracts/activity/games/wordSearchRace';
-import { WordSearchRaceSession } from 'services/activity/word-search-race/WordSearchRaceSession';
+import { WordSearchRaceSession } from 'modules/activity/games/word-search-race/word-search-race-session';
 import type { AdapterContext, GameRoomAdapter } from '../GameRoomAdapter';
+import type { RoomDependencies } from '../room-dependencies';
 import { sendMessage } from '../sendMessage';
 
 const SELECT_RATE_LIMIT_WINDOW_MS = 1000;
@@ -19,7 +20,7 @@ export const wordSearchRaceAdapter: GameRoomAdapter<WordSearchRaceSession> = {
   supportsBot: false,
   supportsQueue: false,
 
-  setup(ctx: AdapterContext) {
+  setup(ctx: AdapterContext, dependencies: RoomDependencies) {
     const session = new WordSearchRaceSession(
       {
         sessionKey: ctx.roomKey,
@@ -31,7 +32,7 @@ export const wordSearchRaceAdapter: GameRoomAdapter<WordSearchRaceSession> = {
         broadcast: (_key, message) =>
           ctx.broadcast(message.type, message.payload),
       },
-      undefined,
+      dependencies.gamification,
       { onSessionEnded: ctx.onSessionEnded },
     );
 

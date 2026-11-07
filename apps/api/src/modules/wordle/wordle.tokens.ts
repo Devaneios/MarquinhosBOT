@@ -1,0 +1,7 @@
+export const WORDLE_NOW = Symbol('WORDLE_NOW');
+export const WORDLE_TODAY = Symbol('WORDLE_TODAY');
+export const WORDLE_RANDOM = Symbol('WORDLE_RANDOM');
+export const WORDLE_ANSWER_WORDS = Symbol('WORDLE_ANSWER_WORDS');
+export const WORDLE_DEVANEIOS_WORDS = Symbol('WORDLE_DEVANEIOS_WORDS');
+export const WORDLE_GUESS_RESOLVER = Symbol('WORDLE_GUESS_RESOLVER');
+export const WORDLE_GLOBAL_DRAFT_AWARD = Symbol('WORDLE_GLOBAL_DRAFT_AWARD');

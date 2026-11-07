@@ -17,7 +17,7 @@ import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { matchWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/engine/matchPatterns';
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { eq, sql } from 'drizzle-orm';
-import { migrateGlobalWordle } from '../src/services/wordle/WordleGlobalMigrationService';
+import { migrateGlobalWordle } from '../src/modules/wordle/services/wordle-global-migration.service';
 
 let testDb: TestDb;
 beforeEach(async () => {

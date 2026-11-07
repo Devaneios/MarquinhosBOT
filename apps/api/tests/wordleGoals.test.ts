@@ -10,15 +10,16 @@ import {
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, expect, it } from 'bun:test';
 import { sql } from 'drizzle-orm';
-import { WordleGoalsService } from '../src/services/wordle/WordleGoalsService';
-import { WordleNotificationService } from '../src/services/wordle/WordleNotificationService';
-import { lockGoalFactsForWrite } from '../src/services/wordle/goalFactLock';
+import { lockGoalFactsForWrite } from '../src/modules/wordle/services/goal-fact-lock';
+import type { WordleGoalsService } from '../src/modules/wordle/services/wordle-goals.service';
+import { WordleNotificationService } from '../src/modules/wordle/services/wordle-notification.service';
+import { createWordleTestGoalsService } from './helpers/wordleServices';
 
 let testDb: TestDb;
 let service: WordleGoalsService;
 beforeAll(async () => {
   testDb = await createTestDb();
-  service = new WordleGoalsService(testDb.db, () => 100);
+  service = createWordleTestGoalsService(() => 100, testDb.db);
 });
 
 it('counts one accepted participation per player and date for each eligible community', async () => {
@@ -111,8 +112,9 @@ it('creates a goal with a fixed positive target and a future time window', async
 });
 
 it('uses local day boundaries for an inclusive date range', async () => {
-  const goals = new WordleGoalsService(testDb.db, () =>
-    Date.parse('2026-10-30T00:00:00Z'),
+  const goals = createWordleTestGoalsService(
+    () => Date.parse('2026-10-30T00:00:00Z'),
+    testDb.db,
   );
   const goal = await goals.createForDates(
     'dates',
@@ -147,7 +149,7 @@ it('prevents closing while a fact writer is still in flight', async () => {
 
 it('closes only after the deadline, snapshots eligible facts and grants rewards once', async () => {
   let now = 100;
-  const goals = new WordleGoalsService(testDb.db, () => now);
+  const goals = createWordleTestGoalsService(() => now, testDb.db);
   const goal = await goals.create('a', 1, 200, 500);
   await new WordleNotificationService(testDb.db, () => now).configure('a', {
     channelId: null,
@@ -191,7 +193,7 @@ it('closes only after the deadline, snapshots eligible facts and grants rewards 
 
 it('waits for an in-flight accepted fact before closing', async () => {
   let now = 100;
-  const goals = new WordleGoalsService(testDb.db, () => now);
+  const goals = createWordleTestGoalsService(() => now, testDb.db);
   const goal = await goals.create('race', 1, 200, 500);
   await testDb.db.insert(wordleGlobalSessions).values({
     id: 's3',
@@ -245,7 +247,7 @@ it('waits for an in-flight accepted fact before closing', async () => {
 
 it('reconciles due goals idempotently and leaves future goals scheduled', async () => {
   let now = 100;
-  const goals = new WordleGoalsService(testDb.db, () => now);
+  const goals = createWordleTestGoalsService(() => now, testDb.db);
   const due = await goals.create('process', 1, 200, 300);
   const future = await goals.create('process', 1, 400, 500);
   now = 300;
