@@ -1,18 +1,16 @@
 import type { PlaybackData } from '@marquinhos/contracts/http/routes/scrobble';
+import { Injectable } from '@nestjs/common';
 import { DiscordService } from 'integrations/discord/discord.service';
 import { LastfmService } from 'integrations/lastfm/lastfm.service';
 import { ParserService } from 'modules/scrobble/parser.service';
 
+@Injectable()
 export class ScrobblerService {
-  discordService: DiscordService;
-  lastfmService: LastfmService;
-  parserService: ParserService;
-
-  constructor() {
-    this.discordService = new DiscordService();
-    this.lastfmService = new LastfmService();
-    this.parserService = new ParserService();
-  }
+  constructor(
+    private readonly discordService: DiscordService,
+    private readonly lastfmService: LastfmService,
+    private readonly parserService: ParserService,
+  ) {}
 
   async addScrobbleToQueue(playbackData: PlaybackData) {
     const track = await this.parserService.parseTrack(playbackData);

@@ -2,7 +2,7 @@
 
 ## Phase 0: baseline and safety net
 
-**Status: Phase 0, Phase 1, and Phase 2 complete; beginning Phase 3.**
+**Status: Phase 0 through Phase 3 complete; beginning Phase 4.**
 
 - Branch: `refactor/api-nestjs` (created from `main`, which was two commits ahead of `origin/main`).
 - Initial baseline: `pnpm run dev:test` exited 1 because all five gateway assertions passed but its `afterAll` hook timed out at 5 seconds. Diagnostic instrumentation showed 12 pending Vite client-environment transform requests; `vite.close()` waits for those requests.
@@ -61,4 +61,9 @@
 - Move-only step completed for the crypto helper, Discord/Last.fm/Spotify integrations, parser/scrobbler/User services, and auth/user/scrobble controllers. The codemod rewrites relative and tsconfig-alias imports across `src`, `tests`, and `scripts`; no runtime logic changed in this step.
 - The first codemod pass exposed that extensionless relative specifiers need to be normalized before matching the move map. The codemod now normalizes source paths and safely reruns after files have moved; the contract tests' dynamic imports resolve to the new locations.
 - Move-step checks: API typecheck and lint passed. `pnpm test` was also attempted directly, but the host had no PostgreSQL listener on `127.0.0.1:5432`; this was an environment setup failure, not a test assertion failure. The repository's disposable test runner then passed: 2 dev config tests, 5 Activity gateway tests, 1,758 API tests across 191 files, 257 bot tests across 45 files, and 291 Activity tests across 73 files. The API suite includes the unchanged parity goldens.
-- The identity/integrations slice remains in progress: singleton audit, provider conversion, Nest controllers, and legacy route removal are still to be completed.
+- Singleton audit: `TokenCipherService`, `DiscordService`, `LastfmService`, `SpotifyService`, `UserService`, `ParserService`, and `ScrobblerService` hold only immutable constructor-injected collaborators; none has per-request mutable state. The auth, user, and scrobble controllers are stateless apart from immutable injected collaborators.
+- Converted the integrations and services to Nest providers using `AppConfig` and the shared `DB` token. Converted `/api/auth`, `/api/user`, and `/api/scrobble` to Nest controllers and removed their Express routers from `legacyRoutes.ts`; the deleted route files are no longer needed.
+- Migrated auth/user/scrobble contract tests to real Nest HTTP tests with provider overrides. Existing status/body assertions remain intact. The direct legacy contract helper now resets its API-key fixture on every server start, because `botAuth.test.ts` clears the process environment after its own test; this fixed four downstream legacy contract failures without changing a production response.
+- The Nest Express adapter emits an empty response for a handler that returns literal `null`. `UserController.exists` uses a JSON-null sentinel so the response remains `200` with body `null`, matching the unchanged golden and existing API contract.
+- `bun run dev:test` passed: dev config 2 tests, Activity gateway 5, API 1,758 tests across 191 files, bot 257 across 45 files, and Activity 291 across 73 files. API parity is included and passed against the unchanged golden.
+- Workspace checks passed: `pnpm run typecheck`, `pnpm run lint`, and `pnpm run build`. Existing bot and Activity lint warnings remain unchanged.

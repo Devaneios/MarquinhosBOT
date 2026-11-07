@@ -1,10 +1,12 @@
 import axios from 'axios';
 import { afterEach, describe, expect, it, spyOn } from 'bun:test';
 import { encryptToken } from 'common/crypto';
-import type { DiscordService } from 'integrations/discord/discord.service';
+import { DiscordService } from 'integrations/discord/discord.service';
 import { LastfmService } from 'integrations/lastfm/lastfm.service';
-import { verifyDiscordToken } from 'middlewares/userAuth';
-import AuthController from 'modules/auth/auth.controller';
+import { AuthModule } from 'modules/auth/auth.module';
+import { UserModule } from 'modules/user/user.module';
+import { startNestContractServer } from './helpers/contractServer';
+import { createTestAppConfig } from './helpers/testAppConfig';
 
 const SECRET = 'TOP-SECRET-VALUE';
 const originalFetch = globalThis.fetch;
@@ -33,15 +35,6 @@ function captureConsole(): string[] {
   return lines;
 }
 
-function makeRes() {
-  const res = {
-    status: () => res,
-    json: () => res,
-    set: () => res,
-  };
-  return res as any;
-}
-
 afterEach(() => {
   restores.splice(0).forEach((restore) => restore());
   globalThis.fetch = originalFetch;
@@ -53,14 +46,18 @@ describe('failed requests carrying secrets', () => {
     const discord = {
       requestToken: () => Promise.reject(failedRequest()),
     } as unknown as DiscordService;
-
-    await new AuthController(discord).login(
-      { query: { code: 'code' } } as any,
-      makeRes(),
+    const server = await startNestContractServer(
+      { imports: [AuthModule] },
+      (builder) => builder.overrideProvider(DiscordService).useValue(discord),
     );
+    try {
+      await fetch(`${server.origin}/api/auth/login?code=code`);
 
-    expect(lines.length).toBeGreaterThan(0);
-    expect(lines.join('\n')).not.toContain(SECRET);
+      expect(lines.length).toBeGreaterThan(0);
+      expect(lines.join('\n')).not.toContain(SECRET);
+    } finally {
+      await server.close();
+    }
   });
 
   it('are not logged with their config by the token refresh', async () => {
@@ -69,45 +66,53 @@ describe('failed requests carrying secrets', () => {
       refreshToken: () => Promise.reject(failedRequest()),
     } as unknown as DiscordService;
     const refreshToken = encryptToken('refresh')!;
-
-    await new AuthController(discord).refreshToken(
-      {
-        headers: { 'refresh-token': refreshToken },
-        get: () => refreshToken,
-      } as any,
-      makeRes(),
+    const server = await startNestContractServer(
+      { imports: [AuthModule] },
+      (builder) => builder.overrideProvider(DiscordService).useValue(discord),
     );
+    try {
+      await fetch(`${server.origin}/api/auth/refresh_token`, {
+        headers: { 'Refresh-Token': refreshToken },
+      });
 
-    expect(lines.length).toBeGreaterThan(0);
-    expect(lines.join('\n')).not.toContain(SECRET);
+      expect(lines.length).toBeGreaterThan(0);
+      expect(lines.join('\n')).not.toContain(SECRET);
+    } finally {
+      await server.close();
+    }
   });
 
   it('are not logged with their config by user token verification', async () => {
     const lines = captureConsole();
-    globalThis.fetch = Object.assign(
-      async () => new Response('{}', { status: 200 }),
-      { preconnect: originalFetch.preconnect },
-    );
-    const get = spyOn(axios, 'get').mockRejectedValue(failedRequest());
-    restores.push(() => get.mockRestore());
+    const discord = {
+      getDiscordUser: async () => ({ id: 'u1' }),
+      getDiscordGuildUserHighestRole: () => Promise.reject(failedRequest()),
+    } as unknown as DiscordService;
     const token = encryptToken('mock-access-token', Date.now() + 60_000);
-
-    await verifyDiscordToken(
-      { headers: { authorization: `Bearer ${token}` } } as any,
-      makeRes(),
-      () => {},
+    const server = await startNestContractServer(
+      { imports: [UserModule] },
+      (builder) => builder.overrideProvider(DiscordService).useValue(discord),
     );
+    try {
+      await fetch(`${server.origin}/api/user/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    expect(lines.length).toBeGreaterThan(0);
-    expect(lines.join('\n')).not.toContain(SECRET);
+      expect(lines.length).toBeGreaterThan(0);
+      expect(lines.join('\n')).not.toContain(SECRET);
+    } finally {
+      await server.close();
+    }
   });
 
   it('are not logged with their config by Last.fm now-playing', async () => {
     const lines = captureConsole();
     const post = spyOn(axios, 'post').mockRejectedValue(failedRequest());
     restores.push(() => post.mockRestore());
+    const { db } = await import('@marquinhos/database/client');
+    const lastfm = new LastfmService(db, createTestAppConfig());
 
-    await new LastfmService().updateNowPlaying(
+    await lastfm.updateNowPlaying(
       { artist: 'artist', name: 'track' } as any,
       'session-key',
     );

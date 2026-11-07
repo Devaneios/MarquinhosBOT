@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import type { DiscordService } from 'integrations/discord/discord.service';
-import type { LastfmService } from 'integrations/lastfm/lastfm.service';
-import type { UserService } from 'modules/user/user.service';
-import { startContractServer } from '../helpers/contractServer';
+import { DiscordService } from 'integrations/discord/discord.service';
+import { LastfmService } from 'integrations/lastfm/lastfm.service';
+import { AuthModule } from 'modules/auth/auth.module';
+import { UserService } from 'modules/user/user.service';
+import { startNestContractServer } from '../helpers/contractServer';
 
 const { callContract } = await import('@marquinhos/api-client/bot');
 const auth = await import('@marquinhos/contracts/http/routes/auth');
@@ -33,18 +34,18 @@ const fakeUsers = {
   create: async () => undefined,
 } as unknown as UserService;
 
-let server: Awaited<ReturnType<typeof startContractServer>>;
+let server: Awaited<ReturnType<typeof startNestContractServer>>;
 
 beforeAll(async () => {
-  const { createAuthRouter } = await import('../../src/routes/auth.route');
-  const { default: AuthController } =
-    await import('../../src/modules/auth/auth.controller');
-  server = await startContractServer((app) => {
-    app.use(
-      '/api/auth',
-      createAuthRouter(new AuthController(fakeDiscord, fakeLastfm, fakeUsers)),
-    );
-  });
+  server = await startNestContractServer({ imports: [AuthModule] }, (builder) =>
+    builder
+      .overrideProvider(DiscordService)
+      .useValue(fakeDiscord)
+      .overrideProvider(LastfmService)
+      .useValue(fakeLastfm)
+      .overrideProvider(UserService)
+      .useValue(fakeUsers),
+  );
 });
 
 afterAll(() => server.close());

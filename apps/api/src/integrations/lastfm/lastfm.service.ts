@@ -29,10 +29,13 @@ import {
   type Track,
 } from '@marquinhos/contracts/http/routes/scrobble';
 import type { LastfmTopListenedPeriod } from '@marquinhos/contracts/http/routes/user';
-import { db, type DbExecutor } from '@marquinhos/database/client';
+import type { Db, DbExecutor } from '@marquinhos/database/client';
 import { scrobblesQueue, users } from '@marquinhos/database/schema';
+import { Inject, Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { AppConfig } from 'config/app.config';
 import crypto from 'crypto';
+import { DB } from 'database/database.tokens';
 import { getUnixTime, parseISO } from 'date-fns';
 import { eq } from 'drizzle-orm';
 import type { LastfmSessionResponse } from 'types';
@@ -91,7 +94,7 @@ async function setPlaybackData(
     .where(eq(scrobblesQueue.id, scrobbleId));
 }
 
-async function findUser(userId: string) {
+async function findUser(db: Db, userId: string) {
   const [row] = await db
     .select({
       lastfm_session_token: users.lastfm_session_token,
@@ -102,9 +105,15 @@ async function findUser(userId: string) {
   return row;
 }
 
+@Injectable()
 export class LastfmService {
   readonly apiRootUrl = 'https://ws.audioscrobbler.com/2.0';
   readonly userAgent = 'cordscrobbler/1.0.0';
+
+  constructor(
+    @Inject(DB) private readonly db: Db,
+    private readonly config: AppConfig,
+  ) {}
 
   async getSession(token: string | undefined): Promise<LastfmSessionResponse> {
     if (!token) {
@@ -200,7 +209,7 @@ export class LastfmService {
   }
 
   async dispatchScrobbleFromQueue(scrobbleId: string) {
-    const row = await findScrobble(db, scrobbleId);
+    const row = await findScrobble(this.db, scrobbleId);
 
     if (!row) {
       throw new Error('ScrobbleNotFound');
@@ -216,10 +225,12 @@ export class LastfmService {
     // If completely successful (or non-transient failures), delete the queue item.
     // If transient failures occurred, update the queue to only contain the users who need retries.
     if (failedUserIds.length === 0) {
-      await db.delete(scrobblesQueue).where(eq(scrobblesQueue.id, scrobbleId));
+      await this.db
+        .delete(scrobblesQueue)
+        .where(eq(scrobblesQueue.id, scrobbleId));
     } else {
       playbackData.listeningUsersId = failedUserIds;
-      await setPlaybackData(db, scrobbleId, playbackData);
+      await setPlaybackData(this.db, scrobbleId, playbackData);
     }
 
     return scrobbleId;
@@ -236,7 +247,7 @@ export class LastfmService {
     const id = crypto.randomUUID();
     const createdAt = Math.floor(Date.now() / 1000);
 
-    await db.insert(scrobblesQueue).values({
+    await this.db.insert(scrobblesQueue).values({
       id,
       track: JSON.stringify(track),
       playback_data: JSON.stringify(playbackData),
@@ -244,7 +255,7 @@ export class LastfmService {
     });
 
     for (const userId of playbackData.listeningUsersId) {
-      const registeredUser = await findUser(userId);
+      const registeredUser = await findUser(this.db, userId);
 
       if (registeredUser?.scrobbles_on === true) {
         await this.updateNowPlaying(
@@ -274,7 +285,7 @@ export class LastfmService {
     }>[] = [];
 
     for (const userId of playbackData.listeningUsersId) {
-      const registeredUser = await findUser(userId);
+      const registeredUser = await findUser(this.db, userId);
 
       if (registeredUser?.scrobbles_on === true) {
         const scrobblingRequestPromise = this.scrobble(
@@ -295,7 +306,7 @@ export class LastfmService {
       if (!res.success) {
         if (res.error?.message === 'LastfmInvalidSessionKey') {
           logger.warn(`User ${res.userId} has invalid Last.fm session`);
-          await db
+          await this.db
             .update(users)
             .set({ scrobbles_on: false })
             .where(eq(users.id, res.userId));
@@ -426,7 +437,7 @@ export class LastfmService {
     type: 'get' | 'post',
     signed: boolean,
   ) {
-    params.set('api_key', process.env.LASTFM_API_KEY || '');
+    params.set('api_key', this.config.lastfmApiKey || '');
     params.set('format', 'json');
 
     if (signed) {
@@ -462,16 +473,16 @@ export class LastfmService {
       }
     }
 
-    signatureString += process.env.LASTFM_SHARED_SECRET;
+    signatureString += this.config.lastfmSharedSecret;
     return crypto.createHash('md5').update(signatureString).digest('hex');
   }
 
   getAuthorizationUrl = () => {
-    return `https://www.last.fm/api/auth/?api_key=${process.env.LASTFM_API_KEY}&cb=${process.env.LASTFM_REDIRECT_URI}`;
+    return `https://www.last.fm/api/auth/?api_key=${this.config.lastfmApiKey}&cb=${this.config.lastfmRedirectUri}`;
   };
 
   async removeUserFromScrobble(scrobbleId: string, userId: string) {
-    await db.transaction(async (tx) => {
+    await this.db.transaction(async (tx) => {
       const row = await findScrobble(tx, scrobbleId, RowLock.ForUpdate);
 
       if (!row) {
@@ -501,13 +512,13 @@ export class LastfmService {
   }
 
   async addUserToScrobble(scrobbleId: string, userId: string) {
-    const user = await findUser(userId);
+    const user = await findUser(this.db, userId);
 
     if (!user) {
       throw new Error('UserNotFound');
     }
 
-    await db.transaction(async (tx) => {
+    await this.db.transaction(async (tx) => {
       const row = await findScrobble(tx, scrobbleId, RowLock.ForUpdate);
 
       if (!row) {

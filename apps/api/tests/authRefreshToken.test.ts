@@ -1,49 +1,30 @@
-import { describe, expect, it } from 'bun:test';
-import AuthController from 'modules/auth/auth.controller';
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
+import { AuthModule } from 'modules/auth/auth.module';
+import { startNestContractServer } from './helpers/contractServer';
 
-// Node lowercases incoming header names; Express's req.get() looks them up
-// case-insensitively, which this fake mirrors.
-function makeReq(headers: Record<string, string>) {
-  return {
-    headers,
-    get: (name: string) => headers[name.toLowerCase()],
-  } as any;
-}
+let server: Awaited<ReturnType<typeof startNestContractServer>>;
 
-function makeRes() {
-  let statusCode: number | undefined;
-  let payload: unknown;
-  const res = {
-    status(code: number) {
-      statusCode = code;
-      return res;
-    },
-    json(data: unknown) {
-      payload = data;
-      return res;
-    },
-    getStatus: () => statusCode,
-    getPayload: () => payload,
-  };
-  return res;
-}
+beforeAll(async () => {
+  server = await startNestContractServer({ imports: [AuthModule] });
+});
 
-describe('AuthController.refreshToken', () => {
-  it('reads the Refresh-Token header regardless of case', async () => {
-    const res = makeRes();
-    await new AuthController().refreshToken(
-      makeReq({ 'refresh-token': 'not-a-real-token' }),
-      res as any,
-    );
-    expect(res.getPayload()).not.toEqual({
-      message: 'Refresh token not found',
+afterAll(() => server.close());
+
+describe('GET /api/auth/refresh_token', () => {
+  it('rejects an invalid refresh token', async () => {
+    const response = await fetch(`${server.origin}/api/auth/refresh_token`, {
+      headers: { 'Refresh-Token': 'not-a-real-token' },
     });
+    const body = await response.json();
+
+    expect(body).not.toEqual({ message: 'Refresh token not found' });
   });
 
   it('rejects a request without the header', async () => {
-    const res = makeRes();
-    await new AuthController().refreshToken(makeReq({}), res as any);
-    expect(res.getStatus()).toBe(400);
-    expect(res.getPayload()).toEqual({ message: 'Refresh token not found' });
+    const response = await fetch(`${server.origin}/api/auth/refresh_token`);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toEqual({ message: 'Refresh token not found' });
   });
 });

@@ -1,4 +1,7 @@
+import { Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { AppConfig } from 'config/app.config';
+import { createLegacyAppConfig } from 'config/legacy-app-config';
 import { URLSearchParams } from 'url';
 import { z } from 'zod';
 // URLSearchParams is available globally in Node.js >= 15 but we import for clarity
@@ -44,21 +47,25 @@ const oauthTokenResponseSchema = activityTokenExchangeResultSchema.extend({
   refresh_token: z.string(),
 });
 
-export function buildActivityTokenExchangeBody(code: string): URLSearchParams {
+export function buildActivityTokenExchangeBody(
+  code: string,
+  clientId: string,
+  clientSecret: string,
+): URLSearchParams {
   return new URLSearchParams({
-    client_id: process.env.DISCORD_CLIENT_ID ?? '',
-    client_secret: process.env.DISCORD_CLIENT_SECRET ?? '',
+    client_id: clientId,
+    client_secret: clientSecret,
     grant_type: 'authorization_code',
     code,
   });
 }
 
+@Injectable()
 export class DiscordService {
+  constructor(private readonly config: AppConfig = createLegacyAppConfig()) {}
+
   getDiscordUser = async (token: string): Promise<DiscordUser | null> => {
-    if (
-      process.env.NODE_ENV !== 'production' &&
-      token === 'mock-access-token'
-    ) {
+    if (!this.config.isProduction && token === 'mock-access-token') {
       // Must match @discord/embedded-app-sdk's DiscordSDKMock, which always
       // resolves `user.id` to this literal client-side — any other value
       // here desyncs `identity.userId` from the userId the server embeds
@@ -84,10 +91,7 @@ export class DiscordService {
   };
 
   isGuildMember = async (token: string, guildId: string): Promise<boolean> => {
-    if (
-      process.env.NODE_ENV !== 'production' &&
-      token === 'mock-access-token'
-    ) {
+    if (!this.config.isProduction && token === 'mock-access-token') {
       return guildId === '123456789012345678';
     }
     try {
@@ -128,7 +132,7 @@ export class DiscordService {
       {
         headers: {
           'User-Agent': 'DiscordBot',
-          Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+          Authorization: `Bot ${this.config.discordBotToken}`,
         },
       },
     );
@@ -148,11 +152,11 @@ export class DiscordService {
 
   requestToken = async (code: string) => {
     const body = new URLSearchParams({
-      client_id: process.env.DISCORD_CLIENT_ID ?? '',
-      client_secret: process.env.DISCORD_CLIENT_SECRET ?? '',
+      client_id: this.config.discordClientId ?? '',
+      client_secret: this.config.discordClientSecret ?? '',
       grant_type: 'authorization_code',
       code,
-      redirect_uri: process.env.DISCORD_REDIRECT_URI ?? '',
+      redirect_uri: this.config.discordRedirectUri ?? '',
       scope: 'identify+guilds.members.read',
     });
 
@@ -173,7 +177,11 @@ export class DiscordService {
   exchangeActivityCode = async (
     code: string,
   ): Promise<ActivityTokenExchangeResult> => {
-    const body = buildActivityTokenExchangeBody(code);
+    const body = buildActivityTokenExchangeBody(
+      code,
+      this.config.discordClientId ?? '',
+      this.config.discordClientSecret ?? '',
+    );
 
     try {
       const response = await axios.post(
@@ -200,11 +208,11 @@ export class DiscordService {
 
   refreshToken = async (refresh_token: string) => {
     const body = new URLSearchParams({
-      client_id: process.env.DISCORD_CLIENT_ID ?? '',
-      client_secret: process.env.DISCORD_CLIENT_SECRET ?? '',
+      client_id: this.config.discordClientId ?? '',
+      client_secret: this.config.discordClientSecret ?? '',
       grant_type: 'refresh_token',
       refresh_token,
-      redirect_uri: process.env.DISCORD_REDIRECT_URI ?? '',
+      redirect_uri: this.config.discordRedirectUri ?? '',
       scope: 'identify',
     });
 
@@ -227,7 +235,7 @@ export class DiscordService {
   };
 
   getAuthorizationUrl = (state?: string) => {
-    let url = `https://discord.com/oauth2/authorize?response_type=code&client_id=${process.env.DISCORD_CLIENT_ID}&scope=identify+guilds.members.read&redirect_uri=${encodeURIComponent(process.env.DISCORD_REDIRECT_URI ?? '')}&prompt=none`;
+    let url = `https://discord.com/oauth2/authorize?response_type=code&client_id=${this.config.discordClientId}&scope=identify+guilds.members.read&redirect_uri=${encodeURIComponent(this.config.discordRedirectUri ?? '')}&prompt=none`;
     if (state) {
       url += `&state=${encodeURIComponent(state)}`;
     }

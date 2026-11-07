@@ -1,100 +1,81 @@
+import type { ContractResponseInput } from '@marquinhos/contracts/http/contract';
 import * as contract from '@marquinhos/contracts/http/routes/scrobble';
-import type { Request, Response } from 'express';
+import { Controller, Delete, HttpCode, Post, UseGuards } from '@nestjs/common';
+import type { ContractInputValue } from 'common/decorators/contract-input.decorator';
+import { ContractInput } from 'common/decorators/contract-input.decorator';
+import { OnRouteError } from 'common/decorators/on-route-error.decorator';
+import { BotAuthGuard } from 'common/guards/bot-auth.guard';
 import { ScrobblerService } from 'modules/scrobble/scrobbler.service';
-import { parseRequest, sendContract } from 'utils/contract';
-import { logger } from 'utils/logger';
 
-class ScrobbleController {
-  scrobblerService: ScrobblerService;
+@Controller('scrobble')
+export class ScrobbleController {
+  constructor(private readonly scrobblerService: ScrobblerService) {}
 
-  constructor() {
-    this.scrobblerService = new ScrobblerService();
+  @Post('queue')
+  @HttpCode(200)
+  @UseGuards(BotAuthGuard)
+  @OnRouteError({
+    event: 'scrobble.controller.add_scrobble_to_queue_failed',
+    message: 'Unknown Error',
+  })
+  async addScrobbleToQueue(
+    @ContractInput(contract.addToQueue)
+    input: ContractInputValue<typeof contract.addToQueue>,
+  ): Promise<ContractResponseInput<typeof contract.addToQueue>> {
+    const data = await this.scrobblerService.addScrobbleToQueue(
+      input.body.playbackData,
+    );
+    return { data, message: 'Scrobble added to queue' };
   }
 
-  async addScrobbleToQueue(req: Request, res: Response) {
-    try {
-      const input = parseRequest(contract.addToQueue, req);
-      if (!input) {
-        return res.status(400).json({ message: 'Invalid playback data' });
-      }
-      const data = await this.scrobblerService.addScrobbleToQueue(
-        input.body.playbackData,
-      );
-      return sendContract(res, contract.addToQueue, {
-        data,
-        message: 'Scrobble added to queue',
-      });
-    } catch (error: unknown) {
-      logger.error('scrobble.controller.add_scrobble_to_queue_failed', {
-        error,
-      });
-      return res.status(500).json({ message: 'Unknown Error' });
-    }
+  @Post(':id')
+  @HttpCode(200)
+  @UseGuards(BotAuthGuard)
+  @OnRouteError({
+    event: 'scrobble.controller.dispatch_scrobble_failed',
+    message: 'Unknown Error',
+  })
+  async dispatchScrobble(
+    @ContractInput(contract.dispatch, 'id is required')
+    input: ContractInputValue<typeof contract.dispatch>,
+  ): Promise<ContractResponseInput<typeof contract.dispatch>> {
+    const id = await this.scrobblerService.dispatchScrobble(input.params.id);
+    return { data: id, message: 'Scrobbled' };
   }
 
-  async dispatchScrobble(req: Request, res: Response) {
-    try {
-      const input = parseRequest(contract.dispatch, req);
-      if (!input) {
-        return res.status(400).json({ message: 'id is required' });
-      }
-      const id = await this.scrobblerService.dispatchScrobble(input.params.id);
-      return sendContract(res, contract.dispatch, {
-        data: id,
-        message: 'Scrobbled',
-      });
-    } catch (error: unknown) {
-      logger.error('scrobble.controller.dispatch_scrobble_failed', { error });
-      return res.status(500).json({ message: 'Unknown Error' });
-    }
+  @Delete(':scrobbleId/:userId')
+  @UseGuards(BotAuthGuard)
+  @OnRouteError({
+    event: 'scrobble.controller.remove_user_from_scrobble_failed',
+    message: 'Unknown Error',
+  })
+  async removeUserFromScrobble(
+    @ContractInput(contract.removeUser, 'scrobbleId and userId are required')
+    input: ContractInputValue<typeof contract.removeUser>,
+  ): Promise<ContractResponseInput<typeof contract.removeUser>> {
+    const id = await this.scrobblerService.removeUserFromScrobble(
+      input.params.scrobbleId,
+      input.params.userId,
+    );
+    return { data: id, message: 'User removed' };
   }
 
-  async removeUserFromScrobble(req: Request, res: Response) {
-    try {
-      const input = parseRequest(contract.removeUser, req);
-      if (!input) {
-        return res
-          .status(400)
-          .json({ message: 'scrobbleId and userId are required' });
-      }
-      const id = await this.scrobblerService.removeUserFromScrobble(
-        input.params.scrobbleId,
-        input.params.userId,
-      );
-      return sendContract(res, contract.removeUser, {
-        data: id,
-        message: 'User removed',
-      });
-    } catch (error: unknown) {
-      logger.error('scrobble.controller.remove_user_from_scrobble_failed', {
-        error,
-      });
-      return res.status(500).json({ message: 'Unknown Error' });
-    }
-  }
-
-  async addUserToScrobble(req: Request, res: Response) {
-    try {
-      const input = parseRequest(contract.addUser, req);
-      if (!input) {
-        return res
-          .status(400)
-          .json({ message: 'scrobbleId and userId are required' });
-      }
-      const id = await this.scrobblerService.addUserToScrobble(
-        input.params.scrobbleId,
-        input.params.userId,
-      );
-      return sendContract(res, contract.addUser, {
-        data: id,
-        message: 'User added',
-      });
-    } catch (error: unknown) {
-      logger.error('scrobble.controller.add_user_to_scrobble_failed', {
-        error,
-      });
-      return res.status(500).json({ message: 'Unknown Error' });
-    }
+  @Post(':scrobbleId/:userId')
+  @HttpCode(200)
+  @UseGuards(BotAuthGuard)
+  @OnRouteError({
+    event: 'scrobble.controller.add_user_to_scrobble_failed',
+    message: 'Unknown Error',
+  })
+  async addUserToScrobble(
+    @ContractInput(contract.addUser, 'scrobbleId and userId are required')
+    input: ContractInputValue<typeof contract.addUser>,
+  ): Promise<ContractResponseInput<typeof contract.addUser>> {
+    const id = await this.scrobblerService.addUserToScrobble(
+      input.params.scrobbleId,
+      input.params.userId,
+    );
+    return { data: id, message: 'User added' };
   }
 }
 

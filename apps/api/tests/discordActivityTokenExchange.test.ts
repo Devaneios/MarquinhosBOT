@@ -3,13 +3,21 @@ import { buildActivityTokenExchangeBody } from 'integrations/discord/discord.ser
 
 describe('buildActivityTokenExchangeBody', () => {
   it('includes the authorization code and grant_type', () => {
-    const body = buildActivityTokenExchangeBody('auth-code-abc');
+    const body = buildActivityTokenExchangeBody(
+      'auth-code-abc',
+      'client-id',
+      'client-secret',
+    );
     expect(body.get('code')).toBe('auth-code-abc');
     expect(body.get('grant_type')).toBe('authorization_code');
   });
 
   it('omits redirect_uri, unlike the web OAuth flow', () => {
-    const body = buildActivityTokenExchangeBody('auth-code-abc');
+    const body = buildActivityTokenExchangeBody(
+      'auth-code-abc',
+      'client-id',
+      'client-secret',
+    );
     expect(body.has('redirect_uri')).toBe(false);
   });
 });

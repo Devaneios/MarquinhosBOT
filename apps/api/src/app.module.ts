@@ -3,8 +3,11 @@ import { HttpInfrastructureModule } from 'common/http/http-infrastructure.module
 import { ConfigModule } from 'config/config.module';
 import { DatabaseModule } from 'database/database.module';
 import { JobsModule } from 'jobs/jobs.module';
+import { AuthModule } from 'modules/auth/auth.module';
 import { HealthModule } from 'modules/health/health.module';
 import { PrivacyPolicyModule } from 'modules/privacy-policy/privacy-policy.module';
+import { ScrobbleModule } from 'modules/scrobble/scrobble.module';
+import { UserModule } from 'modules/user/user.module';
 import { RealtimeModule } from 'realtime/realtime.module';
 import { StartupModule } from 'startup/startup.module';
 
@@ -16,8 +19,11 @@ import { StartupModule } from 'startup/startup.module';
     RealtimeModule,
     StartupModule,
     JobsModule,
+    AuthModule,
     HealthModule,
     PrivacyPolicyModule,
+    ScrobbleModule,
+    UserModule,
   ],
 })
 export class AppModule {}

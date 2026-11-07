@@ -1,119 +1,125 @@
+import type { ContractResponseInput } from '@marquinhos/contracts/http/contract';
 import * as contract from '@marquinhos/contracts/http/routes/auth';
-import { decryptToken, encryptToken } from 'common/crypto';
-import type { Request, Response } from 'express';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Controller,
+  Get,
+  Headers,
+  InternalServerErrorException,
+  Query,
+  Res,
+} from '@nestjs/common';
+import { TokenCipherService } from 'common/crypto';
+import type { ContractInputValue } from 'common/decorators/contract-input.decorator';
+import { ContractInput } from 'common/decorators/contract-input.decorator';
+import { OnRouteError } from 'common/decorators/on-route-error.decorator';
+import type { Response } from 'express';
 import { DiscordService } from 'integrations/discord/discord.service';
 import { LastfmService } from 'integrations/lastfm/lastfm.service';
 import { UserService } from 'modules/user/user.service';
-import { parseRequest, sendContract } from 'utils/contract';
-import { logger } from 'utils/logger';
 
-class AuthController {
+@Controller('auth')
+export class AuthController {
   constructor(
-    private discordService: DiscordService = new DiscordService(),
-    private lastfmService: LastfmService = new LastfmService(),
-    private userService: UserService = new UserService(),
+    private readonly discordService: DiscordService,
+    private readonly lastfmService: LastfmService,
+    private readonly userService: UserService,
+    private readonly tokenCipher: TokenCipherService,
   ) {}
 
-  public async login(req: Request, res: Response): Promise<Response> {
-    const input = parseRequest(contract.login, req);
+  @Get('login')
+  @OnRouteError({
+    event: 'auth.controller.login_failed',
+    message: 'Internal Server Error',
+  })
+  async login(
+    @ContractInput(contract.login, 'Code not provided')
+    input: ContractInputValue<typeof contract.login>,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<ContractResponseInput<typeof contract.login>> {
+    const tokens = await this.discordService.requestToken(input.query.code);
+    const expiresAt = Date.now() + tokens.expires_in * 1000;
+    const encryptedToken = this.tokenCipher.encryptToken(
+      tokens.access_token,
+      expiresAt,
+    );
+    const encryptedRefreshToken = this.tokenCipher.encryptToken(
+      tokens.refresh_token,
+    );
 
-    if (!input) {
-      return res.status(400).json({
-        message: 'Code not provided',
-      });
+    if (!encryptedToken || !encryptedRefreshToken) {
+      throw new InternalServerErrorException('Internal Server Error');
     }
 
-    try {
-      const response = await this.discordService.requestToken(input.query.code);
+    response.setHeader('Created-At', new Date().toISOString());
+    response.setHeader('Expires-In', tokens.expires_in.toString());
+    response.setHeader('Authorization', `Bearer ${encryptedToken}`);
+    response.setHeader('Refresh-Token', encryptedRefreshToken);
+    response.setHeader(
+      'Access-Control-Expose-Headers',
+      'Authorization, Refresh-Token, Expires-In, Created-At',
+    );
+    response.setHeader(
+      'Access-Control-Allow-Headers',
+      'Authorization, Refresh-Token, Expires-In, Created-At',
+    );
 
-      const expiresAt = Date.now() + response.expires_in * 1000;
-      const encryptedToken = encryptToken(response.access_token, expiresAt);
-      const encryptedRefreshToken = encryptToken(response.refresh_token);
+    const discordUser = await this.discordService.getDiscordUser(
+      tokens.access_token,
+    );
+    if (!discordUser)
+      throw new BadGatewayException('Discord user lookup failed');
 
-      if (!encryptedToken || !encryptedRefreshToken) {
-        return res.status(500).json({ message: 'Internal Server Error' });
-      }
-
-      res.set('Created-At', new Date().toISOString());
-      res.set('Expires-In', response.expires_in.toString());
-      res.set('Authorization', `Bearer ${encryptedToken}`);
-      res.set('Refresh-Token', encryptedRefreshToken);
-
-      res.set(
-        'Access-Control-Expose-Headers',
-        'Authorization, Refresh-Token, Expires-In, Created-At',
-      );
-      res.set(
-        'Access-Control-Allow-Headers',
-        'Authorization, Refresh-Token, Expires-In, Created-At',
-      );
-
-      const discordUser = await this.discordService.getDiscordUser(
-        response.access_token,
-      );
-      if (!discordUser) {
-        return res.status(502).json({ message: 'Discord user lookup failed' });
-      }
-
-      if (!(await this.userService.exists(discordUser.id)))
-        await this.userService.create(discordUser.id);
-
-      return sendContract(res, contract.login, {
-        message: 'Authenticated successfully',
-      });
-    } catch (error) {
-      logger.error('auth.controller.login_failed', { error });
-      return res.status(500).json({ message: 'Internal Server Error' });
+    if (!(await this.userService.exists(discordUser.id))) {
+      await this.userService.create(discordUser.id);
     }
+
+    return { message: 'Authenticated successfully' };
   }
 
-  public async refreshToken(req: Request, res: Response): Promise<Response> {
-    const refresh_token = req.get('Refresh-Token');
-
-    if (!refresh_token) {
-      return res.status(400).json({ message: 'Refresh token not found' });
+  @Get('refresh_token')
+  @OnRouteError({
+    event: 'auth.controller.refresh_token_failed',
+    message: 'Internal Server Error',
+  })
+  async refreshToken(
+    @Headers('refresh-token') refreshToken: string | undefined,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<ContractResponseInput<typeof contract.refreshToken>> {
+    if (!refreshToken) {
+      throw new BadRequestException('Refresh token not found');
     }
-    const decryptedRefreshToken = decryptToken(refresh_token);
-
+    const decryptedRefreshToken = this.tokenCipher.decryptToken(refreshToken);
     if (!decryptedRefreshToken) {
-      return res.status(500).json({ message: 'Internal Server Error' });
+      throw new InternalServerErrorException('Internal Server Error');
     }
 
-    try {
-      const response = await this.discordService.refreshToken(
-        decryptedRefreshToken,
-      );
+    const tokens = await this.discordService.refreshToken(
+      decryptedRefreshToken,
+    );
+    const refreshExpiresAt = Date.now() + tokens.expires_in * 1000;
+    const encryptedToken = this.tokenCipher.encryptToken(
+      tokens.access_token,
+      refreshExpiresAt,
+    );
 
-      const refreshExpiresAt = Date.now() + response.expires_in * 1000;
-      const encryptedToken = encryptToken(
-        response.access_token,
-        refreshExpiresAt,
-      );
-
-      res.set('Authorization', `Bearer ${encryptedToken}`);
-      res.set('Access-Control-Expose-Headers', 'Authorization');
-      res.set('Access-Control-Allow-Headers', 'Authorization');
-
-      return sendContract(res, contract.refreshToken, {
-        message: 'Token refreshed',
-      });
-    } catch (error) {
-      logger.error('auth.controller.refresh_token_failed', { error });
-      return res.status(500).json({ message: 'Internal Server Error' });
-    }
+    response.setHeader('Authorization', `Bearer ${encryptedToken}`);
+    response.setHeader('Access-Control-Expose-Headers', 'Authorization');
+    response.setHeader('Access-Control-Allow-Headers', 'Authorization');
+    return { message: 'Token refreshed' };
   }
 
-  public discordLoginUrl(req: Request, res: Response): Response {
-    const state = parseRequest(contract.discordLoginUrl, req)?.query.state;
-    return sendContract(res, contract.discordLoginUrl, {
-      data: this.discordService.getAuthorizationUrl(state),
-    });
+  @Get('discordLoginUrl')
+  discordLoginUrl(
+    @Query('state') state: string | undefined,
+  ): ContractResponseInput<typeof contract.discordLoginUrl> {
+    return { data: this.discordService.getAuthorizationUrl(state) };
   }
 
-  public lastfmLoginUrl(req: Request, res: Response): Response {
-    return sendContract(res, contract.lastfmLoginUrl, {
-      data: this.lastfmService.getAuthorizationUrl(),
-    });
+  @Get('lastfmLoginUrl')
+  lastfmLoginUrl(): ContractResponseInput<typeof contract.lastfmLoginUrl> {
+    return { data: this.lastfmService.getAuthorizationUrl() };
   }
 }
 

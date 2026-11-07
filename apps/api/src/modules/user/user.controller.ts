@@ -1,190 +1,179 @@
+import type { ContractResponseInput } from '@marquinhos/contracts/http/contract';
 import * as contract from '@marquinhos/contracts/http/routes/user';
-import type { Request, Response } from 'express';
+import {
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpException,
+  HttpStatus,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import type { ContractInputValue } from 'common/decorators/contract-input.decorator';
+import { ContractInput } from 'common/decorators/contract-input.decorator';
+import { CurrentUser } from 'common/decorators/current-user.decorator';
+import { OnRouteError } from 'common/decorators/on-route-error.decorator';
+import { BotAuthGuard } from 'common/guards/bot-auth.guard';
+import { jsonNull } from 'common/http/json-null';
+import type { DiscordUser } from 'integrations/discord/discord.service';
+import { DiscordUserAuthGuard } from 'modules/user/user-auth.guard';
 import { UserService } from 'modules/user/user.service';
-import { parseRequest, sendContract } from 'utils/contract';
-import { logger } from 'utils/logger';
 
-class UserController {
-  constructor(private userService: UserService = new UserService()) {}
+@Controller('user')
+export class UserController {
+  constructor(private readonly userService: UserService) {}
 
-  public async enableLastfm(req: Request, res: Response) {
-    if (!req.user) {
-      return res.status(500).json({ message: 'Internal Server error' });
-    }
-
-    const input = parseRequest(contract.enableLastfm, req);
-    if (!input) {
-      return res.status(400).json({ message: 'Missing credentials' });
-    }
-
-    try {
-      await this.userService.enableLastfm(req.user.id, input.body.token);
-    } catch (error: unknown) {
-      logger.error('user.controller.enable_lastfm_failed', { error });
-      return res.status(500).json({ message: 'Unknown Error' });
-    }
-
-    return sendContract(res, contract.enableLastfm, {
-      message: 'Lastfm enabled',
-    });
-  }
-
-  public async getProfile(req: Request, res: Response) {
-    if (!req.user) {
-      return res.status(500).json({ message: 'Internal Server error' });
-    }
-
-    return sendContract(res, contract.getProfile, req.user);
-  }
-
-  public async toggleScrobbles(req: Request, res: Response) {
-    if (!req.user) {
-      return res.status(500).json({ message: 'Internal Server error' });
-    }
-
-    try {
-      return sendContract(
-        res,
-        contract.toggleScrobbles,
-        await this.userService.toggleScrobbles(req.user.id),
+  @Get('profile')
+  @UseGuards(DiscordUserAuthGuard)
+  getProfile(
+    @CurrentUser() user: DiscordUser | undefined,
+  ): ContractResponseInput<typeof contract.getProfile> {
+    if (!user) {
+      throw new HttpException(
+        'Internal Server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
-    } catch (error: unknown) {
-      logger.error('user.controller.toggle_scrobbles_failed', { error });
-      return res.status(500).json({ message: 'Unknown Error' });
     }
+    return user;
   }
 
-  public async deleteLastfmData(req: Request, res: Response) {
-    if (!req.user) {
-      return res.status(500).json({ message: 'Internal Server error' });
-    }
-
-    try {
-      await this.userService.deleteLastfmData(req.user.id);
-    } catch (error: unknown) {
-      logger.error('user.controller.delete_lastfm_data_failed', { error });
-      return res.status(500).json({ message: 'Unknown Error' });
-    }
-
-    return sendContract(res, contract.deleteLastfmData, {
-      message: 'User deleted',
-    });
+  @Get('exists/:id')
+  @UseGuards(DiscordUserAuthGuard)
+  @OnRouteError({
+    event: 'user.controller.exists_failed',
+    message: 'Unknown Error',
+  })
+  async exists(
+    @ContractInput(contract.exists, 'id is required')
+    input: ContractInputValue<typeof contract.exists>,
+    @CurrentUser() user: DiscordUser | undefined,
+  ): Promise<ContractResponseInput<typeof contract.exists>> {
+    this.requireUser(user);
+    const existingUser = await this.userService.exists(input.params.id);
+    return existingUser ?? jsonNull;
   }
 
-  public async deleteAllData(req: Request, res: Response) {
-    if (!req.user) {
-      return res.status(500).json({ message: 'Internal Server error' });
-    }
-
-    try {
-      await this.userService.deleteAllData(req.user.id);
-    } catch (error: unknown) {
-      logger.error('user.controller.delete_all_data_failed', { error });
-      return res.status(500).json({ message: 'Unknown Error' });
-    }
-
-    return sendContract(res, contract.deleteAllData, {
-      message: 'User deleted',
-    });
+  @Get('lastfm-status')
+  @UseGuards(DiscordUserAuthGuard)
+  @OnRouteError({
+    event: 'user.controller.lastfm_status_failed',
+    message: 'Unknown Error',
+  })
+  async lastfmStatus(
+    @CurrentUser() user: DiscordUser | undefined,
+  ): Promise<ContractResponseInput<typeof contract.lastfmStatus>> {
+    const { id } = this.requireUser(user);
+    const status = await this.userService.hasValidLastfmSessionToken(id);
+    if (!status) throw new HttpException('Lastfm token not found', 404);
+    return status;
   }
 
-  public async exists(req: Request, res: Response) {
-    if (!req.user) {
-      return res.status(500).json({ message: 'Internal Server error' });
-    }
+  @Post('enable-lastfm')
+  @HttpCode(200)
+  @UseGuards(DiscordUserAuthGuard)
+  @OnRouteError({
+    event: 'user.controller.enable_lastfm_failed',
+    message: 'Unknown Error',
+  })
+  async enableLastfm(
+    @ContractInput(contract.enableLastfm, 'Missing credentials')
+    input: ContractInputValue<typeof contract.enableLastfm>,
+    @CurrentUser() user: DiscordUser | undefined,
+  ): Promise<ContractResponseInput<typeof contract.enableLastfm>> {
+    await this.userService.enableLastfm(
+      this.requireUser(user).id,
+      input.body.token,
+    );
+    return { message: 'Lastfm enabled' };
+  }
 
-    try {
-      const input = parseRequest(contract.exists, req);
-      if (!input) {
-        return res.status(400).json({ message: 'id is required' });
-      }
-      return sendContract(
-        res,
-        contract.exists,
-        await this.userService.exists(input.params.id),
+  @Delete('lastfm')
+  @UseGuards(DiscordUserAuthGuard)
+  @OnRouteError({
+    event: 'user.controller.delete_lastfm_data_failed',
+    message: 'Unknown Error',
+  })
+  async deleteLastfmData(
+    @CurrentUser() user: DiscordUser | undefined,
+  ): Promise<ContractResponseInput<typeof contract.deleteLastfmData>> {
+    await this.userService.deleteLastfmData(this.requireUser(user).id);
+    return { message: 'User deleted' };
+  }
+
+  @Delete()
+  @UseGuards(DiscordUserAuthGuard)
+  @OnRouteError({
+    event: 'user.controller.delete_all_data_failed',
+    message: 'Unknown Error',
+  })
+  async deleteAllData(
+    @CurrentUser() user: DiscordUser | undefined,
+  ): Promise<ContractResponseInput<typeof contract.deleteAllData>> {
+    await this.userService.deleteAllData(this.requireUser(user).id);
+    return { message: 'User deleted' };
+  }
+
+  @Patch('toggle-scrobble')
+  @UseGuards(DiscordUserAuthGuard)
+  @OnRouteError({
+    event: 'user.controller.toggle_scrobbles_failed',
+    message: 'Unknown Error',
+  })
+  toggleScrobbles(
+    @CurrentUser() user: DiscordUser | undefined,
+  ): Promise<ContractResponseInput<typeof contract.toggleScrobbles>> {
+    return this.userService.toggleScrobbles(this.requireUser(user).id);
+  }
+
+  @Get('top-artists/:period/:id')
+  @UseGuards(BotAuthGuard)
+  @OnRouteError({
+    event: 'user.controller.get_top_artists_failed',
+    message: 'Unknown Error',
+  })
+  getTopArtists(
+    @ContractInput(contract.getTopArtists, 'Invalid user id or period')
+    input: ContractInputValue<typeof contract.getTopArtists>,
+  ): ReturnType<UserService['getTopArtists']> {
+    return this.userService.getTopArtists(input.params.id, input.params.period);
+  }
+
+  @Get('top-albums/:period/:id')
+  @UseGuards(BotAuthGuard)
+  @OnRouteError({
+    event: 'user.controller.get_top_albums_failed',
+    message: 'Unknown Error',
+  })
+  getTopAlbums(
+    @ContractInput(contract.getTopAlbums, 'Invalid user id or period')
+    input: ContractInputValue<typeof contract.getTopAlbums>,
+  ): ReturnType<UserService['getTopAlbums']> {
+    return this.userService.getTopAlbums(input.params.id, input.params.period);
+  }
+
+  @Get('top-tracks/:period/:id')
+  @UseGuards(BotAuthGuard)
+  @OnRouteError({
+    event: 'user.controller.get_top_tracks_failed',
+    message: 'Unknown Error',
+  })
+  getTopTracks(
+    @ContractInput(contract.getTopTracks, 'Invalid user id or period')
+    input: ContractInputValue<typeof contract.getTopTracks>,
+  ): ReturnType<UserService['getTopTracks']> {
+    return this.userService.getTopTracks(input.params.id, input.params.period);
+  }
+
+  private requireUser(user: DiscordUser | undefined): DiscordUser {
+    if (!user) {
+      throw new HttpException(
+        'Internal Server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
-    } catch (error: unknown) {
-      logger.error('user.controller.exists_failed', { error });
-      return res.status(500).json({ message: 'Unknown Error' });
     }
-  }
-
-  public async lastfmStatus(req: Request, res: Response) {
-    if (!req.user) {
-      return res.status(500).json({ message: 'Internal Server error' });
-    }
-
-    try {
-      const lastfmStatus = await this.userService.hasValidLastfmSessionToken(
-        req.user.id,
-      );
-
-      if (lastfmStatus) {
-        return sendContract(res, contract.lastfmStatus, lastfmStatus);
-      } else {
-        return res.status(404).json({ message: 'Lastfm token not found' });
-      }
-    } catch (error: unknown) {
-      logger.error('user.controller.lastfm_status_failed', { error });
-      return res.status(500).json({ message: 'Unknown Error' });
-    }
-  }
-
-  public async getTopArtists(req: Request, res: Response) {
-    const input = parseRequest(contract.getTopArtists, req);
-    if (!input) {
-      return res.status(400).json({ message: 'Invalid user id or period' });
-    }
-    const { id, period } = input.params;
-
-    try {
-      return sendContract(
-        res,
-        contract.getTopArtists,
-        await this.userService.getTopArtists(id, period),
-      );
-    } catch (error: unknown) {
-      logger.error('user.controller.get_top_artists_failed', { error });
-      return res.status(500).json({ message: 'Unknown Error' });
-    }
-  }
-
-  public async getTopAlbums(req: Request, res: Response) {
-    const input = parseRequest(contract.getTopAlbums, req);
-    if (!input) {
-      return res.status(400).json({ message: 'Invalid user id or period' });
-    }
-    const { id, period } = input.params;
-
-    try {
-      return sendContract(
-        res,
-        contract.getTopAlbums,
-        await this.userService.getTopAlbums(id, period),
-      );
-    } catch (error: unknown) {
-      logger.error('user.controller.get_top_albums_failed', { error });
-      return res.status(500).json({ message: 'Unknown Error' });
-    }
-  }
-
-  public async getTopTracks(req: Request, res: Response) {
-    const input = parseRequest(contract.getTopTracks, req);
-    if (!input) {
-      return res.status(400).json({ message: 'Invalid user id or period' });
-    }
-    const { id, period } = input.params;
-
-    try {
-      return sendContract(
-        res,
-        contract.getTopTracks,
-        await this.userService.getTopTracks(id, period),
-      );
-    } catch (error: unknown) {
-      logger.error('user.controller.get_top_tracks_failed', { error });
-      return res.status(500).json({ message: 'Unknown Error' });
-    }
+    return user;
   }
 }
 

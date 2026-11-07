@@ -1,7 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
+import { ScrobbleModule } from 'modules/scrobble/scrobble.module';
 import { randomUUID } from 'node:crypto';
 import type { EmojiReactionService } from 'services/aiChat/EmojiReactionService';
-import { startContractServer } from '../helpers/contractServer';
+import {
+  startContractServer,
+  startNestContractServer,
+} from '../helpers/contractServer';
 
 const { callContract } = await import('@marquinhos/api-client/bot');
 const emojiReaction =
@@ -12,31 +16,39 @@ const fakeReactions = {
   chooseReactions: async () => ['😂', '🔥'],
 } as unknown as EmojiReactionService;
 
-let server: Awaited<ReturnType<typeof startContractServer>>;
+let emojiServer: Awaited<ReturnType<typeof startContractServer>>;
+let scrobbleServer: Awaited<ReturnType<typeof startNestContractServer>>;
 
 beforeAll(async () => {
   const { createEmojiReactionRouter } =
     await import('../../src/routes/emojiReaction.route');
   const { default: EmojiReactionController } =
     await import('../../src/controllers/emojiReaction.controller');
-  const { default: scrobbleRouter } =
-    await import('../../src/routes/scrobble.route');
-  server = await startContractServer((app) => {
+  emojiServer = await startContractServer((app) => {
     app.use(
       '/api/emoji-reaction',
       createEmojiReactionRouter(new EmojiReactionController(fakeReactions)),
     );
-    app.use('/api/scrobble', scrobbleRouter);
+  });
+  scrobbleServer = await startNestContractServer({
+    imports: [ScrobbleModule],
   });
 });
 
-afterAll(() => server.close());
+afterAll(async () => {
+  await emojiServer.close();
+  await scrobbleServer.close();
+});
 
 describe('emoji reaction contracts', () => {
   it('returns the chosen emojis', async () => {
-    const response = await callContract(server.http, emojiReaction.choose, {
-      body: { content: 'kkkkk', recentMessages: [] },
-    });
+    const response = await callContract(
+      emojiServer.http,
+      emojiReaction.choose,
+      {
+        body: { content: 'kkkkk', recentMessages: [] },
+      },
+    );
 
     expect(response.data).toEqual({ emojis: ['😂', '🔥'] });
   });
@@ -68,15 +80,23 @@ describe('scrobble contracts', () => {
       created_at: Math.floor(Date.now() / 1000),
     });
 
-    const added = await callContract(server.http, scrobble.addUser, {
+    const added = await callContract(scrobbleServer.http, scrobble.addUser, {
       params: { scrobbleId, userId },
     });
-    const removed = await callContract(server.http, scrobble.removeUser, {
-      params: { scrobbleId, userId },
-    });
-    const dispatched = await callContract(server.http, scrobble.dispatch, {
-      params: { id: scrobbleId },
-    });
+    const removed = await callContract(
+      scrobbleServer.http,
+      scrobble.removeUser,
+      {
+        params: { scrobbleId, userId },
+      },
+    );
+    const dispatched = await callContract(
+      scrobbleServer.http,
+      scrobble.dispatch,
+      {
+        params: { id: scrobbleId },
+      },
+    );
 
     expect(added).toEqual({ data: scrobbleId, message: 'User added' });
     expect(removed).toEqual({ data: scrobbleId, message: 'User removed' });

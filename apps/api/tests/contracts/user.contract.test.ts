@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import type { NextFunction, Request, Response } from 'express';
-import type { UserService } from 'modules/user/user.service';
-import { startContractServer } from '../helpers/contractServer';
+import { encryptToken } from 'common/crypto';
+import { DiscordService } from 'integrations/discord/discord.service';
+import { UserModule } from 'modules/user/user.module';
+import { UserService } from 'modules/user/user.service';
+import { startNestContractServer } from '../helpers/contractServer';
 
 const { callContract } = await import('@marquinhos/api-client/bot');
 const user = await import('@marquinhos/contracts/http/routes/user');
@@ -30,25 +32,24 @@ const fakeUsers = {
   }),
 } as unknown as UserService;
 
-function fakeAuth(req: Request, _res: Response, next: NextFunction) {
-  Object.defineProperty(req, 'user', {
-    value: { id: 'u1', username: 'gui', highestRole: 'admin' },
-  });
-  next();
-}
+const fakeDiscord = {
+  getDiscordUser: async () => ({ id: 'u1', username: 'gui' }),
+  getDiscordGuildUserHighestRole: async () => 'admin',
+} as unknown as DiscordService;
 
-let server: Awaited<ReturnType<typeof startContractServer>>;
+let server: Awaited<ReturnType<typeof startNestContractServer>>;
 
 beforeAll(async () => {
-  const { createUserRouter } = await import('../../src/routes/user.route');
-  const { default: UserController } =
-    await import('../../src/modules/user/user.controller');
-  server = await startContractServer((app) => {
-    app.use(
-      '/api/user',
-      createUserRouter(new UserController(fakeUsers), fakeAuth, fakeAuth),
-    );
-  });
+  server = await startNestContractServer(
+    { imports: [UserModule] },
+    (builder) =>
+      builder
+        .overrideProvider(DiscordService)
+        .useValue(fakeDiscord)
+        .overrideProvider(UserService)
+        .useValue(fakeUsers),
+    { Authorization: `Bearer ${encryptToken('contract-user-token')}` },
+  );
 });
 
 afterAll(() => server.close());
@@ -98,15 +99,31 @@ describe('user contracts', () => {
 
   it('serves top artists, albums and tracks', async () => {
     const params = { period: '7day', id: 'u1' } as const;
-    const artists = await callContract(server.http, user.getTopArtists, {
-      params,
-    });
-    const albums = await callContract(server.http, user.getTopAlbums, {
-      params,
-    });
-    const tracks = await callContract(server.http, user.getTopTracks, {
-      params,
-    });
+    const options = { headers: { Authorization: 'Bearer contract-test-key' } };
+    const artists = await callContract(
+      server.http,
+      user.getTopArtists,
+      {
+        params,
+      },
+      options,
+    );
+    const albums = await callContract(
+      server.http,
+      user.getTopAlbums,
+      {
+        params,
+      },
+      options,
+    );
+    const tracks = await callContract(
+      server.http,
+      user.getTopTracks,
+      {
+        params,
+      },
+      options,
+    );
 
     expect(artists.artists[0]?.name).toBe('Artist');
     expect(albums.albums[0]?.name).toBe('Album');

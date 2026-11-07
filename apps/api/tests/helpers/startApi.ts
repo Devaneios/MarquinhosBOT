@@ -7,9 +7,6 @@ export async function getLegacyRouteMounts() {
   const [
     health,
     activity,
-    auth,
-    user,
-    scrobble,
     privacyPolicy,
     aiChat,
     emojiReaction,
@@ -20,9 +17,6 @@ export async function getLegacyRouteMounts() {
   ] = await Promise.all([
     import('routes/health.route'),
     import('routes/activity.route'),
-    import('routes/auth.route'),
-    import('routes/user.route'),
-    import('routes/scrobble.route'),
     import('routes/privacyPolicy.route'),
     import('routes/aiChat.route'),
     import('routes/emojiReaction.route'),
@@ -38,13 +32,6 @@ export async function getLegacyRouteMounts() {
       mount: '/api/activities',
       router: activity.default,
       contractModule: 'activity',
-    },
-    { mount: '/api/auth', router: auth.default, contractModule: 'auth' },
-    { mount: '/api/user', router: user.default, contractModule: 'user' },
-    {
-      mount: '/api/scrobble',
-      router: scrobble.default,
-      contractModule: 'scrobble',
     },
     {
       mount: '/api/privacy-policy',
@@ -99,20 +86,33 @@ export async function startApi(
     { configureHttp },
     { NEST_APP_OPTIONS },
     { HttpInfrastructureModule },
+    { AuthModule },
     { HealthModule },
     { PrivacyPolicyModule },
+    { ScrobbleModule },
+    { UserModule },
     { registerLegacyRoutes },
   ] = await Promise.all([
     import('common/http/configure-http'),
     import('common/http/nest-app.options'),
     import('common/http/http-infrastructure.module'),
+    import('modules/auth/auth.module'),
     import('modules/health/health.module'),
     import('modules/privacy-policy/privacy-policy.module'),
+    import('modules/scrobble/scrobble.module'),
+    import('modules/user/user.module'),
     import('../../src/legacyRoutes'),
   ]);
 
   const moduleRef = await Test.createTestingModule({
-    imports: [HttpInfrastructureModule, HealthModule, PrivacyPolicyModule],
+    imports: [
+      HttpInfrastructureModule,
+      AuthModule,
+      HealthModule,
+      PrivacyPolicyModule,
+      ScrobbleModule,
+      UserModule,
+    ],
   }).compile();
   const app =
     moduleRef.createNestApplication<NestExpressApplication>(NEST_APP_OPTIONS);

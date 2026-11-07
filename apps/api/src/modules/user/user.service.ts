@@ -1,6 +1,6 @@
 import type { Track } from '@marquinhos/contracts/http/routes/scrobble';
 import type { LastfmTopListenedPeriod } from '@marquinhos/contracts/http/routes/user';
-import { db } from '@marquinhos/database/client';
+import type { Db } from '@marquinhos/database/client';
 import {
   activityDeepLinks,
   aiResearchJobs,
@@ -35,16 +35,15 @@ import {
   wordleUserConfig,
   xpCooldowns,
 } from '@marquinhos/database/schema';
-import { decryptToken, encryptToken } from 'common/crypto';
-import dotenv from 'dotenv';
+import { Inject, Injectable } from '@nestjs/common';
+import { TokenCipherService } from 'common/crypto';
+import { DB } from 'database/database.tokens';
 import { eq, not, sql } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { DiscordService } from 'integrations/discord/discord.service';
 import { LastfmService } from 'integrations/lastfm/lastfm.service';
 import { SpotifyService } from 'integrations/spotify/spotify.service';
 import { lockGoalFactsForWrite } from 'services/wordle/goalFactLock';
-
-dotenv.config();
 
 // Everything the privacy policy's "delete all your data" covers. Left out
 // on purpose: AI usage counters (deleting them would reset quotas), sandbox
@@ -89,30 +88,29 @@ const USER_OWNED_TABLES: readonly (readonly [
   [users, users.id],
 ];
 
-async function findUser(id: string) {
+async function findUser(db: Db, id: string) {
   const [row] = await db.select().from(users).where(eq(users.id, id));
   return row;
 }
 
+@Injectable()
 export class UserService {
-  discordService: DiscordService;
-  lastfmService: LastfmService;
-  spotifyService: SpotifyService;
-
-  constructor() {
-    this.discordService = new DiscordService();
-    this.lastfmService = new LastfmService();
-    this.spotifyService = new SpotifyService();
-  }
+  constructor(
+    @Inject(DB) private readonly db: Db,
+    private readonly discordService: DiscordService,
+    private readonly lastfmService: LastfmService,
+    private readonly spotifyService: SpotifyService,
+    private readonly tokenCipher: TokenCipherService,
+  ) {}
 
   async create(id: string) {
     // Atomic upsert — avoids SELECT-then-INSERT race condition (14.4)
-    await db.insert(users).values({ id }).onConflictDoNothing();
+    await this.db.insert(users).values({ id }).onConflictDoNothing();
     return { id };
   }
 
   async enableLastfm(id: string, token: string) {
-    const user = await findUser(id);
+    const user = await findUser(this.db, id);
 
     if (!user) {
       throw new Error('User not found');
@@ -125,11 +123,11 @@ export class UserService {
     }
 
     // Encrypt the session token before persisting (P0 security fix)
-    const encrypted = encryptToken(sessionToken.sessionKey);
+    const encrypted = this.tokenCipher.encryptToken(sessionToken.sessionKey);
     if (!encrypted) {
       throw new Error('Failed to encrypt session token');
     }
-    await db
+    await this.db
       .update(users)
       .set({
         lastfm_session_token: encrypted,
@@ -142,13 +140,13 @@ export class UserService {
   }
 
   async deleteLastfmData(id: string) {
-    const user = await findUser(id);
+    const user = await findUser(this.db, id);
 
     if (!user) {
       throw new Error('User not found');
     }
 
-    await db
+    await this.db
       .update(users)
       .set({
         lastfm_session_token: null,
@@ -161,7 +159,7 @@ export class UserService {
   }
 
   async deleteAllData(id: string) {
-    await db.transaction(async (tx) => {
+    await this.db.transaction(async (tx) => {
       await lockGoalFactsForWrite(tx);
       for (const [table, column] of USER_OWNED_TABLES) {
         await tx.delete(table).where(eq(column, id));
@@ -175,7 +173,7 @@ export class UserService {
 
   async toggleScrobbles(id: string) {
     // One statement, so two concurrent toggles can't both read the old value.
-    const [row] = await db
+    const [row] = await this.db
       .update(users)
       .set({ scrobbles_on: not(sql`coalesce(${users.scrobbles_on}, false)`) })
       .where(eq(users.id, id))
@@ -189,7 +187,7 @@ export class UserService {
   }
 
   async exists(id: string) {
-    const row = await findUser(id);
+    const row = await findUser(this.db, id);
 
     if (!row) {
       return null;
@@ -199,7 +197,7 @@ export class UserService {
   }
 
   async hasValidLastfmSessionToken(id: string) {
-    const row = await findUser(id);
+    const row = await findUser(this.db, id);
 
     if (!row) {
       throw new Error('User not found');
@@ -209,7 +207,7 @@ export class UserService {
       return null;
     }
 
-    const sessionKey = decryptToken(row.lastfm_session_token);
+    const sessionKey = this.tokenCipher.decryptToken(row.lastfm_session_token);
     if (!sessionKey) {
       return null;
     }
@@ -224,7 +222,7 @@ export class UserService {
   }
 
   async getLastfmUsername(id: string) {
-    const row = await findUser(id);
+    const row = await findUser(this.db, id);
 
     if (!row) {
       throw new Error('User not found');
@@ -234,7 +232,7 @@ export class UserService {
   }
 
   async getTopArtists(id: string, period: LastfmTopListenedPeriod) {
-    const row = await findUser(id);
+    const row = await findUser(this.db, id);
 
     if (!row) {
       throw new Error('User not found');
@@ -242,7 +240,7 @@ export class UserService {
 
     const username = row.lastfm_username ?? '';
     const sessionKey = row.lastfm_session_token
-      ? (decryptToken(row.lastfm_session_token) ?? undefined)
+      ? (this.tokenCipher.decryptToken(row.lastfm_session_token) ?? undefined)
       : undefined;
 
     const profileName = (
@@ -286,7 +284,7 @@ export class UserService {
   }
 
   async getTopAlbums(id: string, period: LastfmTopListenedPeriod) {
-    const row = await findUser(id);
+    const row = await findUser(this.db, id);
 
     if (!row) {
       throw new Error('User not found');
@@ -294,7 +292,7 @@ export class UserService {
 
     const username = row.lastfm_username ?? '';
     const sessionKey = row.lastfm_session_token
-      ? (decryptToken(row.lastfm_session_token) ?? undefined)
+      ? (this.tokenCipher.decryptToken(row.lastfm_session_token) ?? undefined)
       : undefined;
 
     const profileName = (
@@ -338,7 +336,7 @@ export class UserService {
   }
 
   async getTopTracks(id: string, period: LastfmTopListenedPeriod) {
-    const row = await findUser(id);
+    const row = await findUser(this.db, id);
 
     if (!row) {
       throw new Error('User not found');
@@ -346,7 +344,7 @@ export class UserService {
 
     const username = row.lastfm_username ?? '';
     const sessionKey = row.lastfm_session_token
-      ? (decryptToken(row.lastfm_session_token) ?? undefined)
+      ? (this.tokenCipher.decryptToken(row.lastfm_session_token) ?? undefined)
       : undefined;
 
     const profileName = (

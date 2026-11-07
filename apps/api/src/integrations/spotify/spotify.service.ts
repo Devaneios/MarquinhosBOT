@@ -1,16 +1,16 @@
 import type { Track } from '@marquinhos/contracts/http/routes/scrobble';
-import dotenv from 'dotenv';
+import { Injectable } from '@nestjs/common';
+import { AppConfig } from 'config/app.config';
 import SpotifyWebApi from 'spotify-web-api-node';
 
-dotenv.config();
-
+@Injectable()
 export class SpotifyService {
-  spotifyApi: SpotifyWebApi;
+  private readonly spotifyApi: SpotifyWebApi;
 
-  constructor() {
+  constructor(config: AppConfig) {
     this.spotifyApi = new SpotifyWebApi({
-      clientId: process.env.SPOTIFY_CLIENT_ID,
-      clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+      clientId: config.spotifyClientId,
+      clientSecret: config.spotifyClientSecret,
     });
   }
 

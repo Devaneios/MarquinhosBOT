@@ -1,4 +1,5 @@
 import { db } from '@marquinhos/database/client';
+import { createLegacyAppConfig } from 'config/legacy-app-config';
 import WordleController from 'controllers/wordle.controller';
 import { WordleAlbumController } from 'controllers/wordleAlbum.controller';
 import { WordleBingoController } from 'controllers/wordleBingo.controller';
@@ -51,7 +52,7 @@ router.post('/admin/notifications/:guildId/resolve', checkToken, (req, res) =>
 );
 const goals = new WordleGoalsController(new WordleGoalsService(db));
 const verifyGuildMember = requireGuildMember(
-  new DiscordService().isGuildMember,
+  new DiscordService(createLegacyAppConfig()).isGuildMember,
 );
 const challenges = new WordleChallengesController(
   new WordleChallengeService(db),

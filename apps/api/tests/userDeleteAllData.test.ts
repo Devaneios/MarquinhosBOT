@@ -1,15 +1,28 @@
 import { db } from '@marquinhos/database/client';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
+import { TokenCipherService } from 'common/crypto';
 import { randomUUID } from 'crypto';
 import { sql } from 'drizzle-orm';
+import { DiscordService } from 'integrations/discord/discord.service';
+import { LastfmService } from 'integrations/lastfm/lastfm.service';
+import { SpotifyService } from 'integrations/spotify/spotify.service';
 import { UserService } from 'modules/user/user.service';
 import { WordleAchievementService } from 'services/wordle/WordleAchievementService';
+import { createTestAppConfig } from './helpers/testAppConfig';
 import { installWordleAchievementCatalog } from './helpers/wordleAchievementCatalog';
 
 const RUN = randomUUID();
 const USER = `delete-me-${RUN}`;
 const OTHER = `keep-me-${RUN}`;
 let restoreCatalog: (() => Promise<void>) | undefined;
+const config = createTestAppConfig();
+const userService = new UserService(
+  db,
+  new DiscordService(config),
+  new LastfmService(db, config),
+  new SpotifyService(config),
+  new TokenCipherService(config),
+);
 beforeAll(async () => {
   restoreCatalog = await installWordleAchievementCatalog();
 });
@@ -131,7 +144,7 @@ async function seed(userId: string) {
 // The test database is shared with other files: remove what the test leaves
 // behind (the other user's rows and the day row the sessions point at).
 afterAll(async () => {
-  await new UserService().deleteAllData(OTHER);
+  await userService.deleteAllData(OTHER);
   await db.execute(
     sql`DELETE FROM wordle_days WHERE guild_id = 'g' AND word_date = '2026-09-24'`,
   );
@@ -149,7 +162,7 @@ describe('UserService.deleteAllData', () => {
     await seed(USER);
     await seed(OTHER);
 
-    await new UserService().deleteAllData(USER);
+    await userService.deleteAllData(USER);
 
     for (const [table, column] of [
       ['users', 'id'],

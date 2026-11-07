@@ -26,14 +26,12 @@ import type {
   PlaybackData,
   Track,
 } from '@marquinhos/contracts/http/routes/scrobble';
+import { Injectable } from '@nestjs/common';
 import { SpotifyService } from 'integrations/spotify/spotify.service';
 
+@Injectable()
 export class ParserService {
-  spotifyService: SpotifyService;
-
-  constructor() {
-    this.spotifyService = new SpotifyService();
-  }
+  constructor(private readonly spotifyService: SpotifyService) {}
 
   async parseTrack(playbackData: PlaybackData): Promise<Track | null> {
     // Based on the implementation of https://github.com/web-scrobbler/web-scrobbler/blob/master/src/core/content/util.js
