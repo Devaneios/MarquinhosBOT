@@ -35,4 +35,4 @@ RUN bun -e "const pkg = await Bun.file('/app/apps/api/package.json').json(); for
 USER marquinhos
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD wget -q -O /dev/null http://127.0.0.1:${HTTP_PORT:-3000}/api/health || exit 1
-CMD ["bun", "src/index.ts"]
+CMD ["bun", "src/main.ts"]

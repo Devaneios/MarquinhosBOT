@@ -2,7 +2,7 @@
 
 ## Phase 0: baseline and safety net
 
-**Status: Phase 0 complete; beginning Phase 1.**
+**Status: Phase 0 and Phase 1 complete; beginning Phase 2.**
 
 - Branch: `refactor/api-nestjs` (created from `main`, which was two commits ahead of `origin/main`).
 - Initial baseline: `pnpm run dev:test` exited 1 because all five gateway assertions passed but its `afterAll` hook timed out at 5 seconds. Diagnostic instrumentation showed 12 pending Vite client-environment transform requests; `vite.close()` waits for those requests.
@@ -32,3 +32,16 @@
 
 - Phase 0 parity suite removes `RateLimit-Policy` from header comparisons because D2 explicitly permits its absence after migration. The original Express golden retains the captured header. Volatile `RateLimit-Reset` and `Retry-After` values are represented by stable placeholders.
 - The benchmark's single-guild load is intentionally retained for the after-migration comparison; do not tune the benchmark or the application between runs.
+
+## Phase 1: Nest shell hosting the old routers
+
+- Installed NestJS 12 runtime/testing packages at pinned compatible versions, added decorator metadata settings, configured the Nest build externals, and switched the API entry point and Docker command to `src/main.ts`.
+- Added root/config/database/http/logging/filter/startup/jobs/realtime modules and kept the old routers mounted through `legacyRoutes.ts` for the strangler phase.
+- Parity after the shell: `tests/parity/http-parity.test.ts` passed, 2 tests / 197 assertions, against the unchanged golden. The helper uses the `APP_FILTER` registration from `HttpInfrastructureModule`.
+- Workspace checks: `pnpm run typecheck`, `pnpm run lint`, and `pnpm run build` passed. Existing warnings remain in unchanged bot tests and Activity UI files.
+- Full development suite: `bun run dev:test` exited 0. It ran 2 dev config tests, 5 Activity gateway tests, 1,750 API tests across 189 files, 257 bot tests across 45 files, and 291 Activity tests across 73 files.
+- Runtime smoke test: started the Nest API in production mode in Docker against a fresh disposable PostgreSQL database named `nestjs_phase1`. Startup completed migrations/default seeding and the health endpoint returned `200 {"status":"ok"}`.
+- Colyseus smoke test: minted a signed local `ws-session` token and joined the `match` room over the same HTTP server. During the Alpine image SIGTERM check, the client was connected; the server closed it and exited with code 0 in 0.17 seconds.
+- Missing-required-secret smoke test: production startup with `MARQUINHOS_API_KEY` empty exited with code 1 during ConfigModule validation, before binding a port.
+- Alpine artifact: `docker build -f apps/api/Dockerfile -t marquinhos-api-nest:phase1 .` succeeded. Its image healthcheck reported healthy and `/api/health` returned `200 {"status":"ok"}`.
+- Compatibility note: the prompt's Nest 12 `req.route` assumption does not hold with the shipped Express 5 adapter: its generated not-found wildcard sets `req.route`. `ApiExceptionFilter` therefore also recognizes Nest's generated `Cannot METHOD URL` 404 and still preserves 404 exceptions thrown by matched handlers.

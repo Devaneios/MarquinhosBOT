@@ -10,6 +10,8 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "verbatimModuleSyntax": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "noEmit": true,
     "strict": true,
     "skipLibCheck": true,

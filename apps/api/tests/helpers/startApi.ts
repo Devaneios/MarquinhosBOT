@@ -1,8 +1,7 @@
-import cors from 'cors';
-import type { Express, NextFunction, Request, Response, Router } from 'express';
-import express from 'express';
-import type { Server } from 'http';
-import morgan from 'morgan';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { Test } from '@nestjs/testing';
+import type { Router } from 'express';
+import type { Server } from 'node:http';
 
 export async function getLegacyRouteMounts() {
   const [
@@ -83,7 +82,7 @@ export interface StartApiOptions {
 }
 
 export interface StartedApi {
-  app: Express;
+  app: NestExpressApplication;
   http: Server;
   origin: string;
   close: () => Promise<void>;
@@ -92,54 +91,34 @@ export interface StartedApi {
 export async function startApi(
   options: StartApiOptions = {},
 ): Promise<StartedApi> {
-  const legacyRouteMounts = await getLegacyRouteMounts();
-  const app = express();
-  app.set('trust proxy', 1);
+  if (options.corsOrigins) {
+    process.env.CORS_ORIGINS = options.corsOrigins.join(',');
+  }
 
-  const allowlist = options.corsOrigins ?? [];
-  const corsOptionsDelegate = function (
-    req: Request,
-    callback: (error: Error | null, options: cors.CorsOptions) => void,
-  ) {
-    callback(null, {
-      origin: allowlist.includes(req.header('Origin') ?? ''),
-      credentials: true,
-    });
-  };
+  const [
+    { configureHttp },
+    { NEST_APP_OPTIONS },
+    { HttpInfrastructureModule },
+    { registerLegacyRoutes },
+  ] = await Promise.all([
+    import('common/http/configure-http'),
+    import('common/http/nest-app.options'),
+    import('common/http/http-infrastructure.module'),
+    import('../../src/legacyRoutes'),
+  ]);
 
-  const accessLogFormat =
-    ':remote-addr :remote-user :method :url HTTP/:http-version :status :res[content-length] - :response-time ms';
-  app.use(
-    options.silent
-      ? morgan(accessLogFormat, { stream: { write: () => undefined } })
-      : morgan(accessLogFormat),
-  );
-  app.use(express.json());
-  app.use(cors(corsOptionsDelegate));
-  app.use(express.urlencoded({ extended: true }));
-
-  for (const { mount, router } of legacyRouteMounts) app.use(mount, router);
-
-  app.use((_req: Request, res: Response) => {
-    res.status(404).json({ message: 'Route not found' });
-  });
-  app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-    console.error('Unhandled error:', err);
-    res.status(500).json({
-      message:
-        process.env.NODE_ENV === 'production'
-          ? 'Internal Server Error'
-          : err.message,
-    });
-  });
-
-  const http = await new Promise<Server>((resolve, reject) => {
-    const server = app.listen(0, '127.0.0.1', () => resolve(server));
-    server.once('error', reject);
-  });
+  const moduleRef = await Test.createTestingModule({
+    imports: [HttpInfrastructureModule],
+  }).compile();
+  const app =
+    moduleRef.createNestApplication<NestExpressApplication>(NEST_APP_OPTIONS);
+  configureHttp(app, { silent: options.silent });
+  registerLegacyRoutes(app);
+  await app.init();
+  const http = await app.listen(0, '127.0.0.1');
   const address = http.address();
   if (!address || typeof address === 'string') {
-    await new Promise<void>((resolve) => http.close(() => resolve()));
+    await app.close();
     throw new Error('Test API did not bind to a TCP port');
   }
 
@@ -147,9 +126,6 @@ export async function startApi(
     app,
     http,
     origin: `http://127.0.0.1:${address.port}`,
-    close: () =>
-      new Promise<void>((resolve, reject) => {
-        http.close((error) => (error ? reject(error) : resolve()));
-      }),
+    close: () => app.close(),
   };
 }
