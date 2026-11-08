@@ -8,6 +8,7 @@ import { DatabaseModule } from 'database/database.module';
 import { DiscordModule } from 'integrations/discord/discord.module';
 import { ActivityAccessService } from 'modules/activity/activity-access.service';
 import { ActivityDeepLinkService } from 'modules/activity/activity-deep-link.service';
+import { ActivitySessionService } from 'modules/activity/activity-session.service';
 import { ActivityController } from 'modules/activity/activity.controller';
 import { ACTIVITY_ROOM_QUERY } from 'modules/activity/activity.tokens';
 import { BoggleWordBankService } from 'modules/activity/games/boggle/boggle-word-bank.service';
@@ -31,6 +32,7 @@ import { GamificationModule } from 'modules/gamification/gamification.module';
     ActivityAccessService,
     BoggleWordBankService,
     ActivityDeepLinkService,
+    ActivitySessionService,
     PongCompetitionService,
     PongTournamentService,
     WsSessionTokenService,

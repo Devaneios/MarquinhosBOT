@@ -2,10 +2,6 @@ import type { ContractResponseInput } from '@marquinhos/contracts/http/contract'
 import * as contract from '@marquinhos/contracts/http/routes/activity';
 import { roomListingSchema } from '@marquinhos/contracts/http/routes/activity';
 import {
-  isPongRulesetId,
-  normalizePongMatchConfig,
-} from '@marquinhos/domain/games/pong/PongRulesetRegistry';
-import {
   Controller,
   HttpCode,
   HttpException,
@@ -24,22 +20,18 @@ import {
   DiscordGuildMembershipError,
   DiscordService,
 } from 'integrations/discord/discord.service';
-import {
-  ActivityAccessService,
-  discordDisplayName,
-} from 'modules/activity/activity-access.service';
+import { ActivityAccessService } from 'modules/activity/activity-access.service';
 import { ActivityDeepLinkService } from 'modules/activity/activity-deep-link.service';
+import {
+  ActivitySessionService,
+  InvalidActivitySessionError,
+} from 'modules/activity/activity-session.service';
 import {
   ACTIVITY_ROOM_QUERY,
   type ActivityRoomQuery,
 } from 'modules/activity/activity.tokens';
 import { PongCompetitionService } from 'modules/activity/games/pong/pong-competition.service';
 import { PongTournamentService } from 'modules/activity/games/pong/pong-tournament.service';
-import { roomKey } from 'modules/activity/room-key';
-import { WsSessionTokenService } from 'modules/activity/ws-session-token';
-import { customAlphabet } from 'nanoid';
-
-const generateRoomId = customAlphabet('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 6);
 
 @Controller('activities')
 export class ActivityController {
@@ -49,7 +41,7 @@ export class ActivityController {
     private readonly competition: PongCompetitionService,
     private readonly tournaments: PongTournamentService,
     private readonly deepLinks: ActivityDeepLinkService,
-    private readonly wsSessionTokens: WsSessionTokenService,
+    private readonly sessions: ActivitySessionService,
     @Inject(ACTIVITY_ROOM_QUERY)
     private readonly queryRooms: ActivityRoomQuery,
   ) {}
@@ -82,72 +74,23 @@ export class ActivityController {
     @ContractInput(contract.wsSession)
     input: ContractInputValue<typeof contract.wsSession>,
   ): Promise<ContractResponseInput<typeof contract.wsSession>> {
-    const {
-      accessToken,
-      instanceId,
-      guildId,
-      mode,
-      game,
-      difficulty,
-      winningScore,
-      ruleset,
-      options,
-      roomId,
-    } = input.body;
-    const requiresGuildMembership = mode === 'multi' || game === 'wordle';
+    const { accessToken, ...request } = input.body;
+    const requiresGuildMembership =
+      request.mode === 'multi' || request.game === 'wordle';
     const user = requiresGuildMembership
-      ? await this.access.authenticateMember(accessToken, guildId)
+      ? await this.access.authenticateMember(accessToken, request.guildId)
       : await this.access.authenticate(accessToken);
-    if (game === 'pong') {
-      if (ruleset !== undefined && !isPongRulesetId(ruleset)) {
-        throw this.httpError(HttpStatus.BAD_REQUEST, 'Invalid Pong ruleset');
-      }
-      try {
-        normalizePongMatchConfig({
-          ruleset: isPongRulesetId(ruleset) ? ruleset : 'classic-1v1',
-          ...(winningScore !== undefined ? { targetScore: winningScore } : {}),
-          ...(options?.bestOf === 1 ||
-          options?.bestOf === 3 ||
-          options?.bestOf === 5
-            ? { bestOf: options.bestOf }
-            : {}),
-          ...(typeof options?.ranked === 'boolean'
-            ? { ranked: options.ranked }
-            : {}),
-        });
-      } catch (error) {
-        throw this.httpError(
+    try {
+      return { data: this.sessions.issueSession(user, request) };
+    } catch (error) {
+      if (error instanceof InvalidActivitySessionError) {
+        throw new HttpException(
+          { message: error.message },
           HttpStatus.BAD_REQUEST,
-          error instanceof Error ? error.message : 'Invalid Pong configuration',
         );
       }
+      throw error;
     }
-    const displayName = discordDisplayName(user);
-    const token = this.wsSessionTokens.mint({
-      userId: user.id,
-      ...(displayName !== undefined ? { displayName } : {}),
-      instanceId,
-      guildId,
-      mode,
-      game,
-      ...(game === 'wordle' && mode !== 'multi'
-        ? { guildMembershipVerified: true }
-        : {}),
-      ...(difficulty !== undefined ? { difficulty } : {}),
-      ...(winningScore !== undefined ? { winningScore } : {}),
-      ...(ruleset !== undefined ? { ruleset } : {}),
-      ...(options !== undefined ? { options } : {}),
-      ...(roomId !== undefined ? { roomId } : {}),
-    });
-    const key = roomKey({
-      instanceId,
-      game,
-      mode,
-      userId: user.id,
-      ...(ruleset !== undefined ? { ruleset } : {}),
-      ...(roomId !== undefined ? { roomId } : {}),
-    });
-    return { data: { token, roomKey: key } };
   }
 
   @Post('pong/leaderboard')
@@ -286,30 +229,10 @@ export class ActivityController {
     input: ContractInputValue<typeof contract.createRoom>,
   ): Promise<ContractResponseInput<typeof contract.createRoom>> {
     try {
-      const { accessToken, instanceId, guildId, game, queueEnabled } =
-        input.body;
+      const { accessToken, ...request } = input.body;
+      const { guildId } = request;
       const user = await this.access.authenticateMember(accessToken, guildId);
-
-      const roomId = generateRoomId();
-      const displayName = discordDisplayName(user);
-      const token = this.wsSessionTokens.mint({
-        userId: user.id,
-        ...(displayName !== undefined ? { displayName } : {}),
-        instanceId,
-        guildId,
-        mode: 'multi',
-        game,
-        roomId,
-        queueEnabled,
-      });
-      const key = roomKey({
-        instanceId,
-        game,
-        mode: 'multi',
-        userId: user.id,
-        roomId,
-      });
-      return { data: { roomId, token, roomKey: key } };
+      return { data: this.sessions.createRoom(user, request) };
     } catch (error) {
       if (error instanceof HttpException) throw error;
       logger.error('activity.controller.create_room_failed', { error });
