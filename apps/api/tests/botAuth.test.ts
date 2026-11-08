@@ -61,7 +61,10 @@ describe('BotAuthGuard', () => {
   });
 
   it('ignores the old web-agent header and still requires the API key', async () => {
-    const userToken = encryptToken('discord-access', Date.now() + 60_000);
+    const userToken = encryptToken('discord-access', Date.now() + 60_000, {
+      secret: process.env.MARQUINHOS_SECRET_KEY,
+      salt: process.env.MARQUINHOS_CRYPTO_SALT,
+    });
     const response = await fetch(`${api.origin}/api/bot-auth-probe`, {
       headers: {
         authorization: `Bearer ${userToken}`,

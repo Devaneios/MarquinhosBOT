@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { AppConfig } from 'config/app.config';
-import { getTokenCipherConfig } from 'config/token-cipher.config';
 import {
   createCipheriv,
   createDecipheriv,
@@ -34,8 +33,8 @@ const ALGORITHM = 'aes-256-gcm';
 
 export function encryptToken(
   token: string,
-  expiresAt?: number,
-  config: TokenCipherConfig = getTokenCipherConfig(),
+  expiresAt: number | undefined,
+  config: TokenCipherConfig,
 ): string | null {
   try {
     const key = getKey(config);
@@ -77,14 +76,14 @@ function decryptRaw(
       decipher.final(),
     ]).toString('utf8');
   } catch {
-    // Covers: auth-tag mismatch (tampered), wrong format, missing env key
+    // Covers: auth-tag mismatch (tampered), wrong format, missing secret
     return null;
   }
 }
 
 export function decryptToken(
   encryptedToken: string,
-  config: TokenCipherConfig = getTokenCipherConfig(),
+  config: TokenCipherConfig,
 ): string | null {
   const raw = decryptRaw(encryptedToken, config);
   if (!raw) return null;
@@ -99,7 +98,7 @@ export function decryptToken(
 
 export function decryptTokenFull(
   encryptedToken: string,
-  config: TokenCipherConfig = getTokenCipherConfig(),
+  config: TokenCipherConfig,
 ): { token: string; expiresAt?: number } | null {
   const raw = decryptRaw(encryptedToken, config);
   if (!raw) return null;

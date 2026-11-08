@@ -9,6 +9,10 @@ import { startNestContractServer } from './helpers/contractServer';
 import { createTestAppConfig } from './helpers/testAppConfig';
 
 const SECRET = 'TOP-SECRET-VALUE';
+const tokenCipherConfig = () => ({
+  secret: process.env.MARQUINHOS_SECRET_KEY,
+  salt: process.env.MARQUINHOS_CRYPTO_SALT,
+});
 const originalFetch = globalThis.fetch;
 
 // Shaped like an AxiosError: the request config carries tokens and bodies.
@@ -65,7 +69,11 @@ describe('failed requests carrying secrets', () => {
     const discord = {
       refreshToken: () => Promise.reject(failedRequest()),
     } as unknown as DiscordService;
-    const refreshToken = encryptToken('refresh')!;
+    const refreshToken = encryptToken(
+      'refresh',
+      undefined,
+      tokenCipherConfig(),
+    )!;
     const server = await startNestContractServer(
       { imports: [AuthModule] },
       (builder) => builder.overrideProvider(DiscordService).useValue(discord),
@@ -88,7 +96,11 @@ describe('failed requests carrying secrets', () => {
       getDiscordUser: async () => ({ id: 'u1' }),
       getDiscordGuildUserHighestRole: () => Promise.reject(failedRequest()),
     } as unknown as DiscordService;
-    const token = encryptToken('mock-access-token', Date.now() + 60_000);
+    const token = encryptToken(
+      'mock-access-token',
+      Date.now() + 60_000,
+      tokenCipherConfig(),
+    );
     const server = await startNestContractServer(
       { imports: [UserModule] },
       (builder) => builder.overrideProvider(DiscordService).useValue(discord),

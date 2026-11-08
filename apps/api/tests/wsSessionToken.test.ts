@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'bun:test';
-import { TokenCipherService, encryptToken } from 'common/crypto';
+import {
+  TokenCipherService,
+  encryptToken as encryptTokenWithConfig,
+} from 'common/crypto';
 import { WsSessionTokenService } from 'modules/activity/ws-session-token';
 import { createTestAppConfig } from './helpers/testAppConfig';
 import {
@@ -25,6 +28,12 @@ const serviceWith = (secret: string) =>
     ),
   );
 
+const encryptWithEnvironment = (token: string, expiresAt?: number) =>
+  encryptTokenWithConfig(token, expiresAt, {
+    secret: process.env.MARQUINHOS_SECRET_KEY,
+    salt: process.env.MARQUINHOS_CRYPTO_SALT,
+  });
+
 describe('mintWsSessionToken / verifyWsSessionToken', () => {
   it('rejects a token signed with another secret', () => {
     const token = serviceWith('secret-a').mint(payload);
@@ -33,10 +42,11 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
   });
 
   it('verifies a token minted by the free function with the same secret', () => {
-    const token = encryptToken(JSON.stringify(payload), Date.now() + 60_000, {
-      secret: 'secret-a',
-      salt: 'salt-a',
-    })!;
+    const token = encryptTokenWithConfig(
+      JSON.stringify(payload),
+      Date.now() + 60_000,
+      { secret: 'secret-a', salt: 'salt-a' },
+    )!;
     expect(serviceWith('secret-a').verify(token)).toEqual(payload);
   });
 
@@ -148,7 +158,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
   });
 
   it('rejects a payload with an invalid winningScore', () => {
-    const malformed = encryptToken(
+    const malformed = encryptWithEnvironment(
       JSON.stringify({
         userId: 'user-1',
         instanceId: 'inst-1',
@@ -162,7 +172,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
   });
 
   it('rejects a payload with an invalid difficulty', () => {
-    const malformed = encryptToken(
+    const malformed = encryptWithEnvironment(
       JSON.stringify({
         userId: 'user-1',
         instanceId: 'inst-1',
@@ -189,7 +199,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
   });
 
   it('rejects an expired token', () => {
-    const expired = encryptToken(
+    const expired = encryptWithEnvironment(
       JSON.stringify({
         userId: 'user-1',
         instanceId: 'inst-1',
@@ -203,12 +213,12 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
   });
 
   it('rejects a payload missing userId/instanceId/guildId/mode/game', () => {
-    const malformed = encryptToken(JSON.stringify({ foo: 'bar' }))!;
+    const malformed = encryptWithEnvironment(JSON.stringify({ foo: 'bar' }))!;
     expect(verifyWsSessionToken(malformed)).toBeNull();
   });
 
   it('rejects a payload with an invalid mode', () => {
-    const malformed = encryptToken(
+    const malformed = encryptWithEnvironment(
       JSON.stringify({
         userId: 'user-1',
         instanceId: 'inst-1',
@@ -221,7 +231,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
   });
 
   it('rejects a payload missing game', () => {
-    const malformed = encryptToken(
+    const malformed = encryptWithEnvironment(
       JSON.stringify({
         userId: 'user-1',
         instanceId: 'inst-1',
@@ -233,7 +243,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
   });
 
   it('rejects a payload with an invalid game', () => {
-    const malformed = encryptToken(
+    const malformed = encryptWithEnvironment(
       JSON.stringify({
         userId: 'user-1',
         instanceId: 'inst-1',
@@ -269,7 +279,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
   });
 
   it('rejects a cards payload with no ruleset', () => {
-    const malformed = encryptToken(
+    const malformed = encryptWithEnvironment(
       JSON.stringify({
         userId: 'user-1',
         instanceId: 'inst-1',
@@ -282,7 +292,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
   });
 
   it('rejects a cards payload with an unknown ruleset', () => {
-    const malformed = encryptToken(
+    const malformed = encryptWithEnvironment(
       JSON.stringify({
         userId: 'user-1',
         instanceId: 'inst-1',
@@ -352,7 +362,7 @@ describe('mintWsSessionToken / verifyWsSessionToken', () => {
   });
 
   function sealed(payload: Record<string, unknown>) {
-    return encryptToken(JSON.stringify(payload))!;
+    return encryptWithEnvironment(JSON.stringify(payload))!;
   }
 
   const basePayload = {

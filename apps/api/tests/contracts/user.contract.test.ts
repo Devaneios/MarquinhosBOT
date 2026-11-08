@@ -48,7 +48,12 @@ beforeAll(async () => {
         .useValue(fakeDiscord)
         .overrideProvider(UserService)
         .useValue(fakeUsers),
-    { Authorization: `Bearer ${encryptToken('contract-user-token')}` },
+    {
+      Authorization: `Bearer ${encryptToken('contract-user-token', undefined, {
+        secret: process.env.MARQUINHOS_SECRET_KEY,
+        salt: process.env.MARQUINHOS_CRYPTO_SALT,
+      })}`,
+    },
   );
 });
 

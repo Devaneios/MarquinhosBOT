@@ -74,7 +74,15 @@ describe('auth contracts', () => {
       server.http,
       auth.refreshToken,
       {},
-      { headers: { 'Refresh-Token': encryptToken('discord-refresh') ?? '' } },
+      {
+        headers: {
+          'Refresh-Token':
+            encryptToken('discord-refresh', undefined, {
+              secret: process.env.MARQUINHOS_SECRET_KEY,
+              salt: process.env.MARQUINHOS_CRYPTO_SALT,
+            }) ?? '',
+        },
+      },
     );
 
     expect(response).toEqual({ message: 'Token refreshed' });
