@@ -23,6 +23,10 @@ import {
   DiscordGuildMembershipError,
   DiscordService,
 } from 'integrations/discord/discord.service';
+import {
+  ActivityAccessService,
+  discordDisplayName,
+} from 'modules/activity/activity-access.service';
 import { ActivityDeepLinkService } from 'modules/activity/activity-deep-link.service';
 import {
   ACTIVITY_ROOM_QUERY,
@@ -40,6 +44,7 @@ const generateRoomId = customAlphabet('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 6);
 export class ActivityController {
   constructor(
     private readonly discordService: DiscordService,
+    private readonly access: ActivityAccessService,
     private readonly competition: PongCompetitionService,
     private readonly tournaments: PongTournamentService,
     private readonly deepLinks: ActivityDeepLinkService,
@@ -86,23 +91,10 @@ export class ActivityController {
         options,
         roomId,
       } = input.body;
-      const user = await this.discordService.getDiscordUser(accessToken);
-      if (!user?.id) {
-        throw this.httpError(HttpStatus.UNAUTHORIZED, 'Invalid access token');
-      }
       const requiresGuildMembership = mode === 'multi' || game === 'wordle';
-      if (requiresGuildMembership) {
-        const isMember = await this.discordService.isGuildMember(
-          accessToken,
-          guildId,
-        );
-        if (!isMember) {
-          throw this.httpError(
-            HttpStatus.FORBIDDEN,
-            'Not a member of the specified guild',
-          );
-        }
-      }
+      const user = requiresGuildMembership
+        ? await this.access.authenticateMember(accessToken, guildId)
+        : await this.access.authenticate(accessToken);
       if (game === 'pong') {
         if (ruleset !== undefined && !isPongRulesetId(ruleset)) {
           throw this.httpError(HttpStatus.BAD_REQUEST, 'Invalid Pong ruleset');
@@ -131,12 +123,7 @@ export class ActivityController {
           );
         }
       }
-      const displayName =
-        typeof user.global_name === 'string' && user.global_name.length > 0
-          ? user.global_name
-          : typeof user.username === 'string' && user.username.length > 0
-            ? user.username
-            : undefined;
+      const displayName = discordDisplayName(user);
       const token = this.wsSessionTokens.mint({
         userId: user.id,
         ...(displayName !== undefined ? { displayName } : {}),
@@ -178,20 +165,7 @@ export class ActivityController {
   ): Promise<ContractResponseInput<typeof contract.pongLeaderboard>> {
     try {
       const { accessToken, guildId, pool, limit } = input.body;
-      const user = await this.discordService.getDiscordUser(accessToken);
-      if (!user?.id) {
-        throw this.httpError(HttpStatus.UNAUTHORIZED, 'Invalid access token');
-      }
-      const isMember = await this.discordService.isGuildMember(
-        accessToken,
-        guildId,
-      );
-      if (!isMember) {
-        throw this.httpError(
-          HttpStatus.FORBIDDEN,
-          'Not a member of the specified guild',
-        );
-      }
+      await this.access.authenticateMember(accessToken, guildId);
       return { data: await this.competition.leaderboard(guildId, pool, limit) };
     } catch (error) {
       if (error instanceof HttpException) throw error;
@@ -208,21 +182,10 @@ export class ActivityController {
   ): Promise<ContractResponseInput<typeof contract.createPongTournament>> {
     try {
       const values = input.body;
-      const user = await this.discordService.getDiscordUser(values.accessToken);
-      if (!user?.id) {
-        throw this.httpError(HttpStatus.UNAUTHORIZED, 'Invalid access token');
-      }
-      if (
-        !(await this.discordService.isGuildMember(
-          values.accessToken,
-          values.guildId,
-        ))
-      ) {
-        throw this.httpError(
-          HttpStatus.FORBIDDEN,
-          'Not a member of the specified guild',
-        );
-      }
+      const user = await this.access.authenticateMember(
+        values.accessToken,
+        values.guildId,
+      );
       const data = await this.tournaments.create({
         guildId: values.guildId,
         name: values.name,
@@ -256,16 +219,7 @@ export class ActivityController {
   ): Promise<ContractResponseInput<typeof contract.listPongTournaments>> {
     try {
       const { accessToken, guildId } = input.body;
-      const user = await this.discordService.getDiscordUser(accessToken);
-      if (!user?.id) {
-        throw this.httpError(HttpStatus.UNAUTHORIZED, 'Invalid access token');
-      }
-      if (!(await this.discordService.isGuildMember(accessToken, guildId))) {
-        throw this.httpError(
-          HttpStatus.FORBIDDEN,
-          'Not a member of the specified guild',
-        );
-      }
+      await this.access.authenticateMember(accessToken, guildId);
       return { data: await this.tournaments.list(guildId) };
     } catch (error) {
       if (error instanceof HttpException) throw error;
@@ -285,10 +239,7 @@ export class ActivityController {
   ): Promise<ContractResponseInput<typeof contract.reportPongTournamentMatch>> {
     try {
       const { accessToken, matchId, winnerId } = input.body;
-      const user = await this.discordService.getDiscordUser(accessToken);
-      if (!user?.id) {
-        throw this.httpError(HttpStatus.UNAUTHORIZED, 'Invalid access token');
-      }
+      const user = await this.access.authenticate(accessToken);
       return {
         data: await this.tournaments.report(matchId, winnerId, user.id),
       };
@@ -333,10 +284,7 @@ export class ActivityController {
   ): Promise<ContractResponseInput<typeof contract.claimDeepLink>> {
     try {
       const { accessToken, guildId } = input.body;
-      const user = await this.discordService.getDiscordUser(accessToken);
-      if (!user?.id) {
-        throw this.httpError(HttpStatus.UNAUTHORIZED, 'Invalid access token');
-      }
+      const user = await this.access.authenticate(accessToken);
       return { data: { game: await this.deepLinks.claim(user.id, guildId) } };
     } catch (error) {
       if (error instanceof HttpException) throw error;
@@ -355,25 +303,13 @@ export class ActivityController {
     try {
       const { accessToken, instanceId, guildId, game, queueEnabled } =
         input.body;
-      const user = await this.discordService.getDiscordUser(accessToken);
-      if (!user?.id) {
-        throw this.httpError(HttpStatus.UNAUTHORIZED, 'Invalid access token');
-      }
-      if (!(await this.discordService.isGuildMember(accessToken, guildId))) {
-        throw this.httpError(
-          HttpStatus.FORBIDDEN,
-          'Not a member of the specified guild',
-        );
-      }
+      const user = await this.access.authenticateMember(accessToken, guildId);
 
       const roomId = generateRoomId();
+      const displayName = discordDisplayName(user);
       const token = this.wsSessionTokens.mint({
         userId: user.id,
-        ...(typeof user.global_name === 'string' && user.global_name.length > 0
-          ? { displayName: user.global_name }
-          : typeof user.username === 'string' && user.username.length > 0
-            ? { displayName: user.username }
-            : {}),
+        ...(displayName !== undefined ? { displayName } : {}),
         instanceId,
         guildId,
         mode: 'multi',
@@ -413,16 +349,7 @@ export class ActivityController {
   ): Promise<ContractResponseInput<typeof contract.listRooms>> {
     try {
       const { accessToken, instanceId, guildId } = input.body;
-      const user = await this.discordService.getDiscordUser(accessToken);
-      if (!user?.id) {
-        throw this.httpError(HttpStatus.UNAUTHORIZED, 'Invalid access token');
-      }
-      if (!(await this.discordService.isGuildMember(accessToken, guildId))) {
-        throw this.httpError(
-          HttpStatus.FORBIDDEN,
-          'Not a member of the specified guild',
-        );
-      }
+      await this.access.authenticateMember(accessToken, guildId);
       const rooms = await this.queryRooms({
         name: 'match',
         instanceId,

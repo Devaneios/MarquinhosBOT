@@ -34,6 +34,9 @@ function defaultDiscord(): FakeDiscord {
   } as unknown as FakeDiscord;
 }
 
+const discordWith = (overrides: Partial<FakeDiscord>) =>
+  ({ ...defaultDiscord(), ...overrides }) as FakeDiscord;
+
 async function withServer<T>(
   run: (server: ControllerServer) => Promise<T>,
   options: {
@@ -74,6 +77,21 @@ const wsBody = {
   game: 'pong',
 } as const;
 
+const validTournamentBody = {
+  accessToken: 'tok_abc',
+  guildId: 'guild-1',
+  name: 'Test tournament',
+  format: 'round-robin',
+  pool: 'classic-1v1',
+  playerIds: ['user-1', 'user-2'],
+} as const;
+
+const validLeaderboardBody = {
+  accessToken: 'tok_abc',
+  guildId: 'guild-1',
+  pool: 'classic-1v1',
+} as const;
+
 describe('ActivityController HTTP routes', () => {
   it('exchanges an OAuth code and returns the access token', async () => {
     await withServer(async (server) => {
@@ -110,6 +128,68 @@ describe('ActivityController HTTP routes', () => {
       expect(response.status).toBe(400);
       expect(response.body).toMatchObject({ message: 'Validation failed' });
     });
+  });
+
+  it('rejects an invalid ws-session body before calling Discord', async () => {
+    let lookups = 0;
+    await withServer(
+      async (server) => {
+        const response = await post(server, '/ws-session', {});
+        expect(response.status).toBe(400);
+        expect(lookups).toBe(0);
+      },
+      {
+        discord: discordWith({
+          getDiscordUser: async () => {
+            lookups += 1;
+            return { id: 'user-1' };
+          },
+        }),
+      },
+    );
+  });
+
+  it('keeps the 400 body with the Discord message when tournament membership is down', async () => {
+    const outage = new DiscordGuildMembershipError(503);
+    await withServer(
+      async (server) => {
+        const response = await post(
+          server,
+          '/pong/tournaments/create',
+          validTournamentBody,
+        );
+        expect(response.status).toBe(400);
+        expect(response.body).toEqual({ message: outage.message });
+      },
+      {
+        discord: discordWith({
+          isGuildMember: async () => {
+            throw outage;
+          },
+        }),
+      },
+    );
+  });
+
+  it('maps a membership outage on the Pong leaderboard to the legacy 500 body', async () => {
+    await withServer(
+      async (server) => {
+        const response = await post(
+          server,
+          '/pong/leaderboard',
+          validLeaderboardBody,
+        );
+        expect(response.status).toBe(500);
+        expect(response.body).toEqual({ message: 'Unknown Error' });
+      },
+      {
+        discord: discordWith({
+          isGuildMember: async () => {
+            throw new DiscordGuildMembershipError(503);
+          },
+        }),
+      },
+    );
   });
 
   it('mints a session token bound to the resolved user and instance', async () => {

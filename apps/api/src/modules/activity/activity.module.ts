@@ -6,6 +6,7 @@ import { BotAuthGuard } from 'common/guards/bot-auth.guard';
 import { SharedBucketThrottlerGuard } from 'common/guards/shared-bucket-throttler.guard';
 import { DatabaseModule } from 'database/database.module';
 import { DiscordModule } from 'integrations/discord/discord.module';
+import { ActivityAccessService } from 'modules/activity/activity-access.service';
 import { ActivityDeepLinkService } from 'modules/activity/activity-deep-link.service';
 import { ActivityController } from 'modules/activity/activity.controller';
 import { ACTIVITY_ROOM_QUERY } from 'modules/activity/activity.tokens';
@@ -27,6 +28,7 @@ import { GamificationModule } from 'modules/gamification/gamification.module';
   providers: [
     BotAuthGuard,
     SharedBucketThrottlerGuard,
+    ActivityAccessService,
     BoggleWordBankService,
     ActivityDeepLinkService,
     PongCompetitionService,
