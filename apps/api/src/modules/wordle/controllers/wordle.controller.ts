@@ -14,9 +14,7 @@ import {
   type ContractInputValue,
 } from 'common/decorators/contract-input.decorator';
 import { OnRouteError } from 'common/decorators/on-route-error.decorator';
-import { getRecifeDate } from 'modules/wordle/services/wordle-date';
-import { visibleWordleEvidence } from 'modules/wordle/services/wordle-evidence-visibility';
-import { WordleRewardsService } from 'modules/wordle/services/wordle-rewards.service';
+import { WordlePlayerOverviewService } from 'modules/wordle/services/wordle-player-overview.service';
 import { WordleShowcaseService } from 'modules/wordle/services/wordle-showcase.service';
 import {
   GlobalWordleCannotForce,
@@ -29,7 +27,7 @@ export class WordleController {
   constructor(
     private readonly service: WordleService,
     private readonly showcase: WordleShowcaseService,
-    private readonly rewards: WordleRewardsService,
+    private readonly overview: WordlePlayerOverviewService,
   ) {}
 
   @Post('presence')
@@ -65,37 +63,8 @@ export class WordleController {
     input: ContractInputValue<typeof contract.getAchievements>,
   ): Promise<ContractResponseInput<typeof contract.getAchievements>> {
     const { userId, guildId } = input.params;
-    const overview = await this.service.getAchievementsOverview(
-      userId,
-      guildId,
-      '',
-    );
-    await this.rewards.reconcile(userId);
-    const cosmetics = await this.rewards.get(userId);
-    const publicAchievements = overview.achievements.map((achievement) =>
-      achievement.matchEvidence === undefined
-        ? achievement
-        : {
-            ...achievement,
-            matchEvidence: visibleWordleEvidence(
-              achievement.matchEvidence,
-              userId,
-              '',
-              getRecifeDate(),
-            ),
-          },
-    );
     return {
-      data: {
-        ...overview,
-        achievements: publicAchievements,
-        showcase: await this.showcase.get(userId),
-        cosmetics: {
-          title: cosmetics.title,
-          frame: cosmetics.frame,
-          badges: cosmetics.badges,
-        },
-      },
+      data: await this.overview.getPublicPlayerOverview(userId, guildId),
     };
   }
 
