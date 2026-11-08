@@ -147,6 +147,9 @@ export function createMatchRoom(dependencies: RoomDependencies) {
       const initialSession = options.token
         ? dependencies.wsSessionTokens.verify(options.token)
         : null;
+      if (options.token && !initialSession) {
+        throw new Error('Invalid or expired session token');
+      }
 
       // The real client join (`client.joinOrCreate('match', { token, roomKey })`)
       // never needs to pass `game`/`roomId` — both are already encoded in the
