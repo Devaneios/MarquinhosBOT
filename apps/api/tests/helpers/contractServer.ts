@@ -2,6 +2,8 @@ import type { ModuleMetadata } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test, type TestingModuleBuilder } from '@nestjs/testing';
 import type { Express } from 'express';
+import { AppConfig } from '../../src/config/app.config';
+import { createTestAppConfig } from './testAppConfig';
 
 process.env.MARQUINHOS_API_KEY = 'contract-test-key';
 
@@ -60,7 +62,11 @@ export async function startNestContractServer(
     Test.createTestingModule({
       ...metadata,
       imports: [HttpInfrastructureModule, ...(metadata.imports ?? [])],
-    }),
+    })
+      .overrideProvider(AppConfig)
+      .useValue(
+        createTestAppConfig({ MARQUINHOS_API_KEY: 'contract-test-key' }),
+      ),
   ).compile();
   const app =
     moduleRef.createNestApplication<NestExpressApplication>(NEST_APP_OPTIONS);
