@@ -1,9 +1,12 @@
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import type { Server } from 'node:http';
+import { AppConfig } from '../../src/config/app.config';
+import { createTestAppConfig } from './testAppConfig';
 
 export interface StartApiOptions {
   corsOrigins?: string[];
+  config?: Record<string, string | undefined>;
   silent?: boolean;
 }
 
@@ -17,10 +20,6 @@ export interface StartedApi {
 export async function startApi(
   options: StartApiOptions = {},
 ): Promise<StartedApi> {
-  if (options.corsOrigins) {
-    process.env.CORS_ORIGINS = options.corsOrigins.join(',');
-  }
-
   const [
     { configureHttp },
     { NEST_APP_OPTIONS },
@@ -53,6 +52,12 @@ export async function startApi(
     import('modules/activity/activity.module'),
   ]);
 
+  const config = {
+    ...options.config,
+    ...(options.corsOrigins
+      ? { CORS_ORIGINS: options.corsOrigins.join(',') }
+      : {}),
+  };
   const moduleRef = await Test.createTestingModule({
     imports: [
       HttpInfrastructureModule,
@@ -68,7 +73,10 @@ export async function startApi(
       ActivityModule,
       WordleModule,
     ],
-  }).compile();
+  })
+    .overrideProvider(AppConfig)
+    .useValue(createTestAppConfig(config))
+    .compile();
   const app =
     moduleRef.createNestApplication<NestExpressApplication>(NEST_APP_OPTIONS);
   configureHttp(app, { silent: options.silent });

@@ -46,16 +46,18 @@ const executableProbes = probes.filter(
     !!probe.request && !!probe.response,
 );
 
-process.env.NODE_ENV = 'test';
-process.env.MARQUINHOS_API_KEY = 'parity-capture-key';
-process.env.MARQUINHOS_SECRET_KEY = 'parity-capture-secret';
-process.env.MARQUINHOS_CRYPTO_SALT = 'parity-capture-salt';
-process.env.DISCORD_CLIENT_ID = 'parity-discord-client-id';
-process.env.DISCORD_CLIENT_SECRET = 'parity-discord-client-secret';
-process.env.DISCORD_REDIRECT_URI = 'https://parity.example/discord/callback';
-process.env.LASTFM_API_KEY = 'parity-lastfm-api-key';
-process.env.LASTFM_SHARED_SECRET = 'parity-lastfm-secret';
-process.env.LASTFM_REDIRECT_URI = 'https://parity.example/lastfm/callback';
+const PARITY_CONFIG = {
+  NODE_ENV: 'test',
+  MARQUINHOS_API_KEY: 'parity-capture-key',
+  MARQUINHOS_SECRET_KEY: 'parity-capture-secret',
+  MARQUINHOS_CRYPTO_SALT: 'parity-capture-salt',
+  DISCORD_CLIENT_ID: 'parity-discord-client-id',
+  DISCORD_CLIENT_SECRET: 'parity-discord-client-secret',
+  DISCORD_REDIRECT_URI: 'https://parity.example/discord/callback',
+  LASTFM_API_KEY: 'parity-lastfm-api-key',
+  LASTFM_SHARED_SECRET: 'parity-lastfm-secret',
+  LASTFM_REDIRECT_URI: 'https://parity.example/lastfm/callback',
+};
 
 const { startApi } = await import('../helpers/startApi');
 let api: Awaited<ReturnType<typeof startApi>>;
@@ -68,6 +70,7 @@ function nextProbeIp(): string {
 
 beforeAll(async () => {
   api = await startApi({
+    config: PARITY_CONFIG,
     corsOrigins: ['https://allowed.example'],
     silent: true,
   });

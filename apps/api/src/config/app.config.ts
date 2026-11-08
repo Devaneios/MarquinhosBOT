@@ -6,7 +6,7 @@ export class AppConfig {
   constructor(private readonly config: ConfigService) {}
 
   private read(name: string): string | undefined {
-    return process.env[name] ?? this.config.get<string>(name);
+    return this.config.get<string>(name);
   }
 
   get httpPort(): number {

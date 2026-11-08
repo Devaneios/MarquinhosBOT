@@ -7,9 +7,11 @@ import { GuildMemberGuard } from '../../src/common/guards/guild-member.guard';
 import { configureHttp } from '../../src/common/http/configure-http';
 import { HttpInfrastructureModule } from '../../src/common/http/http-infrastructure.module';
 import { NEST_APP_OPTIONS } from '../../src/common/http/nest-app.options';
+import { AppConfig } from '../../src/config/app.config';
 import { ConfigModule } from '../../src/config/config.module';
 import type { DiscordUser } from '../../src/integrations/discord/discord.service';
 import { DiscordService } from '../../src/integrations/discord/discord.service';
+import { createTestAppConfig } from './testAppConfig';
 
 const activityToken = 'controller-test-token';
 const testUser = { id: 'owner' } as DiscordUser;
@@ -18,7 +20,6 @@ export async function startNestControllerServer(
   metadata: ModuleMetadata,
   customize: (builder: TestingModuleBuilder) => TestingModuleBuilder = (b) => b,
 ) {
-  process.env.MARQUINHOS_API_KEY = activityToken;
   const builder = Test.createTestingModule({
     ...metadata,
     imports: [
@@ -40,7 +41,9 @@ export async function startNestControllerServer(
         },
       },
     ],
-  });
+  })
+    .overrideProvider(AppConfig)
+    .useValue(createTestAppConfig({ MARQUINHOS_API_KEY: activityToken }));
   const moduleRef = await customize(builder).compile();
   const app =
     moduleRef.createNestApplication<NestExpressApplication>(NEST_APP_OPTIONS);
