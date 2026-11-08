@@ -2,7 +2,8 @@ import {
   createdRoomSchema,
   wsSessionSchema,
 } from '@marquinhos/contracts/http/routes/activity';
-import { describe, expect, it } from 'bun:test';
+import { describe, expect, it, spyOn } from 'bun:test';
+import { logger } from 'common/logging/logger';
 import {
   DiscordGuildMembershipError,
   DiscordService,
@@ -392,6 +393,27 @@ describe('ActivityController HTTP routes', () => {
         { discord },
       );
     }
+  });
+
+  it('logs the route event when Discord fails during ws-session', async () => {
+    const spy = spyOn(logger, 'error');
+    await withServer(
+      async (server) => {
+        await post(server, '/ws-session', wsBody);
+      },
+      {
+        discord: discordWith({
+          getDiscordUser: async () => {
+            throw new Error('discord down');
+          },
+        }),
+      },
+    );
+    expect(spy).toHaveBeenCalledWith(
+      'activity.controller.ws_session_failed',
+      expect.objectContaining({ error: expect.any(Error) }),
+    );
+    spy.mockRestore();
   });
 
   it('includes ruleset, options, and roomId for a cards session', async () => {
