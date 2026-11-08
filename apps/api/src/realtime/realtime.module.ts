@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ActivityModule } from 'modules/activity/activity.module';
 import { BoggleWordBankService } from 'modules/activity/games/boggle/boggle-word-bank.service';
 import { PongCompetitionService } from 'modules/activity/games/pong/pong-competition.service';
+import { WsSessionTokenService } from 'modules/activity/ws-session-token';
 import { GamificationModule } from 'modules/gamification/gamification.module';
 import { GamificationService } from 'modules/gamification/gamification.service';
 import { WordBankService } from 'modules/wordle/services/word-bank.service';
@@ -22,12 +23,14 @@ import { ROOM_DEPENDENCIES } from 'realtime/room-dependencies';
         wordBank: WordBankService,
         boggleWordBank: BoggleWordBankService,
         pongCompetition: PongCompetitionService,
+        wsSessionTokens: WsSessionTokenService,
       ) => ({
         gamification,
         wordle,
         wordBank,
         boggleWordBank,
         pongCompetition,
+        wsSessionTokens,
       }),
       inject: [
         GamificationService,
@@ -35,6 +38,7 @@ import { ROOM_DEPENDENCIES } from 'realtime/room-dependencies';
         WordBankService,
         BoggleWordBankService,
         PongCompetitionService,
+        WsSessionTokenService,
       ],
     },
   ],

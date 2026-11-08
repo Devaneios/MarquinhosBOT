@@ -1,11 +1,45 @@
 import { describe, expect, it } from 'bun:test';
-import { encryptToken } from 'common/crypto';
+import { TokenCipherService, encryptToken } from 'common/crypto';
+import { WsSessionTokenService } from 'modules/activity/ws-session-token';
+import { createTestAppConfig } from './helpers/testAppConfig';
 import {
   mintWsSessionToken,
   verifyWsSessionToken,
-} from 'modules/activity/ws-session-token';
+} from './helpers/wsSessionTokens';
+
+const payload = {
+  userId: 'user-1',
+  instanceId: 'inst-1',
+  guildId: 'guild-1',
+  mode: 'single',
+  game: 'pong',
+} as const;
+
+const serviceWith = (secret: string) =>
+  new WsSessionTokenService(
+    new TokenCipherService(
+      createTestAppConfig({
+        MARQUINHOS_SECRET_KEY: secret,
+        MARQUINHOS_CRYPTO_SALT: 'salt-a',
+      }),
+    ),
+  );
 
 describe('mintWsSessionToken / verifyWsSessionToken', () => {
+  it('rejects a token signed with another secret', () => {
+    const token = serviceWith('secret-a').mint(payload);
+    expect(serviceWith('secret-a').verify(token)).toEqual(payload);
+    expect(serviceWith('secret-b').verify(token)).toBeNull();
+  });
+
+  it('verifies a token minted by the free function with the same secret', () => {
+    const token = encryptToken(JSON.stringify(payload), Date.now() + 60_000, {
+      secret: 'secret-a',
+      salt: 'salt-a',
+    })!;
+    expect(serviceWith('secret-a').verify(token)).toEqual(payload);
+  });
+
   it('rejects minting a multi-mode token without a roomId', () => {
     expect(() =>
       mintWsSessionToken({

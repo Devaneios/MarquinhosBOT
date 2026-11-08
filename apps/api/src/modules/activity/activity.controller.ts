@@ -31,7 +31,7 @@ import {
 import { PongCompetitionService } from 'modules/activity/games/pong/pong-competition.service';
 import { PongTournamentService } from 'modules/activity/games/pong/pong-tournament.service';
 import { roomKey } from 'modules/activity/room-key';
-import { mintWsSessionToken } from 'modules/activity/ws-session-token';
+import { WsSessionTokenService } from 'modules/activity/ws-session-token';
 import { customAlphabet } from 'nanoid';
 
 const generateRoomId = customAlphabet('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 6);
@@ -43,6 +43,7 @@ export class ActivityController {
     private readonly competition: PongCompetitionService,
     private readonly tournaments: PongTournamentService,
     private readonly deepLinks: ActivityDeepLinkService,
+    private readonly wsSessionTokens: WsSessionTokenService,
     @Inject(ACTIVITY_ROOM_QUERY)
     private readonly queryRooms: ActivityRoomQuery,
   ) {}
@@ -136,7 +137,7 @@ export class ActivityController {
           : typeof user.username === 'string' && user.username.length > 0
             ? user.username
             : undefined;
-      const token = mintWsSessionToken({
+      const token = this.wsSessionTokens.mint({
         userId: user.id,
         ...(displayName !== undefined ? { displayName } : {}),
         instanceId,
@@ -366,7 +367,7 @@ export class ActivityController {
       }
 
       const roomId = generateRoomId();
-      const token = mintWsSessionToken({
+      const token = this.wsSessionTokens.mint({
         userId: user.id,
         ...(typeof user.global_name === 'string' && user.global_name.length > 0
           ? { displayName: user.global_name }

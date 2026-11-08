@@ -9,11 +9,11 @@ import {
 } from 'integrations/discord/discord.service';
 import { ACTIVITY_ROOM_QUERY } from 'modules/activity/activity.tokens';
 import { roomKey } from 'modules/activity/room-key';
-import { verifyWsSessionToken } from 'modules/activity/ws-session-token';
 import {
   requestController,
   startNestControllerServer,
 } from './helpers/nestControllerServer';
+import { verifyWsSessionToken } from './helpers/wsSessionTokens';
 
 type ControllerServer = Awaited<ReturnType<typeof startNestControllerServer>>;
 type FakeDiscord = Pick<

@@ -4,8 +4,7 @@ import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 const { createMatchRoom } = await import('../src/realtime/MatchRoom');
 const { bootColyseusTestServer, nextMessage, pendingMessages } =
   await import('./helpers/colyseusTestServer');
-const { mintWsSessionToken } =
-  await import('../src/modules/activity/ws-session-token');
+const { mintWsSessionToken } = await import('./helpers/wsSessionTokens');
 const { roomKey } = await import('modules/activity/room-key');
 
 type ColyseusTestServer = import('@colyseus/testing').ColyseusTestServer;

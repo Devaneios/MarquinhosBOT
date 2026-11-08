@@ -4,8 +4,7 @@ import { testRoomDependencies } from '../helpers/realtimeTestDependencies';
 const { createMatchRoom } = await import('../../src/realtime/MatchRoom');
 const { bootColyseusTestServer, nextMessage, unparsedMessages } =
   await import('../helpers/colyseusTestServer');
-const { mintWsSessionToken } =
-  await import('../../src/modules/activity/ws-session-token');
+const { mintWsSessionToken } = await import('../helpers/wsSessionTokens');
 const { roomKey } = await import('../../src/modules/activity/room-key');
 const pong = await import('@marquinhos/contracts/activity/games/pong');
 

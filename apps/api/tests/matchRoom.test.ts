@@ -10,8 +10,7 @@ const {
   pendingMessages,
   waitUntil,
 } = await import('./helpers/colyseusTestServer');
-const { mintWsSessionToken } =
-  await import('../src/modules/activity/ws-session-token');
+const { mintWsSessionToken } = await import('./helpers/wsSessionTokens');
 const { roomKey } = await import('modules/activity/room-key');
 const { ACTION_REJECTED } =
   await import('@marquinhos/contracts/activity/protocol');

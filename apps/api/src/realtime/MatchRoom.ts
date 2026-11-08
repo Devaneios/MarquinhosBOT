@@ -16,10 +16,7 @@ import { logger } from 'common/logging/logger';
 import { roomKey } from 'modules/activity/room-key';
 import type { MatchRoomMetadata } from 'modules/activity/room-listing';
 import { RateLimiter } from 'modules/activity/shared/rate-limiter';
-import {
-  verifyWsSessionToken,
-  type WsSessionPayload,
-} from 'modules/activity/ws-session-token';
+import type { WsSessionPayload } from 'modules/activity/ws-session-token';
 import { requireAuth, type AuthedClient } from 'realtime/authedClient';
 import { createAdapterRegistry } from './adapters/registry';
 import type {
@@ -126,7 +123,7 @@ export function createMatchRoom(dependencies: RoomDependencies) {
       options: { token?: string; roomKey?: string },
     ): Promise<WsSessionPayload> {
       const session = options.token
-        ? verifyWsSessionToken(options.token)
+        ? dependencies.wsSessionTokens.verify(options.token)
         : null;
       if (!session) throw new Error('Invalid or expired session token');
       if (roomKey(session) !== options.roomKey) {
@@ -148,7 +145,7 @@ export function createMatchRoom(dependencies: RoomDependencies) {
       this.roomKeyValue = options.roomKey;
 
       const initialSession = options.token
-        ? verifyWsSessionToken(options.token)
+        ? dependencies.wsSessionTokens.verify(options.token)
         : null;
 
       // The real client join (`client.joinOrCreate('match', { token, roomKey })`)

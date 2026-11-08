@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { matchMaker } from 'colyseus';
+import { CryptoModule } from 'common/crypto.module';
 import { BotAuthGuard } from 'common/guards/bot-auth.guard';
 import { SharedBucketThrottlerGuard } from 'common/guards/shared-bucket-throttler.guard';
 import { DatabaseModule } from 'database/database.module';
@@ -11,11 +12,13 @@ import { ACTIVITY_ROOM_QUERY } from 'modules/activity/activity.tokens';
 import { BoggleWordBankService } from 'modules/activity/games/boggle/boggle-word-bank.service';
 import { PongCompetitionService } from 'modules/activity/games/pong/pong-competition.service';
 import { PongTournamentService } from 'modules/activity/games/pong/pong-tournament.service';
+import { WsSessionTokenService } from 'modules/activity/ws-session-token';
 import { GamificationModule } from 'modules/gamification/gamification.module';
 
 @Module({
   imports: [
     DatabaseModule,
+    CryptoModule,
     DiscordModule,
     GamificationModule,
     ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 20 }]),
@@ -28,6 +31,7 @@ import { GamificationModule } from 'modules/gamification/gamification.module';
     ActivityDeepLinkService,
     PongCompetitionService,
     PongTournamentService,
+    WsSessionTokenService,
     {
       provide: ACTIVITY_ROOM_QUERY,
       useValue: matchMaker.query.bind(matchMaker),
@@ -38,6 +42,7 @@ import { GamificationModule } from 'modules/gamification/gamification.module';
     ActivityDeepLinkService,
     PongCompetitionService,
     PongTournamentService,
+    WsSessionTokenService,
   ],
 })
 export class ActivityModule {}

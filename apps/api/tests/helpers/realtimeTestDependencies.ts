@@ -8,6 +8,7 @@ import { LevelingService } from '../../src/modules/gamification/leveling.service
 import { WordBankService } from '../../src/modules/wordle/services/word-bank.service';
 import type { RoomDependencies } from '../../src/realtime/room-dependencies';
 import { createWordleTestService } from './wordleServices';
+import { testWsSessionTokens } from './wsSessionTokens';
 
 export function createRealtimeTestDependencies(
   database: Db = db,
@@ -27,6 +28,7 @@ export function createRealtimeTestDependencies(
     wordBank: new WordBankService(database),
     boggleWordBank: new BoggleWordBankService(),
     pongCompetition: new PongCompetitionService(database),
+    wsSessionTokens: testWsSessionTokens,
   };
 }
 

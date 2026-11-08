@@ -3,7 +3,8 @@ import {
   gameIdSchema,
 } from '@marquinhos/contracts/activity/gameId';
 import { isPongRulesetId } from '@marquinhos/domain/games/pong/PongRulesetRegistry';
-import { decryptTokenFull, encryptToken } from 'common/crypto';
+import { Injectable } from '@nestjs/common';
+import { TokenCipherService } from 'common/crypto';
 import { cardGameRegistry } from 'modules/activity/games/cards/card-game-registry';
 import { z } from 'zod';
 
@@ -50,30 +51,35 @@ export type WsSessionPayload = z.infer<typeof wsSessionPayloadSchema>;
 
 const WS_SESSION_TTL_MS = 5 * 60_000;
 
-export function mintWsSessionToken(payload: WsSessionPayload): string {
-  if (payload.mode === 'multi' && !payload.roomId) {
-    throw new Error('roomId is required for mode "multi"');
-  }
-  const token = encryptToken(
-    JSON.stringify(payload),
-    Date.now() + WS_SESSION_TTL_MS,
-  );
-  if (!token) throw new Error('Failed to mint WS session token');
-  return token;
-}
+@Injectable()
+export class WsSessionTokenService {
+  constructor(private readonly cipher: TokenCipherService) {}
 
-export function verifyWsSessionToken(token: string): WsSessionPayload | null {
-  const decrypted = decryptTokenFull(token);
-  if (!decrypted) return null;
-  if (decrypted.expiresAt !== undefined && decrypted.expiresAt < Date.now()) {
-    return null;
+  mint(payload: WsSessionPayload): string {
+    if (payload.mode === 'multi' && !payload.roomId) {
+      throw new Error('roomId is required for mode "multi"');
+    }
+    const token = this.cipher.encryptToken(
+      JSON.stringify(payload),
+      Date.now() + WS_SESSION_TTL_MS,
+    );
+    if (!token) throw new Error('Failed to mint WS session token');
+    return token;
   }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(decrypted.token);
-  } catch {
-    return null;
+
+  verify(token: string): WsSessionPayload | null {
+    const decrypted = this.cipher.decryptTokenFull(token);
+    if (!decrypted) return null;
+    if (decrypted.expiresAt !== undefined && decrypted.expiresAt < Date.now()) {
+      return null;
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(decrypted.token);
+    } catch {
+      return null;
+    }
+    const payload = wsSessionPayloadSchema.safeParse(parsed);
+    return payload.success ? payload.data : null;
   }
-  const payload = wsSessionPayloadSchema.safeParse(parsed);
-  return payload.success ? payload.data : null;
 }
