@@ -1,8 +1,22 @@
 import { Test } from '@nestjs/testing';
-import { describe, it } from 'bun:test';
+import { describe, expect, it } from 'bun:test';
 import 'reflect-metadata';
 
 describe('Nest dependency graph', () => {
+  it('builds emoji reactions without the AI chat graph', async () => {
+    const { EmojiReactionModule } =
+      await import('modules/emoji-reaction/emoji-reaction.module');
+    const { EmojiReactionService } =
+      await import('modules/emoji-reaction/emoji-reaction.service');
+    const { SandboxManager } =
+      await import('modules/ai-chat/sandbox/sandbox-manager.service');
+    const moduleRef = await Test.createTestingModule({
+      imports: [EmojiReactionModule],
+    }).compile();
+    expect(moduleRef.get(EmojiReactionService)).toBeDefined();
+    expect(() => moduleRef.get(SandboxManager, { strict: false })).toThrow();
+  });
+
   it('compiles the app and each migrated feature module independently', async () => {
     const { AppModule } = await import('app.module');
     const { GamificationModule } =

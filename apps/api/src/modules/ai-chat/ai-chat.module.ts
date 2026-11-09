@@ -23,10 +23,6 @@ import {
   AI_RESEARCH_DAILY_QUOTA_SERVICE,
   DOCKER_CLIENT,
   DOCKER_DRIVER,
-  OPENAI_CLIENT,
-  OPENAI_MODEL,
-  OPENAI_REASONING_EFFORT,
-  OPENAI_RESPONSES_CLIENT,
   PAGE_FETCHER,
   SANDBOX_IMAGE,
   SANDBOX_MIRROR_PATH,
@@ -39,6 +35,7 @@ import {
 } from 'modules/ai-chat/daily-quota.service';
 import { GuardrailService } from 'modules/ai-chat/guardrail.service';
 import { KnowledgeBaseClient } from 'modules/ai-chat/knowledge-base.client';
+import { LlmModule } from 'modules/ai-chat/llm/llm.module';
 import { ResponsesClient } from 'modules/ai-chat/llm/responses.client';
 import { OpenAiClient } from 'modules/ai-chat/openai.client';
 import { RateLimitService } from 'modules/ai-chat/rate-limit.service';
@@ -66,15 +63,12 @@ import { AiTraceRecorder } from 'modules/ai-chat/trace/ai-trace-recorder.service
 import type { PageFetcher } from 'modules/ai-chat/web/fetch-page';
 import { createPageFetcher } from 'modules/ai-chat/web/fetch-page';
 import { SearxngClient } from 'modules/ai-chat/web/searxng.client';
-import OpenAI from 'openai';
 
 const DEFAULT_DOCKER_SOCKET = '/var/run/docker.sock';
-const OPENAI_REQUEST_TIMEOUT_MS = 30_000;
-const RESPONSES_REQUEST_TIMEOUT_MS = 120_000;
 const spawnExec: SpawnExec = (argv, options) => Bun.spawn(argv, options);
 
 @Module({
-  imports: [ConfigModule, DatabaseModule],
+  imports: [ConfigModule, DatabaseModule, LlmModule],
   controllers: [AiChatController],
   providers: [
     BotAuthGuard,
@@ -84,46 +78,6 @@ const spawnExec: SpawnExec = (argv, options) => Bun.spawn(argv, options);
     AiTraceRecorder,
     ResearchJobStore,
     { provide: AI_NOW, useValue: Date.now },
-    {
-      provide: OPENAI_CLIENT,
-      useFactory: (config: AppConfig) =>
-        new OpenAI({
-          apiKey: config.openAiApiKey,
-          timeout: OPENAI_REQUEST_TIMEOUT_MS,
-        }),
-      inject: [AppConfig],
-    },
-    {
-      provide: OPENAI_RESPONSES_CLIENT,
-      useFactory: (config: AppConfig) =>
-        new OpenAI({
-          apiKey: config.openAiApiKey,
-          timeout: RESPONSES_REQUEST_TIMEOUT_MS,
-        }),
-      inject: [AppConfig],
-    },
-    {
-      provide: OPENAI_MODEL,
-      useFactory: (config: AppConfig) => config.openAiModel,
-      inject: [AppConfig],
-    },
-    {
-      provide: OPENAI_REASONING_EFFORT,
-      useFactory: (config: AppConfig) => config.openAiReasoningEffort,
-      inject: [AppConfig],
-    },
-    {
-      provide: OpenAiClient,
-      useFactory: (client: OpenAI, model: string) =>
-        new OpenAiClient(client, model),
-      inject: [OPENAI_CLIENT, OPENAI_MODEL],
-    },
-    {
-      provide: ResponsesClient,
-      useFactory: (client: OpenAI, model: string, reasoningEffort: string) =>
-        new ResponsesClient(client, model, reasoningEffort),
-      inject: [OPENAI_RESPONSES_CLIENT, OPENAI_MODEL, OPENAI_REASONING_EFFORT],
-    },
     {
       provide: AI_AGENT_DAILY_QUOTA_SERVICE,
       useFactory: (db: Db) => new DailyQuotaService(AGENT_DAILY_QUOTA, db),
@@ -270,10 +224,8 @@ const spawnExec: SpawnExec = (argv, options) => Bun.spawn(argv, options);
     AiTraceRecorder,
     AI_AGENT_DAILY_QUOTA_SERVICE,
     AI_RESEARCH_DAILY_QUOTA_SERVICE,
-    OpenAiClient,
     RateLimitService,
     ResearchOrchestrator,
-    ResponsesClient,
     SandboxManager,
   ],
 })
