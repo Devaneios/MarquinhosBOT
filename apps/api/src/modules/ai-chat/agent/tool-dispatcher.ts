@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { getErrorMessage } from 'common/errors/error-handling';
 import { logger } from 'common/logging/logger';
-import type { SandboxManager } from 'modules/ai-chat/sandbox/sandbox-manager.service';
+import { AI_AGENT_TOOLS } from 'modules/ai-chat/ai-chat.tokens';
+import { SandboxManager } from 'modules/ai-chat/sandbox/sandbox-manager.service';
 import { AGENT_TOOLS, findTool } from 'modules/ai-chat/tools/registry';
 import type { AgentTool } from 'modules/ai-chat/tools/types';
 import {
@@ -35,6 +36,7 @@ export interface ToolCallRequest {
 export class ToolDispatcher {
   constructor(
     private readonly sandboxManager: SandboxManager,
+    @Inject(AI_AGENT_TOOLS)
     readonly tools: AgentTool[] = AGENT_TOOLS,
   ) {}
 

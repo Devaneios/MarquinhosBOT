@@ -17,6 +17,19 @@ describe('Nest dependency graph', () => {
     expect(() => moduleRef.get(SandboxManager, { strict: false })).toThrow();
   });
 
+  it("dispatches with the module's tool list", async () => {
+    const { AiChatModule } = await import('modules/ai-chat/ai-chat.module');
+    const { ToolDispatcher } =
+      await import('modules/ai-chat/agent/tool-dispatcher');
+    const { AI_AGENT_TOOLS } = await import('modules/ai-chat/ai-chat.tokens');
+    const moduleRef = await Test.createTestingModule({
+      imports: [AiChatModule],
+    }).compile();
+    expect(moduleRef.get(ToolDispatcher).tools).toBe(
+      moduleRef.get(AI_AGENT_TOOLS),
+    );
+  });
+
   it('compiles the app and each migrated feature module independently', async () => {
     const { AppModule } = await import('app.module');
     const { GamificationModule } =

@@ -37,7 +37,6 @@ import { GuardrailService } from 'modules/ai-chat/guardrail.service';
 import { KnowledgeBaseClient } from 'modules/ai-chat/knowledge-base.client';
 import { LlmModule } from 'modules/ai-chat/llm/llm.module';
 import { ResponsesClient } from 'modules/ai-chat/llm/responses.client';
-import { OpenAiClient } from 'modules/ai-chat/openai.client';
 import { RateLimitService } from 'modules/ai-chat/rate-limit.service';
 import {
   DeepResearchService,
@@ -144,39 +143,8 @@ const spawnExec: SpawnExec = (argv, options) => Bun.spawn(argv, options);
         ),
       inject: [SearxngClient],
     },
-    {
-      provide: ToolDispatcher,
-      useFactory: (sandbox: SandboxManager, tools: AgentTool[]) =>
-        new ToolDispatcher(sandbox, tools),
-      inject: [SandboxManager, AI_AGENT_TOOLS],
-    },
-    {
-      provide: AgentToolLoopService,
-      useFactory: (
-        quota: DailyQuotaService,
-        guardrail: GuardrailService,
-        sandbox: SandboxManager,
-        openAi: OpenAiClient,
-        now: () => number,
-        dispatcher: ToolDispatcher,
-      ) =>
-        new AgentToolLoopService(
-          quota,
-          guardrail,
-          sandbox,
-          openAi,
-          now,
-          dispatcher,
-        ),
-      inject: [
-        AI_AGENT_DAILY_QUOTA_SERVICE,
-        GuardrailService,
-        SandboxManager,
-        OpenAiClient,
-        AI_NOW,
-        ToolDispatcher,
-      ],
-    },
+    ToolDispatcher,
+    AgentToolLoopService,
     {
       provide: ThreadAgentLoop,
       useFactory: (
