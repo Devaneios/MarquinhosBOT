@@ -109,13 +109,7 @@ import {
   ],
   exports: [
     WordBankService,
-    WordleAchievementService,
-    WordleAlbumService,
     WordleGalleryService,
-    WordleGlobalAchievementService,
-    WordleGlobalDraftService,
-    WordleGlobalGameplayService,
-    WordleGlobalLeaderboardService,
     WordleGoalsService,
     WordleNotificationService,
     WordleService,

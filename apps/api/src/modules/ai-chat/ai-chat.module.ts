@@ -186,10 +186,6 @@ const spawnExec: SpawnExec = (argv, options) => Bun.spawn(argv, options);
     ResearchOrchestrator,
   ],
   exports: [
-    AgentToolLoopService,
-    AiChatService,
-    AiTraceQuery,
-    AiTraceRecorder,
     AI_AGENT_DAILY_QUOTA_SERVICE,
     AI_RESEARCH_DAILY_QUOTA_SERVICE,
     RateLimitService,
