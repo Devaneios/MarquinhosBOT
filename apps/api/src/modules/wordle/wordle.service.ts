@@ -44,9 +44,6 @@ import {
   WordBankService,
 } from 'modules/wordle/services/word-bank.service';
 import { WordleAchievementService } from 'modules/wordle/services/wordle-achievement.service';
-import { WordleAlbumService } from 'modules/wordle/services/wordle-album.service';
-import { recordWordlePresence } from 'modules/wordle/services/wordle-community.service';
-import { getRecifeDate } from 'modules/wordle/services/wordle-date';
 import { WordleDraftService } from 'modules/wordle/services/wordle-draft.service';
 import { WordleGlobalAchievementService } from 'modules/wordle/services/wordle-global-achievement.service';
 import { WordleGlobalAnnouncementService } from 'modules/wordle/services/wordle-global-announcement.service';
@@ -54,7 +51,8 @@ import { WordleGlobalDayService } from 'modules/wordle/services/wordle-global-da
 import { WordleGlobalDraftService } from 'modules/wordle/services/wordle-global-draft.service';
 import { WordleGlobalGameCoordinator } from 'modules/wordle/services/wordle-global-game-coordinator';
 import { WordleGlobalLeaderboardService } from 'modules/wordle/services/wordle-global-leaderboard.service';
-import { WORDLE_TODAY } from 'modules/wordle/wordle.tokens';
+import { WordleParticipationService } from 'modules/wordle/services/wordle-participation.service';
+import { WORDLE_NOW, WORDLE_TODAY } from 'modules/wordle/wordle.tokens';
 import type { z } from 'zod';
 
 const logger = {
@@ -95,7 +93,7 @@ export class WordleService {
   constructor(
     @Inject(DB) private readonly database: Db,
     private readonly achievements: WordleAchievementService,
-    private readonly album: WordleAlbumService,
+    private readonly participation: WordleParticipationService,
     private readonly drafts: WordleDraftService,
     private readonly globalAchievements: WordleGlobalAchievementService,
     private readonly globalAnnouncements: WordleGlobalAnnouncementService,
@@ -104,6 +102,7 @@ export class WordleService {
     private readonly globalCoordinator: WordleGlobalGameCoordinator,
     private readonly globalLeaderboard: WordleGlobalLeaderboardService,
     @Inject(WORDLE_TODAY) private readonly today: () => string,
+    @Inject(WORDLE_NOW) private readonly now: () => number,
     private readonly wordBank: WordBankService,
   ) {}
 
@@ -129,14 +128,7 @@ export class WordleService {
   }
 
   async recordParticipation(userId: string, guildId: string): Promise<void> {
-    await recordWordlePresence(
-      this.database,
-      this.album,
-      userId,
-      guildId,
-      getRecifeDate(),
-      Math.floor(Date.now() / 1000),
-    );
+    await this.participation.record(userId, guildId);
   }
   async pickNewWord(
     guildId: string,
@@ -198,7 +190,7 @@ export class WordleService {
     if (word === undefined) {
       throw new Error('No available words left in the wordlist');
     }
-    const now = Math.floor(Date.now() / 1000);
+    const now = Math.floor(this.now() / 1000);
 
     return this.database.transaction(async (tx) => {
       const inserted = await tx
@@ -290,7 +282,7 @@ export class WordleService {
   /** `today` is injectable so a caller that already read the date stays on it across midnight. */
   async getDailyWord(
     guildId: string,
-    today: string = getRecifeDate(),
+    today: string = this.today(),
   ): Promise<WordleDaily> {
     if (await this.isGlobalActive()) {
       const day = await this.getGlobalDailyWord(today);
@@ -394,7 +386,7 @@ export class WordleService {
     // through the pool and must also work when it has only one connection.
     await this.getDailyWord(guildId, today);
     if (this.today() !== today) return { error: WORDLE_CUTOFF_ERROR };
-    const now = Math.floor(Date.now() / 1000);
+    const now = Math.floor(this.now() / 1000);
 
     let outcome: GuessResult | { error: string };
     try {
@@ -614,7 +606,7 @@ export class WordleService {
     userId: string,
     guildId: string,
   ): Promise<WordleSession | null> {
-    const today = getRecifeDate();
+    const today = this.today();
     if (await this.isGlobalActive()) {
       const [row] = await this.database
         .select()
@@ -674,10 +666,10 @@ export class WordleService {
   // leaves a window where both the command and the poller can observe the
   // win as unannounced and both send it.
   async markAnnounced(userId: string, guildId: string): Promise<boolean> {
-    const today = getRecifeDate();
+    const today = this.today();
     if (await this.isGlobalActive())
       return this.globalAnnouncements.claim(userId, guildId, today);
-    const now = Math.floor(Date.now() / 1000);
+    const now = Math.floor(this.now() / 1000);
     const claimed = await this.database
       .update(wordleSessions)
       .set({ announced_at: now })
@@ -699,7 +691,7 @@ export class WordleService {
       attempts: number;
     }[]
   > {
-    const today = getRecifeDate();
+    const today = this.today();
     if (await this.isGlobalActive())
       return this.globalAnnouncements.unannounced(guildId, today);
     const rows = await this.database
@@ -768,10 +760,10 @@ export class WordleService {
 
   async getDayGuesses(
     guildId: string,
-    date = getRecifeDate(),
+    date = this.today(),
   ): Promise<DayGuesses | null> {
     if (await this.isGlobalActive()) {
-      if (date < getRecifeDate()) await this.finalizeExpiredDrafts();
+      if (date < this.today()) await this.finalizeExpiredDrafts();
       const [day] = await this.database
         .select()
         .from(wordleGlobalDays)
@@ -915,14 +907,14 @@ export class WordleService {
     if (await this.isGlobalActive())
       return this.globalDrafts.getCurrentDraft(
         userId,
-        getRecifeDate(),
+        this.today(),
         session?.attempts ?? 0,
         session?.solved ?? false,
       );
     return this.drafts.getCurrentDraft(
       userId,
       guildId,
-      getRecifeDate(),
+      this.today(),
       session?.attempts ?? 0,
       session?.solved ?? false,
     );
@@ -933,7 +925,7 @@ export class WordleService {
     guildId: string,
     draft: WordleDraftWrite,
   ): Promise<WordleDraftWriteResult> {
-    if (draft.date !== getRecifeDate()) return { status: 'closed' };
+    if (draft.date !== this.today()) return { status: 'closed' };
     if (await this.isGlobalActive()) {
       await this.getGlobalDailyWord(draft.date);
       await this.recordParticipation(userId, guildId);
@@ -963,7 +955,7 @@ export class WordleService {
     const row = await this.findStreak(userId, guildId);
 
     if (!row) {
-      const today = getRecifeDate();
+      const today = this.today();
       const streak = await this.computeStreakFromHistory(
         userId,
         guildId,
@@ -972,7 +964,7 @@ export class WordleService {
       return { currentStreak: streak, maxStreak: streak };
     }
 
-    const today = getRecifeDate();
+    const today = this.today();
     const yesterday = this.getYesterday(today);
 
     if (row.last_solved_date !== today && row.last_solved_date !== yesterday) {
@@ -999,13 +991,13 @@ export class WordleService {
       return this.globalLeaderboard.getLeaderboard(
         guildId,
         period,
-        period === 'daily' ? (date ?? getRecifeDate()) : getRecifeDate(),
+        period === 'daily' ? (date ?? this.today()) : this.today(),
         limit,
         offset,
       );
     }
     if (period === 'daily') {
-      const wordDate = date ?? getRecifeDate();
+      const wordDate = date ?? this.today();
       const rows = await this.database
         .select({
           user_id: wordleSessions.user_id,
@@ -1036,12 +1028,12 @@ export class WordleService {
 
     let dateFrom: string | null = null;
     if (period === 'weekly') {
-      const today = getRecifeDate();
+      const today = this.today();
       const d = new Date(`${today}T12:00:00`);
       d.setDate(d.getDate() - 6);
       dateFrom = d.toISOString().slice(0, 10);
     } else if (period === 'monthly') {
-      dateFrom = `${getRecifeDate().substring(0, 8)}01`;
+      dateFrom = `${this.today().substring(0, 8)}01`;
     }
 
     const sessionDateFilter = dateFrom
@@ -1094,7 +1086,7 @@ export class WordleService {
   }
 
   async getGroupStreak(guildId: string): Promise<number> {
-    const today = getRecifeDate();
+    const today = this.today();
     if (await this.isGlobalActive())
       return this.globalLeaderboard.getGroupStreak(guildId, today);
     const yesterday = this.getYesterday(today);
@@ -1128,7 +1120,7 @@ export class WordleService {
       throw new GlobalWordleCannotForce(
         'A palavra global não pode ser trocada antes da virada.',
       );
-    const today = getRecifeDate();
+    const today = this.today();
     return this.pickNewWord(guildId, today, 'force');
   }
 
@@ -1138,7 +1130,7 @@ export class WordleService {
   }
 
   async setConfig(guildId: string, channelId: string): Promise<void> {
-    const now = Math.floor(Date.now() / 1000);
+    const now = Math.floor(this.now() / 1000);
     await this.database
       .insert(wordleConfig)
       .values({ guild_id: guildId, channel_id: channelId, updated_at: now })

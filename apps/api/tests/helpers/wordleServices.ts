@@ -18,6 +18,7 @@ import { WordleGlobalGameplayService } from '../../src/modules/wordle/services/w
 import { WordleGlobalLeaderboardService } from '../../src/modules/wordle/services/wordle-global-leaderboard.service';
 import { WordleGoalsService } from '../../src/modules/wordle/services/wordle-goals.service';
 import { WordleNotificationService } from '../../src/modules/wordle/services/wordle-notification.service';
+import { WordleParticipationService } from '../../src/modules/wordle/services/wordle-participation.service';
 import { WordleRewardsService } from '../../src/modules/wordle/services/wordle-rewards.service';
 import { WordleShowcaseService } from '../../src/modules/wordle/services/wordle-showcase.service';
 import { WordleWordlistReviewService } from '../../src/modules/wordle/services/wordle-wordlist-review.service';
@@ -83,10 +84,16 @@ export function createWordleTestServices(
   const showcase = new WordleShowcaseService(database);
   const userConfig = new WordleUserConfigService(database);
   const wordlistReview = new WordleWordlistReviewService(database, wordBank);
+  const participation = new WordleParticipationService(
+    database,
+    album,
+    today,
+    now,
+  );
   const wordle = new WordleService(
     database,
     achievements,
-    album,
+    participation,
     drafts,
     globalAchievements,
     globalAnnouncements,
@@ -95,6 +102,7 @@ export function createWordleTestServices(
     globalCoordinator,
     globalLeaderboard,
     today,
+    now,
     wordBank,
   );
 
@@ -120,6 +128,7 @@ export function createWordleTestServices(
     showcase,
     userConfig,
     wordlistReview,
+    participation,
     wordle,
   };
 }

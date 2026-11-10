@@ -33,6 +33,7 @@ import { WordleGlobalGameplayService } from 'modules/wordle/services/wordle-glob
 import { WordleGlobalLeaderboardService } from 'modules/wordle/services/wordle-global-leaderboard.service';
 import { WordleGoalsService } from 'modules/wordle/services/wordle-goals.service';
 import { WordleNotificationService } from 'modules/wordle/services/wordle-notification.service';
+import { WordleParticipationService } from 'modules/wordle/services/wordle-participation.service';
 import { WordlePlayerOverviewService } from 'modules/wordle/services/wordle-player-overview.service';
 import { WordleRewardsService } from 'modules/wordle/services/wordle-rewards.service';
 import { WordleShowcaseService } from 'modules/wordle/services/wordle-showcase.service';
@@ -85,6 +86,7 @@ import {
     WordleGoalsService,
     WordleNotificationService,
     WordlePlayerOverviewService,
+    WordleParticipationService,
     WordleRewardsService,
     WordleShowcaseService,
     WordleUserConfigService,
