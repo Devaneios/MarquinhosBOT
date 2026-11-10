@@ -25,6 +25,12 @@ export class WordBankService {
 
   constructor(@Inject(DB) private readonly database: Db) {}
 
+  warm(): void {
+    this.getAnswerWordlist();
+    this.getDevaneiosWordlist();
+    this.getValidationSet();
+  }
+
   getAnswerWordlist(): string[] {
     if (this.wordlistCache) return this.wordlistCache;
     const raw = readFileSync(ANSWER_WORDLIST_PATH, 'utf-8');

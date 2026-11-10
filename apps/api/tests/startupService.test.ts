@@ -64,7 +64,7 @@ describe('StartupService', () => {
           provide: WordBankService,
           useValue: {
             loadBannedWords: step('banned-words'),
-            getValidationSet: () => events.push('validation-bank'),
+            warm: () => events.push('word-bank'),
           },
         },
         {
@@ -111,7 +111,7 @@ describe('StartupService', () => {
       'banned-words',
       'expired-drafts',
       'boggle-word-bank',
-      'validation-bank',
+      'word-bank',
       'maintenance-start',
     ]);
 

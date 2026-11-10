@@ -79,7 +79,7 @@ export class StartupService implements OnModuleInit, OnApplicationShutdown {
     await this.wordleService.finalizeExpiredDrafts();
     logger.info('ai.prompts.loaded', { prompts: describeStaticPrompts() });
     this.boggleWordBank.getWordSet();
-    this.wordBank.getValidationSet();
+    this.wordBank.warm();
 
     this.stopMaintenance = this.startMaintenance(this.database);
   }
