@@ -9,7 +9,10 @@ import {
 } from '@marquinhos/database/schema';
 import { and, eq, sql } from 'drizzle-orm';
 
-import { createWordleTestService } from './helpers/wordleServices';
+import {
+  createWordleTestService,
+  createWordleTestServices,
+} from './helpers/wordleServices';
 
 function getRecifeDate(): string {
   const tz = process.env.WORDLE_TIMEZONE ?? 'America/Recife';
@@ -97,7 +100,10 @@ describe('WordleService.pickNewWord', () => {
 
   it('picks from devaneios-wordlist.txt when Math.random() is below the 80% weight', async () => {
     Math.random = () => 0.1;
-    const result = await service.pickNewWord('guild-devaneios', '2026-01-01');
+    const result = await createWordleTestServices().guildMode.pickNewWord(
+      'guild-devaneios',
+      '2026-01-01',
+    );
 
     const { readFileSync } = require('fs');
     const { join } = require('path');
@@ -113,7 +119,10 @@ describe('WordleService.pickNewWord', () => {
 
   it('picks from wordlist.txt when Math.random() is at/above the 80% weight', async () => {
     Math.random = () => 0.9;
-    const result = await service.pickNewWord('guild-wordlist', '2026-01-02');
+    const result = await createWordleTestServices().guildMode.pickNewWord(
+      'guild-wordlist',
+      '2026-01-02',
+    );
 
     const { readFileSync } = require('fs');
     const { join } = require('path');
@@ -154,7 +163,10 @@ describe('WordleService.pickNewWord', () => {
     // pickNewWord reads bans from the database; the in-memory list only feeds
     // Wordle Race.
 
-    const result = await service.pickNewWord('guild-banned', '2026-01-03');
+    const result = await createWordleTestServices().guildMode.pickNewWord(
+      'guild-banned',
+      '2026-01-03',
+    );
     expect(result.word).toBe(survivor);
 
     await db.execute(sql`DELETE FROM wordlist_review`);
@@ -266,6 +278,7 @@ describe('WordleService.getLeaderboard with period', () => {
 
 describe('WordleService.submitGuess', () => {
   let service: WordleService;
+  let guildMode: ReturnType<typeof createWordleTestServices>['guildMode'];
   const guildId = 'guild-atomic';
   let dailyWord: string;
 
@@ -317,7 +330,9 @@ describe('WordleService.submitGuess', () => {
     await db.execute(sql`DELETE FROM wordle_sessions`);
     await db.execute(sql`DELETE FROM wordle_days`);
     await db.execute(sql`DELETE FROM wordle_streaks`);
-    service = createWordleTestService();
+    const services = createWordleTestServices();
+    service = services.wordle;
+    guildMode = services.guildMode;
 
     const { readFileSync } = require('fs');
     const { join } = require('path');
@@ -335,7 +350,7 @@ describe('WordleService.submitGuess', () => {
 
   it('rolls back the session insert and daily stats if a later write in the sequence throws', async () => {
     const userId = 'user-atomic-rollback';
-    service.updateStreak = async () => {
+    guildMode.updateStreak = async () => {
       throw new Error('boom');
     };
 
