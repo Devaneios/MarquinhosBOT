@@ -16,6 +16,7 @@ import {
 import { OnRouteError } from 'common/decorators/on-route-error.decorator';
 import { WordlePlayerOverviewService } from 'modules/wordle/services/wordle-player-overview.service';
 import { WordleShowcaseService } from 'modules/wordle/services/wordle-showcase.service';
+import { WordleWordlistReviewService } from 'modules/wordle/services/wordle-wordlist-review.service';
 import {
   GlobalWordleCannotForce,
   WordleService,
@@ -28,6 +29,7 @@ export class WordleController {
     private readonly service: WordleService,
     private readonly showcase: WordleShowcaseService,
     private readonly overview: WordlePlayerOverviewService,
+    private readonly wordlistReview: WordleWordlistReviewService,
   ) {}
 
   @Post('presence')
@@ -308,7 +310,7 @@ export class WordleController {
   async getWordlistPoolStats(): Promise<
     ContractResponseInput<typeof contract.getWordlistPoolStats>
   > {
-    return { data: await this.service.getWordlistPoolStats() };
+    return { data: await this.wordlistReview.getWordlistPoolStats() };
   }
 
   @Get('review/next')
@@ -319,7 +321,7 @@ export class WordleController {
   async getNextReviewWord(): Promise<
     ContractResponseInput<typeof contract.getNextReviewWord>
   > {
-    return { data: await this.service.getNextReviewWord() };
+    return { data: await this.wordlistReview.getNextReviewWord() };
   }
 
   @Post('review/decision')
@@ -336,7 +338,7 @@ export class WordleController {
     input: ContractInputValue<typeof contract.submitReviewDecision>,
   ): Promise<ContractResponseInput<typeof contract.submitReviewDecision>> {
     return {
-      data: await this.service.submitReviewDecision(
+      data: await this.wordlistReview.submitReviewDecision(
         input.body.word,
         input.body.decision,
       ),

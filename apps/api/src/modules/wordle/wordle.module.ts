@@ -36,6 +36,7 @@ import { WordleNotificationService } from 'modules/wordle/services/wordle-notifi
 import { WordlePlayerOverviewService } from 'modules/wordle/services/wordle-player-overview.service';
 import { WordleRewardsService } from 'modules/wordle/services/wordle-rewards.service';
 import { WordleShowcaseService } from 'modules/wordle/services/wordle-showcase.service';
+import { WordleWordlistReviewService } from 'modules/wordle/services/wordle-wordlist-review.service';
 import { WordleUserConfigService } from 'modules/wordle/wordle-user-config.service';
 import { WordleService } from 'modules/wordle/wordle.service';
 import {
@@ -87,6 +88,7 @@ import {
     WordleRewardsService,
     WordleShowcaseService,
     WordleUserConfigService,
+    WordleWordlistReviewService,
     WordleService,
     { provide: WORDLE_NOW, useValue: Date.now },
     { provide: WORDLE_TODAY, useValue: getRecifeDate },

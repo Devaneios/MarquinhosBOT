@@ -20,6 +20,7 @@ import { WordleGoalsService } from '../../src/modules/wordle/services/wordle-goa
 import { WordleNotificationService } from '../../src/modules/wordle/services/wordle-notification.service';
 import { WordleRewardsService } from '../../src/modules/wordle/services/wordle-rewards.service';
 import { WordleShowcaseService } from '../../src/modules/wordle/services/wordle-showcase.service';
+import { WordleWordlistReviewService } from '../../src/modules/wordle/services/wordle-wordlist-review.service';
 import { WordleUserConfigService } from '../../src/modules/wordle/wordle-user-config.service';
 import { WordleService } from '../../src/modules/wordle/wordle.service';
 
@@ -81,6 +82,7 @@ export function createWordleTestServices(
   const rewards = new WordleRewardsService(database, now);
   const showcase = new WordleShowcaseService(database);
   const userConfig = new WordleUserConfigService(database);
+  const wordlistReview = new WordleWordlistReviewService(database, wordBank);
   const wordle = new WordleService(
     database,
     achievements,
@@ -117,6 +119,7 @@ export function createWordleTestServices(
     rewards,
     showcase,
     userConfig,
+    wordlistReview,
     wordle,
   };
 }

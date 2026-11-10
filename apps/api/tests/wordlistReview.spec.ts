@@ -12,15 +12,15 @@ async function isBanned(word: string) {
   return row?.is_banned;
 }
 
-import type { WordleService } from '../src/modules/wordle/wordle.service';
-import { createWordleTestService } from './helpers/wordleServices';
+import type { WordleWordlistReviewService } from '../src/modules/wordle/services/wordle-wordlist-review.service';
+import { createWordleTestServices } from './helpers/wordleServices';
 
-describe('WordleService wordlist review', () => {
-  let service: WordleService;
+describe('WordleWordlistReviewService', () => {
+  let service: WordleWordlistReviewService;
 
   beforeEach(async () => {
     await db.execute(sql`TRUNCATE wordlist_review RESTART IDENTITY`);
-    service = createWordleTestService();
+    service = createWordleTestServices().wordlistReview;
   });
 
   it('starts review at index 0 of wordlist.txt, seeding the table on first call', async () => {
@@ -65,7 +65,7 @@ describe('WordleService wordlist review', () => {
     const first = await service.getNextReviewWord();
     await service.submitReviewDecision(first.word as string, 'keep');
 
-    const resumed = createWordleTestService();
+    const resumed = createWordleTestServices().wordlistReview;
     const next = await resumed.getNextReviewWord();
     expect(next.index).toBe(1);
     expect(next.word).not.toBe(first.word);
