@@ -3,14 +3,14 @@ import { wordleDays, wordleUsedWords } from '@marquinhos/database/schema';
 import { expect, it } from 'bun:test';
 import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
-import { createWordleTestService } from './helpers/wordleServices';
+import { createWordleTestServices } from './helpers/wordleServices';
 
 it('initializes the global word using the existing word banks', async () => {
-  const service = createWordleTestService();
+  const { globalMode } = createWordleTestServices();
   const date = '2035-08-21';
   const [a, b] = await Promise.all([
-    service.getGlobalDailyWord(date),
-    service.getGlobalDailyWord(date),
+    globalMode.getOrCreateDay(date),
+    globalMode.getOrCreateDay(date),
   ]);
   expect(a).toEqual(b);
   expect(a.word.length).toBeGreaterThanOrEqual(5);

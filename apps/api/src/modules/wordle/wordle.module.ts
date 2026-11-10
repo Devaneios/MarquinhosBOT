@@ -15,6 +15,7 @@ import { WordleRewardsController } from 'modules/wordle/controllers/wordle-rewar
 import { WordleShowcaseController } from 'modules/wordle/controllers/wordle-showcase.controller';
 import { WordleUserConfigController } from 'modules/wordle/controllers/wordle-user-config.controller';
 import { WordleController } from 'modules/wordle/controllers/wordle.controller';
+import { GlobalWordleMode } from 'modules/wordle/modes/global-wordle.mode';
 import { WordBankService } from 'modules/wordle/services/word-bank.service';
 import { WordleAchievementService } from 'modules/wordle/services/wordle-achievement.service';
 import { WordleAlbumMilestoneService } from 'modules/wordle/services/wordle-album-milestone.service';
@@ -76,6 +77,7 @@ import {
     WordleChallengeService,
     WordleDraftService,
     WordleGalleryService,
+    GlobalWordleMode,
     WordleGlobalAchievementService,
     WordleGlobalAnnouncementService,
     WordleGlobalDayService,

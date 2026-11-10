@@ -1,6 +1,7 @@
 import { db, type Db } from '@marquinhos/database/client';
 import { AchievementService } from '../../src/modules/gamification/achievement.service';
 import { LevelingService } from '../../src/modules/gamification/leveling.service';
+import { GlobalWordleMode } from '../../src/modules/wordle/modes/global-wordle.mode';
 import { WordBankService } from '../../src/modules/wordle/services/word-bank.service';
 import { WordleAchievementService } from '../../src/modules/wordle/services/wordle-achievement.service';
 import { WordleAlbumMilestoneService } from '../../src/modules/wordle/services/wordle-album-milestone.service';
@@ -90,17 +91,23 @@ export function createWordleTestServices(
     today,
     now,
   );
-  const wordle = new WordleService(
+  const globalMode = new GlobalWordleMode(
     database,
-    achievements,
-    participation,
-    drafts,
     globalAchievements,
     globalAnnouncements,
     globalDay,
     globalDrafts,
     globalCoordinator,
     globalLeaderboard,
+    participation,
+    today,
+  );
+  const wordle = new WordleService(
+    database,
+    achievements,
+    participation,
+    drafts,
+    globalMode,
     today,
     now,
     wordBank,
@@ -129,6 +136,7 @@ export function createWordleTestServices(
     userConfig,
     wordlistReview,
     participation,
+    globalMode,
     wordle,
   };
 }
