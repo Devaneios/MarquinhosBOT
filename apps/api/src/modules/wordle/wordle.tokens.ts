@@ -1,3 +1,5 @@
+export type WordSource = () => readonly string[];
+
 export const WORDLE_NOW = Symbol('WORDLE_NOW');
 export const WORDLE_TODAY = Symbol('WORDLE_TODAY');
 export const WORDLE_RANDOM = Symbol('WORDLE_RANDOM');

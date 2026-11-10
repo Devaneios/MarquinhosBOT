@@ -39,6 +39,7 @@ import { WordleShowcaseService } from 'modules/wordle/services/wordle-showcase.s
 import { WordleUserConfigService } from 'modules/wordle/wordle-user-config.service';
 import { WordleService } from 'modules/wordle/wordle.service';
 import {
+  type WordSource,
   WORDLE_ANSWER_WORDS,
   WORDLE_DEVANEIOS_WORDS,
   WORDLE_GUESS_RESOLVER,
@@ -92,12 +93,18 @@ import {
     { provide: WORDLE_RANDOM, useValue: Math.random },
     {
       provide: WORDLE_ANSWER_WORDS,
-      useFactory: (words: WordBankService) => words.getAnswerWordlist(),
+      useFactory:
+        (words: WordBankService): WordSource =>
+        () =>
+          words.getAnswerWordlist(),
       inject: [WordBankService],
     },
     {
       provide: WORDLE_DEVANEIOS_WORDS,
-      useFactory: (words: WordBankService) => words.getDevaneiosWordlist(),
+      useFactory:
+        (words: WordBankService): WordSource =>
+        () =>
+          words.getDevaneiosWordlist(),
       inject: [WordBankService],
     },
     {

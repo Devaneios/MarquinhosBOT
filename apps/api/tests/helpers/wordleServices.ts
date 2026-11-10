@@ -66,8 +66,8 @@ export function createWordleTestServices(
   );
   const globalDay = new WordleGlobalDayService(
     database,
-    wordBank.getAnswerWordlist(),
-    wordBank.getDevaneiosWordlist(),
+    () => wordBank.getAnswerWordlist(),
+    () => wordBank.getDevaneiosWordlist(),
     Math.random,
     now,
   );

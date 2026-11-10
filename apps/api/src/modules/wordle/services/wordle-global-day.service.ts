@@ -12,6 +12,7 @@ import {
   WORDLE_DEVANEIOS_WORDS,
   WORDLE_NOW,
   WORDLE_RANDOM,
+  type WordSource,
 } from 'modules/wordle/wordle.tokens';
 
 @Injectable()
@@ -19,9 +20,9 @@ export class WordleGlobalDayService {
   constructor(
     @Inject(DB) private readonly database: Db,
     @Inject(WORDLE_ANSWER_WORDS)
-    private readonly words: readonly string[],
+    private readonly words: WordSource,
     @Inject(WORDLE_DEVANEIOS_WORDS)
-    private readonly devaneiosWords: readonly string[],
+    private readonly devaneiosWords: WordSource,
     @Inject(WORDLE_RANDOM)
     private readonly random: () => number = Math.random,
     @Inject(WORDLE_NOW)
@@ -81,11 +82,11 @@ export class WordleGlobalDayService {
         );
       const preferDevaneios = this.random() < 0.75;
       let candidates = available(
-        preferDevaneios ? this.devaneiosWords : this.words,
+        preferDevaneios ? this.devaneiosWords() : this.words(),
       );
       if (candidates.length === 0)
         candidates = available(
-          preferDevaneios ? this.words : this.devaneiosWords,
+          preferDevaneios ? this.words() : this.devaneiosWords(),
         );
       if (candidates.length === 0)
         throw new Error('No available words left in the wordlist');

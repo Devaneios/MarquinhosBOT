@@ -20,8 +20,8 @@ describe('global daily word', () => {
   it('selects once when multiple callers initialize the same day', async () => {
     const service = new WordleGlobalDayService(
       testDb.db,
-      ['termo', 'carta'],
-      [],
+      () => ['termo', 'carta'],
+      () => [],
       () => 0,
       () => 1000,
     );
@@ -36,8 +36,8 @@ describe('global daily word', () => {
   it('reads an existing day without waiting for word selection', async () => {
     const service = new WordleGlobalDayService(
       testDb.db,
-      ['termo', 'carta'],
-      [],
+      () => ['termo', 'carta'],
+      () => [],
       () => 0,
       () => 1000,
     );
@@ -74,8 +74,8 @@ describe('global daily word', () => {
       .values({ word: 'barco', is_banned: true });
     const service = new WordleGlobalDayService(
       testDb.db,
-      ['termo', 'barco', 'carta'],
-      [],
+      () => ['termo', 'barco', 'carta'],
+      () => [],
       () => 0,
       () => 2000,
     );
@@ -85,8 +85,8 @@ describe('global daily word', () => {
   it('fails without creating a day if no candidate exists', async () => {
     const service = new WordleGlobalDayService(
       testDb.db,
-      ['termo', 'barco', 'carta'],
-      [],
+      () => ['termo', 'barco', 'carta'],
+      () => [],
       () => 0,
       () => 3000,
     );
@@ -99,8 +99,8 @@ describe('global daily word', () => {
   it('serializes selection across different days to avoid reusing a word', async () => {
     const service = new WordleGlobalDayService(
       testDb.db,
-      ['livro', 'letra'],
-      [],
+      () => ['livro', 'letra'],
+      () => [],
       () => 0,
       () => 4000,
     );
@@ -109,5 +109,23 @@ describe('global daily word', () => {
       service.getOrCreate('2026-11-05'),
     ]);
     expect(new Set(results.map((result) => result.word)).size).toBe(2);
+  });
+
+  it('reads the word sources only when it picks a word', async () => {
+    let reads = 0;
+    const answers = () => {
+      reads += 1;
+      return ['nuvem', 'pacto'];
+    };
+    const service = new WordleGlobalDayService(
+      testDb.db,
+      answers,
+      () => [],
+      () => 0,
+      () => 1000,
+    );
+    expect(reads).toBe(0);
+    await service.getOrCreate('2026-11-20');
+    expect(reads).toBeGreaterThan(0);
   });
 });
