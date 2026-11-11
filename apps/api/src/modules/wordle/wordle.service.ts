@@ -59,6 +59,10 @@ export class WordleService {
     @Inject(WORDLE_NOW) private readonly now: () => number,
   ) {}
 
+  currentDate(): string {
+    return this.today();
+  }
+
   getOrCreateDay(date: string) {
     return this.globalDay.getOrCreate(date);
   }
@@ -277,10 +281,14 @@ export class WordleService {
     userId: string,
     guildId: string,
     draft: WordleDraftWrite,
+    // Callers that already recorded today's presence (the Activity does on
+    // join) skip the extra transaction on every keystroke.
+    options: { recordParticipation?: boolean } = {},
   ): Promise<WordleDraftWriteResult> {
     if (draft.date !== this.today()) return { status: 'closed' };
     await this.getOrCreateDay(draft.date);
-    await this.participation.record(userId, guildId);
+    if (options.recordParticipation !== false)
+      await this.participation.record(userId, guildId);
     return this.drafts.write(userId, draft);
   }
 

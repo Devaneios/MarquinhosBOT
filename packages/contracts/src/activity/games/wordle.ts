@@ -7,7 +7,12 @@ import {
   wordleDraftWriteResultSchema,
 } from '../../wordle';
 
-export const guessPayloadSchema = z.object({ guess: z.string().default('') });
+export const guessPayloadSchema = z.object({
+  guess: z.string().default(''),
+  // The day the client's board shows; lets the server refuse a guess typed
+  // against a board that rolled over at midnight.
+  date: z.iso.date().optional(),
+});
 
 export const clientMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('guess'), payload: guessPayloadSchema }),

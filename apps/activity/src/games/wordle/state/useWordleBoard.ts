@@ -481,7 +481,10 @@ export function useWordleBoard(
     }
     send({
       type: 'guess',
-      payload: { guess: currentLetters.join('') },
+      payload: {
+        guess: currentLetters.join(''),
+        ...(draftDateRef.current ? { date: draftDateRef.current } : {}),
+      },
     } satisfies WordleClientMessage);
   }
 

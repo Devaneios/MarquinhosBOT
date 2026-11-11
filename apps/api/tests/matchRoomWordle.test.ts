@@ -213,6 +213,44 @@ describe('MatchRoom · wordle', () => {
     expect(payload.attempts).toBe(1);
   });
 
+  it('refreshes a board left open across midnight instead of applying its guess', async () => {
+    const session = sessionFor('user-rollover', 'guild-rollover');
+    const room = await colyseus.createRoom('match', {
+      game: 'wordle',
+      roomKey: session.roomKey,
+    });
+    const client = await colyseus.connectTo(room, session);
+    const init = await nextMessage<{ wordLength: number; date: string }>(
+      client,
+      'init',
+    );
+    const refreshed = nextMessage<{ date: string; attempts: number }>(
+      client,
+      'init',
+    );
+    const rejected = nextMessage<{ message: string }>(client, 'guess_error');
+
+    client.send('guess', {
+      guess: pickWordOfLength(init.wordLength),
+      date: '2000-01-01',
+    });
+
+    expect((await refreshed).date).toBe(init.date);
+    expect((await refreshed).attempts).toBe(0);
+    expect((await rejected).message).toContain('O dia do jogo mudou');
+
+    const again = nextMessage<{ date: string }>(client, 'init');
+    client.send('draft_update', {
+      date: '2000-01-01',
+      rowIndex: 0,
+      cells: Array(init.wordLength).fill(''),
+      activeIndex: 0,
+      expectedRevision: 0,
+      requestId: 1,
+    });
+    expect((await again).date).toBe(init.date);
+  });
+
   it('replies guess_error for a guess of the wrong length', async () => {
     const session = sessionFor('user-a', 'guild-wronglen');
     const room = await colyseus.createRoom('match', {
