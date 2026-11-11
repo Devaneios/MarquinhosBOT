@@ -32,6 +32,31 @@ const asDays = (...days: Parameters<typeof achievementDay>[0][]): Day[] =>
   days.map((day) => achievementDay(day));
 
 describe('evaluateWordleAchievements', () => {
+  it('uses aggregate lifetime stats without manufacturing historical board evidence', () => {
+    const analysis = analyzeWordleAchievements([], {
+      today,
+      aggregateStats: {
+        played: 10,
+        wins: 10,
+        winRate: 100,
+        currentStreak: 2,
+        bestStreak: 7,
+        distribution: [0, 10, 0, 0, 0, 0, 0, 0],
+      },
+    });
+    expect(
+      analysis
+        .evaluate(new Set())
+        .find((item) => item.id === 'wordle_v2_wins_10')?.met,
+    ).toBe(true);
+    expect(
+      analysis
+        .evaluate(new Set())
+        .find((item) => item.id === 'wordle_v2_played_7')?.met,
+    ).toBe(true);
+    expect(analysis.discoverPatterns(new Set())).toEqual([]);
+  });
+
   it('evaluates the full catalog in its declared order', () => {
     expect(
       analyzeWordleAchievements([], { today })

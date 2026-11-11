@@ -147,6 +147,46 @@ describe('global Wordle cutover preparation', () => {
     ]);
   });
 
+  test('coalesces multi-day legacy participation by guild and player', async () => {
+    await seedLegacy();
+    await testDb.db
+      .insert(wordleDays)
+      .values({
+        guild_id: 'g1',
+        word_date: '2026-11-08',
+        word: null,
+        word_length: null,
+        is_legacy: true,
+        created_at: 80,
+      });
+    await testDb.db
+      .insert(wordleSessions)
+      .values({
+        id: 's0',
+        user_id: 'u1',
+        guild_id: 'g1',
+        word_date: '2026-11-08',
+        guesses: '[]',
+        solved: false,
+        attempts: 0,
+        created_at: 80,
+      });
+    const before = await auditWordlePreservation(testDb.db);
+    await prepareGlobalWordleCutover(testDb.db, {
+      sourceTag: 'v0.0.3',
+      cutoverDate: '2026-11-10',
+      before,
+    });
+    const participation = await testDb.db
+      .select()
+      .from(wordleCommunityParticipation);
+    expect(participation).toHaveLength(2);
+    expect(participation.find((row) => row.guild_id === 'g1')).toMatchObject({
+      first_seen_at: 80,
+      last_seen_at: 100,
+    });
+  });
+
   test('blocks malformed sessions recorded in the inventory', async () => {
     await seedLegacy();
     await testDb.db
@@ -178,28 +218,24 @@ describe('global Wordle cutover preparation', () => {
         before,
       }),
     ).rejects.toThrow('source changed');
-    await testDb.db
-      .insert(wordleDays)
-      .values({
-        guild_id: 'g1',
-        word_date: '2026-11-10',
-        word: 'termo',
-        word_length: 5,
-        is_legacy: true,
-        created_at: 200,
-      });
-    await testDb.db
-      .insert(wordleSessions)
-      .values({
-        id: 'late',
-        user_id: 'u2',
-        guild_id: 'g1',
-        word_date: '2026-11-10',
-        guesses: '[]',
-        solved: false,
-        attempts: 0,
-        created_at: 200,
-      });
+    await testDb.db.insert(wordleDays).values({
+      guild_id: 'g1',
+      word_date: '2026-11-10',
+      word: 'termo',
+      word_length: 5,
+      is_legacy: true,
+      created_at: 200,
+    });
+    await testDb.db.insert(wordleSessions).values({
+      id: 'late',
+      user_id: 'u2',
+      guild_id: 'g1',
+      word_date: '2026-11-10',
+      guesses: '[]',
+      solved: false,
+      attempts: 0,
+      created_at: 200,
+    });
     const freshInventory = await auditWordlePreservation(testDb.db);
     await expect(
       prepareGlobalWordleCutover(testDb.db, {

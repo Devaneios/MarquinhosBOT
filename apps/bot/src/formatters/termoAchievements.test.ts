@@ -142,6 +142,7 @@ describe('familyLabel', () => {
   it('falls back to the raw family slug', () => {
     expect(familyLabel('speed')).toBe('Velocidade');
     expect(familyLabel('novidade')).toBe('novidade');
+    expect(familyLabel('wordle')).toBe('wordle');
   });
   it('labels drawing families in Portuguese', () => {
     expect(

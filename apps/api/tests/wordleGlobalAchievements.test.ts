@@ -1,5 +1,6 @@
 import {
   achievements,
+  userAchievements,
   userLevels,
   wordleAlbumContributions,
   wordleCommunityDailyPresence,
@@ -15,6 +16,7 @@ import {
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { matchWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/engine/matchPatterns';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
+import { eq } from 'drizzle-orm';
 import { createWordleTestGlobalAchievementService } from './helpers/wordleServices';
 
 let testDb: TestDb;
@@ -143,6 +145,111 @@ describe('global Wordle achievements', () => {
       )?.name,
     ).toBe('');
   });
+  it('keeps retired unlocks visible and does not re-award a matching legacy unlock', async () => {
+    await testDb.db.insert(achievements).values({
+      id: 'retired-wordle-test',
+      name: 'Retired title',
+      description: 'Retired description',
+      category: 'wordle',
+      rarity: 'epic',
+      icon: '🟣',
+      reward_xp: 300,
+    });
+    await testDb.db.insert(userAchievements).values([
+      {
+        user_id: 'legacy-player',
+        guild_id: 'legacy-a',
+        achievement_id: 'retired-wordle-test',
+        unlocked_at: 50,
+      },
+      {
+        user_id: 'legacy-player',
+        guild_id: 'legacy-b',
+        achievement_id: 'retired-wordle-test',
+        unlocked_at: 60,
+      },
+      {
+        user_id: 'already-earned',
+        guild_id: 'legacy-a',
+        achievement_id: 'wordle_v2_solved_exactly_1',
+        unlocked_at: 40,
+      },
+    ]);
+    await testDb.db
+      .insert(wordleCommunityParticipation)
+      .values({
+        user_id: 'legacy-player',
+        guild_id: 'legacy-a',
+        first_seen_at: 1,
+        last_seen_at: 1,
+      });
+    await testDb.db.insert(wordleGlobalSessions).values({
+      id: 'already-earned-session',
+      user_id: 'already-earned',
+      word_date: '2026-01-01',
+      solved: true,
+      attempts: 1,
+      created_at: 100,
+      solved_at: 101,
+      guesses: JSON.stringify([
+        {
+          guess: 'termo',
+          feedback: ['correct', 'correct', 'correct', 'correct', 'correct'],
+        },
+      ]),
+    });
+    await testDb.db
+      .insert(userLevels)
+      .values({
+        user_id: 'already-earned',
+        guild_id: 'legacy-a',
+        total_xp: 999,
+      });
+    const service = createWordleTestGlobalAchievementService(
+      () => Date.parse('2026-11-01T15:00:00Z'),
+      testDb.db,
+    );
+    const overview = await service.getOverview(
+      'legacy-player',
+      'legacy-a',
+      'legacy-player',
+    );
+    const retired = overview.achievements.find(
+      (item) => item.id === 'retired-wordle-test',
+    );
+    expect(retired).toMatchObject({
+      family: 'wordle',
+      tier: 1,
+      hidden: false,
+      name: 'Retired title',
+      description: 'Retired description',
+      icon: '🟣',
+      rarity: 'epic',
+      rewardXp: 300,
+      unlockedAt: new Date(50).toISOString(),
+      progress: null,
+      holdersPercent: null,
+    });
+    expect(retired).not.toHaveProperty('patternPreview');
+    expect(await service.checkAndAward('already-earned', 'legacy-a')).toEqual({
+      unlockedIds: [],
+    });
+    expect(
+      await testDb.db
+        .select()
+        .from(wordleGlobalAchievements)
+        .where(eq(wordleGlobalAchievements.user_id, 'already-earned')),
+    ).toHaveLength(0);
+    expect(
+      (
+        await testDb.db
+          .select()
+          .from(userLevels)
+          .where(eq(userLevels.user_id, 'already-earned'))
+      )[0]?.total_xp,
+    ).toBe(999);
+  });
+
   it('counts a first solve in two communities as one global achievement day', async () => {
     await testDb.db.insert(achievements).values({
       id: 'wordle_v2_first_solver_1',

@@ -17,6 +17,7 @@ import { WordleUserConfigController } from 'modules/wordle/controllers/wordle-us
 import { WordleController } from 'modules/wordle/controllers/wordle.controller';
 import { GlobalWordleMode } from 'modules/wordle/modes/global-wordle.mode';
 import { GuildWordleMode } from 'modules/wordle/modes/guild-wordle.mode';
+import { WordleHistoryService } from 'modules/wordle/progression/wordle-history.service';
 import { WordBankService } from 'modules/wordle/services/word-bank.service';
 import { WordleAchievementService } from 'modules/wordle/services/wordle-achievement.service';
 import { WordleAlbumMilestoneService } from 'modules/wordle/services/wordle-album-milestone.service';
@@ -81,6 +82,7 @@ import {
     WordleGalleryService,
     GlobalWordleMode,
     WordleGlobalAchievementService,
+    WordleHistoryService,
     WordleGlobalAnnouncementService,
     WordleGlobalDayService,
     WordleGlobalDraftService,

@@ -222,6 +222,25 @@ describe('WordleAchievementsScreen', () => {
     ).toBeTruthy();
   });
 
+  it('renders a preserved retired achievement in the legacy family', () => {
+    const retired: WordleAchievementStatus = {
+      ...sampleAchievements[0]!,
+      id: 'retired-wordle',
+      family: 'wordle',
+      name: 'Conquista antiga',
+      description: 'Conquistada antes da mudança global.',
+      unlockedAt: '2026-10-01T12:00:00.000Z',
+    };
+    const { container } = render(
+      <WordleAchievementsScreen achievements={[retired]} onBack={() => {}} />,
+    );
+
+    expect(
+      container.querySelector('section[data-family="wordle"]'),
+    ).toBeTruthy();
+    expect(screen.getByText('Conquista antiga')).toBeTruthy();
+  });
+
   it('renders stats header, distribution bars, families, tier ladders, progress bars, holders %, and secret masking', () => {
     const { container } = render(
       <WordleAchievementsScreen

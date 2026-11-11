@@ -78,7 +78,7 @@ export const MILESTONES: readonly WordleAchievementDefinition[] = [
     icon: '🏅',
     rewardXp: 25,
     hidden: false,
-    evaluate: (facts) => counter(facts.participated.length, 1),
+    evaluate: (facts) => counter(facts.stats.played, 1),
   },
   {
     id: 'wordle_v2_played_7',
@@ -91,7 +91,7 @@ export const MILESTONES: readonly WordleAchievementDefinition[] = [
     icon: '🏅',
     rewardXp: 25,
     hidden: false,
-    evaluate: (facts) => counter(facts.participated.length, 7),
+    evaluate: (facts) => counter(facts.stats.played, 7),
   },
   {
     id: 'wordle_v2_played_30',
@@ -104,7 +104,7 @@ export const MILESTONES: readonly WordleAchievementDefinition[] = [
     icon: '🏅',
     rewardXp: 75,
     hidden: false,
-    evaluate: (facts) => counter(facts.participated.length, 30),
+    evaluate: (facts) => counter(facts.stats.played, 30),
   },
   {
     id: 'wordle_v2_played_100',
@@ -117,7 +117,7 @@ export const MILESTONES: readonly WordleAchievementDefinition[] = [
     icon: '🏅',
     rewardXp: 150,
     hidden: false,
-    evaluate: (facts) => counter(facts.participated.length, 100),
+    evaluate: (facts) => counter(facts.stats.played, 100),
   },
   {
     id: 'wordle_v2_played_365',
@@ -130,7 +130,7 @@ export const MILESTONES: readonly WordleAchievementDefinition[] = [
     icon: '🏅',
     rewardXp: 750,
     hidden: false,
-    evaluate: (facts) => counter(facts.participated.length, 365),
+    evaluate: (facts) => counter(facts.stats.played, 365),
   },
   {
     id: 'wordle_v2_streak_3',

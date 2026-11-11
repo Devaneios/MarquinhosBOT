@@ -15,12 +15,10 @@ import {
   wordleGlobalDiscoveries,
   wordleGlobalOccurrences,
   wordleGlobalSessions,
-  wordleStreaks,
 } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { analyzeWordleAchievements } from '@marquinhos/domain/games/wordle/achievements/engine/evaluate';
 import type { AchievementHistoryDay } from '@marquinhos/domain/games/wordle/achievements/engine/history';
-import { computeWordlePlayerStats } from '@marquinhos/domain/games/wordle/playerStats';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 import { Inject, Injectable } from '@nestjs/common';
 import { logger } from 'common/logging/logger';
@@ -29,6 +27,7 @@ import { and, asc, countDistinct, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { LevelingService } from 'modules/gamification/leveling.service';
 import { WORDLE_NOW } from 'modules/wordle/wordle.tokens';
 import { z } from 'zod';
+import { WordleHistoryService } from '../progression/wordle-history.service';
 import { WordleAlbumService } from './wordle-album.service';
 import { getWordleTimeZone } from './wordle-date';
 import { visibleWordleEvidence } from './wordle-evidence-visibility';
@@ -48,6 +47,7 @@ export class WordleGlobalAchievementService {
     @Inject(DB) private readonly database: Db,
     private readonly leveling: LevelingService,
     private readonly album: WordleAlbumService,
+    private readonly historyService: WordleHistoryService,
     @Inject(WORDLE_NOW)
     private readonly now: () => number = Date.now,
   ) {}
@@ -67,18 +67,22 @@ export class WordleGlobalAchievementService {
       .from(wordleCommunityFirstSolves)
       .where(eq(wordleCommunityFirstSolves.user_id, userId));
     const firstDates = new Set(firstSolves.map((row) => row.date));
-    const [legacy] = await exec
-      .select({ best: sql<number | null>`max(${wordleStreaks.max_streak})` })
-      .from(wordleStreaks)
-      .where(eq(wordleStreaks.user_id, userId));
     const now = this.now();
     const options = {
       today: new Intl.DateTimeFormat('sv-SE', {
         timeZone: getWordleTimeZone(),
       }).format(new Date(now)),
       timeZone: getWordleTimeZone(),
-      persistedBestStreak: legacy?.best ?? 0,
     };
+    const aggregateStats = await this.historyService.getStats(
+      userId,
+      options.today,
+      exec,
+    );
+    const legacyUnlocks = await this.historyService.getLegacyUnlocks(
+      userId,
+      exec,
+    );
     const history: AchievementHistoryDay[] = rows.map(({ session, day }) => {
       const normalized = stripDiacritics(day.word);
       return {
@@ -96,7 +100,13 @@ export class WordleGlobalAchievementService {
       };
     });
 
-    return { rows, history, options, now };
+    return {
+      rows,
+      history,
+      options: { ...options, aggregateStats },
+      legacyUnlocks,
+      now,
+    };
   }
 
   async getOverview(
@@ -105,7 +115,8 @@ export class WordleGlobalAchievementService {
     viewerId: string,
   ): Promise<WordleAchievementsOverview> {
     return this.database.transaction(async (tx) => {
-      const { history, options } = await this.loadHistory(userId, tx);
+      const loaded = await this.loadHistory(userId, tx);
+      const { history, options } = loaded;
       const discoveries = await tx
         .select()
         .from(wordleGlobalDiscoveries)
@@ -118,13 +129,19 @@ export class WordleGlobalAchievementService {
             : [];
         }),
       );
+      const legacyUnlocks = loaded.legacyUnlocks;
       const unlockedRows = await tx
         .select()
         .from(wordleGlobalAchievements)
         .where(eq(wordleGlobalAchievements.user_id, userId));
-      const unlocks = new Map(
+      const unlocks = new Map<string, number>(
         unlockedRows.map((row) => [row.achievement_id, row.unlocked_at]),
       );
+      for (const legacy of legacyUnlocks) {
+        const current = unlocks.get(legacy.id);
+        if (current === undefined || legacy.unlockedAt < current)
+          unlocks.set(legacy.id, legacy.unlockedAt);
+      }
       const evaluated = analyzeWordleAchievements(history, options).evaluate(
         new Set(evidence.keys()),
       );
@@ -133,21 +150,19 @@ export class WordleGlobalAchievementService {
         .select({ count: countDistinct(wordleCommunityParticipation.user_id) })
         .from(wordleCommunityParticipation)
         .where(eq(wordleCommunityParticipation.guild_id, guildId));
-      const holders = await tx
-        .select({
-          id: wordleGlobalAchievements.achievement_id,
-          count: countDistinct(wordleGlobalAchievements.user_id),
-        })
-        .from(wordleGlobalAchievements)
-        .innerJoin(
-          wordleCommunityParticipation,
-          eq(
-            wordleCommunityParticipation.user_id,
-            wordleGlobalAchievements.user_id,
-          ),
+      const holders = await tx.execute<{ id: string; count: number }>(sql`
+        WITH earned AS (
+          SELECT user_id, achievement_id FROM wordle_global_achievements
+          UNION
+          SELECT user_id, achievement_id FROM user_achievements
         )
-        .where(eq(wordleCommunityParticipation.guild_id, guildId))
-        .groupBy(wordleGlobalAchievements.achievement_id);
+        SELECT earned.achievement_id AS id, count(DISTINCT earned.user_id)::int AS count
+        FROM earned
+        INNER JOIN wordle_community_participation participation
+          ON participation.user_id = earned.user_id
+        WHERE participation.guild_id = ${guildId}
+        GROUP BY earned.achievement_id
+      `);
       const percentages = new Map(holders.map((row) => [row.id, row.count]));
       const collection = WORDLE_ACHIEVEMENT_CATALOG.map((definition) => {
         const at = unlocks.get(definition.id);
@@ -192,16 +207,34 @@ export class WordleGlobalAchievementService {
             : {}),
         };
       });
+      const currentIds = new Set<string>(
+        WORDLE_ACHIEVEMENT_CATALOG.map((definition) => definition.id),
+      );
+      const retired = legacyUnlocks
+        .filter((unlock) => !currentIds.has(unlock.id))
+        .map((unlock) => ({
+          id: unlock.id,
+          family: 'wordle' as const,
+          tier: 1,
+          hidden: false,
+          name: unlock.name,
+          description: unlock.description,
+          icon: unlock.icon,
+          rarity: unlock.rarity,
+          rewardXp: unlock.rewardXp,
+          unlockedAt: new Date(unlock.unlockedAt).toISOString(),
+          progress: null,
+          holdersPercent: null,
+        }));
       return wordleAchievementsOverviewSchema.parse({
-        achievements: collection,
-        stats: computeWordlePlayerStats(history, options),
+        achievements: [...collection, ...retired],
+        stats: options.aggregateStats,
       });
     });
   }
 
   async getStats(userId: string) {
-    const { history, options } = await this.loadHistory(userId, this.database);
-    return computeWordlePlayerStats(history, options);
+    return this.historyService.getStats(userId, undefined, this.database);
   }
 
   async checkAndAward(
@@ -212,10 +245,8 @@ export class WordleGlobalAchievementService {
       await tx.execute(
         sql`SELECT pg_advisory_xact_lock(hashtextextended(${JSON.stringify(['wordle-global-achievements', userId])}, 0))`,
       );
-      const { rows, history, options, now } = await this.loadHistory(
-        userId,
-        tx,
-      );
+      const { rows, history, options, legacyUnlocks, now } =
+        await this.loadHistory(userId, tx);
       const stored = await tx
         .select()
         .from(wordleGlobalDiscoveries)
@@ -300,9 +331,10 @@ export class WordleGlobalAchievementService {
           .onConflictDoNothing();
         known.add(match.patternId);
       }
+      const alreadyUnlocked = new Set(legacyUnlocks.map((unlock) => unlock.id));
       const eligibleIds = analysis
         .evaluate(known)
-        .filter((item) => item.met)
+        .filter((item) => item.met && !alreadyUnlocked.has(item.id))
         .map((item) => item.id);
       if (eligibleIds.length === 0) return { unlockedIds: [], newDates };
       const definitions = await tx

@@ -244,15 +244,23 @@ export async function prepareGlobalWordleCutover(
             user_id: userId,
             first_seen_at: seenAt,
             last_seen_at: seenAt,
+          })
+          .onConflictDoUpdate({
+            target: [
+              wordleCommunityParticipation.guild_id,
+              wordleCommunityParticipation.user_id,
+            ],
+            set: {
+              first_seen_at: sql`least(${wordleCommunityParticipation.first_seen_at}, ${seenAt})`,
+              last_seen_at: sql`greatest(${wordleCommunityParticipation.last_seen_at}, ${seenAt})`,
+            },
           });
-        await tx
-          .insert(wordleCommunityDailyPresence)
-          .values({
-            guild_id: guildId,
-            user_id: userId,
-            word_date: date,
-            first_seen_at: seenAt,
-          });
+        await tx.insert(wordleCommunityDailyPresence).values({
+          guild_id: guildId,
+          user_id: userId,
+          word_date: date,
+          first_seen_at: seenAt,
+        });
       }
 
       const verification = await verifyWordlePreservation(tx, input.before);

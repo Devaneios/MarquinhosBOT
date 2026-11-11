@@ -23,6 +23,8 @@ export interface AchievementHistoryDay extends WordleDayRecord {
 export interface AchievementEvaluationOptions {
   today: string;
   timeZone?: string;
+  /** Aggregate lifetime counters only; board and timing evidence still comes from rows below. */
+  aggregateStats?: WordlePlayerStats;
 }
 
 function completeFeedback(
@@ -150,9 +152,9 @@ export function prepareAchievementHistory(
   const discoveredPatternCounts = Object.fromEntries(
     WORDLE_PATTERN_FAMILIES.map((family) => [family, 0]),
   ) as Record<(typeof WORDLE_PATTERN_FAMILIES)[number], number>;
-  const stats: WordlePlayerStats = computeWordlePlayerStats(played, {
-    today: options.today,
-  });
+  const stats: WordlePlayerStats =
+    options.aggregateStats ??
+    computeWordlePlayerStats(played, { today: options.today });
   return {
     stats,
     played,

@@ -124,6 +124,54 @@ describe('Wordle catalog initialization', () => {
     expect(operatorRow).toEqual(operatorAchievement);
   });
 
+  it('does not overwrite a conflicting retained definition that reuses an active catalog id', async () => {
+    const definition = WORDLE_ACHIEVEMENT_CATALOG[0]!;
+    const [original] = await db
+      .select()
+      .from(achievements)
+      .where(eq(achievements.id, definition.id));
+    await db
+      .update(achievements)
+      .set({
+        name: 'Legacy name',
+        description: 'Legacy description',
+        icon: '🟣',
+        rarity: 'rare',
+        condition: JSON.stringify({ legacy: true }),
+        reward_xp: 999,
+      })
+      .where(eq(achievements.id, definition.id));
+    try {
+      await defaults.initializeDefaults();
+      const [retained] = await db
+        .select()
+        .from(achievements)
+        .where(eq(achievements.id, definition.id));
+      expect(retained).toMatchObject({
+        name: 'Legacy name',
+        description: 'Legacy description',
+        icon: '🟣',
+        rarity: 'rare',
+        condition: JSON.stringify({ legacy: true }),
+        reward_xp: 999,
+      });
+    } finally {
+      if (original)
+        await db
+          .update(achievements)
+          .set({
+            name: original.name,
+            description: original.description,
+            icon: original.icon,
+            rarity: original.rarity,
+            condition: original.condition,
+            reward_xp: original.reward_xp,
+            archived_at: original.archived_at,
+          })
+          .where(eq(achievements.id, definition.id));
+    }
+  });
+
   it('archives Wordle rows missing from the catalog and keeps their unlocks', async () => {
     await defaults.initializeDefaults();
     await db

@@ -22,7 +22,6 @@ import {
   isNull,
   ne,
   notInArray,
-  sql,
 } from 'drizzle-orm';
 import { LevelingService } from 'modules/gamification/leveling.service';
 import type { Achievement, UserAchievement } from 'modules/gamification/types';
@@ -132,34 +131,37 @@ export class AchievementService {
             ),
           ),
         );
-      await tx
-        .insert(achievements)
-        .values(
-          WORDLE_ACHIEVEMENT_CATALOG.map((definition) => ({
-            id: definition.id,
-            name: definition.name,
-            description: definition.description,
-            category: 'wordle',
-            rarity: definition.rarity,
-            icon: definition.icon,
-            condition: null,
-            reward_xp: definition.rewardXp,
+      const catalogRows = WORDLE_ACHIEVEMENT_CATALOG.map((definition) => ({
+        id: definition.id,
+        name: definition.name,
+        description: definition.description,
+        category: 'wordle',
+        rarity: definition.rarity,
+        icon: definition.icon,
+        condition: null,
+        reward_xp: definition.rewardXp,
+        archived_at: null,
+      }));
+      await tx.insert(achievements).values(catalogRows).onConflictDoNothing();
+      for (const row of catalogRows) {
+        await tx
+          .update(achievements)
+          .set({
+            name: row.name,
+            description: row.description,
+            rarity: row.rarity,
+            icon: row.icon,
+            reward_xp: row.reward_xp,
             archived_at: null,
-          })),
-        )
-        .onConflictDoUpdate({
-          target: achievements.id,
-          set: {
-            name: sql`excluded.name`,
-            description: sql`excluded.description`,
-            category: sql`excluded.category`,
-            rarity: sql`excluded.rarity`,
-            icon: sql`excluded.icon`,
-            condition: sql`excluded.condition`,
-            reward_xp: sql`excluded.reward_xp`,
-            archived_at: null,
-          },
-        });
+          })
+          .where(
+            and(
+              eq(achievements.id, row.id),
+              eq(achievements.category, 'wordle'),
+              isNull(achievements.condition),
+            ),
+          );
+      }
     });
   }
 
