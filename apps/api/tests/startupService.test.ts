@@ -16,6 +16,7 @@ import { WordleService } from 'modules/wordle/wordle.service';
 import 'reflect-metadata';
 import { StartupService } from 'startup/startup.service';
 import {
+  STARTUP_ASSERT_WORDLE_READY,
   STARTUP_IMPORT_SQLITE,
   STARTUP_RUN_MIGRATIONS,
   STARTUP_START_MAINTENANCE,
@@ -84,6 +85,10 @@ describe('StartupService', () => {
           },
         },
         {
+          provide: STARTUP_ASSERT_WORDLE_READY,
+          useValue: step('wordle-ready'),
+        },
+        {
           provide: STARTUP_START_MAINTENANCE,
           useValue: () => {
             events.push('maintenance-start');
@@ -103,6 +108,7 @@ describe('StartupService', () => {
     expect(state.events).toEqual([
       'migrations',
       'sqlite-import',
+      'wordle-ready',
       'gamification',
       'rate-limits',
       'agent-quota',
@@ -125,5 +131,16 @@ describe('StartupService', () => {
 
     await expect(state.app.init()).rejects.toThrow('migrations failed');
     expect(state.events).toEqual(['migrations']);
+  });
+
+  it('blocks startup before defaults or maintenance when Wordle is unprepared', async () => {
+    const state = await createApp('wordle-ready');
+
+    await expect(state.app.init()).rejects.toThrow('wordle-ready failed');
+    expect(state.events).toEqual([
+      'migrations',
+      'sqlite-import',
+      'wordle-ready',
+    ]);
   });
 });

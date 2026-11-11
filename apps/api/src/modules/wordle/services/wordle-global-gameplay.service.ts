@@ -18,7 +18,7 @@ import {
   WORDLE_NOW,
 } from 'modules/wordle/wordle.tokens';
 import { randomUUID } from 'node:crypto';
-import { lockGlobalWordlePlayer } from './gameplay-lock';
+import { lockGlobalWordlePlayer } from './global-gameplay-lock';
 import { lockGoalFactsForWrite } from './goal-fact-lock';
 import { getWordleTimeZone } from './wordle-date';
 

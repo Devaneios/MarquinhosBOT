@@ -1,16 +1,11 @@
 import { db, type Db } from '@marquinhos/database/client';
-import { AchievementService } from '../../src/modules/gamification/achievement.service';
 import { LevelingService } from '../../src/modules/gamification/leveling.service';
-import { GlobalWordleMode } from '../../src/modules/wordle/modes/global-wordle.mode';
-import { GuildWordleMode } from '../../src/modules/wordle/modes/guild-wordle.mode';
 import { WordleHistoryService } from '../../src/modules/wordle/progression/wordle-history.service';
 import { WordBankService } from '../../src/modules/wordle/services/word-bank.service';
-import { WordleAchievementService } from '../../src/modules/wordle/services/wordle-achievement.service';
 import { WordleAlbumMilestoneService } from '../../src/modules/wordle/services/wordle-album-milestone.service';
 import { WordleAlbumService } from '../../src/modules/wordle/services/wordle-album.service';
 import { recordWordlePresence } from '../../src/modules/wordle/services/wordle-community.service';
 import { getRecifeDate } from '../../src/modules/wordle/services/wordle-date';
-import { WordleDraftService } from '../../src/modules/wordle/services/wordle-draft.service';
 import { WordleGalleryService } from '../../src/modules/wordle/services/wordle-gallery.service';
 import { WordleGlobalAchievementService } from '../../src/modules/wordle/services/wordle-global-achievement.service';
 import { WordleGlobalAnnouncementService } from '../../src/modules/wordle/services/wordle-global-announcement.service';
@@ -36,11 +31,6 @@ export function createWordleTestServices(
   const today = options.today ?? getRecifeDate;
   const wordBank = new WordBankService(database);
   const leveling = new LevelingService(database);
-  const genericAchievements = new AchievementService(leveling, database);
-  const achievements = new WordleAchievementService(
-    database,
-    genericAchievements,
-  );
   const notifications = new WordleNotificationService(database, now);
   const albumMilestones = new WordleAlbumMilestoneService(database, now);
   const album = new WordleAlbumService(
@@ -55,7 +45,6 @@ export function createWordleTestServices(
     new WordleHistoryService(database),
     now,
   );
-  const drafts = new WordleDraftService(database, achievements, now);
   const globalDrafts = new WordleGlobalDraftService(
     database,
     globalAchievements,
@@ -94,7 +83,7 @@ export function createWordleTestServices(
     today,
     now,
   );
-  const globalMode = new GlobalWordleMode(
+  const wordle = new WordleService(
     database,
     globalAchievements,
     globalAnnouncements,
@@ -103,22 +92,8 @@ export function createWordleTestServices(
     globalCoordinator,
     globalLeaderboard,
     participation,
-    today,
-  );
-  const guildMode = new GuildWordleMode(
-    database,
     wordBank,
-    drafts,
-    achievements,
-    today,
-    now,
-  );
-  const wordle = new WordleService(
-    database,
-    participation,
-    wordBank,
-    globalMode,
-    guildMode,
+    new WordleHistoryService(database),
     today,
     now,
   );
@@ -126,13 +101,10 @@ export function createWordleTestServices(
   return {
     wordBank,
     leveling,
-    genericAchievements,
-    achievements,
     notifications,
     albumMilestones,
     album,
     globalAchievements,
-    drafts,
     globalDrafts,
     globalGameplay,
     globalCoordinator,
@@ -146,8 +118,6 @@ export function createWordleTestServices(
     userConfig,
     wordlistReview,
     participation,
-    globalMode,
-    guildMode,
     wordle,
   };
 }
@@ -164,14 +134,7 @@ export function createWordleTestService(
 }
 
 export function createWordleTestAchievementService(database: Db = db) {
-  return createWordleTestServices(database).achievements;
-}
-
-export function createWordleTestDraftService(
-  now: () => number = Date.now,
-  database: Db = db,
-) {
-  return createWordleTestServices(database, { now }).drafts;
+  return createWordleTestServices(database).globalAchievements;
 }
 
 export function createWordleTestAlbumService(database: Db = db) {

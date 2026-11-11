@@ -1,16 +1,16 @@
 import { db } from '@marquinhos/database/client';
-import { wordleDays, wordleUsedWords } from '@marquinhos/database/schema';
+import { wordleGlobalDays, wordleUsedWords } from '@marquinhos/database/schema';
 import { expect, it } from 'bun:test';
 import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
 import { createWordleTestServices } from './helpers/wordleServices';
 
 it('initializes the global word using the existing word banks', async () => {
-  const { globalMode } = createWordleTestServices();
+  const { wordle } = createWordleTestServices();
   const date = '2035-08-21';
   const [a, b] = await Promise.all([
-    globalMode.getOrCreateDay(date),
-    globalMode.getOrCreateDay(date),
+    wordle.getOrCreateDay(date),
+    wordle.getOrCreateDay(date),
   ]);
   expect(a).toEqual(b);
   expect(a.word.length).toBeGreaterThanOrEqual(5);
@@ -49,8 +49,13 @@ it('initializes a missing day without exhausting a single-connection pool', asyn
 
   const [day] = await db
     .select()
-    .from(wordleDays)
-    .where(eq(wordleDays.guild_id, guildId));
+    .from(wordleGlobalDays)
+    .where(
+      eq(
+        wordleGlobalDays.word_date,
+        (await import('modules/wordle/services/wordle-date')).getRecifeDate(),
+      ),
+    );
   expect(day?.word).toBeString();
   if (!day?.word) throw new Error('The first guess did not initialize a word');
   const used = await db

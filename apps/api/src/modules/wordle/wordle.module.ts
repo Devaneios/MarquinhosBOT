@@ -15,17 +15,13 @@ import { WordleRewardsController } from 'modules/wordle/controllers/wordle-rewar
 import { WordleShowcaseController } from 'modules/wordle/controllers/wordle-showcase.controller';
 import { WordleUserConfigController } from 'modules/wordle/controllers/wordle-user-config.controller';
 import { WordleController } from 'modules/wordle/controllers/wordle.controller';
-import { GlobalWordleMode } from 'modules/wordle/modes/global-wordle.mode';
-import { GuildWordleMode } from 'modules/wordle/modes/guild-wordle.mode';
 import { WordleHistoryService } from 'modules/wordle/progression/wordle-history.service';
 import { WordBankService } from 'modules/wordle/services/word-bank.service';
-import { WordleAchievementService } from 'modules/wordle/services/wordle-achievement.service';
 import { WordleAlbumMilestoneService } from 'modules/wordle/services/wordle-album-milestone.service';
 import { WordleAlbumService } from 'modules/wordle/services/wordle-album.service';
 import { WordleBingoService } from 'modules/wordle/services/wordle-bingo.service';
 import { WordleChallengeService } from 'modules/wordle/services/wordle-challenge.service';
 import { getRecifeDate } from 'modules/wordle/services/wordle-date';
-import { WordleDraftService } from 'modules/wordle/services/wordle-draft.service';
 import { WordleGalleryService } from 'modules/wordle/services/wordle-gallery.service';
 import { WordleGlobalAchievementService } from 'modules/wordle/services/wordle-global-achievement.service';
 import { WordleGlobalAnnouncementService } from 'modules/wordle/services/wordle-global-announcement.service';
@@ -72,15 +68,11 @@ import {
     BotAuthGuard,
     GuildMemberGuard,
     WordBankService,
-    GuildWordleMode,
-    WordleAchievementService,
     WordleAlbumMilestoneService,
     WordleAlbumService,
     WordleBingoService,
     WordleChallengeService,
-    WordleDraftService,
     WordleGalleryService,
-    GlobalWordleMode,
     WordleGlobalAchievementService,
     WordleHistoryService,
     WordleGlobalAnnouncementService,

@@ -7,6 +7,7 @@ import {
 import { prepareGlobalWordleCutover } from '../../src/modules/wordle/migration/global-cutover';
 import { auditWordlePreservation } from '../../src/modules/wordle/migration/wordle-preservation';
 import { getRecifeDate } from '../../src/modules/wordle/services/wordle-date';
+import { GlobalWordleCannotForce } from '../../src/modules/wordle/wordle.service';
 import { createWordleTestService } from './wordleServices';
 
 try {
@@ -99,10 +100,13 @@ try {
   const closedDay = await service.getDayGuesses('community-a', previousDate);
   const unrelatedDay = await service.getDayGuesses('community-c', previousDate);
   let forced = false;
+  let forceRejected = false;
   try {
     await service.forceNewWord('community-a');
     forced = true;
-  } catch {}
+  } catch (error) {
+    forceRejected = error instanceof GlobalWordleCannotForce;
+  }
   const rotatedA = await service.rotateDailyWord('community-a');
   const rotatedB = await service.rotateDailyWord('community-b');
   console.log(
@@ -127,6 +131,7 @@ try {
       closedDay,
       unrelatedDay,
       forced,
+      forceRejected,
       rotatedA,
       rotatedB,
     }),

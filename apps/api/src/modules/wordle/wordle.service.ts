@@ -1,86 +1,122 @@
 import type {
-  GuessRow,
   WordleDraft,
   WordleDraftWrite,
   WordleDraftWriteResult,
 } from '@marquinhos/contracts/wordle';
 import type { Db } from '@marquinhos/database/client';
 import {
+  wordleCommunityDailyPresence,
   wordleConfig,
-  wordleGlobalMigrationState,
+  wordleGlobalDays,
+  wordleGlobalSessions,
 } from '@marquinhos/database/schema';
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
-import { eq } from 'drizzle-orm';
-import { GlobalWordleMode } from 'modules/wordle/modes/global-wordle.mode';
-import { GuildWordleMode } from 'modules/wordle/modes/guild-wordle.mode';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import type {
   DailyStats,
   DayGuesses,
   ForceNewWordResult,
   GuessResult,
   WordleDaily,
-  WordleGameMode,
   WordleSession,
-} from 'modules/wordle/modes/wordle-game-mode';
+} from 'modules/wordle/gameplay/wordle.types';
+import { WordleHistoryService } from 'modules/wordle/progression/wordle-history.service';
+import { buildUniqueDayGuesses } from 'modules/wordle/services/day-guesses';
 import { WordBankService } from 'modules/wordle/services/word-bank.service';
+import { WordleGlobalAchievementService } from 'modules/wordle/services/wordle-global-achievement.service';
+import { WordleGlobalAnnouncementService } from 'modules/wordle/services/wordle-global-announcement.service';
+import { WordleGlobalDayService } from 'modules/wordle/services/wordle-global-day.service';
+import { WordleGlobalDraftService } from 'modules/wordle/services/wordle-global-draft.service';
+import { WordleGlobalGameCoordinator } from 'modules/wordle/services/wordle-global-game-coordinator';
+import { WordleGlobalLeaderboardService } from 'modules/wordle/services/wordle-global-leaderboard.service';
 import { WordleParticipationService } from 'modules/wordle/services/wordle-participation.service';
 import { WORDLE_NOW, WORDLE_TODAY } from 'modules/wordle/wordle.tokens';
 
-export { GlobalWordleCannotForce } from 'modules/wordle/modes/global-wordle.mode';
+export class GlobalWordleCannotForce extends Error {}
+
 export type {
   DailyStats,
   DayGuesses,
   ForceNewWordResult,
   GuessResult,
-} from 'modules/wordle/modes/wordle-game-mode';
+} from 'modules/wordle/gameplay/wordle.types';
 
 @Injectable()
 export class WordleService {
   constructor(
     @Inject(DB) private readonly database: Db,
+    private readonly achievements: WordleGlobalAchievementService,
+    private readonly announcements: WordleGlobalAnnouncementService,
+    private readonly globalDay: WordleGlobalDayService,
+    private readonly drafts: WordleGlobalDraftService,
+    private readonly coordinator: WordleGlobalGameCoordinator,
+    private readonly leaderboard: WordleGlobalLeaderboardService,
     private readonly participation: WordleParticipationService,
     private readonly wordBank: WordBankService,
-    private readonly globalMode: GlobalWordleMode,
-    private readonly guildMode: GuildWordleMode,
+    private readonly history: WordleHistoryService,
     @Inject(WORDLE_TODAY) private readonly today: () => string,
     @Inject(WORDLE_NOW) private readonly now: () => number,
   ) {}
 
-  async isGlobalActive(): Promise<boolean> {
-    const [state] = await this.database
-      .select({ id: wordleGlobalMigrationState.id })
-      .from(wordleGlobalMigrationState)
-      .where(eq(wordleGlobalMigrationState.id, 'legacy-wordle'));
-    return !!state;
+  getOrCreateDay(date: string) {
+    return this.globalDay.getOrCreate(date);
   }
 
-  private async mode(): Promise<WordleGameMode> {
-    if (await this.isGlobalActive()) return this.globalMode;
-    return this.guildMode;
-  }
-
-  async getAchievementsOverview(
-    userId: string,
-    guildId: string,
-    viewerId: string,
-  ) {
-    return (await this.mode()).getAchievementsOverview(
-      userId,
-      guildId,
-      viewerId,
-    );
+  getAchievementsOverview(userId: string, guildId: string, viewerId: string) {
+    return this.achievements.getOverview(userId, guildId, viewerId);
   }
 
   recordParticipation(userId: string, guildId: string): Promise<void> {
     return this.participation.record(userId, guildId);
   }
 
-  getDailyWord(
+  async getDailyWord(
     guildId: string,
-    today: string = this.today(),
+    today = this.today(),
   ): Promise<WordleDaily> {
-    return this.mode().then((mode) => mode.getDailyWord(guildId, today));
+    const day = await this.getOrCreateDay(today);
+    const [stored] = await this.database
+      .select()
+      .from(wordleGlobalDays)
+      .where(eq(wordleGlobalDays.word_date, today));
+    const [counts] = await this.database
+      .select({
+        players: sql<number>`count(*) filter (where ${wordleGlobalSessions.attempts} > 0 or ${wordleGlobalSessions.solved_from_draft})::int`,
+        winners: sql<number>`count(*) filter (where ${wordleGlobalSessions.solved})::int`,
+        attempts: sql<number>`coalesce(sum(${wordleGlobalSessions.attempts}) filter (where ${wordleGlobalSessions.solved}), 0)::int`,
+      })
+      .from(wordleCommunityDailyPresence)
+      .innerJoin(
+        wordleGlobalSessions,
+        and(
+          eq(
+            wordleGlobalSessions.user_id,
+            wordleCommunityDailyPresence.user_id,
+          ),
+          eq(
+            wordleGlobalSessions.word_date,
+            wordleCommunityDailyPresence.word_date,
+          ),
+        ),
+      )
+      .where(
+        and(
+          eq(wordleCommunityDailyPresence.guild_id, guildId),
+          eq(wordleCommunityDailyPresence.word_date, today),
+        ),
+      );
+
+    return {
+      guild_id: guildId,
+      word: day.word,
+      word_date: today,
+      word_length: day.wordLength,
+      players_count: counts?.players ?? 0,
+      winners_count: counts?.winners ?? 0,
+      total_attempts: counts?.attempts ?? 0,
+      created_at: stored!.created_at,
+    };
   }
 
   async submitGuess(
@@ -88,34 +124,64 @@ export class WordleService {
     guildId: string,
     guess: string,
   ): Promise<GuessResult | { error: string }> {
+    const date = this.today();
     await this.recordParticipation(userId, guildId);
-    return (await this.mode()).submitGuess(userId, guildId, guess);
+    await this.drafts.finalizePlayerBefore(userId, date);
+    await this.getOrCreateDay(date);
+    const result = await this.coordinator.submitGuess(
+      userId,
+      guildId,
+      date,
+      guess,
+    );
+    if ('error' in result || !result.solved) return result;
+    const streak =
+      ('achievementUpdate' in result
+        ? result.achievementUpdate.overview.stats.currentStreak
+        : undefined) ?? (await this.getStreak(userId, guildId)).currentStreak;
+    return { ...result, streak };
   }
 
-  getUserSession(
+  async getUserSession(
     userId: string,
     guildId: string,
   ): Promise<WordleSession | null> {
-    return this.mode().then((mode) => mode.getUserSession(userId, guildId));
+    const today = this.today();
+    const [row] = await this.database
+      .select()
+      .from(wordleGlobalSessions)
+      .where(
+        and(
+          eq(wordleGlobalSessions.user_id, userId),
+          eq(wordleGlobalSessions.word_date, today),
+        ),
+      );
+    return row
+      ? {
+          id: row.id,
+          user_id: userId,
+          guild_id: guildId,
+          word_date: today,
+          guesses: JSON.parse(row.guesses),
+          solved: row.solved,
+          solved_from_draft: row.solved_from_draft,
+          attempts: row.attempts,
+          created_at: row.created_at,
+        }
+      : null;
   }
 
   markAnnounced(userId: string, guildId: string): Promise<boolean> {
-    return this.mode().then((mode) => mode.markAnnounced(userId, guildId));
+    return this.announcements.claim(userId, guildId, this.today());
   }
 
-  getUnannouncedWins(
-    guildId: string,
-  ): Promise<{ userId: string; guesses: GuessRow[]; attempts: number }[]> {
-    return this.mode().then((mode) => mode.getUnannouncedWins(guildId));
+  getUnannouncedWins(guildId: string) {
+    return this.announcements.unannounced(guildId, this.today());
   }
 
-  async validateGuess(
-    guildId: string,
-    guess: string,
-  ): Promise<{ valid: boolean; wordLength: number; message: string }> {
+  async validateGuess(guildId: string, guess: string) {
     const normalized = guess.trim().toLowerCase();
     const daily = await this.getDailyWord(guildId);
-
     if (normalized.length !== daily.word_length) {
       return {
         valid: false,
@@ -140,7 +206,6 @@ export class WordleService {
       daily.winners_count > 0
         ? Math.round((daily.total_attempts / daily.winners_count) * 10) / 10
         : 0;
-
     return {
       wordDate: daily.word_date,
       wordLength: daily.word_length,
@@ -150,11 +215,48 @@ export class WordleService {
     };
   }
 
-  getDayGuesses(
+  async getDayGuesses(
     guildId: string,
-    date: string = this.today(),
+    date = this.today(),
   ): Promise<DayGuesses | null> {
-    return this.mode().then((mode) => mode.getDayGuesses(guildId, date));
+    if (date < this.today()) await this.finalizeExpiredDrafts();
+    const [day] = await this.database
+      .select()
+      .from(wordleGlobalDays)
+      .where(eq(wordleGlobalDays.word_date, date));
+    if (!day) return this.history.getLegacyDayGuesses(guildId, date);
+    const rows = await this.database
+      .select({ guesses: wordleGlobalSessions.guesses })
+      .from(wordleCommunityDailyPresence)
+      .innerJoin(
+        wordleGlobalSessions,
+        and(
+          eq(
+            wordleGlobalSessions.user_id,
+            wordleCommunityDailyPresence.user_id,
+          ),
+          eq(
+            wordleGlobalSessions.word_date,
+            wordleCommunityDailyPresence.word_date,
+          ),
+        ),
+      )
+      .where(
+        and(
+          eq(wordleCommunityDailyPresence.guild_id, guildId),
+          eq(wordleCommunityDailyPresence.word_date, date),
+        ),
+      )
+      .orderBy(
+        asc(wordleGlobalSessions.created_at),
+        asc(wordleGlobalSessions.user_id),
+      );
+    return {
+      word: day.word,
+      wordDate: day.word_date,
+      wordLength: day.word_length,
+      guesses: buildUniqueDayGuesses(day.word, rows),
+    };
   }
 
   async getUserDraft(
@@ -163,10 +265,11 @@ export class WordleService {
   ): Promise<WordleDraft | null> {
     const session = await this.getUserSession(userId, guildId);
     if (session?.solved) return null;
-    return (await this.mode()).getCurrentDraft(
+    return this.drafts.getCurrentDraft(
       userId,
-      guildId,
+      this.today(),
       session?.attempts ?? 0,
+      false,
     );
   }
 
@@ -176,18 +279,18 @@ export class WordleService {
     draft: WordleDraftWrite,
   ): Promise<WordleDraftWriteResult> {
     if (draft.date !== this.today()) return { status: 'closed' };
-    return (await this.mode()).writeDraft(userId, guildId, draft);
+    await this.getOrCreateDay(draft.date);
+    await this.participation.record(userId, guildId);
+    return this.drafts.write(userId, draft);
   }
 
   finalizeExpiredDrafts(): Promise<void> {
-    return this.mode().then((mode) => mode.finalizeExpiredDrafts());
+    return this.drafts.finalizeExpiredDrafts();
   }
 
-  getStreak(
-    userId: string,
-    guildId: string,
-  ): Promise<{ currentStreak: number; maxStreak: number }> {
-    return this.mode().then((mode) => mode.getStreak(userId, guildId));
+  async getStreak(userId: string, _guildId: string) {
+    const stats = await this.history.getStats(userId);
+    return { currentStreak: stats.currentStreak, maxStreak: stats.bestStreak };
   }
 
   getLeaderboard(
@@ -196,22 +299,28 @@ export class WordleService {
     period: 'all-time' | 'weekly' | 'monthly' | 'daily' = 'all-time',
     date?: string,
     offset = 0,
-  ): ReturnType<WordleGameMode['getLeaderboard']> {
-    return this.mode().then((mode) =>
-      mode.getLeaderboard(guildId, limit, period, date, offset),
+  ) {
+    return this.leaderboard.getLeaderboard(
+      guildId,
+      period,
+      period === 'daily' ? (date ?? this.today()) : this.today(),
+      limit,
+      offset,
     );
   }
 
   getGroupStreak(guildId: string): Promise<number> {
-    return this.mode().then((mode) => mode.getGroupStreak(guildId));
+    return this.leaderboard.getGroupStreak(guildId, this.today());
   }
 
-  forceNewWord(guildId: string): Promise<ForceNewWordResult> {
-    return this.mode().then((mode) => mode.forceNewWord(guildId));
+  forceNewWord(_guildId: string): Promise<ForceNewWordResult> {
+    throw new GlobalWordleCannotForce(
+      'A palavra global não pode ser trocada antes da virada.',
+    );
   }
 
-  rotateDailyWord(guildId: string): Promise<ForceNewWordResult> {
-    return this.mode().then((mode) => mode.rotateDailyWord(guildId));
+  rotateDailyWord(_guildId: string) {
+    return this.getOrCreateDay(this.today());
   }
 
   async setConfig(guildId: string, channelId: string): Promise<void> {
@@ -230,7 +339,6 @@ export class WordleService {
       .select({ channel_id: wordleConfig.channel_id })
       .from(wordleConfig)
       .where(eq(wordleConfig.guild_id, guildId));
-
     return row ? { channelId: row.channel_id } : null;
   }
 

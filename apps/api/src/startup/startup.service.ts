@@ -21,9 +21,11 @@ import { GamificationService } from 'modules/gamification/index';
 import { WordBankService } from 'modules/wordle/services/word-bank.service';
 import { WordleService } from 'modules/wordle/wordle.service';
 import {
+  STARTUP_ASSERT_WORDLE_READY,
   STARTUP_IMPORT_SQLITE,
   STARTUP_RUN_MIGRATIONS,
   STARTUP_START_MAINTENANCE,
+  type StartupAssertWordleReady,
   type StartupImportSqlite,
   type StartupRunMigrations,
   type StartupStartMaintenance,
@@ -39,6 +41,8 @@ export class StartupService implements OnModuleInit, OnApplicationShutdown {
     private readonly runMigrations: StartupRunMigrations,
     @Inject(STARTUP_IMPORT_SQLITE)
     private readonly importSqlite: StartupImportSqlite,
+    @Inject(STARTUP_ASSERT_WORDLE_READY)
+    private readonly assertWordleReady: StartupAssertWordleReady,
     @Inject(STARTUP_START_MAINTENANCE)
     private readonly startMaintenance: StartupStartMaintenance,
     private readonly config: AppConfig,
@@ -69,6 +73,8 @@ export class StartupService implements OnModuleInit, OnApplicationShutdown {
         });
       }
     }
+
+    await this.assertWordleReady(this.database);
 
     await this.gamificationService.initializeDefaults();
     await this.rateLimitService.seedDefaults();

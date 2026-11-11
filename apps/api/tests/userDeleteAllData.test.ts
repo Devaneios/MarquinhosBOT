@@ -208,8 +208,9 @@ describe('UserService.deleteAllData', () => {
     expect(await count('ai_thread_items', 'thread_id', `thread-${OTHER}`)).toBe(
       1,
     );
-    const awards = await db.transaction((tx) =>
-      createWordleTestAchievementService().checkAndAward(USER, 'g', tx),
+    const awards = await createWordleTestAchievementService().checkAndAward(
+      USER,
+      'g',
     );
     expect(awards.unlockedIds).toEqual([]);
     expect(await count('user_achievements', 'user_id', USER)).toBe(0);

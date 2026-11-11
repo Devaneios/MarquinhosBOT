@@ -307,13 +307,10 @@ describe('wordle contracts', () => {
     expect(streak.data.maxStreak).toBeGreaterThanOrEqual(0);
   });
 
-  it('forces a new word and returns its stats', async () => {
-    const response = await callContract(server.http, wordle.forceNewWord, {
-      body: { guildId },
-    });
-
-    expect(response.data.stats.playersCount).toBe(0);
-    expect(response.data.word).toHaveLength(response.data.wordLength);
+  it('rejects forcing a new global word with conflict', async () => {
+    await expect(
+      callContract(server.http, wordle.forceNewWord, { body: { guildId } }),
+    ).rejects.toMatchObject({ response: { status: 409 } });
   });
 
   it('serves the word pool and the review queue', async () => {

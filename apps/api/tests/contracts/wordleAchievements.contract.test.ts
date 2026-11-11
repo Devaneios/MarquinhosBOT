@@ -3,8 +3,8 @@ import { getAchievements } from '@marquinhos/contracts/http/routes/wordle';
 import { db } from '@marquinhos/database/client';
 import {
   userAchievements,
-  wordleDays,
-  wordleSessions,
+  wordleGlobalDays,
+  wordleGlobalSessions,
 } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
@@ -29,19 +29,17 @@ beforeAll(async () => {
     headers.delete('authorization');
     return { ...config, headers };
   });
-  await db.insert(wordleDays).values({
-    guild_id: guildId,
+  await db.insert(wordleGlobalDays).values({
     word_date: '2026-01-01',
-    word: null,
+    word: 'termo',
     word_length: 5,
-    is_legacy: true,
     created_at: 0,
   });
-  await db.insert(wordleSessions).values({
+  await db.insert(wordleGlobalSessions).values({
     id: randomUUID(),
     user_id: userId,
-    guild_id: guildId,
     word_date: '2026-01-01',
+    guesses: '[]',
     solved: true,
     attempts: 2,
     created_at: 0,
@@ -89,18 +87,15 @@ describe('Wordle achievement overview contract', () => {
     ).toEqual([]);
   });
 
-  it('does not expose a player history from another guild', async () => {
+  it('returns the same global player history from another community', async () => {
     const response = await callContract(server.http, getAchievements, {
       params: { guildId: 'elsewhere', userId },
     });
     expect(response.data.stats).toMatchObject({
-      played: 0,
-      wins: 0,
-      winRate: 0,
+      played: 1,
+      wins: 1,
+      winRate: 100,
     });
-    expect(
-      response.data.achievements.every((a) => a.holdersPercent === null),
-    ).toBe(true);
   });
 
   it('requires bot authentication', async () => {

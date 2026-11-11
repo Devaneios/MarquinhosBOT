@@ -18,7 +18,7 @@ import { DB } from 'database/database.tokens';
 import { and, asc, eq, isNull, lt, lte, or } from 'drizzle-orm';
 import { WORDLE_NOW } from 'modules/wordle/wordle.tokens';
 import { randomUUID } from 'node:crypto';
-import { lockGlobalWordlePlayer } from './gameplay-lock';
+import { lockGlobalWordlePlayer } from './global-gameplay-lock';
 import { getWordleDayEndEpoch, getWordleTimeZone } from './wordle-date';
 import { WordleGlobalAchievementService } from './wordle-global-achievement.service';
 

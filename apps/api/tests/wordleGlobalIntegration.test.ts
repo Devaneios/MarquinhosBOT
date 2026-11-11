@@ -61,6 +61,7 @@ describe('global Wordle integration', () => {
     });
     expect(result.unrelatedDay.guesses).toEqual([]);
     expect(result.forced).toBe(false);
+    expect(result.forceRejected).toBe(true);
     expect(result.rotatedA.word).toBe('termo');
     expect(result.rotatedB).toEqual(result.rotatedA);
   });

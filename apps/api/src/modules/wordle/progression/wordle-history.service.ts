@@ -15,7 +15,7 @@ import { computePreservedWordleStats } from '@marquinhos/domain/games/wordle/pro
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
 import { and, asc, eq, gte, lt } from 'drizzle-orm';
-import type { DayGuesses } from '../modes/wordle-game-mode';
+import type { DayGuesses } from '../gameplay/wordle.types';
 import { buildUniqueDayGuesses } from '../services/day-guesses';
 import { getRecifeDate } from '../services/wordle-date';
 
