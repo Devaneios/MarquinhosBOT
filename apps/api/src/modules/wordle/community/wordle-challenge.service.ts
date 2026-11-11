@@ -2,7 +2,6 @@ import type { Db } from '@marquinhos/database/client';
 import {
   wordleChallengeJoins,
   wordleCommunityDailyPresence,
-  wordleGlobalAchievements,
   wordleGlobalOccurrences,
   wordlePatternChallenges,
 } from '@marquinhos/database/schema';
@@ -11,6 +10,7 @@ import { challengeParticipants } from '@marquinhos/domain/games/wordle/community
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
 import { and, asc, desc, eq, gt, gte, lt, or, sql } from 'drizzle-orm';
+import { ownedWordleAchievementIds } from 'modules/wordle/progression/wordle-owned-achievements';
 import { WORDLE_NOW } from 'modules/wordle/wordle.tokens';
 import { randomUUID } from 'node:crypto';
 
@@ -53,17 +53,9 @@ export class WordleChallengeService {
       await tx.execute(
         sql`SELECT pg_advisory_xact_lock(hashtextextended(${JSON.stringify(['wordle-challenges', guildId])}, 0))`,
       );
-      const [owned] = await tx
-        .select()
-        .from(wordleGlobalAchievements)
-        .where(
-          and(
-            eq(wordleGlobalAchievements.user_id, userId),
-            eq(wordleGlobalAchievements.achievement_id, definition.id),
-          ),
-        )
-        .for('update');
-      if (!owned) throw new InvalidWordleChallenge('Pattern not unlocked');
+      const owned = await ownedWordleAchievementIds(tx, userId);
+      if (!owned.has(definition.id))
+        throw new InvalidWordleChallenge('Pattern not unlocked');
       const open = gt(wordlePatternChallenges.closes_at, now);
       const recentByMember = and(
         eq(wordlePatternChallenges.creator_user_id, userId),

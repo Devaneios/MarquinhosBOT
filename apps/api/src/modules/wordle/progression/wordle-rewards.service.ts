@@ -2,7 +2,6 @@ import type { Db } from '@marquinhos/database/client';
 import {
   wordleCommunityGoals,
   wordleEquippedRewards,
-  wordleGlobalAchievements,
   wordleGoalAwards,
   wordlePersonalRewards,
 } from '@marquinhos/database/schema';
@@ -14,6 +13,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { WORDLE_NOW } from 'modules/wordle/wordle.tokens';
+import { ownedWordleAchievementIds } from './wordle-owned-achievements';
 
 export class InvalidWordleReward extends Error {}
 type RewardKind = 'title' | 'frame';
@@ -27,11 +27,9 @@ export class WordleRewardsService {
   ) {}
 
   async reconcile(userId: string): Promise<void> {
-    const rows = await this.database
-      .select({ id: wordleGlobalAchievements.achievement_id })
-      .from(wordleGlobalAchievements)
-      .where(eq(wordleGlobalAchievements.user_id, userId));
-    const ids = unlockedWordleRewards(new Set(rows.map((row) => row.id)));
+    const ids = unlockedWordleRewards(
+      await ownedWordleAchievementIds(this.database, userId),
+    );
     if (ids.length)
       await this.database
         .insert(wordlePersonalRewards)

@@ -1,12 +1,9 @@
 import type { Db } from '@marquinhos/database/client';
-import {
-  achievements,
-  wordleGlobalAchievements,
-  wordleShowcase,
-} from '@marquinhos/database/schema';
+import { achievements, wordleShowcase } from '@marquinhos/database/schema';
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
-import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import { asc, eq, inArray, sql } from 'drizzle-orm';
+import { ownedWordleAchievementIds } from './wordle-owned-achievements';
 
 export class InvalidWordleShowcase extends Error {}
 
@@ -53,16 +50,8 @@ export class WordleShowcaseService {
         sql`SELECT pg_advisory_xact_lock(hashtextextended(${JSON.stringify(['wordle-showcase', userId])}, 0))`,
       );
       if (ids.length) {
-        const owned = await tx
-          .select({ id: wordleGlobalAchievements.achievement_id })
-          .from(wordleGlobalAchievements)
-          .where(
-            and(
-              eq(wordleGlobalAchievements.user_id, userId),
-              inArray(wordleGlobalAchievements.achievement_id, ids),
-            ),
-          );
-        if (owned.length !== ids.length)
+        const owned = await ownedWordleAchievementIds(tx, userId);
+        if (ids.some((id) => !owned.has(id)))
           throw new InvalidWordleShowcase('Achievement not unlocked');
       }
       await tx.delete(wordleShowcase).where(eq(wordleShowcase.user_id, userId));
