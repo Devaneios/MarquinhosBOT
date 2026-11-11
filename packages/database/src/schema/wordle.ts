@@ -703,3 +703,58 @@ export const wordleBingoCards = pgTable(
     index('wordle_bingo_guild_idx').on(t.guild_id, t.starts_at),
   ],
 );
+
+export const wordleLegacyProgress = pgTable(
+  'wordle_legacy_progress',
+  {
+    user_id: text('user_id').primaryKey(),
+    current_streak: integer('current_streak').notNull().default(0),
+    best_streak: integer('best_streak').notNull().default(0),
+    last_solved_date: text('last_solved_date'),
+    cutover_date: text('cutover_date').notNull(),
+  },
+  (t) => [
+    check(
+      'wordle_legacy_progress_current_nonnegative',
+      sql`${t.current_streak} >= 0`,
+    ),
+    check(
+      'wordle_legacy_progress_best_nonnegative',
+      sql`${t.best_streak} >= 0`,
+    ),
+    check(
+      'wordle_legacy_progress_cutover_iso',
+      sql`${t.cutover_date} ~ '^\\d{4}-\\d{2}-\\d{2}$'`,
+    ),
+    check(
+      'wordle_legacy_progress_anchor_iso',
+      sql`${t.last_solved_date} IS NULL OR ${t.last_solved_date} ~ '^\\d{4}-\\d{2}-\\d{2}$'`,
+    ),
+  ],
+);
+
+export const wordleGlobalCutovers = pgTable(
+  'wordle_global_cutovers',
+  {
+    id: text('id').primaryKey(),
+    source_tag: text('source_tag').notNull(),
+    cutover_date: text('cutover_date').notNull(),
+    source_digest: text('source_digest').notNull(),
+    verified_at: bigint('verified_at', { mode: 'number' }).notNull(),
+    completed_at: bigint('completed_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    check(
+      'wordle_global_cutovers_source_tag_check',
+      sql`${t.source_tag} IN ('v0.0.3', 'fresh')`,
+    ),
+    check(
+      'wordle_global_cutovers_cutover_iso',
+      sql`${t.cutover_date} ~ '^\\d{4}-\\d{2}-\\d{2}$'`,
+    ),
+    check(
+      'wordle_global_cutovers_digest_check',
+      sql`${t.source_digest} ~ '^[0-9a-f]{64}$'`,
+    ),
+  ],
+);

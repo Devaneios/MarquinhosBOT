@@ -211,6 +211,13 @@
       "when": 1793665000013,
       "tag": "0029_wordle_bingo",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1794358554159,
+      "tag": "0030_wordle_progress_carryover",
+      "breakpoints": true
     }
   ]
 }

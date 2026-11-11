@@ -278,3 +278,26 @@ describe('baseline migrations', () => {
     await expect(insert.execute()).rejects.toThrow();
   });
 });
+
+describe('Wordle progress carryover migrations', () => {
+  test('creates constrained carryover and cutover receipt tables', async () => {
+    const tables = await testDb.db.execute<{ table_name: string }>(sql`
+      SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name IN ('wordle_legacy_progress', 'wordle_global_cutovers')
+    `);
+    expect(tables.map((row) => row.table_name).sort()).toEqual([
+      'wordle_global_cutovers',
+      'wordle_legacy_progress',
+    ]);
+    await expect(
+      testDb.db
+        .execute(
+          sql`
+      INSERT INTO wordle_legacy_progress (user_id, current_streak, best_streak, last_solved_date, cutover_date)
+      VALUES ('bad', -1, 2, NULL, '2026-11-10')
+    `,
+        )
+        .execute(),
+    ).rejects.toThrow();
+  });
+});
