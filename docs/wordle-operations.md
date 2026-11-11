@@ -1,8 +1,9 @@
 # Operate daily Wordle
 
-Use this guide to configure Terminhos, maintain its word banks, backfill
+Use this guide to configure Terminhos, maintain its word banks, reconcile
 achievements, and verify changes. The [daily Wordle implementation reference](wordle.md)
-describes contracts, persistence, and current integration limits.
+describes contracts and persistence. For the one-time legacy release procedure,
+see the [global migration runbook](wordle-global-migration.md).
 
 ## Configure a play channel
 
@@ -57,15 +58,15 @@ To review existing general-bank words, run `/admin wordlist review`. Choose
 the word valid as a guess. The queue seeds only when empty, so adding words to
 the file does not extend an already seeded review queue.
 
-## Reset today's puzzle for testing
+## Test a new puzzle
 
-This action deletes today's sessions for the entire guild and resets the day's
-counters. Streak rows, earned achievements, and XP remain.
+Gameplay is global, and the answer is fixed for each Wordle date. The former
+`/admin termo novo` reset operation is disabled because it cannot safely reset
+one guild independently of everyone else.
 
-1. In a test guild, run `/admin termo novo`.
-2. Close and reopen the Activity to initialize the board with the new answer length.
-3. Submit a guess through `/termo`.
-4. Reopen the Activity and verify that it restores the same guess.
+Use an isolated test database and a different configured date to exercise a
+fresh answer. Do not delete or reset today's shared game in a database with
+real player progress.
 
 ## Zero-attempt draft wins
 
@@ -78,32 +79,32 @@ API connected to the database so it can save delivered input; the bot cannot
 persist edits Discord does not send to autocomplete. Overview reads do not run
 finalization. The finalizer retries pending achievement awards after a failure.
 
-## Seed the collection and backfill awards
+## Seed the collection and reconcile awards
 
-API startup seeds Wordle metadata from the source catalog. Existing sessions
-with eligible dates and counters participate immediately; no activation command
-or session-version boundary is involved. The `wordle_v2_` prefix on IDs is
-historical naming, not a runtime version. Startup stores Wordle conditions as
-null because evaluation functions remain in the domain source.
+API startup seeds Wordle metadata from the source catalog. Eligible global
+sessions participate without an activation command or session-version
+boundary. Legacy unlocks remain visible as historical records and do not get
+replayed for XP. The `wordle_v2_` prefix on IDs is historical naming, not a
+runtime version. Startup stores Wordle conditions as null because evaluation
+functions remain in the domain source.
 
 An overview read does not write discoveries, unlocks, or XP. Accepted guesses
-trigger best-effort awards after the guess commits. Run backfill when missed
-awards need reconciliation, including after catalog edits or after a temporary
+trigger best-effort awards after the guess commits. Run reconciliation when
+missed awards need recovery after catalog edits or a temporary
 award failure:
 
 ```sh
-pnpm --filter marquinhos-web-api exec bun scripts/backfillWordleAchievements.ts --guild-id GUILD_ID --batch-size 100
+pnpm --filter marquinhos-web-api exec bun scripts/reconcileGlobalWordleAchievements.ts --user-id USER_ID --guild-id GUILD_ID
 ```
 
 Set `DATABASE_URL` for the intended PostgreSQL database and run the script from
-a checkout with dependencies installed. Omit `--guild-id` to process every
-guild; `--batch-size` accepts 1 through 1000. The script applies migrations,
-seeds catalog metadata, then evaluates every player with accepted guesses or a
-valid zero-attempt draft win. It reports players processed and newly awarded
+a checkout with dependencies installed. It reconciles one player's eligible
+global sessions in the specified community context and reports newly awarded
 achievements. Repeating it does not duplicate unlock rows or XP.
 
-Backfill uses all eligible historical sessions, including boards started before
-the current catalog was authored. It does not run as a side effect of viewing
+Legacy unlocks remain visible with their original timestamps; the migration
+does not replay legacy rewards. Reconciliation uses eligible global sessions
+and does not run as a side effect of viewing
 `/termo-conquistas`. The release API image does not include `apps/api/scripts/`,
 so run the command from a checkout with access to the target database. The bot's
 optional `conquista` argument accepts an achievement ID or exact visible name to
@@ -197,9 +198,9 @@ For live acceptance, use a test guild and follow this sequence.
 5. Solve the puzzle and inspect `/termo-conquistas` for the saved statistics and awards.
 6. Outside development mode, verify that the configured channel receives one win announcement.
 
-For migration work, follow the audit and rollback steps in
-[deployment](deployment.md). Check the [current integration limits](wordle.md#current-integration-limits)
-before testing midnight rotation or a board left open across a reset.
+For migration work, follow the audit and rollback gates in the
+[global migration runbook](wordle-global-migration.md). A guild request always
+uses the same global answer and session for that date.
 
 ## Anúncios comunitários
 

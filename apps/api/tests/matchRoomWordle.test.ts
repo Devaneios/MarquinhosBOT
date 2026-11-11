@@ -46,9 +46,10 @@ function sessionFor(userId: string, guildId: string) {
   const instanceId = 'inst-1';
   const game = 'wordle' as const;
   const mode = 'single' as const;
-  const key = roomKey({ instanceId, game, mode, userId });
+  const scopedUserId = `${userId}-${testRunId}`;
+  const key = roomKey({ instanceId, game, mode, userId: scopedUserId });
   const token = mintWsSessionToken({
-    userId,
+    userId: scopedUserId,
     instanceId,
     guildId: `${guildId}-${testRunId}`,
     guildMembershipVerified: true,
@@ -159,7 +160,7 @@ describe('MatchRoom · wordle', () => {
       .from(wordleCommunityDailyPresence)
       .where(
         and(
-          eq(wordleCommunityDailyPresence.user_id, 'user-a'),
+          eq(wordleCommunityDailyPresence.user_id, `user-a-${testRunId}`),
           eq(wordleCommunityDailyPresence.guild_id, `guild-init-${testRunId}`),
           eq(wordleCommunityDailyPresence.word_date, getRecifeDate()),
         ),

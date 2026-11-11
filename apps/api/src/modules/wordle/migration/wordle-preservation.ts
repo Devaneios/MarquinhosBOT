@@ -229,7 +229,10 @@ export async function verifyWordlePreservation(
     const actualByKey = new Map(
       actualHashes.map((item) => [item.key, item.hash]),
     );
-    let count = Math.abs(expected.rowCount - actualHashes.length);
+    // Application startup and post-cutover play may add rows to shared tables
+    // such as achievements, user_levels, or the global used-word pool. Those
+    // additions are safe; deleting or changing an inventoried source row is not.
+    let count = Math.max(0, expected.rowCount - actualHashes.length);
     for (const item of expected.keyedHashes)
       if (actualByKey.get(item.key) !== item.hash) count++;
     if (count) mismatches[name] = count;

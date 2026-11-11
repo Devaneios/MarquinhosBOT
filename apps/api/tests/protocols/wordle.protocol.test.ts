@@ -103,7 +103,7 @@ describe('wordle protocol', () => {
 
   it('sends only messages the wordle protocol describes', async () => {
     const identity = {
-      userId: 'user-a',
+      userId: `user-${randomUUID()}`,
       instanceId: 'inst-1',
       guildId: `guild-${randomUUID()}`,
       guildMembershipVerified: true,
