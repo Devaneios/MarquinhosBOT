@@ -28,4 +28,27 @@ describe('DiscordService.isGuildMember', () => {
       '/api/users/@me/guilds/x%2F..%2F..%2F..%2F..%2Fusers%2F%40me%3F/member',
     ]);
   });
+
+  it('asks Discord once for a confirmed membership and never caches a refusal', async () => {
+    let calls = 0;
+    let status = 200;
+    globalThis.fetch = Object.assign(
+      async () => {
+        calls++;
+        return new Response('{}', { status });
+      },
+      { preconnect: originalFetch.preconnect },
+    );
+    const discord = new DiscordService(createTestAppConfig());
+
+    expect(await discord.isGuildMember('token', 'guild')).toBe(true);
+    expect(await discord.isGuildMember('token', 'guild')).toBe(true);
+    expect(calls).toBe(1);
+
+    status = 404;
+    expect(await discord.isGuildMember('other-token', 'guild')).toBe(false);
+    expect(await discord.isGuildMember('other-token', 'guild')).toBe(false);
+    expect(await discord.isGuildMember('token', 'other-guild')).toBe(false);
+    expect(calls).toBe(4);
+  });
 });

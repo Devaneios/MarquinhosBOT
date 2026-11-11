@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { AppConfig } from 'config/app.config';
+import { createHash } from 'node:crypto';
 import { URLSearchParams } from 'url';
 import { z } from 'zod';
 // URLSearchParams is available globally in Node.js >= 15 but we import for clarity
@@ -20,6 +21,9 @@ const discordGuildMemberSchema = z.object({ roles: z.array(z.string()) });
 const discordRolesSchema = z.array(
   z.object({ id: z.string(), position: z.number(), name: z.string() }),
 );
+
+const MEMBERSHIP_CACHE_TTL_MS = 60_000;
+const MEMBERSHIP_CACHE_MAX_ENTRIES = 5_000;
 
 export class DiscordGuildMembershipError extends Error {
   readonly status: number;
@@ -89,10 +93,25 @@ export class DiscordService {
     return user.success ? user.data : null;
   };
 
+  // Confirmed memberships, keyed by a digest of the token so no token is
+  // kept. One screen of the Activity makes several guild-scoped requests at
+  // once, and Discord rate-limits this route tightly per user.
+  private readonly confirmedMemberships = new Map<string, number>();
+
+  private membershipKey(token: string, guildId: string): string {
+    return createHash('sha256')
+      .update(`${guildId}\u0000${token}`)
+      .digest('hex');
+  }
+
   isGuildMember = async (token: string, guildId: string): Promise<boolean> => {
     if (!this.config.isProduction && token === 'mock-access-token') {
       return guildId === '123456789012345678';
     }
+    const key = this.membershipKey(token, guildId);
+    const now = Date.now();
+    const confirmedUntil = this.confirmedMemberships.get(key);
+    if (confirmedUntil !== undefined && confirmedUntil > now) return true;
     try {
       const response = await fetch(
         `https://discord.com/api/users/@me/guilds/${encodeURIComponent(guildId)}/member`,
@@ -102,7 +121,15 @@ export class DiscordService {
       );
       if (response.status === 404) return false;
       if (!response.ok) throw new DiscordGuildMembershipError(response.status);
-      return response.status === 200;
+      if (response.status !== 200) return false;
+      if (this.confirmedMemberships.size >= MEMBERSHIP_CACHE_MAX_ENTRIES) {
+        for (const [entry, until] of this.confirmedMemberships)
+          if (until <= now) this.confirmedMemberships.delete(entry);
+        if (this.confirmedMemberships.size >= MEMBERSHIP_CACHE_MAX_ENTRIES)
+          this.confirmedMemberships.clear();
+      }
+      this.confirmedMemberships.set(key, now + MEMBERSHIP_CACHE_TTL_MS);
+      return true;
     } catch (error) {
       if (error instanceof DiscordGuildMembershipError) throw error;
       throw new Error('Discord guild membership check failed', {
