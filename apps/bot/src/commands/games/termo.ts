@@ -203,39 +203,14 @@ export class TermoCommand extends MarquinhosCommand {
       await interaction.respond([]);
       return;
     }
-    const guildId = interaction.guildId;
-    const userId = interaction.user.id;
-    const requestKey = JSON.stringify([userId, guildId]);
-    const requestToken = Symbol();
-    latestAutocompleteDraft.set(requestKey, requestToken);
-    const isLatestRequest = () =>
-      latestAutocompleteDraft.get(requestKey) === requestToken;
+    // The draft is a side effect: it must not delay or suppress the suggestion
+    // inside Discord's three-second autocomplete window.
+    void this.saveAutocompleteDraft(
+      interaction.user.id,
+      interaction.guildId,
+      guess,
+    );
     try {
-      const [daily, session] = await Promise.all([
-        api.getWordleStats(guildId),
-        api.getUserWordleSession(userId, guildId),
-      ]);
-      const wordLength = daily.data.wordLength;
-      const letters = [...guess.toLocaleLowerCase('pt-BR')];
-      const oversized = letters.length > wordLength;
-      const cells = Array.from(
-        { length: wordLength },
-        (_, index) => letters[index] ?? '',
-      );
-      if (oversized) cells[wordLength - 1] = '';
-      if (isLatestRequest())
-        await api.writeWordleDraft(
-          userId,
-          guildId,
-          {
-            date: daily.data.wordDate,
-            rowIndex: session.data?.attempts ?? 0,
-            cells,
-            activeIndex: Math.min(letters.length, wordLength - 1),
-          },
-          isLatestRequest,
-        );
-
       if (guess.length < 5 || guess.length > 6) {
         await interaction.respond([]);
         return;
@@ -252,6 +227,48 @@ export class TermoCommand extends MarquinhosCommand {
       await interaction.respond([{ name: guess, value: guess }]);
     } catch {
       await interaction.respond([]);
+    }
+  }
+
+  private async saveAutocompleteDraft(
+    userId: string,
+    guildId: string,
+    guess: string,
+  ): Promise<void> {
+    const requestKey = JSON.stringify([userId, guildId]);
+    const requestToken = Symbol();
+    latestAutocompleteDraft.set(requestKey, requestToken);
+    const isLatestRequest = () =>
+      latestAutocompleteDraft.get(requestKey) === requestToken;
+    try {
+      const letters = [...guess.toLocaleLowerCase('pt-BR')];
+      // A draft cell holds one UTF-16 unit; anything else cannot be a guess.
+      if (letters.some((letter) => letter.length !== 1)) return;
+      const [daily, session] = await Promise.all([
+        api.getWordleStats(guildId),
+        api.getUserWordleSession(userId, guildId),
+      ]);
+      if (!isLatestRequest()) return;
+      const wordLength = daily.data.wordLength;
+      const oversized = letters.length > wordLength;
+      const cells = Array.from(
+        { length: wordLength },
+        (_, index) => letters[index] ?? '',
+      );
+      if (oversized) cells[wordLength - 1] = '';
+      await api.writeWordleDraft(
+        userId,
+        guildId,
+        {
+          date: daily.data.wordDate,
+          rowIndex: session.data?.attempts ?? 0,
+          cells,
+          activeIndex: Math.min(letters.length, wordLength - 1),
+        },
+        isLatestRequest,
+      );
+    } catch (error) {
+      logger.warn(`Termo: failed to save draft for user ${userId}`, error);
     } finally {
       if (latestAutocompleteDraft.get(requestKey) === requestToken)
         latestAutocompleteDraft.delete(requestKey);

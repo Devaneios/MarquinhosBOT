@@ -68,7 +68,10 @@ export class MarquinhosApiService {
   private static instance: MarquinhosApiService;
   private client: HttpClient;
   private wordleConfigCache = new Map<string, string | null>();
-  private wordleDraftRevisions = new Map<string, number>();
+  private wordleDraftRevisions = new Map<
+    string,
+    { date: string; revision: number }
+  >();
 
   private constructor() {
     this.client = new HttpClient({
@@ -246,25 +249,29 @@ export class MarquinhosApiService {
     draft: Omit<WordleDraftWrite, 'expectedRevision'>,
     isCurrent: () => boolean = () => true,
   ) {
-    const key = `${userId}:${guildId}:${draft.date}`;
-    let expectedRevision = this.wordleDraftRevisions.get(key) ?? 0;
+    // One entry per player and community: a new day replaces the old one, so
+    // the map does not grow with every date played.
+    const key = `${userId}:${guildId}`;
+    const known = this.wordleDraftRevisions.get(key);
+    const remember = (revision: number) =>
+      this.wordleDraftRevisions.set(key, { date: draft.date, revision });
+    let expectedRevision = known?.date === draft.date ? known.revision : 0;
     let result = await callContract(this.client, wordle.writeDraft, {
       body: { userId, guildId, ...draft, expectedRevision },
     });
     if (result.data.status === 'saved') {
-      if (isCurrent())
-        this.wordleDraftRevisions.set(key, result.data.draft.revision);
+      if (isCurrent()) remember(result.data.draft.revision);
     } else if (result.data.status === 'conflict') {
       if (!isCurrent()) return result;
       expectedRevision = result.data.draft?.revision ?? 0;
-      this.wordleDraftRevisions.set(key, expectedRevision);
+      remember(expectedRevision);
       if (result.data.draft) {
         if (!isCurrent()) return result;
         result = await callContract(this.client, wordle.writeDraft, {
           body: { userId, guildId, ...draft, expectedRevision },
         });
         if (result.data.status === 'saved' && isCurrent())
-          this.wordleDraftRevisions.set(key, result.data.draft.revision);
+          remember(result.data.draft.revision);
       }
     } else if (isCurrent()) {
       this.wordleDraftRevisions.delete(key);
