@@ -18,7 +18,7 @@ import {
 import {
   InvalidWordleBingo,
   WordleBingoService,
-} from 'modules/wordle/services/wordle-bingo.service';
+} from 'modules/wordle/community/wordle-bingo.service';
 
 @Controller('wordle')
 export class WordleBingoController {

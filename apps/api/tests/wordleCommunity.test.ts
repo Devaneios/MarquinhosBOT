@@ -6,7 +6,7 @@ import {
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it, spyOn } from 'bun:test';
-import { WordleAlbumService } from '../src/modules/wordle/services/wordle-album.service';
+import { WordleAlbumService } from '../src/modules/wordle/community/wordle-album.service';
 import {
   createWordleTestGlobalAchievementService,
   createWordleTestPresence,

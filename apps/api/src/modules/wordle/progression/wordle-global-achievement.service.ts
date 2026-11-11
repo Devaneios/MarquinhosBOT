@@ -25,12 +25,12 @@ import { logger } from 'common/logging/logger';
 import { DB } from 'database/database.tokens';
 import { and, asc, countDistinct, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { LevelingService } from 'modules/gamification/leveling.service';
+import { WordleAlbumService } from 'modules/wordle/community/wordle-album.service';
+import { getWordleTimeZone } from 'modules/wordle/wordle-date';
 import { WORDLE_NOW } from 'modules/wordle/wordle.tokens';
 import { z } from 'zod';
-import { WordleHistoryService } from '../progression/wordle-history.service';
-import { WordleAlbumService } from './wordle-album.service';
-import { getWordleTimeZone } from './wordle-date';
 import { visibleWordleEvidence } from './wordle-evidence-visibility';
+import { WordleHistoryService } from './wordle-history.service';
 
 function parseGuesses(raw: string) {
   try {

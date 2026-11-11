@@ -12,7 +12,7 @@ async function isBanned(word: string) {
   return row?.is_banned;
 }
 
-import type { WordleWordlistReviewService } from '../src/modules/wordle/services/wordle-wordlist-review.service';
+import type { WordleWordlistReviewService } from '../src/modules/wordle/words/wordle-wordlist-review.service';
 import { createWordleTestServices } from './helpers/wordleServices';
 
 describe('WordleWordlistReviewService', () => {

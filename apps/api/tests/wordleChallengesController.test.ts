@@ -1,6 +1,6 @@
 import { afterAll, expect, it } from 'bun:test';
-import { WordleChallengesController } from '../src/modules/wordle/controllers/wordle-challenges.controller';
-import { WordleChallengeService } from '../src/modules/wordle/services/wordle-challenge.service';
+import { WordleChallengeService } from '../src/modules/wordle/community/wordle-challenge.service';
+import { WordleChallengesController } from '../src/modules/wordle/community/wordle-challenges.controller';
 import {
   requestController,
   startNestControllerServer,

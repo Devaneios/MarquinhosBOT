@@ -1,9 +1,9 @@
 import { afterAll, expect, it } from 'bun:test';
-import { WordleRewardsController } from '../src/modules/wordle/controllers/wordle-rewards.controller';
+import { WordleRewardsController } from '../src/modules/wordle/progression/wordle-rewards.controller';
 import {
   InvalidWordleReward,
   WordleRewardsService,
-} from '../src/modules/wordle/services/wordle-rewards.service';
+} from '../src/modules/wordle/progression/wordle-rewards.service';
 import {
   requestController,
   startNestControllerServer,

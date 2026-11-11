@@ -1,6 +1,6 @@
 import { afterAll, expect, it } from 'bun:test';
-import { WordleAlbumController } from '../src/modules/wordle/controllers/wordle-album.controller';
-import { WordleAlbumService } from '../src/modules/wordle/services/wordle-album.service';
+import { WordleAlbumController } from '../src/modules/wordle/community/wordle-album.controller';
+import { WordleAlbumService } from '../src/modules/wordle/community/wordle-album.service';
 import {
   requestController,
   startNestControllerServer,

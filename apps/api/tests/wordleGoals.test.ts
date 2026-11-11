@@ -10,9 +10,9 @@ import {
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, expect, it } from 'bun:test';
 import { sql } from 'drizzle-orm';
-import { lockGoalFactsForWrite } from '../src/modules/wordle/services/goal-fact-lock';
-import type { WordleGoalsService } from '../src/modules/wordle/services/wordle-goals.service';
-import { WordleNotificationService } from '../src/modules/wordle/services/wordle-notification.service';
+import { lockGoalFactsForWrite } from '../src/modules/wordle/community/goal-fact-lock';
+import type { WordleGoalsService } from '../src/modules/wordle/community/wordle-goals.service';
+import { WordleNotificationService } from '../src/modules/wordle/notifications/wordle-notification.service';
 import { createWordleTestGoalsService } from './helpers/wordleServices';
 
 let testDb: TestDb;

@@ -13,14 +13,14 @@ import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics'
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
 import { and, eq, lte, sql } from 'drizzle-orm';
+import { lockGoalFactsForWrite } from 'modules/wordle/community/goal-fact-lock';
+import { getWordleTimeZone } from 'modules/wordle/wordle-date';
 import {
   WORDLE_GUESS_RESOLVER,
   WORDLE_NOW,
 } from 'modules/wordle/wordle.tokens';
 import { randomUUID } from 'node:crypto';
 import { lockGlobalWordlePlayer } from './global-gameplay-lock';
-import { lockGoalFactsForWrite } from './goal-fact-lock';
-import { getWordleTimeZone } from './wordle-date';
 
 class GlobalGameCutoff extends Error {}
 export type GlobalGuessResult =

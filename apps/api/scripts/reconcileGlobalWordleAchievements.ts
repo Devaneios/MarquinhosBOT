@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ScriptsModule } from '../src/scripts/scripts.module';
-import { WordleGlobalAchievementService } from '../src/modules/wordle/services/wordle-global-achievement.service';
+import { WordleGlobalAchievementService } from '../src/modules/wordle/progression/wordle-global-achievement.service';
 
 async function main() {
   const args = Bun.argv.slice(2);

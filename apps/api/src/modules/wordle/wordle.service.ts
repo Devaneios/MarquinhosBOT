@@ -13,6 +13,13 @@ import {
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
 import { and, asc, eq, sql } from 'drizzle-orm';
+import { WordleParticipationService } from 'modules/wordle/community/wordle-participation.service';
+import { buildUniqueDayGuesses } from 'modules/wordle/gameplay/day-guesses';
+import { WordleGlobalAnnouncementService } from 'modules/wordle/gameplay/wordle-global-announcement.service';
+import { WordleGlobalDayService } from 'modules/wordle/gameplay/wordle-global-day.service';
+import { WordleGlobalDraftService } from 'modules/wordle/gameplay/wordle-global-draft.service';
+import { WordleGlobalGameCoordinator } from 'modules/wordle/gameplay/wordle-global-game-coordinator';
+import { WordleGlobalLeaderboardService } from 'modules/wordle/gameplay/wordle-global-leaderboard.service';
 import type {
   DailyStats,
   DayGuesses,
@@ -21,17 +28,10 @@ import type {
   WordleDaily,
   WordleSession,
 } from 'modules/wordle/gameplay/wordle.types';
+import { WordleGlobalAchievementService } from 'modules/wordle/progression/wordle-global-achievement.service';
 import { WordleHistoryService } from 'modules/wordle/progression/wordle-history.service';
-import { buildUniqueDayGuesses } from 'modules/wordle/services/day-guesses';
-import { WordBankService } from 'modules/wordle/services/word-bank.service';
-import { WordleGlobalAchievementService } from 'modules/wordle/services/wordle-global-achievement.service';
-import { WordleGlobalAnnouncementService } from 'modules/wordle/services/wordle-global-announcement.service';
-import { WordleGlobalDayService } from 'modules/wordle/services/wordle-global-day.service';
-import { WordleGlobalDraftService } from 'modules/wordle/services/wordle-global-draft.service';
-import { WordleGlobalGameCoordinator } from 'modules/wordle/services/wordle-global-game-coordinator';
-import { WordleGlobalLeaderboardService } from 'modules/wordle/services/wordle-global-leaderboard.service';
-import { WordleParticipationService } from 'modules/wordle/services/wordle-participation.service';
 import { WORDLE_NOW, WORDLE_TODAY } from 'modules/wordle/wordle.tokens';
+import { WordBankService } from 'modules/wordle/words/word-bank.service';
 
 export class GlobalWordleCannotForce extends Error {}
 

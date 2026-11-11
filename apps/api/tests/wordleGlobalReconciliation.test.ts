@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { prepareGlobalWordleReconciliation } from '../src/modules/wordle/services/global-reconciliation';
+import { prepareGlobalWordleReconciliation } from '../src/modules/wordle/migration/global-reconciliation';
 
 describe('prepareGlobalWordleReconciliation', () => {
   it('consolidates equivalent histories deterministically while preserving origins', () => {

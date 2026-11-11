@@ -16,11 +16,14 @@ import { Inject, Injectable } from '@nestjs/common';
 import { logger } from 'common/logging/logger';
 import { DB } from 'database/database.tokens';
 import { and, asc, eq, isNull, lt, lte, or } from 'drizzle-orm';
+import { WordleGlobalAchievementService } from 'modules/wordle/progression/wordle-global-achievement.service';
+import {
+  getWordleDayEndEpoch,
+  getWordleTimeZone,
+} from 'modules/wordle/wordle-date';
 import { WORDLE_NOW } from 'modules/wordle/wordle.tokens';
 import { randomUUID } from 'node:crypto';
 import { lockGlobalWordlePlayer } from './global-gameplay-lock';
-import { getWordleDayEndEpoch, getWordleTimeZone } from './wordle-date';
-import { WordleGlobalAchievementService } from './wordle-global-achievement.service';
 
 class GlobalDraftCutoff extends Error {}
 

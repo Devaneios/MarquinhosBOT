@@ -12,12 +12,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import { logger } from 'common/logging/logger';
 import { DB } from 'database/database.tokens';
 import { and, asc, eq, gte, inArray, lt, lte, sql } from 'drizzle-orm';
+import { WordleNotificationService } from 'modules/wordle/notifications/wordle-notification.service';
+import { getWordleDayEndEpoch } from 'modules/wordle/wordle-date';
 import { WORDLE_NOW } from 'modules/wordle/wordle.tokens';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { lockGoalFactsForClosing } from './goal-fact-lock';
-import { getWordleDayEndEpoch } from './wordle-date';
-import { WordleNotificationService } from './wordle-notification.service';
 
 export class InvalidWordleGoal extends Error {}
 

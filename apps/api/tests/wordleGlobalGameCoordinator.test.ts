@@ -5,8 +5,8 @@ import {
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import { WordleGlobalGameCoordinator } from '../src/modules/wordle/services/wordle-global-game-coordinator';
-import { WordleGlobalGameplayService } from '../src/modules/wordle/services/wordle-global-gameplay.service';
+import { WordleGlobalGameCoordinator } from '../src/modules/wordle/gameplay/wordle-global-game-coordinator';
+import { WordleGlobalGameplayService } from '../src/modules/wordle/gameplay/wordle-global-gameplay.service';
 import { createWordleTestGlobalAchievementService } from './helpers/wordleServices';
 
 let testDb: TestDb;

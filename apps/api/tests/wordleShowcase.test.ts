@@ -4,7 +4,7 @@ import {
 } from '@marquinhos/database/schema';
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import { WordleShowcaseService } from '../src/modules/wordle/services/wordle-showcase.service';
+import { WordleShowcaseService } from '../src/modules/wordle/progression/wordle-showcase.service';
 
 let testDb: TestDb;
 let service: WordleShowcaseService;

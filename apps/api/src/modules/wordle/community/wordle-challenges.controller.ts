@@ -17,7 +17,7 @@ import type { DiscordUser } from 'integrations/discord/discord.service';
 import {
   InvalidWordleChallenge,
   WordleChallengeService,
-} from 'modules/wordle/services/wordle-challenge.service';
+} from 'modules/wordle/community/wordle-challenge.service';
 
 @Controller('wordle')
 export class WordleChallengesController {

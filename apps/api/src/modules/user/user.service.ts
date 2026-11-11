@@ -43,7 +43,7 @@ import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { DiscordService } from 'integrations/discord/discord.service';
 import { LastfmService } from 'integrations/lastfm/lastfm.service';
 import { SpotifyService } from 'integrations/spotify/spotify.service';
-import { lockGoalFactsForWrite } from 'modules/wordle/services/goal-fact-lock';
+import { lockGoalFactsForWrite } from 'modules/wordle/community/goal-fact-lock';
 
 // Everything the privacy policy's "delete all your data" covers. Left out
 // on purpose: AI usage counters (deleting them would reset quotas), sandbox

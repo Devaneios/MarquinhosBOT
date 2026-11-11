@@ -1,7 +1,7 @@
 import { computeFeedback } from '@marquinhos/domain/games/wordle/feedback';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 import { describe, expect, it } from 'bun:test';
-import { buildUniqueDayGuesses } from 'modules/wordle/services/day-guesses';
+import { buildUniqueDayGuesses } from 'modules/wordle/gameplay/day-guesses';
 import { createWordleTestWordBankService } from './helpers/wordleServices';
 
 const wordBank = createWordleTestWordBankService();

@@ -7,7 +7,7 @@ import {
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { eq } from 'drizzle-orm';
-import { getWordleDayEndEpoch } from '../src/modules/wordle/services/wordle-date';
+import { getWordleDayEndEpoch } from '../src/modules/wordle/wordle-date';
 import {
   createWordleTestGlobalDraftService,
   createWordleTestGlobalDraftServiceWithAward,

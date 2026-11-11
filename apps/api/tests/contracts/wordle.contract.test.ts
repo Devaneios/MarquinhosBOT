@@ -8,7 +8,7 @@ import {
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
-import { WordleNotificationService } from '../../src/modules/wordle/services/wordle-notification.service';
+import { WordleNotificationService } from '../../src/modules/wordle/notifications/wordle-notification.service';
 import { WordleModule } from '../../src/modules/wordle/wordle.module';
 import { startNestContractServer } from '../helpers/contractServer';
 import { createWordleTestWordBankService } from '../helpers/wordleServices';

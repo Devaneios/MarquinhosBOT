@@ -6,7 +6,7 @@ import {
 } from '@marquinhos/database/schema';
 import { prepareGlobalWordleCutover } from '../../src/modules/wordle/migration/global-cutover';
 import { auditWordlePreservation } from '../../src/modules/wordle/migration/wordle-preservation';
-import { getRecifeDate } from '../../src/modules/wordle/services/wordle-date';
+import { getRecifeDate } from '../../src/modules/wordle/wordle-date';
 import { GlobalWordleCannotForce } from '../../src/modules/wordle/wordle.service';
 import { createWordleTestService } from './wordleServices';
 

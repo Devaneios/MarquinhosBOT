@@ -4,7 +4,7 @@ import { wordleUsedWords, wordlistReview } from '@marquinhos/database/schema';
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
 import { asc, count, eq, isNull } from 'drizzle-orm';
-import { WordBankService } from 'modules/wordle/services/word-bank.service';
+import { WordBankService } from 'modules/wordle/words/word-bank.service';
 import type { z } from 'zod';
 
 export type ReviewWordResult = z.input<typeof wordleReviewWordResultSchema>;

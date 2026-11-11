@@ -18,8 +18,8 @@ import { describeStaticPrompts } from 'modules/ai-chat/prompt-registry';
 import { RateLimitService } from 'modules/ai-chat/rate-limit.service';
 import { ResearchOrchestrator } from 'modules/ai-chat/research/research-orchestrator.service';
 import { GamificationService } from 'modules/gamification/index';
-import { WordBankService } from 'modules/wordle/services/word-bank.service';
 import { WordleService } from 'modules/wordle/wordle.service';
+import { WordBankService } from 'modules/wordle/words/word-bank.service';
 import {
   STARTUP_ASSERT_WORDLE_READY,
   STARTUP_IMPORT_SQLITE,

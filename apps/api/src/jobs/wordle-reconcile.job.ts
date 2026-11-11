@@ -1,9 +1,9 @@
 import { Injectable, type OnApplicationBootstrap } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { logger } from 'common/logging/logger';
-import { WordleGalleryService } from 'modules/wordle/services/wordle-gallery.service';
-import { WordleGoalsService } from 'modules/wordle/services/wordle-goals.service';
-import { WordleNotificationService } from 'modules/wordle/services/wordle-notification.service';
+import { WordleGalleryService } from 'modules/wordle/community/wordle-gallery.service';
+import { WordleGoalsService } from 'modules/wordle/community/wordle-goals.service';
+import { WordleNotificationService } from 'modules/wordle/notifications/wordle-notification.service';
 
 @Injectable()
 export class WordleReconcileJob implements OnApplicationBootstrap {

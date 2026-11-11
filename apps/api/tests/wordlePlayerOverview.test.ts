@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
-import { WordlePlayerOverviewService } from 'modules/wordle/services/wordle-player-overview.service';
-import { WordleRewardsService } from 'modules/wordle/services/wordle-rewards.service';
-import { WordleShowcaseService } from 'modules/wordle/services/wordle-showcase.service';
+import { WordlePlayerOverviewService } from 'modules/wordle/progression/wordle-player-overview.service';
+import { WordleRewardsService } from 'modules/wordle/progression/wordle-rewards.service';
+import { WordleShowcaseService } from 'modules/wordle/progression/wordle-showcase.service';
 import { WordleService } from 'modules/wordle/wordle.service';
 
 const userId = 'user-1';

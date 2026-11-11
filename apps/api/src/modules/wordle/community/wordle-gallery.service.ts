@@ -10,13 +10,16 @@ import { galleryEntries } from '@marquinhos/domain/games/wordle/community/activi
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
 import { and, eq, gte, lt } from 'drizzle-orm';
-import { WORDLE_NOW } from 'modules/wordle/wordle.tokens';
-import { z } from 'zod';
-import { getWordleDayEndEpoch, getWordleTimeZone } from './wordle-date';
 import {
   previousWordleWeek,
   WordleNotificationService,
-} from './wordle-notification.service';
+} from 'modules/wordle/notifications/wordle-notification.service';
+import {
+  getWordleDayEndEpoch,
+  getWordleTimeZone,
+} from 'modules/wordle/wordle-date';
+import { WORDLE_NOW } from 'modules/wordle/wordle.tokens';
+import { z } from 'zod';
 
 export class InvalidWordleGallery extends Error {}
 @Injectable()

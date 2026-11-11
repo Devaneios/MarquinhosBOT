@@ -7,7 +7,7 @@ import {
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { eq } from 'drizzle-orm';
-import { WordleGlobalGameplayService } from '../src/modules/wordle/services/wordle-global-gameplay.service';
+import { WordleGlobalGameplayService } from '../src/modules/wordle/gameplay/wordle-global-gameplay.service';
 import {
   createWordleTestGlobalDraftService,
   createWordleTestPresence,

@@ -5,9 +5,9 @@ import { PongCompetitionService } from 'modules/activity/games/pong/pong-competi
 import { WsSessionTokenService } from 'modules/activity/ws-session-token';
 import { GamificationModule } from 'modules/gamification/gamification.module';
 import { GamificationService } from 'modules/gamification/gamification.service';
-import { WordBankService } from 'modules/wordle/services/word-bank.service';
 import { WordleModule } from 'modules/wordle/wordle.module';
 import { WordleService } from 'modules/wordle/wordle.service';
+import { WordBankService } from 'modules/wordle/words/word-bank.service';
 import { GameServer } from 'realtime/game-server.service';
 import { ROOM_DEPENDENCIES } from 'realtime/room-dependencies';
 

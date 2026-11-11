@@ -11,7 +11,7 @@ import {
 import { ActivityAuth } from 'common/decorators/auth.decorators';
 import { CurrentUser } from 'common/decorators/current-user.decorator';
 import type { DiscordUser } from 'integrations/discord/discord.service';
-import { WordleUserConfigService } from 'modules/wordle/wordle-user-config.service';
+import { WordleUserConfigService } from 'modules/wordle/progression/wordle-user-config.service';
 
 @Controller('wordle')
 @ActivityAuth()

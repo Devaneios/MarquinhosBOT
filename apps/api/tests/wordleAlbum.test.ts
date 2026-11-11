@@ -9,8 +9,8 @@ import {
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
-import type { WordleAlbumService } from '../src/modules/wordle/services/wordle-album.service';
-import { WordleNotificationService } from '../src/modules/wordle/services/wordle-notification.service';
+import type { WordleAlbumService } from '../src/modules/wordle/community/wordle-album.service';
+import { WordleNotificationService } from '../src/modules/wordle/notifications/wordle-notification.service';
 import {
   createWordleTestAlbumService,
   createWordleTestPresence,

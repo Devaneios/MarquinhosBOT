@@ -1,5 +1,5 @@
 import { expect, it } from 'bun:test';
-import { visibleWordleEvidence } from '../src/modules/wordle/services/wordle-evidence-visibility';
+import { visibleWordleEvidence } from '../src/modules/wordle/progression/wordle-evidence-visibility';
 
 it('shows the owner their fixed evidence and masks the active day for others', () => {
   const evidence = { date: '2026-11-03', patternId: 'x' };

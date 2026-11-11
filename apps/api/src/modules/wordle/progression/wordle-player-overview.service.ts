@@ -1,9 +1,9 @@
 import type { ContractResponseInput } from '@marquinhos/contracts/http/contract';
 import * as contract from '@marquinhos/contracts/http/routes/wordle';
 import { Inject, Injectable } from '@nestjs/common';
-import { visibleWordleEvidence } from 'modules/wordle/services/wordle-evidence-visibility';
-import { WordleRewardsService } from 'modules/wordle/services/wordle-rewards.service';
-import { WordleShowcaseService } from 'modules/wordle/services/wordle-showcase.service';
+import { visibleWordleEvidence } from 'modules/wordle/progression/wordle-evidence-visibility';
+import { WordleRewardsService } from 'modules/wordle/progression/wordle-rewards.service';
+import { WordleShowcaseService } from 'modules/wordle/progression/wordle-showcase.service';
 import { WordleService } from 'modules/wordle/wordle.service';
 import { WORDLE_TODAY } from 'modules/wordle/wordle.tokens';
 

@@ -14,13 +14,13 @@ import {
   type ContractInputValue,
 } from 'common/decorators/contract-input.decorator';
 import { OnRouteError } from 'common/decorators/on-route-error.decorator';
-import { WordlePlayerOverviewService } from 'modules/wordle/services/wordle-player-overview.service';
-import { WordleShowcaseService } from 'modules/wordle/services/wordle-showcase.service';
-import { WordleWordlistReviewService } from 'modules/wordle/services/wordle-wordlist-review.service';
+import { WordlePlayerOverviewService } from 'modules/wordle/progression/wordle-player-overview.service';
+import { WordleShowcaseService } from 'modules/wordle/progression/wordle-showcase.service';
 import {
   GlobalWordleCannotForce,
   WordleService,
 } from 'modules/wordle/wordle.service';
+import { WordleWordlistReviewService } from 'modules/wordle/words/wordle-wordlist-review.service';
 
 @Controller('wordle')
 @BotAuth()

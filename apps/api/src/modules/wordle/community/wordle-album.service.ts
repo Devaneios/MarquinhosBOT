@@ -13,10 +13,10 @@ import { buildAlbumPages } from '@marquinhos/domain/games/wordle/community/album
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
 import { and, eq, inArray, sql } from 'drizzle-orm';
+import { WordleNotificationService } from 'modules/wordle/notifications/wordle-notification.service';
+import { getWordleDayEndEpoch } from 'modules/wordle/wordle-date';
 import { z } from 'zod';
 import { WordleAlbumMilestoneService } from './wordle-album-milestone.service';
-import { getWordleDayEndEpoch } from './wordle-date';
-import { WordleNotificationService } from './wordle-notification.service';
 
 @Injectable()
 export class WordleAlbumService {

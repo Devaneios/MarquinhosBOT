@@ -1,9 +1,9 @@
 import { afterAll, describe, expect, it } from 'bun:test';
-import { WordleShowcaseController } from '../src/modules/wordle/controllers/wordle-showcase.controller';
+import { WordleShowcaseController } from '../src/modules/wordle/progression/wordle-showcase.controller';
 import {
   InvalidWordleShowcase,
   WordleShowcaseService,
-} from '../src/modules/wordle/services/wordle-showcase.service';
+} from '../src/modules/wordle/progression/wordle-showcase.service';
 import {
   requestController,
   startNestControllerServer,

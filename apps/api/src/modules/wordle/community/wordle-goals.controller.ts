@@ -19,7 +19,7 @@ import {
 import {
   InvalidWordleGoal,
   WordleGoalsService,
-} from 'modules/wordle/services/wordle-goals.service';
+} from 'modules/wordle/community/wordle-goals.service';
 
 @Controller('wordle')
 export class WordleGoalsController {

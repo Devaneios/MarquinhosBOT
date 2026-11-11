@@ -67,7 +67,7 @@ curl -X POST http://localhost:3000/api/gamification/xp \
 | `/api/gamification`           | `modules/gamification/gamification.controller.ts`  | XP, levels, leaderboard, game results         |
 | `/api/evolutive-achievements` | `modules/gamification/`                             | Tiered achievement progression               |
 | `/api/games/maze`             | `modules/maze/maze.controller.ts`                  | Maze minigame sessions                        |
-| `/api/wordle`                 | `modules/wordle/controllers/`                       | Wordle guesses and word list review           |
+| `/api/wordle`                 | `modules/wordle/wordle.controller.ts`               | Wordle guesses and word list review           |
 | `/api/ai-chat`                | `modules/ai-chat/ai-chat.controller.ts`            | Threads, research jobs, and traces            |
 | `/api/emoji-reaction`         | `modules/emoji-reaction/`                            | Emoji choice                                  |
 | `/api/activities`             | `modules/activity/activity.controller.ts`           | Discord Activity and Colyseus session helpers |

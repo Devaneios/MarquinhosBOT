@@ -8,7 +8,7 @@ import type { ActionResult } from 'modules/activity/shared/action-result';
 import type { ActivityBroadcaster } from 'modules/activity/shared/activity-broadcaster';
 import { recordMatchResult } from 'modules/activity/shared/record-match-result';
 import { GamificationService } from 'modules/gamification/index';
-import { WordBankService } from 'modules/wordle/services/word-bank.service';
+import { WordBankService } from 'modules/wordle/words/word-bank.service';
 
 interface WordleRaceSessionIdentity {
   sessionKey: string;

@@ -6,9 +6,12 @@ import {
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
 import { and, asc, eq, lt, lte, or, sql } from 'drizzle-orm';
+import {
+  getWordleDayEndEpoch,
+  getWordleTimeZone,
+} from 'modules/wordle/wordle-date';
 import { WORDLE_NOW } from 'modules/wordle/wordle.tokens';
 import { randomUUID } from 'node:crypto';
-import { getWordleDayEndEpoch, getWordleTimeZone } from './wordle-date';
 
 type Config = {
   channelId: string | null;

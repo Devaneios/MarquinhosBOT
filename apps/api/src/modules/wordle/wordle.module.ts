@@ -5,39 +5,37 @@ import { GuildMemberGuard } from 'common/guards/guild-member.guard';
 import { DatabaseModule } from 'database/database.module';
 import { DiscordModule } from 'integrations/discord/discord.module';
 import { GamificationModule } from 'modules/gamification/gamification.module';
-import { WordleAlbumController } from 'modules/wordle/controllers/wordle-album.controller';
-import { WordleBingoController } from 'modules/wordle/controllers/wordle-bingo.controller';
-import { WordleChallengesController } from 'modules/wordle/controllers/wordle-challenges.controller';
-import { WordleGalleryController } from 'modules/wordle/controllers/wordle-gallery.controller';
-import { WordleGoalsController } from 'modules/wordle/controllers/wordle-goals.controller';
-import { WordleNotificationsController } from 'modules/wordle/controllers/wordle-notifications.controller';
-import { WordleRewardsController } from 'modules/wordle/controllers/wordle-rewards.controller';
-import { WordleShowcaseController } from 'modules/wordle/controllers/wordle-showcase.controller';
-import { WordleUserConfigController } from 'modules/wordle/controllers/wordle-user-config.controller';
-import { WordleController } from 'modules/wordle/controllers/wordle.controller';
+import { WordleAlbumMilestoneService } from 'modules/wordle/community/wordle-album-milestone.service';
+import { WordleAlbumController } from 'modules/wordle/community/wordle-album.controller';
+import { WordleAlbumService } from 'modules/wordle/community/wordle-album.service';
+import { WordleBingoController } from 'modules/wordle/community/wordle-bingo.controller';
+import { WordleBingoService } from 'modules/wordle/community/wordle-bingo.service';
+import { WordleChallengeService } from 'modules/wordle/community/wordle-challenge.service';
+import { WordleChallengesController } from 'modules/wordle/community/wordle-challenges.controller';
+import { WordleGalleryController } from 'modules/wordle/community/wordle-gallery.controller';
+import { WordleGalleryService } from 'modules/wordle/community/wordle-gallery.service';
+import { WordleGoalsController } from 'modules/wordle/community/wordle-goals.controller';
+import { WordleGoalsService } from 'modules/wordle/community/wordle-goals.service';
+import { WordleParticipationService } from 'modules/wordle/community/wordle-participation.service';
+import { WordleGlobalAnnouncementService } from 'modules/wordle/gameplay/wordle-global-announcement.service';
+import { WordleGlobalDayService } from 'modules/wordle/gameplay/wordle-global-day.service';
+import { WordleGlobalDraftService } from 'modules/wordle/gameplay/wordle-global-draft.service';
+import { WordleGlobalGameCoordinator } from 'modules/wordle/gameplay/wordle-global-game-coordinator';
+import { WordleGlobalGameplayService } from 'modules/wordle/gameplay/wordle-global-gameplay.service';
+import { WordleGlobalLeaderboardService } from 'modules/wordle/gameplay/wordle-global-leaderboard.service';
+import { WordleNotificationService } from 'modules/wordle/notifications/wordle-notification.service';
+import { WordleNotificationsController } from 'modules/wordle/notifications/wordle-notifications.controller';
+import { WordleGlobalAchievementService } from 'modules/wordle/progression/wordle-global-achievement.service';
 import { WordleHistoryService } from 'modules/wordle/progression/wordle-history.service';
-import { WordBankService } from 'modules/wordle/services/word-bank.service';
-import { WordleAlbumMilestoneService } from 'modules/wordle/services/wordle-album-milestone.service';
-import { WordleAlbumService } from 'modules/wordle/services/wordle-album.service';
-import { WordleBingoService } from 'modules/wordle/services/wordle-bingo.service';
-import { WordleChallengeService } from 'modules/wordle/services/wordle-challenge.service';
-import { getRecifeDate } from 'modules/wordle/services/wordle-date';
-import { WordleGalleryService } from 'modules/wordle/services/wordle-gallery.service';
-import { WordleGlobalAchievementService } from 'modules/wordle/services/wordle-global-achievement.service';
-import { WordleGlobalAnnouncementService } from 'modules/wordle/services/wordle-global-announcement.service';
-import { WordleGlobalDayService } from 'modules/wordle/services/wordle-global-day.service';
-import { WordleGlobalDraftService } from 'modules/wordle/services/wordle-global-draft.service';
-import { WordleGlobalGameCoordinator } from 'modules/wordle/services/wordle-global-game-coordinator';
-import { WordleGlobalGameplayService } from 'modules/wordle/services/wordle-global-gameplay.service';
-import { WordleGlobalLeaderboardService } from 'modules/wordle/services/wordle-global-leaderboard.service';
-import { WordleGoalsService } from 'modules/wordle/services/wordle-goals.service';
-import { WordleNotificationService } from 'modules/wordle/services/wordle-notification.service';
-import { WordleParticipationService } from 'modules/wordle/services/wordle-participation.service';
-import { WordlePlayerOverviewService } from 'modules/wordle/services/wordle-player-overview.service';
-import { WordleRewardsService } from 'modules/wordle/services/wordle-rewards.service';
-import { WordleShowcaseService } from 'modules/wordle/services/wordle-showcase.service';
-import { WordleWordlistReviewService } from 'modules/wordle/services/wordle-wordlist-review.service';
-import { WordleUserConfigService } from 'modules/wordle/wordle-user-config.service';
+import { WordlePlayerOverviewService } from 'modules/wordle/progression/wordle-player-overview.service';
+import { WordleRewardsController } from 'modules/wordle/progression/wordle-rewards.controller';
+import { WordleRewardsService } from 'modules/wordle/progression/wordle-rewards.service';
+import { WordleShowcaseController } from 'modules/wordle/progression/wordle-showcase.controller';
+import { WordleShowcaseService } from 'modules/wordle/progression/wordle-showcase.service';
+import { WordleUserConfigController } from 'modules/wordle/progression/wordle-user-config.controller';
+import { WordleUserConfigService } from 'modules/wordle/progression/wordle-user-config.service';
+import { getRecifeDate } from 'modules/wordle/wordle-date';
+import { WordleController } from 'modules/wordle/wordle.controller';
 import { WordleService } from 'modules/wordle/wordle.service';
 import {
   type WordSource,
@@ -48,6 +46,8 @@ import {
   WORDLE_RANDOM,
   WORDLE_TODAY,
 } from 'modules/wordle/wordle.tokens';
+import { WordBankService } from 'modules/wordle/words/word-bank.service';
+import { WordleWordlistReviewService } from 'modules/wordle/words/wordle-wordlist-review.service';
 
 @Module({
   imports: [DatabaseModule, DiscordModule, GamificationModule],

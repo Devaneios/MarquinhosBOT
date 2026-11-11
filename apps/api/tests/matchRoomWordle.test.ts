@@ -11,7 +11,7 @@ import {
 } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
-import { getRecifeDate } from '../src/modules/wordle/services/wordle-date';
+import { getRecifeDate } from '../src/modules/wordle/wordle-date';
 import { testRoomDependencies } from './helpers/realtimeTestDependencies';
 
 const { createMatchRoom } = await import('../src/realtime/MatchRoom');

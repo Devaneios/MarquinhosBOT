@@ -5,7 +5,7 @@ import {
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, expect, it } from 'bun:test';
 import { eq } from 'drizzle-orm';
-import { WordleAlbumMilestoneService } from '../src/modules/wordle/services/wordle-album-milestone.service';
+import { WordleAlbumMilestoneService } from '../src/modules/wordle/community/wordle-album-milestone.service';
 import { createWordleTestAlbumService } from './helpers/wordleServices';
 
 let testDb: TestDb;

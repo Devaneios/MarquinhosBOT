@@ -11,8 +11,8 @@ import {
 import { RateLimitService } from 'modules/ai-chat/rate-limit.service';
 import { ResearchOrchestrator } from 'modules/ai-chat/research/research-orchestrator.service';
 import { GamificationService } from 'modules/gamification/gamification.service';
-import { WordBankService } from 'modules/wordle/services/word-bank.service';
 import { WordleService } from 'modules/wordle/wordle.service';
+import { WordBankService } from 'modules/wordle/words/word-bank.service';
 import 'reflect-metadata';
 import { StartupService } from 'startup/startup.service';
 import {

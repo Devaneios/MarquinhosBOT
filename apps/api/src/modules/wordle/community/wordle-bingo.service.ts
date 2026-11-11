@@ -15,10 +15,10 @@ import {
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
 import { and, asc, eq, gte, lt } from 'drizzle-orm';
+import { getWordleDayEndEpoch } from 'modules/wordle/wordle-date';
 import { WORDLE_NOW } from 'modules/wordle/wordle.tokens';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { getWordleDayEndEpoch } from './wordle-date';
 
 const condition = z.discriminatedUnion('kind', [
   z.object({

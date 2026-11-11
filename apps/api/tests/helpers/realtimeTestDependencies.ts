@@ -5,7 +5,7 @@ import { AchievementService } from '../../src/modules/gamification/achievement.s
 import { EvolutiveAchievementsService } from '../../src/modules/gamification/evolutive-achievements.service';
 import { GamificationService } from '../../src/modules/gamification/gamification.service';
 import { LevelingService } from '../../src/modules/gamification/leveling.service';
-import { WordBankService } from '../../src/modules/wordle/services/word-bank.service';
+import { WordBankService } from '../../src/modules/wordle/words/word-bank.service';
 import type { RoomDependencies } from '../../src/realtime/room-dependencies';
 import { createWordleTestService } from './wordleServices';
 import { testWsSessionTokens } from './wsSessionTokens';

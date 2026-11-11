@@ -8,7 +8,7 @@ import {
 import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { inArray } from 'drizzle-orm';
-import { WordleGlobalLeaderboardService } from '../src/modules/wordle/services/wordle-global-leaderboard.service';
+import { WordleGlobalLeaderboardService } from '../src/modules/wordle/gameplay/wordle-global-leaderboard.service';
 import { createWordleTestPresence } from './helpers/wordleServices';
 
 let testDb: TestDb;
@@ -151,26 +151,22 @@ describe('global community rankings', () => {
     await testDb.db
       .delete(wordleGlobalSessions)
       .where(inArray(wordleGlobalSessions.id, ['a-old', 'b-old']));
-    await testDb.db
-      .insert(wordleGlobalCutovers)
-      .values({
-        id: 'global-only-v003',
-        source_tag: 'v0.0.3',
-        cutover_date: '2026-11-02',
-        source_digest: 'a'.repeat(64),
-        verified_at: first,
-        completed_at: first,
-      });
-    await testDb.db
-      .insert(wordleDays)
-      .values({
-        guild_id: 'community',
-        word_date: '2026-11-01',
-        word: 'termo',
-        word_length: 5,
-        is_legacy: true,
-        created_at: first,
-      });
+    await testDb.db.insert(wordleGlobalCutovers).values({
+      id: 'global-only-v003',
+      source_tag: 'v0.0.3',
+      cutover_date: '2026-11-02',
+      source_digest: 'a'.repeat(64),
+      verified_at: first,
+      completed_at: first,
+    });
+    await testDb.db.insert(wordleDays).values({
+      guild_id: 'community',
+      word_date: '2026-11-01',
+      word: 'termo',
+      word_length: 5,
+      is_legacy: true,
+      created_at: first,
+    });
     await testDb.db.insert(wordleSessions).values([
       {
         id: 'legacy-a',

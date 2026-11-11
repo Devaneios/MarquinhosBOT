@@ -12,7 +12,7 @@ import {
 import {
   InvalidWordleGallery,
   WordleGalleryService,
-} from 'modules/wordle/services/wordle-gallery.service';
+} from 'modules/wordle/community/wordle-gallery.service';
 
 @Controller('wordle')
 export class WordleGalleryController {

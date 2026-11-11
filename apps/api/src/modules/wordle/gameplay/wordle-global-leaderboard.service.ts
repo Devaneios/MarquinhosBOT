@@ -3,7 +3,7 @@ import { wordleGlobalCutovers } from '@marquinhos/database/schema';
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
 import { eq, sql } from 'drizzle-orm';
-import { getWordleTimeZone } from './wordle-date';
+import { getWordleTimeZone } from 'modules/wordle/wordle-date';
 
 type Period = 'daily' | 'weekly' | 'monthly' | 'all-time';
 export type GlobalDailyEntry = {

@@ -53,7 +53,7 @@ it('initializes a missing day without exhausting a single-connection pool', asyn
     .where(
       eq(
         wordleGlobalDays.word_date,
-        (await import('modules/wordle/services/wordle-date')).getRecifeDate(),
+        (await import('modules/wordle/wordle-date')).getRecifeDate(),
       ),
     );
   expect(day?.word).toBeString();

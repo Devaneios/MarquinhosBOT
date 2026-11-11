@@ -1,6 +1,6 @@
 import type { WordleAchievementsOverview } from '@marquinhos/contracts/wordle';
 import { Inject, Injectable } from '@nestjs/common';
-import { WordleGlobalAchievementService } from './wordle-global-achievement.service';
+import { WordleGlobalAchievementService } from 'modules/wordle/progression/wordle-global-achievement.service';
 import { WordleGlobalGameplayService } from './wordle-global-gameplay.service';
 
 interface GlobalAwards {

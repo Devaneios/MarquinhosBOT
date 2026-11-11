@@ -1,7 +1,7 @@
 import { wordleUserConfig } from '@marquinhos/database/schema';
 import { describe, expect, it } from 'bun:test';
 import { count } from 'drizzle-orm';
-import { WordleUserConfigService } from 'modules/wordle/wordle-user-config.service';
+import { WordleUserConfigService } from 'modules/wordle/progression/wordle-user-config.service';
 import { useTestDb } from './helpers/testDb';
 
 const testDb = useTestDb();

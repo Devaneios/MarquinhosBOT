@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it } from 'bun:test';
-import { WordleUserConfigController } from '../src/modules/wordle/controllers/wordle-user-config.controller';
-import { WordleUserConfigService } from '../src/modules/wordle/wordle-user-config.service';
+import { WordleUserConfigController } from '../src/modules/wordle/progression/wordle-user-config.controller';
+import { WordleUserConfigService } from '../src/modules/wordle/progression/wordle-user-config.service';
 import {
   requestController,
   startNestControllerServer,

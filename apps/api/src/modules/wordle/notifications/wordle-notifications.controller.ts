@@ -6,7 +6,7 @@ import {
   ContractInput,
   type ContractInputValue,
 } from 'common/decorators/contract-input.decorator';
-import { WordleNotificationService } from 'modules/wordle/services/wordle-notification.service';
+import { WordleNotificationService } from 'modules/wordle/notifications/wordle-notification.service';
 
 @Controller('wordle/admin/notifications')
 @BotAuth()

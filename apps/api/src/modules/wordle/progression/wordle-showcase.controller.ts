@@ -15,39 +15,37 @@ import {
 import { CurrentUser } from 'common/decorators/current-user.decorator';
 import type { DiscordUser } from 'integrations/discord/discord.service';
 import {
-  InvalidWordleReward,
-  WordleRewardsService,
-} from 'modules/wordle/services/wordle-rewards.service';
+  InvalidWordleShowcase,
+  WordleShowcaseService,
+} from 'modules/wordle/progression/wordle-showcase.service';
 
 @Controller('wordle')
 @ActivityAuth()
-export class WordleRewardsController {
-  constructor(private readonly service: WordleRewardsService) {}
+export class WordleShowcaseController {
+  constructor(private readonly service: WordleShowcaseService) {}
 
-  @Get('rewards')
+  @Get('showcase')
   async get(
     @CurrentUser() user: DiscordUser,
-  ): Promise<ContractResponseInput<typeof contract.getRewards>> {
-    await this.service.reconcile(user.id);
+  ): Promise<ContractResponseInput<typeof contract.getShowcase>> {
     return { data: await this.service.get(user.id) };
   }
 
-  @Put('rewards')
+  @Put('showcase')
   @HttpCode(200)
   async update(
     @CurrentUser() user: DiscordUser,
-    @ContractInput(contract.updateReward, 'Invalid reward')
-    input: ContractInputValue<typeof contract.updateReward>,
-  ): Promise<ContractResponseInput<typeof contract.updateReward>> {
+    @ContractInput(contract.updateShowcase, 'Invalid showcase')
+    input: ContractInputValue<typeof contract.updateShowcase>,
+  ): Promise<ContractResponseInput<typeof contract.updateShowcase>> {
     try {
-      await this.service.reconcile(user.id);
-      await this.service.equip(user.id, input.body.kind, input.body.rewardId);
+      await this.service.replace(user.id, input.body.achievements);
     } catch (error) {
-      if (error instanceof InvalidWordleReward) {
+      if (error instanceof InvalidWordleShowcase) {
         throw new BadRequestException({ message: error.message });
       }
       throw error;
     }
-    return { data: await this.service.get(user.id) };
+    return { data: input.body.achievements };
   }
 }
