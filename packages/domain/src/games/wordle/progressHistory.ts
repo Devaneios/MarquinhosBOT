@@ -77,46 +77,38 @@ export function computePreservedWordleStats(
   const solvedDates = [...new Set(solved.map((record) => record.date))].sort();
   const runs = streakRuns(solvedDates);
   const carryover = options.carryover;
-  const anchorDate = carryover?.lastSolvedDate ?? null;
+  const today = dayNumber(options.today);
+  const anchor =
+    carryover?.lastSolvedDate && carryover.currentStreak > 0
+      ? dayNumber(carryover.lastSolvedDate)
+      : null;
+  const solvedDays = solvedDates.map(dayNumber);
+  const lastSolved = solvedDays.at(-1);
   let currentStreak = 0;
 
-  if (anchorDate && carryover && carryover.currentStreak > 0) {
-    const anchorAge = dayNumber(options.today) - dayNumber(anchorDate);
-    if (anchorAge >= 0 && anchorAge <= 1) {
-      const extensions = solvedDates.filter(
-        (date) => dayNumber(date) > dayNumber(anchorDate),
-      );
-      const first = extensions[0];
-      if (!first) currentStreak = carryover.currentStreak;
-      else if (dayNumber(first) - dayNumber(anchorDate) === 1) {
-        let extended = carryover.currentStreak;
-        let previous = dayNumber(anchorDate);
-        for (const date of extensions) {
-          const current = dayNumber(date);
-          if (current - previous !== 1) extended = 1;
-          else extended += 1;
-          previous = current;
-        }
-        currentStreak = extended;
-      }
+  if (lastSolved !== undefined && today - lastSolved <= 1) {
+    // The run of consecutive solved days that ends on the last solve.
+    let runStart = lastSolved;
+    for (let index = solvedDays.length - 2; index >= 0; index--) {
+      if (solvedDays[index] !== runStart - 1) break;
+      runStart -= 1;
     }
-  }
-
-  const lastSolvedDate = solvedDates.at(-1);
-  if (
-    lastSolvedDate &&
-    dayNumber(options.today) - dayNumber(lastSolvedDate) <= 1
+    // A run that reaches back to the day after the anchor continues the
+    // carried streak, however long ago the cutover was.
+    currentStreak =
+      anchor !== null &&
+      carryover &&
+      lastSolved > anchor &&
+      runStart <= anchor + 1
+        ? carryover.currentStreak + (lastSolved - anchor)
+        : lastSolved - runStart + 1;
+  } else if (
+    anchor !== null &&
+    carryover &&
+    today - anchor >= 0 &&
+    today - anchor <= 1
   ) {
-    const withoutAnchor = runs.at(-1) ?? 0;
-    if (
-      !anchorDate ||
-      !carryover ||
-      dayNumber(lastSolvedDate) <= dayNumber(anchorDate)
-    ) {
-      currentStreak = withoutAnchor;
-    } else if (dayNumber(solvedDates[0]!) > dayNumber(anchorDate) + 1) {
-      currentStreak = withoutAnchor;
-    }
+    currentStreak = carryover.currentStreak;
   }
 
   const distribution = new Array<number>(WORDLE_DISTRIBUTION_BUCKETS).fill(0);

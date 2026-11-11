@@ -88,4 +88,44 @@ describe('computePreservedWordleStats', () => {
       }).currentStreak,
     ).toBe(1);
   });
+
+  test('keeps extending a carried streak beyond the day after cutover', () => {
+    const carryover = {
+      currentStreak: 5,
+      bestStreak: 5,
+      lastSolvedDate: '2026-11-10',
+    };
+    const records = [
+      legacy('a', '2026-11-09', true),
+      legacy('b', '2026-11-10', true),
+      legacy('c', '2026-11-11', true),
+      legacy('d', '2026-11-12', true),
+    ];
+    const stats = computePreservedWordleStats(records, {
+      today: '2026-11-13',
+      carryover,
+    });
+    expect(stats.currentStreak).toBe(7);
+    expect(stats.bestStreak).toBe(7);
+  });
+
+  test('counts a new streak started after the carried one was broken', () => {
+    expect(
+      computePreservedWordleStats(
+        [
+          legacy('a', '2026-11-10', true),
+          legacy('b', '2026-12-01', true),
+          legacy('c', '2026-12-02', true),
+        ],
+        {
+          today: '2026-12-02',
+          carryover: {
+            currentStreak: 5,
+            bestStreak: 5,
+            lastSolvedDate: '2026-11-10',
+          },
+        },
+      ).currentStreak,
+    ).toBe(2);
+  });
 });
