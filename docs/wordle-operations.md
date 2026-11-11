@@ -29,12 +29,14 @@ reload its cached channel configuration.
 
 ## Set the day boundary
 
-To use the bot's midnight schedule, keep the API's `WORDLE_TIMEZONE` unset or set
-it to `America/Recife`. The bot does not read this override.
+The API and the bot both read `WORDLE_TIMEZONE` and default to `America/Recife`.
+They must agree: the bot uses it for the midnight schedule and for the date of
+the board it closes, and the API uses it for the day of every guess.
 
-For local API configuration, set the variable in `apps/api/.env` and restart the
-development stack. For a release, set the GitHub Environment variable
-`WORDLE_TIMEZONE` and deploy the API through the [deployment workflow](deployment.md).
+For local configuration, set the variable in both `apps/api/.env` and
+`apps/bot/.env` and restart the development stack. For a release, set the GitHub
+Environment variable `WORDLE_TIMEZONE`; the [deployment workflow](deployment.md)
+writes it to both services. Deploy the API and the bot together when it changes.
 
 ## Update accepted words
 

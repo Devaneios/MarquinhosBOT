@@ -123,6 +123,7 @@ bot_optional_keys=(
   MARQUINHOS_SPREADSHEET_API_KEY
   MARQUINHOS_SPREADSHEET_ID
   MARQUINHOS_WEB_URL
+  WORDLE_TIMEZONE
 )
 
 for key in "${api_optional_keys[@]}"; do

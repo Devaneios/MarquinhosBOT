@@ -1,5 +1,8 @@
 import { announceTermoWin } from '@marquinhos/commands/games/announceTermoWin';
-import { previousRecifeDate } from '@marquinhos/commands/games/termoDate';
+import {
+  previousRecifeDate,
+  wordleTimeZone,
+} from '@marquinhos/commands/games/termoDate';
 import {
   buildDailyLeaderboardAttachment,
   sendTermoStatusBroadcast,
@@ -106,7 +109,7 @@ function startBichoGame(client: Client<true>) {
 function msUntilMidnightRecife(): number {
   const now = new Date();
   const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Recife',
+    timeZone: wordleTimeZone(),
     hour: 'numeric',
     minute: 'numeric',
     second: 'numeric',
