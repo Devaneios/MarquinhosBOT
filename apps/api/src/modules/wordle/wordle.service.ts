@@ -84,7 +84,7 @@ export class WordleService {
       .select({
         players: sql<number>`count(*) filter (where ${wordleGlobalSessions.attempts} > 0 or ${wordleGlobalSessions.solved_from_draft})::int`,
         winners: sql<number>`count(*) filter (where ${wordleGlobalSessions.solved})::int`,
-        attempts: sql<number>`coalesce(sum(${wordleGlobalSessions.attempts}) filter (where ${wordleGlobalSessions.solved}), 0)::int`,
+        attempts: sql<number>`coalesce(sum(case when ${wordleGlobalSessions.solved_from_draft} then 1 else ${wordleGlobalSessions.attempts} end) filter (where ${wordleGlobalSessions.solved}), 0)::int`,
       })
       .from(wordleCommunityDailyPresence)
       .innerJoin(

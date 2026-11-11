@@ -2,7 +2,7 @@ import type { Db } from '@marquinhos/database/client';
 import { wordleGlobalCutovers } from '@marquinhos/database/schema';
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, type SQL } from 'drizzle-orm';
 import { getWordleTimeZone } from 'modules/wordle/wordle-date';
 
 type Period = 'daily' | 'weekly' | 'monthly' | 'all-time';
@@ -16,6 +16,11 @@ export type GlobalRankedEntry = {
   totalDays: number;
   avgScore: number;
 };
+
+// A draft win is stored with no attempts. Ranking it as a single attempt
+// keeps it level with a first-guess solve instead of ahead of every real one.
+const rankedAttempts = (prefix: SQL) =>
+  sql`(CASE WHEN ${prefix}solved_from_draft THEN 1 ELSE ${prefix}attempts END)`;
 
 function shift(date: string, days: number): string {
   const value = new Date(`${date}T12:00:00Z`);
@@ -53,7 +58,7 @@ export class WordleGlobalLeaderboardService {
           SELECT user_id, attempts, solved FROM wordle_sessions
           WHERE guild_id = ${guildId} AND word_date = ${today}
             AND (attempts > 0 OR solved_from_draft)
-          ORDER BY solved DESC, attempts ASC, created_at ASC, user_id ASC
+          ORDER BY solved DESC, ${rankedAttempts(sql``)} ASC, solved_from_draft ASC, created_at ASC, user_id ASC
           LIMIT ${limit} OFFSET ${offset}
         `);
         return rows.map((row) => ({
@@ -72,7 +77,7 @@ export class WordleGlobalLeaderboardService {
         JOIN wordle_global_sessions s ON s.user_id = p.user_id AND s.word_date = p.word_date
         WHERE p.guild_id = ${guildId} AND p.word_date = ${today}
           AND (s.attempts > 0 OR s.solved_from_draft)
-        ORDER BY s.solved DESC, s.attempts ASC, s.created_at ASC, s.user_id ASC
+        ORDER BY s.solved DESC, ${rankedAttempts(sql`s.`)} ASC, s.solved_from_draft ASC, s.created_at ASC, s.user_id ASC
         LIMIT ${limit} OFFSET ${offset}
       `);
       return rows.map((row) => ({
@@ -98,12 +103,12 @@ export class WordleGlobalLeaderboardService {
         SELECT user_id, (to_timestamp(first_seen_at) AT TIME ZONE ${timeZone})::date::text AS joined_on
         FROM wordle_community_participation WHERE guild_id = ${guildId}
       ), session_scores AS (
-        SELECT s.user_id, s.word_date, s.attempts, s.solved, s.word_length
+        SELECT s.user_id, s.word_date, ${rankedAttempts(sql`s.`)} AS attempts, s.solved, s.word_length
         FROM wordle_sessions s
         WHERE s.guild_id = ${guildId} AND s.word_date < ${cutoverDate}
           AND (s.attempts > 0 OR s.solved_from_draft)
         UNION ALL
-        SELECT s.user_id, s.word_date, s.attempts, s.solved, d.word_length
+        SELECT s.user_id, s.word_date, ${rankedAttempts(sql`s.`)} AS attempts, s.solved, d.word_length
         FROM wordle_community_daily_presence p
         JOIN wordle_global_sessions s ON s.user_id = p.user_id AND s.word_date = p.word_date
         JOIN wordle_global_days d ON d.word_date = s.word_date

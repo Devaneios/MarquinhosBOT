@@ -123,6 +123,50 @@ describe('global community rankings', () => {
     expect(page1.map((entry) => entry.userId)).toEqual(['a']);
     expect(page2.map((entry) => entry.userId)).toEqual(['c']);
   });
+  it('never ranks a draft win ahead of a real first-guess solve', async () => {
+    const day = '2026-11-03';
+    const at = first + 2 * 86400;
+    await testDb.db.insert(wordleGlobalDays).values({
+      word_date: day,
+      word: 'fases',
+      word_length: 5,
+      created_at: at,
+    });
+    await testDb.db.insert(wordleGlobalSessions).values([
+      {
+        id: 'draft-win',
+        user_id: 'drafter',
+        word_date: day,
+        solved: true,
+        solved_from_draft: true,
+        attempts: 0,
+        created_at: at,
+      },
+      {
+        id: 'real-win',
+        user_id: 'solver',
+        word_date: day,
+        solved: true,
+        attempts: 1,
+        created_at: at + 60,
+      },
+    ]);
+    await createWordleTestPresence(testDb.db, 'drafter', 'drafts', day, at);
+    await createWordleTestPresence(testDb.db, 'solver', 'drafts', day, at);
+    const service = new WordleGlobalLeaderboardService(testDb.db);
+
+    expect(
+      (await service.getLeaderboard('drafts', 'daily', day, 10)).map(
+        (entry) => entry.userId,
+      ),
+    ).toEqual(['solver', 'drafter']);
+    expect(await service.getLeaderboard('drafts', 'all-time', day, 10)).toEqual(
+      [
+        { userId: 'drafter', totalDays: 1, avgScore: 1 },
+        { userId: 'solver', totalDays: 1, avgScore: 1 },
+      ],
+    );
+  });
   it('shows only players present in the requested community on the date', async () => {
     const service = new WordleGlobalLeaderboardService(testDb.db);
     expect(
