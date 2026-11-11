@@ -19,6 +19,12 @@ type Channel = {
   send: (message: Message) => Promise<{ id: string }>;
 };
 
+function wasRejectedByDiscord(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const status = Reflect.get(error, 'status');
+  return typeof status === 'number' && status >= 400 && status < 500;
+}
+
 export async function deliverWordleNotification(
   guildId: string,
   api: Api,
@@ -99,11 +105,13 @@ export async function deliverWordleNotification(
       allowedMentions: { parse: [] },
       ...(components ? { components } : {}),
     });
-  } catch {
+  } catch (error) {
+    // A response from Discord means the message was refused, so it can be
+    // retried. Only a failure with no response leaves delivery unknown.
     await api.settleWordleNotification(guildId, {
       id: event.id,
       leaseId: event.leaseId,
-      result: 'ambiguous',
+      result: wasRejectedByDiscord(error) ? 'not_sent' : 'ambiguous',
     });
     return false;
   }
