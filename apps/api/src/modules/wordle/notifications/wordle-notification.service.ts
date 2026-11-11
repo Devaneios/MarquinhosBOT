@@ -82,6 +82,21 @@ export class WordleNotificationService {
       : { channelId: null, collective: false, weekly: false };
   }
 
+  /** Whether this event was already queued, whatever became of it since. */
+  async hasEvent(guildId: string, eventKey: string): Promise<boolean> {
+    const [row] = await this.database
+      .select({ id: wordleNotifications.id })
+      .from(wordleNotifications)
+      .where(
+        and(
+          eq(wordleNotifications.guild_id, guildId),
+          eq(wordleNotifications.event_key, eventKey),
+        ),
+      )
+      .limit(1);
+    return row !== undefined;
+  }
+
   async enqueue(
     guildId: string,
     kind: Kind,

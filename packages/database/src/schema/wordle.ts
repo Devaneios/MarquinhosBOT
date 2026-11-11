@@ -263,6 +263,10 @@ export const wordleGlobalAcceptedGuesses = pgTable(
     primaryKey({ columns: [t.session_id, t.attempt] }),
     check('wordle_global_accepted_guess_attempt_check', sql`${t.attempt} > 0`),
     index('wordle_global_accepted_guesses_time_idx').on(t.accepted_at),
+    index('wordle_global_accepted_guesses_user_date_idx').on(
+      t.user_id,
+      t.word_date,
+    ),
   ],
 );
 

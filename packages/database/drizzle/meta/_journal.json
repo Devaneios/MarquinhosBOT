@@ -218,6 +218,13 @@
       "when": 1794358554159,
       "tag": "0030_wordle_progress_carryover",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794365747913,
+      "tag": "0031_wordle_accepted_guesses_user_date",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+CREATE INDEX "wordle_global_accepted_guesses_user_date_idx" ON "wordle_global_accepted_guesses" USING btree ("user_id","word_date");

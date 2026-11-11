@@ -35,9 +35,14 @@ export class WordleGalleryService {
       .select({ guildId: wordleNotificationConfig.guild_id })
       .from(wordleNotificationConfig)
       .where(eq(wordleNotificationConfig.weekly, true));
+    const { weekKey } = previousWordleWeek(this.now());
     let queued = 0;
     for (const { guildId } of guilds) {
-      const gallery = await this.previousWeek(guildId);
+      // This runs on every reconcile tick; the week's gallery is only worth
+      // building until its notification exists.
+      if (await this.notifications.hasEvent(guildId, `gallery:${weekKey}`))
+        continue;
+      const gallery = await this.forWeek(guildId, weekKey);
       if (!gallery.entries.length) continue;
       if (
         await this.notifications.enqueue(

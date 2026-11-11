@@ -5,7 +5,6 @@ import {
   wordleDaily,
   wordleDays,
   wordleGlobalCutovers,
-  wordleGlobalSessionOrigins,
   wordleGlobalSessions,
   wordleLegacyProgress,
   wordleSessions,
@@ -72,10 +71,6 @@ export class WordleHistoryService {
           .select()
           .from(wordleGlobalSessions)
           .where(eq(wordleGlobalSessions.user_id, userId));
-    const origins = await exec
-      .select({ sourceSessionId: wordleGlobalSessionOrigins.source_session_id })
-      .from(wordleGlobalSessionOrigins);
-    const migratedSources = new Set(origins.map((row) => row.sourceSessionId));
     const [carryover] = await exec
       .select()
       .from(wordleLegacyProgress)
@@ -83,16 +78,14 @@ export class WordleHistoryService {
 
     return computePreservedWordleStats(
       [
-        ...legacyRows
-          .filter((row) => !migratedSources.has(row.id))
-          .map((row) => ({
-            source: 'legacy' as const,
-            sessionId: row.id,
-            date: row.word_date,
-            solved: row.solved,
-            solvedFromDraft: row.solved_from_draft,
-            attempts: row.attempts,
-          })),
+        ...legacyRows.map((row) => ({
+          source: 'legacy' as const,
+          sessionId: row.id,
+          date: row.word_date,
+          solved: row.solved,
+          solvedFromDraft: row.solved_from_draft,
+          attempts: row.attempts,
+        })),
         ...globalRows.map((row) => ({
           source: 'global' as const,
           sessionId: row.id,
