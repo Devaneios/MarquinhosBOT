@@ -1,111 +1,67 @@
-import { NestFactory } from '@nestjs/core';
-import type { Db } from '@marquinhos/database/client';
-import {
-  achievements,
-  userAchievements,
-  userLevels,
-  wordleDays,
-  wordleDrafts,
-  wordlePatternDiscoveries,
-  wordleSessions,
-} from '@marquinhos/database/schema';
-import { eq, inArray } from 'drizzle-orm';
-import { DB } from '../src/database/database.tokens';
-import { ScriptsModule } from '../src/scripts/scripts.module';
-import { auditGlobalWordleHistory } from '../src/modules/wordle/services/global-audit';
+import { writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { sql } from 'drizzle-orm';
+import { createDb } from '@marquinhos/database/client';
+import { auditWordlePreservation } from '../src/modules/wordle/migration/wordle-preservation';
+
+const SOURCE_TAG = 'v0.0.3';
+const SOURCE_COMMIT = '44e8394be8fdb8dd11fec7c27e9476d02629470a';
+
+function outputPath(args: string[]): string {
+  const index = args.indexOf('--output');
+  const value = index >= 0 ? args[index + 1] : undefined;
+  if (!value || value.startsWith('--')) throw new Error('Usage: bun scripts/auditGlobalWordle.ts --output /protected/path/inventory.json');
+  return value;
+}
 
 async function main() {
-  const app = await NestFactory.createApplicationContext(ScriptsModule, {
-    logger: false,
-  });
+  const path = outputPath(process.argv.slice(2));
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error('DATABASE_URL is required');
+  const handle = createDb(url, 1);
   try {
-    const database = app.get<Db>(DB);
-    const [days, sessions, drafts, wordleAchievementRows] = await Promise.all([
-      database.select().from(wordleDays),
-      database.select().from(wordleSessions),
-      database.select().from(wordleDrafts),
-      database
-        .select({ id: achievements.id })
-        .from(achievements)
-        .where(eq(achievements.category, 'wordle')),
-    ]);
-    const achievementIds = wordleAchievementRows.map((row) => row.id);
-    const [earned, discoveries, levels] = await Promise.all([
-      achievementIds.length
-        ? database
-            .select({
-              user_id: userAchievements.user_id,
-              achievement_id: userAchievements.achievement_id,
-            })
-            .from(userAchievements)
-            .where(inArray(userAchievements.achievement_id, achievementIds))
-        : Promise.resolve([]),
-      database
-        .select({
-          user_id: wordlePatternDiscoveries.user_id,
-          pattern_id: wordlePatternDiscoveries.pattern_id,
-        })
-        .from(wordlePatternDiscoveries),
-      database
-        .select({ user_id: userLevels.user_id, total_xp: userLevels.total_xp })
-        .from(userLevels),
-    ]);
-
-    const report = auditGlobalWordleHistory({
-      days: days.map((row) => ({
-        guildId: row.guild_id,
-        date: row.word_date,
-        answer: row.word,
-      })),
-      sessions: sessions.map((row) => ({
-        userId: row.user_id,
-        guildId: row.guild_id,
-        date: row.word_date,
-        guesses: row.guesses,
-        state: JSON.stringify({
-          guesses: row.guesses,
-          solved: row.solved,
-          solvedFromDraft: row.solved_from_draft,
-          attempts: row.attempts,
-          solvedAt: row.solved_at,
-        }),
-      })),
-      drafts: drafts.map((row) => ({
-        userId: row.user_id,
-        guildId: row.guild_id,
-        date: row.word_date,
-        state: JSON.stringify({
-          rowIndex: row.row_index,
-          cells: row.cells,
-          activeIndex: row.active_index,
-          revision: row.revision,
-          finalizedAt: row.finalized_at,
-          awardReconciledAt: row.award_reconciled_at,
-        }),
-      })),
-      achievementKeys: earned.map(
-        (row) => `${row.user_id}\u0000${row.achievement_id}`,
-      ),
-      discoveryKeys: discoveries.map(
-        (row) => `${row.user_id}\u0000${row.pattern_id}`,
-      ),
-      experienceByPlayer: levels.map((row) => ({
-        userId: row.user_id,
-        totalXp: row.total_xp,
-      })),
-    });
-
-    console.log(JSON.stringify(report, null, 2));
+    await handle.db.execute(sql.raw('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY'));
+    const report = await auditWordlePreservation(handle.db);
+    await handle.db.execute(sql.raw('COMMIT'));
+    const artifact = {
+      artifactType: 'wordle-preservation-inventory',
+      version: 1,
+      source: {
+        expectedTag: SOURCE_TAG,
+        pinnedCommit: SOURCE_COMMIT,
+        databaseTagVerified: false,
+      },
+      sourceDigest: reportDigest(report),
+      report,
+    };
+    await writeFile(path, `${JSON.stringify(artifact, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
+    console.log(JSON.stringify({
+      artifactType: artifact.artifactType,
+      expectedSourceTag: SOURCE_TAG,
+      databaseTagVerified: false,
+      sourceDigest: artifact.sourceDigest,
+      users: report.users,
+      inspectedTables: Object.keys(report.tables).length,
+      rows: Object.values(report.tables).reduce((sum, table) => sum + (table?.rowCount ?? 0), 0),
+      unknownAnswerDays: report.unknownAnswerDays,
+      multipleGuildPlayerDates: report.multipleGuildPlayerDates,
+      output: path,
+    }));
+  } catch (error) {
+    await handle.db.execute(sql.raw('ROLLBACK')).catch(() => undefined);
+    throw error;
   } finally {
-    await app.close();
+    await handle.close();
   }
+}
+
+function reportDigest(report: Awaited<ReturnType<typeof auditWordlePreservation>>): string {
+  return createHash('sha256').update(JSON.stringify(report.tables)).digest('hex');
 }
 
 if (import.meta.main) {
   main().catch((error: unknown) => {
-    console.error(
-      error instanceof Error ? error.message : 'Wordle audit failed',
-    );
+    console.error(error instanceof Error ? error.message : 'Wordle audit failed');
     process.exitCode = 1;
   });
 }
