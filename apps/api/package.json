@@ -67,7 +67,7 @@
   },
   "scripts": {
     "build": "bun build src/main.ts --target=bun --outdir=./dist --sourcemap=external --external cpu-features --external class-validator --external class-transformer --external '@nestjs/microservices' --external '@nestjs/microservices/*' --external '@nestjs/websockets' --external '@nestjs/websockets/*'",
-    "dev": "bun --watch src/main.ts",
+    "dev": "bun scripts/prepareDevelopmentWordle.ts && bun --watch src/main.ts",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",

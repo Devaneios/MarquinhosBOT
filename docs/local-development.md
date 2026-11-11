@@ -211,16 +211,17 @@ membership, dependency overrides, and permitted dependency build scripts.
 
 ## Troubleshooting
 
-| Symptom                                      | Check                                                                             |
-| -------------------------------------------- | --------------------------------------------------------------------------------- |
-| Tunnel `/` returns `Route not found`        | Cloudflare service must be `http://activity:5173`, not the API                    |
-| Vite says hostname is not allowed            | `DEV_PUBLIC_ORIGIN` must contain the tunnel hostname; restart Activity            |
-| API request returns HTML                     | Request must reach the Vite API proxy, not an old static gateway                  |
-| Bot never becomes ready                      | Token, application ID, intents, channel access, and bot logs                      |
-| Activity auth fails                          | Matching dev app IDs, active API client secret and bot token, Discord URL mapping |
-| Room join fails                              | `/colyseus/` HTTP and WebSocket forwarding; inspect API and Activity logs         |
-| Sandbox execution fails                      | Docker socket permissions, development sandbox image, absolute host mirror path   |
-| Port occupied                                | Stop the existing server or change the host port in `dev/.env`                    |
+| Symptom                                     | Check                                                                                                                     |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Tunnel `/` returns `Route not found`        | Cloudflare service must be `http://activity:5173`, not the API                                                            |
+| Vite says hostname is not allowed           | `DEV_PUBLIC_ORIGIN` must contain the tunnel hostname; restart Activity                                                    |
+| API request returns HTML                    | Request must reach the Vite API proxy, not an old static gateway                                                          |
+| API exits with `Global Wordle is not ready` | The database holds legacy Wordle rows; follow [the cutover runbook](wordle-global-migration.md) or reset the dev database |
+| Bot never becomes ready                     | Token, application ID, intents, channel access, and bot logs                                                              |
+| Activity auth fails                         | Matching dev app IDs, active API client secret and bot token, Discord URL mapping                                         |
+| Room join fails                             | `/colyseus/` HTTP and WebSocket forwarding; inspect API and Activity logs                                                 |
+| Sandbox execution fails                     | Docker socket permissions, development sandbox image, absolute host mirror path                                           |
+| Port occupied                               | Stop the existing server or change the host port in `dev/.env`                                                            |
 
 Inspect combined or service-specific logs with
 `docker compose --env-file dev/.env -f dev/compose.yml logs -f api bot activity cloudflared`.

@@ -1,6 +1,7 @@
 import { createTestDb } from '@marquinhos/database/testing';
 import { afterEach, describe, expect, it } from 'bun:test';
 import { sql } from 'drizzle-orm';
+import { ensureDevelopmentWordleReceipt } from '../src/modules/wordle/migration/development-receipt';
 import { prepareGlobalWordleCutover } from '../src/modules/wordle/migration/global-cutover';
 import { auditWordlePreservation } from '../src/modules/wordle/migration/wordle-preservation';
 import { assertGlobalWordleReady } from '../src/modules/wordle/wordle-readiness';
@@ -69,5 +70,51 @@ describe('global Wordle readiness', () => {
     });
 
     await expect(assertGlobalWordleReady(testDb.db)).resolves.toBeUndefined();
+  });
+
+  it('refuses to serve before the cutover date begins', async () => {
+    const testDb = await createTestDb();
+    drop = testDb.drop;
+    const before = await auditWordlePreservation(testDb.db);
+    await prepareGlobalWordleCutover(testDb.db, {
+      sourceTag: 'fresh',
+      cutoverDate: '2026-11-11',
+      before,
+    });
+
+    await expect(
+      assertGlobalWordleReady(testDb.db, '2026-11-10'),
+    ).rejects.toThrow('the cutover starts on 2026-11-11');
+    await expect(
+      assertGlobalWordleReady(testDb.db, '2026-11-11'),
+    ).resolves.toBeUndefined();
+  });
+
+  it('gives an empty development database its fresh receipt', async () => {
+    const testDb = await createTestDb();
+    drop = testDb.drop;
+
+    await ensureDevelopmentWordleReceipt(testDb.db, '2026-11-10');
+
+    await expect(
+      assertGlobalWordleReady(testDb.db, '2026-11-10'),
+    ).resolves.toBeUndefined();
+  });
+
+  it('never creates a development receipt over legacy progress', async () => {
+    const fixture = await createWordleV003Db();
+    drop = fixture.drop;
+    await fixture.db.execute(sql`
+      INSERT INTO wordle_streaks
+        (user_id, guild_id, current_streak, max_streak, last_solved_date)
+      VALUES ('player', 'guild-a', 8, 20, '2026-11-09')
+    `);
+    await fixture.upgrade();
+
+    await ensureDevelopmentWordleReceipt(fixture.db, '2026-11-10');
+
+    await expect(assertGlobalWordleReady(fixture.db)).rejects.toThrow(
+      'prepare and verify the global cutover',
+    );
   });
 });

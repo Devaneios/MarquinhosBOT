@@ -1,10 +1,14 @@
 import type { Db } from '@marquinhos/database/client';
 import { wordleGlobalCutovers } from '@marquinhos/database/schema';
 import { eq } from 'drizzle-orm';
+import { getRecifeDate } from './wordle-date';
 
 const CUTOVER_ID = 'global-only-v003';
 
-export async function assertGlobalWordleReady(database: Db): Promise<void> {
+export async function assertGlobalWordleReady(
+  database: Db,
+  today: string = getRecifeDate(),
+): Promise<void> {
   const [receipt] = await database
     .select()
     .from(wordleGlobalCutovers)
@@ -29,6 +33,13 @@ export async function assertGlobalWordleReady(database: Db): Promise<void> {
   ) {
     throw new Error(
       'Global Wordle is not ready: its cutover receipt is invalid or incomplete.',
+    );
+  }
+  // Readers ignore global sessions dated before the cutover, so serving
+  // earlier would silently discard that day's play.
+  if (receipt.cutover_date > today) {
+    throw new Error(
+      `Global Wordle is not ready: the cutover starts on ${receipt.cutover_date} and today is ${today}. Keep the API stopped until then.`,
     );
   }
 }

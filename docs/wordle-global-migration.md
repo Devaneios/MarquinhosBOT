@@ -64,7 +64,16 @@ on the rehearsal copy before scheduling another attempt.
 
 ## Apply and verify on the restored copy
 
-1. Apply checked-in schema migrations using the same API startup migration
+1. Run the data audit against the restored copy and resolve every reported
+   conflict before migrating. Migrations 0004 and 0005 abort on orphaned or
+   duplicated AI event rows, inconsistent Pong tournament matches, and Wordle
+   days with conflicting answer lengths; they do not repair them.
+
+   ```sh
+   pnpm --filter @marquinhos/database db:audit
+   ```
+
+   Then apply checked-in schema migrations using the same API startup migration
    runner, without starting application services. From the repository root,
    with `DATABASE_URL` pointing at the restored copy, run:
 
@@ -132,7 +141,9 @@ the scheduled release:
 1. Freeze writers and take the final verified backup. Use that exact snapshot
    for the before audit.
 2. Apply schema migrations, run and review the dry run, then apply the cutover
-   with the same audit artifact and selected cutoff.
+   with the same audit artifact and selected cutoff. The API refuses to start
+   before the cutoff date begins in `WORDLE_TIMEZONE`, because play accepted
+   earlier would be dated before the cutover and ignored by every reader.
 3. Produce and retain the after audit. Verify receipt readiness, protected
    source rows, carryovers, and smoke checks before reopening traffic.
 4. Reopen the global-only API and bot, then observe a new global game before
@@ -158,7 +169,14 @@ those accepted sessions and announcements.
 
 ## Fresh installations
 
-A genuinely new database also requires an explicit receipt. Audit it and use
+For local development, `bun run dev` in `apps/api` (which `pnpm run dev` uses)
+first runs `scripts/prepareDevelopmentWordle.ts`. It applies migrations and
+creates the `fresh` receipt when the database holds no legacy Wordle rows, so
+local development needs no extra step. The script refuses to run with
+`NODE_ENV=production`. A development database that
+does hold legacy rows still needs the procedure below.
+
+In production, a genuinely new database requires an explicit receipt. Audit it and use
 `--source-tag fresh` with a cutoff and generated inventory artifact. The fresh
 audit must contain no legacy Wordle rows. This path initializes global
 readiness and does not carry over progress.
