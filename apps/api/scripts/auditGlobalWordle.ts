@@ -1,8 +1,7 @@
 import { writeFile } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import { createDb } from '@marquinhos/database/client';
-import { auditWordlePreservation } from '../src/modules/wordle/migration/wordle-preservation';
+import { auditWordlePreservation, wordlePreservationDigest } from '../src/modules/wordle/migration/wordle-preservation';
 
 const SOURCE_TAG = 'v0.0.3';
 const SOURCE_COMMIT = '44e8394be8fdb8dd11fec7c27e9476d02629470a';
@@ -31,7 +30,7 @@ async function main() {
         pinnedCommit: SOURCE_COMMIT,
         databaseTagVerified: false,
       },
-      sourceDigest: reportDigest(report),
+      sourceDigest: wordlePreservationDigest(report),
       report,
     };
     await writeFile(path, `${JSON.stringify(artifact, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
@@ -53,10 +52,6 @@ async function main() {
   } finally {
     await handle.close();
   }
-}
-
-function reportDigest(report: Awaited<ReturnType<typeof auditWordlePreservation>>): string {
-  return createHash('sha256').update(JSON.stringify(report.tables)).digest('hex');
 }
 
 if (import.meta.main) {

@@ -53,6 +53,9 @@ describe('Wordle v0.0.3 preservation inventory', () => {
     await db.execute(
       sql`INSERT INTO wordle_used_words (word, used_at) VALUES ('crane', 1704067200)`,
     );
+    await db.execute(
+      sql`INSERT INTO wordle_sessions (id, user_id, guild_id, word_date, guesses, solved, attempts, created_at, word_length) VALUES ('upgrade-session', 'u1', 'g1', '2024-01-01', '["crane"]', true, 1, 1704067200, 5)`,
+    );
     const before = await auditWordlePreservation(db);
     await upgrade?.();
     const verification = await verifyWordlePreservation(db, before);

@@ -42,8 +42,22 @@ export interface WordlePreservationVerification {
   mismatches: Record<string, number>;
 }
 
+function canonical(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, item]) => [key, canonical(item)]),
+    );
+  }
+  return value;
+}
+
 const digest = (value: unknown) =>
-  createHash('sha256').update(JSON.stringify(value)).digest('hex');
+  createHash('sha256')
+    .update(JSON.stringify(canonical(value)))
+    .digest('hex');
 
 async function tableExists(db: DbExecutor, table: string): Promise<boolean> {
   const result = await db.execute<{ exists: boolean }>(sql`
@@ -178,23 +192,54 @@ export async function verifyWordlePreservation(
   database: DbExecutor,
   before: WordlePreservationReport,
 ): Promise<WordlePreservationVerification> {
-  const after = await auditWordlePreservation(database);
   const mismatches: Record<string, number> = {};
   for (const [name, expected] of Object.entries(before.tables) as Array<
     [SourceTable, WordlePreservationTable]
   >) {
-    const actual = after.tables[name];
-    if (!actual) {
+    if (!(await tableExists(database, name))) {
       mismatches[name] = expected.rowCount || 1;
       continue;
     }
-    const actualByKey = new Map(
-      actual.keyedHashes.map((item) => [item.key, item.hash]),
+    const originalColumns = before.schema[name];
+    if (!originalColumns?.length) {
+      mismatches[name] = 1;
+      continue;
+    }
+    const keys = await keysFor(database, name);
+    const order = keys.length ? keys : originalColumns;
+    const orderSql = order
+      .map((column) => `"${column.replaceAll('"', '""')}"`)
+      .join(', ');
+    const rows = await database.execute<{ row: Record<string, unknown> }>(
+      sql.raw(
+        `SELECT to_jsonb(source_row) AS row FROM "${name}" AS source_row ORDER BY ${orderSql}`,
+      ),
     );
-    let count = Math.max(0, expected.rowCount - actual.rowCount);
+    const actualHashes = rows.map(({ row }) => {
+      const original = Object.fromEntries(
+        originalColumns.map((column) => [column, row[column]]),
+      );
+      const key = keys.length
+        ? keys
+            .map((column) => `${column}=${JSON.stringify(row[column])}`)
+            .join('&')
+        : digest(original);
+      return { key, hash: digest(original) };
+    });
+    const actualByKey = new Map(
+      actualHashes.map((item) => [item.key, item.hash]),
+    );
+    let count = Math.abs(expected.rowCount - actualHashes.length);
     for (const item of expected.keyedHashes)
       if (actualByKey.get(item.key) !== item.hash) count++;
     if (count) mismatches[name] = count;
   }
   return { ok: Object.keys(mismatches).length === 0, mismatches };
+}
+
+/** Stable digest for the protected source rows; does not include newly added tables. */
+export function wordlePreservationDigest(
+  report: WordlePreservationReport,
+): string {
+  return digest({ schema: report.schema, tables: report.tables });
 }

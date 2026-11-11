@@ -4,13 +4,19 @@ import {
   wordleGlobalDays,
   wordleGlobalSessions,
 } from '@marquinhos/database/schema';
+import { prepareGlobalWordleCutover } from '../../src/modules/wordle/migration/global-cutover';
+import { auditWordlePreservation } from '../../src/modules/wordle/migration/wordle-preservation';
 import { getRecifeDate } from '../../src/modules/wordle/services/wordle-date';
-import { migrateGlobalWordle } from '../../src/modules/wordle/services/wordle-global-migration.service';
 import { createWordleTestService } from './wordleServices';
 
 try {
   const date = getRecifeDate();
-  await migrateGlobalWordle(db);
+  const inventory = await auditWordlePreservation(db);
+  await prepareGlobalWordleCutover(db, {
+    sourceTag: 'fresh',
+    cutoverDate: date,
+    before: inventory,
+  });
   await db
     .insert(wordleGlobalDays)
     .values({ word_date: date, word: 'termo', word_length: 5, created_at: 1 });
