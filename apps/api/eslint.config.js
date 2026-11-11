@@ -132,6 +132,41 @@ export default [
     },
   },
   {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/modules/wordle/migration/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@marquinhos/database/client',
+              message: 'Inject DB from database/database.tokens instead.',
+              allowTypeImports: true,
+            },
+            {
+              name: 'express',
+              message: 'Keep Express at the HTTP boundary and use type imports.',
+              allowTypeImports: true,
+            },
+          ],
+          patterns: [
+            {
+              group: [
+                '**/wordle/migration/**',
+                'modules/wordle/migration/**',
+                '../migration/**',
+                './migration/**',
+              ],
+              message:
+                'Runtime modules must not depend on Wordle cutover or migration implementations.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['src/config/**/*.{ts,tsx}', 'src/common/logging/logger.ts'],
     rules: {
       'no-restricted-properties': 'off',

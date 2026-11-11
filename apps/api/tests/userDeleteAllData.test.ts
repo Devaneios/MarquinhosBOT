@@ -52,6 +52,12 @@ async function seed(userId: string) {
     sql`INSERT INTO wordle_sessions (id, user_id, guild_id, word_date, created_at)
         VALUES (${`ws-${userId}`}, ${userId}, 'g', '2026-09-24', ${now})`,
   );
+  await db.execute(sql`INSERT INTO wordle_streaks
+    (user_id, guild_id, current_streak, max_streak, last_solved_date)
+    VALUES (${userId}, 'g', 4, 12, '2026-09-23')`);
+  await db.execute(sql`INSERT INTO user_achievements
+    (user_id, guild_id, achievement_id, unlocked_at)
+    VALUES (${userId}, 'g', 'wordle_v2_wins_1', ${now})`);
   await db.execute(
     sql`INSERT INTO wordle_drafts (user_id, guild_id, word_date, row_index, cells, active_index, revision, updated_at)
         VALUES (${userId}, 'g', '2026-09-24', 0, '["t", "", "r", "", "o"]'::jsonb, 2, 1, ${now})`,
@@ -59,6 +65,8 @@ async function seed(userId: string) {
   await db.execute(sql`INSERT INTO wordle_global_days
     (word_date, word, word_length, created_at) VALUES ('2026-09-24', 'termo', 5, ${now})
     ON CONFLICT (word_date) DO NOTHING`);
+  await db.execute(sql`INSERT INTO wordle_used_words (word, used_at)
+    VALUES (${`preserved-${RUN}`}, ${now}) ON CONFLICT (word) DO NOTHING`);
   await db.execute(sql`INSERT INTO wordle_global_sessions
     (id, user_id, word_date, created_at) VALUES (${`global-${userId}`}, ${userId}, '2026-09-24', ${now})`);
   await db.execute(
@@ -67,6 +75,9 @@ async function seed(userId: string) {
   await db.execute(sql`INSERT INTO wordle_global_drafts
     (user_id, word_date, row_index, cells, active_index, revision, updated_at)
     VALUES (${userId}, '2026-09-24', 0, '["", "", "", "", ""]'::jsonb, 0, 1, ${now})`);
+  await db.execute(sql`INSERT INTO wordle_legacy_progress
+    (user_id, current_streak, best_streak, last_solved_date, cutover_date)
+    VALUES (${userId}, 4, 12, '2026-09-23', '2026-09-24')`);
   await db.execute(sql`INSERT INTO wordle_community_participation
     (guild_id, user_id, first_seen_at, last_seen_at) VALUES ('g', ${userId}, ${now}, ${now})`);
   await db.execute(sql`INSERT INTO wordle_community_daily_presence
@@ -168,11 +179,14 @@ describe('UserService.deleteAllData', () => {
       ['users', 'id'],
       ['user_levels', 'user_id'],
       ['wordle_sessions', 'user_id'],
+      ['wordle_streaks', 'user_id'],
+      ['user_achievements', 'user_id'],
       ['wordle_drafts', 'user_id'],
       ['wordle_pattern_discoveries', 'user_id'],
       ['wordle_global_sessions', 'user_id'],
       ['wordle_global_accepted_guesses', 'user_id'],
       ['wordle_global_drafts', 'user_id'],
+      ['wordle_legacy_progress', 'user_id'],
       ['wordle_global_achievements', 'user_id'],
       ['wordle_global_discoveries', 'user_id'],
       ['wordle_global_occurrences', 'user_id'],
@@ -206,6 +220,9 @@ describe('UserService.deleteAllData', () => {
       0,
     );
     expect(await count('ai_thread_items', 'thread_id', `thread-${OTHER}`)).toBe(
+      1,
+    );
+    expect(await count('wordle_used_words', 'word', `preserved-${RUN}`)).toBe(
       1,
     );
     const awards = await createWordleTestAchievementService().checkAndAward(
