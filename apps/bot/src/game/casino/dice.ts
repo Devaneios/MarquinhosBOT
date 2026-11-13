@@ -245,6 +245,7 @@ export class DiceGame extends BaseGame<DiceData, DiceAction> {
 
   getBetButtons() {
     const data = this.data;
+    if (data.finished || data.betType) return [];
     const maxSum = data.diceCount * 6;
     const _minSum = data.diceCount;
     const _midPoint = maxSum / 2;
@@ -306,7 +307,7 @@ export class DiceGame extends BaseGame<DiceData, DiceAction> {
       ];
     }
 
-    return [...this.getBetButtons(), endGameButton];
+    return [endGameButton];
   }
 
   async finish(): Promise<GameResult> {
@@ -333,7 +334,7 @@ export class DiceGame extends BaseGame<DiceData, DiceAction> {
         winRate:
           data.history.filter((h) => h.result === 'win').length /
           Math.max(data.history.length, 1),
-        biggestWin: Math.max(...data.history.map((h) => h.payout)),
+        biggestWin: Math.max(0, ...data.history.map((h) => h.payout)),
       },
       duration: Date.now() - this.session.startedAt.getTime(),
     };

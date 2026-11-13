@@ -35,6 +35,7 @@ const STATIC_BUTTONS = new Map<string, ButtonResult>([
   // Dice
   ['dice_roll', { kind: 'action', action: { type: 'roll' } }],
   ['dice_cancel_bet', { kind: 'action', action: { type: 'cancel_bet' } }],
+  ['dice_finish', { kind: 'action', action: { type: 'finish_session' } }],
   [
     'dice_bet_sum',
     {
@@ -247,6 +248,14 @@ export class GameButtonsHandler extends InteractionHandler {
 
     const result = legacyParseButton(btn.customId);
     if (result.kind === 'ignore') return;
+
+    if (!session.players.some((p) => p.userId === btn.user.id)) {
+      await btn.reply({
+        content: 'Você não está participando desta partida.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
 
     if (result.kind === 'modal') {
       try {
