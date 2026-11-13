@@ -390,6 +390,7 @@ export class WordleNotificationService {
         lease_id: null,
         lease_started_at: null,
         message_id: result === 'found' ? messageId! : null,
+        ...(result === 'confirmed_absent' ? { channel_id: null } : {}),
       })
       .where(
         and(
