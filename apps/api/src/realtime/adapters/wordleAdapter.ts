@@ -21,6 +21,20 @@ const GUESS_RATE_LIMIT_MAX = 3;
 const DAY_CHANGED_MESSAGE =
   'O dia do jogo mudou. O tabuleiro foi atualizado para a palavra de hoje.';
 
+const recordedDatesByService = new WeakMap<
+  WordleService,
+  WeakMap<Client, string>
+>();
+
+function getRecordedDates(service: WordleService): WeakMap<Client, string> {
+  let map = recordedDatesByService.get(service);
+  if (!map) {
+    map = new WeakMap();
+    recordedDatesByService.set(service, map);
+  }
+  return map;
+}
+
 async function sendInit(
   service: WordleService,
   auth: WsSessionPayload,
@@ -29,9 +43,13 @@ async function sendInit(
 ): Promise<void> {
   // Presence and achievements are side effects of joining: a failure in
   // either must not keep the player out of the game.
+  const initDate = service.currentDate();
   if (seat === 'player') {
     await service
       .recordParticipation(auth.userId, auth.guildId)
+      .then(() => {
+        getRecordedDates(service).set(client, initDate);
+      })
       .catch((error: unknown) => {
         logger.error('wordle.presence_failed', {
           error,
@@ -91,6 +109,7 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
 
   setup(_ctx: AdapterContext, dependencies: RoomDependencies) {
     const service = dependencies.wordle;
+    const recordedDates = getRecordedDates(service);
     return {
       session: service,
       messageHandlers: {
@@ -163,12 +182,17 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
               await sendInit(service, auth, client, 'player');
               return;
             }
+            const shouldRecordParticipation =
+              recordedDates.get(client) !== draft.date;
             const result = await service.writeDraft(
               auth.userId,
               auth.guildId,
               draft,
-              { recordParticipation: false },
+              { recordParticipation: shouldRecordParticipation },
             );
+            if (shouldRecordParticipation && result.status === 'saved') {
+              recordedDates.set(client, draft.date);
+            }
             sendMessage<WordleServerMessage>(client, {
               type: 'draft_result',
               payload: { ...result, requestId },
