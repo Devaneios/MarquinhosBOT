@@ -31,8 +31,9 @@ import {
 import type { LastfmTopListenedPeriod } from '@marquinhos/contracts/http/routes/user';
 import type { Db, DbExecutor } from '@marquinhos/database/client';
 import { scrobblesQueue, users } from '@marquinhos/database/schema';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import axios from 'axios';
+import { TokenCipherService } from 'common/crypto';
 import { log } from 'common/logging/logger';
 import { AppConfig } from 'config/app.config';
 import crypto from 'crypto';
@@ -113,7 +114,18 @@ export class LastfmService {
   constructor(
     @Inject(DB) private readonly db: Db,
     private readonly config: AppConfig,
+    @Optional() private readonly tokenCipher?: TokenCipherService,
   ) {}
+
+  private resolveSessionToken(
+    stored: string | null | undefined,
+  ): string | null {
+    if (!stored) return null;
+    if (stored.includes(':') && this.tokenCipher) {
+      return this.tokenCipher.decryptToken(stored);
+    }
+    return stored;
+  }
 
   async getSession(token: string | undefined): Promise<LastfmSessionResponse> {
     if (!token) {
@@ -258,9 +270,12 @@ export class LastfmService {
       const registeredUser = await findUser(this.db, userId);
 
       if (registeredUser?.scrobbles_on === true) {
+        const sessionKey = this.resolveSessionToken(
+          registeredUser.lastfm_session_token,
+        );
         await this.updateNowPlaying(
           track,
-          registeredUser.lastfm_session_token ?? undefined,
+          sessionKey ?? undefined,
           track.durationInMillis / 1000,
         );
         scrobblesOnUsers.push(userId);
@@ -288,10 +303,23 @@ export class LastfmService {
       const registeredUser = await findUser(this.db, userId);
 
       if (registeredUser?.scrobbles_on === true) {
+        const sessionKey = this.resolveSessionToken(
+          registeredUser.lastfm_session_token,
+        );
+        if (!sessionKey) {
+          scrobblingRequestPromises.push(
+            Promise.resolve({
+              userId,
+              success: false,
+              error: new Error('LastfmInvalidSessionKey'),
+            }),
+          );
+          continue;
+        }
         const scrobblingRequestPromise = this.scrobble(
           [track],
           [playbackData],
-          registeredUser.lastfm_session_token ?? undefined,
+          sessionKey,
         )
           .then(() => ({ userId, success: true }))
           .catch((error) => ({ userId, success: false, error }));
