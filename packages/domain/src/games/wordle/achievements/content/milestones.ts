@@ -1,6 +1,10 @@
 import { counter } from '../engine/predicates';
 import type { WordleAchievementDefinition } from '../types';
 
+const playedWithGuesses = (
+  facts: Parameters<WordleAchievementDefinition['evaluate']>[0],
+) => Math.max(0, facts.stats.played - (facts.stats.distribution[0] ?? 0));
+
 export const MILESTONES: readonly WordleAchievementDefinition[] = [
   {
     id: 'wordle_v2_wins_1',
@@ -78,7 +82,7 @@ export const MILESTONES: readonly WordleAchievementDefinition[] = [
     icon: '🏅',
     rewardXp: 25,
     hidden: false,
-    evaluate: (facts) => counter(facts.stats.played, 1),
+    evaluate: (facts) => counter(playedWithGuesses(facts), 1),
   },
   {
     id: 'wordle_v2_played_7',
@@ -91,7 +95,7 @@ export const MILESTONES: readonly WordleAchievementDefinition[] = [
     icon: '🏅',
     rewardXp: 25,
     hidden: false,
-    evaluate: (facts) => counter(facts.stats.played, 7),
+    evaluate: (facts) => counter(playedWithGuesses(facts), 7),
   },
   {
     id: 'wordle_v2_played_30',
@@ -104,7 +108,7 @@ export const MILESTONES: readonly WordleAchievementDefinition[] = [
     icon: '🏅',
     rewardXp: 75,
     hidden: false,
-    evaluate: (facts) => counter(facts.stats.played, 30),
+    evaluate: (facts) => counter(playedWithGuesses(facts), 30),
   },
   {
     id: 'wordle_v2_played_100',
@@ -117,7 +121,7 @@ export const MILESTONES: readonly WordleAchievementDefinition[] = [
     icon: '🏅',
     rewardXp: 150,
     hidden: false,
-    evaluate: (facts) => counter(facts.stats.played, 100),
+    evaluate: (facts) => counter(playedWithGuesses(facts), 100),
   },
   {
     id: 'wordle_v2_played_365',
@@ -130,7 +134,7 @@ export const MILESTONES: readonly WordleAchievementDefinition[] = [
     icon: '🏅',
     rewardXp: 750,
     hidden: false,
-    evaluate: (facts) => counter(facts.stats.played, 365),
+    evaluate: (facts) => counter(playedWithGuesses(facts), 365),
   },
   {
     id: 'wordle_v2_streak_3',
