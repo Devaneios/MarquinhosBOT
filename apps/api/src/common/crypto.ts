@@ -68,8 +68,11 @@ function decryptRaw(
     if (!ivB64 || !tagB64 || !ciphertextB64) return null;
     const iv = Buffer.from(ivB64, 'base64');
     const tag = Buffer.from(tagB64, 'base64');
+    if (iv.length !== 12 || tag.length !== 16) return null;
     const ciphertext = Buffer.from(ciphertextB64, 'base64');
-    const decipher = createDecipheriv(ALGORITHM, key, iv);
+    const decipher = createDecipheriv(ALGORITHM, key, iv, {
+      authTagLength: 16,
+    });
     decipher.setAuthTag(tag);
     return Buffer.concat([
       decipher.update(ciphertext),
