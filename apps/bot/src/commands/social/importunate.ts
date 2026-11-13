@@ -1,7 +1,9 @@
+import { getVoiceConnection } from '@discordjs/voice';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { resolveGuildMember } from '@marquinhos/utils/discord';
 import { Command } from '@sapphire/framework';
 import { joinVoiceChannel } from 'discord-player';
+import { MessageFlags } from 'discord.js';
 
 export class ImportunateCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
@@ -31,7 +33,7 @@ export class ImportunateCommand extends MarquinhosCommand {
       interaction.options.getMember('importunado'),
     );
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     if (!member) {
       await interaction.editReply({
@@ -47,6 +49,13 @@ export class ImportunateCommand extends MarquinhosCommand {
       return;
     }
 
+    if (getVoiceConnection(member.guild.id)) {
+      await interaction.editReply({
+        content: 'Já estou conectado a um canal de voz neste servidor.',
+      });
+      return;
+    }
+
     if (member.voice.channel) {
       const connection = joinVoiceChannel({
         channelId: member.voice.channel.id,
@@ -57,8 +66,12 @@ export class ImportunateCommand extends MarquinhosCommand {
         content: `Pronto, já tô lá no canal de voz irritando a vida do ${member.user.tag}!`,
       });
       setTimeout(() => {
-        connection.disconnect();
-        connection.destroy();
+        try {
+          connection.disconnect();
+          connection.destroy();
+        } catch {
+          // Connection may already be destroyed or disconnected.
+        }
       }, 3000);
     } else {
       await interaction.editReply({
