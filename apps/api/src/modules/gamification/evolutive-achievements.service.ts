@@ -227,6 +227,9 @@ export class EvolutiveAchievementsService {
           .onConflictDoNothing();
 
         row = await getRow(this.database, userId, guildId, baseId);
+        if (def.thresholds[1] !== undefined && def.thresholds[1] <= 1) {
+          continue;
+        }
       }
 
       if (!row || row.current_tier >= 5) continue;
