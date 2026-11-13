@@ -183,7 +183,7 @@ export class HttpClient {
 
       // Check if response is not ok
       if (!response.ok) {
-        const errorText = await response.text();
+        const errorText = await this.withTimeout(response.text(), timeout);
         let errorData: unknown = errorText;
         try {
           errorData = JSON.parse(errorText);
@@ -252,6 +252,10 @@ export class HttpClient {
       let response = await this.fetchWithRetry(config.url || url, config);
       response = await this.applyResponseInterceptors(response);
 
+      if (response.status === 204) {
+        return undefined;
+      }
+
       const bodyTimeout = config.timeout ?? this.defaultTimeout;
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
@@ -275,14 +279,14 @@ export class HttpClient {
     data?: unknown,
     options?: Omit<RequestConfig, 'method' | 'body'>,
   ): Promise<unknown> {
+    const hasBody = data !== undefined;
     return this.request(endpoint, {
       ...options,
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
+      body: hasBody ? JSON.stringify(data) : undefined,
+      headers: hasBody
+        ? { 'Content-Type': 'application/json', ...options?.headers }
+        : options?.headers,
     });
   }
 
@@ -291,14 +295,14 @@ export class HttpClient {
     data?: unknown,
     options?: Omit<RequestConfig, 'method' | 'body'>,
   ): Promise<unknown> {
+    const hasBody = data !== undefined;
     return this.request(endpoint, {
       ...options,
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
+      body: hasBody ? JSON.stringify(data) : undefined,
+      headers: hasBody
+        ? { 'Content-Type': 'application/json', ...options?.headers }
+        : options?.headers,
     });
   }
 
