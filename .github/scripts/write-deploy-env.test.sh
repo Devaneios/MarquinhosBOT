@@ -35,7 +35,7 @@ export MARQUINHOS_WEB_URL='https://web.example.test/space path'
 
 "$script_dir/write-deploy-env.sh" "$test_dir/deploy/.env"
 
-[[ $(stat -c '%a' "$test_dir/deploy/.env") == 600 ]]
+[[ $(stat -c '%a' "$test_dir/deploy/.env" 2>/dev/null || stat -f '%Lp' "$test_dir/deploy/.env") == 600 ]]
 grep -Fq "CORS_ORIGINS='https://one.example.test,https://two.example.test'" "$test_dir/deploy/.env"
 grep -Fq "DISCORD_CLIENT_ID='client id'" "$test_dir/deploy/.env"
 grep -Fq "MARQUINHOS_WEB_URL='https://web.example.test/space path'" "$test_dir/deploy/.env"
