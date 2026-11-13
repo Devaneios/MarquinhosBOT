@@ -3,7 +3,7 @@ import type { Db } from '@marquinhos/database/client';
 import { wordleUsedWords, wordlistReview } from '@marquinhos/database/schema';
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
-import { asc, count, eq, isNull } from 'drizzle-orm';
+import { asc, count, isNull } from 'drizzle-orm';
 import { WordBankService } from 'modules/wordle/words/word-bank.service';
 import type { z } from 'zod';
 
@@ -73,11 +73,15 @@ export class WordleWordlistReviewService {
   ): Promise<ReviewWordResult> {
     await this.ensureReviewSeeded();
 
+    const normalizedWord = word.trim().toLowerCase();
     await this.database
-      .update(wordlistReview)
-      .set({ is_banned: decision === 'remove' })
-      .where(eq(wordlistReview.word, word));
-    this.wordBank.setBanned(word, decision === 'remove');
+      .insert(wordlistReview)
+      .values({ word: normalizedWord, is_banned: decision === 'remove' })
+      .onConflictDoUpdate({
+        target: wordlistReview.word,
+        set: { is_banned: decision === 'remove' },
+      });
+    this.wordBank.setBanned(normalizedWord, decision === 'remove');
 
     return this.getNextReviewWord();
   }
@@ -93,6 +97,6 @@ export class WordleWordlistReviewService {
       .select({ count: count() })
       .from(wordleUsedWords);
     const used = row?.count ?? 0;
-    return { total, used, remaining: total - used };
+    return { total, used, remaining: Math.max(0, total - used) };
   }
 }
