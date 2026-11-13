@@ -1,5 +1,6 @@
 import type { LetterFeedback } from '@marquinhos/contracts/wordle';
 import { computeFeedback } from '@marquinhos/domain/games/wordle/feedback';
+import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 
 export interface PlayerState {
   userId: string;
@@ -84,10 +85,13 @@ export class WordleRaceEngine {
       return { error: 'No attempts remaining' };
     }
 
-    const normalizedGuess = guess.trim().toLowerCase();
-    if (normalizedGuess.length !== this.state.targetWord.length) {
+    const normalizedTarget = stripDiacritics(
+      this.state.targetWord,
+    ).toLowerCase();
+    const normalizedGuess = stripDiacritics(guess.trim()).toLowerCase();
+    if (normalizedGuess.length !== normalizedTarget.length) {
       return {
-        error: `Word must be ${this.state.targetWord.length} letters long`,
+        error: `Word must be ${normalizedTarget.length} letters long`,
       };
     }
 
@@ -96,16 +100,17 @@ export class WordleRaceEngine {
       return { error: 'Invalid word' };
     }
 
+    const normalizedCanonical = stripDiacritics(canonicalGuess).toLowerCase();
     if (
       player.guesses.some(
-        (g) => g.guess.toLowerCase() === canonicalGuess.toLowerCase(),
+        (g) => stripDiacritics(g.guess).toLowerCase() === normalizedCanonical,
       )
     ) {
       return { error: 'Already guessed this word' };
     }
 
-    const feedback = computeFeedback(canonicalGuess, this.state.targetWord);
-    const solved = canonicalGuess.toLowerCase() === this.state.targetWord;
+    const feedback = computeFeedback(normalizedCanonical, normalizedTarget);
+    const solved = normalizedCanonical === normalizedTarget;
 
     player.guesses.push({ guess: canonicalGuess, feedback });
     player.attempts += 1;
