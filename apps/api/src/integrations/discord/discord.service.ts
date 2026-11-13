@@ -88,6 +88,7 @@ export class DiscordService {
         Authorization: `Bearer ${token}`,
       },
     });
+    if (!response.ok) return null;
 
     const user = discordUserSchema.safeParse(await response.json());
     return user.success ? user.data : null;
