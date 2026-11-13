@@ -129,11 +129,19 @@ export class GamificationService {
 
     await this.levelingService.addXpToUser(userId, guildId, config.xp_amount);
 
-    const leveledUp = await this.levelingService.applyLevelUps(userId, guildId);
-    const userLevel = await this.levelingService.getUserLevel(userId, guildId);
+    const initialLeveledUp = await this.levelingService.applyLevelUps(
+      userId,
+      guildId,
+    );
     const unlockedAchievements =
       await this.achievementService.checkAndAwardAchievements(userId, guildId);
     await this.evolutiveService.checkAndEvolveAll(userId, guildId);
+    const bonusLeveledUp = await this.levelingService.applyLevelUps(
+      userId,
+      guildId,
+    );
+    const leveledUp = initialLeveledUp || bonusLeveledUp;
+    const userLevel = await this.levelingService.getUserLevel(userId, guildId);
 
     return {
       userLevel,
