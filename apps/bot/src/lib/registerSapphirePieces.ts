@@ -106,33 +106,37 @@ const preconditions = [
   ['UserInVoiceChannel', UserInVoiceChannelPrecondition],
 ] as const;
 
-export function registerSapphireCommands() {
+export async function registerSapphireCommands() {
   for (const [name, piece] of commands) {
-    container.stores.loadPiece({ name, piece, store: 'commands' });
+    await container.stores.loadPiece({ name, piece, store: 'commands' });
   }
 }
 
-export function registerSapphireInteractionHandlers() {
+export async function registerSapphireInteractionHandlers() {
   for (const [name, piece] of interactionHandlers) {
-    container.stores.loadPiece({ name, piece, store: 'interaction-handlers' });
+    await container.stores.loadPiece({
+      name,
+      piece,
+      store: 'interaction-handlers',
+    });
   }
 }
 
-export function registerSapphireListeners() {
+export async function registerSapphireListeners() {
   for (const [name, piece] of listeners) {
-    container.stores.loadPiece({ name, piece, store: 'listeners' });
+    await container.stores.loadPiece({ name, piece, store: 'listeners' });
   }
 }
 
-export function registerSapphirePreconditions() {
+export async function registerSapphirePreconditions() {
   for (const [name, piece] of preconditions) {
-    container.stores.loadPiece({ name, piece, store: 'preconditions' });
+    await container.stores.loadPiece({ name, piece, store: 'preconditions' });
   }
 }
 
-export function registerSapphirePieces() {
-  registerSapphireCommands();
-  registerSapphireInteractionHandlers();
-  registerSapphireListeners();
-  registerSapphirePreconditions();
+export async function registerSapphirePieces() {
+  await registerSapphireCommands();
+  await registerSapphireInteractionHandlers();
+  await registerSapphireListeners();
+  await registerSapphirePreconditions();
 }

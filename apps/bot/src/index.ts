@@ -57,8 +57,6 @@ const healthServer = Bun.serve({
   },
 });
 
-registerSapphirePieces();
-
 function registerShutdownHooks() {
   const cleanup = () => {
     logger.info('Shutting down gracefully...');
@@ -74,6 +72,7 @@ function registerShutdownHooks() {
 async function main() {
   try {
     logger.info('Starting Marquinhos™ with Sapphire...');
+    await registerSapphirePieces();
     await initializePlayer(client);
     registerShutdownHooks();
     SpreadsheetService.getInstance();
