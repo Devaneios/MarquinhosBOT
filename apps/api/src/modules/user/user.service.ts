@@ -245,9 +245,10 @@ export class UserService {
       ? (this.tokenCipher.decryptToken(row.lastfm_session_token) ?? undefined)
       : undefined;
 
-    const profileName = (
-      await this.lastfmService.getUserInfo(sessionKey)
-    ).realname.split(' ')[0];
+    const profileName =
+      (await this.lastfmService.getUserInfo(sessionKey))?.realname?.split(
+        ' ',
+      )[0] || username;
     const topArtists = await this.lastfmService.getTopArtists(username, period);
     const artistsPromises: Promise<{
       name: string;
@@ -297,9 +298,10 @@ export class UserService {
       ? (this.tokenCipher.decryptToken(row.lastfm_session_token) ?? undefined)
       : undefined;
 
-    const profileName = (
-      await this.lastfmService.getUserInfo(sessionKey)
-    ).realname.split(' ')[0];
+    const profileName =
+      (
+        await this.lastfmService.getUserInfo(sessionKey).catch(() => null)
+      )?.realname?.split(' ')[0] || username;
 
     const topAlbums = await this.lastfmService.getTopAlbums(username, period);
 
@@ -349,9 +351,10 @@ export class UserService {
       ? (this.tokenCipher.decryptToken(row.lastfm_session_token) ?? undefined)
       : undefined;
 
-    const profileName = (
-      await this.lastfmService.getUserInfo(sessionKey)
-    ).realname.split(' ')[0];
+    const profileName =
+      (
+        await this.lastfmService.getUserInfo(sessionKey).catch(() => null)
+      )?.realname?.split(' ')[0] || username;
 
     const topTracks = await this.lastfmService.getTopTracks(username, period);
 
