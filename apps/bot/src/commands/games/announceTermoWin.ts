@@ -48,11 +48,15 @@ export async function announceTermoWin(
     const msg = await channel.send(
       `TAPORRA ${name} EU NUNCA ACREDITEI! ESPERO QUE NUNCA MAIS CONSIGA!`,
     );
-    msg.react(':marquinhosverao:1192666622356361367');
+    await msg
+      .react?.('marquinhosverao:1192666622356361367')
+      ?.catch(() => undefined);
   } else if (result.attempts === 2) {
     const msg = await channel.send(
       `OLOCO ${name} QUASE HEIN! DA PRÓXIMA VAI SER NO MÍNIMO 5!`,
     );
-    msg.react(':marquinhosverao:1192666622356361367');
+    await msg
+      .react?.('marquinhosverao:1192666622356361367')
+      ?.catch(() => undefined);
   }
 }
