@@ -96,18 +96,19 @@ export function RoomLobbyScreen({
     if (!selectedGame) return;
     setBusy(true);
     setActionRejected(false);
+    const effectiveQueue = isQueueEligible(selectedGame) ? queueEnabled : false;
     try {
       const room = await createRoom({
         game: selectedGame,
         identity,
-        queueEnabled,
+        queueEnabled: effectiveQueue,
       });
       onRoomReady({
         roomId: room.roomId,
         token: room.token,
         roomKey: room.roomKey,
         game: selectedGame,
-        queueEnabled,
+        queueEnabled: effectiveQueue,
       });
     } catch {
       setActionRejected(true);
@@ -226,7 +227,11 @@ export function RoomLobbyScreen({
                 <MenuAction
                   key={g.id}
                   label={t(`games:${g.id}.name`)}
-                  onSelect={() => setSelectedGame(g.id)}
+                  onSelect={() => {
+                    setSelectedGame(g.id);
+                    setPickerOpen(false);
+                    if (!isQueueEligible(g.id)) setQueueEnabled(false);
+                  }}
                 />
               ))}
             </div>
