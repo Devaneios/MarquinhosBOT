@@ -49,16 +49,19 @@ function uniqueRecords(records: readonly ProgressRecord[]): ProgressRecord[] {
   });
 }
 
-function streakRuns(dates: readonly string[]): number[] {
-  const runs: number[] = [];
-  let previous: number | null = null;
-  for (const date of dates) {
-    const current = dayNumber(date);
-    if (previous !== null && current === previous) continue;
-    if (previous !== null && current - previous === 1)
-      runs[runs.length - 1]! += 1;
-    else runs.push(1);
-    previous = current;
+function streakRunBounds(
+  days: readonly number[],
+): Array<{ start: number; end: number; length: number }> {
+  const runs: Array<{ start: number; end: number; length: number }> = [];
+  for (const day of days) {
+    const prev = runs[runs.length - 1];
+    if (prev && day === prev.end) continue;
+    if (prev && day === prev.end + 1) {
+      prev.end = day;
+      prev.length += 1;
+    } else {
+      runs.push({ start: day, end: day, length: 1 });
+    }
   }
   return runs;
 }
@@ -75,7 +78,6 @@ export function computePreservedWordleStats(
   const played = uniqueRecords(records).filter(isPlayed);
   const solved = played.filter((record) => record.solved);
   const solvedDates = [...new Set(solved.map((record) => record.date))].sort();
-  const runs = streakRuns(solvedDates);
   const carryover = options.carryover;
   const today = dayNumber(options.today);
   const anchor =
@@ -83,25 +85,33 @@ export function computePreservedWordleStats(
       ? dayNumber(carryover.lastSolvedDate)
       : null;
   const solvedDays = solvedDates.map(dayNumber);
-  const lastSolved = solvedDays.at(-1);
-  let currentStreak = 0;
+  const runs = streakRunBounds(solvedDays);
 
-  if (lastSolved !== undefined && today - lastSolved <= 1) {
-    // The run of consecutive solved days that ends on the last solve.
-    let runStart = lastSolved;
-    for (let index = solvedDays.length - 2; index >= 0; index--) {
-      if (solvedDays[index] !== runStart - 1) break;
-      runStart -= 1;
-    }
-    // A run that reaches back to the day after the anchor continues the
-    // carried streak, however long ago the cutover was.
-    currentStreak =
+  const effectiveRunLength = (run: {
+    start: number;
+    end: number;
+    length: number;
+  }): number => {
+    // A run that begins on or before the day after the carryover anchor and
+    // reaches at least the anchor extends the carried-over streak length.
+    if (
       anchor !== null &&
       carryover &&
-      lastSolved > anchor &&
-      runStart <= anchor + 1
-        ? carryover.currentStreak + (lastSolved - anchor)
-        : lastSolved - runStart + 1;
+      carryover.currentStreak > 0 &&
+      run.start <= anchor + 1 &&
+      run.end >= anchor
+    ) {
+      return Math.max(run.length, carryover.currentStreak + (run.end - anchor));
+    }
+    return run.length;
+  };
+
+  const effectiveRuns = runs.map(effectiveRunLength);
+  const lastRun = runs.at(-1);
+  let currentStreak = 0;
+
+  if (lastRun !== undefined && today - lastRun.end <= 1) {
+    currentStreak = effectiveRunLength(lastRun);
   } else if (
     anchor !== null &&
     carryover &&
@@ -120,7 +130,11 @@ export function computePreservedWordleStats(
     wins,
     winRate: played.length === 0 ? 0 : Math.round((wins / played.length) * 100),
     currentStreak,
-    bestStreak: Math.max(carryover?.bestStreak ?? 0, ...runs, currentStreak),
+    bestStreak: Math.max(
+      carryover?.bestStreak ?? 0,
+      ...effectiveRuns,
+      currentStreak,
+    ),
     distribution,
   };
 }
