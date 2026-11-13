@@ -84,6 +84,7 @@ export class AdminCommand extends MarquinhosCommand {
                   opt
                     .setName('canal')
                     .setDescription('Canal de texto para o Termo')
+                    .addChannelTypes(ChannelType.GuildText)
                     .setRequired(true),
                 ),
             )
@@ -261,6 +262,17 @@ export class AdminCommand extends MarquinhosCommand {
     }
 
     if (subgroup === 'termo') {
+      if (
+        !interaction.guildId ||
+        !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
+      ) {
+        await interaction.reply({
+          content:
+            '❌ Somente administradores neste servidor podem gerenciar o Terminhos.',
+          flags: MessageFlags.Ephemeral,
+        });
+        return;
+      }
       if (sub === 'conversa') {
         if (
           !interaction.guildId ||
@@ -743,6 +755,15 @@ export class AdminCommand extends MarquinhosCommand {
     }
 
     if (subgroup === 'wordlist') {
+      if (
+        !interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)
+      ) {
+        await interaction.reply({
+          content: '❌ Somente administradores podem revisar a wordlist.',
+          flags: MessageFlags.Ephemeral,
+        });
+        return;
+      }
       if (sub === 'review') {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
