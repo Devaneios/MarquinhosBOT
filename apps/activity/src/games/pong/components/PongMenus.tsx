@@ -95,7 +95,7 @@ function ModeMenu({
   return (
     <GameMenu
       gameId="pong"
-      onBack={() => navigate('..')}
+      onBack={() => navigate('..', { relative: 'path' })}
       backLabelKey="back"
       actions={[
         {
@@ -154,19 +154,22 @@ function SettingsMenu({ settings }: { settings: PongMenuSettings }) {
       onBestOfChange={setBestOf}
       ranked={ranked}
       onRankedChange={setRanked}
-      onBack={() => navigate('..')}
+      onBack={() => navigate('..', { relative: 'path' })}
     />
   );
 }
 
 function HowToPlayMenu() {
   const navigate = useNavigate();
-  return <HowToPlay onBack={() => navigate('..')} />;
+  return <HowToPlay onBack={() => navigate('..', { relative: 'path' })} />;
 }
 
 function CompetitiveMenu({ identity }: { identity: DiscordIdentity }) {
   const navigate = useNavigate();
   return (
-    <CompetitiveScreen identity={identity} onBack={() => navigate('..')} />
+    <CompetitiveScreen
+      identity={identity}
+      onBack={() => navigate('..', { relative: 'path' })}
+    />
   );
 }
