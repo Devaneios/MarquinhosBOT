@@ -44,7 +44,31 @@ export class SandboxManager {
     private readonly repoMirrorHostPath: string = DEFAULT_REPO_MIRROR_HOST_PATH,
   ) {}
 
+  private readonly inFlightCreations = new Map<string, Promise<string>>();
+
   async getOrCreateSession(
+    userId: string,
+    guildId: string,
+    channelId: string,
+  ): Promise<string> {
+    const key = `${userId}:${channelId}`;
+    const inflight = this.inFlightCreations.get(key);
+    if (inflight) return inflight;
+
+    const promise = this.getOrCreateSessionInternal(
+      userId,
+      guildId,
+      channelId,
+    ).finally(() => {
+      if (this.inFlightCreations.get(key) === promise) {
+        this.inFlightCreations.delete(key);
+      }
+    });
+    this.inFlightCreations.set(key, promise);
+    return promise;
+  }
+
+  private async getOrCreateSessionInternal(
     userId: string,
     guildId: string,
     channelId: string,
@@ -70,6 +94,9 @@ export class SandboxManager {
         channelId,
         containerId: existing.container_id,
       });
+      await this.docker
+        .removeContainer(existing.container_id)
+        .catch(() => undefined);
       await this.deleteSession(userId, channelId);
     }
 
@@ -149,20 +176,32 @@ export class SandboxManager {
     const rows = await this.runningSessions();
 
     for (const row of rows) {
-      const running = await this.docker.isRunning(row.container_id);
-      if (!running) {
-        await this.deleteSession(row.user_id, row.channel_id);
-        continue;
-      }
-      if (row.last_used_at < cutoff) {
-        await this.docker.stopContainer(row.container_id);
-        await this.docker.removeContainer(row.container_id);
-        await this.deleteSession(row.user_id, row.channel_id);
-        logger.info('sandbox.session_swept', {
+      try {
+        const running = await this.docker.isRunning(row.container_id);
+        if (!running) {
+          await this.docker
+            .removeContainer(row.container_id)
+            .catch(() => undefined);
+          await this.deleteSession(row.user_id, row.channel_id);
+          continue;
+        }
+        if (row.last_used_at < cutoff) {
+          await this.docker.stopContainer(row.container_id);
+          await this.docker.removeContainer(row.container_id);
+          await this.deleteSession(row.user_id, row.channel_id);
+          logger.info('sandbox.session_swept', {
+            userId: row.user_id,
+            channelId: row.channel_id,
+            containerId: row.container_id,
+            idleMs: Date.now() - row.last_used_at,
+          });
+        }
+      } catch (error) {
+        logger.warn('sandbox.sweep_session_failed', {
           userId: row.user_id,
           channelId: row.channel_id,
           containerId: row.container_id,
-          idleMs: Date.now() - row.last_used_at,
+          error,
         });
       }
     }
@@ -200,6 +239,9 @@ export class SandboxManager {
       if (running) {
         liveCount++;
       } else {
+        await this.docker
+          .removeContainer(row.container_id)
+          .catch(() => undefined);
         await this.deleteSession(row.user_id, row.channel_id);
       }
     }
