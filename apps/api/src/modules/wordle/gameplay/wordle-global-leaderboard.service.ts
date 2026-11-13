@@ -55,7 +55,7 @@ export class WordleGlobalLeaderboardService {
           attempts: number;
           solved: boolean;
         }>(sql`
-          SELECT user_id, attempts, solved FROM wordle_sessions
+          SELECT user_id, ${rankedAttempts(sql``)} AS attempts, solved FROM wordle_sessions
           WHERE guild_id = ${guildId} AND word_date = ${today}
             AND (attempts > 0 OR solved_from_draft)
           ORDER BY solved DESC, ${rankedAttempts(sql``)} ASC, solved_from_draft ASC, created_at ASC, user_id ASC
@@ -72,7 +72,7 @@ export class WordleGlobalLeaderboardService {
         attempts: number;
         solved: boolean;
       }>(sql`
-        SELECT s.user_id, s.attempts, s.solved
+        SELECT s.user_id, ${rankedAttempts(sql`s.`)} AS attempts, s.solved
         FROM wordle_community_daily_presence p
         JOIN wordle_global_sessions s ON s.user_id = p.user_id AND s.word_date = p.word_date
         WHERE p.guild_id = ${guildId} AND p.word_date = ${today}
@@ -106,6 +106,7 @@ export class WordleGlobalLeaderboardService {
         SELECT s.user_id, s.word_date, ${rankedAttempts(sql`s.`)} AS attempts, s.solved, s.word_length
         FROM wordle_sessions s
         WHERE s.guild_id = ${guildId} AND s.word_date < ${cutoverDate}
+          AND s.word_length > 0
           AND (s.attempts > 0 OR s.solved_from_draft)
         UNION ALL
         SELECT s.user_id, s.word_date, ${rankedAttempts(sql`s.`)} AS attempts, s.solved, d.word_length
@@ -121,7 +122,7 @@ export class WordleGlobalLeaderboardService {
         GROUP BY word_date
       )
       SELECT m.user_id, count(d.word_date)::int AS total_days,
-        round(sum(coalesce(s.attempts, d.word_length + 1))::numeric / count(d.word_date), 2)::float8 AS avg_score
+        round(sum(CASE WHEN s.solved = true THEN s.attempts ELSE d.word_length + 1 END)::numeric / count(d.word_date), 2)::float8 AS avg_score
       FROM members m JOIN eligible_days d ON d.word_date >= m.joined_on
       LEFT JOIN session_scores s ON s.user_id = m.user_id AND s.word_date = d.word_date
       WHERE d.word_date BETWEEN ${from} AND ${today}
