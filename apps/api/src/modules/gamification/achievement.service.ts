@@ -22,6 +22,7 @@ import {
   isNull,
   ne,
   notInArray,
+  sql,
 } from 'drizzle-orm';
 import { LevelingService } from 'modules/gamification/leveling.service';
 import type { Achievement, UserAchievement } from 'modules/gamification/types';
@@ -142,26 +143,24 @@ export class AchievementService {
         reward_xp: definition.rewardXp,
         archived_at: null,
       }));
-      await tx.insert(achievements).values(catalogRows).onConflictDoNothing();
-      for (const row of catalogRows) {
-        await tx
-          .update(achievements)
-          .set({
-            name: row.name,
-            description: row.description,
-            rarity: row.rarity,
-            icon: row.icon,
-            reward_xp: row.reward_xp,
+      await tx
+        .insert(achievements)
+        .values(catalogRows)
+        .onConflictDoUpdate({
+          target: achievements.id,
+          set: {
+            name: sql`excluded.name`,
+            description: sql`excluded.description`,
+            rarity: sql`excluded.rarity`,
+            icon: sql`excluded.icon`,
+            reward_xp: sql`excluded.reward_xp`,
             archived_at: null,
-          })
-          .where(
-            and(
-              eq(achievements.id, row.id),
-              eq(achievements.category, 'wordle'),
-              isNull(achievements.condition),
-            ),
-          );
-      }
+          },
+          setWhere: and(
+            eq(achievements.category, 'wordle'),
+            isNull(achievements.condition),
+          ),
+        });
     });
   }
 
