@@ -223,6 +223,19 @@ export function useWordleBoard(
           });
           return;
         case 'guess_result': {
+          window.clearTimeout(draftAckTimeoutRef.current);
+          draftInFlightRequestIdRef.current = null;
+          draftInFlightRef.current = false;
+          draftPendingRef.current = null;
+          draftRequestRef.current = null;
+          draftRevisionRef.current = 0;
+          const emptyRow = {
+            rowIndex: message.payload.guesses.length,
+            cells: Array(message.payload.wordLength).fill(''),
+            activeIndex: 0,
+          };
+          draftLatestRef.current = emptyRow;
+          draftSavedSnapshotRef.current = JSON.stringify(emptyRow);
           setGuesses(message.payload.guesses);
           setSolved(message.payload.solved);
           if (message.payload.achievementUpdate !== undefined) {
