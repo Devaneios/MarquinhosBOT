@@ -25,10 +25,15 @@ type Listener = (message: ActivityMessage) => void;
 // only a game without a room board could ever fill it.
 const MAX_BACKLOG = 256;
 
+interface BacklogEntry {
+  message: ActivityMessage;
+  seenBy: ReadonlySet<Listener>;
+}
+
 interface Backlog {
   game: GameId | null;
   // null once handed over: later messages reach the board live.
-  messages: ActivityMessage[] | null;
+  messages: BacklogEntry[] | null;
   lateListeners: Set<Listener>;
   flushScheduled: boolean;
 }
@@ -56,11 +61,13 @@ function reopenBacklogOnGameChange(backlog: Backlog, game: GameId) {
 }
 
 function flushBacklog(backlog: Backlog, listeners: ReadonlySet<Listener>) {
-  const messages = backlog.messages ?? [];
+  const entries = backlog.messages ?? [];
   backlog.messages = null;
   for (const listener of backlog.lateListeners) {
     if (!listeners.has(listener)) continue;
-    for (const message of messages) listener(message);
+    for (const entry of entries) {
+      if (!entry.seenBy.has(listener)) listener(entry.message);
+    }
   }
   backlog.lateListeners.clear();
 }
@@ -104,10 +111,11 @@ export function RoomConnectionProvider({
         } else devwarn('[room] ignoring malformed room state', message.payload);
         return;
       }
-      listenersRef.current.forEach((listener) => listener(message));
+      const seenBy = new Set(listenersRef.current);
+      seenBy.forEach((listener) => listener(message));
       const backlog = backlogRef.current;
       if (backlog.messages && backlog.messages.length < MAX_BACKLOG)
-        backlog.messages.push(message);
+        backlog.messages.push({ message, seenBy });
     })
       .then((room) => {
         if (cancelled) {
@@ -140,6 +148,21 @@ export function RoomConnectionProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
+  useEffect(() => {
+    const backlog = backlogRef.current;
+    if (
+      connectionState === 'connected' &&
+      roomState !== null &&
+      roomState.game === backlog.game &&
+      backlog.messages !== null &&
+      backlog.lateListeners.size > 0 &&
+      !backlog.flushScheduled
+    ) {
+      backlog.flushScheduled = true;
+      queueMicrotask(() => flushBacklog(backlog, listenersRef.current));
+    }
+  }, [connectionState, roomState]);
+
   const send = (message: ActivityMessage) => {
     roomRef.current?.send(message.type, message.payload);
   };
@@ -161,6 +184,7 @@ export function RoomConnectionProvider({
     }
     return () => {
       listenersRef.current.delete(onMessage);
+      backlog.lateListeners.delete(onMessage);
     };
   };
 
