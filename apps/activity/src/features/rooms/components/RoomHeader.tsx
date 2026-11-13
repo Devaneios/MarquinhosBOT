@@ -24,13 +24,22 @@ export function RoomHeader({ onLeave }: RoomHeaderProps) {
   const [names, setNames] = useState<Record<string, string>>({});
   const [rejection, setRejection] = useState<string | null>(null);
 
+  const memberCount = ctx?.roomState?.members.length ?? 0;
+
   useEffect(() => {
-    getParticipantDisplayNames().then(setNames);
-  }, []);
+    let cancelled = false;
+    getParticipantDisplayNames().then((next) => {
+      if (!cancelled) setNames(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [memberCount]);
 
   useEffect(() => {
     if (!ctx) return;
-    return ctx.subscribe((message) => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const unsubscribe = ctx.subscribe((message) => {
       if (message.type !== ACTION_REJECTED) return;
       const parsed = parseMessage(roomServerMessageSchema, message);
       setRejection(
@@ -38,9 +47,13 @@ export function RoomHeader({ onLeave }: RoomHeaderProps) {
           ? parsed.payload.error
           : t('rooms:actionRejected'),
       );
-      const timer = setTimeout(() => setRejection(null), 3000);
-      return () => clearTimeout(timer);
+      clearTimeout(timer);
+      timer = setTimeout(() => setRejection(null), 3000);
     });
+    return () => {
+      clearTimeout(timer);
+      unsubscribe();
+    };
   }, [ctx, t]);
 
   const roomState = ctx?.roomState ?? null;
@@ -108,7 +121,7 @@ export function RoomHeader({ onLeave }: RoomHeaderProps) {
         </div>
       </div>
 
-      {pickerOpen && (
+      {pickerOpen && !matchInProgress && (
         <div className="flex flex-wrap gap-2">
           {GAME_REGISTRY.filter((g) => g.status === 'PLAY').map((g) => (
             <button
