@@ -40,7 +40,13 @@ export async function fetchContract(
     body: hasBody ? JSON.stringify(request.body) : undefined,
   });
   if (!response.ok) throw new HttpError(response.status, url);
-  const parsed = contract.response.safeParse(await response.json());
+  let raw: unknown;
+  try {
+    raw = await response.json();
+  } catch {
+    throw new Error(`Invalid response from ${url}`);
+  }
+  const parsed = contract.response.safeParse(raw);
   if (!parsed.success) throw new Error(`Invalid response from ${url}`);
   return parsed.data;
 }
