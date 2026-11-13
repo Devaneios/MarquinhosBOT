@@ -6,11 +6,19 @@ export class AppConfig {
   constructor(private readonly config: ConfigService) {}
 
   private read(name: string): string | undefined {
-    return this.config.get<string>(name);
+    const raw = this.config.get<string>(name)?.trim();
+    return raw ? raw : undefined;
+  }
+
+  private readNumber(name: string, fallback: number): number {
+    const raw = this.read(name);
+    if (raw === undefined) return fallback;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : fallback;
   }
 
   get httpPort(): number {
-    return Number(this.read('HTTP_PORT')) || 3000;
+    return this.readNumber('HTTP_PORT', 3000) || 3000;
   }
 
   get corsOrigins(): string[] {
@@ -117,22 +125,22 @@ export class AppConfig {
   }
 
   get aiThreadTokenBudget(): number {
-    return Number(this.read('AI_THREAD_TOKEN_BUDGET') ?? 120_000);
+    return this.readNumber('AI_THREAD_TOKEN_BUDGET', 120_000);
   }
 
   get aiResearchMaxRounds(): number {
-    return Number(this.read('AI_RESEARCH_MAX_ROUNDS') ?? 5);
+    return this.readNumber('AI_RESEARCH_MAX_ROUNDS', 5);
   }
 
   get aiResearchMaxSearches(): number {
-    return Number(this.read('AI_RESEARCH_MAX_SEARCHES') ?? 30);
+    return this.readNumber('AI_RESEARCH_MAX_SEARCHES', 30);
   }
 
   get aiResearchMaxFetches(): number {
-    return Number(this.read('AI_RESEARCH_MAX_FETCHES') ?? 40);
+    return this.readNumber('AI_RESEARCH_MAX_FETCHES', 40);
   }
 
   get aiResearchDeadlineMs(): number {
-    return Number(this.read('AI_RESEARCH_DEADLINE_MS') ?? 900_000);
+    return this.readNumber('AI_RESEARCH_DEADLINE_MS', 900_000);
   }
 }
