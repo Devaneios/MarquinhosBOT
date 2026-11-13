@@ -166,10 +166,26 @@ function isBlockedIpv4(address: string): boolean {
 }
 
 function isBlockedIpv6(address: string): boolean {
-  const addr = address.toLowerCase().split('%')[0] ?? '';
+  const raw = address.toLowerCase().split('%')[0] ?? '';
+  if (!raw) return true;
+  let addr: string;
+  try {
+    addr = new URL(`http://[${raw}]/`).hostname.slice(1, -1).toLowerCase();
+  } catch {
+    return true;
+  }
   if (addr === '::' || addr === '::1') return true;
-  const mapped = addr.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/);
-  if (mapped) return isBlockedIpv4(mapped[1] ?? '');
+  const mappedDotted = addr.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/);
+  if (mappedDotted) return isBlockedIpv4(mappedDotted[1] ?? '');
+  const mappedHex = addr.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  if (mappedHex) {
+    const hi = Number.parseInt(mappedHex[1] ?? '', 16);
+    const lo = Number.parseInt(mappedHex[2] ?? '', 16);
+    return isBlockedIpv4(
+      `${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`,
+    );
+  }
+  if (addr.startsWith('64:ff9b:') || addr.startsWith('2002:')) return true;
   const head = addr.split(':')[0];
   if (!head) return true;
   const group = Number.parseInt(head, 16);
@@ -462,7 +478,13 @@ export function createPageFetcher(
         );
       }
 
-      const { bytes, truncated } = await readCappedBody(response);
+      let bytes: Uint8Array;
+      let truncated: boolean;
+      try {
+        ({ bytes, truncated } = await readCappedBody(response));
+      } catch (err) {
+        fail(`Failed to read response body: ${getErrorMessage(err)}`);
+      }
       const isHtml =
         contentType.includes('html') || contentType.includes('xhtml');
       const isPdf = contentType.includes('pdf');
