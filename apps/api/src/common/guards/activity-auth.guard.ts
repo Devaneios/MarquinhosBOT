@@ -36,7 +36,11 @@ export class ActivityAuthGuard implements CanActivate {
       throw new InternalServerErrorException('Internal Server Error');
     }
     if (!user?.id) throw new UnauthorizedException('Unauthorized');
-    Object.defineProperty(req, 'user', { value: user });
+    Object.defineProperty(req, 'user', {
+      value: user,
+      configurable: true,
+      writable: true,
+    });
     return true;
   }
 }
