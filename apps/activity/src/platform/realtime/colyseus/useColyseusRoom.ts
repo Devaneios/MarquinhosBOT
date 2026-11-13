@@ -39,6 +39,9 @@ function acquireRoom(key: string, connect: () => Promise<Room>): PooledRoom {
     cleanupTimer: null,
   };
   roomPool.set(key, entry);
+  entry.promise.catch(() => {
+    if (roomPool.get(key) === entry) roomPool.delete(key);
+  });
   return entry;
 }
 
@@ -49,13 +52,13 @@ function releaseRoom(key: string, onBeforeLeave?: (room: Room) => void): void {
   if (entry.refs > 0) return;
   entry.cleanupTimer = setTimeout(() => {
     if (entry.refs > 0) return;
+    if (roomPool.get(key) === entry) roomPool.delete(key);
     entry.promise
       .then((room) => {
         onBeforeLeave?.(room);
         return room.leave(true);
       })
-      .catch(() => undefined)
-      .finally(() => roomPool.delete(key));
+      .catch(() => undefined);
   }, 100);
 }
 
