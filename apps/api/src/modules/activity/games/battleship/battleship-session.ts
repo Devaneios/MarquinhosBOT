@@ -392,13 +392,21 @@ export class BattleshipSession {
     const outgoing = this.players.find((p) => p.userId === outgoingUserId);
     if (!outgoing) return null;
 
+    const incomingSpectatorConns = this.spectators.get(incomingUserId);
+    this.spectators.delete(incomingUserId);
+    const incomingConnections = new Set(incomingSpectatorConns ?? []);
+    incomingConnections.add(connection);
+
     this.players = this.players.filter((p) => p.userId !== outgoingUserId);
     this.players.push({
       userId: incomingUserId,
       side: outgoing.side,
       connected: true,
-      connections: new Set([connection]),
+      connections: incomingConnections,
     });
+    if (outgoing.connections.size > 0) {
+      this.spectators.set(outgoingUserId, new Set(outgoing.connections));
+    }
 
     this.engine = new BattleshipEngine();
     this.resultRecorded = false;
