@@ -52,6 +52,16 @@ export class AuthController {
       throw new InternalServerErrorException('Internal Server Error');
     }
 
+    const discordUser = await this.discordService.getDiscordUser(
+      tokens.access_token,
+    );
+    if (!discordUser)
+      throw new BadGatewayException('Discord user lookup failed');
+
+    if (!(await this.userService.exists(discordUser.id))) {
+      await this.userService.create(discordUser.id);
+    }
+
     response.setHeader('Created-At', new Date().toISOString());
     response.setHeader('Expires-In', tokens.expires_in.toString());
     response.setHeader('Authorization', `Bearer ${encryptedToken}`);
@@ -64,16 +74,6 @@ export class AuthController {
       'Access-Control-Allow-Headers',
       'Authorization, Refresh-Token, Expires-In, Created-At',
     );
-
-    const discordUser = await this.discordService.getDiscordUser(
-      tokens.access_token,
-    );
-    if (!discordUser)
-      throw new BadGatewayException('Discord user lookup failed');
-
-    if (!(await this.userService.exists(discordUser.id))) {
-      await this.userService.create(discordUser.id);
-    }
 
     return { message: 'Authenticated successfully' };
   }
@@ -103,10 +103,31 @@ export class AuthController {
       tokens.access_token,
       refreshExpiresAt,
     );
+    if (!encryptedToken) {
+      throw new InternalServerErrorException('Internal Server Error');
+    }
 
+    const encryptedNewRefreshToken = tokens.refresh_token
+      ? this.tokenCipher.encryptToken(tokens.refresh_token)
+      : null;
+    if (tokens.refresh_token && !encryptedNewRefreshToken) {
+      throw new InternalServerErrorException('Internal Server Error');
+    }
+
+    response.setHeader('Created-At', new Date().toISOString());
+    response.setHeader('Expires-In', tokens.expires_in.toString());
     response.setHeader('Authorization', `Bearer ${encryptedToken}`);
-    response.setHeader('Access-Control-Expose-Headers', 'Authorization');
-    response.setHeader('Access-Control-Allow-Headers', 'Authorization');
+    if (encryptedNewRefreshToken) {
+      response.setHeader('Refresh-Token', encryptedNewRefreshToken);
+    }
+    response.setHeader(
+      'Access-Control-Expose-Headers',
+      'Authorization, Refresh-Token, Expires-In, Created-At',
+    );
+    response.setHeader(
+      'Access-Control-Allow-Headers',
+      'Authorization, Refresh-Token, Expires-In, Created-At',
+    );
     return { message: 'Token refreshed' };
   }
 
