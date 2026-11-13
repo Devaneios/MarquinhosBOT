@@ -161,15 +161,45 @@ export class ThreadSessionStore {
    * items with a single summary item. Without this a long-lived thread
    * eventually exceeds the model's context window and every turn starts failing.
    */
-  async compact(threadId: string, summary: string): Promise<void> {
-    const rows = await this.db
-      .select({ seq: aiThreadItems.seq })
+  private isUserMessageJson(itemJson: string): boolean {
+    try {
+      const parsed = JSON.parse(itemJson) as { role?: unknown };
+      return parsed.role === 'user';
+    } catch {
+      return false;
+    }
+  }
+
+  private async resolveCompactionSplit(threadId: string): Promise<{
+    ascRows: { seq: number; item_json: string }[];
+    splitIndex: number;
+  } | null> {
+    const descRows = await this.db
+      .select({ seq: aiThreadItems.seq, item_json: aiThreadItems.item_json })
       .from(aiThreadItems)
       .where(eq(aiThreadItems.thread_id, threadId))
       .orderBy(desc(aiThreadItems.seq));
-    if (rows.length <= KEEP_RECENT_ITEMS) return;
+    if (descRows.length <= KEEP_RECENT_ITEMS) return null;
 
-    const cutoffSeq = rows[KEEP_RECENT_ITEMS]!.seq;
+    const ascRows = [...descRows].reverse();
+    let splitIndex = ascRows.length - KEEP_RECENT_ITEMS;
+    // Keep complete turns anchored on a user message so tool calls/outputs stay paired.
+    while (
+      splitIndex > 0 &&
+      !this.isUserMessageJson(ascRows[splitIndex]!.item_json)
+    ) {
+      splitIndex--;
+    }
+    if (splitIndex <= 0) return null;
+    return { ascRows, splitIndex };
+  }
+
+  async compact(threadId: string, summary: string): Promise<void> {
+    const plan = await this.resolveCompactionSplit(threadId);
+    if (!plan) return;
+
+    const { ascRows, splitIndex } = plan;
+    const cutoffSeq = ascRows[splitIndex - 1]!.seq;
     const summaryItem: ConversationItem = {
       role: 'user',
       content: `<conversa_anterior_resumida>\n${summary}\n</conversa_anterior_resumida>`,
@@ -194,8 +224,8 @@ export class ThreadSessionStore {
 
     logger.info('ai.thread.compacted', {
       threadId,
-      removedItems: rows.length - KEEP_RECENT_ITEMS,
-      keptItems: KEEP_RECENT_ITEMS,
+      removedItems: splitIndex,
+      keptItems: ascRows.length - splitIndex,
     });
   }
 
@@ -204,9 +234,12 @@ export class ThreadSessionStore {
    * summarize exactly what it is about to lose.
    */
   async itemsToCompact(threadId: string): Promise<ConversationItem[]> {
+    const plan = await this.resolveCompactionSplit(threadId);
+    if (!plan) return [];
+    const { ascRows, splitIndex } = plan;
     const all = await this.loadTranscript(threadId);
-    if (all.length <= KEEP_RECENT_ITEMS) return [];
-    return all.slice(0, all.length - KEEP_RECENT_ITEMS);
+    if (all.length <= ascRows.length - splitIndex) return [];
+    return all.slice(0, splitIndex);
   }
 
   private async nextSeq(exec: DbExecutor, threadId: string): Promise<number> {
