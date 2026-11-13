@@ -23,7 +23,16 @@ import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics'
 import { Inject, Injectable } from '@nestjs/common';
 import { logger } from 'common/logging/logger';
 import { DB } from 'database/database.tokens';
-import { and, asc, countDistinct, eq, inArray, isNull, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  countDistinct,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  sql,
+} from 'drizzle-orm';
 import { LevelingService } from 'modules/gamification/leveling.service';
 import { WordleAlbumService } from 'modules/wordle/community/wordle-album.service';
 import { getWordleTimeZone } from 'modules/wordle/wordle-date';
@@ -53,6 +62,11 @@ export class WordleGlobalAchievementService {
   ) {}
 
   private async loadHistory(userId: string, exec: DbExecutor) {
+    const legacyHistory = await this.historyService.getLegacyAchievementHistory(
+      userId,
+      parseGuesses,
+      exec,
+    );
     const rows = await exec
       .select({ session: wordleGlobalSessions, day: wordleGlobalDays })
       .from(wordleGlobalSessions)
@@ -60,7 +74,14 @@ export class WordleGlobalAchievementService {
         wordleGlobalDays,
         eq(wordleGlobalSessions.word_date, wordleGlobalDays.word_date),
       )
-      .where(eq(wordleGlobalSessions.user_id, userId))
+      .where(
+        legacyHistory.cutoverDate
+          ? and(
+              eq(wordleGlobalSessions.user_id, userId),
+              gte(wordleGlobalSessions.word_date, legacyHistory.cutoverDate),
+            )
+          : eq(wordleGlobalSessions.user_id, userId),
+      )
       .orderBy(asc(wordleGlobalSessions.word_date));
     const firstSolves = await exec
       .select({ date: wordleCommunityFirstSolves.word_date })
@@ -83,22 +104,26 @@ export class WordleGlobalAchievementService {
       userId,
       exec,
     );
-    const history: AchievementHistoryDay[] = rows.map(({ session, day }) => {
-      const normalized = stripDiacritics(day.word);
-      return {
-        date: session.word_date,
-        solved: session.solved,
-        solvedFromDraft: session.solved_from_draft,
-        attempts: session.attempts,
-        guesses: parseGuesses(session.guesses),
-        wordLength: day.word_length,
-        answerHasRepeatedLetters: new Set(normalized).size < normalized.length,
-        answerHasAccent: day.word !== normalized,
-        startedAt: session.created_at,
-        solvedAt: session.solved ? session.solved_at : null,
-        firstSolverInGuild: firstDates.has(session.word_date),
-      };
-    });
+    const history: AchievementHistoryDay[] = [
+      ...legacyHistory.days,
+      ...rows.map(({ session, day }) => {
+        const normalized = stripDiacritics(day.word);
+        return {
+          date: session.word_date,
+          solved: session.solved,
+          solvedFromDraft: session.solved_from_draft,
+          attempts: session.attempts,
+          guesses: parseGuesses(session.guesses),
+          wordLength: day.word_length,
+          answerHasRepeatedLetters:
+            new Set(normalized).size < normalized.length,
+          answerHasAccent: day.word !== normalized,
+          startedAt: session.created_at,
+          solvedAt: session.solved ? session.solved_at : null,
+          firstSolverInGuild: firstDates.has(session.word_date),
+        };
+      }),
+    ];
 
     return {
       rows,
@@ -224,7 +249,11 @@ export class WordleGlobalAchievementService {
           rewardXp: unlock.rewardXp,
           unlockedAt: new Date(unlock.unlockedAt).toISOString(),
           progress: null,
-          holdersPercent: null,
+          holdersPercent: total?.count
+            ? Math.round(
+                ((percentages.get(unlock.id) ?? 0) / total.count) * 10000,
+              ) / 100
+            : null,
         }));
       return wordleAchievementsOverviewSchema.parse({
         achievements: [...collection, ...retired],
@@ -234,7 +263,10 @@ export class WordleGlobalAchievementService {
   }
 
   async getStats(userId: string) {
-    return this.historyService.getStats(userId, undefined, this.database);
+    const today = new Intl.DateTimeFormat('sv-SE', {
+      timeZone: getWordleTimeZone(),
+    }).format(new Date(this.now()));
+    return this.historyService.getStats(userId, today, this.database);
   }
 
   async checkAndAward(
