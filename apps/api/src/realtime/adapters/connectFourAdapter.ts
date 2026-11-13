@@ -88,6 +88,10 @@ export const connectFourAdapter: GameRoomAdapter<ConnectFourSession> = {
   getWinnerUserId(session) {
     return session.getWinnerUserId();
   },
+  isMatchEnded(session) {
+    const state = session.getPublicState();
+    return Boolean(state.winner || state.isDraw);
+  },
   substitutePlayer(session, outgoingUserId, incomingUserId, incomingClient) {
     const disc = session.substitutePlayer(
       outgoingUserId,

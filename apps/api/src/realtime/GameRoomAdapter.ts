@@ -67,6 +67,9 @@ export interface GameRoomAdapter<TSession> {
 
   // Required only for the 6 queue-eligible games (supportsQueue: true).
   getWinnerUserId?(session: TSession): string | null;
+  // Optional check for concluded matches without a winner (e.g. a draw), so
+  // room controls like switch_game are not blocked after a drawn game.
+  isMatchEnded?(session: TSession): boolean;
   // Must send the incoming client its `init`: it joined as queued with a
   // null seat, and `init` is the only message that tells a client its side.
   substitutePlayer?(

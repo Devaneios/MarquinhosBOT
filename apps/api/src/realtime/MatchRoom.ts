@@ -126,8 +126,22 @@ export function createMatchRoom(dependencies: RoomDependencies) {
         ? dependencies.wsSessionTokens.verify(options.token)
         : null;
       if (!session) throw new Error('Invalid or expired session token');
-      if (roomKey(session) !== options.roomKey) {
+      const expectedKey = roomKey(session);
+      if (expectedKey !== options.roomKey) {
         throw new Error('Room key does not match session identity');
+      }
+      if (this.roomKeyValue && expectedKey !== this.roomKeyValue) {
+        const sameMultiRoom =
+          this.mode === 'multi' &&
+          session.mode === 'multi' &&
+          Boolean(session.roomId) &&
+          (!this.roomIdValue || session.roomId === this.roomIdValue) &&
+          this.roomKeyValue.startsWith(
+            `${session.instanceId}:${session.roomId}:`,
+          );
+        if (!sameMultiRoom) {
+          throw new Error('Room key does not match target room');
+        }
       }
       if (this.game === 'wordle' && !canPlayCommunityWordle(session)) {
         throw new Error(WORDLE_MEMBERSHIP_ERROR);
@@ -436,6 +450,7 @@ export function createMatchRoom(dependencies: RoomDependencies) {
     }
 
     private isMatchInProgress(): boolean {
+      if (this.adapter.isMatchEnded?.(this.session)) return false;
       if (!this.adapter.getWinnerUserId) return false;
       const playerCount = this.members.filter(
         (m) => m.role === 'player',
