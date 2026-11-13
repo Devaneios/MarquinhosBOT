@@ -67,7 +67,12 @@ export class WordleService {
     return this.globalDay.getOrCreate(date);
   }
 
-  getAchievementsOverview(userId: string, guildId: string, viewerId: string) {
+  async getAchievementsOverview(
+    userId: string,
+    guildId: string,
+    viewerId: string,
+  ) {
+    await this.drafts.finalizePlayerBefore(userId, this.today());
     return this.achievements.getOverview(userId, guildId, viewerId);
   }
 
@@ -151,6 +156,7 @@ export class WordleService {
     guildId: string,
   ): Promise<WordleSession | null> {
     const today = this.today();
+    await this.drafts.finalizePlayerBefore(userId, today);
     const [row] = await this.database
       .select()
       .from(wordleGlobalSessions)
@@ -297,7 +303,9 @@ export class WordleService {
   }
 
   async getStreak(userId: string, _guildId: string) {
-    const stats = await this.history.getStats(userId);
+    const today = this.today();
+    await this.drafts.finalizePlayerBefore(userId, today);
+    const stats = await this.history.getStats(userId, today);
     return { currentStreak: stats.currentStreak, maxStreak: stats.bestStreak };
   }
 
