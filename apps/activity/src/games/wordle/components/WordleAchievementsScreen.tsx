@@ -30,7 +30,7 @@ const DEFAULT_STATS: WordlePlayerStats = {
   winRate: 0,
   currentStreak: 0,
   bestStreak: 0,
-  distribution: [0, 0, 0, 0, 0, 0, 0],
+  distribution: [0, 0, 0, 0, 0, 0, 0, 0],
 };
 
 type AchievementFilter = 'all' | 'unlocked' | 'locked';
