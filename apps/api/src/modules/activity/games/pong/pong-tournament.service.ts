@@ -253,9 +253,28 @@ export class PongTournamentService {
             eq(pongTournamentEntries.user_id, winnerId),
           ),
         );
+      if (
+        loserId &&
+        match.bracket !== 'swiss' &&
+        (tournament.format !== 'double-elimination' ||
+          match.bracket === 'lower' ||
+          match.bracket === 'grand-final')
+      ) {
+        await tx
+          .update(pongTournamentEntries)
+          .set({ eliminated: true })
+          .where(
+            and(
+              eq(pongTournamentEntries.tournament_id, match.tournament_id),
+              eq(pongTournamentEntries.user_id, loserId),
+            ),
+          );
+      }
       await this.resolveSources(tx, match, winnerId, loserId);
       await this.advanceByes(tx, match.tournament_id);
-      await this.advanceSwiss(tx, tournament, match.round);
+      if (match.bracket === 'swiss') {
+        await this.advanceSwiss(tx, tournament, match.round);
+      }
       await this.finishIfComplete(tx, tournament, match, winnerId);
       return match.tournament_id;
     });
@@ -442,13 +461,15 @@ export class PongTournamentService {
       userId: entry.user_id,
       rating: entry.rating,
       score: entry.score,
-      opponents: matches.flatMap((match) =>
-        match.player_a === entry.user_id
-          ? [match.player_b!]
-          : match.player_b === entry.user_id
-            ? [match.player_a!]
-            : [],
-      ),
+      opponents: matches.flatMap((match) => {
+        const opp =
+          match.player_a === entry.user_id
+            ? match.player_b
+            : match.player_b === entry.user_id
+              ? match.player_a
+              : null;
+        return opp ? [opp] : [];
+      }),
     }));
   }
 
