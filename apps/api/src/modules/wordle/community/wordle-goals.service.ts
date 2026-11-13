@@ -98,12 +98,24 @@ export class WordleGoalsService {
   }
 
   async listWithProgress(guildId: string) {
-    const goals = await this.list(guildId);
+    const rows = await this.database
+      .select()
+      .from(wordleCommunityGoals)
+      .where(eq(wordleCommunityGoals.guild_id, guildId))
+      .orderBy(
+        asc(wordleCommunityGoals.starts_at),
+        asc(wordleCommunityGoals.id),
+      );
+    const now = this.now();
     return Promise.all(
-      goals.map(async (goal) => ({
-        ...goal,
-        progress: await this.progress(goal.id, guildId),
-      })),
+      rows.map(async (row) => {
+        const mapped = this.map(row);
+        return {
+          ...mapped,
+          status: goalStateAt(mapped, now),
+          progress: await this.progressForGoal(row, guildId),
+        };
+      }),
     );
   }
 
@@ -154,11 +166,18 @@ export class WordleGoalsService {
         ),
       );
     if (!goal) throw new Error('Goal not found');
+    return this.progressForGoal(goal, guildId);
+  }
+
+  private async progressForGoal(
+    goal: typeof wordleCommunityGoals.$inferSelect,
+    guildId: string,
+  ): Promise<{ count: number; contributors: string[] }> {
     if (goal.status === 'completed' || goal.status === 'expired') {
       const facts = await this.database
         .select({ userId: wordleGoalContributions.user_id })
         .from(wordleGoalContributions)
-        .where(eq(wordleGoalContributions.goal_id, goalId));
+        .where(eq(wordleGoalContributions.goal_id, goal.id));
       return {
         count: facts.length,
         contributors: [...new Set(facts.map((fact) => fact.userId))].sort(),
