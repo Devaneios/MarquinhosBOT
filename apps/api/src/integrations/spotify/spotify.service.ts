@@ -6,6 +6,8 @@ import SpotifyWebApi from 'spotify-web-api-node';
 @Injectable()
 export class SpotifyService {
   private readonly spotifyApi: SpotifyWebApi;
+  private tokenExpiresAt = 0;
+  private tokenPromise: Promise<void> | null = null;
 
   constructor(config: AppConfig) {
     this.spotifyApi = new SpotifyWebApi({
@@ -136,7 +138,21 @@ export class SpotifyService {
   }
 
   private async _getAccessToken() {
-    const data = await this.spotifyApi.clientCredentialsGrant();
-    this.spotifyApi.setAccessToken(data.body.access_token);
+    if (Date.now() < this.tokenExpiresAt) return;
+    if (this.tokenPromise) {
+      await this.tokenPromise;
+      return;
+    }
+    this.tokenPromise = (async () => {
+      const data = await this.spotifyApi.clientCredentialsGrant();
+      this.spotifyApi.setAccessToken(data.body.access_token);
+      const ttlSeconds = Math.max(1, (data.body.expires_in ?? 3600) - 60);
+      this.tokenExpiresAt = Date.now() + ttlSeconds * 1000;
+    })();
+    try {
+      await this.tokenPromise;
+    } finally {
+      this.tokenPromise = null;
+    }
   }
 }
