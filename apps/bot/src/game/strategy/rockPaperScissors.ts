@@ -137,7 +137,7 @@ export class RockPaperScissorsGame extends BaseGame<RPSData, RPSAction> {
       description += '🏁 **Jogo Finalizado!**\n\n';
 
       // Final scores
-      const sortedPlayers = this.session.players.sort(
+      const sortedPlayers = [...this.session.players].sort(
         (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
       );
 
@@ -223,7 +223,7 @@ export class RockPaperScissorsGame extends BaseGame<RPSData, RPSAction> {
 
   async finish(): Promise<GameResult> {
     const data = this.data;
-    const sortedPlayers = this.session.players.sort(
+    const sortedPlayers = [...this.session.players].sort(
       (a, b) => (data.scores[b.userId] || 0) - (data.scores[a.userId] || 0),
     );
 
@@ -236,10 +236,25 @@ export class RockPaperScissorsGame extends BaseGame<RPSData, RPSAction> {
       rewards[player.userId] = baseRewards;
     });
 
+    const topScore =
+      sortedPlayers.length > 0 ? data.scores[sortedPlayers[0]!.userId] || 0 : 0;
+    const winners =
+      topScore > 0
+        ? sortedPlayers
+            .filter((p) => (data.scores[p.userId] || 0) === topScore)
+            .map((p) => p.userId)
+        : [];
+    const losers =
+      topScore > 0
+        ? sortedPlayers
+            .filter((p) => (data.scores[p.userId] || 0) < topScore)
+            .map((p) => p.userId)
+        : sortedPlayers.map((p) => p.userId);
+
     return {
       sessionId: this.session.id,
-      winners: sortedPlayers.length > 0 ? [sortedPlayers[0].userId] : [],
-      losers: sortedPlayers.slice(1).map((p) => p.userId),
+      winners,
+      losers,
       rewards,
       stats: {
         rounds: data.rounds,
