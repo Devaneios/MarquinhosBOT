@@ -195,7 +195,7 @@ export class RpsSession {
       });
     }
 
-    if (this.onSessionEnded) {
+    if (this.identity.mode === 'single' && this.onSessionEnded) {
       this.onSessionEnded();
     }
   }
