@@ -183,7 +183,14 @@ async function startGame(
   gameKey: string,
 ) {
   const userId = interaction.user.id;
-  const guildId = interaction.guildId!;
+  const guildId = interaction.guildId;
+  if (!guildId) {
+    await interaction.reply({
+      content: 'Este comando só pode ser usado em servidores!',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
   const channelId = interaction.channelId;
   const gameType = GAME_TYPE_MAP[gameKey];
 
