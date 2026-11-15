@@ -175,14 +175,12 @@ describe('global Wordle achievements', () => {
         unlocked_at: 40,
       },
     ]);
-    await testDb.db
-      .insert(wordleCommunityParticipation)
-      .values({
-        user_id: 'legacy-player',
-        guild_id: 'legacy-a',
-        first_seen_at: 1,
-        last_seen_at: 1,
-      });
+    await testDb.db.insert(wordleCommunityParticipation).values({
+      user_id: 'legacy-player',
+      guild_id: 'legacy-a',
+      first_seen_at: 1,
+      last_seen_at: 1,
+    });
     await testDb.db.insert(wordleGlobalSessions).values({
       id: 'already-earned-session',
       user_id: 'already-earned',
@@ -198,13 +196,11 @@ describe('global Wordle achievements', () => {
         },
       ]),
     });
-    await testDb.db
-      .insert(userLevels)
-      .values({
-        user_id: 'already-earned',
-        guild_id: 'legacy-a',
-        total_xp: 999,
-      });
+    await testDb.db.insert(userLevels).values({
+      user_id: 'already-earned',
+      guild_id: 'legacy-a',
+      total_xp: 999,
+    });
     const service = createWordleTestGlobalAchievementService(
       () => Date.parse('2026-11-01T15:00:00Z'),
       testDb.db,
@@ -228,7 +224,7 @@ describe('global Wordle achievements', () => {
       rewardXp: 300,
       unlockedAt: new Date(50).toISOString(),
       progress: null,
-      holdersPercent: null,
+      holdersPercent: 100,
     });
     expect(retired).not.toHaveProperty('patternPreview');
     expect(await service.checkAndAward('already-earned', 'legacy-a')).toEqual({

@@ -20,10 +20,12 @@ export function WordleBingoPanel({
   const [retry, setRetry] = useState(0);
   useEffect(() => {
     let active = true;
-    setError(false);
     load().then(
       (rows) => {
-        if (active) setCards(rows);
+        if (active) {
+          setError(false);
+          setCards(rows);
+        }
       },
       () => {
         if (active) setError(true);
@@ -42,7 +44,13 @@ export function WordleBingoPanel({
       {error ? (
         <p role="alert">
           {t('bingoError')}{' '}
-          <button type="button" onClick={() => setRetry((value) => value + 1)}>
+          <button
+            type="button"
+            onClick={() => {
+              setError(false);
+              setRetry((value) => value + 1);
+            }}
+          >
             {t('showcaseRetry')}
           </button>
         </p>

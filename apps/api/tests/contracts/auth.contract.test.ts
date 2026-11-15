@@ -51,22 +51,42 @@ beforeAll(async () => {
 afterAll(() => server.close());
 
 describe('auth contracts', () => {
-  it('serves the discord and last.fm login urls', async () => {
+  it('serves the discord and last.fm login urls with signed state', async () => {
     const discord = await callContract(server.http, auth.discordLoginUrl, {
       query: { state: 'abc' },
     });
     const lastfm = await callContract(server.http, auth.lastfmLoginUrl, {});
 
-    expect(discord.data).toBe('https://discord.test/oauth?state=abc');
+    const signedState = new URL(discord.data).searchParams.get('state');
+    expect(signedState).toBeTruthy();
+    expect(signedState).not.toBe('abc');
     expect(lastfm.data).toBe('https://last.fm.test/auth');
   });
 
-  it('logs in with an oauth code', async () => {
+  it('logs in with an oauth code and valid signed state', async () => {
+    const discord = await callContract(server.http, auth.discordLoginUrl, {
+      query: { state: 'abc' },
+    });
+    const state = new URL(discord.data).searchParams.get('state')!;
     const response = await callContract(server.http, auth.login, {
-      query: { code: 'oauth-code' },
+      query: { code: 'oauth-code', state },
     });
 
     expect(response).toEqual({ message: 'Authenticated successfully' });
+  });
+
+  it('supports existing clients that do not return OAuth state', async () => {
+    const response = await fetch(
+      `${server.origin}/api/auth/login?code=oauth-code`,
+    );
+    expect(response.status).toBe(200);
+  });
+
+  it('rejects tampered oauth state on login', async () => {
+    const res = await fetch(
+      `${server.origin}/api/auth/login?code=oauth-code&state=forged.state`,
+    );
+    expect(res.status).toBe(400);
   });
 
   it('refreshes a token from the Refresh-Token header', async () => {

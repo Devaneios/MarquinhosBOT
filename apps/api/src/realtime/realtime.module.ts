@@ -10,9 +10,10 @@ import { WordleService } from 'modules/wordle/wordle.service';
 import { WordBankService } from 'modules/wordle/words/word-bank.service';
 import { GameServer } from 'realtime/game-server.service';
 import { ROOM_DEPENDENCIES } from 'realtime/room-dependencies';
+import { RedisModule } from 'redis/redis.module';
 
 @Module({
-  imports: [ActivityModule, GamificationModule, WordleModule],
+  imports: [RedisModule, ActivityModule, GamificationModule, WordleModule],
   providers: [
     GameServer,
     {

@@ -106,8 +106,8 @@ deploy_api() {
   backup_api_data
   tag_rollback_image marquinhos-api marquinhos-api
   tag_sandbox_rollback_image
-  compose build api sandbox
-  compose up --detach --wait --wait-timeout 90 postgres
+  [[ "${SKIP_BUILD:-0}" == "1" ]] || compose build api sandbox
+  compose up --detach --wait --wait-timeout 90 postgres redis
   # Generous: the first Postgres boot also imports the SQLite data before the
   # API reports healthy.
   if ! compose up --detach --no-deps --force-recreate --wait --wait-timeout 300 api; then
@@ -124,17 +124,20 @@ deploy_api() {
 
 deploy_bot() {
   tag_rollback_image marquinhos-bot marquinhos-bot
-  compose build bot
+  [[ "${SKIP_BUILD:-0}" == "1" ]] || compose build bot
   if ! compose up --detach --no-deps --force-recreate --wait --wait-timeout 120 bot; then
     docker logs marquinhos-bot --tail 200 2>&1 || true
     rollback_bot || true
     exit 1
   fi
+  if [[ "${REGISTER_SLASH_COMMANDS:-1}" == "1" ]]; then
+    compose run --rm --no-deps -T bot bun dist/register-slash-commands.js
+  fi
 }
 
 deploy_activity() {
   tag_rollback_image marquinhos-gateway marquinhos-activity
-  compose build gateway
+  [[ "${SKIP_BUILD:-0}" == "1" ]] || compose build gateway
   if ! compose up --detach --no-deps --force-recreate --wait --wait-timeout 90 gateway; then
     docker logs marquinhos-gateway --tail 200 2>&1 || true
     rollback_activity || true

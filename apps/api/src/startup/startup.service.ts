@@ -2,6 +2,7 @@ import type { Db } from '@marquinhos/database/client';
 import {
   Inject,
   Injectable,
+  Optional,
   type OnApplicationShutdown,
   type OnModuleInit,
 } from '@nestjs/common';
@@ -20,6 +21,7 @@ import { ResearchOrchestrator } from 'modules/ai-chat/research/research-orchestr
 import { GamificationService } from 'modules/gamification/index';
 import { WordleService } from 'modules/wordle/wordle.service';
 import { WordBankService } from 'modules/wordle/words/word-bank.service';
+import { RedisService } from 'redis/redis.service';
 import {
   STARTUP_ASSERT_WORDLE_READY,
   STARTUP_IMPORT_SQLITE,
@@ -56,7 +58,19 @@ export class StartupService implements OnModuleInit, OnApplicationShutdown {
     private readonly wordBank: WordBankService,
     private readonly boggleWordBank: BoggleWordBankService,
     private readonly wordleService: WordleService,
+    @Optional() private readonly redis?: RedisService,
   ) {}
+
+  private async runWithStartupLock(
+    lockKey: string,
+    task: () => Promise<unknown>,
+  ): Promise<void> {
+    if (this.redis) {
+      await this.redis.withLock(lockKey, 30_000, task);
+      return;
+    }
+    await task();
+  }
 
   async onModuleInit(): Promise<void> {
     await this.runMigrations(this.database);
@@ -80,9 +94,13 @@ export class StartupService implements OnModuleInit, OnApplicationShutdown {
     await this.rateLimitService.seedDefaults();
     await this.agentQuota.seedDefaults();
     await this.researchQuota.seedDefaults();
-    await this.research.reapStaleJobs();
+    await this.runWithStartupLock('startup:research-reap', () =>
+      this.research.reapStaleJobs(),
+    );
     await this.wordBank.loadBannedWords();
-    await this.wordleService.finalizeExpiredDrafts();
+    await this.runWithStartupLock('startup:finalize-drafts', () =>
+      this.wordleService.finalizeExpiredDrafts(),
+    );
     logger.info('ai.prompts.loaded', { prompts: describeStaticPrompts() });
     this.boggleWordBank.getWordSet();
     this.wordBank.warm();

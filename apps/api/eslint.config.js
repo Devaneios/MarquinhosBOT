@@ -50,6 +50,8 @@ export default [
         NodeJS: true,
         // Bun runtime globals
         Bun: 'readonly',
+        Worker: 'readonly',
+        MessageEvent: 'readonly',
         // Fetch API globals (Node.js 18+)
         fetch: 'readonly',
         Response: 'readonly',
@@ -96,7 +98,8 @@ export default [
             },
             {
               name: 'express',
-              message: 'Keep Express at the HTTP boundary and use type imports.',
+              message:
+                'Keep Express at the HTTP boundary and use type imports.',
               allowTypeImports: true,
             },
           ],
@@ -121,11 +124,13 @@ export default [
           message: 'Module cycles must be removed instead of using forwardRef.',
         },
         {
-          selector: "MemberExpression[object.name='Scope'][property.name='REQUEST']",
+          selector:
+            "MemberExpression[object.name='Scope'][property.name='REQUEST']",
           message: 'Use the default singleton provider scope.',
         },
         {
-          selector: "MemberExpression[object.name='Scope'][property.name='TRANSIENT']",
+          selector:
+            "MemberExpression[object.name='Scope'][property.name='TRANSIENT']",
           message: 'Use the default singleton provider scope.',
         },
       ],
@@ -146,7 +151,8 @@ export default [
             },
             {
               name: 'express',
-              message: 'Keep Express at the HTTP boundary and use type imports.',
+              message:
+                'Keep Express at the HTTP boundary and use type imports.',
               allowTypeImports: true,
             },
           ],
@@ -181,7 +187,8 @@ export default [
           paths: [
             {
               name: 'express',
-              message: 'Keep Express at the HTTP boundary and use type imports.',
+              message:
+                'Keep Express at the HTTP boundary and use type imports.',
               allowTypeImports: true,
             },
           ],
@@ -204,17 +211,20 @@ export default [
           message: 'Module cycles must be removed instead of using forwardRef.',
         },
         {
-          selector: "MemberExpression[object.name='Scope'][property.name='REQUEST']",
+          selector:
+            "MemberExpression[object.name='Scope'][property.name='REQUEST']",
           message: 'Use the default singleton provider scope.',
         },
         {
-          selector: "MemberExpression[object.name='Scope'][property.name='TRANSIENT']",
+          selector:
+            "MemberExpression[object.name='Scope'][property.name='TRANSIENT']",
           message: 'Use the default singleton provider scope.',
         },
         {
           selector:
             'NewExpression[callee.name=/Service$/]:not([callee.name="TurndownService"])',
-          message: 'Resolve feature services through Nest dependency injection.',
+          message:
+            'Resolve feature services through Nest dependency injection.',
         },
       ],
     },

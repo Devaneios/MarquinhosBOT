@@ -38,6 +38,12 @@ export class AuthController {
     input: ContractInputValue<typeof contract.login>,
     @Res({ passthrough: true }) response: Response,
   ): Promise<ContractResponseInput<typeof contract.login>> {
+    if (
+      input.query.state &&
+      !this.tokenCipher.verifyOAuthState(input.query.state).valid
+    ) {
+      throw new BadRequestException('Invalid OAuth state');
+    }
     const tokens = await this.discordService.requestToken(input.query.code);
     const expiresAt = Date.now() + tokens.expires_in * 1000;
     const encryptedToken = this.tokenCipher.encryptToken(
@@ -135,7 +141,8 @@ export class AuthController {
   discordLoginUrl(
     @Query('state') state: string | undefined,
   ): ContractResponseInput<typeof contract.discordLoginUrl> {
-    return { data: this.discordService.getAuthorizationUrl(state) };
+    const signedState = this.tokenCipher.signOAuthState(state);
+    return { data: this.discordService.getAuthorizationUrl(signedState) };
   }
 
   @Get('lastfmLoginUrl')

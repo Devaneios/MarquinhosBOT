@@ -35,22 +35,71 @@ import {
 
 const api = MarquinhosApiService.getInstance();
 
+const activeTimeouts = new Set<ReturnType<typeof setTimeout>>();
+const activeIntervals = new Set<ReturnType<typeof setInterval>>();
+
+function trackTimeout(
+  fn: () => void,
+  ms: number,
+): ReturnType<typeof setTimeout> {
+  const handle = setTimeout(() => {
+    activeTimeouts.delete(handle);
+    fn();
+  }, ms);
+  activeTimeouts.add(handle);
+  return handle;
+}
+
+function trackInterval(
+  fn: () => void,
+  ms: number,
+): ReturnType<typeof setInterval> {
+  const handle = setInterval(fn, ms);
+  activeIntervals.add(handle);
+  return handle;
+}
+
+export function stopReadySchedulers(): void {
+  for (const handle of activeTimeouts) {
+    clearTimeout(handle);
+  }
+  activeTimeouts.clear();
+  for (const handle of activeIntervals) {
+    clearInterval(handle);
+  }
+  activeIntervals.clear();
+}
+
 export class ReadyListener extends Listener<typeof Events.ClientReady> {
   public constructor(context: Listener.LoaderContext) {
     super(context, { event: Events.ClientReady, once: true });
   }
 
   override async run(client: Client<true>) {
-    logger.info(`Logged in as ${client.user.tag}`);
-    logger.info('Marquinhos™ is online!');
-    await api.preloadWordleConfigs([...client.guilds.cache.keys()]);
-    startBichoGame(client);
-    if (env.NODE_ENV === 'development') return;
-    startTermoScheduler(client);
-    startTermoStatsBroadcast(client);
-    startTermoWinAnnouncer(client);
-    startTermoCommunityNotifications(client);
-    startWednesdayImageScheduler(client);
+    try {
+      stopReadySchedulers();
+      logger.info(`Logged in as ${client.user.tag}`);
+      logger.info('Marquinhos™ is online!');
+      try {
+        await api.preloadWordleConfigs([...client.guilds.cache.keys()]);
+      } catch (error) {
+        logger.warn('Terminhos: failed preloading wordle configs', error);
+        reportError(error, {
+          origin: 'ReadyListener.preloadWordleConfigs',
+          logLevel: 'error',
+        });
+      }
+      startBichoGame(client);
+      if (env.NODE_ENV === 'development') return;
+      startTermoScheduler(client);
+      startTermoStatsBroadcast(client);
+      startTermoWinAnnouncer(client);
+      startTermoCommunityNotifications(client);
+      startWednesdayImageScheduler(client);
+    } catch (error) {
+      logger.error('ReadyListener failed during startup:', error);
+      reportError(error, { origin: 'ReadyListener.run', logLevel: 'error' });
+    }
   }
 }
 
@@ -94,14 +143,14 @@ function startTermoCommunityNotifications(client: Client<true>): void {
     }
   };
   void poll();
-  setInterval(() => {
+  trackInterval(() => {
     void poll();
   }, 60_000);
 }
 
 function startBichoGame(client: Client<true>) {
   client.user.setActivity(getBicho());
-  setInterval(() => {
+  trackInterval(() => {
     client.user.setActivity(getBicho());
   }, 100 * 1000);
 }
@@ -361,9 +410,9 @@ function startTermoScheduler(client: Client<true>): void {
     `Terminhos: próxima palavra em ${Math.round(msToMidnight / 60000)} minutos`,
   );
 
-  setTimeout(() => {
+  trackTimeout(() => {
     rotateTermoWord(client);
-    setInterval(() => rotateTermoWord(client), 24 * 60 * 60 * 1000);
+    trackInterval(() => rotateTermoWord(client), 24 * 60 * 60 * 1000);
   }, msToMidnight);
 }
 
@@ -459,7 +508,7 @@ async function broadcastTermoWins(client: Client<true>): Promise<void> {
 
 function startTermoWinAnnouncer(client: Client<true>): void {
   const FIFTEEN_SECONDS = 15 * 1000;
-  setInterval(() => {
+  trackInterval(() => {
     void broadcastTermoWins(client);
     void retryPendingLeaderboards(client);
   }, FIFTEEN_SECONDS);
@@ -467,7 +516,7 @@ function startTermoWinAnnouncer(client: Client<true>): void {
 
 function startTermoStatsBroadcast(client: Client<true>): void {
   const TWO_HOURS = 2 * 60 * 60 * 1000;
-  setInterval(() => broadcastTermoStats(client), TWO_HOURS);
+  trackInterval(() => broadcastTermoStats(client), TWO_HOURS);
 }
 
 function msUntilNextWednesdayAt5PM(): number {
@@ -535,7 +584,7 @@ function scheduleNextWednesday(client: Client<true>): void {
   logger.info(
     `Wednesday image: próximo post em ${Math.round(ms / 60000)} minutos`,
   );
-  setTimeout(async () => {
+  trackTimeout(async () => {
     await postWednesdayImage(client);
     scheduleNextWednesday(client);
   }, ms);

@@ -3,6 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { AppConfig } from 'config/app.config';
 import SpotifyWebApi from 'spotify-web-api-node';
 
+const SPOTIFY_TIMEOUT_MS = 10_000;
+
 @Injectable()
 export class SpotifyService {
   private readonly spotifyApi: SpotifyWebApi;
@@ -16,10 +18,32 @@ export class SpotifyService {
     });
   }
 
+  private async withTimeout<T>(
+    operation: string,
+    fn: () => Promise<T>,
+  ): Promise<T> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        fn(),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () => reject(new Error(`SpotifyTimeout:${operation}`)),
+            SPOTIFY_TIMEOUT_MS,
+          );
+        }),
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
   async getTrack(trackId: string) {
     try {
       await this._getAccessToken();
-      const track = await this.spotifyApi.getTrack(trackId);
+      const track = await this.withTimeout('getTrack', () =>
+        this.spotifyApi.getTrack(trackId),
+      );
       const artist = track.body.artists[0];
       const coverArt = track.body.album.images[0];
 
@@ -52,9 +76,11 @@ export class SpotifyService {
   ): Promise<Track | Pick<Track, 'name' | 'coverArtUrl'>> {
     try {
       await this._getAccessToken();
-      const track = await this.spotifyApi.searchTracks(query, {
-        limit: 1,
-      });
+      const track = await this.withTimeout('searchTracks', () =>
+        this.spotifyApi.searchTracks(query, {
+          limit: 1,
+        }),
+      );
 
       const item = track.body.tracks?.items[0];
 
@@ -94,9 +120,11 @@ export class SpotifyService {
   ): Promise<{ name: string; coverArtUrl?: string } | null> {
     try {
       await this._getAccessToken();
-      const artist = await this.spotifyApi.search(query, ['artist'], {
-        limit: 1,
-      });
+      const artist = await this.withTimeout('searchArtist', () =>
+        this.spotifyApi.search(query, ['artist'], {
+          limit: 1,
+        }),
+      );
 
       const item = artist.body.artists?.items[0];
 
@@ -117,9 +145,11 @@ export class SpotifyService {
   async searchAlbum(query: string) {
     try {
       await this._getAccessToken();
-      const album = await this.spotifyApi.search(query, ['album'], {
-        limit: 1,
-      });
+      const album = await this.withTimeout('searchAlbum', () =>
+        this.spotifyApi.search(query, ['album'], {
+          limit: 1,
+        }),
+      );
 
       const item = album.body.albums?.items[0];
 
@@ -144,7 +174,9 @@ export class SpotifyService {
       return;
     }
     this.tokenPromise = (async () => {
-      const data = await this.spotifyApi.clientCredentialsGrant();
+      const data = await this.withTimeout('clientCredentialsGrant', () =>
+        this.spotifyApi.clientCredentialsGrant(),
+      );
       this.spotifyApi.setAccessToken(data.body.access_token);
       const ttlSeconds = Math.max(1, (data.body.expires_in ?? 3600) - 60);
       this.tokenExpiresAt = Date.now() + ttlSeconds * 1000;

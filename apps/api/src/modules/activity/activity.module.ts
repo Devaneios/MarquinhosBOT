@@ -16,6 +16,8 @@ import { PongCompetitionService } from 'modules/activity/games/pong/pong-competi
 import { PongTournamentService } from 'modules/activity/games/pong/pong-tournament.service';
 import { WsSessionTokenService } from 'modules/activity/ws-session-token';
 import { GamificationModule } from 'modules/gamification/gamification.module';
+import { RedisThrottlerStorage } from 'redis/redis-throttler.storage';
+import { RedisModule } from 'redis/redis.module';
 
 @Module({
   imports: [
@@ -23,7 +25,14 @@ import { GamificationModule } from 'modules/gamification/gamification.module';
     CryptoModule,
     DiscordModule,
     GamificationModule,
-    ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 20 }]),
+    ThrottlerModule.forRootAsync({
+      imports: [RedisModule],
+      inject: [RedisThrottlerStorage],
+      useFactory: (storage: RedisThrottlerStorage) => ({
+        storage,
+        throttlers: [{ name: 'default', ttl: 60_000, limit: 20 }],
+      }),
+    }),
   ],
   controllers: [ActivityController],
   providers: [

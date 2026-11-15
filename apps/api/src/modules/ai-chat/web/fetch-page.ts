@@ -11,9 +11,12 @@
 import * as cheerio from 'cheerio';
 import { getErrorMessage } from 'common/errors/error-handling';
 import { lookup as dnsLookup } from 'node:dns/promises';
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import TurndownService from 'turndown';
 import { gfm } from 'turndown-plugin-gfm';
-import { z } from 'zod';
+
+const PDF_EXTRACT_TIMEOUT_MS = 15_000;
 
 export const MAX_REDIRECTS = 3;
 // 512 KB used to be the cap, and it silently destroyed exactly the pages worth
@@ -35,10 +38,8 @@ const ALLOWED_CONTENT_TYPES = [
 ];
 
 /**
- * Text extraction runs in this process with no worker, so it is CPU the API
- * cannot serve requests during. A 48-page report costs ~8s; capping pages keeps
- * a 500-page document from freezing everything, and the callers slice the text
- * down to a fraction of this anyway.
+ * Capping extracted pages keeps a 500-page document bounded even inside the
+ * background worker, and callers slice the text down to a fraction anyway.
  */
 export const MAX_PDF_PAGES = 20;
 
@@ -71,43 +72,61 @@ export interface FetchPageDeps {
   extractPdfText?: PdfTextExtractor;
 }
 
-const pdfInfoSchema = z.object({ Title: z.string() });
+type PdfWorkerResponse =
+  { ok: true; title: string; text: string } | { ok: false; error: string };
 
 /**
- * Pulls text out of a pdf, first `MAX_PDF_PAGES` pages only.
- *
- * unpdf is imported on demand because it bundles pdf.js: loading it costs real
- * startup time, and most of this process never touches a pdf. Note that pdf.js
- * detaches the buffer it is handed, so `bytes` must not be read afterwards.
+ * Resolves the sibling compiled JS worker when running from bundled `dist/`,
+ * falling back to the TypeScript worker source in dev/test runs.
+ */
+export function resolvePdfWorkerUrl(): string {
+  const bundledUrl = new URL('./pdf-worker.js', import.meta.url);
+  if (existsSync(fileURLToPath(bundledUrl))) {
+    return bundledUrl.href;
+  }
+  return new URL('./pdf-worker.ts', import.meta.url).href;
+}
+
+/**
+ * Runs PDF text extraction inside a short-lived Worker thread so pdf.js CPU
+ * parsing does not block the API HTTP/WebSocket event loop.
  */
 async function extractPdfTextWithUnpdf(bytes: Uint8Array): Promise<PdfText> {
-  const { getDocumentProxy } = await import('unpdf');
-  const pdf = await getDocumentProxy(bytes);
-
-  let title = '';
-  try {
-    const metadata = await pdf.getMetadata();
-    const info = pdfInfoSchema.safeParse(metadata.info);
-    if (info.success) title = info.data.Title.trim();
-  } catch {
-    // Metadata is a nicety; the search hit's title already covers us.
+  if (typeof Worker === 'undefined') {
+    throw new Error('PDF worker runtime is unavailable');
   }
 
-  const pages: string[] = [];
-  const limit = Math.min(pdf.numPages, MAX_PDF_PAGES);
-  for (let pageNumber = 1; pageNumber <= limit; pageNumber++) {
-    const page = await pdf.getPage(pageNumber);
-    const content = await page.getTextContent();
-    pages.push(
-      content.items
-        .map((item) => ('str' in item ? item.str : ''))
-        .join(' ')
-        .replace(/\s+/g, ' ')
-        .trim(),
-    );
-  }
+  return new Promise<PdfText>((resolve, reject) => {
+    const worker = new Worker(resolvePdfWorkerUrl());
+    let settled = false;
+    const finish = (cb: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      worker.terminate();
+      cb();
+    };
+    const timer = setTimeout(() => {
+      finish(() => reject(new Error('PDF extraction timed out')));
+    }, PDF_EXTRACT_TIMEOUT_MS);
 
-  return { text: pages.filter(Boolean).join('\n\n'), title };
+    worker.onmessage = (event: MessageEvent<PdfWorkerResponse>) => {
+      const data = event.data;
+      finish(() => {
+        if (data.ok) {
+          resolve({ text: data.text, title: data.title });
+        } else {
+          reject(new Error(data.error));
+        }
+      });
+    };
+    worker.onerror = (event) => {
+      finish(() => reject(new Error(event.message || 'PDF worker error')));
+    };
+
+    const copy = new Uint8Array(bytes);
+    worker.postMessage({ bytes: copy, maxPages: MAX_PDF_PAGES }, [copy.buffer]);
+  });
 }
 
 export type FetchPageMode = 'text' | 'links';

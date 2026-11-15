@@ -102,8 +102,7 @@ jobs:
     if: needs.changes.outputs.component != 'none'
     runs-on: ${{ needs.changes.outputs.environment == 'production' && 'hostinger-runner' || 'devaneios-runner' }}
 
-    # Throwaway Postgres for the database tests. The host port is picked by
-    # Docker so it never collides with anything already running on the runner.
+    # Throwaway Postgres + Redis for the database and cache tests.
     services:
       postgres:
         image: postgres:17-alpine
@@ -114,6 +113,16 @@ jobs:
           - 5432/tcp
         options: >-
           --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379/tcp
+        options: >-
+          --health-cmd "redis-cli ping"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 12
@@ -132,12 +141,14 @@ jobs:
       - run: npm install -g pnpm@11.10.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test:deploy-env
+      - run: ./node_modules/.bin/prettier --check "apps/*/src/**/*.{ts,tsx}" "apps/*/scripts/**/*.ts" "apps/*/tests/**/*.ts" "packages/*/src/**/*.ts"
       - run: pnpm run typecheck
       - run: pnpm run lint
       - run: pnpm run test
         env:
-          # The job context (mapped port) is only readable at step level.
+          # The job context (mapped ports) is only readable at step level.
           TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/postgres
+          TEST_REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports['6379'] }}
       - run: pnpm run test:dev
       - run: pnpm run build
 
@@ -153,11 +164,13 @@ jobs:
       AI_RESEARCH_DEADLINE_MS: ${{ vars.AI_RESEARCH_DEADLINE_MS }}
       AI_RESEARCH_MAX_FETCHES: ${{ vars.AI_RESEARCH_MAX_FETCHES }}
       AI_RESEARCH_MAX_ROUNDS: ${{ vars.AI_RESEARCH_MAX_ROUNDS }}
+      AI_RESEARCH_MAX_SEARCHES: ${{ vars.AI_RESEARCH_MAX_SEARCHES }}
       AI_RESEARCH_RETENTION_DAYS: ${{ vars.AI_RESEARCH_RETENTION_DAYS }}
       AI_THREAD_RETENTION_DAYS: ${{ vars.AI_THREAD_RETENTION_DAYS }}
       AI_THREAD_TOKEN_BUDGET: ${{ vars.AI_THREAD_TOKEN_BUDGET }}
       AI_TRACE_ENABLED: ${{ vars.AI_TRACE_ENABLED }}
       AI_TRACE_RETENTION_DAYS: ${{ vars.AI_TRACE_RETENTION_DAYS }}
+      ALLOW_NON_SPOTIFY_SCROBBLES: ${{ vars.ALLOW_NON_SPOTIFY_SCROBBLES }}
       BACKUP_DIR: ${{ vars.BACKUP_DIR }}
       CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
       DEEZER_ARL_COOKIE: ${{ secrets.DEEZER_ARL_COOKIE }}
@@ -165,6 +178,7 @@ jobs:
       DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
       DISCORD_CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID }}
       DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+      DISCORD_MAIN_GUILD_ID: ${{ vars.DISCORD_MAIN_GUILD_ID }}
       DISCORD_REDIRECT_URI: ${{ vars.DISCORD_REDIRECT_URI }}
       GUILD_EXTERNAL_ROLE_ID: ${{ vars.GUILD_EXTERNAL_ROLE_ID }}
       GUILD_MAIN_CHANNEL_ID: ${{ vars.GUILD_MAIN_CHANNEL_ID }}
@@ -181,16 +195,19 @@ jobs:
       MARQUINHOS_ERROR_DM_USER_ID: ${{ vars.MARQUINHOS_ERROR_DM_USER_ID }}
       MARQUINHOS_SECRET_KEY: ${{ secrets.MARQUINHOS_SECRET_KEY }}
       MARQUINHOS_SPREADSHEET_API_KEY: ${{ secrets.MARQUINHOS_SPREADSHEET_API_KEY }}
-      MARQUINHOS_SPREADSHEET_ID: ${{ vars.MARQUINHOS_SPREADSHEET_ID }}
+      MARQUINHOS_SPREADSHEET_ID: ${{ secrets.MARQUINHOS_SPREADSHEET_ID || vars.MARQUINHOS_SPREADSHEET_ID }}
       MARQUINHOS_TOKEN: ${{ secrets.MARQUINHOS_TOKEN }}
       MARQUINHOS_WEB_URL: ${{ vars.MARQUINHOS_WEB_URL }}
+      MIGRATION_BREAKING: ${{ vars.MIGRATION_BREAKING }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
       OPENAI_REASONING_EFFORT: ${{ vars.OPENAI_REASONING_EFFORT }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+      REDIS_URL: ${{ vars.REDIS_URL }}
       SANDBOX_MIRROR_PATH: ${{ vars.SANDBOX_MIRROR_PATH }}
       SEARXNG_URL: ${{ vars.SEARXNG_URL }}
-      SPOTIFY_CLIENT_ID: ${{ vars.SPOTIFY_CLIENT_ID }}
+      SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID || vars.SPOTIFY_CLIENT_ID }}
       SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
       VITE_API_ORIGIN: ${{ vars.VITE_API_ORIGIN }}
       VITE_DISCORD_CLIENT_ID: ${{ vars.VITE_DISCORD_CLIENT_ID }}
@@ -202,10 +219,19 @@ jobs:
       - name: Write deployment environment
         run: bash .github/scripts/write-deploy-env.sh deploy/.env
 
-      - name: Deploy
+      - name: Build candidate images
         env:
           COMPONENT: ${{ needs.changes.outputs.component }}
-        run: bash deploy/deploy.sh "$COMPONENT"
+        run: |
+          docker_gid=$(getent group docker | cut -d: -f3)
+          services=""
+          case "$COMPONENT" in
+            api) services="api sandbox" ;;
+            bot) services="bot" ;;
+            activity) services="gateway" ;;
+            all) services="api sandbox bot gateway" ;;
+          esac
+          DOCKER_GID="$docker_gid" docker compose --env-file deploy/.env -f deploy/docker-compose.yml build $services
 
       - name: Scan API image
         if: needs.changes.outputs.component == 'api' || needs.changes.outputs.component == 'all'
@@ -214,8 +240,8 @@ jobs:
           scan-type: image
           image-ref: marquinhos-api:${{ github.sha }}
           format: table
-          exit-code: '0'
-          severity: HIGH,CRITICAL
+          exit-code: '1'
+          severity: CRITICAL
 
       - name: Scan bot image
         if: needs.changes.outputs.component == 'bot' || needs.changes.outputs.component == 'all'
@@ -224,8 +250,8 @@ jobs:
           scan-type: image
           image-ref: marquinhos-bot:${{ github.sha }}
           format: table
-          exit-code: '0'
-          severity: HIGH,CRITICAL
+          exit-code: '1'
+          severity: CRITICAL
 
       - name: Scan Activity image
         if: needs.changes.outputs.component == 'activity' || needs.changes.outputs.component == 'all'
@@ -234,8 +260,14 @@ jobs:
           scan-type: image
           image-ref: marquinhos-activity:${{ github.sha }}
           format: table
-          exit-code: '0'
-          severity: HIGH,CRITICAL
+          exit-code: '1'
+          severity: CRITICAL
+
+      - name: Deploy
+        env:
+          COMPONENT: ${{ needs.changes.outputs.component }}
+          SKIP_BUILD: '1'
+        run: bash deploy/deploy.sh "$COMPONENT"
 
       - name: Remove generated environment files
         if: always()

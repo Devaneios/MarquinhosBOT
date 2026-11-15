@@ -1,18 +1,25 @@
-import { Injectable, type OnApplicationBootstrap } from '@nestjs/common';
+import {
+  Injectable,
+  Optional,
+  type OnApplicationBootstrap,
+} from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { logger } from 'common/logging/logger';
 import { WordleGalleryService } from 'modules/wordle/community/wordle-gallery.service';
 import { WordleGoalsService } from 'modules/wordle/community/wordle-goals.service';
 import { WordleNotificationService } from 'modules/wordle/notifications/wordle-notification.service';
+import { runExclusiveJob } from 'redis/job-lock';
+import { RedisService } from 'redis/redis.service';
 
 @Injectable()
 export class WordleReconcileJob implements OnApplicationBootstrap {
-  private reconciling = false;
+  private readonly state = { running: false };
 
   constructor(
     private readonly notifications: WordleNotificationService,
     private readonly goals: WordleGoalsService,
     private readonly gallery: WordleGalleryService,
+    @Optional() private readonly redis?: RedisService,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -25,31 +32,36 @@ export class WordleReconcileJob implements OnApplicationBootstrap {
   }
 
   private async reconcile(): Promise<void> {
-    if (this.reconciling) return;
-    this.reconciling = true;
-    const steps: [string, () => Promise<unknown>][] = [
-      ['wordle.goal.scheduler_failed', () => this.goals.processDue()],
-      [
-        'wordle.notification.reap_failed',
-        () => this.notifications.reapStale(120_000),
-      ],
-      [
-        'wordle.notification.weekly_failed',
-        () => this.notifications.queueWeeklySummaries(),
-      ],
-      ['wordle.gallery.weekly_failed', () => this.gallery.queuePreviousWeek()],
-    ];
-
-    try {
-      for (const [event, step] of steps) {
-        try {
-          await step();
-        } catch (error) {
-          logger.warn(event, { error });
+    await runExclusiveJob(
+      this.state,
+      this.redis,
+      'jobs:wordle:reconcile',
+      25_000,
+      'wordle.reconcile_failed',
+      async () => {
+        const steps: [string, () => Promise<unknown>][] = [
+          ['wordle.goal.scheduler_failed', () => this.goals.processDue()],
+          [
+            'wordle.notification.reap_failed',
+            () => this.notifications.reapStale(120_000),
+          ],
+          [
+            'wordle.notification.weekly_failed',
+            () => this.notifications.queueWeeklySummaries(),
+          ],
+          [
+            'wordle.gallery.weekly_failed',
+            () => this.gallery.queuePreviousWeek(),
+          ],
+        ];
+        for (const [event, step] of steps) {
+          try {
+            await step();
+          } catch (error) {
+            logger.warn(event, { error });
+          }
         }
-      }
-    } finally {
-      this.reconciling = false;
-    }
+      },
+    );
   }
 }

@@ -38,8 +38,13 @@ const fakeDiscord = {
 } as unknown as DiscordService;
 
 let server: Awaited<ReturnType<typeof startNestContractServer>>;
+let userAuthHeader: string;
 
 beforeAll(async () => {
+  userAuthHeader = `Bearer ${encryptToken('contract-user-token', undefined, {
+    secret: process.env.MARQUINHOS_SECRET_KEY,
+    salt: process.env.MARQUINHOS_CRYPTO_SALT,
+  })}`;
   server = await startNestContractServer(
     { imports: [UserModule] },
     (builder) =>
@@ -49,10 +54,7 @@ beforeAll(async () => {
         .overrideProvider(UserService)
         .useValue(fakeUsers),
     {
-      Authorization: `Bearer ${encryptToken('contract-user-token', undefined, {
-        secret: process.env.MARQUINHOS_SECRET_KEY,
-        salt: process.env.MARQUINHOS_CRYPTO_SALT,
-      })}`,
+      Authorization: userAuthHeader,
     },
   );
 });
@@ -70,17 +72,17 @@ describe('user contracts', () => {
     });
   });
 
-  it('checks existence and last.fm status', async () => {
+  it('checks own existence, blocks cross-user checks, and returns last.fm status', async () => {
     const found = await callContract(server.http, user.exists, {
       params: { id: 'u1' },
     });
-    const missing = await callContract(server.http, user.exists, {
-      params: { id: 'nobody' },
+    const forbidden = await fetch(`${server.origin}/api/user/exists/nobody`, {
+      headers: { Authorization: userAuthHeader },
     });
     const status = await callContract(server.http, user.lastfmStatus, {});
 
     expect(found).toEqual({ id: 'u1' });
-    expect(missing).toBeNull();
+    expect(forbidden.status).toBe(403);
     expect(status).toEqual({ id: 'u1', scrobblesOn: false });
   });
 

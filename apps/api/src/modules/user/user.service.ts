@@ -1,4 +1,3 @@
-import type { Track } from '@marquinhos/contracts/http/routes/scrobble';
 import type { LastfmTopListenedPeriod } from '@marquinhos/contracts/http/routes/user';
 import type { Db } from '@marquinhos/database/client';
 import {
@@ -233,9 +232,8 @@ export class UserService {
     return row.lastfm_username ?? null;
   }
 
-  async getTopArtists(id: string, period: LastfmTopListenedPeriod) {
+  private async getLastfmContext(id: string) {
     const row = await findUser(this.db, id);
-
     if (!row) {
       throw new Error('User not found');
     }
@@ -246,152 +244,66 @@ export class UserService {
       : undefined;
 
     const profileName =
-      (await this.lastfmService.getUserInfo(sessionKey))?.realname?.split(
-        ' ',
-      )[0] || username;
-    const topArtists = await this.lastfmService.getTopArtists(username, period);
-    const artistsPromises: Promise<{
-      name: string;
-      coverArtUrl?: string;
-    } | null>[] = [];
+      (
+        await this.lastfmService.getUserInfo(sessionKey).catch(() => null)
+      )?.realname?.split(' ')[0] || username;
 
-    for (const artist of topArtists) {
-      const spotifyArtist = this.spotifyService.searchArtist(artist.name);
-      artistsPromises.push(spotifyArtist);
-    }
+    return { username, profileName };
+  }
 
-    const spotifyArtsits = await Promise.all(artistsPromises);
-
-    const artists = spotifyArtsits
-      .map((artist) => {
-        if (!artist) {
-          return;
-        }
-
-        if (!artist.coverArtUrl) {
-          return;
-        }
-
+  private async resolveTopItems<T>(
+    items: T[],
+    getFallbackName: (item: T) => string,
+    lookupCover: (
+      item: T,
+    ) => Promise<{ name?: string; coverArtUrl?: string } | null>,
+  ): Promise<{ name: string; coverArtUrl: string }[]> {
+    const resolved = await Promise.all(
+      items.slice(0, 10).map(async (item) => {
+        const match = await lookupCover(item).catch(() => null);
         return {
-          name: artist.name,
-          coverArtUrl: artist.coverArtUrl,
+          name: match?.name || getFallbackName(item),
+          coverArtUrl: match?.coverArtUrl ?? '',
         };
-      })
-      .filter(
-        (artist): artist is { name: string; coverArtUrl: string } =>
-          artist !== null && artist !== undefined,
-      )
-      .slice(0, 10);
-    // TODO: Return not found artists
+      }),
+    );
+    return resolved;
+  }
+
+  async getTopArtists(id: string, period: LastfmTopListenedPeriod) {
+    const { username, profileName } = await this.getLastfmContext(id);
+    const topArtists = await this.lastfmService.getTopArtists(username, period);
+    const artists = await this.resolveTopItems(
+      topArtists,
+      (artist) => artist.name,
+      (artist) => this.spotifyService.searchArtist(artist.name),
+    );
     return { artists, profileName };
   }
 
   async getTopAlbums(id: string, period: LastfmTopListenedPeriod) {
-    const row = await findUser(this.db, id);
-
-    if (!row) {
-      throw new Error('User not found');
-    }
-
-    const username = row.lastfm_username ?? '';
-    const sessionKey = row.lastfm_session_token
-      ? (this.tokenCipher.decryptToken(row.lastfm_session_token) ?? undefined)
-      : undefined;
-
-    const profileName =
-      (
-        await this.lastfmService.getUserInfo(sessionKey).catch(() => null)
-      )?.realname?.split(' ')[0] || username;
-
+    const { username, profileName } = await this.getLastfmContext(id);
     const topAlbums = await this.lastfmService.getTopAlbums(username, period);
-
-    const albumsPromises: Promise<{ name: string; coverArtUrl?: string }>[] =
-      [];
-
-    for (const album of topAlbums) {
-      const spotifyAlbum = this.spotifyService.searchAlbum(album.name);
-      albumsPromises.push(spotifyAlbum);
-    }
-
-    const spotifyAlbums = await Promise.all(albumsPromises);
-
-    const albums = spotifyAlbums
-      .map((album) => {
-        if (!album) {
-          return;
-        }
-
-        if (!album.coverArtUrl) {
-          return;
-        }
-
-        return {
-          name: album.name,
-          coverArtUrl: album.coverArtUrl,
-        };
-      })
-      .filter(
-        (album): album is { name: string; coverArtUrl: string } =>
-          album !== null && album !== undefined,
-      )
-      .slice(0, 10);
-    // TODO: Return not found albums
+    const albums = await this.resolveTopItems(
+      topAlbums,
+      (album) => album.name,
+      (album) => this.spotifyService.searchAlbum(album.name),
+    );
     return { albums, profileName };
   }
 
   async getTopTracks(id: string, period: LastfmTopListenedPeriod) {
-    const row = await findUser(this.db, id);
-
-    if (!row) {
-      throw new Error('User not found');
-    }
-
-    const username = row.lastfm_username ?? '';
-    const sessionKey = row.lastfm_session_token
-      ? (this.tokenCipher.decryptToken(row.lastfm_session_token) ?? undefined)
-      : undefined;
-
-    const profileName =
-      (
-        await this.lastfmService.getUserInfo(sessionKey).catch(() => null)
-      )?.realname?.split(' ')[0] || username;
-
+    const { username, profileName } = await this.getLastfmContext(id);
     const topTracks = await this.lastfmService.getTopTracks(username, period);
-
-    const tracksPromises: Promise<Pick<Track, 'name' | 'coverArtUrl'>>[] = [];
-
-    for (const track of topTracks) {
-      const spotifyTrack = this.spotifyService.searchTrack(
-        `${track.name} ${track.artist}`,
-        'minimal',
-      );
-      tracksPromises.push(spotifyTrack);
-    }
-
-    const spotifyTracks = await Promise.all(tracksPromises);
-
-    const tracks = spotifyTracks
-      .map((track) => {
-        if (!track) {
-          return;
-        }
-
-        if (!track.coverArtUrl) {
-          return;
-        }
-
-        return {
-          name: track.name,
-          coverArtUrl: track.coverArtUrl,
-        };
-      })
-      .filter(
-        (track): track is { name: string; coverArtUrl: string } =>
-          track !== null && track !== undefined,
-      )
-      .slice(0, 10);
-
-    // TODO: Return not found tracks
+    const tracks = await this.resolveTopItems(
+      topTracks,
+      (track) => track.name,
+      (track) =>
+        this.spotifyService.searchTrack(
+          `${track.name} ${track.artist}`,
+          'minimal',
+        ),
+    );
     return { tracks, profileName };
   }
 }

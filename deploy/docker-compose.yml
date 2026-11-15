@@ -19,6 +19,45 @@ services:
       retries: 12
     restart: unless-stopped
     stop_grace_period: 30s
+    mem_limit: 1g
+    cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
+    networks:
+      - marquinhos
+
+  redis:
+    image: redis:7-alpine
+    container_name: marquinhos-redis
+    command:
+      - sh
+      - -c
+      - 'if [ -n "$$REDIS_PASSWORD" ]; then exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"; else exec redis-server --appendonly yes; fi'
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    volumes:
+      - marquinhos-redis-data:/data
+    healthcheck:
+      test:
+        [
+          CMD-SHELL,
+          'if [ -n "$$REDIS_PASSWORD" ]; then redis-cli -a "$$REDIS_PASSWORD" ping | grep -q PONG; else redis-cli ping | grep -q PONG; fi',
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+    stop_grace_period: 15s
+    mem_limit: 256m
+    cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
     networks:
       - marquinhos
 
@@ -34,6 +73,8 @@ services:
       - ./api.env
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     environment:
       CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required}
@@ -52,6 +93,7 @@ services:
       NODE_ENV: production
       OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY is required}
       PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       SANDBOX_IMAGE: marquinhos-sandbox:${DEPLOY_IMAGE_TAG:?DEPLOY_IMAGE_TAG is required}
       SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:?SPOTIFY_CLIENT_ID is required}
       SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET:?SPOTIFY_CLIENT_SECRET is required}
@@ -66,8 +108,21 @@ services:
       - ${SANDBOX_MIRROR_PATH:-/opt/marquinhos/sandbox-mirror}:${SANDBOX_MIRROR_PATH:-/opt/marquinhos/sandbox-mirror}:ro
     ports:
       - '127.0.0.1:3106:3106'
+    healthcheck:
+      test: [CMD-SHELL, 'wget -q -O /dev/null http://127.0.0.1:3106/api/health || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
     stop_grace_period: 30s
+    mem_limit: 1536m
+    cpus: '2.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
     networks:
       - marquinhos
 
@@ -86,6 +141,9 @@ services:
     container_name: marquinhos-bot
     env_file:
       - ./bot.env
+    depends_on:
+      api:
+        condition: service_healthy
     environment:
       MARQUINHOS_API_KEY: ${MARQUINHOS_API_KEY:?MARQUINHOS_API_KEY is required}
       MARQUINHOS_API_URL: http://api:3106
@@ -94,6 +152,13 @@ services:
       NODE_ENV: production
     restart: unless-stopped
     stop_grace_period: 30s
+    mem_limit: 768m
+    cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
     networks:
       - marquinhos
 
@@ -109,6 +174,14 @@ services:
     ports:
       - '127.0.0.1:5173:80'
     restart: unless-stopped
+    stop_grace_period: 15s
+    mem_limit: 256m
+    cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
     networks:
       - marquinhos
 
@@ -121,3 +194,5 @@ volumes:
     name: marquinhos-api-data
   marquinhos-postgres-data:
     name: marquinhos-postgres-data
+  marquinhos-redis-data:
+    name: marquinhos-redis-data

@@ -2,6 +2,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppConfig } from 'config/app.config';
 import cors, { type CorsOptionsDelegate } from 'cors';
 import type { Request } from 'express';
+import helmet from 'helmet';
 import morgan from 'morgan';
 
 const MORGAN_FORMAT =
@@ -19,11 +20,17 @@ export function configureHttp(
   app.setGlobalPrefix('api');
   app.set('trust proxy', 1);
   app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      frameguard: false,
+    }),
+  );
+  app.use(
     options.silent
       ? morgan(MORGAN_FORMAT, { stream: { write: () => undefined } })
       : morgan(MORGAN_FORMAT),
   );
-  app.useBodyParser('json');
+  app.useBodyParser('json', { limit: '256kb' });
 
   const corsOptionsDelegate: CorsOptionsDelegate<Request> = (req, callback) => {
     callback(null, {
@@ -32,5 +39,5 @@ export function configureHttp(
     });
   };
   app.use(cors(corsOptionsDelegate));
-  app.useBodyParser('urlencoded', { extended: true });
+  app.useBodyParser('urlencoded', { extended: true, limit: '256kb' });
 }

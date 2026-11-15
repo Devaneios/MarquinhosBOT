@@ -41,7 +41,9 @@ optional_keys=(
   AI_THREAD_TOKEN_BUDGET
   AI_TRACE_ENABLED
   AI_TRACE_RETENTION_DAYS
+  ALLOW_NON_SPOTIFY_SCROBBLES
   DEEZER_ARL_COOKIE
+  DISCORD_MAIN_GUILD_ID
   GUILD_EXTERNAL_ROLE_ID
   GUILD_MAIN_CHANNEL_ID
   GUILD_NEWCOMERS_CHANNEL_ID
@@ -55,6 +57,8 @@ optional_keys=(
   MARQUINHOS_WEB_URL
   OPENAI_MODEL
   OPENAI_REASONING_EFFORT
+  REDIS_PASSWORD
+  REDIS_URL
   SANDBOX_MIRROR_PATH
   SEARXNG_URL
   WORDLE_TIMEZONE
@@ -91,6 +95,11 @@ write_key() {
   printf "%s='%s'\n" "$key" "$escaped" >> "$file"
 }
 
+if [[ -n "${REDIS_PASSWORD:-}" && -z "${REDIS_URL:-}" ]]; then
+  encoded_redis_password=$(node -p "encodeURIComponent(process.env.REDIS_PASSWORD)")
+  REDIS_URL="redis://:${encoded_redis_password}@redis:6379"
+fi
+
 for key in "${required_keys[@]}" "${optional_keys[@]}"; do
   write_key "$key" "$tmp_file"
 done
@@ -105,11 +114,14 @@ api_optional_keys=(
   AI_THREAD_TOKEN_BUDGET
   AI_TRACE_ENABLED
   AI_TRACE_RETENTION_DAYS
+  ALLOW_NON_SPOTIFY_SCROBBLES
+  DISCORD_MAIN_GUILD_ID
   KNOWLEDGE_BASE_API_KEY
   KNOWLEDGE_BASE_URL
   LOG_LEVEL
   OPENAI_MODEL
   OPENAI_REASONING_EFFORT
+  REDIS_URL
   SANDBOX_MIRROR_PATH
   SEARXNG_URL
   WORDLE_TIMEZONE

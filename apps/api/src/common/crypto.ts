@@ -3,9 +3,69 @@ import { AppConfig } from 'config/app.config';
 import {
   createCipheriv,
   createDecipheriv,
+  createHmac,
   randomBytes,
   scryptSync,
+  timingSafeEqual,
 } from 'crypto';
+
+const OAUTH_STATE_TTL_MS = 10 * 60_000;
+
+export function signOAuthState(
+  config: TokenCipherConfig,
+  customState?: string,
+  nowMs: number = Date.now(),
+): string {
+  const key = getKey(config);
+  const payload = Buffer.from(
+    JSON.stringify({
+      n: randomBytes(16).toString('base64url'),
+      exp: nowMs + OAUTH_STATE_TTL_MS,
+      ...(customState !== undefined ? { s: customState } : {}),
+    }),
+    'utf8',
+  ).toString('base64url');
+  const sig = createHmac('sha256', key).update(payload).digest('base64url');
+  return `${payload}.${sig}`;
+}
+
+export function verifyOAuthState(
+  state: string,
+  config: TokenCipherConfig,
+  nowMs: number = Date.now(),
+): { valid: boolean; customState?: string } {
+  try {
+    const dot = state.indexOf('.');
+    if (dot <= 0) return { valid: false };
+    const payload = state.slice(0, dot);
+    const sig = state.slice(dot + 1);
+    if (!payload || !sig) return { valid: false };
+    const key = getKey(config);
+    const expected = createHmac('sha256', key)
+      .update(payload)
+      .digest('base64url');
+    const sigBuf = Buffer.from(sig, 'utf8');
+    const expectedBuf = Buffer.from(expected, 'utf8');
+    if (
+      sigBuf.length !== expectedBuf.length ||
+      !timingSafeEqual(sigBuf, expectedBuf)
+    ) {
+      return { valid: false };
+    }
+    const decoded = JSON.parse(
+      Buffer.from(payload, 'base64url').toString('utf8'),
+    ) as { exp?: unknown; s?: unknown };
+    if (typeof decoded.exp !== 'number' || decoded.exp <= nowMs) {
+      return { valid: false };
+    }
+    return {
+      valid: true,
+      customState: typeof decoded.s === 'string' ? decoded.s : undefined,
+    };
+  } catch {
+    return { valid: false };
+  }
+}
 
 export interface TokenCipherConfig {
   secret?: string;
@@ -135,6 +195,14 @@ export class TokenCipherService {
     encryptedToken: string,
   ): { token: string; expiresAt?: number } | null {
     return decryptTokenFull(encryptedToken, this.configValues);
+  }
+
+  signOAuthState(customState?: string): string {
+    return signOAuthState(this.configValues, customState);
+  }
+
+  verifyOAuthState(state: string): { valid: boolean; customState?: string } {
+    return verifyOAuthState(state, this.configValues);
   }
 
   private get configValues(): TokenCipherConfig {

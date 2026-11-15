@@ -26,12 +26,16 @@ import type {
   PlaybackData,
   Track,
 } from '@marquinhos/contracts/http/routes/scrobble';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
+import { AppConfig } from 'config/app.config';
 import { SpotifyService } from 'integrations/spotify/spotify.service';
 
 @Injectable()
 export class ParserService {
-  constructor(private readonly spotifyService: SpotifyService) {}
+  constructor(
+    private readonly spotifyService: SpotifyService,
+    @Optional() private readonly config?: AppConfig,
+  ) {}
 
   async parseTrack(playbackData: PlaybackData): Promise<Track | null> {
     // Based on the implementation of https://github.com/web-scrobbler/web-scrobbler/blob/master/src/core/content/util.js
@@ -91,6 +95,14 @@ export class ParserService {
       }
     }
 
+    if (
+      this.config &&
+      !this.config.allowNonSpotifyScrobbles &&
+      playbackData.providerName?.toLowerCase() !== 'spotify'
+    ) {
+      return null;
+    }
+
     let filteredTitle = playbackData.title.toLowerCase();
 
     // Remove [genre] or 【genre】 from the beginning of the title
@@ -131,7 +143,5 @@ export class ParserService {
     }
 
     return null;
-
-    // TODO: Allow disable scrobbling for tracks not provided by Spotify
   }
 }

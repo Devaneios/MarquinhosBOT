@@ -110,7 +110,9 @@ export class SandboxManager {
       nanoCpus: NANO_CPUS,
       pidsLimit: PIDS_LIMIT,
       readonlyRootfs: true,
-      tmpfs: { '/tmp': `rw,size=${TMPFS_SIZE_BYTES}` },
+      tmpfs: {
+        '/tmp': `rw,noexec,nosuid,nodev,mode=1777,size=${TMPFS_SIZE_BYTES}`,
+      },
       binds: [`${this.repoMirrorHostPath}:/repo:ro`],
       labels: {
         'marquinhos.sandbox': 'true',

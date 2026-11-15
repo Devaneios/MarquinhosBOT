@@ -112,6 +112,18 @@ export class AppConfig {
     return this.read('SEARXNG_URL') ?? 'https://searxng.frois.net.br';
   }
 
+  get redisUrl(): string | undefined {
+    return this.read('REDIS_URL');
+  }
+
+  get discordMainGuildId(): string {
+    return this.read('DISCORD_MAIN_GUILD_ID') ?? '305861924648779779';
+  }
+
+  get allowNonSpotifyScrobbles(): boolean {
+    return this.read('ALLOW_NON_SPOTIFY_SCROBBLES')?.toLowerCase() !== 'false';
+  }
+
   get sandboxImage(): string {
     return this.read('SANDBOX_IMAGE') ?? 'marquinhos-sandbox:latest';
   }

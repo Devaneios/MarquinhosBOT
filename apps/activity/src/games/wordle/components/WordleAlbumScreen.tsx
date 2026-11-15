@@ -39,10 +39,12 @@ export function WordleAlbumScreen({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
-    setError(false);
     load().then(
       (result) => {
-        if (active) setPages(result);
+        if (active) {
+          setError(false);
+          setPages(result);
+        }
       },
       () => {
         if (active) setError(true);
@@ -75,7 +77,13 @@ export function WordleAlbumScreen({
       {error ? (
         <div role="alert">
           {t('albumError')}{' '}
-          <button type="button" onClick={() => setRetry((value) => value + 1)}>
+          <button
+            type="button"
+            onClick={() => {
+              setError(false);
+              setRetry((value) => value + 1);
+            }}
+          >
             {t('showcaseRetry')}
           </button>
         </div>

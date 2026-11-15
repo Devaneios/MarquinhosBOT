@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ApiThrottlerGuard } from 'common/guards/api-throttler.guard';
 import { HttpInfrastructureModule } from 'common/http/http-infrastructure.module';
 import { ConfigModule } from 'config/config.module';
 import { DatabaseModule } from 'database/database.module';
@@ -15,12 +18,23 @@ import { ScrobbleModule } from 'modules/scrobble/scrobble.module';
 import { UserModule } from 'modules/user/user.module';
 import { WordleModule } from 'modules/wordle/wordle.module';
 import { RealtimeModule } from 'realtime/realtime.module';
+import { RedisThrottlerStorage } from 'redis/redis-throttler.storage';
+import { RedisModule } from 'redis/redis.module';
 import { StartupModule } from 'startup/startup.module';
 
 @Module({
   imports: [
     ConfigModule,
+    RedisModule,
     DatabaseModule,
+    ThrottlerModule.forRootAsync({
+      imports: [RedisModule],
+      inject: [RedisThrottlerStorage],
+      useFactory: (storage: RedisThrottlerStorage) => ({
+        storage,
+        throttlers: [{ name: 'api', ttl: 60_000, limit: 120 }],
+      }),
+    }),
     HttpInfrastructureModule,
     RealtimeModule,
     StartupModule,
@@ -37,5 +51,6 @@ import { StartupModule } from 'startup/startup.module';
     ActivityModule,
     WordleModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: ApiThrottlerGuard }],
 })
 export class AppModule {}

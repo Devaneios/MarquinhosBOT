@@ -4,8 +4,8 @@ import { ChannelType } from 'discord.js';
 import { TermoShareButtonHandler } from './termoShareButton';
 
 it('does not publish another player’s preview', async () => {
-  const send = mock(async () => {});
-  const reply = mock(async () => {});
+  const send = mock(async () => undefined);
+  const reply = mock(async () => undefined);
   const interaction = {
     guildId: 'g',
     guild: {
@@ -25,8 +25,8 @@ it('does not publish another player’s preview', async () => {
 });
 
 it('does not publish where the player lacks channel permission', async () => {
-  const send = mock(async () => {});
-  const editReply = mock(async () => {});
+  const send = mock(async () => undefined);
+  const editReply = mock(async () => undefined);
   const interaction = {
     guildId: 'g',
     guild: {
@@ -40,7 +40,7 @@ it('does not publish where the player lacks channel permission', async () => {
     },
     user: { id: 'owner' },
     message: { id: 'message' },
-    deferUpdate: async () => {},
+    deferUpdate: async () => undefined,
     editReply,
   };
   await TermoShareButtonHandler.prototype.run.call({}, interaction as never, {
@@ -84,7 +84,7 @@ it('publishes the unlocked achievement only after confirmation', async () => {
       },
     },
   } as never);
-  const send = mock(async () => {});
+  const send = mock(async () => undefined);
   const channel = {
     id: 'channel',
     type: ChannelType.GuildText,
@@ -109,8 +109,8 @@ it('publishes the unlocked achievement only after confirmation', async () => {
       displayAvatarURL: () => 'https://cdn/ana.png',
     },
     message: { id: 'message-success' },
-    deferUpdate: async () => {},
-    editReply: async () => {},
+    deferUpdate: async () => undefined,
+    editReply: async () => undefined,
   };
   await TermoShareButtonHandler.prototype.run.call({}, interaction as never, {
     userId: 'owner',

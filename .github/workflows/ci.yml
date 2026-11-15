@@ -28,8 +28,19 @@ jobs:
           --health-timeout 3s
           --health-retries 12
 
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+
     env:
       TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+      TEST_REDIS_URL: redis://127.0.0.1:6379
 
     steps:
       - uses: actions/checkout@v7
@@ -45,6 +56,7 @@ jobs:
       - run: npm install -g pnpm@11.10.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test:deploy-env
+      - run: ./node_modules/.bin/prettier --check "apps/*/src/**/*.{ts,tsx}" "apps/*/scripts/**/*.ts" "apps/*/tests/**/*.ts" "packages/*/src/**/*.ts"
       - run: pnpm run typecheck
       - run: pnpm run lint
       - run: pnpm run test

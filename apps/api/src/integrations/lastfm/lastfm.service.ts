@@ -39,11 +39,16 @@ import { AppConfig } from 'config/app.config';
 import crypto from 'crypto';
 import { DB } from 'database/database.tokens';
 import { getUnixTime, parseISO } from 'date-fns';
-import { eq } from 'drizzle-orm';
+import { and, asc, eq, gt, or } from 'drizzle-orm';
 import type { LastfmSessionResponse } from 'types';
 import { URLSearchParams } from 'url';
 import { z } from 'zod';
 // URLSearchParams is available globally in Node.js >= 15 but we import for clarity
+
+const LASTFM_REQUEST_TIMEOUT_MS = 10_000;
+const SCROBBLE_RETRY_MAX_ATTEMPTS = 3;
+const SCROBBLE_RETRY_BASE_MS = 30_000;
+const ORPHANED_SCROBBLE_AGE_SECONDS = 600;
 
 // Request errors carry the signed URL (session key) in their config, so
 // they go through the structured logger, which keeps only message and stack.
@@ -196,7 +201,6 @@ export class LastfmService {
         throw new Error('LastfmRequestUnknownError', { cause: error });
       }
     }
-    // TODO: Check scrobble history/queue on fail
   }
 
   async getUserInfo(sessionKey: string | undefined) {
@@ -235,17 +239,96 @@ export class LastfmService {
     const failedUserIds = await this.dispatchScrobble(track, playbackData);
 
     // If completely successful (or non-transient failures), delete the queue item.
-    // If transient failures occurred, update the queue to only contain the users who need retries.
+    // If transient failures occurred, schedule exponential backoff retries or drop after max attempts.
     if (failedUserIds.length === 0) {
       await this.db
         .delete(scrobblesQueue)
         .where(eq(scrobblesQueue.id, scrobbleId));
     } else {
-      playbackData.listeningUsersId = failedUserIds;
-      await setPlaybackData(this.db, scrobbleId, playbackData);
+      const nextRetryCount = (playbackData.retryCount ?? 0) + 1;
+      if (nextRetryCount > SCROBBLE_RETRY_MAX_ATTEMPTS) {
+        logger.warn(
+          `Dropping queued scrobble ${scrobbleId} after ${SCROBBLE_RETRY_MAX_ATTEMPTS} retry attempts`,
+        );
+        await this.db
+          .delete(scrobblesQueue)
+          .where(eq(scrobblesQueue.id, scrobbleId));
+      } else {
+        const backoffMs =
+          SCROBBLE_RETRY_BASE_MS * Math.pow(2, nextRetryCount - 1);
+        playbackData.listeningUsersId = failedUserIds;
+        playbackData.retryCount = nextRetryCount;
+        playbackData.nextRetryAt = Date.now() + backoffMs;
+        await setPlaybackData(this.db, scrobbleId, playbackData);
+      }
     }
 
     return scrobbleId;
+  }
+
+  /**
+   * Re-dispatches queued scrobbles whose retry backoff elapsed, plus orphaned
+   * entries left undispatched for more than 10 minutes.
+   */
+  async retryPendingScrobbles(limit = 20): Promise<number> {
+    const nowMs = Date.now();
+    const orphanCutoffSec =
+      Math.floor(nowMs / 1000) - ORPHANED_SCROBBLE_AGE_SECONDS;
+    let processed = 0;
+    let cursor: { created_at: number; id: string } | undefined;
+    while (processed < limit) {
+      const rows = await this.db
+        .select({
+          id: scrobblesQueue.id,
+          playback_data: scrobblesQueue.playback_data,
+          created_at: scrobblesQueue.created_at,
+        })
+        .from(scrobblesQueue)
+        .where(
+          cursor
+            ? or(
+                gt(scrobblesQueue.created_at, cursor.created_at),
+                and(
+                  eq(scrobblesQueue.created_at, cursor.created_at),
+                  gt(scrobblesQueue.id, cursor.id),
+                ),
+              )
+            : undefined,
+        )
+        .orderBy(asc(scrobblesQueue.created_at), asc(scrobblesQueue.id))
+        .limit(100);
+      if (rows.length === 0) break;
+      for (const row of rows) {
+        cursor = { created_at: row.created_at, id: row.id };
+        if (processed >= limit) break;
+        let parsed: PlaybackData;
+        try {
+          parsed = playbackDataSchema.parse(JSON.parse(row.playback_data));
+        } catch (error) {
+          logger.warn(`Deleting malformed scrobble queue row ${row.id}`, error);
+          await this.db
+            .delete(scrobblesQueue)
+            .where(eq(scrobblesQueue.id, row.id));
+          continue;
+        }
+
+        const retryDue =
+          parsed.nextRetryAt !== undefined && parsed.nextRetryAt <= nowMs;
+        const orphaned =
+          parsed.retryCount === undefined && row.created_at <= orphanCutoffSec;
+        if (!retryDue && !orphaned) continue;
+
+        try {
+          await this.dispatchScrobbleFromQueue(row.id);
+          processed += 1;
+        } catch (error) {
+          logger.warn(`Failed retrying queued scrobble ${row.id}`, error);
+        }
+      }
+      if (rows.length < 100) break;
+    }
+
+    return processed;
   }
 
   async addToScrobbleQueue(track: Track | null, playbackData: PlaybackData) {
@@ -382,7 +465,7 @@ export class LastfmService {
   async getTopArtists(
     userName: string | null,
     period: LastfmTopListenedPeriod,
-  ) {
+  ): Promise<{ name: string }[]> {
     const params = new URLSearchParams();
 
     params.set('method', 'user.gettopartists');
@@ -395,18 +478,19 @@ export class LastfmService {
 
       const topArtists = response?.data.topartists;
 
-      return topArtists.artist.map((artist: { name: string }) => {
-        return {
-          name: artist.name,
-        };
-      });
+      return (topArtists.artist as { name: string }[]).map((artist) => ({
+        name: artist.name,
+      }));
     } catch (error: unknown) {
       logger.error('getTopArtists error:', error);
       throw new Error('LastfmRequestUnknownError', { cause: error });
     }
   }
 
-  async getTopAlbums(userName: string | null, period: LastfmTopListenedPeriod) {
+  async getTopAlbums(
+    userName: string | null,
+    period: LastfmTopListenedPeriod,
+  ): Promise<{ name: string; artist: string }[]> {
     const params = new URLSearchParams();
 
     params.set('method', 'user.gettopalbums');
@@ -419,21 +503,22 @@ export class LastfmService {
 
       const topAlbums = response?.data.topalbums;
 
-      return topAlbums.album.map(
-        (album: { name: string; artist: { name: string } }) => {
-          return {
-            name: album.name,
-            artist: album.artist.name,
-          };
-        },
-      );
+      return (
+        topAlbums.album as { name: string; artist: { name: string } }[]
+      ).map((album) => ({
+        name: album.name,
+        artist: album.artist.name,
+      }));
     } catch (error: unknown) {
       logger.error('getTopAlbums error:', error);
       throw new Error('LastfmRequestUnknownError', { cause: error });
     }
   }
 
-  async getTopTracks(userName: string | null, period: LastfmTopListenedPeriod) {
+  async getTopTracks(
+    userName: string | null,
+    period: LastfmTopListenedPeriod,
+  ): Promise<{ name: string; artist: string }[]> {
     const params = new URLSearchParams();
 
     params.set('method', 'user.gettoptracks');
@@ -446,14 +531,12 @@ export class LastfmService {
 
       const topTracks = response?.data.toptracks;
 
-      return topTracks.track.map(
-        (track: { name: string; artist: { name: string } }) => {
-          return {
-            name: track.name,
-            artist: track.artist.name,
-          };
-        },
-      );
+      return (
+        topTracks.track as { name: string; artist: { name: string } }[]
+      ).map((track) => ({
+        name: track.name,
+        artist: track.artist.name,
+      }));
     } catch (error: unknown) {
       logger.error('getTopTracks error:', error);
       throw new Error('LastfmRequestUnknownError', { cause: error });
@@ -477,12 +560,16 @@ export class LastfmService {
     const url = `${this.apiRootUrl}/?${params.toString()}`;
 
     if (type === 'get') {
-      return axios.get(url, { headers: { 'User-Agent': this.userAgent } });
+      return axios.get(url, {
+        headers: { 'User-Agent': this.userAgent },
+        timeout: LASTFM_REQUEST_TIMEOUT_MS,
+      });
     }
 
     if (type === 'post') {
       return axios.post(url, null, {
         headers: { 'User-Agent': this.userAgent },
+        timeout: LASTFM_REQUEST_TIMEOUT_MS,
       });
     }
   }

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test';
+import { describe, expect, it, mock } from 'bun:test';
 import type { SpawnExec } from 'modules/ai-chat/sandbox/dockerode-sandbox.client';
 import { DockerodeSandboxClient } from 'modules/ai-chat/sandbox/dockerode-sandbox.client';
 
@@ -40,5 +40,40 @@ describe('DockerodeSandboxClient.exec', () => {
 
     expect(result.stderr).toContain('[timeout after 150ms]');
     expect(result.exitCode).toBe(TIMEOUT_EXIT_CODE);
+  });
+});
+
+describe('DockerodeSandboxClient.createContainer', () => {
+  it('enforces least-privilege capabilities and no-new-privileges', async () => {
+    const createContainer = mock(async () => ({ id: 'ctr-1' }));
+    const client = new DockerodeSandboxClient(
+      { createContainer } as never,
+      localSpawn(['true']),
+    );
+
+    const id = await client.createContainer({
+      image: 'marquinhos-sandbox:latest',
+      cmd: ['sleep', 'infinity'],
+      networkMode: 'none',
+      memoryBytes: 512 * 1024 * 1024,
+      nanoCpus: 1_000_000_000,
+      pidsLimit: 64,
+      readonlyRootfs: true,
+      tmpfs: { '/tmp': 'rw,noexec,nosuid,nodev,mode=1777,size=67108864' },
+      binds: ['/mirror:/repo:ro'],
+      labels: { 'marquinhos.sandbox': 'true' },
+    });
+
+    expect(id).toBe('ctr-1');
+    expect(createContainer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        HostConfig: expect.objectContaining({
+          CapDrop: ['ALL'],
+          SecurityOpt: ['no-new-privileges:true'],
+          ReadonlyRootfs: true,
+          NetworkMode: 'none',
+        }),
+      }),
+    );
   });
 });

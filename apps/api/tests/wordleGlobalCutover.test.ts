@@ -149,28 +149,24 @@ describe('global Wordle cutover preparation', () => {
 
   test('coalesces multi-day legacy participation by guild and player', async () => {
     await seedLegacy();
-    await testDb.db
-      .insert(wordleDays)
-      .values({
-        guild_id: 'g1',
-        word_date: '2026-11-08',
-        word: null,
-        word_length: null,
-        is_legacy: true,
-        created_at: 80,
-      });
-    await testDb.db
-      .insert(wordleSessions)
-      .values({
-        id: 's0',
-        user_id: 'u1',
-        guild_id: 'g1',
-        word_date: '2026-11-08',
-        guesses: '[]',
-        solved: false,
-        attempts: 0,
-        created_at: 80,
-      });
+    await testDb.db.insert(wordleDays).values({
+      guild_id: 'g1',
+      word_date: '2026-11-08',
+      word: null,
+      word_length: null,
+      is_legacy: true,
+      created_at: 80,
+    });
+    await testDb.db.insert(wordleSessions).values({
+      id: 's0',
+      user_id: 'u1',
+      guild_id: 'g1',
+      word_date: '2026-11-08',
+      guesses: '[]',
+      solved: false,
+      attempts: 0,
+      created_at: 80,
+    });
     const before = await auditWordlePreservation(testDb.db);
     await prepareGlobalWordleCutover(testDb.db, {
       sourceTag: 'v0.0.3',

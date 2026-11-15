@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { afterEach, describe, expect, it, spyOn } from 'bun:test';
-import { encryptToken } from 'common/crypto';
+import { encryptToken, signOAuthState } from 'common/crypto';
 import { DiscordService } from 'integrations/discord/discord.service';
 import { LastfmService } from 'integrations/lastfm/lastfm.service';
 import { AuthModule } from 'modules/auth/auth.module';
@@ -55,7 +55,10 @@ describe('failed requests carrying secrets', () => {
       (builder) => builder.overrideProvider(DiscordService).useValue(discord),
     );
     try {
-      await fetch(`${server.origin}/api/auth/login?code=code`);
+      const state = signOAuthState(tokenCipherConfig());
+      await fetch(
+        `${server.origin}/api/auth/login?code=code&state=${encodeURIComponent(state)}`,
+      );
 
       expect(lines.length).toBeGreaterThan(0);
       expect(lines.join('\n')).not.toContain(SECRET);

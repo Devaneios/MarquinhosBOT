@@ -6,7 +6,10 @@ const messageOnly = z.object({ message: z.string() });
 export const login = defineContract({
   method: 'GET',
   path: '/api/auth/login',
-  query: z.object({ code: z.string().min(1) }),
+  query: z.object({
+    code: z.string().min(1),
+    state: z.string().min(1).optional(),
+  }),
   response: messageOnly,
 });
 

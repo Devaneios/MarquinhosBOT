@@ -326,4 +326,60 @@ describe('fetchPage failures', () => {
       fetchPage('https://slow.example.com', { timeoutMs: 2000 }),
     ).rejects.toThrow('2s');
   });
+
+  it('extracts and rejects cleanly via the default PDF worker thread', async () => {
+    const brokenFetcher = createPageFetcher({
+      fetchFn: mock(
+        async () =>
+          new Response(new Uint8Array([37, 80, 68, 70, 45, 49]), {
+            status: 200,
+            headers: { 'content-type': 'application/pdf' },
+          }),
+      ),
+      lookupFn: publicLookup(),
+    });
+
+    await expect(
+      brokenFetcher('https://example.com/corrupt.pdf'),
+    ).rejects.toBeInstanceOf(FetchPageError);
+
+    const minimalPdf = buildMinimalPdf('Ola PDF Worker');
+    const validFetcher = createPageFetcher({
+      fetchFn: mock(
+        async () =>
+          new Response(minimalPdf, {
+            status: 200,
+            headers: { 'content-type': 'application/pdf' },
+          }),
+      ),
+      lookupFn: publicLookup(),
+    });
+
+    const page = await validFetcher('https://example.com/hello.pdf');
+    expect(page.content).toContain('Ola PDF Worker');
+  });
 });
+
+function buildMinimalPdf(text: string): Uint8Array {
+  const stream = `BT /F1 12 Tf 72 720 Td (${text}) Tj ET`;
+  const objects = [
+    '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n',
+    '2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n',
+    '3 0 obj << /Type /Page /Parent 2 0 R /Resources << /Font << /F1 4 0 R >> >> /MediaBox [0 0 612 792] /Contents 5 0 R >> endobj\n',
+    '4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n',
+    `5 0 obj << /Length ${stream.length} >> stream\n${stream}\nendstream endobj\n`,
+  ];
+  let pdf = '%PDF-1.4\n';
+  const offsets = [0];
+  for (const obj of objects) {
+    offsets.push(pdf.length);
+    pdf += obj;
+  }
+  const xrefStart = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  for (let i = 1; i < offsets.length; i++) {
+    pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+  }
+  pdf += `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF\n`;
+  return new TextEncoder().encode(pdf);
+}

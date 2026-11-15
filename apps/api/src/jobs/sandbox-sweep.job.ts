@@ -1,24 +1,27 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
-import { logger } from 'common/logging/logger';
 import { SandboxManager } from 'modules/ai-chat/sandbox/sandbox-manager.service';
+import { runExclusiveJob } from 'redis/job-lock';
+import { RedisService } from 'redis/redis.service';
 
 @Injectable()
 export class SandboxSweepJob {
-  private running = false;
+  private readonly state = { running: false };
 
-  constructor(private readonly sandbox: SandboxManager) {}
+  constructor(
+    private readonly sandbox: SandboxManager,
+    @Optional() private readonly redis?: RedisService,
+  ) {}
 
   @Interval(5 * 60_000)
   async sweepIdleSessions(): Promise<void> {
-    if (this.running) return;
-    this.running = true;
-    try {
-      await this.sandbox.sweepIdleSessions();
-    } catch (error) {
-      logger.error('sandbox.sweep_failed', { error });
-    } finally {
-      this.running = false;
-    }
+    await runExclusiveJob(
+      this.state,
+      this.redis,
+      'jobs:sandbox:sweep',
+      4 * 60_000,
+      'sandbox.sweep_failed',
+      () => this.sandbox.sweepIdleSessions(),
+    );
   }
 }

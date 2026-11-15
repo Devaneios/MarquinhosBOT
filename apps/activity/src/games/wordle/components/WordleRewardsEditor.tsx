@@ -20,10 +20,12 @@ export function WordleRewardsEditor({
   const [retry, setRetry] = useState(0);
   useEffect(() => {
     let active = true;
-    setError(false);
     load().then(
       (value) => {
-        if (active) setState(value);
+        if (active) {
+          setError(false);
+          setState(value);
+        }
       },
       () => {
         if (active) setError(true);
@@ -59,7 +61,10 @@ export function WordleRewardsEditor({
           {!state && (
             <button
               type="button"
-              onClick={() => setRetry((value) => value + 1)}
+              onClick={() => {
+                setError(false);
+                setRetry((value) => value + 1);
+              }}
             >
               {t('showcaseRetry')}
             </button>

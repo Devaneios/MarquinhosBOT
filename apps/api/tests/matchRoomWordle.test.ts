@@ -67,7 +67,7 @@ function pickWordOfLength(length: number): string {
 }
 
 describe('MatchRoom · wordle', () => {
-  it('rejects a private token for another game without verified membership', async () => {
+  it('rejects a private token for another game before room entry', async () => {
     const identity = {
       userId: 'unverified-user',
       instanceId: 'inst-1',
@@ -83,6 +83,27 @@ describe('MatchRoom · wordle', () => {
       colyseus.connectTo(room, {
         token: mintWsSessionToken(identity),
         roomKey: roomKey(identity),
+      }),
+    ).rejects.toThrow('Room key does not match target room');
+  });
+
+  it('rejects a Wordle token without verified community membership', async () => {
+    const identity = {
+      userId: 'unverified-user',
+      instanceId: 'inst-1',
+      guildId: 'other-guild',
+      mode: 'single',
+      game: 'wordle',
+    } as const;
+    const key = roomKey(identity);
+    const room = await colyseus.createRoom('match', {
+      game: 'wordle',
+      roomKey: key,
+    });
+    await expect(
+      colyseus.connectTo(room, {
+        token: mintWsSessionToken(identity),
+        roomKey: key,
       }),
     ).rejects.toThrow('Guild membership');
   });

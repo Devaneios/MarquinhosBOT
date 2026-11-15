@@ -27,10 +27,12 @@ export function WordleChallengesPanel({
   );
   useEffect(() => {
     let active = true;
-    setError(false);
     load().then(
       (value) => {
-        if (active) setItems(value);
+        if (active) {
+          setError(false);
+          setItems(value);
+        }
       },
       () => {
         if (active) setError(true);
@@ -82,7 +84,13 @@ export function WordleChallengesPanel({
       {error && (
         <p role="alert">
           {t('challengesError')}{' '}
-          <button type="button" onClick={() => setRetry((value) => value + 1)}>
+          <button
+            type="button"
+            onClick={() => {
+              setError(false);
+              setRetry((value) => value + 1);
+            }}
+          >
             {t('showcaseRetry')}
           </button>
         </p>

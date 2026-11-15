@@ -27,10 +27,13 @@ export MARQUINHOS_SECRET_KEY='secret-key'
 export MARQUINHOS_TOKEN='bot-token'
 export OPENAI_API_KEY='openai-key'
 export POSTGRES_PASSWORD='pg-password'
+export REDIS_PASSWORD='redis#p@ss/word%'
 export SPOTIFY_CLIENT_ID='spotify-client'
 export SPOTIFY_CLIENT_SECRET='spotify-secret'
 export VITE_API_ORIGIN='https://activity.example.test'
 export VITE_DISCORD_CLIENT_ID='discord-client-id'
+export ALLOW_NON_SPOTIFY_SCROBBLES='false'
+export DISCORD_MAIN_GUILD_ID='123456789012345678'
 export MARQUINHOS_WEB_URL='https://web.example.test/space path'
 
 "$script_dir/write-deploy-env.sh" "$test_dir/deploy/.env"
@@ -47,3 +50,9 @@ grep -Fq "MARQUINHOS_DECRYPTION_KEY='decryption\$key'" "$test_dir/deploy/bot.env
 grep -Fq "POSTGRES_PASSWORD='pg-password'" "$test_dir/deploy/.env"
 ! grep -Fq 'POSTGRES_PASSWORD=' "$test_dir/deploy/api.env"
 ! grep -Fq 'POSTGRES_PASSWORD=' "$test_dir/deploy/bot.env"
+grep -Fq "REDIS_PASSWORD='redis#p@ss/word%'" "$test_dir/deploy/.env"
+! grep -Fq 'REDIS_PASSWORD=' "$test_dir/deploy/api.env"
+! grep -Fq 'REDIS_PASSWORD=' "$test_dir/deploy/bot.env"
+grep -Fq "REDIS_URL='redis://:redis%23p%40ss%2Fword%25@redis:6379'" "$test_dir/deploy/api.env"
+grep -Fq "ALLOW_NON_SPOTIFY_SCROBBLES='false'" "$test_dir/deploy/api.env"
+grep -Fq "DISCORD_MAIN_GUILD_ID='123456789012345678'" "$test_dir/deploy/api.env"

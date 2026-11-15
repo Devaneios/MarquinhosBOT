@@ -14,10 +14,12 @@ export function WordleGalleryPanel({
   const [retry, setRetry] = useState(0);
   useEffect(() => {
     let active = true;
-    setError(false);
     load().then(
       (value) => {
-        if (active) setGallery(value);
+        if (active) {
+          setError(false);
+          setGallery(value);
+        }
       },
       () => {
         if (active) setError(true);
@@ -39,7 +41,13 @@ export function WordleGalleryPanel({
       {error ? (
         <p role="alert">
           {t('galleryError')}{' '}
-          <button type="button" onClick={() => setRetry((value) => value + 1)}>
+          <button
+            type="button"
+            onClick={() => {
+              setError(false);
+              setRetry((value) => value + 1);
+            }}
+          >
             {t('showcaseRetry')}
           </button>
         </p>

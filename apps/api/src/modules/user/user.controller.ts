@@ -3,6 +3,7 @@ import * as contract from '@marquinhos/contracts/http/routes/user';
 import {
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpException,
@@ -50,7 +51,10 @@ export class UserController {
     input: ContractInputValue<typeof contract.exists>,
     @CurrentUser() user: DiscordUser | undefined,
   ): Promise<ContractResponseInput<typeof contract.exists>> {
-    this.requireUser(user);
+    const currentUser = this.requireUser(user);
+    if (currentUser.id !== input.params.id) {
+      throw new ForbiddenException('Forbidden');
+    }
     const existingUser = await this.userService.exists(input.params.id);
     return existingUser ?? jsonNull;
   }

@@ -9,6 +9,8 @@ export const playbackDataSchema = z.object({
   guildId: z.string(),
   channelId: z.string(),
   providerName: z.string(),
+  retryCount: z.number().int().nonnegative().optional(),
+  nextRetryAt: z.number().nonnegative().optional(),
 });
 export type PlaybackData = z.output<typeof playbackDataSchema>;
 

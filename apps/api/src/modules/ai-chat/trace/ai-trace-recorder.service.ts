@@ -1,6 +1,6 @@
 import type { Db } from '@marquinhos/database/client';
 import { aiTraceEvents, aiTraces } from '@marquinhos/database/schema';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, type OnApplicationShutdown } from '@nestjs/common';
 import { getErrorMessage } from 'common/errors/error-handling';
 import { isLevelEnabled, logger, type LogFields } from 'common/logging/logger';
 import { AppConfig } from 'config/app.config';
@@ -335,7 +335,7 @@ class RecordedTrace implements TraceContext {
 }
 
 @Injectable()
-export class AiTraceRecorder {
+export class AiTraceRecorder implements OnApplicationShutdown {
   private readonly open = new Set<RecordedTrace>();
 
   constructor(
@@ -392,5 +392,9 @@ export class AiTraceRecorder {
     const traces = [...this.open];
     this.open.clear();
     await Promise.all(traces.map((trace) => trace.settled));
+  }
+
+  async onApplicationShutdown(): Promise<void> {
+    await this.flush();
   }
 }

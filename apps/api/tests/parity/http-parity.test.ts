@@ -279,6 +279,26 @@ describe('HTTP parity safety net', () => {
           ? '203.0.113.199'
           : nextProbeIp(),
       );
+      if (probe.request.path === '/api/auth/discordLoginUrl') {
+        const body = actual.body as { data?: unknown };
+        expect(typeof body?.data).toBe('string');
+        const parsedUrl = new URL(body.data as string);
+        const state = parsedUrl.searchParams.get('state');
+        expect(state).toBeTruthy();
+        parsedUrl.searchParams.delete('state');
+        expect(
+          {
+            ...actual,
+            headers: canonicalHeaders(actual.headers),
+            body: { ...body, data: parsedUrl.toString() } as unknown,
+          },
+          probe.id,
+        ).toEqual({
+          ...probe.response,
+          headers: canonicalHeaders(probe.response.headers),
+        });
+        continue;
+      }
       expect(
         {
           ...actual,
@@ -291,4 +311,22 @@ describe('HTTP parity safety net', () => {
       });
     }
   }, 30_000);
+
+  test('enforces security headers and body size limits globally', async () => {
+    const healthRes = await fetch(new URL('/api/health', api.origin));
+    expect(healthRes.status).toBe(200);
+    expect(healthRes.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(healthRes.headers.get('x-powered-by')).toBeNull();
+
+    const oversized = JSON.stringify({ data: 'a'.repeat(300_000) });
+    const tooLarge = await fetch(new URL('/api/activities/token', api.origin), {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-forwarded-for': '203.0.113.222',
+      },
+      body: oversized,
+    });
+    expect(tooLarge.status).toBe(413);
+  });
 });

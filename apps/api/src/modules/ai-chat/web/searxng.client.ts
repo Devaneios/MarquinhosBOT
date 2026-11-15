@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { getErrorMessage } from 'common/errors/error-handling';
 import { z } from 'zod';
 
-const DEFAULT_BASE_URL = 'https://searxng.frois.net.br';
+const DEFAULT_BASE_URL = 'http://127.0.0.1:8888';
 const SEARCH_TIMEOUT_MS = 12_000;
 const DEFAULT_LIMIT = 10;
 const USER_AGENT = 'MarquinhosBOT/1.0 (Discord bot; research agent)';

@@ -8,6 +8,7 @@ import { useDeferredValue, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
 import { DevConsole } from './dev/DevConsole';
+import { ErrorBoundary } from './ErrorBoundary';
 import { useDeepLinkIntent } from './navigation/useDeepLinkIntent';
 import { AppRoutes } from './router';
 
@@ -51,12 +52,14 @@ function App() {
       {shownPhase === 'ready' &&
         identity.status === 'ready' &&
         initialPath !== null && (
-          <MemoryRouter initialEntries={[initialPath]}>
-            <AppRoutes
-              identity={identity.identity}
-              onAuthInvalid={identity.reauth}
-            />
-          </MemoryRouter>
+          <ErrorBoundary>
+            <MemoryRouter initialEntries={[initialPath]}>
+              <AppRoutes
+                identity={identity.identity}
+                onAuthInvalid={identity.reauth}
+              />
+            </MemoryRouter>
+          </ErrorBoundary>
         )}
 
       {import.meta.env.DEV && !isMobilePlatform() && <DevConsole />}

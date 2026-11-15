@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import axios from 'axios';
 import { AppConfig } from 'config/app.config';
 import { createHash } from 'node:crypto';
+import { RedisService } from 'redis/redis.service';
 import { URLSearchParams } from 'url';
 import { z } from 'zod';
 // URLSearchParams is available globally in Node.js >= 15 but we import for clarity
@@ -22,8 +23,10 @@ const discordRolesSchema = z.array(
   z.object({ id: z.string(), position: z.number(), name: z.string() }),
 );
 
+const DISCORD_TIMEOUT_MS = 10_000;
+const USER_CACHE_TTL_MS = 15_000;
 const MEMBERSHIP_CACHE_TTL_MS = 60_000;
-const MEMBERSHIP_CACHE_MAX_ENTRIES = 5_000;
+const CACHE_MAX_ENTRIES = 5_000;
 
 export class DiscordGuildMembershipError extends Error {
   readonly status: number;
@@ -65,7 +68,34 @@ export function buildActivityTokenExchangeBody(
 
 @Injectable()
 export class DiscordService {
-  constructor(private readonly config: AppConfig) {}
+  constructor(
+    private readonly config: AppConfig,
+    @Optional() private readonly redis?: RedisService,
+  ) {}
+
+  private cacheSetBounded<T>(
+    map: Map<string, T>,
+    key: string,
+    value: T,
+    isExpired: (entry: T) => boolean,
+  ): void {
+    if (map.size >= CACHE_MAX_ENTRIES) {
+      for (const [entryKey, entry] of map) {
+        if (isExpired(entry)) map.delete(entryKey);
+      }
+      if (map.size >= CACHE_MAX_ENTRIES) map.clear();
+    }
+    map.set(key, value);
+  }
+
+  private userCacheKey(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private readonly userCache = new Map<
+    string,
+    { user: DiscordUser; expiresAt: number }
+  >();
 
   getDiscordUser = async (token: string): Promise<DiscordUser | null> => {
     if (!this.config.isProduction && token === 'mock-access-token') {
@@ -83,15 +113,54 @@ export class DiscordService {
       };
     }
 
+    const key = this.userCacheKey(token);
+    const now = Date.now();
+    const localCached = this.userCache.get(key);
+    if (localCached && localCached.expiresAt > now) {
+      return localCached.user;
+    }
+
+    if (this.redis) {
+      const redisCached = await this.redis.getCached(`discord:user:${key}`);
+      if (redisCached) {
+        const parsed = discordUserSchema.safeParse(JSON.parse(redisCached));
+        if (parsed.success) {
+          this.cacheSetBounded(
+            this.userCache,
+            key,
+            { user: parsed.data, expiresAt: now + USER_CACHE_TTL_MS },
+            (entry) => entry.expiresAt <= now,
+          );
+          return parsed.data;
+        }
+      }
+    }
+
     const response = await fetch('https://discord.com/api/users/@me', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      signal: AbortSignal.timeout(DISCORD_TIMEOUT_MS),
     });
     if (!response.ok) return null;
 
     const user = discordUserSchema.safeParse(await response.json());
-    return user.success ? user.data : null;
+    if (!user.success) return null;
+
+    this.cacheSetBounded(
+      this.userCache,
+      key,
+      { user: user.data, expiresAt: now + USER_CACHE_TTL_MS },
+      (entry) => entry.expiresAt <= now,
+    );
+    if (this.redis) {
+      await this.redis.setCached(
+        `discord:user:${key}`,
+        JSON.stringify(user.data),
+        USER_CACHE_TTL_MS,
+      );
+    }
+    return user.data;
   };
 
   // Confirmed memberships, keyed by a digest of the token so no token is
@@ -113,23 +182,44 @@ export class DiscordService {
     const now = Date.now();
     const confirmedUntil = this.confirmedMemberships.get(key);
     if (confirmedUntil !== undefined && confirmedUntil > now) return true;
+
+    if (this.redis) {
+      const cached = await this.redis.getCached(`discord:member:${key}`);
+      if (cached === '1') {
+        this.cacheSetBounded(
+          this.confirmedMemberships,
+          key,
+          now + MEMBERSHIP_CACHE_TTL_MS,
+          (until) => until <= now,
+        );
+        return true;
+      }
+    }
+
     try {
       const response = await fetch(
         `https://discord.com/api/users/@me/guilds/${encodeURIComponent(guildId)}/member`,
         {
           headers: { Authorization: `Bearer ${token}` },
+          signal: AbortSignal.timeout(DISCORD_TIMEOUT_MS),
         },
       );
       if (response.status === 404) return false;
       if (!response.ok) throw new DiscordGuildMembershipError(response.status);
       if (response.status !== 200) return false;
-      if (this.confirmedMemberships.size >= MEMBERSHIP_CACHE_MAX_ENTRIES) {
-        for (const [entry, until] of this.confirmedMemberships)
-          if (until <= now) this.confirmedMemberships.delete(entry);
-        if (this.confirmedMemberships.size >= MEMBERSHIP_CACHE_MAX_ENTRIES)
-          this.confirmedMemberships.clear();
+      this.cacheSetBounded(
+        this.confirmedMemberships,
+        key,
+        now + MEMBERSHIP_CACHE_TTL_MS,
+        (until) => until <= now,
+      );
+      if (this.redis) {
+        await this.redis.setCached(
+          `discord:member:${key}`,
+          '1',
+          MEMBERSHIP_CACHE_TTL_MS,
+        );
       }
-      this.confirmedMemberships.set(key, now + MEMBERSHIP_CACHE_TTL_MS);
       return true;
     } catch (error) {
       if (error instanceof DiscordGuildMembershipError) throw error;
@@ -140,27 +230,37 @@ export class DiscordService {
   };
 
   getDiscordGuildUserHighestRole = async (token: string) => {
+    const guildId = this.config.discordMainGuildId;
     const guildUserResponse = await fetch(
-      'https://discord.com/api/users/@me/guilds/305861924648779779/member',
+      `https://discord.com/api/users/@me/guilds/${encodeURIComponent(guildId)}/member`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        signal: AbortSignal.timeout(DISCORD_TIMEOUT_MS),
       },
     );
+
+    if (!guildUserResponse.ok) {
+      return '';
+    }
 
     const guildUser = discordGuildMemberSchema.safeParse(
       await guildUserResponse.json(),
     );
     const memberRoles = guildUser.success ? guildUser.data.roles : [];
+    if (memberRoles.length === 0) {
+      return '';
+    }
 
     const guildRolesResponse = await axios.get(
-      `https://discord.com/api/guilds/305861924648779779/roles`,
+      `https://discord.com/api/guilds/${encodeURIComponent(guildId)}/roles`,
       {
         headers: {
           'User-Agent': 'DiscordBot',
           Authorization: `Bot ${this.config.discordBotToken}`,
         },
+        timeout: DISCORD_TIMEOUT_MS,
       },
     );
 
@@ -195,6 +295,7 @@ export class DiscordService {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         withCredentials: true,
+        timeout: DISCORD_TIMEOUT_MS,
       },
     );
 
@@ -218,6 +319,7 @@ export class DiscordService {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
+          timeout: DISCORD_TIMEOUT_MS,
         },
       );
 
@@ -251,6 +353,7 @@ export class DiscordService {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         withCredentials: true,
+        timeout: DISCORD_TIMEOUT_MS,
       },
     );
 

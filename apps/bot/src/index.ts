@@ -7,6 +7,7 @@ import { env } from './config/environment';
 import { GameManager } from './game/core/GameManager';
 import { initializePlayer } from './lib/player';
 import { registerSapphirePieces } from './lib/registerSapphirePieces';
+import { stopReadySchedulers } from './listeners/ready';
 import { MarquinhosApiService } from './services/marquinhosApi';
 import { SpreadsheetService } from './services/spreadsheet';
 import {
@@ -18,8 +19,19 @@ import { logger } from './utils/logger';
 
 process.env.ROOT_DIR = dirname(fileURLToPath(import.meta.url));
 
+function flushWithTimeout(ms = 2000): Promise<unknown> {
+  return Promise.race([
+    flushPendingErrors(),
+    new Promise((resolve) => setTimeout(resolve, ms)),
+  ]);
+}
+
 process.on('unhandledRejection', (reason, promise) => {
   logger.error(`Unhandled rejection at: ${promise}, reason: ${reason}`);
+  reportError(reason, {
+    origin: 'process.unhandledRejection',
+    logLevel: 'error',
+  });
 });
 
 process.on('uncaughtException', (error: Error) => {
@@ -28,10 +40,7 @@ process.on('uncaughtException', (error: Error) => {
     origin: 'process.uncaughtException',
     logLevel: 'error',
   });
-  Promise.race([
-    flushPendingErrors(),
-    new Promise((resolve) => setTimeout(resolve, 2000)),
-  ]).finally(() => process.exit(1));
+  flushWithTimeout().finally(() => process.exit(1));
 });
 
 const client = new SapphireClient({
@@ -47,6 +56,25 @@ const client = new SapphireClient({
   loadMessageCommandListeners: false,
 });
 
+client.on('error', (error) => {
+  logger.error('Discord client error:', error);
+  reportError(error, { origin: 'discord.client.error', logLevel: 'error' });
+});
+
+client.on('shardError', (error, shardId) => {
+  logger.error(`Discord shard ${shardId} error:`, error);
+  reportError(error, {
+    origin: `discord.shardError:${shardId}`,
+    logLevel: 'error',
+  });
+});
+
+client.on('shardDisconnect', (event, shardId) => {
+  logger.warn(
+    `Discord shard ${shardId} disconnected (code ${event.code}, reason: ${event.reason || 'none'})`,
+  );
+});
+
 const healthServer = Bun.serve({
   hostname: '127.0.0.1',
   port: Number(process.env.HEALTHCHECK_PORT ?? 3001),
@@ -58,12 +86,20 @@ const healthServer = Bun.serve({
 });
 
 function registerShutdownHooks() {
+  let shuttingDown = false;
   const cleanup = () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
     logger.info('Shutting down gracefully...');
+    stopReadySchedulers();
     healthServer.stop(true);
     GameManager.getInstance().destroy();
-    client.destroy();
-    process.exit(0);
+    flushWithTimeout()
+      .catch(() => undefined)
+      .finally(() => {
+        client.destroy();
+        process.exit(0);
+      });
   };
   process.on('SIGTERM', cleanup);
   process.on('SIGINT', cleanup);

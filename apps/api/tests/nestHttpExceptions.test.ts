@@ -28,7 +28,7 @@ describe('Nest HTTP body parser errors', () => {
     const response = await fetch(`${api.origin}/api/activities/token`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ body: 'x'.repeat(150_000) }),
+      body: JSON.stringify({ body: 'x'.repeat(300_000) }),
     });
 
     expect(response.status).toBe(413);

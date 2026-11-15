@@ -34,5 +34,5 @@ sync_repo() {
 
 mkdir -p "$STAGING_DIR" "$MIRROR_DIR"
 
-sync_repo "marquinhos-web-api" "https://github.com/Devaneios/marquinhos-web-api.git"
-sync_repo "MarquinhosBOT" "https://github.com/Devaneios/MarquinhosBOT.git"
+sync_repo "MarquinhosBOT" "${SANDBOX_MIRROR_REPO_URL:-https://github.com/Devaneios/MarquinhosBOT.git}"
+ln -sfn MarquinhosBOT/apps/api "$MIRROR_DIR/marquinhos-web-api"

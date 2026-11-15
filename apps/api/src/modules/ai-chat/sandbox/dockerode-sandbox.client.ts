@@ -39,6 +39,8 @@ export class DockerodeSandboxClient implements DockerClient {
         NanoCpus: config.nanoCpus,
         PidsLimit: config.pidsLimit,
         ReadonlyRootfs: config.readonlyRootfs,
+        CapDrop: ['ALL'],
+        SecurityOpt: ['no-new-privileges:true'],
         Tmpfs: config.tmpfs,
         Binds: config.binds,
       },

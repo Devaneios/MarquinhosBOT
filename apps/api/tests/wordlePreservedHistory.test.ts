@@ -48,26 +48,22 @@ async function preparedHistory() {
     cutoverDate: '2026-11-10',
     before,
   });
-  await db
-    .insert(wordleGlobalDays)
-    .values({
-      word_date: '2026-11-10',
-      word: 'global',
-      word_length: 6,
-      created_at: 100,
-    });
-  await db
-    .insert(wordleGlobalSessions)
-    .values({
-      id: 'global-1',
-      user_id: 'u1',
-      word_date: '2026-11-10',
-      guesses: '[]',
-      solved: true,
-      solved_from_draft: true,
-      attempts: 0,
-      created_at: 101,
-    });
+  await db.insert(wordleGlobalDays).values({
+    word_date: '2026-11-10',
+    word: 'global',
+    word_length: 6,
+    created_at: 100,
+  });
+  await db.insert(wordleGlobalSessions).values({
+    id: 'global-1',
+    user_id: 'u1',
+    word_date: '2026-11-10',
+    guesses: '[]',
+    solved: true,
+    solved_from_draft: true,
+    attempts: 0,
+    created_at: 101,
+  });
 }
 
 describe('Wordle preserved history', () => {

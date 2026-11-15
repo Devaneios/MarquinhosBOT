@@ -24,7 +24,6 @@ export function WordleShowcaseEditor({
   const [retry, setRetry] = useState(0);
   useEffect(() => {
     let active = true;
-    setStatus('loading');
     load().then(
       (ids) => {
         if (active) {
@@ -65,7 +64,13 @@ export function WordleShowcaseEditor({
       {status === 'error' && (
         <div role="alert">
           <p>{t('showcaseError')}</p>
-          <button type="button" onClick={() => setRetry((n) => n + 1)}>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus('loading');
+              setRetry((n) => n + 1);
+            }}
+          >
             {t('showcaseRetry')}
           </button>
         </div>

@@ -5,6 +5,8 @@
   "main": "dist",
   "type": "module",
   "dependencies": {
+    "@colyseus/redis-driver": "^0.17.7",
+    "@colyseus/redis-presence": "^0.17.8",
     "@colyseus/schema": "^4.0.30",
     "@colyseus/testing": "^0.17.11",
     "@colyseus/ws-transport": "^0.17.13",
@@ -25,6 +27,8 @@
     "dockerode": "^5.0.1",
     "drizzle-orm": "0.45.3",
     "express": "^5.2.1",
+    "helmet": "^8.3.0",
+    "ioredis": "^5.11.1",
     "morgan": "^1.11.0",
     "nanoid": "^6.0.1",
     "openai": "^6.48.0",
@@ -66,7 +70,7 @@
     "typescript": "^6.0.3"
   },
   "scripts": {
-    "build": "bun build src/main.ts --target=bun --outdir=./dist --sourcemap=external --external cpu-features --external class-validator --external class-transformer --external '@nestjs/microservices' --external '@nestjs/microservices/*' --external '@nestjs/websockets' --external '@nestjs/websockets/*'",
+    "build": "bun build src/main.ts --target=bun --outdir=./dist --sourcemap=external --external cpu-features --external class-validator --external class-transformer --external '@nestjs/microservices' --external '@nestjs/microservices/*' --external '@nestjs/websockets' --external '@nestjs/websockets/*' && bun build src/modules/ai-chat/web/pdf-worker.ts --target=bun --outdir=./dist --sourcemap=external",
     "dev": "bun scripts/prepareDevelopmentWordle.ts && bun --watch src/main.ts",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\"",

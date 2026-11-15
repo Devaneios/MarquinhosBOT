@@ -13,9 +13,24 @@ export interface DbHandle {
 }
 
 const POOL_MAX = Number(process.env.DATABASE_POOL_MAX ?? 10);
+const STATEMENT_TIMEOUT_MS = Number(
+  process.env.DATABASE_STATEMENT_TIMEOUT_MS ?? 30_000,
+);
 
 export function createDb(url: string, poolMax: number = POOL_MAX): DbHandle {
-  const client = postgres(url, { max: poolMax, onnotice: () => undefined });
+  const client = postgres(url, {
+    max: poolMax,
+    connect_timeout: 10,
+    idle_timeout: 30,
+    max_lifetime: 1800,
+    keep_alive: 60,
+    connection: {
+      statement_timeout: Number.isFinite(STATEMENT_TIMEOUT_MS)
+        ? STATEMENT_TIMEOUT_MS
+        : 30_000,
+    },
+    onnotice: () => undefined,
+  });
   return {
     db: drizzle(client, { schema }),
     close: () => client.end({ timeout: 5 }),
