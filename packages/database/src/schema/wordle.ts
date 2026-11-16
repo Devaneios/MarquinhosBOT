@@ -258,15 +258,32 @@ export const wordleGlobalAcceptedGuesses = pgTable(
     word_date: text('word_date').notNull(),
     attempt: integer('attempt').notNull(),
     accepted_at: bigint('accepted_at', { mode: 'number' }).notNull(),
+    request_id: text('request_id'),
+    achievement_baseline: jsonb('achievement_baseline').$type<string[]>(),
+    achievement_guild_id: text('achievement_guild_id'),
+    achievement_reconciled: boolean('achievement_reconciled')
+      .notNull()
+      .default(false),
+    achievement_retry_at: bigint('achievement_retry_at', { mode: 'number' })
+      .notNull()
+      .default(0),
   },
   (t) => [
     primaryKey({ columns: [t.session_id, t.attempt] }),
+    uniqueIndex('wordle_global_accepted_guesses_user_request_idx')
+      .on(t.user_id, t.request_id)
+      .where(sql`${t.request_id} IS NOT NULL`),
     check('wordle_global_accepted_guess_attempt_check', sql`${t.attempt} > 0`),
     index('wordle_global_accepted_guesses_time_idx').on(t.accepted_at),
     index('wordle_global_accepted_guesses_user_date_idx').on(
       t.user_id,
       t.word_date,
     ),
+    index('wordle_global_accepted_guesses_pending_awards_idx')
+      .on(t.achievement_retry_at, t.accepted_at, t.session_id, t.attempt)
+      .where(
+        sql`${t.achievement_guild_id} IS NOT NULL AND NOT ${t.achievement_reconciled}`,
+      ),
   ],
 );
 
@@ -479,6 +496,18 @@ export const wordleAlbumPages = pgTable(
     }).notNull(),
   },
   (t) => [primaryKey({ columns: [t.guild_id, t.pattern_id] })],
+);
+
+export const wordleAlbumProjectionQueue = pgTable(
+  'wordle_album_projection_queue',
+  {
+    guild_id: text('guild_id').primaryKey(),
+    revision: text('revision')
+      .notNull()
+      .default(sql`gen_random_uuid()::text`),
+    retry_at: bigint('retry_at', { mode: 'number' }).notNull().default(0),
+  },
+  (t) => [index('wordle_album_projection_queue_retry_idx').on(t.retry_at)],
 );
 
 export const wordleAlbumMilestones = pgTable(

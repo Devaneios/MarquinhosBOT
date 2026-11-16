@@ -2,6 +2,7 @@ import type { Db } from '@marquinhos/database/client';
 import {
   wordleAlbumContributions,
   wordleAlbumPages,
+  wordleAlbumProjectionQueue,
   wordleCommunityDailyPresence,
 } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
@@ -11,10 +12,12 @@ import type {
 } from '@marquinhos/domain/games/wordle/community/album';
 import { buildAlbumPages } from '@marquinhos/domain/games/wordle/community/album';
 import { Inject, Injectable } from '@nestjs/common';
+import { logger } from 'common/logging/logger';
 import { DB } from 'database/database.tokens';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, lte, sql } from 'drizzle-orm';
 import { WordleNotificationService } from 'modules/wordle/notifications/wordle-notification.service';
 import { getWordleDayEndEpoch } from 'modules/wordle/wordle-date';
+import { WORDLE_NOW } from 'modules/wordle/wordle.tokens';
 import { z } from 'zod';
 import { WordleAlbumMilestoneService } from './wordle-album-milestone.service';
 
@@ -24,6 +27,7 @@ export class WordleAlbumService {
     @Inject(DB) private readonly database: Db,
     private readonly milestones: WordleAlbumMilestoneService,
     private readonly notifications: WordleNotificationService,
+    @Inject(WORDLE_NOW) private readonly now: () => number = Date.now,
   ) {}
 
   async reconcile(guildId?: string): Promise<void> {
@@ -76,7 +80,55 @@ export class WordleAlbumService {
           inArray(wordleCommunityDailyPresence.word_date, [...dates]),
         ),
       );
-    for (const { guildId } of guilds) await this.pages(guildId);
+    for (const { guildId } of guilds) await this.projectGuild(guildId);
+  }
+
+  async projectGuild(guildId: string): Promise<void> {
+    const [queued] = await this.database
+      .select({ revision: wordleAlbumProjectionQueue.revision })
+      .from(wordleAlbumProjectionQueue)
+      .where(eq(wordleAlbumProjectionQueue.guild_id, guildId));
+    await this.pages(guildId);
+    if (queued)
+      await this.database
+        .delete(wordleAlbumProjectionQueue)
+        .where(
+          and(
+            eq(wordleAlbumProjectionQueue.guild_id, guildId),
+            eq(wordleAlbumProjectionQueue.revision, queued.revision),
+          ),
+        );
+  }
+
+  async processPending(): Promise<void> {
+    const pending = await this.database
+      .select()
+      .from(wordleAlbumProjectionQueue)
+      .where(lte(wordleAlbumProjectionQueue.retry_at, this.now()))
+      .orderBy(
+        asc(wordleAlbumProjectionQueue.retry_at),
+        asc(wordleAlbumProjectionQueue.guild_id),
+      )
+      .limit(100);
+    for (const item of pending) {
+      try {
+        await this.projectGuild(item.guild_id);
+      } catch (error) {
+        logger.warn('wordle.album.projection_retry_failed', {
+          error,
+          guildId: item.guild_id,
+        });
+        await this.database
+          .update(wordleAlbumProjectionQueue)
+          .set({ retry_at: this.now() + 60_000 })
+          .where(
+            and(
+              eq(wordleAlbumProjectionQueue.guild_id, item.guild_id),
+              eq(wordleAlbumProjectionQueue.revision, item.revision),
+            ),
+          );
+      }
+    }
   }
 
   private async recordPages(

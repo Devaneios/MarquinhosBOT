@@ -20,6 +20,7 @@ import * as wordle from '@marquinhos/contracts/http/routes/wordle';
 import type { WordleDraftWrite } from '@marquinhos/contracts/wordle';
 import { reportError } from '@marquinhos/utils/errorHandling';
 import { logger } from '@marquinhos/utils/logger';
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 function extractErrorMessage(data: unknown, fallback: string): unknown {
@@ -238,9 +239,23 @@ export class MarquinhosApiService {
   }
 
   async submitWordleGuess(userId: string, guildId: string, guess: string) {
-    return callContract(this.client, wordle.submitGuess, {
-      body: { userId, guildId, guess },
-    });
+    const {
+      data: { wordDate },
+    } = await this.getWordleStats(guildId);
+    return callContract(
+      this.client,
+      wordle.submitGuess,
+      {
+        body: {
+          userId,
+          guildId,
+          guess,
+          requestId: randomUUID(),
+          date: wordDate,
+        },
+      },
+      { retries: API_RETRIES },
+    );
   }
 
   async writeWordleDraft(

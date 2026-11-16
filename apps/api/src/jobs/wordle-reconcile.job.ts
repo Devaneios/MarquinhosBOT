@@ -5,8 +5,10 @@ import {
 } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { logger } from 'common/logging/logger';
+import { WordleAlbumService } from 'modules/wordle/community/wordle-album.service';
 import { WordleGalleryService } from 'modules/wordle/community/wordle-gallery.service';
 import { WordleGoalsService } from 'modules/wordle/community/wordle-goals.service';
+import { WordleGlobalGameCoordinator } from 'modules/wordle/gameplay/wordle-global-game-coordinator';
 import { WordleNotificationService } from 'modules/wordle/notifications/wordle-notification.service';
 import { runExclusiveJob } from 'redis/job-lock';
 import { RedisService } from 'redis/redis.service';
@@ -19,6 +21,8 @@ export class WordleReconcileJob implements OnApplicationBootstrap {
     private readonly notifications: WordleNotificationService,
     private readonly goals: WordleGoalsService,
     private readonly gallery: WordleGalleryService,
+    private readonly game: WordleGlobalGameCoordinator,
+    private readonly album: WordleAlbumService,
     @Optional() private readonly redis?: RedisService,
   ) {}
 
@@ -40,6 +44,11 @@ export class WordleReconcileJob implements OnApplicationBootstrap {
       'wordle.reconcile_failed',
       async () => {
         const steps: [string, () => Promise<unknown>][] = [
+          [
+            'wordle.achievement.retry_failed',
+            () => this.game.reconcilePending(),
+          ],
+          ['wordle.album.retry_failed', () => this.album.processPending()],
           ['wordle.goal.scheduler_failed', () => this.goals.processDue()],
           [
             'wordle.notification.reap_failed',

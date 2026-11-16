@@ -75,6 +75,8 @@ export function createMatchRoom(dependencies: RoomDependencies) {
     // room's context, not whichever room's setup() ran most recently.
     private ctx!: AdapterContext;
     private members: Member[] = [];
+    private sessionGeneration = 0;
+    private readonly wordleDrops = new Map<string, number>();
     private hostUserId: string | null = null;
     private mode: ActivityMode = 'multi';
     private queueEnabled = false;
@@ -559,7 +561,46 @@ export function createMatchRoom(dependencies: RoomDependencies) {
       );
     }
 
+    override async onDrop(client: AuthedClient) {
+      if (this.game !== 'wordle') return;
+      for (const limiter of this.rateLimiters.values()) limiter.clear(client);
+      this.wordleDrops.set(client.sessionId, this.sessionGeneration);
+      try {
+        await this.allowReconnection(client, 30);
+      } catch {
+        // The framework calls onLeave if the reservation expires.
+      }
+    }
+
+    override onReconnect(client: AuthedClient) {
+      const previousGeneration = this.wordleDrops.get(client.sessionId);
+      this.wordleDrops.delete(client.sessionId);
+      if (previousGeneration === undefined) return;
+      const auth = requireAuth(client);
+      const member = this.members.find((item) => item.userId === auth.userId);
+      const role =
+        previousGeneration !== this.sessionGeneration || !member
+          ? this.admitMember(auth)
+          : member.role;
+      this.syncMetadata();
+      sendMessage<RoomServerMessage>(client, {
+        type: ROOM_STATE,
+        payload: this.roomState(),
+      });
+      this.settle(
+        this.adapter.onJoin(this.session, auth, client, role, this.ctx),
+        'reconnect',
+      );
+    }
+
     override onLeave(client: AuthedClient) {
+      const droppedGeneration = this.wordleDrops.get(client.sessionId);
+      this.wordleDrops.delete(client.sessionId);
+      if (
+        droppedGeneration !== undefined &&
+        droppedGeneration !== this.sessionGeneration
+      )
+        return;
       const auth = requireAuth(client);
 
       for (const limiter of this.rateLimiters.values()) limiter.clear(client);
@@ -659,6 +700,7 @@ export function createMatchRoom(dependencies: RoomDependencies) {
     }
 
     private switchGame(game: GameId) {
+      this.sessionGeneration++;
       this.adapter.onDispose(this.session);
       this.adapter = ADAPTER_REGISTRY[game]!;
       this.game = game;

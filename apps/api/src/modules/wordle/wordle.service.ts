@@ -11,6 +11,7 @@ import {
   wordleGlobalSessions,
 } from '@marquinhos/database/schema';
 import { Inject, Injectable } from '@nestjs/common';
+import { logger } from 'common/logging/logger';
 import { DB } from 'database/database.tokens';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { WordleParticipationService } from 'modules/wordle/community/wordle-participation.service';
@@ -72,8 +73,46 @@ export class WordleService {
     guildId: string,
     viewerId: string,
   ) {
+    return (await this.loadAchievements(userId, guildId, viewerId)).overview;
+  }
+
+  private async loadAchievements(
+    userId: string,
+    guildId: string,
+    viewerId: string,
+  ) {
     await this.drafts.finalizePlayerBefore(userId, this.today());
-    return this.achievements.getOverview(userId, guildId, viewerId);
+    let reconciliationFailed = false;
+    if (userId === viewerId) {
+      try {
+        await this.coordinator.reconcile(userId, guildId);
+      } catch (error) {
+        reconciliationFailed = true;
+        logger.warn('wordle.achievement_reconciliation_failed', {
+          error,
+          userId,
+          guildId,
+        });
+      }
+    }
+    const overview = await this.achievements.getOverview(
+      userId,
+      guildId,
+      viewerId,
+    );
+    return { overview, reconciliationFailed };
+  }
+
+  async refreshAchievements(userId: string, guildId: string) {
+    // Sample before reconciliation so a concurrent award cannot leave a stale
+    // overview marked as final. A pending sample triggers one further refresh.
+    const pending = await this.coordinator.hasPendingAwards(userId);
+    const { overview, reconciliationFailed } = await this.loadAchievements(
+      userId,
+      guildId,
+      userId,
+    );
+    return { pending: pending || reconciliationFailed, overview };
   }
 
   recordParticipation(userId: string, guildId: string): Promise<void> {
@@ -132,8 +171,25 @@ export class WordleService {
     userId: string,
     guildId: string,
     guess: string,
+    captureAchievementBaseline = false,
+    requestId?: string,
+    expectedDate?: string,
   ): Promise<GuessResult | { error: string }> {
+    if (requestId) {
+      const replay = expectedDate
+        ? await this.coordinator.replayGuess(
+            userId,
+            guildId,
+            expectedDate,
+            guess,
+            requestId,
+          )
+        : await this.coordinator.replayById(userId, guildId, guess, requestId);
+      if (replay) return this.withWinStreak(replay, userId, guildId);
+    }
     const date = this.today();
+    if (expectedDate && expectedDate !== date)
+      return { error: 'O dia do jogo mudou. Envie o palpite novamente.' };
     await this.recordParticipation(userId, guildId);
     await this.drafts.finalizePlayerBefore(userId, date);
     await this.getOrCreateDay(date);
@@ -142,13 +198,39 @@ export class WordleService {
       guildId,
       date,
       guess,
+      captureAchievementBaseline,
+      requestId,
     );
+    return this.withWinStreak(result, userId, guildId);
+  }
+
+  private async withWinStreak(
+    result: GuessResult | { error: string },
+    userId: string,
+    guildId: string,
+  ): Promise<GuessResult | { error: string }> {
     if ('error' in result || !result.solved) return result;
     const streak =
       ('achievementUpdate' in result
-        ? result.achievementUpdate.overview.stats.currentStreak
+        ? result.achievementUpdate?.overview.stats.currentStreak
         : undefined) ?? (await this.getStreak(userId, guildId)).currentStreak;
     return { ...result, streak };
+  }
+
+  async replayGuess(
+    userId: string,
+    guildId: string,
+    date: string,
+    guess: string,
+    requestId: string,
+  ): Promise<GuessResult | { error: string } | null> {
+    return this.coordinator.replayGuess(
+      userId,
+      guildId,
+      date,
+      guess,
+      requestId,
+    );
   }
 
   async getUserSession(

@@ -118,6 +118,8 @@ import { WordleWordlistReviewService } from 'modules/wordle/words/wordle-wordlis
   ],
   exports: [
     WordBankService,
+    WordleAlbumService,
+    WordleGlobalGameCoordinator,
     WordleGalleryService,
     WordleGoalsService,
     WordleNotificationService,

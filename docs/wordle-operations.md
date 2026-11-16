@@ -78,8 +78,9 @@ configured Wordle date closes, a background finalizer runs on startup and every
 30 seconds. It records a zero-attempt win only when the saved final draft still
 matches the answer and the player has no accepted guesses that date. Keep the
 API connected to the database so it can save delivered input; the bot cannot
-persist edits Discord does not send to autocomplete. Overview reads do not run
-finalization. The finalizer retries pending achievement awards after a failure.
+persist edits Discord does not send to autocomplete. Player overview reads also
+finalize that player's expired drafts. The finalizer retries pending achievement
+awards after a failure.
 
 ## Seed the collection and reconcile awards
 
@@ -90,10 +91,21 @@ replayed for XP. The `wordle_v2_` prefix on IDs is historical naming, not a
 runtime version. Startup stores Wordle conditions as null because evaluation
 functions remain in the domain source.
 
-An overview read does not write discoveries, unlocks, or XP. Accepted guesses
-trigger best-effort awards after the guess commits. Run reconciliation when
-missed awards need recovery after catalog edits or a temporary
-award failure:
+Accepted guesses commit before achievement evaluation. Each new guess records
+its community and pending award work in the same transaction. The API retries
+pending awards on startup and every 30 seconds; one failed player's work does
+not stop the others. Opening the Activity also reconciles the player's awards.
+XP and unlocks are protected against duplicate retries. Public profile reads
+do not run this general reconciliation, though they do finalize expired
+drafts as described above.
+
+Community album projections are queued transactionally when a player visits a
+community or discovers a drawing. The same reconciliation job retries failed
+projections independently, including existing discoveries queued by the album
+projection migration. A failing community is retried after one minute.
+
+Use the manual reconciliation command for catalog edits or older sessions that
+do not have a pending guess record:
 
 ```sh
 pnpm --filter marquinhos-web-api exec bun scripts/reconcileGlobalWordleAchievements.ts --user-id USER_ID --guild-id GUILD_ID
@@ -105,9 +117,7 @@ global sessions in the specified community context and reports newly awarded
 achievements. Repeating it does not duplicate unlock rows or XP.
 
 Legacy unlocks remain visible with their original timestamps; the migration
-does not replay legacy rewards. Reconciliation uses eligible global sessions
-and does not run as a side effect of viewing
-`/termo-conquistas`. The release API image does not include `apps/api/scripts/`,
+does not replay legacy rewards. The release API image does not include `apps/api/scripts/`,
 so run the command from a checkout with access to the target database. The bot's
 optional `conquista` argument accepts an achievement ID or exact visible name to
 show its drawing preview or saved evidence.

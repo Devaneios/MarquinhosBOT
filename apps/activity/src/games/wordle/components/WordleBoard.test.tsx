@@ -2,7 +2,7 @@ import '@/i18n';
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, mock } from 'bun:test';
+import { afterEach, describe, expect, it, jest, mock } from 'bun:test';
 import { MemoryRouter } from 'react-router-dom';
 
 let deliverMessage: (message: ActivityMessage) => void = () => {
@@ -35,6 +35,7 @@ const keyboardConfig = {
 
 afterEach(() => {
   connectionState = 'connected';
+  jest.useRealTimers();
 });
 
 function renderBoard(WordleBoard: typeof import('./WordleBoard').WordleBoard) {
@@ -116,6 +117,143 @@ describe('WordleBoard focus keyboard', () => {
 });
 
 describe('WordleBoard screen transitions', () => {
+  it('shows a new achievement even if the initial collection failed to load', async () => {
+    jest.useFakeTimers();
+    const { WordleBoard } = await import(`./WordleBoard.tsx?${Math.random()}`);
+    const rendered = renderBoard(WordleBoard);
+    initializeBoard();
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'termo',
+          feedback: ['correct', 'correct', 'correct', 'correct', 'correct'],
+          guesses: [
+            {
+              guess: 'termo',
+              feedback: ['correct', 'correct', 'correct', 'correct', 'correct'],
+            },
+          ],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+          achievementBaseline: ['old'],
+        },
+      }),
+    );
+    act(() => jest.advanceTimersByTime(10_000));
+    const stats = {
+      played: 1,
+      wins: 1,
+      winRate: 100,
+      currentStreak: 1,
+      bestStreak: 1,
+      distribution: [1, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const old = {
+      id: 'old',
+      name: 'Conquista antiga',
+      description: 'Antiga',
+      icon: '🏆',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: '2026-10-01T12:00:00.000Z',
+    };
+    const fresh = {
+      ...old,
+      id: 'new',
+      name: 'Conquista nova',
+      unlockedAt: '2026-10-29T12:00:00.000Z',
+    };
+    act(() =>
+      deliverMessage({
+        type: 'achievement_refresh_result',
+        payload: {
+          requestId: 1,
+          pending: false,
+          overview: { stats, achievements: [old, fresh] },
+        },
+      }),
+    );
+    expect(screen.getByText('Conquista nova')).toBeTruthy();
+    expect(screen.queryByText('Conquista antiga')).toBeNull();
+    expect(screen.getByText('+25 XP')).toBeTruthy();
+    rendered.unmount();
+  });
+  it('shows a recovered achievement in an already open board', async () => {
+    jest.useFakeTimers();
+    const { WordleBoard } = await import(`./WordleBoard.tsx?${Math.random()}`);
+    const rendered = renderBoard(WordleBoard);
+    const stats = {
+      played: 0,
+      wins: 0,
+      winRate: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      distribution: [0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const achievement = {
+      id: 'wordle_first_win',
+      name: 'Primeira palavra',
+      description: 'Acerte sua primeira palavra.',
+      icon: '🟩',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: null,
+    };
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          achievementOverview: { stats, achievements: [achievement] },
+        },
+      }),
+    );
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'termo',
+          feedback: ['correct', 'correct', 'correct', 'correct', 'correct'],
+          guesses: [
+            {
+              guess: 'termo',
+              feedback: ['correct', 'correct', 'correct', 'correct', 'correct'],
+            },
+          ],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+        },
+      }),
+    );
+    expect(screen.queryByText(/conquista desbloqueada/i)).toBeNull();
+    act(() => jest.advanceTimersByTime(10_000));
+    act(() =>
+      deliverMessage({
+        type: 'achievement_refresh_result',
+        payload: {
+          requestId: 1,
+          pending: false,
+          overview: {
+            stats: { ...stats, played: 1, wins: 1, winRate: 100 },
+            achievements: [
+              { ...achievement, unlockedAt: '2026-10-29T12:00:00.000Z' },
+            ],
+          },
+        },
+      }),
+    );
+    expect(screen.getByText(/conquista desbloqueada/i)).toBeTruthy();
+    expect(screen.getByText('Primeira palavra')).toBeTruthy();
+    expect(screen.getByText('+25 XP')).toBeTruthy();
+    rendered.unmount();
+  });
   it('keeps the connecting screen until the room sends the board', async () => {
     const { WordleBoard } = await import(`./WordleBoard.tsx?${Math.random()}`);
     renderBoard(WordleBoard);

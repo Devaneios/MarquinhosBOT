@@ -37,6 +37,7 @@ export function createWordleTestServices(
     database,
     albumMilestones,
     notifications,
+    now,
   );
   const globalAchievements = new WordleGlobalAchievementService(
     database,

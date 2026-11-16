@@ -67,6 +67,22 @@ async function preparedHistory() {
 }
 
 describe('Wordle preserved history', () => {
+  test('evaluates current play when a preserved board contains a drawing', async () => {
+    await preparedHistory();
+    const guesses = Array.from({ length: 4 }, (_, index) => ({
+      guess: ['terco', 'terei', 'terca', 'terau'][index],
+      feedback: ['correct', 'absent', 'absent', 'absent', 'absent'],
+    }));
+    await db.execute(
+      sql`UPDATE wordle_sessions SET guesses = ${JSON.stringify(guesses)}, attempts = 4, solved = false WHERE id = 's2'`,
+    );
+    await db.execute(sql`DELETE FROM wordle_sessions WHERE id = 's3'`);
+    const service = createWordleTestGlobalAchievementService(
+      () => Date.parse('2026-11-10T12:00:00.000Z'),
+      db,
+    );
+    await expect(service.checkAndAward('u1', 'g1')).resolves.toBeDefined();
+  });
   test('combines source-identified games and continues the anchored streak', async () => {
     await preparedHistory();
     const history = new WordleHistoryService(db);

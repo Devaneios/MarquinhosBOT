@@ -1,0 +1,4 @@
+ALTER TABLE "wordle_global_accepted_guesses" ADD COLUMN "achievement_guild_id" text;--> statement-breakpoint
+ALTER TABLE "wordle_global_accepted_guesses" ADD COLUMN "achievement_reconciled" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "wordle_global_accepted_guesses" ADD COLUMN "achievement_retry_at" bigint DEFAULT 0 NOT NULL;--> statement-breakpoint
+CREATE INDEX "wordle_global_accepted_guesses_pending_awards_idx" ON "wordle_global_accepted_guesses" USING btree ("achievement_retry_at","accepted_at","session_id","attempt") WHERE "wordle_global_accepted_guesses"."achievement_guild_id" IS NOT NULL AND NOT "wordle_global_accepted_guesses"."achievement_reconciled";

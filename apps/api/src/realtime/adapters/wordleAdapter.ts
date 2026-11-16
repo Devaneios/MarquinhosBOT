@@ -25,6 +25,8 @@ const recordedDatesByService = new WeakMap<
   WordleService,
   WeakMap<Client, string>
 >();
+const seatsByClient = new WeakMap<Client, SeatRole>();
+const initializationsByClient = new WeakMap<Client, Promise<void>>();
 
 function getRecordedDates(service: WordleService): WeakMap<Client, string> {
   let map = recordedDatesByService.get(service);
@@ -40,11 +42,12 @@ async function sendInit(
   auth: WsSessionPayload,
   client: Client,
   seat: SeatRole,
+  syncOnly = false,
 ): Promise<void> {
   // Presence and achievements are side effects of joining: a failure in
   // either must not keep the player out of the game.
   const initDate = service.currentDate();
-  if (seat === 'player') {
+  if (seat === 'player' && getRecordedDates(service).get(client) !== initDate) {
     await service
       .recordParticipation(auth.userId, auth.guildId)
       .then(() => {
@@ -59,7 +62,7 @@ async function sendInit(
       });
   }
   const overview = service
-    .getAchievementsOverview(auth.userId, auth.guildId, auth.userId)
+    .refreshAchievements(auth.userId, auth.guildId)
     .catch((error: unknown) => {
       logger.error('wordle.achievements.overview_failed', {
         error,
@@ -77,7 +80,7 @@ async function sendInit(
   // has no player-registration concept to skip for a spectator, so
   // there's no harm in reading state for them — they get the same ack
   // shape a real player gets, with an empty session, instead of no ack.
-  const [daily, userSession, achievementOverview, draft] = await Promise.all([
+  const [daily, userSession, achievementState, draft] = await Promise.all([
     service.getDailyWord(auth.guildId),
     seat === 'player'
       ? service.getUserSession(auth.userId, auth.guildId)
@@ -94,7 +97,13 @@ async function sendInit(
       solved: userSession?.solved ?? false,
       attempts: userSession?.attempts ?? 0,
       draft,
-      ...(achievementOverview ? { achievementOverview } : {}),
+      ...(syncOnly ? { syncOnly: true } : {}),
+      ...(achievementState
+        ? {
+            achievementOverview: achievementState.overview,
+            achievementPending: achievementState.pending,
+          }
+        : {}),
     },
   });
 }
@@ -113,6 +122,36 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
     return {
       session: service,
       messageHandlers: {
+        wordle_sync: {
+          rateLimit: { windowMs: 1000, max: 2 },
+          handle: async (auth, client) => {
+            await initializationsByClient.get(client)?.catch(() => undefined);
+            const seat = seatsByClient.get(client);
+            if (seat) await sendInit(service, auth, client, seat, true);
+          },
+        },
+        achievement_refresh: {
+          rateLimit: { windowMs: 1000, max: 2 },
+          handle: async (auth, client, payload) => {
+            const parsed = clientMessageSchema.safeParse({
+              type: 'achievement_refresh',
+              payload,
+            });
+            if (!parsed.success || parsed.data.type !== 'achievement_refresh')
+              return;
+            const refreshed = await service.refreshAchievements(
+              auth.userId,
+              auth.guildId,
+            );
+            sendMessage<WordleServerMessage>(client, {
+              type: 'achievement_refresh_result',
+              payload: {
+                requestId: parsed.data.payload.requestId,
+                ...refreshed,
+              },
+            });
+          },
+        },
         guess: {
           rateLimit: {
             windowMs: GUESS_RATE_LIMIT_WINDOW_MS,
@@ -138,10 +177,41 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
               parsed.data.date !== undefined &&
               parsed.data.date !== service.currentDate()
             ) {
+              if (parsed.data.requestId) {
+                const replay = await service.replayGuess(
+                  auth.userId,
+                  auth.guildId,
+                  parsed.data.date,
+                  parsed.data.guess,
+                  parsed.data.requestId,
+                );
+                if (replay && !('error' in replay)) {
+                  sendMessage<WordleServerMessage>(client, {
+                    type: 'guess_result',
+                    payload: replay,
+                  });
+                  await sendInit(service, auth, client, 'player');
+                  return;
+                }
+                if (replay && 'error' in replay) {
+                  await sendInit(service, auth, client, 'player');
+                  sendMessage<WordleServerMessage>(client, {
+                    type: 'guess_error',
+                    payload: {
+                      message: replay.error,
+                      requestId: parsed.data.requestId,
+                    },
+                  });
+                  return;
+                }
+              }
               await sendInit(service, auth, client, 'player');
               sendMessage<WordleServerMessage>(client, {
                 type: 'guess_error',
-                payload: { message: DAY_CHANGED_MESSAGE },
+                payload: {
+                  message: DAY_CHANGED_MESSAGE,
+                  requestId: parsed.data.requestId,
+                },
               });
               return;
             }
@@ -149,12 +219,18 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
               auth.userId,
               auth.guildId,
               parsed.data.guess,
+              parsed.data.captureAchievementBaseline,
+              parsed.data.requestId,
             );
             if ('error' in result) {
               sendMessage<WordleServerMessage>(client, {
                 type: 'guess_error',
-                payload: { message: result.error },
+                payload: {
+                  message: result.error,
+                  requestId: parsed.data.requestId,
+                },
               });
+              await sendInit(service, auth, client, 'player', true);
               return;
             }
             sendMessage<WordleServerMessage>(client, {
@@ -203,8 +279,15 @@ export const wordleAdapter: GameRoomAdapter<WordleService> = {
     };
   },
 
-  onJoin: (service, auth, client, seat: SeatRole) =>
-    sendInit(service, auth, client, seat),
-  onLeave: () => undefined,
+  onJoin: (service, auth, client, seat: SeatRole) => {
+    seatsByClient.set(client, seat);
+    const initialization = sendInit(service, auth, client, seat);
+    initializationsByClient.set(client, initialization);
+    return initialization;
+  },
+  onLeave: (_service, _auth, client) => {
+    seatsByClient.delete(client);
+    initializationsByClient.delete(client);
+  },
   onDispose: () => undefined,
 };

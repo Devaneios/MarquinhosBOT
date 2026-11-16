@@ -1,4 +1,5 @@
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
+import { clientMessageSchema } from '@marquinhos/contracts/activity/games/wordle';
 import type {
   WordleAchievementStatus,
   WordleUnlockedAchievement,
@@ -8,6 +9,7 @@ import { afterEach, describe, expect, it, jest, mock } from 'bun:test';
 import { revealDurationMs } from '../constants';
 
 const originalMatchMedia = window.matchMedia;
+afterEach(() => window.sessionStorage.clear());
 
 const miss = (guess: string) => ({
   guess,
@@ -72,6 +74,157 @@ async function renderBoardHook(enableArrowKeys = false) {
 }
 
 describe('useWordleBoard focus controls', () => {
+  it('restores a newer remote draft after reconnecting to the same board', async () => {
+    sentMessages = [];
+    const { result, unmount } = await renderBoardHook();
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          syncOnly: true,
+          draft: {
+            date: '2026-10-29',
+            rowIndex: 0,
+            cells: ['t', 'e', '', '', ''],
+            activeIndex: 2,
+            revision: 2,
+          },
+        },
+      }),
+    );
+    expect(result.current.currentLetters).toEqual(['t', 'e', '', '', '']);
+    expect(result.current.activeIndex).toBe(2);
+    expect(sentMessages).toHaveLength(0);
+    act(() => result.current.typeLetter('r'));
+    expect(sentMessages[0]).toMatchObject({
+      type: 'draft_update',
+      payload: { expectedRevision: 2 },
+    });
+    unmount();
+  });
+
+  it('keeps an unsaved local edit when a reconnect snapshot arrives', async () => {
+    const { result, unmount } = await renderBoardHook();
+    act(() => result.current.typeLetter('a'));
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          syncOnly: true,
+          draft: {
+            date: '2026-10-29',
+            rowIndex: 0,
+            cells: ['t', 'e', '', '', ''],
+            activeIndex: 2,
+            revision: 2,
+          },
+        },
+      }),
+    );
+    expect(result.current.currentLetters).toEqual(['a', '', '', '', '']);
+    unmount();
+  });
+
+  it('shows newly earned achievements when a newer synchronized board arrives', async () => {
+    const { result, unmount } = await renderBoardHook();
+    const stats = {
+      played: 0,
+      wins: 0,
+      winRate: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      distribution: [0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const locked = {
+      id: 'new',
+      name: 'Nova',
+      description: 'Nova',
+      icon: '🏆',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: null,
+    };
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          date: '2026-10-29',
+          wordLength: 5,
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          achievementOverview: { stats, achievements: [locked] },
+        },
+      }),
+    );
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          date: '2026-10-29',
+          wordLength: 5,
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          syncOnly: true,
+          achievementOverview: {
+            stats: { ...stats, played: 1, wins: 1, winRate: 100 },
+            achievements: [
+              { ...locked, unlockedAt: '2026-10-29T12:00:00.000Z' },
+            ],
+          },
+        },
+      }),
+    );
+    expect(result.current.solved).toBe(true);
+    expect(
+      result.current.unlockedAchievements.map(
+        (item: WordleUnlockedAchievement) => item.id,
+      ),
+    ).toEqual(['new']);
+    unmount();
+  });
+  it('ignores an older synchronization snapshot after a guess', async () => {
+    const { result, unmount } = await renderBoardHook();
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'carro',
+          feedback: miss('carro').feedback,
+          guesses: [miss('carro')],
+          solved: false,
+          attempts: 1,
+          wordLength: 5,
+        },
+      }),
+    );
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          date: '2026-10-29',
+          wordLength: 5,
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          syncOnly: true,
+        },
+      }),
+    );
+    expect(result.current.guesses).toEqual([miss('carro')]);
+    unmount();
+  });
   it('restores draft gaps and position, then serializes edits by acknowledged revision', async () => {
     sentMessages = [];
     const { result } = await renderBoardHook();
@@ -812,5 +965,1162 @@ describe('useWordleBoard reveal', () => {
       result.current.dismissCurrentAchievement();
     });
     expect(result.current.unlockedAchievements).toEqual([]);
+  });
+});
+
+describe('achievement recovery', () => {
+  afterEach(() => jest.useRealTimers());
+
+  it('restores an unanswered guess after the board remounts', async () => {
+    jest.useFakeTimers();
+    const firstBoard = await renderBoardHook();
+    const initialStats = {
+      played: 0,
+      wins: 0,
+      winRate: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      distribution: [0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          achievementOverview: { stats: initialStats, achievements: [] },
+        },
+      }),
+    );
+    sentMessages = [];
+    for (const letter of 'termo')
+      act(() => firstBoard.result.current.typeLetter(letter));
+    act(() => firstBoard.result.current.submitGuess());
+    const first = sentMessages.find((message) => message.type === 'guess');
+    if (!first) throw new Error('Expected a guess');
+    const parsed = clientMessageSchema.parse(first);
+    if (parsed.type !== 'guess' || !parsed.payload.requestId)
+      throw new Error('Expected a request id');
+    expect(parsed.payload.captureAchievementBaseline).toBe(true);
+    firstBoard.unmount();
+    sentMessages = [];
+    const secondBoard = await renderBoardHook();
+    act(() => jest.advanceTimersByTime(5_000));
+    expect(sentMessages.filter((message) => message.type === 'guess')).toEqual([
+      first,
+    ]);
+    const stats = {
+      played: 1,
+      wins: 1,
+      winRate: 100,
+      currentStreak: 1,
+      bestStreak: 1,
+      distribution: [1, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const fresh = {
+      id: 'new',
+      name: 'Nova',
+      description: 'Nova',
+      icon: '🏆',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: '2026-10-29T12:00:00.000Z',
+    };
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          requestId: parsed.payload.requestId,
+          guess: 'termo',
+          feedback: hit('termo').feedback,
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+          achievementBaseline: [],
+          achievementUpdate: {
+            overview: { stats, achievements: [fresh] },
+            unlockedIds: [],
+          },
+        },
+      }),
+    );
+    expect(
+      secondBoard.result.current.unlockedAchievements.map(
+        (item: WordleUnlockedAchievement) => item.id,
+      ),
+    ).toEqual(['new']);
+    secondBoard.unmount();
+    sentMessages = [];
+    const thirdBoard = await renderBoardHook();
+    act(() => jest.advanceTimersByTime(5_000));
+    expect(
+      sentMessages.filter((message) => message.type === 'guess'),
+    ).toHaveLength(0);
+    thirdBoard.unmount();
+  });
+
+  it('does not retry another room’s pending guess after the session changes', async () => {
+    jest.useFakeTimers();
+    const { useWordleBoard } = await import(
+      `./useWordleBoard.ts?${Math.random()}`
+    );
+    const { result, rerender, unmount } = renderHook(
+      ({ roomKey }) =>
+        useWordleBoard(
+          { token: 'token', roomKey },
+          { enabled: true, enableSpaceKey: true, enableArrowKeys: false },
+        ),
+      { initialProps: { roomKey: 'room-a' } },
+    );
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [],
+          solved: false,
+          attempts: 0,
+        },
+      }),
+    );
+    for (const letter of 'termo') act(() => result.current.typeLetter(letter));
+    act(() => result.current.submitGuess());
+    sentMessages = [];
+    rerender({ roomKey: 'room-b' });
+    act(() => jest.advanceTimersByTime(5_000));
+    expect(
+      sentMessages.filter((message) => message.type === 'guess'),
+    ).toHaveLength(0);
+    unmount();
+  });
+
+  it('retries a lost guess response with the same id and stops after receiving it', async () => {
+    jest.useFakeTimers();
+    const { result, unmount } = await renderBoardHook();
+    sentMessages = [];
+    for (const letter of 'termo') act(() => result.current.typeLetter(letter));
+    act(() => result.current.submitGuess());
+    const first = sentMessages.find((message) => message.type === 'guess');
+    if (!first) throw new Error('Expected a guess');
+    const parsed = clientMessageSchema.parse(first);
+    if (parsed.type !== 'guess' || !parsed.payload.requestId)
+      throw new Error('Expected a guess request id');
+    expect(parsed.payload.guess).toBe('termo');
+    act(() => jest.advanceTimersByTime(5_000));
+    expect(sentMessages.filter((message) => message.type === 'guess')).toEqual([
+      first,
+      first,
+    ]);
+    const requestId = parsed.payload.requestId;
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          requestId,
+          guess: 'termo',
+          feedback: hit('termo').feedback,
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+          achievementBaseline: [],
+        },
+      }),
+    );
+    expect(result.current.solved).toBe(true);
+    act(() => jest.advanceTimersByTime(10_000));
+    expect(
+      sentMessages.filter((message) => message.type === 'guess'),
+    ).toHaveLength(2);
+    unmount();
+  });
+
+  it('uses the saved baseline if an overview arrives before a very late guess reply', async () => {
+    jest.useFakeTimers();
+    const { result, unmount } = await renderBoardHook();
+    sentMessages = [];
+    for (const letter of 'termo') act(() => result.current.typeLetter(letter));
+    act(() => result.current.submitGuess());
+    const request = clientMessageSchema.parse(
+      sentMessages.find((message) => message.type === 'guess'),
+    );
+    if (request.type !== 'guess' || !request.payload.requestId)
+      throw new Error('Expected request id');
+    act(() => jest.advanceTimersByTime(30_000));
+    const stats = {
+      played: 1,
+      wins: 1,
+      winRate: 100,
+      currentStreak: 1,
+      bestStreak: 1,
+      distribution: [1, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const fresh = {
+      id: 'new',
+      name: 'Nova',
+      description: 'Nova',
+      icon: '🏆',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: '2026-10-29T12:00:00.000Z',
+    };
+    const overview = { stats, achievements: [fresh] };
+    act(() =>
+      deliverMessage({
+        type: 'achievement_refresh_result',
+        payload: { requestId: 1, pending: false, overview },
+      }),
+    );
+    expect(result.current.unlockedAchievements).toEqual([]);
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          requestId: request.payload.requestId,
+          guess: 'termo',
+          feedback: hit('termo').feedback,
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+          achievementBaseline: [],
+          achievementUpdate: { overview, unlockedIds: [] },
+        },
+      }),
+    );
+    expect(
+      result.current.unlockedAchievements.map(
+        (item: WordleUnlockedAchievement) => item.id,
+      ),
+    ).toEqual(['new']);
+    unmount();
+  });
+
+  it('does not redisplay a dismissed award when the guess reply arrives late', async () => {
+    jest.useFakeTimers();
+    const { result, unmount } = await renderBoardHook();
+    const stats = {
+      played: 0,
+      wins: 0,
+      winRate: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      distribution: [0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const locked = {
+      id: 'new',
+      name: 'Nova',
+      description: 'Nova',
+      icon: '🏆',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: null,
+    };
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          achievementOverview: { stats, achievements: [locked] },
+          achievementPending: true,
+        },
+      }),
+    );
+    sentMessages = [];
+    for (const letter of 'termo') act(() => result.current.typeLetter(letter));
+    act(() => result.current.submitGuess());
+    const request = clientMessageSchema.parse(
+      sentMessages.find((message) => message.type === 'guess'),
+    );
+    if (request.type !== 'guess' || !request.payload.requestId)
+      throw new Error('Expected request id');
+    act(() => jest.advanceTimersByTime(30_000));
+    const overview = {
+      stats: { ...stats, played: 1, wins: 1, winRate: 100 },
+      achievements: [{ ...locked, unlockedAt: '2026-10-29T12:00:00.000Z' }],
+    };
+    act(() =>
+      deliverMessage({
+        type: 'achievement_refresh_result',
+        payload: { requestId: 1, pending: false, overview },
+      }),
+    );
+    expect(result.current.unlockedAchievements).toHaveLength(1);
+    act(() => result.current.dismissCurrentAchievement());
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          requestId: request.payload.requestId,
+          guess: 'termo',
+          feedback: hit('termo').feedback,
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+          achievementBaseline: [],
+          achievementUpdate: { overview, unlockedIds: [] },
+        },
+      }),
+    );
+    expect(result.current.unlockedAchievements).toEqual([]);
+    unmount();
+  });
+
+  it('retains achievement state through a reconnect until the lost guess reply is replayed', async () => {
+    jest.useFakeTimers();
+    const { result, unmount } = await renderBoardHook();
+    const stats = {
+      played: 0,
+      wins: 0,
+      winRate: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      distribution: [0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const locked = {
+      id: 'new',
+      name: 'Nova',
+      description: 'Nova',
+      icon: '🏆',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: null,
+    };
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          achievementOverview: { stats, achievements: [locked] },
+        },
+      }),
+    );
+    sentMessages = [];
+    for (const letter of 'termo') act(() => result.current.typeLetter(letter));
+    act(() => result.current.submitGuess());
+    const request = clientMessageSchema.parse(
+      sentMessages.find((message) => message.type === 'guess'),
+    );
+    if (request.type !== 'guess' || !request.payload.requestId)
+      throw new Error('Expected request id');
+    const won = {
+      stats: { ...stats, played: 1, wins: 1, winRate: 100 },
+      achievements: [{ ...locked, unlockedAt: '2026-10-29T12:00:00.000Z' }],
+    };
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          achievementOverview: won,
+        },
+      }),
+    );
+    expect(result.current.achievements[0]?.unlockedAt).toBeNull();
+    act(() => jest.advanceTimersByTime(5_000));
+    expect(
+      sentMessages.filter((message) => message.type === 'guess'),
+    ).toHaveLength(2);
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          requestId: request.payload.requestId,
+          guess: 'termo',
+          feedback: hit('termo').feedback,
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+          achievementUpdate: { overview: won, unlockedIds: [] },
+        },
+      }),
+    );
+    expect(
+      result.current.unlockedAchievements.map(
+        (item: WordleUnlockedAchievement) => item.id,
+      ),
+    ).toEqual(['new']);
+    unmount();
+  });
+  it('refreshes a deferred overview when the pending guess is rejected after a reconnect', async () => {
+    jest.useFakeTimers();
+    const { result, unmount } = await renderBoardHook();
+    const stats = {
+      played: 0,
+      wins: 0,
+      winRate: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      distribution: [0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          achievementOverview: { stats, achievements: [] },
+        },
+      }),
+    );
+    sentMessages = [];
+    for (const letter of 'termo') act(() => result.current.typeLetter(letter));
+    act(() => result.current.submitGuess());
+    const request = clientMessageSchema.parse(
+      sentMessages.find((message) => message.type === 'guess'),
+    );
+    if (request.type !== 'guess' || !request.payload.requestId)
+      throw new Error('Expected request id');
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-30',
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          achievementOverview: { stats, achievements: [] },
+        },
+      }),
+    );
+    act(() =>
+      deliverMessage({
+        type: 'guess_error',
+        payload: {
+          message: 'O dia do jogo mudou.',
+          requestId: request.payload.requestId,
+        },
+      }),
+    );
+    sentMessages = [];
+    act(() => jest.advanceTimersByTime(10_000));
+    expect(
+      sentMessages.filter((message) => message.type === 'achievement_refresh'),
+    ).toHaveLength(1);
+    unmount();
+  });
+
+  it('announces only new awards when the initial collection was unavailable', async () => {
+    jest.useFakeTimers();
+    const { result, unmount } = await renderBoardHook();
+    sentMessages = [];
+    for (const letter of 'termo') act(() => result.current.typeLetter(letter));
+    act(() => result.current.submitGuess());
+    const guess = clientMessageSchema.parse(
+      sentMessages.find((message) => message.type === 'guess'),
+    );
+    if (guess.type !== 'guess') throw new Error('Expected a guess');
+    expect(guess.payload.guess).toBe('termo');
+    expect(guess.payload.date).toBe('2026-10-29');
+    expect(guess.payload.captureAchievementBaseline).toBe(true);
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'termo',
+          feedback: hit('termo').feedback,
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+          achievementBaseline: ['old'],
+        },
+      }),
+    );
+    act(() => jest.advanceTimersByTime(10_000));
+    const stats = {
+      played: 1,
+      wins: 1,
+      winRate: 100,
+      currentStreak: 1,
+      bestStreak: 1,
+      distribution: [1, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const old = {
+      id: 'old',
+      name: 'Antiga',
+      description: 'Antiga',
+      icon: '🏆',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: '2026-10-01T12:00:00.000Z',
+    };
+    const fresh = {
+      ...old,
+      id: 'new',
+      name: 'Nova',
+      unlockedAt: '2026-10-29T12:00:00.000Z',
+    };
+    act(() =>
+      deliverMessage({
+        type: 'achievement_refresh_result',
+        payload: {
+          requestId: 1,
+          overview: { stats, achievements: [old, fresh] },
+          pending: false,
+        },
+      }),
+    );
+    expect(
+      result.current.unlockedAchievements.map(
+        (item: WordleUnlockedAchievement) => item.id,
+      ),
+    ).toEqual(['new']);
+    unmount();
+  });
+
+  it('does not let an earlier refresh hide a new award while a guess is in flight', async () => {
+    jest.useFakeTimers();
+    const { result, unmount } = await renderBoardHook();
+    act(() => jest.advanceTimersByTime(10_000));
+    for (const letter of 'termo') act(() => result.current.typeLetter(letter));
+    act(() => result.current.submitGuess());
+    const stats = {
+      played: 1,
+      wins: 1,
+      winRate: 100,
+      currentStreak: 1,
+      bestStreak: 1,
+      distribution: [1, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const fresh = {
+      id: 'new',
+      name: 'Nova',
+      description: 'Nova',
+      icon: '🏆',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: '2026-10-29T12:00:00.000Z',
+    };
+    act(() =>
+      deliverMessage({
+        type: 'achievement_refresh_result',
+        payload: {
+          requestId: 1,
+          pending: false,
+          overview: { stats, achievements: [fresh] },
+        },
+      }),
+    );
+    expect(result.current.achievements).toEqual([]);
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'termo',
+          feedback: hit('termo').feedback,
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+          achievementBaseline: [],
+          achievementUpdate: {
+            overview: { stats, achievements: [fresh] },
+            unlockedIds: [],
+          },
+        },
+      }),
+    );
+    expect(
+      result.current.unlockedAchievements.map(
+        (item: WordleUnlockedAchievement) => item.id,
+      ),
+    ).toEqual(['new']);
+    unmount();
+  });
+
+  it('does not start another refresh while waiting for a guess result', async () => {
+    jest.useFakeTimers();
+    const { result, unmount } = await renderBoardHook();
+    sentMessages = [];
+    for (const letter of 'termo') act(() => result.current.typeLetter(letter));
+    act(() => result.current.submitGuess());
+    act(() => jest.advanceTimersByTime(10_000));
+    expect(
+      sentMessages.filter((message) => message.type === 'achievement_refresh'),
+    ).toHaveLength(0);
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'termo',
+          feedback: hit('termo').feedback,
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+          achievementBaseline: [],
+        },
+      }),
+    );
+    act(() => jest.advanceTimersByTime(10_000));
+    expect(
+      sentMessages.filter((message) => message.type === 'achievement_refresh'),
+    ).toHaveLength(1);
+    unmount();
+  });
+
+  it('retains the baseline when reconnecting before a failed award refresh', async () => {
+    const { result, unmount } = await renderBoardHook();
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'termo',
+          feedback: hit('termo').feedback,
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+          achievementBaseline: ['old'],
+        },
+      }),
+    );
+    const stats = {
+      played: 1,
+      wins: 1,
+      winRate: 100,
+      currentStreak: 1,
+      bestStreak: 1,
+      distribution: [1, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const old = {
+      id: 'old',
+      name: 'Antiga',
+      description: 'Antiga',
+      icon: '🏆',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: '2026-10-01T12:00:00.000Z',
+    };
+    const fresh = {
+      ...old,
+      id: 'new',
+      name: 'Nova',
+      unlockedAt: '2026-10-29T12:00:00.000Z',
+    };
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          achievementOverview: { stats, achievements: [old, fresh] },
+        },
+      }),
+    );
+    expect(
+      result.current.unlockedAchievements.map(
+        (item: WordleUnlockedAchievement) => item.id,
+      ),
+    ).toEqual(['new']);
+    unmount();
+  });
+
+  it('announces a concurrent worker award using the captured baseline', async () => {
+    const { result, unmount } = await renderBoardHook();
+    const stats = {
+      played: 1,
+      wins: 1,
+      winRate: 100,
+      currentStreak: 1,
+      bestStreak: 1,
+      distribution: [1, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const old = {
+      id: 'old',
+      name: 'Antiga',
+      description: 'Antiga',
+      icon: '🏆',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: '2026-10-01T12:00:00.000Z',
+    };
+    const fresh = {
+      ...old,
+      id: 'new',
+      name: 'Nova',
+      unlockedAt: '2026-10-29T12:00:00.000Z',
+    };
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'termo',
+          feedback: hit('termo').feedback,
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+          achievementBaseline: ['old'],
+          achievementUpdate: {
+            overview: { stats, achievements: [old, fresh] },
+            unlockedIds: [],
+          },
+        },
+      }),
+    );
+    expect(
+      result.current.unlockedAchievements.map(
+        (item: WordleUnlockedAchievement) => item.id,
+      ),
+    ).toEqual(['new']);
+    unmount();
+  });
+
+  it('announces a concurrent worker award when an initial overview exists', async () => {
+    const { result, unmount } = await renderBoardHook();
+    const stats = {
+      played: 0,
+      wins: 0,
+      winRate: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      distribution: [0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const first = {
+      id: 'new',
+      name: 'Nova',
+      description: 'Nova',
+      icon: '🏆',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: null,
+    };
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          achievementOverview: { stats, achievements: [first] },
+        },
+      }),
+    );
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'termo',
+          feedback: hit('termo').feedback,
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+          achievementUpdate: {
+            overview: {
+              stats: { ...stats, played: 1, wins: 1, winRate: 100 },
+              achievements: [
+                { ...first, unlockedAt: '2026-10-29T12:00:00.000Z' },
+              ],
+            },
+            unlockedIds: [],
+          },
+        },
+      }),
+    );
+    expect(
+      result.current.unlockedAchievements.map(
+        (item: WordleUnlockedAchievement) => item.id,
+      ),
+    ).toEqual(['new']);
+    unmount();
+  });
+
+  it('refreshes achievements after reconnecting to an unchanged board', async () => {
+    jest.useFakeTimers();
+    const { result, unmount } = await renderBoardHook();
+    const stats = {
+      played: 0,
+      wins: 0,
+      winRate: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      distribution: [0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const achievement = {
+      id: 'offline',
+      name: 'Conquista',
+      description: 'Conquista',
+      icon: '🏆',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: null,
+    };
+    const locked = { stats, achievements: [achievement] };
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          date: '2026-10-29',
+          wordLength: 5,
+          guesses: [],
+          attempts: 0,
+          solved: false,
+          achievementOverview: locked,
+          achievementPending: true,
+        },
+      }),
+    );
+    sentMessages = [];
+    act(() => jest.advanceTimersByTime(10_000));
+    expect(sentMessages).toContainEqual({
+      type: 'achievement_refresh',
+      payload: { requestId: 1 },
+    });
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          date: '2026-10-29',
+          wordLength: 5,
+          guesses: [],
+          attempts: 0,
+          solved: false,
+          syncOnly: true,
+          achievementOverview: locked,
+          achievementPending: false,
+        },
+      }),
+    );
+    const staleUnlock = '2026-10-01T12:00:00.000Z';
+    act(() =>
+      deliverMessage({
+        type: 'achievement_refresh_result',
+        payload: {
+          requestId: 1,
+          pending: false,
+          overview: {
+            stats,
+            achievements: [{ ...achievement, unlockedAt: staleUnlock }],
+          },
+        },
+      }),
+    );
+    expect(result.current.achievements[0]?.unlockedAt).toBeNull();
+    act(() => jest.advanceTimersByTime(10_000));
+    expect(sentMessages).toContainEqual({
+      type: 'achievement_refresh',
+      payload: { requestId: 2 },
+    });
+    const unlockedAt = '2026-10-29T12:00:00.000Z';
+    act(() =>
+      deliverMessage({
+        type: 'achievement_refresh_result',
+        payload: {
+          requestId: 2,
+          pending: false,
+          overview: { stats, achievements: [{ ...achievement, unlockedAt }] },
+        },
+      }),
+    );
+    expect(result.current.achievements[0]?.unlockedAt).toBe(unlockedAt);
+    expect(
+      result.current.unlockedAchievements.map(
+        (item: WordleUnlockedAchievement) => item.id,
+      ),
+    ).toEqual(['offline']);
+    unmount();
+  });
+
+  it('retries an overview that loaded while awards were still pending', async () => {
+    jest.useFakeTimers();
+    const { unmount } = await renderBoardHook();
+    const stats = {
+      played: 0,
+      wins: 0,
+      winRate: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      distribution: [0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          achievementOverview: { stats, achievements: [] },
+          achievementPending: true,
+        },
+      }),
+    );
+    sentMessages = [];
+    act(() => jest.advanceTimersByTime(10_000));
+    expect(sentMessages).toContainEqual({
+      type: 'achievement_refresh',
+      payload: { requestId: 1 },
+    });
+    unmount();
+  });
+
+  it('restores a missing initial overview without announcing historical unlocks', async () => {
+    jest.useFakeTimers();
+    const { result, unmount } = await renderBoardHook();
+    sentMessages = [];
+    act(() => jest.advanceTimersByTime(10_000));
+    expect(sentMessages).toContainEqual({
+      type: 'achievement_refresh',
+      payload: { requestId: 1 },
+    });
+    const old = {
+      id: 'historical',
+      name: 'Antiga',
+      description: 'Já conquistada',
+      icon: '🏆',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: '2026-10-01T12:00:00.000Z',
+    };
+    const stats = {
+      played: 1,
+      wins: 1,
+      winRate: 100,
+      currentStreak: 1,
+      bestStreak: 1,
+      distribution: [1, 0, 0, 0, 0, 0, 0, 0],
+    };
+    act(() =>
+      deliverMessage({
+        type: 'achievement_refresh_result',
+        payload: {
+          requestId: 1,
+          overview: { stats, achievements: [old] },
+          pending: false,
+        },
+      }),
+    );
+    expect(result.current.achievements[0]?.id).toBe('historical');
+    expect(result.current.unlockedAchievements).toEqual([]);
+    unmount();
+  });
+
+  it('accepts a slow refresh response even after a retry was sent', async () => {
+    jest.useFakeTimers();
+    const { result, unmount } = await renderBoardHook();
+    sentMessages = [];
+    act(() => jest.advanceTimersByTime(20_000));
+    expect(
+      sentMessages.filter((message) => message.type === 'achievement_refresh'),
+    ).toHaveLength(2);
+    const stats = {
+      played: 1,
+      wins: 1,
+      winRate: 100,
+      currentStreak: 1,
+      bestStreak: 1,
+      distribution: [1, 0, 0, 0, 0, 0, 0, 0],
+    };
+    act(() =>
+      deliverMessage({
+        type: 'achievement_refresh_result',
+        payload: {
+          requestId: 1,
+          overview: { stats, achievements: [] },
+          pending: false,
+        },
+      }),
+    );
+    expect(result.current.stats).toEqual(stats);
+    act(() => jest.advanceTimersByTime(20_000));
+    expect(
+      sentMessages.filter((message) => message.type === 'achievement_refresh'),
+    ).toHaveLength(2);
+    unmount();
+  });
+
+  it('does not replace a newer guess result with an older refresh', async () => {
+    jest.useFakeTimers();
+    const { result, unmount } = await renderBoardHook();
+    const stats = {
+      played: 0,
+      wins: 0,
+      winRate: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      distribution: [0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const achievement = {
+      id: 'first',
+      name: 'Primeira palavra',
+      description: 'Acerte',
+      icon: '🟩',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: null,
+    };
+    const oldOverview = { stats, achievements: [achievement] };
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          achievementOverview: oldOverview,
+          achievementPending: true,
+        },
+      }),
+    );
+    sentMessages = [];
+    act(() => jest.advanceTimersByTime(10_000));
+    const unlockedAt = '2026-10-29T12:00:00.000Z';
+    const newOverview = {
+      stats: { ...stats, played: 1, wins: 1, winRate: 100 },
+      achievements: [{ ...achievement, unlockedAt }],
+    };
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'termo',
+          feedback: hit('termo').feedback,
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+          achievementUpdate: { overview: newOverview, unlockedIds: ['first'] },
+        },
+      }),
+    );
+    act(() =>
+      deliverMessage({
+        type: 'achievement_refresh_result',
+        payload: { requestId: 1, overview: oldOverview, pending: false },
+      }),
+    );
+    expect(result.current.achievements[0]?.unlockedAt).toBe(unlockedAt);
+    expect(
+      result.current.unlockedAchievements.map(
+        (item: WordleUnlockedAchievement) => item.id,
+      ),
+    ).toEqual(['first']);
+    unmount();
+  });
+
+  it('refreshes a failed award until recovered and announces it only once', async () => {
+    jest.useFakeTimers();
+    const { result, unmount } = await renderBoardHook();
+    const stats = {
+      played: 0,
+      wins: 0,
+      winRate: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      distribution: [0, 0, 0, 0, 0, 0, 0, 0],
+    };
+    const locked = {
+      id: 'wordle_first_win',
+      name: 'Primeira palavra',
+      description: 'Acerte sua primeira palavra.',
+      icon: '🟩',
+      rarity: 'common',
+      rewardXp: 25,
+      unlockedAt: null,
+    };
+    const initial = { stats, achievements: [locked] };
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          achievementOverview: initial,
+        },
+      }),
+    );
+    sentMessages = [];
+    act(() =>
+      deliverMessage({
+        type: 'guess_result',
+        payload: {
+          guess: 'termo',
+          feedback: hit('termo').feedback,
+          guesses: [hit('termo')],
+          solved: true,
+          attempts: 1,
+          wordLength: 5,
+        },
+      }),
+    );
+    act(() => jest.advanceTimersByTime(10_000));
+    expect(sentMessages).toContainEqual({
+      type: 'achievement_refresh',
+      payload: { requestId: 1 },
+    });
+    act(() =>
+      deliverMessage({
+        type: 'achievement_refresh_result',
+        payload: { requestId: 1, overview: initial, pending: true },
+      }),
+    );
+    expect(result.current.unlockedAchievements).toEqual([]);
+    act(() => jest.advanceTimersByTime(10_000));
+    const unlockedAt = '2026-10-29T12:00:00.000Z';
+    const recovered = {
+      stats: { ...stats, played: 1, wins: 1, winRate: 100 },
+      achievements: [{ ...locked, unlockedAt }],
+    };
+    act(() =>
+      deliverMessage({
+        type: 'achievement_refresh_result',
+        payload: { requestId: 2, overview: recovered, pending: false },
+      }),
+    );
+    expect(result.current.achievements[0]?.unlockedAt).toBe(unlockedAt);
+    expect(
+      result.current.unlockedAchievements.map(
+        (item: WordleUnlockedAchievement) => item.id,
+      ),
+    ).toEqual([locked.id]);
+    act(() =>
+      deliverMessage({
+        type: 'achievement_refresh_result',
+        payload: { requestId: 1, overview: initial, pending: true },
+      }),
+    );
+    expect(result.current.achievements[0]?.unlockedAt).toBe(unlockedAt);
+    act(() => jest.advanceTimersByTime(20_000));
+    expect(
+      sentMessages.filter((message) => message.type === 'achievement_refresh'),
+    ).toHaveLength(2);
+    unmount();
   });
 });

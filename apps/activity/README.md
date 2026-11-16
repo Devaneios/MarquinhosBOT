@@ -44,6 +44,11 @@ The frontend proxies API and Colyseus traffic through Vite during development.
 Use `bun run dev:test` at the root for isolated workspace and gateway tests.
 Browser mocks support UI iteration; use Discord for full authentication and gameplay.
 
+For the standalone Activity UI preview, run the Activity Vite server and open
+`/preview.html`. It uses a demo identity and exposes the same hub, room, and
+game routes as the embedded app. To open a route directly, add it as a hash,
+for example `/preview.html#/games/wordle`.
+
 ## Production
 
 The release gateway serves the Activity build and proxies API/multiplayer traffic.

@@ -75,7 +75,17 @@ export class WordleGlobalDraftService {
         asc(wordleGlobalDrafts.word_date),
         asc(wordleGlobalDrafts.user_id),
       );
-    for (const row of rows) await this.finalizeOne(row.userId, row.date);
+    for (const row of rows) {
+      try {
+        await this.finalizeOne(row.userId, row.date);
+      } catch (error) {
+        logger.warn('wordle.draft.finalization_failed', {
+          error,
+          userId: row.userId,
+          date: row.date,
+        });
+      }
+    }
   }
 
   async finalizePlayerBefore(

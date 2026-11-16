@@ -7,6 +7,7 @@ import {
 import type { Db, DbExecutor } from '@marquinhos/database/client';
 import {
   achievements,
+  wordleCommunityDailyPresence,
   wordleCommunityFirstSolves,
   wordleCommunityParticipation,
   wordleGlobalAcceptedGuesses,
@@ -34,10 +35,12 @@ import {
   sql,
 } from 'drizzle-orm';
 import { LevelingService } from 'modules/gamification/leveling.service';
+import { enqueueAlbumProjections } from 'modules/wordle/community/wordle-album-projection-queue';
 import { WordleAlbumService } from 'modules/wordle/community/wordle-album.service';
 import { getWordleTimeZone } from 'modules/wordle/wordle-date';
 import { WORDLE_NOW } from 'modules/wordle/wordle.tokens';
 import { z } from 'zod';
+import { lockWordleAchievements } from './wordle-achievement-lock';
 import { visibleWordleEvidence } from './wordle-evidence-visibility';
 import { WordleHistoryService } from './wordle-history.service';
 
@@ -274,9 +277,7 @@ export class WordleGlobalAchievementService {
     guildId: string,
   ): Promise<{ unlockedIds: string[] }> {
     const outcome = await this.database.transaction(async (tx) => {
-      await tx.execute(
-        sql`SELECT pg_advisory_xact_lock(hashtextextended(${JSON.stringify(['wordle-global-achievements', userId])}, 0))`,
-      );
+      await lockWordleAchievements(tx, userId);
       const { rows, history, options, legacyUnlocks, now } =
         await this.loadHistory(userId, tx);
       const stored = await tx
@@ -348,7 +349,28 @@ export class WordleGlobalAchievementService {
           .returning({ date: wordleGlobalOccurrences.word_date });
         for (const { date } of inserted) newDates.add(date);
       }
-      for (const match of analysis.discoverPatterns(known)) {
+      if (newDates.size > 0) {
+        const guilds = await tx
+          .selectDistinct({ guildId: wordleCommunityDailyPresence.guild_id })
+          .from(wordleCommunityDailyPresence)
+          .where(
+            and(
+              eq(wordleCommunityDailyPresence.user_id, userId),
+              inArray(wordleCommunityDailyPresence.word_date, [...newDates]),
+            ),
+          );
+        await enqueueAlbumProjections(
+          tx,
+          guilds.map((row) => row.guildId),
+        );
+      }
+      // Discovery records reference global sessions. Legacy boards still feed
+      // lifetime rules, but cannot be stored as global discovery evidence.
+      const globalAnalysis = analyzeWordleAchievements(
+        history.filter((day) => sessionByDate.has(day.date)),
+        options,
+      );
+      for (const match of globalAnalysis.discoverPatterns(known)) {
         const source = sessionByDate.get(match.date);
         if (!source) throw new Error('Discovery has no global session');
         await tx

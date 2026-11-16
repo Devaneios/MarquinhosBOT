@@ -47,6 +47,98 @@ const identity = {
 const session = { token: 't', roomKey: 'k' };
 
 describe('RoomConnectionProvider + useColyseusRoom', () => {
+  it('opens a new Wordle room after a terminal disconnect', async () => {
+    const oldRoom = fakeRoom();
+    const newRoom = fakeRoom();
+    const { useColyseusRoom, joinOrCreate } =
+      await freshUseColyseusRoom(oldRoom);
+    joinOrCreate.mockResolvedValueOnce(oldRoom).mockResolvedValueOnce(newRoom);
+    const first = renderHook(() =>
+      useColyseusRoom('wordle', session, 'ws://x', () => {}),
+    );
+    await waitFor(() =>
+      expect(first.result.current.connectionState).toBe('connected'),
+    );
+    act(() => oldRoom.emitLeave(4000));
+    expect(first.result.current.connectionState).toBe('disconnected');
+    first.unmount();
+    const messages: ActivityMessage[] = [];
+    const second = renderHook(() =>
+      useColyseusRoom('wordle', session, 'ws://x', (message: ActivityMessage) =>
+        messages.push(message),
+      ),
+    );
+    await waitFor(() =>
+      expect(second.result.current.connectionState).toBe('connected'),
+    );
+    act(() => newRoom.emit('init', { date: '2026-11-01' }));
+    expect(joinOrCreate).toHaveBeenCalledTimes(2);
+    expect(messages).toEqual([
+      { type: 'init', payload: { date: '2026-11-01' } },
+    ]);
+    second.unmount();
+  });
+
+  it('keeps a replacement Wordle connection open when the failed subscriber unmounts', async () => {
+    const room = fakeRoom();
+    const { useColyseusRoom, joinOrCreate } = await freshUseColyseusRoom(room);
+    joinOrCreate.mockRejectedValueOnce(new Error('temporary join failure'));
+    const first = renderHook(() =>
+      useColyseusRoom('wordle', session, 'ws://x', () => {}),
+    );
+    await waitFor(() =>
+      expect(first.result.current.connectionState).toBe('error'),
+    );
+    const second = renderHook(() =>
+      useColyseusRoom('wordle', session, 'ws://x', () => {}),
+    );
+    await waitFor(() =>
+      expect(second.result.current.connectionState).toBe('connected'),
+    );
+    first.unmount();
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    expect(room.leave).not.toHaveBeenCalled();
+    second.unmount();
+  });
+
+  it('delivers Wordle messages to the new subscriber when a room is reused after remount', async () => {
+    const room = fakeRoom();
+    const { useColyseusRoom, joinOrCreate } = await freshUseColyseusRoom(room);
+    const firstMessages: unknown[] = [];
+    const secondMessages: unknown[] = [];
+    const first = renderHook(() =>
+      useColyseusRoom('wordle', session, 'ws://x', (message: ActivityMessage) =>
+        firstMessages.push(message),
+      ),
+    );
+    await waitFor(() =>
+      expect(first.result.current.connectionState).toBe('connected'),
+    );
+    first.unmount();
+    const second = renderHook(() =>
+      useColyseusRoom('wordle', session, 'ws://x', (message: ActivityMessage) =>
+        secondMessages.push(message),
+      ),
+    );
+    await waitFor(() =>
+      expect(second.result.current.connectionState).toBe('connected'),
+    );
+    act(() => room.emit('guess_result', { attempts: 1 }));
+    expect(firstMessages).toEqual([]);
+    expect(secondMessages).toEqual([
+      { type: 'guess_result', payload: { attempts: 1 } },
+    ]);
+    expect(joinOrCreate).toHaveBeenCalledTimes(1);
+    expect(
+      room.send.mock.calls.filter(([type]) => type === 'wordle_sync'),
+    ).toHaveLength(2);
+    act(() => room.emitReconnect());
+    expect(
+      room.send.mock.calls.filter(([type]) => type === 'wordle_sync'),
+    ).toHaveLength(3);
+    second.unmount();
+  });
+
   it('a board using useColyseusRoom inside the provider receives messages and role from the one shared connection', async () => {
     const room = fakeRoom();
     const { useColyseusRoom, joinOrCreate } = await freshUseColyseusRoom(room);

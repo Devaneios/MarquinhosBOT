@@ -40,10 +40,12 @@ export function connectToRoom(
       game,
     })
     .then((room) => {
+      if (game === 'wordle') room.reconnection.minUptime = 0;
       room.onMessage('*', (type, payload) =>
         onMessage({ type: String(type), payload }),
       );
       if (game === 'pong') room.send('sync');
+      if (game === 'wordle') room.send('wordle_sync');
       return room;
     });
 }
@@ -69,6 +71,7 @@ export function wireRoomLifecycle(
   room.onReconnect(() => {
     devinfo('[colyseus] reconnected');
     onConnectionStateChange('connected');
+    if (game === 'wordle') room.send('wordle_sync');
   });
   // onLeave only fires for a genuinely terminal disconnect: consented
   // leave, reconnection disabled, room uptime too short to retry, or the

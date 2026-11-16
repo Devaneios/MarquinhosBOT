@@ -97,6 +97,13 @@ not reveal whether they match the answer. After the day closes, the finalizer
 may turn a matching complete draft into a zero-attempt win when the user has no
 accepted guesses for that date. Guess persistence commits before achievement
 evaluation; a temporary award failure does not reject an accepted guess.
+Pending evaluations are persisted and retried by the API. Activity guesses carry
+an idempotency key, allowing a lost reply to be recovered without another
+attempt or XP award. The bot also reuses a key when retrying a guess request and
+pins that request to the daily date it fetched before submission.
+The Activity requests a board snapshot after attaching its realtime listener
+and after reconnecting, so an early initialization message cannot leave the
+board waiting indefinitely.
 
 ## Data ownership and deletion
 

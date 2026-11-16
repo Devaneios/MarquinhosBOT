@@ -83,8 +83,15 @@ export class WordleController {
     )
     input: ContractInputValue<typeof contract.submitGuess>,
   ): Promise<ContractResponseInput<typeof contract.submitGuess>> {
-    const { userId, guildId, guess } = input.body;
-    const result = await this.service.submitGuess(userId, guildId, guess);
+    const { userId, guildId, guess, requestId, date } = input.body;
+    const result = await this.service.submitGuess(
+      userId,
+      guildId,
+      guess,
+      false,
+      requestId,
+      date,
+    );
     if ('error' in result)
       throw new BadRequestException({ message: result.error });
     return { data: result };

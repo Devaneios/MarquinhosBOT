@@ -225,6 +225,27 @@
       "when": 1794365747913,
       "tag": "0031_wordle_accepted_guesses_user_date",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794708210934,
+      "tag": "0032_wordle_award_reconciliation",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794709840384,
+      "tag": "0033_wordle_guess_receipts",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794778899724,
+      "tag": "0034_wordle_album_projection_queue",
+      "breakpoints": true
     }
   ]
 }

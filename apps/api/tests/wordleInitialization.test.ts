@@ -31,7 +31,7 @@ it('initializes a missing day without exhausting a single-connection pool', asyn
        const moduleRef = await Test.createTestingModule({ imports: [WordleModule] }).compile();
        const service = moduleRef.get(WordleService);
        try {
-         await service.submitGuess('single-connection', ${JSON.stringify(guildId)}, 'termo');
+         await service.submitGuess('single-connection', ${JSON.stringify(guildId)}, 'termo', true);
        } finally {
          await moduleRef.close();
        }`,

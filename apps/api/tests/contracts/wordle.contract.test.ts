@@ -3,6 +3,7 @@ import {
   achievements,
   wordleCommunityDailyPresence,
   wordleGlobalAchievements,
+  wordleGlobalDays,
   wordleShowcase,
 } from '@marquinhos/database/schema';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
@@ -35,6 +36,66 @@ beforeAll(async () => {
 afterAll(() => server.close());
 
 describe('wordle contracts', () => {
+  it('does not apply a stale bot guess to a new daily word', async () => {
+    const userId = `stale-${randomUUID()}`;
+    await expect(
+      callContract(server.http, wordle.submitGuess, {
+        body: {
+          userId,
+          guildId,
+          guess: validGuess,
+          requestId: randomUUID(),
+          date: '2000-01-01',
+        },
+      }),
+    ).rejects.toThrow();
+    const session = await callContract(server.http, wordle.getUserSession, {
+      params: { userId, guildId },
+    });
+    expect(session.data).toBeNull();
+  });
+  it('replays the same bot guess request after a lost HTTP response', async () => {
+    const userId = `retry-${randomUUID()}`;
+    const requestId = randomUUID();
+    const body = {
+      userId,
+      guildId: `retry-guild-${randomUUID()}`,
+      guess: validGuess,
+      requestId,
+    };
+    const first = await callContract(server.http, wordle.submitGuess, { body });
+    const replay = await callContract(server.http, wordle.submitGuess, {
+      body,
+    });
+    expect(first.data.requestId).toBe(requestId);
+    expect(replay.data.requestId).toBe(requestId);
+    expect(replay.data.attempts).toBe(1);
+    expect(replay.data.guesses).toEqual(first.data.guesses);
+  });
+  it('preserves the winning streak when an HTTP response is replayed', async () => {
+    const stats = await callContract(server.http, wordle.getStats, {
+      params: { guildId },
+    });
+    const [day] = await db
+      .select()
+      .from(wordleGlobalDays)
+      .where(eq(wordleGlobalDays.word_date, stats.data.wordDate));
+    if (!day) throw new Error('Missing daily word');
+    const body = {
+      userId: `winning-retry-${randomUUID()}`,
+      guildId: `winning-retry-guild-${randomUUID()}`,
+      guess: day.word,
+      date: stats.data.wordDate,
+      requestId: randomUUID(),
+    };
+    const first = await callContract(server.http, wordle.submitGuess, { body });
+    const replay = await callContract(server.http, wordle.submitGuess, {
+      body,
+    });
+    expect(first.data.solved).toBe(true);
+    expect(first.data.streak).toBe(1);
+    expect(replay.data.streak).toBe(first.data.streak);
+  });
   it('records a bot player opening the game without submitting a guess', async () => {
     const userId = `open-${randomUUID()}`;
     await callContract(server.http, wordle.recordPresence, {

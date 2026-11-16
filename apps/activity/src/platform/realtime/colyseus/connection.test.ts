@@ -11,6 +11,7 @@ export function fakeRoom() {
   const errorHandlers: Array<(code: number, message?: string) => void> = [];
   return {
     roomId: 'room-1',
+    reconnection: { minUptime: 5000 },
     onMessage: mock(
       (type: string, cb: (type: unknown, payload: unknown) => void) => {
         messageHandlers[type] = cb;
@@ -67,6 +68,45 @@ async function freshModule(client: {
 }
 
 describe('connectToRoom', () => {
+  it('allows Wordle to reconnect immediately after joining', async () => {
+    const room = fakeRoom();
+    const mod = await freshModule({ joinOrCreate: async () => room });
+    await mod.connectToRoom(
+      'wordle',
+      { token: 't', roomKey: 'k' },
+      'ws://fake.test',
+      () => {},
+    );
+    expect(room.reconnection.minUptime).toBe(0);
+  });
+
+  it('recovers a Wordle init sent before the message listener is attached', async () => {
+    const room = fakeRoom();
+    const initial = {
+      date: '2026-10-29',
+      wordLength: 5,
+      guesses: [],
+      solved: false,
+      attempts: 0,
+    };
+    room.send.mockImplementation((type: string) => {
+      if (type === 'wordle_sync') room.emit('init', initial);
+    });
+    const mod = await freshModule({
+      joinOrCreate: async () => {
+        room.emit('init', initial);
+        return room;
+      },
+    });
+    const received: unknown[] = [];
+    await mod.connectToRoom(
+      'wordle',
+      { token: 't', roomKey: 'k' },
+      'ws://fake.test',
+      (message: unknown) => received.push(message),
+    );
+    expect(received).toEqual([{ type: 'init', payload: initial }]);
+  });
   it('joins the generic "match" room type, passing the game id and session token/roomKey as options', async () => {
     const room = fakeRoom();
     const joinOrCreate = mock(
@@ -139,6 +179,7 @@ describe('wireRoomLifecycle', () => {
     room.emitReconnect();
 
     expect(states).toEqual(['connected']);
+    expect(room.send).toHaveBeenCalledWith('wordle_sync');
   });
 
   it('moves to disconnected on a terminal onLeave', async () => {

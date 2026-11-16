@@ -27,6 +27,8 @@ export const wordleGuessResultSchema = z.object({
   attempts: z.number(),
   wordLength: z.number(),
   streak: z.number().optional(),
+  achievementBaseline: z.array(z.string()).optional(),
+  requestId: z.uuid().optional(),
   achievementUpdate: wordleAchievementUpdateSchema.optional(),
 });
 export type WordleGuessResult = z.output<typeof wordleGuessResultSchema>;
@@ -441,6 +443,8 @@ export const submitGuess = defineContract({
     userId: requiredString,
     guildId: requiredString,
     guess: requiredString,
+    requestId: z.uuid().optional(),
+    date: z.iso.date().optional(),
   }),
   response: envelope(wordleGuessResultSchema),
 });

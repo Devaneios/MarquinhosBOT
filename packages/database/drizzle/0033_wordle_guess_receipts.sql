@@ -1,0 +1,3 @@
+ALTER TABLE "wordle_global_accepted_guesses" ADD COLUMN "request_id" text;--> statement-breakpoint
+ALTER TABLE "wordle_global_accepted_guesses" ADD COLUMN "achievement_baseline" jsonb;--> statement-breakpoint
+CREATE UNIQUE INDEX "wordle_global_accepted_guesses_user_request_idx" ON "wordle_global_accepted_guesses" USING btree ("user_id","request_id") WHERE "wordle_global_accepted_guesses"."request_id" IS NOT NULL;

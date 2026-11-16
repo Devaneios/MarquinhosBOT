@@ -21,33 +21,63 @@ interface PooledRoom {
   promise: Promise<Room>;
   refs: number;
   cleanupTimer: ReturnType<typeof setTimeout> | null;
+  messages: Set<(message: ActivityMessage) => void>;
+  states: Set<(state: ColyseusConnectionState) => void>;
 }
 
 const roomPool = new Map<string, PooledRoom>();
 
-function acquireRoom(key: string, connect: () => Promise<Room>): PooledRoom {
+function acquireRoom(
+  key: string,
+  game: GameId,
+  connect: (deliver: (message: ActivityMessage) => void) => Promise<Room>,
+  message: (message: ActivityMessage) => void,
+  state: (state: ColyseusConnectionState) => void,
+): { entry: PooledRoom; reused: boolean } {
   const existing = roomPool.get(key);
   if (existing) {
     existing.refs += 1;
+    existing.messages.add(message);
+    existing.states.add(state);
     if (existing.cleanupTimer) clearTimeout(existing.cleanupTimer);
     existing.cleanupTimer = null;
-    return existing;
+    return { entry: existing, reused: true };
   }
+  const messages = new Set([message]);
+  const states = new Set([state]);
   const entry: PooledRoom = {
-    promise: connect(),
+    promise: connect((incoming) => {
+      for (const listener of messages) listener(incoming);
+    }).then((room) => {
+      wireRoomLifecycle(room, game, (next) => {
+        if (next === 'disconnected' && roomPool.get(key) === entry) {
+          roomPool.delete(key);
+        }
+        for (const listener of states) listener(next);
+      });
+      return room;
+    }),
     refs: 1,
     cleanupTimer: null,
+    messages,
+    states,
   };
   roomPool.set(key, entry);
   entry.promise.catch(() => {
     if (roomPool.get(key) === entry) roomPool.delete(key);
   });
-  return entry;
+  return { entry, reused: false };
 }
 
-function releaseRoom(key: string, onBeforeLeave?: (room: Room) => void): void {
-  const entry = roomPool.get(key);
-  if (!entry) return;
+function releaseRoom(
+  key: string,
+  entry: PooledRoom,
+  message: (message: ActivityMessage) => void,
+  state: (state: ColyseusConnectionState) => void,
+  onBeforeLeave?: (room: Room) => void,
+): void {
+  entry.messages.delete(message);
+  entry.states.delete(state);
   entry.refs = Math.max(0, entry.refs - 1);
   if (entry.refs > 0) return;
   entry.cleanupTimer = setTimeout(() => {
@@ -114,19 +144,23 @@ export function useColyseusRoom(
     let cancelled = false;
 
     const poolKey = `${endpoint}:${game}:${session.roomKey}:${session.token}`;
-    const pooled = acquireRoom(poolKey, () =>
-      connectToRoom(game, session, endpoint, (message) =>
-        handleMessage(message),
-      ),
+    const onRoomMessage = (message: ActivityMessage) => handleMessage(message);
+    const onRoomState = (state: ColyseusConnectionState) => {
+      if (!cancelled) setConnection({ game, session, endpoint, state });
+    };
+    const { entry: pooled, reused } = acquireRoom(
+      poolKey,
+      game,
+      (deliver) => connectToRoom(game, session, endpoint, deliver),
+      onRoomMessage,
+      onRoomState,
     );
     pooled.promise
       .then((room) => {
         if (cancelled) return;
         roomRef.current = room;
         setConnection({ game, session, endpoint, state: 'connected' });
-        wireRoomLifecycle(room, game, (state) => {
-          if (!cancelled) setConnection({ game, session, endpoint, state });
-        });
+        if (reused && game === 'wordle') room.send('wordle_sync');
       })
       .catch((err) => {
         if (cancelled) return;
@@ -136,7 +170,7 @@ export function useColyseusRoom(
 
     return () => {
       cancelled = true;
-      releaseRoom(poolKey, beforeLeave);
+      releaseRoom(poolKey, pooled, onRoomMessage, onRoomState, beforeLeave);
       roomRef.current = null;
     };
   }, [game, session, endpoint, roomContext]);

@@ -6,6 +6,7 @@ import {
 import { logger } from 'common/logging/logger';
 import { sql } from 'drizzle-orm';
 import { lockGoalFactsForWrite } from './goal-fact-lock';
+import { enqueueAlbumProjections } from './wordle-album-projection-queue';
 import { WordleAlbumService } from './wordle-album.service';
 
 /** Records a player opening or playing in a community, without creating a session. */
@@ -56,13 +57,15 @@ export async function recordWordlePresence(
         },
       })
       .returning({ inserted: sql<boolean>`xmax = 0` });
-    return presence?.inserted === true;
+    const inserted = presence?.inserted === true;
+    if (inserted) await enqueueAlbumProjections(tx, [guildId]);
+    return inserted;
   });
   // The album only gains contributions here when this community sees the
   // player for the first time that day.
   if (!firstVisit) return;
   try {
-    await album.pages(guildId);
+    await album.projectGuild(guildId);
   } catch (error) {
     logger.warn('wordle.album.presence_projection_failed', { error, guildId });
   }
