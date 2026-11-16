@@ -392,7 +392,7 @@ export class WordleGlobalAchievementService {
         .map((item) => item.id);
       if (eligibleIds.length === 0) return { unlockedIds: [], newDates };
       const definitions = await tx
-        .select({ id: achievements.id, reward: achievements.reward_xp })
+        .select({ id: achievements.id })
         .from(achievements)
         .where(
           and(
@@ -415,9 +415,9 @@ export class WordleGlobalAchievementService {
         .returning({ id: wordleGlobalAchievements.achievement_id });
       const unlockedIds = inserted.map((row) => row.id);
       const newlyUnlocked = new Set(unlockedIds);
-      const xp = definitions
-        .filter((item) => newlyUnlocked.has(item.id))
-        .reduce((total, item) => total + Math.max(0, item.reward), 0);
+      const xp = WORDLE_ACHIEVEMENT_CATALOG.filter((item) =>
+        newlyUnlocked.has(item.id),
+      ).reduce((total, item) => total + Math.max(0, item.rewardXp), 0);
       if (xp > 0) {
         await this.leveling.ensureUser(userId, guildId, tx);
         await this.leveling.addXpToUser(userId, guildId, xp, tx, null);

@@ -400,7 +400,25 @@ describe('global game coordinator', () => {
       restarted.globalCoordinator,
       restarted.album,
     );
-    await job.reconcileOnInterval();
+    expect(
+      await restarted.globalGameplay.pendingAwards('background-player'),
+    ).toHaveLength(1);
+    const finished = Promise.withResolvers<void>();
+    const queuePreviousWeek = restarted.gallery.queuePreviousWeek.bind(
+      restarted.gallery,
+    );
+    restarted.gallery.queuePreviousWeek = async () => {
+      try {
+        return await queuePreviousWeek();
+      } finally {
+        finished.resolve();
+      }
+    };
+    job.onApplicationBootstrap();
+    await finished.promise;
+    expect(
+      await restarted.globalGameplay.pendingAwards('background-player'),
+    ).toHaveLength(0);
     await job.reconcileOnInterval();
     const [award] = await testDb.db
       .select()

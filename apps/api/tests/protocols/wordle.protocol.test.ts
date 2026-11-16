@@ -35,6 +35,77 @@ afterAll(async () => {
 });
 
 describe('wordle protocol', () => {
+  it('keeps a reopened session playable when an earlier Wordle reservation expires', async () => {
+    const identity = {
+      userId: `expiry-${randomUUID()}`,
+      instanceId: 'expiry-inst',
+      guildId: `guild-${randomUUID()}`,
+      guildMembershipVerified: true,
+      mode: 'single',
+      game: 'wordle',
+    } as const;
+    const key = roomKey(identity);
+    const room = await colyseus.createRoom('match', {
+      roomKey: key,
+      game: 'wordle',
+    });
+    const oldClient = await colyseus.connectTo(room, {
+      token: mintWsSessionToken(identity),
+      roomKey: key,
+    });
+    await nextMessage(oldClient, 'init');
+    let expire!: () => void;
+    const reservation = new Promise<never>((_, reject) => {
+      expire = () => reject(new Error('expired'));
+    });
+    const reservationSpy = spyOn(
+      room,
+      'allowReconnection',
+    ).mockImplementationOnce(() => reservation as never);
+    const leaveSpy = spyOn(room, 'onLeave');
+    oldClient.reconnection.enabled = false;
+    oldClient.connection.close(4010);
+    await waitUntil(() => reservationSpy.mock.calls.length === 1);
+    const newClient = await colyseus.connectTo(room, {
+      token: mintWsSessionToken(identity),
+      roomKey: key,
+    });
+    const initial = await nextMessage<{ date: string }>(newClient, 'init');
+    expire();
+    await waitUntil(() => leaveSpy.mock.calls.length === 1);
+    newClient.send('wordle_sync');
+    const synced = await nextMessage<{ date: string; syncOnly: boolean }>(
+      newClient,
+      'init',
+      (message) => message.syncOnly === true,
+    );
+    expect(synced.date).toBe(initial.date);
+    const members = (
+      room as unknown as {
+        members: Array<{ userId: string; connections: number }>;
+      }
+    ).members;
+    expect(
+      members.find((member) => member.userId === identity.userId)?.connections,
+    ).toBe(1);
+    const day = await testRoomDependencies.wordle.getDailyWord(
+      identity.guildId,
+    );
+    newClient.send('guess', {
+      date: initial.date,
+      guess: day.word,
+      requestId: randomUUID(),
+    });
+    expect(
+      await nextMessage<{ solved: boolean; attempts: number }>(
+        newClient,
+        'guess_result',
+      ),
+    ).toMatchObject({ solved: true, attempts: 1 });
+    reservationSpy.mockRestore();
+    leaveSpy.mockRestore();
+  }, 7_000);
+
   it('restores an earlier guess made by another connection and then accepts a win', async () => {
     const identity = {
       userId: `shared-miss-${randomUUID()}`,

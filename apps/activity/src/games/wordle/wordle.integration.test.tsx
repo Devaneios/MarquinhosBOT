@@ -20,15 +20,29 @@ mock.module('@/platform/api/apiBase', () => ({
 
 const integrationTest = process.env.TEST_DATABASE_URL ? it : it.skip;
 
-async function playGame(
-  dropFirst: boolean,
+async function playGame({
+  dropFirst = false,
   remount = false,
   failAward = false,
   backgroundAward = false,
   dropTransport = false,
   terminalDrop = false,
   botSolve = false,
-) {
+  botWrong = false,
+  legacyReward = false,
+  checkCollection = false,
+}: {
+  dropFirst?: boolean;
+  remount?: boolean;
+  failAward?: boolean;
+  backgroundAward?: boolean;
+  dropTransport?: boolean;
+  terminalDrop?: boolean;
+  botSolve?: boolean;
+  botWrong?: boolean;
+  legacyReward?: boolean;
+  checkCollection?: boolean;
+} = {}) {
   const child = Bun.spawn(
     [
       process.execPath,
@@ -49,6 +63,8 @@ async function playGame(
         WORDLE_E2E_DROP_TRANSPORT: dropTransport ? '1' : '0',
         WORDLE_E2E_TERMINAL_DROP: terminalDrop ? '1' : '0',
         WORDLE_E2E_BOT_SOLVE: botSolve ? '1' : '0',
+        WORDLE_E2E_BOT_WRONG: botWrong ? '1' : '0',
+        WORDLE_E2E_LEGACY_REWARD: legacyReward ? '1' : '0',
       },
       stdout: 'pipe',
       stderr: 'pipe',
@@ -124,42 +140,57 @@ async function playGame(
       { timeout: 10_000 },
     );
     await waitFor(() => expect(document.activeElement).toBe(input));
-    if (botSolve) {
+    if (botSolve || botWrong) {
       if (!ready.botOrigin) throw new Error('Missing bot API endpoint');
-      const response = await new Promise<{ status: number; body: string }>(
-        (resolve, reject) => {
-          const req = request(
-            `${ready.botOrigin}/api/wordle/guess`,
-            {
-              method: 'POST',
-              headers: {
-                authorization: 'Bearer test-bot-key',
-                'content-type': 'application/json',
+      const response = await act(
+        () =>
+          new Promise<{ status: number; body: string }>((resolve, reject) => {
+            const req = request(
+              `${ready.botOrigin}/api/wordle/guess`,
+              {
+                method: 'POST',
+                headers: {
+                  authorization: 'Bearer test-bot-key',
+                  'content-type': 'application/json',
+                },
               },
-            },
-            (res) => {
-              let body = '';
-              res.on('data', (chunk) => {
-                body += chunk;
-              });
-              res.on('end', () =>
-                resolve({ status: res.statusCode ?? 0, body }),
-              );
-            },
-          );
-          req.on('error', reject);
-          req.end(
-            JSON.stringify({
-              userId: 'activity-e2e-user',
-              guildId: 'activity-e2e-guild',
-              guess: 'termo',
-              requestId: crypto.randomUUID(),
-            }),
-          );
-        },
+              (res) => {
+                let body = '';
+                res.on('data', (chunk) => {
+                  body += chunk;
+                });
+                res.on('end', () =>
+                  resolve({ status: res.statusCode ?? 0, body }),
+                );
+              },
+            );
+            req.on('error', reject);
+            req.end(
+              JSON.stringify({
+                userId: 'activity-e2e-user',
+                guildId: 'activity-e2e-guild',
+                guess: botWrong ? 'carro' : 'termo',
+                requestId: crypto.randomUUID(),
+              }),
+            );
+          }),
       );
       expect(response.status).toBe(200);
-      expect(JSON.parse(response.body).data.solved).toBe(true);
+      expect(JSON.parse(response.body).data.solved).toBe(!botWrong);
+    }
+    if (botWrong) {
+      for (const letter of 'carro')
+        fireEvent.keyDown(document.activeElement!, { key: letter });
+      fireEvent.keyDown(document.activeElement!, { key: 'Enter' });
+      await screen.findByText(/tentativa 2/i, {}, { timeout: 10_000 });
+      await waitFor(() =>
+        expect(
+          (screen.getAllByRole('textbox')[0] as HTMLInputElement).value,
+        ).toBe(''),
+      );
+      await waitFor(() =>
+        expect(document.activeElement).toBe(screen.getAllByRole('textbox')[0]),
+      );
     }
     if (dropTransport) window.dispatchEvent(new Event('offline'));
     for (const [index, letter] of [...'termo'].entries()) {
@@ -177,24 +208,43 @@ async function playGame(
       rendered = mountBoard();
     }
     expect(
-      await screen.findByText('Palpite certeiro', {}, { timeout: 20_000 }),
+      await screen.findByText(
+        botWrong ? 'Segunda é a certa' : 'Palpite certeiro',
+        {},
+        { timeout: 20_000 },
+      ),
     ).toBeTruthy();
-    expect(screen.getByText('+75 XP')).toBeTruthy();
+    expect(screen.getByText(botWrong ? '+25 XP' : '+75 XP')).toBeTruthy();
     expect(screen.getByText(/conquista desbloqueada/i)).toBeTruthy();
+    if (checkCollection) {
+      fireEvent.click(
+        screen.getByRole('button', { name: /fechar conquista desbloqueada/i }),
+      );
+      fireEvent.click(screen.getByRole('button', { name: /ver conquistas/i }));
+      expect(screen.getByRole('heading', { name: /conquistas/i })).toBeTruthy();
+      expect(screen.getByText(/1 de \d+ desbloqueadas/i)).toBeTruthy();
+      expect(screen.getByText('Palpite certeiro')).toBeTruthy();
+      expect(screen.getByText('Desbloqueada')).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: /voltar/i }));
+      expect(screen.queryByRole('heading', { name: /conquistas/i })).toBeNull();
+    }
     await act(async () => rendered.unmount());
   } finally {
     clearTimeout(readinessTimer);
     window.matchMedia = originalMatchMedia;
     window.sessionStorage.clear();
     child.kill('SIGTERM');
-    expect(await child.exited).toBe(0);
+    const exitCode = await child.exited;
+    const stderr =
+      exitCode === 0 ? '' : await new Response(child.stderr).text();
+    expect(exitCode, stderr).toBe(0);
   }
 }
 
 integrationTest(
   'plays a real Wordle over WebSocket and shows the earned achievement',
   async () => {
-    await playGame(false);
+    await playGame({ checkCollection: true });
   },
   30_000,
 );
@@ -202,7 +252,7 @@ integrationTest(
 integrationTest(
   'restores a quickly remounted Wordle and awards the win',
   async () => {
-    await playGame(false, true);
+    await playGame({ remount: true });
   },
   30_000,
 );
@@ -210,7 +260,7 @@ integrationTest(
 integrationTest(
   'recovers an achievement after award processing fails',
   async () => {
-    await playGame(false, false, true);
+    await playGame({ failAward: true });
   },
   35_000,
 );
@@ -218,7 +268,7 @@ integrationTest(
 integrationTest(
   'shows an achievement recovered by the background job',
   async () => {
-    await playGame(false, false, true, true);
+    await playGame({ failAward: true, backgroundAward: true });
   },
   35_000,
 );
@@ -226,7 +276,7 @@ integrationTest(
 integrationTest(
   'reconnects a dropped WebSocket and awards a buffered winning guess',
   async () => {
-    await playGame(false, false, false, false, true);
+    await playGame({ dropTransport: true });
   },
   35_000,
 );
@@ -234,7 +284,7 @@ integrationTest(
 integrationTest(
   'recovers an unanswered winning guess after a terminal disconnect and remount',
   async () => {
-    await playGame(false, false, false, false, false, true);
+    await playGame({ terminalDrop: true });
   },
   35_000,
 );
@@ -242,7 +292,15 @@ integrationTest(
 integrationTest(
   'updates an open Activity when the bot already solved the shared game',
   async () => {
-    await playGame(false, false, false, false, false, false, true);
+    await playGame({ botSolve: true });
+  },
+  35_000,
+);
+
+integrationTest(
+  'restores a bot guess before winning from the open Activity',
+  async () => {
+    await playGame({ botWrong: true });
   },
   35_000,
 );
@@ -250,7 +308,15 @@ integrationTest(
 integrationTest(
   'recovers a lost guess response without duplicating the win or XP',
   async () => {
-    await playGame(true);
+    await playGame({ dropFirst: true });
+  },
+  30_000,
+);
+
+integrationTest(
+  'shows and awards the current XP when a legacy definition has a different reward',
+  async () => {
+    await playGame({ legacyReward: true });
   },
   30_000,
 );

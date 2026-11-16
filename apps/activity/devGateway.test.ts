@@ -99,34 +99,100 @@ test('joins a Colyseus room and exchanges messages through the gateway', async (
 
 const wordleTest = process.env.TEST_DATABASE_URL ? test : test.skip;
 
-wordleTest('plays Wordle and awards XP through the Vite WebSocket gateway', async () => {
-  const { randomUUID } = await import('node:crypto');
-  const { startWordleGatewayFixture } = await import('../api/tests/helpers/wordleGatewayFixture');
-  const fixture = await startWordleGatewayFixture();
-  let gateway: ViteDevServer | undefined;
-  let room: Awaited<ReturnType<Client['joinOrCreate']>> | undefined;
-  const originalTarget = process.env.DEV_API_TARGET;
-  try {
-    process.env.DEV_API_TARGET = fixture.origin;
-    gateway = await createServer({ root: import.meta.dirname, configFile: resolve(import.meta.dirname, 'vite.config.ts'), logLevel: 'silent', server: { port: 0, host: '127.0.0.1' } });
-    await gateway.listen();
-    const gatewayAddress = gateway.httpServer?.address();
-    if (!gatewayAddress || typeof gatewayAddress === 'string') throw new Error('No Wordle gateway port');
-    room = await new Client(`ws://127.0.0.1:${gatewayAddress.port}/colyseus`).joinOrCreate('match', { token: fixture.token, roomKey: fixture.key, game: 'wordle' });
-    const ready = new Promise<void>((resolve) => room!.onMessage('init', () => resolve()));
-    room.send('wordle_sync');
-    await ready;
-    const result = new Promise<{ solved: boolean; achievementUpdate: { unlockedIds: string[] } }>((resolve) => room!.onMessage('guess_result', resolve));
-    room.send('guess', { guess: 'termo', date: fixture.date, requestId: randomUUID(), captureAchievementBaseline: true });
-    const response = await result;
-    expect(response.solved).toBe(true);
-    expect(response.achievementUpdate.unlockedIds).toContain('wordle_v2_solved_exactly_1');
-    expect(await fixture.persistence()).toEqual({ unlocks: 1, xp: 75 });
-  } finally {
-    await room?.leave();
-    await gateway?.close();
-    await fixture.close();
-    if (originalTarget === undefined) delete process.env.DEV_API_TARGET;
-    else process.env.DEV_API_TARGET = originalTarget;
-  }
-}, 30_000);
+wordleTest(
+  'plays Wordle and awards XP through the Vite WebSocket gateway',
+  async () => {
+    const { randomUUID } = await import('node:crypto');
+    const { startWordleGatewayFixture } =
+      await import('../api/tests/helpers/wordleGatewayFixture');
+    const fixture = await startWordleGatewayFixture();
+    let gateway: ViteDevServer | undefined;
+    let room: Awaited<ReturnType<Client['joinOrCreate']>> | undefined;
+    const originalTarget = process.env.DEV_API_TARGET;
+    try {
+      process.env.DEV_API_TARGET = fixture.origin;
+      gateway = await createServer({
+        root: import.meta.dirname,
+        configFile: resolve(import.meta.dirname, 'vite.config.ts'),
+        logLevel: 'silent',
+        server: { port: 0, host: '127.0.0.1' },
+      });
+      await gateway.listen();
+      const gatewayAddress = gateway.httpServer?.address();
+      if (!gatewayAddress || typeof gatewayAddress === 'string')
+        throw new Error('No Wordle gateway port');
+      const origin = `http://127.0.0.1:${gatewayAddress.port}`;
+      const directPreflight = await fetch(
+        `${fixture.origin}/matchmake/joinOrCreate/match`,
+        {
+          method: 'OPTIONS',
+          headers: {
+            origin: 'https://dev.example.com',
+            'access-control-request-method': 'POST',
+            'access-control-request-headers': 'content-type',
+          },
+        },
+      );
+      expect(directPreflight.status).toBe(204);
+      expect(directPreflight.headers.get('access-control-allow-origin')).toBe(
+        'https://dev.example.com',
+      );
+      expect(
+        directPreflight.headers.get('access-control-allow-credentials'),
+      ).toBe('true');
+      expect(
+        directPreflight.headers
+          .get('access-control-allow-headers')
+          ?.toLowerCase(),
+      ).toContain('content-type');
+      const preflight = await fetch(
+        `${origin}/colyseus/matchmake/joinOrCreate/match`,
+        {
+          method: 'OPTIONS',
+          headers: {
+            origin,
+            'access-control-request-method': 'POST',
+            'access-control-request-headers': 'content-type',
+          },
+        },
+      );
+      expect(preflight.status).toBe(204);
+      expect(preflight.headers.get('access-control-allow-origin')).toBe(origin);
+      room = await new Client(
+        `ws://127.0.0.1:${gatewayAddress.port}/colyseus`,
+      ).joinOrCreate('match', {
+        token: fixture.token,
+        roomKey: fixture.key,
+        game: 'wordle',
+      });
+      const ready = new Promise<void>((resolve) =>
+        room!.onMessage('init', () => resolve()),
+      );
+      room.send('wordle_sync');
+      await ready;
+      const result = new Promise<{
+        solved: boolean;
+        achievementUpdate: { unlockedIds: string[] };
+      }>((resolve) => room!.onMessage('guess_result', resolve));
+      room.send('guess', {
+        guess: 'termo',
+        date: fixture.date,
+        requestId: randomUUID(),
+        captureAchievementBaseline: true,
+      });
+      const response = await result;
+      expect(response.solved).toBe(true);
+      expect(response.achievementUpdate.unlockedIds).toContain(
+        'wordle_v2_solved_exactly_1',
+      );
+      expect(await fixture.persistence()).toEqual({ unlocks: 1, xp: 75 });
+    } finally {
+      await room?.leave();
+      await gateway?.close();
+      await fixture.close();
+      if (originalTarget === undefined) delete process.env.DEV_API_TARGET;
+      else process.env.DEV_API_TARGET = originalTarget;
+    }
+  },
+  30_000,
+);

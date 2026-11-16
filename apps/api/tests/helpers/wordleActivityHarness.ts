@@ -1,3 +1,4 @@
+import { WebSocketTransport } from '@colyseus/ws-transport';
 import {
   achievements,
   userLevels,
@@ -28,8 +29,10 @@ import { createWordleTestServices } from './wordleServices';
 import { mintWsSessionToken } from './wsSessionTokens';
 
 const fixture = await createTestDb();
+process.env.DATABASE_URL = fixture.url;
 let server: Server | undefined;
 let httpApp: NestExpressApplication | undefined;
+let realtimeApp: NestExpressApplication | undefined;
 let ready = false;
 let simulatedAwardFailure = false;
 let backgroundAwardGranted = false;
@@ -46,14 +49,19 @@ try {
   await fixture.db
     .insert(wordleGlobalDays)
     .values({ word_date: date, word: 'termo', word_length: 5, created_at: 1 });
+  const botWrong = process.env.WORDLE_E2E_BOT_WRONG === '1';
+  const legacyReward = process.env.WORDLE_E2E_LEGACY_REWARD === '1';
   await fixture.db.insert(achievements).values({
-    id: 'wordle_v2_solved_exactly_1',
-    name: 'Palpite certeiro',
-    description: 'Acerte de primeira.',
+    id: botWrong ? 'wordle_v2_solved_exactly_2' : 'wordle_v2_solved_exactly_1',
+    name: botWrong ? 'Segunda é a certa' : 'Palpite certeiro',
+    description: botWrong
+      ? 'Acerte na segunda tentativa.'
+      : 'Acerte de primeira.',
     category: 'wordle',
     rarity: 'rare',
     icon: '🏅',
-    reward_xp: 75,
+    condition: legacyReward ? JSON.stringify({ legacy: true }) : null,
+    reward_xp: legacyReward ? 999 : botWrong ? 25 : 75,
   });
   const identity = {
     userId: 'activity-e2e-user',
@@ -65,7 +73,7 @@ try {
   } as const;
   const services = createWordleTestServices(fixture.db);
   let botOrigin: string | undefined;
-  if (process.env.WORDLE_E2E_BOT_SOLVE === '1') {
+  if (process.env.WORDLE_E2E_BOT_SOLVE === '1' || botWrong) {
     const moduleRef = await Test.createTestingModule({
       imports: [HttpInfrastructureModule, WordleModule],
     })
@@ -139,7 +147,22 @@ try {
       return result;
     };
   }
-  server = new Server({ greet: false });
+  const realtimeModule = await Test.createTestingModule({
+    imports: [HttpInfrastructureModule],
+  })
+    .overrideProvider(AppConfig)
+    .useValue(createTestAppConfig())
+    .compile();
+  realtimeApp =
+    realtimeModule.createNestApplication<NestExpressApplication>(
+      NEST_APP_OPTIONS,
+    );
+  configureHttp(realtimeApp, { silent: true });
+  await realtimeApp.init();
+  server = new Server({
+    greet: false,
+    transport: new WebSocketTransport({ server: realtimeApp.getHttpServer() }),
+  });
   const dependencies = {
     ...createRealtimeTestDependencies(fixture.db),
     wordle: services.wordle,
@@ -172,8 +195,11 @@ try {
   await new Promise<void>((resolve) => process.once('SIGTERM', resolve));
 } finally {
   await server?.gracefullyShutdown(false);
+  await realtimeApp?.close();
   await httpApp?.close();
   if (ready) {
+    const botWrong = process.env.WORDLE_E2E_BOT_WRONG === '1';
+    const legacyReward = process.env.WORDLE_E2E_LEGACY_REWARD === '1';
     const [events, unlocks, levels] = await Promise.all([
       fixture.db
         .select()
@@ -189,11 +215,14 @@ try {
         .where(eq(userLevels.user_id, 'activity-e2e-user')),
     ]);
     if (
-      events.length !== 1 ||
-      events[0]?.attempt !== 1 ||
-      events[0]?.achievement_reconciled !== true ||
+      events.length !== (botWrong ? 2 : 1) ||
+      events
+        .map((event) => event.attempt)
+        .sort((a, b) => a - b)
+        .join(',') !== (botWrong ? '1,2' : '1') ||
+      events.some((event) => !event.achievement_reconciled) ||
       unlocks.length !== 1 ||
-      levels[0]?.total_xp !== 75 ||
+      levels[0]?.total_xp !== (botWrong ? 25 : 75) ||
       (process.env.WORDLE_E2E_FAIL_AWARD === '1' && !simulatedAwardFailure) ||
       (process.env.WORDLE_E2E_BACKGROUND_AWARD === '1' &&
         !backgroundAwardGranted) ||
@@ -202,6 +231,16 @@ try {
     ) {
       console.error('Wordle integration persistence check failed');
       process.exitCode = 1;
+    }
+    if (legacyReward) {
+      const [definition] = await fixture.db
+        .select()
+        .from(achievements)
+        .where(eq(achievements.id, 'wordle_v2_solved_exactly_1'));
+      if (definition?.reward_xp !== 999) {
+        console.error('Legacy Wordle definition was changed');
+        process.exitCode = 1;
+      }
     }
   }
   await fixture.drop();
