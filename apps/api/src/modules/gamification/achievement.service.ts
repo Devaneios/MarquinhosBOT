@@ -1,5 +1,6 @@
 import {
   achievementConditionSchema,
+  achievementRaritySchema,
   type AchievementCondition,
 } from '@marquinhos/contracts/http/routes/gamification';
 import type { Db, DbExecutor } from '@marquinhos/database/client';
@@ -10,6 +11,7 @@ import {
   userStats,
 } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
+import { achievementXpForRarity } from '@marquinhos/domain/games/wordle/achievements/rewards';
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
 import {
@@ -36,7 +38,6 @@ const DEFAULT_ACHIEVEMENTS = [
     rarity: 'common',
     icon: '👋',
     condition: { type: 'commands', threshold: 1 },
-    reward_xp: 10,
   },
   {
     id: 'commands_10',
@@ -46,7 +47,6 @@ const DEFAULT_ACHIEVEMENTS = [
     rarity: 'common',
     icon: '⚡',
     condition: { type: 'commands', threshold: 10 },
-    reward_xp: 50,
   },
   {
     id: 'commands_100',
@@ -56,7 +56,6 @@ const DEFAULT_ACHIEVEMENTS = [
     rarity: 'rare',
     icon: '🏆',
     condition: { type: 'commands', threshold: 100 },
-    reward_xp: 200,
   },
   {
     id: 'level_10',
@@ -66,7 +65,6 @@ const DEFAULT_ACHIEVEMENTS = [
     rarity: 'rare',
     icon: '🧗',
     condition: { type: 'level', threshold: 10 },
-    reward_xp: 500,
   },
   {
     id: 'music_lover',
@@ -76,7 +74,6 @@ const DEFAULT_ACHIEVEMENTS = [
     rarity: 'epic',
     icon: '🎵',
     condition: { type: 'scrobbles', threshold: 50 },
-    reward_xp: 300,
   },
   {
     id: 'scrobbles_100',
@@ -86,7 +83,6 @@ const DEFAULT_ACHIEVEMENTS = [
     rarity: 'epic',
     icon: '📊',
     condition: { type: 'scrobbles', threshold: 100 },
-    reward_xp: 400,
   },
 ];
 
@@ -140,7 +136,7 @@ export class AchievementService {
         rarity: definition.rarity,
         icon: definition.icon,
         condition: null,
-        reward_xp: definition.rewardXp,
+        reward_xp: achievementXpForRarity(definition.rarity),
         archived_at: null,
       }));
       await tx
@@ -288,7 +284,7 @@ export class AchievementService {
     if (requestedIds.length === 0) return [];
 
     const definitions = await exec
-      .select({ id: achievements.id, reward_xp: achievements.reward_xp })
+      .select({ id: achievements.id, rarity: achievements.rarity })
       .from(achievements)
       .where(
         and(
@@ -298,7 +294,10 @@ export class AchievementService {
       );
     const eligibleIds = new Set(definitions.map((row) => row.id));
     const rewardById = new Map(
-      definitions.map((row) => [row.id, row.reward_xp]),
+      definitions.map((row) => [
+        row.id,
+        achievementXpForRarity(achievementRaritySchema.parse(row.rarity)),
+      ]),
     );
     const eligible = requestedIds.filter((id) => eligibleIds.has(id));
     if (eligible.length === 0) return [];

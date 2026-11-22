@@ -435,7 +435,6 @@ describe('WordleBoard screen transitions', () => {
                 {
                   id: 'wordle_first_win',
                   family: 'wins',
-                  tier: 1,
                   name: 'Primeira palavra',
                   description: 'Acerte sua primeira palavra.',
                   icon: '🟩',
@@ -447,7 +446,6 @@ describe('WordleBoard screen transitions', () => {
                 {
                   id: 'wordle_solved_in_1',
                   family: 'precision',
-                  tier: 3,
                   name: 'Na mosca',
                   description: 'Acerte na primeira tentativa.',
                   icon: '🍀',

@@ -20,7 +20,6 @@ const sampleAchievements: WordleAchievementStatus[] = [
   {
     id: 'wordle_first_win',
     family: 'wins',
-    tier: 1,
     name: 'Primeira palavra',
     description: 'Acerte sua primeira palavra do dia no Terminhos.',
     icon: '🟩',
@@ -34,7 +33,6 @@ const sampleAchievements: WordleAchievementStatus[] = [
   {
     id: 'wordle_wins_10',
     family: 'wins',
-    tier: 2,
     name: 'Dez palavras',
     description: 'Acerte a palavra diária em 10 dias.',
     icon: '📚',
@@ -48,7 +46,6 @@ const sampleAchievements: WordleAchievementStatus[] = [
   {
     id: 'wordle_streak_7',
     family: 'streak',
-    tier: 2,
     name: 'Semana perfeita',
     description: 'Mantenha uma sequência de 7 dias acertando o Terminhos.',
     icon: '🔥',
@@ -62,7 +59,6 @@ const sampleAchievements: WordleAchievementStatus[] = [
   {
     id: 'wordle_night_owl',
     family: 'timing',
-    tier: 4,
     name: '',
     description: '',
     icon: '❔',
@@ -241,7 +237,7 @@ describe('WordleAchievementsScreen', () => {
     expect(screen.getByText('Conquista antiga')).toBeTruthy();
   });
 
-  it('renders stats header, distribution bars, families, tier ladders, progress bars, holders %, and secret masking', () => {
+  it('renders stats header, distribution bars, families, progress bars, holders %, and secret masking', () => {
     const { container } = render(
       <WordleAchievementsScreen
         achievements={sampleAchievements}

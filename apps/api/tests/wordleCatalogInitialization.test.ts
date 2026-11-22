@@ -6,6 +6,7 @@ import {
   userStats,
 } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
+import { achievementXpForRarity } from '@marquinhos/domain/games/wordle/achievements/rewards';
 import { afterAll, describe, expect, it } from 'bun:test';
 import { and, eq, inArray } from 'drizzle-orm';
 import { AchievementService } from 'modules/gamification/achievement.service';
@@ -112,7 +113,7 @@ describe('Wordle catalog initialization', () => {
         rarity: definition.rarity,
         icon: definition.icon,
         condition: null,
-        reward_xp: definition.rewardXp,
+        reward_xp: achievementXpForRarity(definition.rarity),
         archived_at: null,
       })),
     );

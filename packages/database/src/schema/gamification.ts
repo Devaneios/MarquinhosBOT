@@ -147,7 +147,10 @@ export const evolutiveAchievements = pgTable(
     user_id: text('user_id').notNull(),
     guild_id: text('guild_id').notNull(),
     base_id: text('base_id').notNull(),
-    current_tier: integer('current_tier').notNull().default(1),
+    current_rarity: text('current_rarity')
+      .$type<'common' | 'rare' | 'epic' | 'legendary' | 'mythical'>()
+      .notNull()
+      .default('common'),
     unlocked_at: bigint('unlocked_at', { mode: 'number' }).notNull(),
     last_evolved: bigint('last_evolved', { mode: 'number' }),
     evolution_log: text('evolution_log').notNull().default('[]'),

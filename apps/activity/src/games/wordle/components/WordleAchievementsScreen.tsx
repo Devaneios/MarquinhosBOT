@@ -7,6 +7,7 @@ import { WORDLE_ACHIEVEMENT_FAMILIES } from '@marquinhos/domain/games/wordle/ach
 import { useEffect, useMemo, useState, ViewTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WordleRewardsState } from '../api/wordleRewardsApi';
+import { AchievementIcon } from './AchievementIcon';
 import { WordlePatternDisplay } from './WordlePatternDisplay';
 import { WordleRewardsEditor } from './WordleRewardsEditor';
 import { WordleShowcaseEditor } from './WordleShowcaseEditor';
@@ -18,6 +19,8 @@ const RARITY_CLASSES: Record<WordleAchievementStatus['rarity'], string> = {
   legendary:
     'border-marquinhos-accent/50 bg-marquinhos-accent/15 text-marquinhos-accent',
 };
+
+const RARITY_ORDER = { common: 0, rare: 1, epic: 2, legendary: 3 } as const;
 
 const FAMILY_ORDER: readonly string[] = [
   ...WORDLE_ACHIEVEMENT_FAMILIES,
@@ -99,7 +102,9 @@ export function WordleAchievementsScreen({
     }
     for (const list of map.values()) {
       list.sort(
-        (a, b) => (a.tier ?? 1) - (b.tier ?? 1) || a.id.localeCompare(b.id),
+        (a, b) =>
+          RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] ||
+          a.name.localeCompare(b.name, 'pt-BR'),
       );
     }
     return map;
@@ -122,7 +127,9 @@ export function WordleAchievementsScreen({
     });
     return keys.map((family) => {
       const items = [...(map.get(family) ?? [])].sort(
-        (a, b) => (a.tier ?? 1) - (b.tier ?? 1) || a.id.localeCompare(b.id),
+        (a, b) =>
+          RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] ||
+          a.name.localeCompare(b.name, 'pt-BR'),
       );
       const fullFamily = allByFamily.get(family) ?? items;
       return {
@@ -355,29 +362,6 @@ export function WordleAchievementsScreen({
                                 })}
                               </span>
                             </div>
-
-                            <div className="flex items-center gap-1">
-                              {fullFamily.map((rung) => {
-                                const rungUnlocked = rung.unlockedAt !== null;
-                                const rungTier = rung.tier ?? 1;
-                                return (
-                                  <span
-                                    key={rung.id}
-                                    data-tier-rung={rungTier}
-                                    data-unlocked={
-                                      rungUnlocked ? 'true' : 'false'
-                                    }
-                                    className={`rounded border px-1.5 py-0.5 text-[10px] font-bold ${
-                                      rungUnlocked
-                                        ? 'border-marquinhos-green/50 bg-marquinhos-green/15 text-marquinhos-green'
-                                        : 'border-marquinhos-border/60 bg-black/30 text-marquinhos-text-dim'
-                                    }`}
-                                  >
-                                    {t('wordle:tierShort', { tier: rungTier })}
-                                  </span>
-                                );
-                              })}
-                            </div>
                           </div>
 
                           <ul className="flex flex-col gap-3">
@@ -385,7 +369,6 @@ export function WordleAchievementsScreen({
                               const isUnlocked =
                                 achievement.unlockedAt !== null;
                               const hidden = achievement.hidden ?? false;
-                              const tier = achievement.tier ?? 1;
                               const progress = achievement.progress ?? null;
                               const holdersPercent =
                                 achievement.holdersPercent ?? null;
@@ -433,15 +416,15 @@ export function WordleAchievementsScreen({
                                         aria-hidden="true"
                                         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-marquinhos-border bg-black/30 text-xl"
                                       >
-                                        {displayIcon}
+                                        <AchievementIcon
+                                          icon={displayIcon}
+                                          className="h-8 w-8"
+                                        />
                                       </span>
                                       <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-1.5">
                                           <span className="font-pixel text-sm text-marquinhos-text">
                                             {displayName}
-                                          </span>
-                                          <span className="rounded border border-marquinhos-border bg-black/30 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-marquinhos-text-dim">
-                                            {t('wordle:tierLabel', { tier })}
                                           </span>
                                           <span
                                             className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${RARITY_CLASSES[achievement.rarity]}`}
@@ -543,7 +526,6 @@ export function WordleAchievementsScreen({
         (() => {
           const isUnlocked = selectedAchievement.unlockedAt !== null;
           const hidden = selectedAchievement.hidden ?? false;
-          const tier = selectedAchievement.tier ?? 1;
           const family = selectedAchievement.family || 'wordle';
           const progress = selectedAchievement.progress ?? null;
           const holdersPercent = selectedAchievement.holdersPercent ?? null;
@@ -581,7 +563,10 @@ export function WordleAchievementsScreen({
                       aria-hidden="true"
                       className="termo-achievement-badge flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-marquinhos-border bg-black/40 text-2xl"
                     >
-                      {displayIcon}
+                      <AchievementIcon
+                        icon={displayIcon}
+                        className="h-10 w-10"
+                      />
                     </span>
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-marquinhos-text-dim">
@@ -608,9 +593,6 @@ export function WordleAchievementsScreen({
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded border border-marquinhos-border bg-black/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-marquinhos-text-dim">
                     {t(`wordle:families.${family}`, { defaultValue: family })}
-                  </span>
-                  <span className="rounded border border-marquinhos-border bg-black/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-marquinhos-text-dim">
-                    {t('wordle:tierLabel', { tier })}
                   </span>
                   <span
                     className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${RARITY_CLASSES[selectedAchievement.rarity]}`}

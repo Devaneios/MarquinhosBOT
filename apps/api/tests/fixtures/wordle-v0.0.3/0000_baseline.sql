@@ -172,7 +172,7 @@ CREATE TABLE "evolutive_achievements" (
 	"user_id" text NOT NULL,
 	"guild_id" text NOT NULL,
 	"base_id" text NOT NULL,
-	"current_tier" integer DEFAULT 1 NOT NULL,
+	"current_rarity" text DEFAULT 'common' NOT NULL,
 	"unlocked_at" bigint NOT NULL,
 	"last_evolved" bigint,
 	"evolution_log" text DEFAULT '[]' NOT NULL,

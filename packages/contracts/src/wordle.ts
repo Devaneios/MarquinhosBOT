@@ -91,9 +91,7 @@ export const wordleAchievementSchema = z.object({
   description: z.string(),
   icon: z.string(),
   rarity: achievementRaritySchema,
-  rewardXp: z.number().int().nonnegative(),
   family: z.string().default('wordle'),
-  tier: z.number().int().min(1).default(1),
   hidden: z.boolean().default(false),
   patternPreview: wordlePatternPreviewSchema.optional(),
 });
@@ -104,6 +102,7 @@ export const wordleAchievementProgressSchema = z.object({
   target: z.number().int().positive(),
 });
 export const wordleAchievementStatusSchema = wordleAchievementSchema.extend({
+  rewardXp: z.number().int().nonnegative(),
   unlockedAt: z.iso.datetime().nullable(),
   progress: wordleAchievementProgressSchema.nullable().default(null),
   holdersPercent: z.number().min(0).max(100).nullable().default(null),

@@ -1,7 +1,7 @@
 # Maintain Wordle achievements
 
 The catalog is authored in `content/` and combined in `catalog.ts`. Each object
-contains its ID, Portuguese copy, family, explicit tier, rarity, icon, XP reward,
+contains its ID, Portuguese copy, family, rarity, icon,
 and pure `evaluate` function. Drawing objects also own their pattern ID, family,
 mask, variants, colors, and allowed rotations. `engine/predicates.ts` contains
 reusable pure behavior; `engine/history.ts` prepares eligible facts once.
@@ -52,12 +52,10 @@ evaluator fields look like this:
   id: 'wordle_v2_pattern_shape_example',
   kind: 'drawing',
   family: 'shapes',
-  tier: 17,
   name: 'Exemplo',
   description: 'Forme a figura completa em uma cor.',
   rarity: 'rare',
   icon: '🎨',
-  rewardXp: 75,
   hidden: false,
   evaluate: discoveredDrawing,
   drawing: {
@@ -111,12 +109,10 @@ achievement's complete identity and `evaluate` function on the object in
   id: 'wordle_v2_example_goal',
   kind: 'standard',
   family: 'precision',
-  tier: 7,
   name: 'Exemplo',
   description: 'Resolva em até três tentativas em dez datas.',
   rarity: 'rare',
   icon: '🏅',
-  rewardXp: 75,
   hidden: false,
   evaluate: (facts) => winsWithin(facts, 3, 10),
 }

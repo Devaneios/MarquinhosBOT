@@ -7,7 +7,7 @@ const userGuildParams = z.object({
 });
 
 export const evolutionEventSchema = z.object({
-  tier: z.number(),
+  rarity: z.enum(['common', 'rare', 'epic', 'legendary', 'mythical']),
   evolvedAt: z.string(),
   reason: z.string(),
 });
@@ -16,22 +16,21 @@ export type EvolutionEvent = z.output<typeof evolutionEventSchema>;
 export const evolutiveAchievementSchema = z.object({
   baseId: z.string(),
   name: z.string(),
-  currentTier: z.number(),
-  currentTierName: z.string(),
+  currentName: z.string(),
   icon: z.string(),
   rarity: z.enum(['common', 'rare', 'epic', 'legendary', 'mythical']),
   description: z.string(),
   unlockedAt: isoDate,
   lastEvolved: isoDate.nullable(),
   evolutionLog: z.array(evolutionEventSchema),
-  nextTierThreshold: z.number().nullable(),
+  nextThreshold: z.number().nullable(),
   currentStatValue: z.number(),
 });
 
 export const evolutionResultSchema = z.object({
   baseId: z.string(),
-  newTier: z.number(),
-  newTierName: z.string(),
+  newRarity: z.enum(['common', 'rare', 'epic', 'legendary', 'mythical']),
+  newName: z.string(),
   icon: z.string(),
 });
 

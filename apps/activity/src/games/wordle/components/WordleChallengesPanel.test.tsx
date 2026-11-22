@@ -49,7 +49,6 @@ it('creates a challenge only from a figure the player unlocked', async () => {
   const achievement = {
     id: 'a',
     family: 'letters',
-    tier: 1,
     name: 'Letra A',
     description: '',
     icon: '🔤',

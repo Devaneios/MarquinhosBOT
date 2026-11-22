@@ -3,6 +3,7 @@ import { wordlePatternPreviewSchema } from '@marquinhos/contracts/wordle';
 import { describe, expect, it } from 'bun:test';
 import { WORDLE_ACHIEVEMENT_CATALOG, WORDLE_DRAWING_CATALOG } from './catalog';
 import { WORDLE_ACHIEVEMENT_FAMILIES } from './families';
+import { achievementXpForRarity } from './rewards';
 
 describe('Wordle achievement catalog', () => {
   it('keeps the curated catalog at 110 entries after confirmed additions', () => {
@@ -50,7 +51,7 @@ describe('Wordle achievement catalog', () => {
     expect(tetrominoI?.kind).toBe('drawing');
     if (tetrominoI?.kind === 'drawing') {
       expect(tetrominoI.rarity).toBe('common');
-      expect(tetrominoI.rewardXp).toBe(25);
+      expect(achievementXpForRarity(tetrominoI.rarity)).toBe(25);
       expect(tetrominoI.drawing.mask).toEqual(['####']);
     }
   });
@@ -63,14 +64,8 @@ describe('Wordle achievement catalog', () => {
       );
       expect(definition.name.length).toBeGreaterThan(0);
       expect(definition.description.length).toBeGreaterThan(0);
-      expect(definition.rewardXp).toBe(
-        definition.id === 'wordle_v2_letters_all' ||
-          definition.id === 'wordle_v2_wins_365' ||
-          definition.id === 'wordle_v2_played_365'
-          ? 750
-          : { common: 25, rare: 75, epic: 150, legendary: 300 }[
-              definition.rarity
-            ],
+      expect(achievementXpForRarity(definition.rarity)).toBe(
+        { common: 25, rare: 75, epic: 150, legendary: 750 }[definition.rarity],
       );
     }
   });
@@ -84,9 +79,9 @@ describe('Wordle achievement catalog', () => {
       family: 'vocabulary',
       name: 'DEVANEIOS',
       rarity: 'legendary',
-      rewardXp: 300,
       hidden: false,
     });
+    expect(devaneios && achievementXpForRarity(devaneios.rarity)).toBe(750);
     expect(devaneios?.description).toContain('mesma linha');
     expect(devaneios?.description).toContain('volta ao começo');
   });
@@ -139,41 +134,15 @@ describe('Wordle achievement catalog', () => {
         definition.drawing.mask,
         ...(definition.drawing.variants ?? []),
       ]).toEqual([...masks]);
-      expect(definition.rewardXp).toBe(75);
+      expect(achievementXpForRarity(definition.rarity)).toBe(75);
       expect(definition.rarity).toBe('rare');
     }
   });
 
-  it('never reduces XP across harder numerical tiers', () => {
-    const groups = [
-      [
-        'wordle_v2_wins_1',
-        'wordle_v2_wins_10',
-        'wordle_v2_wins_50',
-        'wordle_v2_wins_100',
-        'wordle_v2_wins_365',
-      ],
-      [
-        'wordle_v2_played_1',
-        'wordle_v2_played_7',
-        'wordle_v2_played_30',
-        'wordle_v2_played_100',
-        'wordle_v2_played_365',
-      ],
-      [
-        'wordle_v2_streak_3',
-        'wordle_v2_streak_7',
-        'wordle_v2_streak_14',
-        'wordle_v2_streak_30',
-        'wordle_v2_streak_100',
-      ],
-      ['wordle_v2_fast_60', 'wordle_v2_secret_d6a09c31'],
-    ];
-    for (const ids of groups) {
-      const rewards = ids.map(
-        (id) => WORDLE_ACHIEVEMENT_CATALOG.find((d) => d.id === id)!.rewardXp,
-      );
-      expect(rewards).toEqual([...rewards].sort((a, b) => a - b));
-    }
+  it('maps rarity to fixed XP amounts', () => {
+    expect(achievementXpForRarity('common')).toBe(25);
+    expect(achievementXpForRarity('rare')).toBe(75);
+    expect(achievementXpForRarity('epic')).toBe(150);
+    expect(achievementXpForRarity('legendary')).toBe(750);
   });
 });

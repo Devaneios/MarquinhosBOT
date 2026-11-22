@@ -15,8 +15,7 @@ type Rarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythical';
 type StatKey =
   'total_scrobbles' | 'total_commands' | 'total_voice_joins' | 'games_won';
 
-interface TierDef {
-  tier: number;
+interface StageDef {
   name: string;
   rarity: Rarity;
   icon: string;
@@ -26,9 +25,9 @@ interface BaseDef {
   name: string;
   description: string;
   statKey: StatKey;
-  // threshold[tier] = stat value needed to evolve FROM that tier to the next
-  thresholds: Record<number, number>;
-  evolutionPath: TierDef[];
+  // threshold[rarity] = stat value needed to evolve FROM that rarity to the next
+  thresholds: Partial<Record<Rarity, number>>;
+  evolutionPath: StageDef[];
   reasons: string[];
 }
 
@@ -37,18 +36,17 @@ const BASE_ACHIEVEMENTS: Record<string, BaseDef> = {
     name: 'Explorador Musical',
     description: 'Descubra o universo musical através de suas músicas',
     statKey: 'total_scrobbles',
-    thresholds: { 1: 10, 2: 50, 3: 200, 4: 500 },
+    thresholds: { common: 10, rare: 50, epic: 200, legendary: 500 },
     evolutionPath: [
-      { tier: 1, name: 'Primeiro Ouvinte', rarity: 'common', icon: '🎵' },
-      { tier: 2, name: 'Descobridor Curioso', rarity: 'rare', icon: '🎶' },
-      { tier: 3, name: 'Curador de Raridades', rarity: 'epic', icon: '🎼' },
+      { name: 'Primeiro Ouvinte', rarity: 'common', icon: '🎵' },
+      { name: 'Descobridor Curioso', rarity: 'rare', icon: '🎶' },
+      { name: 'Curador de Raridades', rarity: 'epic', icon: '🎼' },
       {
-        tier: 4,
         name: 'Descobridor de Talentos',
         rarity: 'legendary',
         icon: '🎹',
       },
-      { tier: 5, name: 'Visionário Musical', rarity: 'mythical', icon: '🌟' },
+      { name: 'Visionário Musical', rarity: 'mythical', icon: '🌟' },
     ],
     reasons: [
       'Explorou novos horizontes musicais',
@@ -61,13 +59,13 @@ const BASE_ACHIEVEMENTS: Record<string, BaseDef> = {
     name: 'Conector Social',
     description: 'Una pessoas através da música e da comunidade',
     statKey: 'total_commands',
-    thresholds: { 1: 10, 2: 50, 3: 200, 4: 500 },
+    thresholds: { common: 10, rare: 50, epic: 200, legendary: 500 },
     evolutionPath: [
-      { tier: 1, name: 'Novo Amigo', rarity: 'common', icon: '🤝' },
-      { tier: 2, name: 'Facilitador', rarity: 'rare', icon: '👥' },
-      { tier: 3, name: 'Influenciador Musical', rarity: 'epic', icon: '🌐' },
-      { tier: 4, name: 'Ponte entre Mundos', rarity: 'legendary', icon: '🌍' },
-      { tier: 5, name: 'Unificador Universal', rarity: 'mythical', icon: '💫' },
+      { name: 'Novo Amigo', rarity: 'common', icon: '🤝' },
+      { name: 'Facilitador', rarity: 'rare', icon: '👥' },
+      { name: 'Influenciador Musical', rarity: 'epic', icon: '🌐' },
+      { name: 'Ponte entre Mundos', rarity: 'legendary', icon: '🌍' },
+      { name: 'Unificador Universal', rarity: 'mythical', icon: '💫' },
     ],
     reasons: [
       'Engajou a comunidade ativamente',
@@ -80,13 +78,13 @@ const BASE_ACHIEVEMENTS: Record<string, BaseDef> = {
     name: 'Mestre do Ritmo',
     description: 'Domine diferentes estilos rítmicos nos jogos',
     statKey: 'games_won',
-    thresholds: { 1: 1, 2: 5, 3: 20, 4: 50 },
+    thresholds: { common: 1, rare: 5, epic: 20, legendary: 50 },
     evolutionPath: [
-      { tier: 1, name: 'Batida Básica', rarity: 'common', icon: '🥁' },
-      { tier: 2, name: 'Groove Intermediário', rarity: 'rare', icon: '🎺' },
-      { tier: 3, name: 'Ritmo Avançado', rarity: 'epic', icon: '🎸' },
-      { tier: 4, name: 'Metrônomo Humano', rarity: 'legendary', icon: '🎻' },
-      { tier: 5, name: 'Senhor do Tempo', rarity: 'mythical', icon: '🎭' },
+      { name: 'Batida Básica', rarity: 'common', icon: '🥁' },
+      { name: 'Groove Intermediário', rarity: 'rare', icon: '🎺' },
+      { name: 'Ritmo Avançado', rarity: 'epic', icon: '🎸' },
+      { name: 'Metrônomo Humano', rarity: 'legendary', icon: '🎻' },
+      { name: 'Senhor do Tempo', rarity: 'mythical', icon: '🎭' },
     ],
     reasons: [
       'Venceu batalhas rítmicas',
@@ -100,18 +98,17 @@ const BASE_ACHIEVEMENTS: Record<string, BaseDef> = {
     description:
       'Adapte sua música às estações participando da comunidade de voz',
     statKey: 'total_voice_joins',
-    thresholds: { 1: 5, 2: 20, 3: 50, 4: 100 },
+    thresholds: { common: 5, rare: 20, epic: 50, legendary: 100 },
     evolutionPath: [
-      { tier: 1, name: 'Ouvinte de Verão', rarity: 'common', icon: '🌱' },
-      { tier: 2, name: 'Guardião do Outono', rarity: 'rare', icon: '🌸' },
-      { tier: 3, name: 'Espírito do Inverno', rarity: 'epic', icon: '☀️' },
+      { name: 'Ouvinte de Verão', rarity: 'common', icon: '🌱' },
+      { name: 'Guardião do Outono', rarity: 'rare', icon: '🌸' },
+      { name: 'Espírito do Inverno', rarity: 'epic', icon: '☀️' },
       {
-        tier: 4,
         name: 'Florescer da Primavera',
         rarity: 'legendary',
         icon: '🍂',
       },
-      { tier: 5, name: 'Senhor das Estações', rarity: 'mythical', icon: '❄️' },
+      { name: 'Senhor das Estações', rarity: 'mythical', icon: '❄️' },
     ],
     reasons: [
       'Frequentou canais de voz consistentemente',
@@ -126,7 +123,7 @@ interface EvolutiveRow {
   user_id: string;
   guild_id: string;
   base_id: string;
-  current_tier: number;
+  current_rarity: Rarity;
   unlocked_at: number;
   last_evolved: number | null;
   evolution_log: string;
@@ -203,12 +200,12 @@ export class EvolutiveAchievementsService {
 
       let row = await getRow(this.database, userId, guildId, baseId);
 
-      // Auto-initialize at tier 1 when the user first qualifies
+      // Auto-initialize at common rarity when the user first qualifies
       if (!row && statValue >= 1) {
         const now = Date.now();
         const initialLog: EvolutionEvent[] = [
           {
-            tier: 1,
+            rarity: 'common',
             evolvedAt: new Date(now).toISOString(),
             reason: 'Primeiro passo desbloqueado!',
           },
@@ -219,7 +216,7 @@ export class EvolutiveAchievementsService {
             user_id: userId,
             guild_id: guildId,
             base_id: baseId,
-            current_tier: 1,
+            current_rarity: 'common',
             unlocked_at: now,
             last_evolved: null,
             evolution_log: JSON.stringify(initialLog),
@@ -227,34 +224,36 @@ export class EvolutiveAchievementsService {
           .onConflictDoNothing();
 
         row = await getRow(this.database, userId, guildId, baseId);
-        if (def.thresholds[1] !== undefined && def.thresholds[1] <= 1) {
+        if (def.thresholds.common !== undefined && def.thresholds.common <= 1) {
           continue;
         }
       }
 
-      if (!row || row.current_tier >= 5) continue;
+      if (!row) continue;
+      const currentIndex = def.evolutionPath.findIndex(
+        (stage) => stage.rarity === row.current_rarity,
+      );
+      if (currentIndex < 0 || currentIndex >= def.evolutionPath.length - 1)
+        continue;
 
-      const threshold = def.thresholds[row.current_tier];
+      const threshold = def.thresholds[row.current_rarity];
       if (threshold === undefined || statValue < threshold) continue;
 
-      // Evolve to next tier
-      const nextTierDef = def.evolutionPath[row.current_tier]; // index = current_tier (0-based), which is next tier
-      if (!nextTierDef) continue;
+      const nextStage = def.evolutionPath[currentIndex + 1];
+      if (!nextStage) continue;
       const log = evolutionLogSchema.parse(JSON.parse(row.evolution_log));
       const now = Date.now();
       log.push({
-        tier: nextTierDef.tier,
+        rarity: nextStage.rarity,
         evolvedAt: new Date(now).toISOString(),
         reason:
-          def.reasons[Math.min(nextTierDef.tier - 2, def.reasons.length - 1)] ??
-          '',
+          def.reasons[Math.min(currentIndex, def.reasons.length - 1)] ?? '',
       });
 
-      // Guarded on the tier we read so a concurrent evolution can't apply twice.
       const evolved = await this.database
         .update(evolutiveAchievements)
         .set({
-          current_tier: nextTierDef.tier,
+          current_rarity: nextStage.rarity,
           last_evolved: now,
           evolution_log: JSON.stringify(log),
         })
@@ -262,17 +261,17 @@ export class EvolutiveAchievementsService {
           and(
             byUser(userId, guildId),
             eq(evolutiveAchievements.base_id, baseId),
-            eq(evolutiveAchievements.current_tier, row.current_tier),
+            eq(evolutiveAchievements.current_rarity, row.current_rarity),
           ),
         )
-        .returning({ tier: evolutiveAchievements.current_tier });
+        .returning({ rarity: evolutiveAchievements.current_rarity });
       if (evolved.length === 0) continue;
 
       evolutions.push({
         baseId,
-        newTier: nextTierDef.tier,
-        newTierName: nextTierDef.name,
-        icon: nextTierDef.icon,
+        newRarity: nextStage.rarity,
+        newName: nextStage.name,
+        icon: nextStage.icon,
       });
     }
 
@@ -292,26 +291,28 @@ export class EvolutiveAchievementsService {
 
     return rows.flatMap((row: EvolutiveRow) => {
       const def = BASE_ACHIEVEMENTS[row.base_id];
-      const tierDef = def?.evolutionPath[row.current_tier - 1];
-      if (!def || !tierDef) return [];
+      const stage = def?.evolutionPath.find(
+        (item) => item.rarity === row.current_rarity,
+      );
+      if (!def || !stage) return [];
+      const stageIndex = def.evolutionPath.indexOf(stage);
       const nextThreshold =
-        row.current_tier < 5
-          ? (def.thresholds[row.current_tier] ?? null)
+        stageIndex < def.evolutionPath.length - 1
+          ? (def.thresholds[row.current_rarity] ?? null)
           : null;
 
       return [
         {
           baseId: row.base_id,
           name: def.name,
-          currentTier: row.current_tier,
-          currentTierName: tierDef.name,
-          icon: tierDef.icon,
-          rarity: tierDef.rarity,
+          currentName: stage.name,
+          icon: stage.icon,
+          rarity: stage.rarity,
           description: def.description,
           unlockedAt: new Date(row.unlocked_at),
           lastEvolved: row.last_evolved ? new Date(row.last_evolved) : null,
           evolutionLog: evolutionLogSchema.parse(JSON.parse(row.evolution_log)),
-          nextTierThreshold: nextThreshold,
+          nextThreshold,
           currentStatValue: stats ? stats[def.statKey] : 0,
         },
       ];

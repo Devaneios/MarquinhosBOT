@@ -21,7 +21,6 @@ const badge = {
   rewardXp: 25,
   unlockedAt: '2026-10-24T04:00:00.000Z',
   family: 'wins',
-  tier: 1,
   hidden: false,
 } as const;
 

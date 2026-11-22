@@ -324,7 +324,6 @@ describe('useWordleBoard focus controls', () => {
       rarity: 'common',
       rewardXp: 25,
       family: 'wins',
-      tier: 1,
       hidden: false,
       unlockedAt: null,
       progress: { current: 0, target: 1 },
@@ -817,7 +816,6 @@ describe('useWordleBoard reveal', () => {
               {
                 id: 'wordle_streak_3',
                 family: 'streak',
-                tier: 1,
                 name: 'No ritmo',
                 description: '3 dias seguidos.',
                 icon: '🔥',
@@ -831,7 +829,6 @@ describe('useWordleBoard reveal', () => {
               {
                 id: 'wordle_night_owl',
                 family: 'timing',
-                tier: 4,
                 name: '',
                 description: '',
                 icon: '❔',
@@ -845,7 +842,6 @@ describe('useWordleBoard reveal', () => {
               {
                 id: 'wordle_wins_10',
                 family: 'wins',
-                tier: 2,
                 name: 'Dez palavras',
                 description: 'Acerte 10 palavras.',
                 icon: '📚',
@@ -889,7 +885,6 @@ describe('useWordleBoard reveal', () => {
                 {
                   id: 'wordle_streak_3',
                   family: 'streak',
-                  tier: 1,
                   name: 'No ritmo',
                   description: '3 dias seguidos.',
                   icon: '🔥',
@@ -903,7 +898,6 @@ describe('useWordleBoard reveal', () => {
                 {
                   id: 'wordle_night_owl',
                   family: 'timing',
-                  tier: 4,
                   name: 'Coruja',
                   description: 'Acerte entre meia-noite e 5h.',
                   icon: '🦉',
@@ -917,7 +911,6 @@ describe('useWordleBoard reveal', () => {
                 {
                   id: 'wordle_wins_10',
                   family: 'wins',
-                  tier: 2,
                   name: 'Dez palavras',
                   description: 'Acerte 10 palavras.',
                   icon: '📚',

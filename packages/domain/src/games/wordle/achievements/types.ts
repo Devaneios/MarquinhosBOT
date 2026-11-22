@@ -56,12 +56,10 @@ export interface WordleAchievementFacts {
 export interface WordleAchievementMetadata {
   readonly id: `wordle_v2_${string}`;
   readonly family: WordleAchievementFamily;
-  readonly tier: number;
   readonly name: string;
   readonly description: string;
   readonly rarity: AchievementRarity;
   readonly icon: string;
-  readonly rewardXp: number;
   readonly hidden: boolean;
 }
 

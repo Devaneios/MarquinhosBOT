@@ -20,6 +20,7 @@ import {
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { analyzeWordleAchievements } from '@marquinhos/domain/games/wordle/achievements/engine/evaluate';
 import type { AchievementHistoryDay } from '@marquinhos/domain/games/wordle/achievements/engine/history';
+import { achievementXpForRarity } from '@marquinhos/domain/games/wordle/achievements/rewards';
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 import { Inject, Injectable } from '@nestjs/common';
 import { logger } from 'common/logging/logger';
@@ -207,13 +208,12 @@ export class WordleGlobalAchievementService {
         return {
           id: definition.id,
           family: definition.family,
-          tier: definition.tier,
           hidden: definition.hidden,
           name: concealed ? '' : definition.name,
           description: concealed ? '' : definition.description,
           icon: concealed ? '❔' : definition.icon,
           rarity: definition.rarity,
-          rewardXp: definition.rewardXp,
+          rewardXp: achievementXpForRarity(definition.rarity),
           unlockedAt: at === undefined ? null : new Date(at).toISOString(),
           progress: concealed ? null : (progress.get(definition.id) ?? null),
           holdersPercent: total?.count
@@ -243,7 +243,6 @@ export class WordleGlobalAchievementService {
         .map((unlock) => ({
           id: unlock.id,
           family: 'wordle' as const,
-          tier: 1,
           hidden: false,
           name: unlock.name,
           description: unlock.description,
@@ -417,7 +416,7 @@ export class WordleGlobalAchievementService {
       const newlyUnlocked = new Set(unlockedIds);
       const xp = WORDLE_ACHIEVEMENT_CATALOG.filter((item) =>
         newlyUnlocked.has(item.id),
-      ).reduce((total, item) => total + Math.max(0, item.rewardXp), 0);
+      ).reduce((total, item) => total + achievementXpForRarity(item.rarity), 0);
       if (xp > 0) {
         await this.leveling.ensureUser(userId, guildId, tx);
         await this.leveling.addXpToUser(userId, guildId, xp, tx, null);

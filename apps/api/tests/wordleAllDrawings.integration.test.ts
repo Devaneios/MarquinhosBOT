@@ -6,6 +6,7 @@ import {
 } from '@marquinhos/database/schema';
 import { createTestDb } from '@marquinhos/database/testing';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
+import { achievementXpForRarity } from '@marquinhos/domain/games/wordle/achievements/rewards';
 import { expect, it } from 'bun:test';
 import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
@@ -27,7 +28,7 @@ it('awards drawing variants through playable guesses and persists XP only once',
         rarity: entry.rarity,
         icon: entry.icon,
         condition: '{}',
-        reward_xp: entry.rewardXp,
+        reward_xp: achievementXpForRarity(entry.rarity),
       })),
     );
     let date = '2026-01-01';
@@ -81,8 +82,12 @@ it('awards drawing variants through playable guesses and persists XP only once',
       const expectedXp = earned.reduce(
         (sum, row) =>
           sum +
-          (drawings.find((entry) => entry.id === row.achievement_id)
-            ?.rewardXp ?? 0),
+          (drawings.find((entry) => entry.id === row.achievement_id)?.rarity
+            ? achievementXpForRarity(
+                drawings.find((entry) => entry.id === row.achievement_id)!
+                  .rarity,
+              )
+            : 0),
         0,
       );
       const [before] = await fixture.db
