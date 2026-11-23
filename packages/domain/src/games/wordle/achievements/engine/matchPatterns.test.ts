@@ -21,10 +21,10 @@ const t: DrawingDefinition = {
 };
 
 describe('pattern matching', () => {
-  it('contains all 59 complete drawing identities', () => {
-    expect(WORDLE_DRAWING_CATALOG).toHaveLength(59);
+  it('contains all 61 complete drawing identities', () => {
+    expect(WORDLE_DRAWING_CATALOG).toHaveLength(61);
     expect(new Set(WORDLE_DRAWING_CATALOG.map((p) => p.patternId)).size).toBe(
-      59,
+      61,
     );
     expect(
       WORDLE_DRAWING_CATALOG.filter((p) => p.family === 'letter'),

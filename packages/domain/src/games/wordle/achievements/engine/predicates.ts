@@ -4,11 +4,7 @@ import type {
   WordleAchievementFacts,
   WordleAchievementResult,
 } from '../types';
-import {
-  bestParticipationStreak,
-  elapsedSeconds,
-  hasCalendarCoverage,
-} from './history';
+import { elapsedSeconds, hasCalendarCoverage } from './history';
 
 const DEVANEIOS = 'DEVANEIOS';
 
@@ -199,15 +195,16 @@ export function blankTwiceThenSolve(
   );
 }
 
-export function nearMissTwice(
+export function nearMisses(
   facts: WordleAchievementFacts,
+  target: number,
 ): WordleAchievementResult {
   return flag(
     facts.boards.some(
       ({ feedback }) =>
         feedback.filter(
           (row) => row.filter((cell) => cell !== 'correct').length === 1,
-        ).length >= 2,
+        ).length >= target,
     ),
   );
 }
@@ -316,11 +313,4 @@ export function devaneiosRows(
   for (const prefix of prefixes.values())
     longestPrefix = Math.max(longestPrefix, prefix.length);
   return counter(longestPrefix, DEVANEIOS.length);
-}
-
-export function participationStreak(
-  facts: WordleAchievementFacts,
-  days: number,
-): WordleAchievementResult {
-  return counter(bestParticipationStreak(facts.participated), days);
 }

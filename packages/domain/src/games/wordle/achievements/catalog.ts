@@ -2,6 +2,7 @@ import { COLLECTIONS } from './content/collections';
 import { GAMEPLAY } from './content/gameplay';
 import { MILESTONES } from './content/milestones';
 import { DIGITS } from './content/patterns/digits';
+import { GESTURES } from './content/patterns/gestures';
 import { LETTERS } from './content/patterns/letters';
 import { SHAPES } from './content/patterns/shapes';
 import { TETROMINOES } from './content/patterns/tetrominoes';
@@ -15,6 +16,7 @@ export const WORDLE_ACHIEVEMENT_CATALOG: readonly WordleAchievementDefinition[] 
     ...DIGITS,
     ...TETROMINOES,
     ...SHAPES,
+    ...GESTURES,
     ...COLLECTIONS,
   ];
 

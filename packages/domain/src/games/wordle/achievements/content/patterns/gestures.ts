@@ -1,0 +1,83 @@
+import { discoveredDrawing } from '../../engine/predicates';
+import type { WordleAchievementDefinition } from '../../types';
+
+export const GESTURES: readonly WordleAchievementDefinition[] = [
+  {
+    id: 'wordle_v2_pattern_hang_loose',
+    kind: 'drawing',
+    family: 'gestures',
+    name: 'Hang loose',
+    description: 'Desenhe o sinal de hang loose.',
+    rarity: 'rare',
+    icon: '/achievements/pattern_hang_loose.png',
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'hang_loose',
+      family: 'gesture',
+      mask: ['#...#', '#...#', '#...#', '#####', '.###.'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
+  },
+  {
+    id: 'wordle_v2_pattern_middle_finger',
+    kind: 'drawing',
+    family: 'gestures',
+    name: 'Dedo do meio',
+    description: 'Desenhe o gesto do dedo do meio.',
+    rarity: 'rare',
+    icon: '/achievements/pattern_middle_finger.png',
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'middle_finger',
+      family: 'gesture',
+      mask: ['..#..', '..#..', '..#..', '#####', '.###.'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
+  },
+  {
+    id: 'wordle_v2_pattern_love_you',
+    kind: 'drawing',
+    family: 'gestures',
+    name: 'Eu te amo',
+    description:
+      'Desenhe o gesto de amor com o polegar, o indicador e o mindinho estendidos.',
+    rarity: 'rare',
+    icon: '/achievements/pattern_love_you.png',
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'love_you',
+      family: 'gesture',
+      mask: ['.#..#', '.#..#', '##..#', '#####', '.###.'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
+  },
+  {
+    id: 'wordle_v2_pattern_metal_horns',
+    kind: 'drawing',
+    family: 'gestures',
+    name: 'Chifres do metal',
+    description:
+      'Desenhe o gesto do metal com o indicador e o mindinho levantados.',
+    rarity: 'rare',
+    icon: '/achievements/pattern_metal_horns.png',
+    hidden: false,
+    evaluate: discoveredDrawing,
+    drawing: {
+      patternId: 'metal_horns',
+      family: 'gesture',
+      mask: ['#..#', '#..#', '#..#', '####', '.##.'],
+      variants: [],
+      colors: ['correct', 'present'],
+      rotations: [0],
+    },
+  },
+];

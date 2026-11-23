@@ -237,6 +237,38 @@ describe('WordleAchievementsScreen', () => {
     expect(screen.getByText('Conquista antiga')).toBeTruthy();
   });
 
+  it('renders hand gestures separately from shapes', () => {
+    const shape = {
+      ...sampleAchievements[0]!,
+      id: 'wordle_v2_pattern_heart',
+      family: 'shapes',
+      name: 'Coração',
+    };
+    const gesture = {
+      ...shape,
+      id: 'wordle_v2_pattern_metal_horns',
+      family: 'gestures',
+      name: 'Chifres do metal',
+    };
+
+    render(
+      <WordleAchievementsScreen
+        achievements={[gesture, shape]}
+        onBack={() => {}}
+      />,
+    );
+
+    const families = screen.getAllByRole('heading', {
+      name: /^(Formas|Gestos)$/,
+    });
+    expect(families.map((heading) => heading.textContent)).toEqual([
+      'Formas',
+      'Gestos',
+    ]);
+    const gestures = screen.getByText('Gestos').closest('section')!;
+    expect(within(gestures).getByText('Chifres do metal')).toBeTruthy();
+  });
+
   it('renders stats header, distribution bars, families, progress bars, holders %, and secret masking', () => {
     const { container } = render(
       <WordleAchievementsScreen

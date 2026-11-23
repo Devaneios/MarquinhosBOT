@@ -215,7 +215,6 @@ describe('global Wordle achievements', () => {
     );
     expect(retired).toMatchObject({
       family: 'wordle',
-      tier: 1,
       hidden: false,
       name: 'Retired title',
       description: 'Retired description',
@@ -330,7 +329,7 @@ describe('global Wordle achievements', () => {
       levels
         .filter((row) => row.user_id === 'player')
         .reduce((total, row) => total + row.total_xp, 0),
-    ).toBe(75);
+    ).toBe(150);
   });
 
   it('records repeat occurrences while preserving the first discovery evidence', async () => {

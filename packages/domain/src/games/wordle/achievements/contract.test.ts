@@ -66,6 +66,9 @@ const completed: AchievementHistoryDay[] = [
   solvedDay('2026-03-15', { guesses: greenWord('chuva') }),
   solvedDay('2026-03-16', { guesses: greenWord('nenhuma') }),
   solvedDay('2026-03-17', { guesses: greenWord('vitorioso') }),
+  failedDay('2026-03-18', {
+    guesses: rows('cccca', 'cccca', 'cccca', 'cccca'),
+  }),
 ].map((day) =>
   achievementDay(day, {
     answerHasAccent: true,
@@ -130,6 +133,37 @@ const cases: {
 ];
 
 describe('achievement behavior contract', () => {
+  it('keeps saved hand gestures unlocked and counts only shapes in shape collections', () => {
+    const gestureIds = [
+      'hang_loose',
+      'middle_finger',
+      'love_you',
+      'metal_horns',
+    ];
+    const persisted = new Set([...gestureIds, 'heart']);
+    const evaluations = analyzeWordleAchievements([], { today }).evaluate(
+      persisted,
+    );
+
+    for (const id of gestureIds) {
+      expect(
+        evaluations.find((entry) => entry.id === `wordle_v2_pattern_${id}`),
+      ).toMatchObject({ met: true });
+    }
+    expect(
+      evaluations.find(({ id }) => id === 'wordle_v2_shapes_5'),
+    ).toMatchObject({
+      met: false,
+      progress: { current: 1, target: 5 },
+    });
+    expect(
+      evaluations.find(({ id }) => id === 'wordle_v2_shapes_all'),
+    ).toMatchObject({
+      met: false,
+      progress: { current: 1, target: 10 },
+    });
+  });
+
   it('preserves the complete metadata and drawing geometry projection', () => {
     expect(
       WORDLE_ACHIEVEMENT_CATALOG.map(({ evaluate: _evaluate, ...definition }) =>

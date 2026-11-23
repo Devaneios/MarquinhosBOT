@@ -16,12 +16,10 @@ exports[`achievement behavior contract preserves the complete metadata and drawi
 {"id":"wordle_v2_streak_14","kind":"standard","family":"streak","name":"Duas semanas certas","description":"Acerte a palavra do dia 14 dias seguidos.","rarity":"rare","icon":"/achievements/streak_14.png","hidden":false}
 {"id":"wordle_v2_streak_30","kind":"standard","family":"streak","name":"Mês de acertos","description":"Acerte a palavra do dia 30 dias seguidos.","rarity":"epic","icon":"/achievements/streak_30.png","hidden":false}
 {"id":"wordle_v2_streak_100","kind":"standard","family":"streak","name":"Cem sem pausa","description":"Acerte a palavra do dia 100 dias seguidos.","rarity":"legendary","icon":"/achievements/streak_100.png","hidden":false}
-{"id":"wordle_v2_played_streak_7","kind":"standard","family":"participation_streak","name":"Toda semana","description":"Mande um palpite válido por 7 dias seguidos, acertando ou não.","rarity":"common","icon":"/achievements/played_streak_7.png","hidden":false}
-{"id":"wordle_v2_played_streak_30","kind":"standard","family":"participation_streak","name":"Ritual diário","description":"Mande um palpite válido por 30 dias seguidos, acertando ou não.","rarity":"epic","icon":"/achievements/played_streak_30.png","hidden":false}
 {"id":"wordle_v2_calendar_week","kind":"standard","family":"calendar","name":"Agenda preenchida","description":"Jogue todos os dias de uma semana que já acabou, de segunda a domingo.","rarity":"rare","icon":"/achievements/calendar_week.png","hidden":false}
 {"id":"wordle_v2_calendar_month","kind":"standard","family":"calendar","name":"Mês completo","description":"Jogue todos os dias de um mês que já acabou.","rarity":"epic","icon":"/achievements/calendar_month.png","hidden":false}
-{"id":"wordle_v2_solved_exactly_1","kind":"standard","family":"precision","name":"Palpite certeiro","description":"Acerte de primeira.","rarity":"rare","icon":"/achievements/solved_exactly_1.png","hidden":false}
-{"id":"wordle_v2_solved_exactly_2","kind":"standard","family":"precision","name":"Segunda é a certa","description":"Acerte na segunda tentativa.","rarity":"common","icon":"/achievements/solved_exactly_2.png","hidden":false}
+{"id":"wordle_v2_solved_exactly_1","kind":"standard","family":"precision","name":"Palpite certeiro","description":"Acerte de primeira.","rarity":"epic","icon":"/achievements/solved_exactly_1.png","hidden":false}
+{"id":"wordle_v2_solved_exactly_2","kind":"standard","family":"precision","name":"Segunda é a certa","description":"Acerte na segunda tentativa.","rarity":"rare","icon":"/achievements/solved_exactly_2.png","hidden":false}
 {"id":"wordle_v2_wins_within_3_10","kind":"standard","family":"precision","name":"Mira treinada","description":"Acerte em até três tentativas em 10 dias.","rarity":"rare","icon":"/achievements/wins_within_3_10.png","hidden":false}
 {"id":"wordle_v2_all_yellow","kind":"standard","family":"feedback","name":"Tudo no lugar errado","description":"Faça um palpite com todas as letras amarelas.","rarity":"rare","icon":"/achievements/all_yellow.png","hidden":false}
 {"id":"wordle_v2_blank_opening","kind":"standard","family":"feedback","name":"Recomeço em cinza","description":"Comece com um palpite todo cinza e acerte mesmo assim.","rarity":"common","icon":"/achievements/blank_opening.png","hidden":false}
@@ -39,9 +37,11 @@ exports[`achievement behavior contract preserves the complete metadata and drawi
 {"id":"wordle_v2_repeated_letters","kind":"standard","family":"vocabulary","name":"Letra em dobro","description":"Acerte uma palavra com letra repetida, sem contar os acentos.","rarity":"common","icon":"/achievements/repeated_letters.png","hidden":false}
 {"id":"wordle_v2_accented_answer","kind":"standard","family":"vocabulary","name":"Com acento","description":"Acerte uma palavra que se escreve com acento.","rarity":"common","icon":"/achievements/accented_answer.png","hidden":false}
 {"id":"wordle_v2_solved_exactly_3","kind":"standard","family":"precision","name":"Três tentativas","description":"Acerte na terceira tentativa.","rarity":"common","icon":"/achievements/solved_exactly_3.png","hidden":false}
-{"id":"wordle_v2_zero_attempt_solve","kind":"standard","family":"precision","name":"Rascunho certeiro","description":"Deixe a palavra certa digitada no rascunho e não envie nenhum palpite até o fim do dia.","rarity":"epic","icon":"/achievements/zero_attempt_solve.png","hidden":false}
+{"id":"wordle_v2_zero_attempt_solve","kind":"standard","family":"precision","name":"Rascunho certeiro","description":"Deixe a palavra certa digitada no rascunho e não envie nenhum palpite até o fim do dia.","rarity":"legendary","icon":"/achievements/zero_attempt_solve.png","hidden":false}
 {"id":"wordle_v2_blank_twice_then_solved","kind":"standard","family":"feedback","name":"Duas linhas em branco","description":"Erre tudo em dois palpites seguidos, sem nenhuma letra verde, e depois acerte.","rarity":"rare","icon":"/achievements/blank_twice_then_solved.png","hidden":false}
 {"id":"wordle_v2_near_miss_twice","kind":"standard","family":"style","name":"Por um triz, duas vezes","description":"Faça dois palpites em que só uma letra está no lugar errado, mesmo sem acertar a palavra.","rarity":"rare","icon":"/achievements/near_miss_twice.png","hidden":false}
+{"id":"wordle_v2_near_miss_three_times","kind":"standard","family":"style","name":"Por um triz, três vezes","description":"Na mesma partida, faça três palpites em que só uma letra fique fora do verde, mesmo sem acertar a palavra.","rarity":"epic","icon":"/achievements/near_miss_three_times.png","hidden":false}
+{"id":"wordle_v2_near_miss_four_times","kind":"standard","family":"style","name":"Por um triz, quatro vezes","description":"Na mesma partida, faça quatro palpites em que só uma letra fique fora do verde, mesmo sem acertar a palavra.","rarity":"legendary","icon":"/achievements/near_miss_four_times.png","hidden":false}
 {"id":"wordle_v2_yellow_only_before_solve","kind":"standard","family":"feedback","name":"Só amarelos","description":"Acerte depois de só fazer palpites inteiros amarelos.","rarity":"epic","icon":"/achievements/yellow_only_before_solve.png","hidden":false}
 {"id":"wordle_v2_anagrams_only_before_solve","kind":"standard","family":"feedback","name":"Anagramas até o fim","description":"Acerte depois de só fazer palpites que são anagramas da resposta, sem nenhuma letra cinza.","rarity":"rare","icon":"/achievements/anagrams_only_before_solve.png","hidden":false}
 {"id":"wordle_v2_devaneios_rows","kind":"standard","family":"vocabulary","name":"DEVANEIOS","description":"Escreva DEVANEIOS com letras verdes na mesma linha, ao longo de vários dias. Se um palpite não avançar a palavra, o progresso daquela linha volta ao começo.","rarity":"legendary","icon":"/achievements/devaneios_rows.png","hidden":false}
@@ -102,8 +102,10 @@ exports[`achievement behavior contract preserves the complete metadata and drawi
 {"id":"wordle_v2_pattern_triangle_6","kind":"drawing","family":"shapes","name":"Triângulo de base 6","description":"Desenhe um triângulo de base 6.","rarity":"rare","icon":"/achievements/pattern_triangle_6.png","hidden":false,"drawing":{"patternId":"triangle_6","family":"shape","mask":["..##..",".####.","######"],"variants":[],"colors":["correct","present"],"rotations":[0]}}
 {"id":"wordle_v2_pattern_staircase_right","kind":"drawing","family":"shapes","name":"Escada para a direita","description":"Desenhe uma escada para a direita.","rarity":"rare","icon":"/achievements/pattern_staircase_right.png","hidden":false,"drawing":{"patternId":"staircase_right","family":"shape","mask":["..#",".##","###"],"variants":[],"colors":["correct","present"],"rotations":[0]}}
 {"id":"wordle_v2_pattern_staircase_inverted","kind":"drawing","family":"shapes","name":"Escada de cabeça para baixo","description":"Desenhe uma escada de cabeça para baixo, virada para a esquerda ou para a direita,.","rarity":"rare","icon":"/achievements/pattern_staircase_inverted.png","hidden":false,"drawing":{"patternId":"staircase_inverted","family":"shape","mask":["###","##.","#.."],"variants":[["###",".##","..#"]],"colors":["correct","present"],"rotations":[0]}}
-{"id":"wordle_v2_pattern_hang_loose","kind":"drawing","family":"shapes","name":"Hang loose","description":"Desenhe o sinal de hang loose.","rarity":"rare","icon":"/achievements/pattern_hang_loose.png","hidden":false,"drawing":{"patternId":"hang_loose","family":"shape","mask":["#...#","#...#","#...#","#####",".###."],"variants":[],"colors":["correct","present"],"rotations":[0]}}
-{"id":"wordle_v2_pattern_middle_finger","kind":"drawing","family":"shapes","name":"Dedo do meio","description":"Desenhe o gesto do dedo do meio.","rarity":"rare","icon":"/achievements/pattern_middle_finger.png","hidden":false,"drawing":{"patternId":"middle_finger","family":"shape","mask":["..#..","..#..","..#..","#####",".###."],"variants":[],"colors":["correct","present"],"rotations":[0]}}
+{"id":"wordle_v2_pattern_hang_loose","kind":"drawing","family":"gestures","name":"Hang loose","description":"Desenhe o sinal de hang loose.","rarity":"rare","icon":"/achievements/pattern_hang_loose.png","hidden":false,"drawing":{"patternId":"hang_loose","family":"gesture","mask":["#...#","#...#","#...#","#####",".###."],"variants":[],"colors":["correct","present"],"rotations":[0]}}
+{"id":"wordle_v2_pattern_middle_finger","kind":"drawing","family":"gestures","name":"Dedo do meio","description":"Desenhe o gesto do dedo do meio.","rarity":"rare","icon":"/achievements/pattern_middle_finger.png","hidden":false,"drawing":{"patternId":"middle_finger","family":"gesture","mask":["..#..","..#..","..#..","#####",".###."],"variants":[],"colors":["correct","present"],"rotations":[0]}}
+{"id":"wordle_v2_pattern_love_you","kind":"drawing","family":"gestures","name":"Eu te amo","description":"Desenhe o gesto de amor com o polegar, o indicador e o mindinho estendidos.","rarity":"rare","icon":"/achievements/pattern_love_you.png","hidden":false,"drawing":{"patternId":"love_you","family":"gesture","mask":[".#..#",".#..#","##..#","#####",".###."],"variants":[],"colors":["correct","present"],"rotations":[0]}}
+{"id":"wordle_v2_pattern_metal_horns","kind":"drawing","family":"gestures","name":"Chifres do metal","description":"Desenhe o gesto do metal com o indicador e o mindinho levantados.","rarity":"rare","icon":"/achievements/pattern_metal_horns.png","hidden":false,"drawing":{"patternId":"metal_horns","family":"gesture","mask":["#..#","#..#","#..#","####",".##."],"variants":[],"colors":["correct","present"],"rotations":[0]}}
 {"id":"wordle_v2_letters_5","kind":"standard","family":"collections","name":"Primeiras letras","description":"Desenhe cinco letras diferentes.","rarity":"rare","icon":"/achievements/letters_5.png","hidden":false}
 {"id":"wordle_v2_letters_all","kind":"standard","family":"collections","name":"Alfabeto completo","description":"Desenhe o alfabeto inteiro, das 26 letras.","rarity":"legendary","icon":"/achievements/letters_all.png","hidden":false}
 {"id":"wordle_v2_digits_5","kind":"standard","family":"collections","name":"Meia contagem","description":"Desenhe cinco números diferentes.","rarity":"rare","icon":"/achievements/digits_5.png","hidden":false}
@@ -171,8 +173,10 @@ exports[`achievement behavior contract preserves drawing geometry and its order 
 {"patternId":"triangle_6","family":"shape","mask":["..##..",".####.","######"],"variants":[],"colors":["correct","present"],"rotations":[0]}
 {"patternId":"staircase_right","family":"shape","mask":["..#",".##","###"],"variants":[],"colors":["correct","present"],"rotations":[0]}
 {"patternId":"staircase_inverted","family":"shape","mask":["###","##.","#.."],"variants":[["###",".##","..#"]],"colors":["correct","present"],"rotations":[0]}
-{"patternId":"hang_loose","family":"shape","mask":["#...#","#...#","#...#","#####",".###."],"variants":[],"colors":["correct","present"],"rotations":[0]}
-{"patternId":"middle_finger","family":"shape","mask":["..#..","..#..","..#..","#####",".###."],"variants":[],"colors":["correct","present"],"rotations":[0]}"
+{"patternId":"hang_loose","family":"gesture","mask":["#...#","#...#","#...#","#####",".###."],"variants":[],"colors":["correct","present"],"rotations":[0]}
+{"patternId":"middle_finger","family":"gesture","mask":["..#..","..#..","..#..","#####",".###."],"variants":[],"colors":["correct","present"],"rotations":[0]}
+{"patternId":"love_you","family":"gesture","mask":[".#..#",".#..#","##..#","#####",".###."],"variants":[],"colors":["correct","present"],"rotations":[0]}
+{"patternId":"metal_horns","family":"gesture","mask":["#..#","#..#","#..#","####",".##."],"variants":[],"colors":["correct","present"],"rotations":[0]}"
 `;
 
 exports[`achievement behavior contract preserves evaluation for empty history 1`] = `
@@ -191,8 +195,6 @@ exports[`achievement behavior contract preserves evaluation for empty history 1`
 {"id":"wordle_v2_streak_14","met":false,"progress":{"current":0,"target":14}}
 {"id":"wordle_v2_streak_30","met":false,"progress":{"current":0,"target":30}}
 {"id":"wordle_v2_streak_100","met":false,"progress":{"current":0,"target":100}}
-{"id":"wordle_v2_played_streak_7","met":false,"progress":{"current":0,"target":7}}
-{"id":"wordle_v2_played_streak_30","met":false,"progress":{"current":0,"target":30}}
 {"id":"wordle_v2_calendar_week","met":false,"progress":null}
 {"id":"wordle_v2_calendar_month","met":false,"progress":null}
 {"id":"wordle_v2_solved_exactly_1","met":false,"progress":null}
@@ -217,6 +219,8 @@ exports[`achievement behavior contract preserves evaluation for empty history 1`
 {"id":"wordle_v2_zero_attempt_solve","met":false,"progress":null}
 {"id":"wordle_v2_blank_twice_then_solved","met":false,"progress":null}
 {"id":"wordle_v2_near_miss_twice","met":false,"progress":null}
+{"id":"wordle_v2_near_miss_three_times","met":false,"progress":null}
+{"id":"wordle_v2_near_miss_four_times","met":false,"progress":null}
 {"id":"wordle_v2_yellow_only_before_solve","met":false,"progress":null}
 {"id":"wordle_v2_anagrams_only_before_solve","met":false,"progress":null}
 {"id":"wordle_v2_devaneios_rows","met":false,"progress":{"current":0,"target":9}}
@@ -279,6 +283,8 @@ exports[`achievement behavior contract preserves evaluation for empty history 1`
 {"id":"wordle_v2_pattern_staircase_inverted","met":false,"progress":null}
 {"id":"wordle_v2_pattern_hang_loose","met":false,"progress":null}
 {"id":"wordle_v2_pattern_middle_finger","met":false,"progress":null}
+{"id":"wordle_v2_pattern_love_you","met":false,"progress":null}
+{"id":"wordle_v2_pattern_metal_horns","met":false,"progress":null}
 {"id":"wordle_v2_letters_5","met":false,"progress":{"current":0,"target":5}}
 {"id":"wordle_v2_letters_all","met":false,"progress":{"current":0,"target":26}}
 {"id":"wordle_v2_digits_5","met":false,"progress":{"current":0,"target":5}}
@@ -304,8 +310,6 @@ exports[`achievement behavior contract preserves evaluation for completed collec
 {"id":"wordle_v2_streak_14","met":true,"progress":{"current":14,"target":14}}
 {"id":"wordle_v2_streak_30","met":true,"progress":{"current":30,"target":30}}
 {"id":"wordle_v2_streak_100","met":true,"progress":{"current":100,"target":100}}
-{"id":"wordle_v2_played_streak_7","met":true,"progress":{"current":7,"target":7}}
-{"id":"wordle_v2_played_streak_30","met":true,"progress":{"current":30,"target":30}}
 {"id":"wordle_v2_calendar_week","met":true,"progress":null}
 {"id":"wordle_v2_calendar_month","met":true,"progress":null}
 {"id":"wordle_v2_solved_exactly_1","met":true,"progress":null}
@@ -330,6 +334,8 @@ exports[`achievement behavior contract preserves evaluation for completed collec
 {"id":"wordle_v2_zero_attempt_solve","met":true,"progress":null}
 {"id":"wordle_v2_blank_twice_then_solved","met":true,"progress":null}
 {"id":"wordle_v2_near_miss_twice","met":true,"progress":null}
+{"id":"wordle_v2_near_miss_three_times","met":true,"progress":null}
+{"id":"wordle_v2_near_miss_four_times","met":true,"progress":null}
 {"id":"wordle_v2_yellow_only_before_solve","met":true,"progress":null}
 {"id":"wordle_v2_anagrams_only_before_solve","met":true,"progress":null}
 {"id":"wordle_v2_devaneios_rows","met":true,"progress":{"current":9,"target":9}}
@@ -392,6 +398,8 @@ exports[`achievement behavior contract preserves evaluation for completed collec
 {"id":"wordle_v2_pattern_staircase_inverted","met":true,"progress":null}
 {"id":"wordle_v2_pattern_hang_loose","met":true,"progress":null}
 {"id":"wordle_v2_pattern_middle_finger","met":true,"progress":null}
+{"id":"wordle_v2_pattern_love_you","met":true,"progress":null}
+{"id":"wordle_v2_pattern_metal_horns","met":true,"progress":null}
 {"id":"wordle_v2_letters_5","met":true,"progress":{"current":5,"target":5}}
 {"id":"wordle_v2_letters_all","met":true,"progress":{"current":26,"target":26}}
 {"id":"wordle_v2_digits_5","met":true,"progress":{"current":5,"target":5}}
@@ -417,8 +425,6 @@ exports[`achievement behavior contract preserves evaluation for partial history 
 {"id":"wordle_v2_streak_14","met":false,"progress":{"current":1,"target":14}}
 {"id":"wordle_v2_streak_30","met":false,"progress":{"current":1,"target":30}}
 {"id":"wordle_v2_streak_100","met":false,"progress":{"current":1,"target":100}}
-{"id":"wordle_v2_played_streak_7","met":false,"progress":{"current":2,"target":7}}
-{"id":"wordle_v2_played_streak_30","met":false,"progress":{"current":2,"target":30}}
 {"id":"wordle_v2_calendar_week","met":false,"progress":null}
 {"id":"wordle_v2_calendar_month","met":false,"progress":null}
 {"id":"wordle_v2_solved_exactly_1","met":true,"progress":null}
@@ -443,6 +449,8 @@ exports[`achievement behavior contract preserves evaluation for partial history 
 {"id":"wordle_v2_zero_attempt_solve","met":false,"progress":null}
 {"id":"wordle_v2_blank_twice_then_solved","met":false,"progress":null}
 {"id":"wordle_v2_near_miss_twice","met":false,"progress":null}
+{"id":"wordle_v2_near_miss_three_times","met":false,"progress":null}
+{"id":"wordle_v2_near_miss_four_times","met":false,"progress":null}
 {"id":"wordle_v2_yellow_only_before_solve","met":false,"progress":null}
 {"id":"wordle_v2_anagrams_only_before_solve","met":false,"progress":null}
 {"id":"wordle_v2_devaneios_rows","met":false,"progress":{"current":0,"target":9}}
@@ -505,6 +513,8 @@ exports[`achievement behavior contract preserves evaluation for partial history 
 {"id":"wordle_v2_pattern_staircase_inverted","met":false,"progress":null}
 {"id":"wordle_v2_pattern_hang_loose","met":false,"progress":null}
 {"id":"wordle_v2_pattern_middle_finger","met":false,"progress":null}
+{"id":"wordle_v2_pattern_love_you","met":false,"progress":null}
+{"id":"wordle_v2_pattern_metal_horns","met":false,"progress":null}
 {"id":"wordle_v2_letters_5","met":false,"progress":{"current":1,"target":5}}
 {"id":"wordle_v2_letters_all","met":false,"progress":{"current":1,"target":26}}
 {"id":"wordle_v2_digits_5","met":false,"progress":{"current":0,"target":5}}
@@ -530,8 +540,6 @@ exports[`achievement behavior contract preserves evaluation for duplicate future
 {"id":"wordle_v2_streak_14","met":false,"progress":{"current":2,"target":14}}
 {"id":"wordle_v2_streak_30","met":false,"progress":{"current":2,"target":30}}
 {"id":"wordle_v2_streak_100","met":false,"progress":{"current":2,"target":100}}
-{"id":"wordle_v2_played_streak_7","met":false,"progress":{"current":3,"target":7}}
-{"id":"wordle_v2_played_streak_30","met":false,"progress":{"current":3,"target":30}}
 {"id":"wordle_v2_calendar_week","met":false,"progress":null}
 {"id":"wordle_v2_calendar_month","met":false,"progress":null}
 {"id":"wordle_v2_solved_exactly_1","met":false,"progress":null}
@@ -556,6 +564,8 @@ exports[`achievement behavior contract preserves evaluation for duplicate future
 {"id":"wordle_v2_zero_attempt_solve","met":false,"progress":null}
 {"id":"wordle_v2_blank_twice_then_solved","met":false,"progress":null}
 {"id":"wordle_v2_near_miss_twice","met":false,"progress":null}
+{"id":"wordle_v2_near_miss_three_times","met":false,"progress":null}
+{"id":"wordle_v2_near_miss_four_times","met":false,"progress":null}
 {"id":"wordle_v2_yellow_only_before_solve","met":false,"progress":null}
 {"id":"wordle_v2_anagrams_only_before_solve","met":false,"progress":null}
 {"id":"wordle_v2_devaneios_rows","met":false,"progress":{"current":0,"target":9}}
@@ -618,6 +628,8 @@ exports[`achievement behavior contract preserves evaluation for duplicate future
 {"id":"wordle_v2_pattern_staircase_inverted","met":false,"progress":null}
 {"id":"wordle_v2_pattern_hang_loose","met":false,"progress":null}
 {"id":"wordle_v2_pattern_middle_finger","met":false,"progress":null}
+{"id":"wordle_v2_pattern_love_you","met":false,"progress":null}
+{"id":"wordle_v2_pattern_metal_horns","met":false,"progress":null}
 {"id":"wordle_v2_letters_5","met":false,"progress":{"current":0,"target":5}}
 {"id":"wordle_v2_letters_all","met":false,"progress":{"current":0,"target":26}}
 {"id":"wordle_v2_digits_5","met":false,"progress":{"current":0,"target":5}}
@@ -643,8 +655,6 @@ exports[`achievement behavior contract preserves evaluation for clock and elapse
 {"id":"wordle_v2_streak_14","met":false,"progress":{"current":3,"target":14}}
 {"id":"wordle_v2_streak_30","met":false,"progress":{"current":3,"target":30}}
 {"id":"wordle_v2_streak_100","met":false,"progress":{"current":3,"target":100}}
-{"id":"wordle_v2_played_streak_7","met":false,"progress":{"current":3,"target":7}}
-{"id":"wordle_v2_played_streak_30","met":false,"progress":{"current":3,"target":30}}
 {"id":"wordle_v2_calendar_week","met":false,"progress":null}
 {"id":"wordle_v2_calendar_month","met":false,"progress":null}
 {"id":"wordle_v2_solved_exactly_1","met":false,"progress":null}
@@ -669,6 +679,8 @@ exports[`achievement behavior contract preserves evaluation for clock and elapse
 {"id":"wordle_v2_zero_attempt_solve","met":false,"progress":null}
 {"id":"wordle_v2_blank_twice_then_solved","met":false,"progress":null}
 {"id":"wordle_v2_near_miss_twice","met":false,"progress":null}
+{"id":"wordle_v2_near_miss_three_times","met":false,"progress":null}
+{"id":"wordle_v2_near_miss_four_times","met":false,"progress":null}
 {"id":"wordle_v2_yellow_only_before_solve","met":false,"progress":null}
 {"id":"wordle_v2_anagrams_only_before_solve","met":false,"progress":null}
 {"id":"wordle_v2_devaneios_rows","met":false,"progress":{"current":0,"target":9}}
@@ -731,6 +743,8 @@ exports[`achievement behavior contract preserves evaluation for clock and elapse
 {"id":"wordle_v2_pattern_staircase_inverted","met":false,"progress":null}
 {"id":"wordle_v2_pattern_hang_loose","met":false,"progress":null}
 {"id":"wordle_v2_pattern_middle_finger","met":false,"progress":null}
+{"id":"wordle_v2_pattern_love_you","met":false,"progress":null}
+{"id":"wordle_v2_pattern_metal_horns","met":false,"progress":null}
 {"id":"wordle_v2_letters_5","met":false,"progress":{"current":0,"target":5}}
 {"id":"wordle_v2_letters_all","met":false,"progress":{"current":0,"target":26}}
 {"id":"wordle_v2_digits_5","met":false,"progress":{"current":0,"target":5}}

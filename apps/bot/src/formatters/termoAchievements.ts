@@ -8,7 +8,7 @@ import type { EmbedBuilder } from 'discord.js';
 
 export const TERMO_FAMILY_LABELS: Record<string, string> = {
   wins: 'Vitórias',
-  streak: 'Sequência',
+  streak: 'Sequência de vitórias',
   played: 'Presença',
   precision: 'Precisão',
   speed: 'Velocidade',
@@ -18,8 +18,8 @@ export const TERMO_FAMILY_LABELS: Record<string, string> = {
   digits: 'Dígitos',
   tetrominoes: 'Tetraminós',
   shapes: 'Formas',
+  gestures: 'Gestos',
   collections: 'Coleções',
-  participation_streak: 'Constância',
   calendar: 'Calendário',
   feedback: 'Pistas',
   variety: 'Variedade',

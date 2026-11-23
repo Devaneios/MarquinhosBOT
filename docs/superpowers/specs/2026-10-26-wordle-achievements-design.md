@@ -85,7 +85,6 @@ The history-based catalog uses these launch goals.
 | Wins                  | 1, 10, 50, 100, and 365 eligible solved dates                                                                                           |
 | Participation         | 1, 7, 30, 100, and 365 eligible played dates                                                                                            |
 | Winning streaks       | 3, 7, 14, 30, and 100 consecutive solved dates                                                                                          |
-| Participation streaks | 7 and 30 consecutive played dates, regardless of outcome                                                                                |
 | Calendar coverage     | Every date in a completed Monday-through-Sunday week. Every date in a completed calendar month                                          |
 | Precision             | A first-guess solve. A solve in exactly two guesses. Ten solves within three guesses                                                    |
 | Persistence           | Solve after at least 10 guesses. Solve after at least 20 guesses                                                                        |

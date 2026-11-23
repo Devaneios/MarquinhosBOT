@@ -6,7 +6,6 @@ export const WORDLE_ACHIEVEMENT_FAMILIES = [
   'speed',
   'timing',
   'style',
-  'participation_streak',
   'calendar',
   'feedback',
   'variety',
@@ -15,6 +14,7 @@ export const WORDLE_ACHIEVEMENT_FAMILIES = [
   'digits',
   'tetrominoes',
   'shapes',
+  'gestures',
   'collections',
 ] as const;
 
@@ -26,5 +26,6 @@ export const WORDLE_PATTERN_FAMILIES = [
   'digit',
   'tetromino',
   'shape',
+  'gesture',
 ] as const;
 export type WordlePatternFamily = (typeof WORDLE_PATTERN_FAMILIES)[number];

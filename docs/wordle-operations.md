@@ -130,8 +130,8 @@ Run the verifier from the repository root.
 bun apps/api/scripts/verifyWordlePatterns.ts
 ```
 
-The JSON result must report 59 pattern identities and 352 witnesses, including
-176 yellow witnesses. This count covers every base mask and variant separately
+The JSON result must report 61 pattern identities and 356 witnesses, including
+178 yellow witnesses. This count covers every base mask and variant separately
 in green and yellow. The verifier checks source answer banks, accepted distinct
 guesses, production feedback, and the default matcher. Yellow examples preserve
 every previously discovered green position and finish with a solve. The preview

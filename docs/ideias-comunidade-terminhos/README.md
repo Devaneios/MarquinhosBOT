@@ -2,7 +2,7 @@
 
 Este diretório reúne propostas para dar significado social às partidas individuais e às conquistas. São pontos de partida para discussão, não especificações aprovadas nem promessas de implementação. Os nomes, exemplos e regras sugeridos podem mudar. Terminhos/Wordle Race está fora do escopo.
 
-O Terminhos já tem coleção de conquistas, XP, ranking e consulta de conquistas pelo Discord. O catálogo documentado contém 110 conquistas, incluindo 59 desenhos. A primeira ocorrência de um desenho por jogador e servidor é guardada com sessão de origem, cores e coordenadas, sem a palavra ou os palpites nesse registro. Veja [a documentação atual](../wordle.md#achievements-and-player-statistics) para detalhes e limitações.
+O Terminhos já tem coleção de conquistas, XP, ranking e consulta de conquistas pelo Discord. O catálogo documentado contém 112 conquistas, incluindo 61 desenhos. A primeira ocorrência de um desenho por jogador e servidor é guardada com sessão de origem, cores e coordenadas, sem a palavra ou os palpites nesse registro. Veja [a documentação atual](../wordle.md#achievements-and-player-statistics) para detalhes e limitações.
 
 ## Decisão transversal: jornada global
 

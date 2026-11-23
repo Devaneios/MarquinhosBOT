@@ -2696,5 +2696,33 @@
     "answer": "partes",
     "guesses": ["abebra", "abecar", "bdélio", "aperta", "besana", "partes"],
     "origin": [0, 0]
+  },
+  {
+    "patternId": "love_you",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["bacuém", "badoém", "pachel", "partem", "cartar", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "love_you",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["beberu", "bebiam", "apiari", "aperta", "besana", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "metal_horns",
+    "color": "correct",
+    "answer": "partes",
+    "guesses": ["pectar", "peitai", "peitam", "partam", "barabu", "partes"],
+    "origin": [0, 0]
+  },
+  {
+    "patternId": "metal_horns",
+    "color": "present",
+    "answer": "partes",
+    "guesses": ["abarca", "abarco", "abarga", "aperar", "beagle", "partes"],
+    "origin": [0, 0]
   }
 ]

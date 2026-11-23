@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import {
-  achievementDay,
-  failedDay,
-  rows,
-  solvedDay,
-  solvedStreak,
-} from '../testing';
+import { achievementDay, rows, solvedDay, solvedStreak } from '../testing';
 import { analyzeWordleAchievements } from './evaluate';
 import type { AchievementHistoryDay } from './history';
 
@@ -28,9 +22,6 @@ describe('Wordle achievement history', () => {
       ...history({ ...solvedDay(today), attempts: 0, guesses: [] }),
     ];
     expect(met('wordle_v2_wins_1', duplicate)).toBe(true);
-    expect(
-      met('wordle_v2_played_streak_7', history(...solvedStreak(today, 7))),
-    ).toBe(false);
     expect(
       met('wordle_v2_calendar_week', history(...solvedStreak('2026-10-19', 7))),
     ).toBe(true);
@@ -69,20 +60,5 @@ describe('Wordle achievement history', () => {
         .evaluate(new Set())
         .find((entry) => entry.id === 'wordle_v2_accented_answer')?.met,
     ).toBe(false);
-  });
-
-  it('counts participation days whether they solve or expire', () => {
-    expect(
-      met(
-        'wordle_v2_played_streak_7',
-        history(
-          ...Array.from({ length: 7 }, (_, index) =>
-            index % 2 === 0
-              ? solvedDay(`2026-10-${String(20 + index).padStart(2, '0')}`)
-              : failedDay(`2026-10-${String(20 + index).padStart(2, '0')}`),
-          ),
-        ),
-      ),
-    ).toBe(true);
   });
 });

@@ -62,7 +62,7 @@ function expectLegalSequence(answer: string, guesses: readonly string[]) {
 }
 
 describe('legal source-bank witnesses', () => {
-  it('proves all 59 templates and every wider variant separately in both colors through production feedback', () => {
+  it('proves every drawing template and wider variant separately in both colors through production feedback', () => {
     expect(
       missingWordlePatternWitnesses(WORDLE_DRAWING_CATALOG, witnesses),
     ).toEqual([]);
@@ -147,6 +147,16 @@ describe('legal source-bank witnesses', () => {
         answer: 'castro',
         guesses: ['torças', 'castor', 'castro'],
         achievement: 'wordle_v2_anagrams_only_before_solve',
+      },
+      {
+        answer: 'canto',
+        guesses: ['manto', 'santo', 'tanto', 'canto'],
+        achievement: 'wordle_v2_near_miss_three_times',
+      },
+      {
+        answer: 'canto',
+        guesses: ['manto', 'santo', 'tanto', 'banto', 'canto'],
+        achievement: 'wordle_v2_near_miss_four_times',
       },
     ];
     for (const sequence of sequences) {

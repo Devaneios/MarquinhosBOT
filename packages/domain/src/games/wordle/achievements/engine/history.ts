@@ -67,21 +67,6 @@ export function elapsedSeconds(
   return day.solvedAt - day.startedAt;
 }
 
-export function bestParticipationStreak(
-  days: readonly Pick<WordleDayRecord, 'date'>[],
-): number {
-  let best = 0;
-  let current = 0;
-  let previous: number | undefined;
-  for (const day of days) {
-    const date = dayNumber(day.date);
-    current = previous !== undefined && date === previous + 1 ? current + 1 : 1;
-    best = Math.max(best, current);
-    previous = date;
-  }
-  return best;
-}
-
 export function hasCalendarCoverage(
   days: readonly Pick<WordleDayRecord, 'date'>[],
   today: string,

@@ -11,8 +11,7 @@ import {
   firstSolverWins,
   mixedRows,
   nearMiss,
-  nearMissTwice,
-  participationStreak,
+  nearMisses,
   solvedAtHours,
   solvedExactly,
   staircase,
@@ -23,30 +22,6 @@ import {
 import type { WordleAchievementDefinition } from '../types';
 
 export const GAMEPLAY: readonly WordleAchievementDefinition[] = [
-  {
-    id: 'wordle_v2_played_streak_7',
-    kind: 'standard',
-    family: 'participation_streak',
-    name: 'Toda semana',
-    description:
-      'Mande um palpite válido por 7 dias seguidos, acertando ou não.',
-    rarity: 'common',
-    icon: '/achievements/played_streak_7.png',
-    hidden: false,
-    evaluate: (facts) => participationStreak(facts, 7),
-  },
-  {
-    id: 'wordle_v2_played_streak_30',
-    kind: 'standard',
-    family: 'participation_streak',
-    name: 'Ritual diário',
-    description:
-      'Mande um palpite válido por 30 dias seguidos, acertando ou não.',
-    rarity: 'epic',
-    icon: '/achievements/played_streak_30.png',
-    hidden: false,
-    evaluate: (facts) => participationStreak(facts, 30),
-  },
   {
     id: 'wordle_v2_calendar_week',
     kind: 'standard',
@@ -76,7 +51,7 @@ export const GAMEPLAY: readonly WordleAchievementDefinition[] = [
     family: 'precision',
     name: 'Palpite certeiro',
     description: 'Acerte de primeira.',
-    rarity: 'rare',
+    rarity: 'epic',
     icon: '/achievements/solved_exactly_1.png',
     hidden: false,
     evaluate: (facts) => solvedExactly(facts, 1),
@@ -87,7 +62,7 @@ export const GAMEPLAY: readonly WordleAchievementDefinition[] = [
     family: 'precision',
     name: 'Segunda é a certa',
     description: 'Acerte na segunda tentativa.',
-    rarity: 'common',
+    rarity: 'rare',
     icon: '/achievements/solved_exactly_2.png',
     hidden: false,
     evaluate: (facts) => solvedExactly(facts, 2),
@@ -293,7 +268,7 @@ export const GAMEPLAY: readonly WordleAchievementDefinition[] = [
     name: 'Rascunho certeiro',
     description:
       'Deixe a palavra certa digitada no rascunho e não envie nenhum palpite até o fim do dia.',
-    rarity: 'epic',
+    rarity: 'legendary',
     icon: '/achievements/zero_attempt_solve.png',
     hidden: false,
     evaluate: zeroGuessWin,
@@ -320,7 +295,31 @@ export const GAMEPLAY: readonly WordleAchievementDefinition[] = [
     rarity: 'rare',
     icon: '/achievements/near_miss_twice.png',
     hidden: false,
-    evaluate: nearMissTwice,
+    evaluate: (facts) => nearMisses(facts, 2),
+  },
+  {
+    id: 'wordle_v2_near_miss_three_times',
+    kind: 'standard',
+    family: 'style',
+    name: 'Por um triz, três vezes',
+    description:
+      'Na mesma partida, faça três palpites em que só uma letra fique fora do verde, mesmo sem acertar a palavra.',
+    rarity: 'epic',
+    icon: '/achievements/near_miss_three_times.png',
+    hidden: false,
+    evaluate: (facts) => nearMisses(facts, 3),
+  },
+  {
+    id: 'wordle_v2_near_miss_four_times',
+    kind: 'standard',
+    family: 'style',
+    name: 'Por um triz, quatro vezes',
+    description:
+      'Na mesma partida, faça quatro palpites em que só uma letra fique fora do verde, mesmo sem acertar a palavra.',
+    rarity: 'legendary',
+    icon: '/achievements/near_miss_four_times.png',
+    hidden: false,
+    evaluate: (facts) => nearMisses(facts, 4),
   },
   {
     id: 'wordle_v2_yellow_only_before_solve',

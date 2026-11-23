@@ -14,7 +14,6 @@ const overview: WordleAchievementsOverview = {
       rarity: 'common',
       rewardXp: 25,
       family: 'wins',
-      tier: 1,
       hidden: false,
       unlockedAt: '2026-10-01T12:00:00.000Z',
       progress: { current: 1, target: 1 },

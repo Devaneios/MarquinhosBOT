@@ -21,7 +21,6 @@ function status(
     rarity: 'common',
     rewardXp: 50,
     family: 'wins',
-    tier: 1,
     hidden: false,
     unlockedAt: null,
     progress: null,
@@ -41,7 +40,6 @@ const achievements: WordleAchievementStatus[] = [
   status({
     id: 'wordle_wins_10',
     name: 'Dez palavras',
-    tier: 2,
     progress: { current: 8, target: 10 },
     rewardXp: 100,
   }),
@@ -54,7 +52,6 @@ const achievements: WordleAchievementStatus[] = [
   status({
     id: 'wordle_streak_7',
     family: 'streak',
-    tier: 2,
     name: 'Semana perfeita',
     progress: { current: 3, target: 7 },
   }),
@@ -146,10 +143,22 @@ describe('familyLabel', () => {
   });
   it('labels drawing families in Portuguese', () => {
     expect(
-      ['letters', 'digits', 'tetrominoes', 'shapes', 'collections'].map(
-        familyLabel,
-      ),
-    ).toEqual(['Letras', 'Dígitos', 'Tetraminós', 'Formas', 'Coleções']);
+      [
+        'letters',
+        'digits',
+        'tetrominoes',
+        'shapes',
+        'gestures',
+        'collections',
+      ].map(familyLabel),
+    ).toEqual([
+      'Letras',
+      'Dígitos',
+      'Tetraminós',
+      'Formas',
+      'Gestos',
+      'Coleções',
+    ]);
   });
 });
 

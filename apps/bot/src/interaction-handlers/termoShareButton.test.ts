@@ -67,7 +67,6 @@ it('publishes the unlocked achievement only after confirmation', async () => {
           rarity: 'common',
           rewardXp: 0,
           family: 'wins',
-          tier: 1,
           hidden: false,
           unlockedAt: '2026-10-01T12:00:00.000Z',
           progress: null,

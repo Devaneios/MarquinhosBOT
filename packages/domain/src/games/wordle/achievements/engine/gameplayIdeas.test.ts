@@ -72,7 +72,6 @@ describe('confirmed gameplay achievements', () => {
     expect(results.get('wordle_v2_zero_attempt_solve')?.met).toBe(true);
     expect(results.get('wordle_v2_wins_1')?.met).toBe(true);
     expect(results.get('wordle_v2_played_1')?.met).toBe(false);
-    expect(results.get('wordle_v2_played_streak_7')?.met).toBe(false);
     expect(analysis.discoverPatterns(new Set())).toEqual([]);
   });
 
@@ -133,6 +132,24 @@ describe('confirmed gameplay achievements', () => {
         ),
       ),
     ).toBe(false);
+  });
+
+  it('awards three and four near misses at their respective thresholds in one game', () => {
+    const three = 'wordle_v2_near_miss_three_times';
+    const four = 'wordle_v2_near_miss_four_times';
+    const threeMisses = day([nearMiss, grey, nearMiss, nearMiss]);
+    const fourMisses = day([nearMiss, grey, nearMiss, nearMiss, nearMiss]);
+
+    expect(met(three, day([nearMiss, nearMiss, green], true))).toBe(false);
+    expect(met(three, threeMisses)).toBe(true);
+    expect(met(four, threeMisses)).toBe(false);
+    expect(met(four, fourMisses)).toBe(true);
+
+    const split = analyzeWordleAchievements(
+      [threeMisses, { ...day([nearMiss]), date: '2026-10-27' }],
+      { today },
+    ).evaluate(new Set());
+    expect(split.find(({ id }) => id === four)?.met).toBe(false);
   });
 
   it('requires every pre-solve row to be yellow for yellow-only wins', () => {

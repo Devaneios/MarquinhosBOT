@@ -6,8 +6,8 @@ import { WORDLE_ACHIEVEMENT_FAMILIES } from './families';
 import { achievementXpForRarity } from './rewards';
 
 describe('Wordle achievement catalog', () => {
-  it('keeps the curated catalog at 110 entries after confirmed additions', () => {
-    expect(WORDLE_ACHIEVEMENT_CATALOG).toHaveLength(110);
+  it('keeps the curated catalog at 112 entries after confirmed additions', () => {
+    expect(WORDLE_ACHIEVEMENT_CATALOG).toHaveLength(112);
   });
 
   it('publishes an evaluator on each complete achievement object', () => {
@@ -27,10 +27,10 @@ describe('Wordle achievement catalog', () => {
   });
 
   it('publishes every drawing with a validated preview and no hidden drawings', () => {
-    expect(WORDLE_DRAWING_CATALOG).toHaveLength(59);
+    expect(WORDLE_DRAWING_CATALOG).toHaveLength(61);
     expect(
       WORDLE_ACHIEVEMENT_CATALOG.filter(({ kind }) => kind === 'drawing'),
-    ).toHaveLength(59);
+    ).toHaveLength(61);
     for (const definition of WORDLE_ACHIEVEMENT_CATALOG) {
       if (definition.kind !== 'drawing') continue;
       expect(definition.hidden).toBe(false);
@@ -107,7 +107,7 @@ describe('Wordle achievement catalog', () => {
     ).toBe(true);
   });
 
-  it('publishes the six confirmed new drawings with their exact masks', () => {
+  it('publishes the triangles, stairs and hands with their exact masks', () => {
     const expected = new Map<string, readonly string[][]>([
       ['triangle_5', [['..#..', '.###.', '#####']]],
       ['triangle_6', [['..##..', '.####.', '######']]],
@@ -121,6 +121,8 @@ describe('Wordle achievement catalog', () => {
       ],
       ['hang_loose', [['#...#', '#...#', '#...#', '#####', '.###.']]],
       ['middle_finger', [['..#..', '..#..', '..#..', '#####', '.###.']]],
+      ['love_you', [['.#..#', '.#..#', '##..#', '#####', '.###.']]],
+      ['metal_horns', [['#..#', '#..#', '#..#', '####', '.##.']]],
     ]);
     for (const [patternId, masks] of expected) {
       const definition = WORDLE_ACHIEVEMENT_CATALOG.find(
