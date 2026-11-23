@@ -7,6 +7,7 @@
 **/.codex
 **/.turbo
 **/dist
+apps/activity/public/achievements
 **/logs
 **/.logs
 **/*.log

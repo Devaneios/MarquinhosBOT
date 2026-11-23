@@ -40,6 +40,7 @@ import {
   WORDLE_FOCUS_KEYS,
 } from '../constants';
 import { useWordleBoard } from '../state/useWordleBoard';
+import { AchievementIcon } from './AchievementIcon';
 import { CurrentRow } from './CurrentRow';
 import { GuessRow } from './GuessRow';
 import { WordleAchievementsScreen } from './WordleAchievementsScreen';
@@ -416,7 +417,10 @@ export function WordleBoard({
                       aria-hidden="true"
                       className="termo-achievement-badge inline-block"
                     >
-                      {activeToast.icon}
+                      <AchievementIcon
+                        icon={activeToast.icon}
+                        className="h-6 w-6"
+                      />
                     </span>
                     <span className="truncate font-semibold text-marquinhos-text">
                       {activeToast.name}

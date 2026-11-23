@@ -161,6 +161,12 @@ test-output/
 pnpm-debug.log*
 dist-ssr
 *.local
+apps/activity/public/achievements/
+docs/achievement-art/review/
+docs/achievement-art/png/
+docs/achievement-art/palette.png
+docs/achievement-art/palette-preview.png
+docs/achievement-art/sheet.png
 
 # Windows project files
 *.suo

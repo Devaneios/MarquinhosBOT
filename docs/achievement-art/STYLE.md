@@ -30,9 +30,11 @@ images synchronized as described below.
 
 ## Source format
 
-One file per achievement: `src/<id>.txt`, where `<id>` is the catalog ID without
-the `wordle_v2_` prefix (`wordle_v2_wins_10` → `src/wins_10.txt`). The file holds
-exactly 14 rows of exactly 14 characters. Each character is one pixel:
+One file per achievement in
+[`apps/activity/achievement-art/blueprints/`](../../apps/activity/achievement-art/blueprints/).
+The filename uses the catalog ID without the `wordle_v2_` prefix
+(`wordle_v2_wins_10` → `wins_10.txt`). The file holds exactly 14 rows of exactly
+14 characters. Each character is one pixel:
 
 | Char | Color   | Palette name     | Use                                      |
 | ---- | ------- | ---------------- | ---------------------------------------- |
@@ -75,7 +77,7 @@ the larger shared palette is not a requirement to use more colors per badge.
 All four border colors remain reserved, including common gray `C`.
 
 `palette.gpl` holds the RGB values; the renderer maps blueprint characters to
-its color names. Run `bun docs/achievement-art/render.ts palette` after a
+its color names. Run `bun apps/activity/achievement-art/render.ts palette` after a
 palette change to regenerate `palette.png` (one pixel per entry) and
 `palette-preview.png` (16-pixel swatches), both in GPL entry order. These are
 palette references; badge review previews remain native 16×16.
@@ -87,11 +89,11 @@ The ring covers the emblem's corner pixel at each corner (row 0 col 0, and so on
 Run from the repository root.
 
 ```sh
-bun docs/achievement-art/render.ts preview <dir> <id...>  # validate and write native 16×16 previews to <dir>
-bun docs/achievement-art/render.ts render                # validate all, write png/<id>.png and sheet.png
-bun docs/achievement-art/render.ts palette               # regenerate palette references from palette.gpl
-bun docs/achievement-art/render.ts build                 # write approved badges to apps/activity/public/achievements
-bun docs/achievement-art/render.ts scaffold <id...>      # print the tile emblem for a drawing achievement
+bun apps/activity/achievement-art/render.ts preview <dir> <id...>  # validate and write native 16×16 previews to <dir>
+bun apps/activity/achievement-art/render.ts render                # validate all, write png/<id>.png and sheet.png
+bun apps/activity/achievement-art/render.ts palette               # regenerate palette references from palette.gpl
+bun apps/activity/achievement-art/render.ts build                 # write approved badges to apps/activity/public/achievements
+bun apps/activity/achievement-art/render.ts scaffold <id...>      # print the tile emblem for a drawing achievement
 ```
 
 `preview` fails with the row number when a row has the wrong width or an unknown
@@ -116,7 +118,7 @@ character. Open the preview image to check the result by eye.
   numerals. Days played use a calendar page; winning streaks use a flame.
   Family progress counts sit underneath in white, with a clear gap above them for families
   that use numerals.
-  Collection badges use book covers, a sketchbook, a gallery easel, or the
+  Collection badges use book covers, a sketchbook, or the
   seven individual tetrominoes. Keep tiny details subordinate to the silhouette.
 - Write numbers with the 3×5 font below, 1 pixel apart. Three digits take 11
   pixels, so a number usually replaces part of the motif or sits below a small

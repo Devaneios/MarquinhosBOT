@@ -44,6 +44,7 @@ nodemon.json
 **/node_modules
 **/.turbo
 **/dist
+apps/activity/public/achievements
 **/.env
 **/.env.*
 **/*.db

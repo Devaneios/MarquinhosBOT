@@ -1,0 +1,452 @@
+{
+  "achievements": [
+    {
+      "id": "wins_1",
+      "status": "approved"
+    },
+    {
+      "id": "wins_10",
+      "status": "approved"
+    },
+    {
+      "id": "wins_50",
+      "status": "approved"
+    },
+    {
+      "id": "wins_100",
+      "status": "approved"
+    },
+    {
+      "id": "wins_365",
+      "status": "approved"
+    },
+    {
+      "id": "played_1",
+      "status": "approved"
+    },
+    {
+      "id": "played_7",
+      "status": "approved"
+    },
+    {
+      "id": "played_30",
+      "status": "approved"
+    },
+    {
+      "id": "played_100",
+      "status": "approved"
+    },
+    {
+      "id": "played_365",
+      "status": "approved"
+    },
+    {
+      "id": "streak_3",
+      "status": "approved"
+    },
+    {
+      "id": "streak_7",
+      "status": "approved"
+    },
+    {
+      "id": "streak_14",
+      "status": "approved"
+    },
+    {
+      "id": "streak_30",
+      "status": "approved"
+    },
+    {
+      "id": "streak_100",
+      "status": "approved"
+    },
+    {
+      "id": "calendar_week",
+      "status": "approved"
+    },
+    {
+      "id": "calendar_month",
+      "status": "approved"
+    },
+    {
+      "id": "solved_exactly_1",
+      "status": "approved"
+    },
+    {
+      "id": "solved_exactly_2",
+      "status": "approved"
+    },
+    {
+      "id": "wins_within_3_10",
+      "status": "approved"
+    },
+    {
+      "id": "all_yellow",
+      "status": "approved"
+    },
+    {
+      "id": "blank_opening",
+      "status": "approved"
+    },
+    {
+      "id": "mixed_rows",
+      "status": "approved"
+    },
+    {
+      "id": "improvement",
+      "status": "approved"
+    },
+    {
+      "id": "near_miss",
+      "status": "approved"
+    },
+    {
+      "id": "fast_60",
+      "status": "approved"
+    },
+    {
+      "id": "secret_d6a09c31",
+      "status": "approved"
+    },
+    {
+      "id": "midnight",
+      "status": "approved"
+    },
+    {
+      "id": "morning",
+      "status": "approved"
+    },
+    {
+      "id": "late",
+      "status": "approved"
+    },
+    {
+      "id": "first_solver_1",
+      "status": "approved"
+    },
+    {
+      "id": "first_solver_10",
+      "status": "approved"
+    },
+    {
+      "id": "both_lengths",
+      "status": "approved"
+    },
+    {
+      "id": "repeated_letters",
+      "status": "approved"
+    },
+    {
+      "id": "accented_answer",
+      "status": "approved"
+    },
+    {
+      "id": "solved_exactly_3",
+      "status": "approved"
+    },
+    {
+      "id": "zero_attempt_solve",
+      "status": "approved"
+    },
+    {
+      "id": "blank_twice_then_solved",
+      "status": "approved"
+    },
+    {
+      "id": "near_miss_twice",
+      "status": "approved"
+    },
+    {
+      "id": "near_miss_three_times",
+      "status": "approved"
+    },
+    {
+      "id": "near_miss_four_times",
+      "status": "approved"
+    },
+    {
+      "id": "yellow_only_before_solve",
+      "status": "approved"
+    },
+    {
+      "id": "anagrams_only_before_solve",
+      "status": "approved"
+    },
+    {
+      "id": "devaneios_rows",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_a",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_b",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_c",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_d",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_e",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_f",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_g",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_h",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_i",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_j",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_k",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_l",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_m",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_n",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_o",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_p",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_q",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_r",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_s",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_t",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_u",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_v",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_w",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_x",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_y",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_letter_z",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_digit_0",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_digit_1",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_digit_2",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_digit_3",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_digit_4",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_digit_5",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_digit_6",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_digit_7",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_digit_8",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_digit_9",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_tetromino_i",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_tetromino_o",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_tetromino_t",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_tetromino_j",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_tetromino_l",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_tetromino_s",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_tetromino_z",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_square_outline",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_diamond_outline",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_cross",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_heart",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_arrow_up",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_arrow_down",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_arrow_left",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_arrow_right",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_staircase",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_hourglass",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_triangle_5",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_triangle_6",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_staircase_right",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_staircase_inverted",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_hang_loose",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_middle_finger",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_love_you",
+      "status": "approved"
+    },
+    {
+      "id": "pattern_metal_horns",
+      "status": "approved"
+    },
+    {
+      "id": "letters_5",
+      "status": "approved"
+    },
+    {
+      "id": "letters_all",
+      "status": "approved"
+    },
+    {
+      "id": "digits_5",
+      "status": "approved"
+    },
+    {
+      "id": "digits_all",
+      "status": "approved"
+    },
+    {
+      "id": "tetrominoes_all",
+      "status": "approved"
+    },
+    {
+      "id": "shapes_5",
+      "status": "approved"
+    },
+    {
+      "id": "shapes_all",
+      "status": "approved"
+    }
+  ]
+}

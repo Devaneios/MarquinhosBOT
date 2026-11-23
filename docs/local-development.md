@@ -85,6 +85,9 @@ Edit source normally. API and bot use Bun watch; Activity uses Vite hot updates.
 Dependency/package changes and API word-list changes require an image rebuild;
 restarting `pnpm run dev` rebuilds changed layers. Source directories are mounted
 read-only inside containers, with dependencies retained in the image.
+Activity mounts `apps/activity/achievement-art` read-only and
+`apps/activity/public` with write access. Its `predev` script generates approved
+badges into the Git-ignored `public/achievements` directory on each startup.
 
 API restarts interrupt in-memory multiplayer rooms. Frontend changes affecting
 the Discord SDK handshake can require closing and relaunching the Activity.
