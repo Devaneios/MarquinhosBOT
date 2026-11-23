@@ -225,16 +225,16 @@ function normalizeHeader(name: string, value: string): string {
 
 describe('HTTP parity safety net', () => {
   test('the route manifest maps every baseline route to exactly one contract', () => {
-    expect(manifest.routeCount).toBe(97);
-    expect(manifest.contractCount).toBe(97);
-    expect(manifest.routes).toHaveLength(97);
+    expect(manifest.routeCount).toBe(90);
+    expect(manifest.contractCount).toBe(90);
+    expect(manifest.routes).toHaveLength(90);
     expect(manifest.unmatchedRoutes).toEqual([]);
     expect(manifest.unmatchedContracts).toEqual([]);
     expect(manifest.unclassifiedMiddleware).toEqual([]);
-    expect(golden.routeCount).toBe(97);
+    expect(golden.routeCount).toBe(90);
     expect(
       probes.filter((probe) => probe.id.endsWith('no Authorization')),
-    ).toHaveLength(97);
+    ).toHaveLength(90);
     expect(golden.skippedProbes).toHaveLength(13);
   });
 

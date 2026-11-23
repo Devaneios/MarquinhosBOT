@@ -120,17 +120,18 @@ on the rehearsal copy before scheduling another attempt.
    two test guilds, existing used and banned words are respected, legacy
    boards remain guild-specific when their answer is known, unknown-answer
    boards remain unavailable, and combined lifetime totals and streak
-   continuation match the inventory. Confirm old unlocks retain their dates,
-   legacy XP is not awarded again, and unsupported historical timing or
-   first-solver evidence has not appeared.
+   continuation match the inventory. Confirm unlocks for active catalog IDs
+   retain their dates, XP balances match the inventory, and unsupported
+   historical timing or first-solver evidence has not appeared. API startup
+   removes achievements and unlocks outside the active catalog, and migration
+   `0035_wordle_achievements_only` drops the evolutive achievements table.
 7. Rehearse one new global solve and its community projections on the restored
    copy, including history, achievements, leaderboard, and announcement
    behavior. Record any new post-cutover XP separately and confirm it comes
    from the new game only; do not replay old unlock rewards. Verify legacy
-   sessions, unlocks, streak snapshots, settings, and used-word timestamps
-   remain available. New gameplay may add used words or legitimately increase
-   a community XP balance, so compare those against the cutover snapshot with
-   the new activity accounted for.
+   sessions, unlocks for active catalog IDs, streak snapshots, settings, and
+   used-word timestamps remain available. Account for new used words and
+   XP earned through gameplay when comparing against the cutover snapshot.
 
 ## Production release gates
 

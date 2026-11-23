@@ -10,7 +10,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { AchievementService } from 'modules/gamification/achievement.service';
-import { EvolutiveAchievementsService } from 'modules/gamification/evolutive-achievements.service';
 import { LevelingService } from 'modules/gamification/leveling.service';
 import type {
   AddXpResult,
@@ -52,7 +51,6 @@ export class GamificationService {
   constructor(
     private readonly levelingService: LevelingService,
     private readonly achievementService: AchievementService,
-    private readonly evolutiveService: EvolutiveAchievementsService,
     @Inject(DB) private readonly database: Db,
   ) {}
 
@@ -112,7 +110,6 @@ export class GamificationService {
           userLevel: await this.levelingService.getUserLevel(userId, guildId),
           onCooldown: true,
           leveledUp: false,
-          unlockedAchievements: [],
         };
       }
     }
@@ -133,9 +130,6 @@ export class GamificationService {
       userId,
       guildId,
     );
-    const unlockedAchievements =
-      await this.achievementService.checkAndAwardAchievements(userId, guildId);
-    await this.evolutiveService.checkAndEvolveAll(userId, guildId);
     const bonusLeveledUp = await this.levelingService.applyLevelUps(
       userId,
       guildId,
@@ -148,7 +142,6 @@ export class GamificationService {
       onCooldown: false,
       leveledUp,
       newLevel: leveledUp ? userLevel.level : undefined,
-      unlockedAchievements,
     };
   }
 
@@ -234,11 +227,6 @@ export class GamificationService {
           input.guildId,
           tx,
         );
-        await this.achievementService.checkAndAwardAchievements(
-          player.userId,
-          input.guildId,
-          tx,
-        );
       }
     });
   }
@@ -310,32 +298,5 @@ export class GamificationService {
 
   getLeaderboard(guildId: string, limit: number = 10) {
     return this.levelingService.getLeaderboard(guildId, limit);
-  }
-
-  // Achievement delegation
-  getUserAchievements(userId: string, guildId: string) {
-    return this.achievementService.getUserAchievements(userId, guildId);
-  }
-
-  getAllAchievements() {
-    return this.achievementService.getAllAchievements();
-  }
-
-  unlockAchievement(
-    userId: string,
-    guildId: string,
-    achievementId: string,
-  ): Promise<boolean> {
-    return this.achievementService.unlockAchievement(
-      userId,
-      guildId,
-      achievementId,
-    );
-  }
-
-  createAchievement(
-    data: Parameters<AchievementService['createAchievement']>[0],
-  ) {
-    return this.achievementService.createAchievement(data);
   }
 }

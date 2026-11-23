@@ -17,6 +17,9 @@ export class LevelingService {
   constructor(@Inject(DB) private readonly database: Db) {}
 
   async initializeDefaults(): Promise<void> {
+    await this.database
+      .delete(xpConfig)
+      .where(eq(xpConfig.event_type, 'achievement'));
     const [row] = await this.database.select({ count: count() }).from(xpConfig);
     if (row && row.count > 0) return;
     await this.database

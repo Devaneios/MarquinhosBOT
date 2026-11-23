@@ -1,16 +1,9 @@
 import { db } from '@marquinhos/database/client';
-import {
-  achievements,
-  userAchievements,
-  userLevels,
-  userStats,
-  xpConfig,
-} from '@marquinhos/database/schema';
+import { userLevels, xpConfig } from '@marquinhos/database/schema';
 import { afterEach, beforeAll, describe, expect, it, spyOn } from 'bun:test';
 import { randomUUID } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { AchievementService } from 'modules/gamification/achievement.service';
-import { EvolutiveAchievementsService } from 'modules/gamification/evolutive-achievements.service';
 import { GamificationService } from 'modules/gamification/index';
 import { LevelingService } from 'modules/gamification/leveling.service';
 
@@ -22,15 +15,11 @@ function createGamificationService(): GamificationService {
   return new GamificationService(
     leveling,
     new AchievementService(leveling, db),
-    new EvolutiveAchievementsService(db),
     db,
   );
 }
 
-// Runs the real addXP against the shared test database; Date.now is pinned so
-// the cooldown window is deterministic.
 let nowSpy: ReturnType<typeof spyOn<DateConstructor, 'now'>> | undefined;
-
 function at(timestamp: number) {
   nowSpy?.mockRestore();
   nowSpy = spyOn(Date, 'now').mockReturnValue(timestamp);
@@ -49,246 +38,9 @@ beforeAll(async () => {
       set: { xp_amount: COMMAND_XP, cooldown_ms: COMMAND_COOLDOWN_MS },
     });
 });
-
 afterEach(() => {
   nowSpy?.mockRestore();
   nowSpy = undefined;
-});
-
-describe('generic achievement conditions', () => {
-  it('evaluates serialized conditions and grants their XP', async () => {
-    const userId = `user-${randomUUID()}`;
-    const guildId = `guild-${randomUUID()}`;
-    const achievementId = `commands-test-${randomUUID()}`;
-    const leveling = new LevelingService(db);
-    const service = new AchievementService(leveling, db);
-    await leveling.ensureUser(userId, guildId);
-    await db
-      .update(userStats)
-      .set({ total_commands: 3 })
-      .where(
-        and(eq(userStats.user_id, userId), eq(userStats.guild_id, guildId)),
-      );
-    await db.insert(achievements).values({
-      id: achievementId,
-      name: 'Three commands',
-      description: 'Run three commands.',
-      category: 'commands',
-      rarity: 'common',
-      icon: '⚡',
-      condition: JSON.stringify({ type: 'commands', threshold: 3 }),
-      reward_xp: 37,
-      archived_at: null,
-    });
-
-    const unlocked = await service.checkAndAwardAchievements(userId, guildId);
-    const [level] = await db
-      .select()
-      .from(userLevels)
-      .where(
-        and(eq(userLevels.user_id, userId), eq(userLevels.guild_id, guildId)),
-      );
-    const [earned] = await db
-      .select()
-      .from(userAchievements)
-      .where(
-        and(
-          eq(userAchievements.user_id, userId),
-          eq(userAchievements.guild_id, guildId),
-          eq(userAchievements.achievement_id, achievementId),
-        ),
-      );
-
-    expect(unlocked).toContain(achievementId);
-    expect(earned).toBeDefined();
-    expect(level?.total_xp).toBe(37);
-  });
-});
-
-describe('achievement award batches', () => {
-  const leveling = new LevelingService(db);
-  const service = new AchievementService(leveling, db);
-  const guildId = `batch-guild-${randomUUID()}`;
-
-  async function define(id: string, rewardXp: number, category = 'wordle') {
-    await db.insert(achievements).values({
-      id,
-      name: id,
-      description: id,
-      category,
-      rarity: 'common',
-      icon: '🏅',
-      condition:
-        category === 'wordle'
-          ? null
-          : JSON.stringify({ type: 'commands', threshold: 999999 }),
-      reward_xp: rewardXp,
-      archived_at: null,
-    });
-  }
-
-  async function level(userId: string) {
-    const [row] = await db
-      .select()
-      .from(userLevels)
-      .where(
-        and(eq(userLevels.user_id, userId), eq(userLevels.guild_id, guildId)),
-      );
-    return row;
-  }
-
-  it('matches individual grants across multiple level thresholds and preserves only newly earned XP', async () => {
-    const suffix = randomUUID();
-    const userIds = [`batch-user-a-${suffix}`, `batch-user-b-${suffix}`];
-    const [batchUser, individualUser] = userIds;
-    const ids = {
-      existing: `batch-existing-${suffix}`,
-      first: `batch-first-${suffix}`,
-      second: `batch-second-${suffix}`,
-      zero: `batch-zero-${suffix}`,
-      generic: `batch-generic-${suffix}`,
-    };
-    await define(ids.existing, 900);
-    await define(ids.first, 1300);
-    await define(ids.second, 2100);
-    await define(ids.zero, 0);
-    await define(ids.generic, 200, 'test');
-
-    for (const userId of userIds) {
-      await leveling.ensureUser(userId, guildId);
-      await db
-        .update(userLevels)
-        .set({ level: 1, xp: 50, total_xp: 50, last_xp_gain: 123456 })
-        .where(
-          and(eq(userLevels.user_id, userId), eq(userLevels.guild_id, guildId)),
-        );
-      await db.insert(userAchievements).values({
-        user_id: userId,
-        guild_id: guildId,
-        achievement_id: ids.existing,
-        unlocked_at: 123,
-      });
-    }
-
-    const requested = [
-      ids.existing,
-      ids.second,
-      ids.first,
-      ids.zero,
-      ids.generic,
-      ids.second,
-      `missing-${suffix}`,
-    ];
-    const batched = await service.unlockAchievements(
-      batchUser!,
-      guildId,
-      requested,
-    );
-    const individual: string[] = [];
-    for (const id of requested) {
-      if (await service.unlockAchievement(individualUser!, guildId, id))
-        individual.push(id);
-    }
-
-    expect(batched.map(({ id }) => id)).toEqual([
-      ids.second,
-      ids.first,
-      ids.zero,
-      ids.generic,
-    ]);
-    expect(individual).toEqual(batched.map(({ id }) => id));
-    expect(await level(batchUser!)).toMatchObject({
-      level: 5,
-      xp: 650,
-      total_xp: 3650,
-      last_xp_gain: 123456,
-    });
-    expect(await level(individualUser!)).toMatchObject({
-      level: 5,
-      xp: 650,
-      total_xp: 3650,
-      last_xp_gain: 123456,
-    });
-    expect(await service.unlockAchievements(batchUser!, guildId, [])).toEqual(
-      [],
-    );
-    expect(
-      await service.unlockAchievements(batchUser!, guildId, requested),
-    ).toEqual([]);
-  });
-
-  it('preserves a concurrent generic XP contribution while a batch unlocks', async () => {
-    const userId = `batch-race-${randomUUID()}`;
-    const id = `batch-race-achievement-${randomUUID()}`;
-    await define(id, 750);
-    await leveling.ensureUser(userId, guildId);
-
-    await Promise.all([
-      db.transaction((tx) =>
-        service.unlockAchievements(userId, guildId, [id], tx),
-      ),
-      db.transaction(async (tx) => {
-        await leveling.addXpToUser(userId, guildId, 275, tx, null);
-        await leveling.applyLevelUps(userId, guildId, tx);
-      }),
-    ]);
-
-    expect(await level(userId)).toMatchObject({
-      level: 3,
-      xp: 525,
-      total_xp: 1025,
-    });
-    expect(
-      await db
-        .select()
-        .from(userAchievements)
-        .where(
-          and(
-            eq(userAchievements.user_id, userId),
-            eq(userAchievements.guild_id, guildId),
-            eq(userAchievements.achievement_id, id),
-          ),
-        ),
-    ).toHaveLength(1);
-  });
-
-  it('rolls back every inserted achievement and XP update, then retries once', async () => {
-    const userId = `batch-rollback-${randomUUID()}`;
-    const first = `batch-rollback-first-${randomUUID()}`;
-    const second = `batch-rollback-second-${randomUUID()}`;
-    await define(first, 400);
-    await define(second, 600);
-    await leveling.ensureUser(userId, guildId);
-
-    await expect(
-      db.transaction(async (tx) => {
-        await service.unlockAchievements(userId, guildId, [first, second], tx);
-        const [pending] = await tx
-          .select()
-          .from(userLevels)
-          .where(
-            and(
-              eq(userLevels.user_id, userId),
-              eq(userLevels.guild_id, guildId),
-            ),
-          );
-        expect(pending?.total_xp).toBe(1000);
-        throw new Error('rollback achievement batch');
-      }),
-    ).rejects.toThrow('rollback achievement batch');
-    expect(await level(userId)).toMatchObject({ total_xp: 0, level: 1, xp: 0 });
-    expect(
-      await service.unlockAchievements(userId, guildId, [first, second]),
-    ).toHaveLength(2);
-    expect(await level(userId)).toMatchObject({
-      total_xp: 1000,
-      level: 3,
-      xp: 500,
-    });
-    expect(
-      await service.unlockAchievements(userId, guildId, [first, second]),
-    ).toEqual([]);
-  });
 });
 
 describe('XP cooldown logic', () => {

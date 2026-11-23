@@ -23,7 +23,6 @@ import { PlayCommand } from '@marquinhos/commands/music/play';
 import { PlayNextCommand } from '@marquinhos/commands/music/playNext';
 import { QueueCommand } from '@marquinhos/commands/music/queue';
 import { SkipCommand } from '@marquinhos/commands/music/skip';
-import { AchievementsCommand } from '@marquinhos/commands/social/achievements';
 import { CheckInCommand } from '@marquinhos/commands/social/checkIn';
 import { ImportunateCommand } from '@marquinhos/commands/social/importunate';
 import { LeaderboardCommand } from '@marquinhos/commands/social/leaderboard';
@@ -74,7 +73,6 @@ const commands = [
   ['adicionar-a-fila', PlayNextCommand],
   ['fila', QueueCommand],
   ['pular', SkipCommand],
-  ['achievements', AchievementsCommand],
   ['check-in', CheckInCommand],
   ['importunar', ImportunateCommand],
   ['leaderboard', LeaderboardCommand],

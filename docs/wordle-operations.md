@@ -86,8 +86,9 @@ awards after a failure.
 
 API startup seeds Wordle metadata from the source catalog. Eligible global
 sessions participate without an activation command or session-version
-boundary. Legacy unlocks remain visible as historical records and do not get
-replayed for XP. The `wordle_v2_` prefix on IDs is historical naming, not a
+boundary. Unlocks for active catalog IDs keep their timestamps and do not get
+replayed for XP. Startup removes definitions and unlocks outside the active
+catalog. The `wordle_v2_` prefix on IDs is historical naming, not a
 runtime version. Startup stores Wordle conditions as null because evaluation
 functions remain in the domain source.
 
@@ -116,8 +117,7 @@ a checkout with dependencies installed. It reconciles one player's eligible
 global sessions in the specified community context and reports newly awarded
 achievements. Repeating it does not duplicate unlock rows or XP.
 
-Legacy unlocks remain visible with their original timestamps; the migration
-does not replay legacy rewards. The release API image does not include `apps/api/scripts/`,
+The release API image does not include `apps/api/scripts/`,
 so run the command from a checkout with access to the target database. The bot's
 optional `conquista` argument accepts an achievement ID or exact visible name to
 show its drawing preview or saved evidence.

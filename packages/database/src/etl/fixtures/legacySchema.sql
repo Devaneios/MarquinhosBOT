@@ -148,16 +148,6 @@ CREATE TABLE ai_traces (
     created_at        INTEGER NOT NULL
   );
 
-CREATE TABLE evolutive_achievements (
-    user_id       TEXT    NOT NULL,
-    guild_id      TEXT    NOT NULL,
-    base_id       TEXT    NOT NULL,
-    current_rarity TEXT NOT NULL DEFAULT 'common',
-    unlocked_at   INTEGER NOT NULL,
-    last_evolved  INTEGER,
-    evolution_log TEXT    NOT NULL DEFAULT '[]',
-    PRIMARY KEY (user_id, guild_id, base_id)
-  );
 
 CREATE TABLE game_results (
     id          TEXT    NOT NULL PRIMARY KEY,

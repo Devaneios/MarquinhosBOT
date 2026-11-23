@@ -1,7 +1,7 @@
 {
   "generatedFrom": "Express router stacks and @marquinhos/contracts",
-  "routeCount": 97,
-  "contractCount": 97,
+  "routeCount": 90,
+  "contractCount": 90,
   "routes": [
     {
       "id": "GET /api/health",
@@ -872,90 +872,6 @@
       }
     },
     {
-      "id": "POST /api/gamification/achievement/unlock",
-      "method": "POST",
-      "path": "/api/gamification/achievement/unlock",
-      "mount": "/api/gamification",
-      "routerPath": "/achievement/unlock",
-      "middlewareChain": [
-        "botAuth"
-      ],
-      "successStatus": 200,
-      "contractExport": "gamification.unlockAchievement",
-      "contractMatches": [
-        "gamification.unlockAchievement"
-      ],
-      "examplePath": "/api/gamification/achievement/unlock",
-      "probes": {
-        "noAuthorization": "capture",
-        "wrongBearer": "capture",
-        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
-      }
-    },
-    {
-      "id": "GET /api/gamification/achievements/:userId/:guildId",
-      "method": "GET",
-      "path": "/api/gamification/achievements/:userId/:guildId",
-      "mount": "/api/gamification",
-      "routerPath": "/achievements/:userId/:guildId",
-      "middlewareChain": [
-        "botAuth"
-      ],
-      "successStatus": 200,
-      "contractExport": "gamification.getUserAchievements",
-      "contractMatches": [
-        "gamification.getUserAchievements"
-      ],
-      "examplePath": "/api/gamification/achievements/111111111111111111/111111111111111111",
-      "probes": {
-        "noAuthorization": "capture",
-        "wrongBearer": "capture",
-        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
-      }
-    },
-    {
-      "id": "GET /api/gamification/achievements",
-      "method": "GET",
-      "path": "/api/gamification/achievements",
-      "mount": "/api/gamification",
-      "routerPath": "/achievements",
-      "middlewareChain": [
-        "botAuth"
-      ],
-      "successStatus": 200,
-      "contractExport": "gamification.getAllAchievements",
-      "contractMatches": [
-        "gamification.getAllAchievements"
-      ],
-      "examplePath": "/api/gamification/achievements",
-      "probes": {
-        "noAuthorization": "capture",
-        "wrongBearer": "capture",
-        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
-      }
-    },
-    {
-      "id": "POST /api/gamification/achievements",
-      "method": "POST",
-      "path": "/api/gamification/achievements",
-      "mount": "/api/gamification",
-      "routerPath": "/achievements",
-      "middlewareChain": [
-        "botAuth"
-      ],
-      "successStatus": 201,
-      "contractExport": "gamification.createAchievement",
-      "contractMatches": [
-        "gamification.createAchievement"
-      ],
-      "examplePath": "/api/gamification/achievements",
-      "probes": {
-        "noAuthorization": "capture",
-        "wrongBearer": "capture",
-        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
-      }
-    },
-    {
       "id": "POST /api/gamification/achievements/initialize",
       "method": "POST",
       "path": "/api/gamification/achievements/initialize",
@@ -1033,69 +949,6 @@
         "gamification.getGameLeaderboard"
       ],
       "examplePath": "/api/gamification/game-leaderboard/111111111111111111/wordle",
-      "probes": {
-        "noAuthorization": "capture",
-        "wrongBearer": "capture",
-        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
-      }
-    },
-    {
-      "id": "POST /api/evolutive-achievements/evolve/:userId/:guildId",
-      "method": "POST",
-      "path": "/api/evolutive-achievements/evolve/:userId/:guildId",
-      "mount": "/api/evolutive-achievements",
-      "routerPath": "/evolve/:userId/:guildId",
-      "middlewareChain": [
-        "botAuth"
-      ],
-      "successStatus": 200,
-      "contractExport": "evolutiveAchievements.checkAndEvolve",
-      "contractMatches": [
-        "evolutiveAchievements.checkAndEvolve"
-      ],
-      "examplePath": "/api/evolutive-achievements/evolve/111111111111111111/111111111111111111",
-      "probes": {
-        "noAuthorization": "capture",
-        "wrongBearer": "capture",
-        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
-      }
-    },
-    {
-      "id": "GET /api/evolutive-achievements/:userId/:guildId",
-      "method": "GET",
-      "path": "/api/evolutive-achievements/:userId/:guildId",
-      "mount": "/api/evolutive-achievements",
-      "routerPath": "/:userId/:guildId",
-      "middlewareChain": [
-        "botAuth"
-      ],
-      "successStatus": 200,
-      "contractExport": "evolutiveAchievements.getUserEvolutiveAchievements",
-      "contractMatches": [
-        "evolutiveAchievements.getUserEvolutiveAchievements"
-      ],
-      "examplePath": "/api/evolutive-achievements/111111111111111111/111111111111111111",
-      "probes": {
-        "noAuthorization": "capture",
-        "wrongBearer": "capture",
-        "authenticatedEmptyBody": "skip: route has no pre-handler contract validation"
-      }
-    },
-    {
-      "id": "GET /api/evolutive-achievements/timeline/:userId/:guildId",
-      "method": "GET",
-      "path": "/api/evolutive-achievements/timeline/:userId/:guildId",
-      "mount": "/api/evolutive-achievements",
-      "routerPath": "/timeline/:userId/:guildId",
-      "middlewareChain": [
-        "botAuth"
-      ],
-      "successStatus": 200,
-      "contractExport": "evolutiveAchievements.getEvolutionTimeline",
-      "contractMatches": [
-        "evolutiveAchievements.getEvolutionTimeline"
-      ],
-      "examplePath": "/api/evolutive-achievements/timeline/111111111111111111/111111111111111111",
       "probes": {
         "noAuthorization": "capture",
         "wrongBearer": "capture",

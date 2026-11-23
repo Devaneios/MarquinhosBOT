@@ -13,30 +13,6 @@ export interface UserLevel {
   last_xp_gain: number | null;
 }
 
-export interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
-  icon: string;
-  condition: string | null;
-  reward_xp: number;
-}
-
-export interface UserAchievement {
-  user_id: string;
-  guild_id: string;
-  achievement_id: string;
-  unlocked_at: number;
-  name: string;
-  description: string;
-  category: string;
-  rarity: Achievement['rarity'];
-  icon: string;
-  reward_xp: number;
-}
-
 export interface UserStats {
   user_id: string;
   guild_id: string;
@@ -52,7 +28,6 @@ export interface AddXpResult {
   onCooldown: boolean;
   leveledUp: boolean;
   newLevel?: number;
-  unlockedAchievements: string[];
 }
 
 export interface GameResultInput {

@@ -8,11 +8,7 @@ import {
 } from 'common/decorators/contract-input.decorator';
 import { OnRouteError } from 'common/decorators/on-route-error.decorator';
 import { GamificationService } from 'modules/gamification/gamification.service';
-import type {
-  AddXpResult,
-  UserAchievement,
-  UserLevel,
-} from 'modules/gamification/types';
+import type { AddXpResult, UserLevel } from 'modules/gamification/types';
 
 // Transform helpers — convert snake_case DB rows to camelCase for bot/web consumers
 function formatLevel(row: UserLevel) {
@@ -26,28 +22,12 @@ function formatLevel(row: UserLevel) {
   };
 }
 
-function formatAchievement(row: UserAchievement) {
-  return {
-    userId: row.user_id,
-    guildId: row.guild_id,
-    achievementId: row.achievement_id,
-    unlockedAt: new Date(row.unlocked_at),
-    name: row.name,
-    description: row.description,
-    category: row.category,
-    rarity: row.rarity,
-    icon: row.icon,
-    rewardXp: row.reward_xp,
-  };
-}
-
 function formatAddXpResult(result: AddXpResult) {
   return {
     userLevel: formatLevel(result.userLevel),
     onCooldown: result.onCooldown,
     leveledUp: result.leveledUp,
     newLevel: result.newLevel,
-    unlockedAchievements: result.unlockedAchievements,
   };
 }
 
@@ -116,74 +96,6 @@ export class GamificationController {
     const limit = Math.min(input.query.limit, 25);
     const rows = await this.service.getLeaderboard(guildId, limit);
     return { data: rows.map(formatLevel) };
-  }
-
-  @Post('achievement/unlock')
-  @HttpCode(200)
-  @OnRouteError({
-    event: 'gamification.controller.unlock_achievement_failed',
-    message: 'Unknown Error',
-  })
-  async unlockAchievement(
-    @ContractInput(
-      contract.unlockAchievement,
-      'userId, guildId, and achievementId are required',
-    )
-    input: ContractInputValue<typeof contract.unlockAchievement>,
-  ): Promise<ContractResponseInput<typeof contract.unlockAchievement>> {
-    const { userId, guildId, achievementId } = input.body;
-    const unlocked = await this.service.unlockAchievement(
-      userId,
-      guildId,
-      achievementId,
-    );
-    return {
-      data: { unlocked },
-      message: unlocked ? 'Achievement unlocked' : 'Already unlocked',
-    };
-  }
-
-  @Get('achievements/:userId/:guildId')
-  @OnRouteError({
-    event: 'gamification.controller.get_user_achievements_failed',
-    message: 'Unknown Error',
-  })
-  async getUserAchievements(
-    @ContractInput(
-      contract.getUserAchievements,
-      'userId and guildId are required',
-    )
-    input: ContractInputValue<typeof contract.getUserAchievements>,
-  ): Promise<ContractResponseInput<typeof contract.getUserAchievements>> {
-    const { userId, guildId } = input.params;
-    const rows = await this.service.getUserAchievements(userId, guildId);
-    return { data: rows.map(formatAchievement) };
-  }
-
-  @Get('achievements')
-  @OnRouteError({
-    event: 'gamification.controller.get_all_achievements_failed',
-    message: 'Unknown Error',
-  })
-  async getAllAchievements(): Promise<
-    ContractResponseInput<typeof contract.getAllAchievements>
-  > {
-    const data = await this.service.getAllAchievements();
-    return { data };
-  }
-
-  @Post('achievements')
-  @HttpCode(201)
-  @OnRouteError({
-    event: 'gamification.controller.create_achievement_failed',
-    message: 'Unknown Error',
-  })
-  async createAchievement(
-    @ContractInput(contract.createAchievement, 'Invalid achievement')
-    input: ContractInputValue<typeof contract.createAchievement>,
-  ): Promise<ContractResponseInput<typeof contract.createAchievement>> {
-    const data = await this.service.createAchievement(input.body);
-    return { data, message: 'Achievement created' };
   }
 
   @Post('achievements/initialize')

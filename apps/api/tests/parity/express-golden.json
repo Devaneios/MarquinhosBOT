@@ -1,7 +1,7 @@
 {
   "generatedFrom": "Express baseline",
-  "routeCount": 97,
-  "capturedCases": 201,
+  "routeCount": 90,
+  "capturedCases": 187,
   "skippedProbes": [
     {
       "id": "GET /api/wordle/gallery/:guildId :: wrong bearer",
@@ -1510,49 +1510,49 @@
           "content-type": "application/json; charset=utf-8"
         },
         "body": {
-          "title": "Política de Privacidade para MarquinhosBOT",
+          "title": "Pol\u00edtica de Privacidade para MarquinhosBOT",
           "date": "Atualizado 19 de agosto de 2023",
-          "body": "MarquinhosBOT (\"nós,\" \"nos,\" ou \"nosso\") está comprometido(a) em proteger a sua privacidade. Esta Política de Privacidade descreve como coletamos, usamos e protegemos as suas informações pessoais em relação ao uso do nosso bot no Discord.",
+          "body": "MarquinhosBOT (\"n\u00f3s,\" \"nos,\" ou \"nosso\") est\u00e1 comprometido(a) em proteger a sua privacidade. Esta Pol\u00edtica de Privacidade descreve como coletamos, usamos e protegemos as suas informa\u00e7\u00f5es pessoais em rela\u00e7\u00e3o ao uso do nosso bot no Discord.",
           "sections": [
             {
               "title": "1. Coleta de Dados",
-              "body": "Coletamos as seguintes informações com o propósito de fornecer os nossos serviços: - Seu ID de usuário no Discord - Seu token de usuário no Discord (com o escopo \"identity\" apenas) - Seu token do Last.fm"
+              "body": "Coletamos as seguintes informa\u00e7\u00f5es com o prop\u00f3sito de fornecer os nossos servi\u00e7os: - Seu ID de usu\u00e1rio no Discord - Seu token de usu\u00e1rio no Discord (com o escopo \"identity\" apenas) - Seu token do Last.fm"
             },
             {
-              "title": "2. Propósito da Coleta de Dados",
-              "body": "Coletamos essas informações exclusivamente com o propósito de integrar MarquinhosBOT ao Last.fm. Essa integração nos permite registrar músicas tocadas por outro bot na sua conta do Last.fm."
+              "title": "2. Prop\u00f3sito da Coleta de Dados",
+              "body": "Coletamos essas informa\u00e7\u00f5es exclusivamente com o prop\u00f3sito de integrar MarquinhosBOT ao Last.fm. Essa integra\u00e7\u00e3o nos permite registrar m\u00fasicas tocadas por outro bot na sua conta do Last.fm."
             },
             {
               "title": "3. Armazenamento de Dados",
-              "body": "Os seus dados são armazenados de forma segura em nosso servidor pessoal. Esses dados só podem ser acessados por meio dos comandos do bot. A API pode criar ou excluir dados, mas não pode acessar as informações."
+              "body": "Os seus dados s\u00e3o armazenados de forma segura em nosso servidor pessoal. Esses dados s\u00f3 podem ser acessados por meio dos comandos do bot. A API pode criar ou excluir dados, mas n\u00e3o pode acessar as informa\u00e7\u00f5es."
             },
             {
               "title": "4. Compartilhamento de Dados",
-              "body": "Não compartilhamos as suas informações pessoais com terceiros. Seus dados são usados exclusivamente para habilitar a integração com o Last.fm."
+              "body": "N\u00e3o compartilhamos as suas informa\u00e7\u00f5es pessoais com terceiros. Seus dados s\u00e3o usados exclusivamente para habilitar a integra\u00e7\u00e3o com o Last.fm."
             },
             {
-              "title": "5. Direitos do Usuário",
-              "body": "Você não tem acesso direto aos seus dados por meio do bot, por questões de segurança. No entanto, você pode usar a interface web fornecida para excluir todas as suas informações armazenadas a qualquer momento."
+              "title": "5. Direitos do Usu\u00e1rio",
+              "body": "Voc\u00ea n\u00e3o tem acesso direto aos seus dados por meio do bot, por quest\u00f5es de seguran\u00e7a. No entanto, voc\u00ea pode usar a interface web fornecida para excluir todas as suas informa\u00e7\u00f5es armazenadas a qualquer momento."
             },
             {
-              "title": "6. Medidas de Segurança",
-              "body": "Tomamos medidas para garantir a segurança dos seus dados, incluindo a restrição de acesso ao banco de dados apenas ao bot. A API não pode acessar os dados armazenados."
+              "title": "6. Medidas de Seguran\u00e7a",
+              "body": "Tomamos medidas para garantir a seguran\u00e7a dos seus dados, incluindo a restri\u00e7\u00e3o de acesso ao banco de dados apenas ao bot. A API n\u00e3o pode acessar os dados armazenados."
             },
             {
               "title": "7. Conformidade Legal",
-              "body": "Não coletamos dados que exijam conformidade legal específica."
+              "body": "N\u00e3o coletamos dados que exijam conformidade legal espec\u00edfica."
             },
             {
-              "title": "8. Restrições de Idade",
-              "body": "Nosso serviço está sujeito às restrições de idade definidas pelo Discord. Não coletamos informações relacionadas à idade."
+              "title": "8. Restri\u00e7\u00f5es de Idade",
+              "body": "Nosso servi\u00e7o est\u00e1 sujeito \u00e0s restri\u00e7\u00f5es de idade definidas pelo Discord. N\u00e3o coletamos informa\u00e7\u00f5es relacionadas \u00e0 idade."
             },
             {
-              "title": "9. Atualizações da Política",
-              "body": "Comunicaremos as atualizações a esta Política de Privacidade por meio de mensagens diretas do bot, incluindo um link para a página da Política de Privacidade."
+              "title": "9. Atualiza\u00e7\u00f5es da Pol\u00edtica",
+              "body": "Comunicaremos as atualiza\u00e7\u00f5es a esta Pol\u00edtica de Privacidade por meio de mensagens diretas do bot, incluindo um link para a p\u00e1gina da Pol\u00edtica de Privacidade."
             },
             {
-              "title": "Informações de Contato",
-              "body": "Se tiver alguma dúvida ou preocupação sobre a nossa Política de Privacidade, você pode entrar em contato conosco através do nosso servidor no Discord: https://discord.gg/RKWBudnFe"
+              "title": "Informa\u00e7\u00f5es de Contato",
+              "body": "Se tiver alguma d\u00favida ou preocupa\u00e7\u00e3o sobre a nossa Pol\u00edtica de Privacidade, voc\u00ea pode entrar em contato conosco atrav\u00e9s do nosso servidor no Discord: https://discord.gg/RKWBudnFe"
             }
           ]
         }
@@ -2140,160 +2140,6 @@
       }
     },
     {
-      "id": "POST /api/gamification/achievement/unlock :: no Authorization",
-      "request": {
-        "method": "POST",
-        "path": "/api/gamification/achievement/unlock",
-        "headers": {
-          "content-type": "application/json"
-        },
-        "body": "{}"
-      },
-      "response": {
-        "status": 401,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "message": "Token not provided"
-        }
-      }
-    },
-    {
-      "id": "POST /api/gamification/achievement/unlock :: wrong bearer",
-      "request": {
-        "method": "POST",
-        "path": "/api/gamification/achievement/unlock",
-        "headers": {
-          "authorization": "Bearer wrong-token",
-          "content-type": "application/json"
-        },
-        "body": "{}"
-      },
-      "response": {
-        "status": 401,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "message": "Token not authorized"
-        }
-      }
-    },
-    {
-      "id": "GET /api/gamification/achievements/:userId/:guildId :: no Authorization",
-      "request": {
-        "method": "GET",
-        "path": "/api/gamification/achievements/111111111111111111/111111111111111111",
-        "headers": {}
-      },
-      "response": {
-        "status": 401,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "message": "Token not provided"
-        }
-      }
-    },
-    {
-      "id": "GET /api/gamification/achievements/:userId/:guildId :: wrong bearer",
-      "request": {
-        "method": "GET",
-        "path": "/api/gamification/achievements/111111111111111111/111111111111111111",
-        "headers": {
-          "authorization": "Bearer wrong-token"
-        }
-      },
-      "response": {
-        "status": 401,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "message": "Token not authorized"
-        }
-      }
-    },
-    {
-      "id": "GET /api/gamification/achievements :: no Authorization",
-      "request": {
-        "method": "GET",
-        "path": "/api/gamification/achievements",
-        "headers": {}
-      },
-      "response": {
-        "status": 401,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "message": "Token not provided"
-        }
-      }
-    },
-    {
-      "id": "GET /api/gamification/achievements :: wrong bearer",
-      "request": {
-        "method": "GET",
-        "path": "/api/gamification/achievements",
-        "headers": {
-          "authorization": "Bearer wrong-token"
-        }
-      },
-      "response": {
-        "status": 401,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "message": "Token not authorized"
-        }
-      }
-    },
-    {
-      "id": "POST /api/gamification/achievements :: no Authorization",
-      "request": {
-        "method": "POST",
-        "path": "/api/gamification/achievements",
-        "headers": {
-          "content-type": "application/json"
-        },
-        "body": "{}"
-      },
-      "response": {
-        "status": 401,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "message": "Token not provided"
-        }
-      }
-    },
-    {
-      "id": "POST /api/gamification/achievements :: wrong bearer",
-      "request": {
-        "method": "POST",
-        "path": "/api/gamification/achievements",
-        "headers": {
-          "authorization": "Bearer wrong-token",
-          "content-type": "application/json"
-        },
-        "body": "{}"
-      },
-      "response": {
-        "status": 401,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "message": "Token not authorized"
-        }
-      }
-    },
-    {
       "id": "POST /api/gamification/achievements/initialize :: no Authorization",
       "request": {
         "method": "POST",
@@ -2433,119 +2279,6 @@
       "request": {
         "method": "GET",
         "path": "/api/gamification/game-leaderboard/111111111111111111/wordle",
-        "headers": {
-          "authorization": "Bearer wrong-token"
-        }
-      },
-      "response": {
-        "status": 401,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "message": "Token not authorized"
-        }
-      }
-    },
-    {
-      "id": "POST /api/evolutive-achievements/evolve/:userId/:guildId :: no Authorization",
-      "request": {
-        "method": "POST",
-        "path": "/api/evolutive-achievements/evolve/111111111111111111/111111111111111111",
-        "headers": {
-          "content-type": "application/json"
-        },
-        "body": "{}"
-      },
-      "response": {
-        "status": 401,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "message": "Token not provided"
-        }
-      }
-    },
-    {
-      "id": "POST /api/evolutive-achievements/evolve/:userId/:guildId :: wrong bearer",
-      "request": {
-        "method": "POST",
-        "path": "/api/evolutive-achievements/evolve/111111111111111111/111111111111111111",
-        "headers": {
-          "authorization": "Bearer wrong-token",
-          "content-type": "application/json"
-        },
-        "body": "{}"
-      },
-      "response": {
-        "status": 401,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "message": "Token not authorized"
-        }
-      }
-    },
-    {
-      "id": "GET /api/evolutive-achievements/:userId/:guildId :: no Authorization",
-      "request": {
-        "method": "GET",
-        "path": "/api/evolutive-achievements/111111111111111111/111111111111111111",
-        "headers": {}
-      },
-      "response": {
-        "status": 401,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "message": "Token not provided"
-        }
-      }
-    },
-    {
-      "id": "GET /api/evolutive-achievements/:userId/:guildId :: wrong bearer",
-      "request": {
-        "method": "GET",
-        "path": "/api/evolutive-achievements/111111111111111111/111111111111111111",
-        "headers": {
-          "authorization": "Bearer wrong-token"
-        }
-      },
-      "response": {
-        "status": 401,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "message": "Token not authorized"
-        }
-      }
-    },
-    {
-      "id": "GET /api/evolutive-achievements/timeline/:userId/:guildId :: no Authorization",
-      "request": {
-        "method": "GET",
-        "path": "/api/evolutive-achievements/timeline/111111111111111111/111111111111111111",
-        "headers": {}
-      },
-      "response": {
-        "status": 401,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "message": "Token not provided"
-        }
-      }
-    },
-    {
-      "id": "GET /api/evolutive-achievements/timeline/:userId/:guildId :: wrong bearer",
-      "request": {
-        "method": "GET",
-        "path": "/api/evolutive-achievements/timeline/111111111111111111/111111111111111111",
         "headers": {
           "authorization": "Bearer wrong-token"
         }
@@ -4132,49 +3865,49 @@
           "content-type": "application/json; charset=utf-8"
         },
         "body": {
-          "title": "Política de Privacidade para MarquinhosBOT",
+          "title": "Pol\u00edtica de Privacidade para MarquinhosBOT",
           "date": "Atualizado 19 de agosto de 2023",
-          "body": "MarquinhosBOT (\"nós,\" \"nos,\" ou \"nosso\") está comprometido(a) em proteger a sua privacidade. Esta Política de Privacidade descreve como coletamos, usamos e protegemos as suas informações pessoais em relação ao uso do nosso bot no Discord.",
+          "body": "MarquinhosBOT (\"n\u00f3s,\" \"nos,\" ou \"nosso\") est\u00e1 comprometido(a) em proteger a sua privacidade. Esta Pol\u00edtica de Privacidade descreve como coletamos, usamos e protegemos as suas informa\u00e7\u00f5es pessoais em rela\u00e7\u00e3o ao uso do nosso bot no Discord.",
           "sections": [
             {
               "title": "1. Coleta de Dados",
-              "body": "Coletamos as seguintes informações com o propósito de fornecer os nossos serviços: - Seu ID de usuário no Discord - Seu token de usuário no Discord (com o escopo \"identity\" apenas) - Seu token do Last.fm"
+              "body": "Coletamos as seguintes informa\u00e7\u00f5es com o prop\u00f3sito de fornecer os nossos servi\u00e7os: - Seu ID de usu\u00e1rio no Discord - Seu token de usu\u00e1rio no Discord (com o escopo \"identity\" apenas) - Seu token do Last.fm"
             },
             {
-              "title": "2. Propósito da Coleta de Dados",
-              "body": "Coletamos essas informações exclusivamente com o propósito de integrar MarquinhosBOT ao Last.fm. Essa integração nos permite registrar músicas tocadas por outro bot na sua conta do Last.fm."
+              "title": "2. Prop\u00f3sito da Coleta de Dados",
+              "body": "Coletamos essas informa\u00e7\u00f5es exclusivamente com o prop\u00f3sito de integrar MarquinhosBOT ao Last.fm. Essa integra\u00e7\u00e3o nos permite registrar m\u00fasicas tocadas por outro bot na sua conta do Last.fm."
             },
             {
               "title": "3. Armazenamento de Dados",
-              "body": "Os seus dados são armazenados de forma segura em nosso servidor pessoal. Esses dados só podem ser acessados por meio dos comandos do bot. A API pode criar ou excluir dados, mas não pode acessar as informações."
+              "body": "Os seus dados s\u00e3o armazenados de forma segura em nosso servidor pessoal. Esses dados s\u00f3 podem ser acessados por meio dos comandos do bot. A API pode criar ou excluir dados, mas n\u00e3o pode acessar as informa\u00e7\u00f5es."
             },
             {
               "title": "4. Compartilhamento de Dados",
-              "body": "Não compartilhamos as suas informações pessoais com terceiros. Seus dados são usados exclusivamente para habilitar a integração com o Last.fm."
+              "body": "N\u00e3o compartilhamos as suas informa\u00e7\u00f5es pessoais com terceiros. Seus dados s\u00e3o usados exclusivamente para habilitar a integra\u00e7\u00e3o com o Last.fm."
             },
             {
-              "title": "5. Direitos do Usuário",
-              "body": "Você não tem acesso direto aos seus dados por meio do bot, por questões de segurança. No entanto, você pode usar a interface web fornecida para excluir todas as suas informações armazenadas a qualquer momento."
+              "title": "5. Direitos do Usu\u00e1rio",
+              "body": "Voc\u00ea n\u00e3o tem acesso direto aos seus dados por meio do bot, por quest\u00f5es de seguran\u00e7a. No entanto, voc\u00ea pode usar a interface web fornecida para excluir todas as suas informa\u00e7\u00f5es armazenadas a qualquer momento."
             },
             {
-              "title": "6. Medidas de Segurança",
-              "body": "Tomamos medidas para garantir a segurança dos seus dados, incluindo a restrição de acesso ao banco de dados apenas ao bot. A API não pode acessar os dados armazenados."
+              "title": "6. Medidas de Seguran\u00e7a",
+              "body": "Tomamos medidas para garantir a seguran\u00e7a dos seus dados, incluindo a restri\u00e7\u00e3o de acesso ao banco de dados apenas ao bot. A API n\u00e3o pode acessar os dados armazenados."
             },
             {
               "title": "7. Conformidade Legal",
-              "body": "Não coletamos dados que exijam conformidade legal específica."
+              "body": "N\u00e3o coletamos dados que exijam conformidade legal espec\u00edfica."
             },
             {
-              "title": "8. Restrições de Idade",
-              "body": "Nosso serviço está sujeito às restrições de idade definidas pelo Discord. Não coletamos informações relacionadas à idade."
+              "title": "8. Restri\u00e7\u00f5es de Idade",
+              "body": "Nosso servi\u00e7o est\u00e1 sujeito \u00e0s restri\u00e7\u00f5es de idade definidas pelo Discord. N\u00e3o coletamos informa\u00e7\u00f5es relacionadas \u00e0 idade."
             },
             {
-              "title": "9. Atualizações da Política",
-              "body": "Comunicaremos as atualizações a esta Política de Privacidade por meio de mensagens diretas do bot, incluindo um link para a página da Política de Privacidade."
+              "title": "9. Atualiza\u00e7\u00f5es da Pol\u00edtica",
+              "body": "Comunicaremos as atualiza\u00e7\u00f5es a esta Pol\u00edtica de Privacidade por meio de mensagens diretas do bot, incluindo um link para a p\u00e1gina da Pol\u00edtica de Privacidade."
             },
             {
-              "title": "Informações de Contato",
-              "body": "Se tiver alguma dúvida ou preocupação sobre a nossa Política de Privacidade, você pode entrar em contato conosco através do nosso servidor no Discord: https://discord.gg/RKWBudnFe"
+              "title": "Informa\u00e7\u00f5es de Contato",
+              "body": "Se tiver alguma d\u00favida ou preocupa\u00e7\u00e3o sobre a nossa Pol\u00edtica de Privacidade, voc\u00ea pode entrar em contato conosco atrav\u00e9s do nosso servidor no Discord: https://discord.gg/RKWBudnFe"
             }
           ]
         }

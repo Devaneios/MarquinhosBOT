@@ -25,43 +25,11 @@ export const userLevelSchema = z.object({
 });
 export type UserLevel = z.output<typeof userLevelSchema>;
 
-export const userAchievementSchema = z.object({
-  userId: z.string(),
-  guildId: z.string(),
-  achievementId: z.string(),
-  unlockedAt: isoDate,
-  name: z.string(),
-  description: z.string(),
-  category: z.string(),
-  rarity: achievementRaritySchema,
-  icon: z.string(),
-  rewardXp: z.number(),
-});
-export type UserAchievement = z.output<typeof userAchievementSchema>;
-
-export const achievementConditionSchema = z.object({
-  type: z.string(),
-  threshold: z.number(),
-});
-export type AchievementCondition = z.output<typeof achievementConditionSchema>;
-
-export const achievementSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string(),
-  category: z.string(),
-  rarity: achievementRaritySchema,
-  icon: z.string(),
-  condition: z.string().nullable(),
-  reward_xp: z.number(),
-});
-
 export const addXpResultSchema = z.object({
   userLevel: userLevelSchema,
   onCooldown: z.boolean(),
   leveledUp: z.boolean(),
   newLevel: z.number().optional(),
-  unlockedAchievements: z.array(z.string()),
 });
 export type AddXpResult = z.output<typeof addXpResultSchema>;
 
@@ -134,46 +102,6 @@ export const getLeaderboard = defineContract({
     limit: z.coerce.number().int().min(1).catch(10),
   }),
   response: envelope(z.array(userLevelSchema)),
-});
-
-export const unlockAchievement = defineContract({
-  method: 'POST',
-  path: '/api/gamification/achievement/unlock',
-  body: z.object({
-    userId: requiredString,
-    guildId: requiredString,
-    achievementId: requiredString,
-  }),
-  response: envelope(z.object({ unlocked: z.boolean() })),
-});
-
-export const getUserAchievements = defineContract({
-  method: 'GET',
-  path: '/api/gamification/achievements/:userId/:guildId',
-  params: userGuildParams,
-  response: envelope(z.array(userAchievementSchema)),
-});
-
-export const getAllAchievements = defineContract({
-  method: 'GET',
-  path: '/api/gamification/achievements',
-  response: envelope(z.array(achievementSchema)),
-});
-
-export const createAchievement = defineContract({
-  method: 'POST',
-  path: '/api/gamification/achievements',
-  body: z.object({
-    id: requiredString,
-    name: requiredString,
-    description: z.string(),
-    category: requiredString,
-    rarity: achievementRaritySchema,
-    icon: z.string(),
-    condition: achievementConditionSchema,
-    reward_xp: z.number().int().min(0),
-  }),
-  response: envelope(achievementSchema),
 });
 
 export const initializeDefaults = defineContract({

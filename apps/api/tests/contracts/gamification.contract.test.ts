@@ -5,8 +5,6 @@ import { startNestContractServer } from '../helpers/contractServer';
 const { callContract } = await import('@marquinhos/api-client/bot');
 const gamification =
   await import('@marquinhos/contracts/http/routes/gamification');
-const evolutive =
-  await import('@marquinhos/contracts/http/routes/evolutiveAchievements');
 
 const guildId = `contract-${randomUUID()}`;
 
@@ -36,6 +34,9 @@ describe('gamification contracts', () => {
       xp_amount: 5,
       cooldown_ms: 60_000,
     });
+    expect(
+      response.data.some(({ event_type }) => event_type === 'achievement'),
+    ).toBe(false);
   });
 
   it('adds xp and reads the level back with dates revived', async () => {
@@ -61,89 +62,6 @@ describe('gamification contracts', () => {
     );
 
     expect(response.data.map((entry) => entry.userId)).toEqual(['u1']);
-  });
-
-  it('unlocks an achievement once and lists it with its rarity', async () => {
-    await callContract(server.http, gamification.createAchievement, {
-      body: {
-        id: 'contract_unlock',
-        name: 'Contract unlock',
-        description: 'Created for the unlock contract.',
-        category: 'test',
-        rarity: 'common',
-        icon: '🧪',
-        condition: { type: 'commands', threshold: 1 },
-        reward_xp: 0,
-      },
-    });
-    const first = await callContract(
-      server.http,
-      gamification.unlockAchievement,
-      { body: { userId: 'u2', guildId, achievementId: 'contract_unlock' } },
-    );
-    const second = await callContract(
-      server.http,
-      gamification.unlockAchievement,
-      { body: { userId: 'u2', guildId, achievementId: 'contract_unlock' } },
-    );
-    const listed = await callContract(
-      server.http,
-      gamification.getUserAchievements,
-      { params: { userId: 'u2', guildId } },
-    );
-
-    expect(first.data).toEqual({ unlocked: true });
-    expect(second.data).toEqual({ unlocked: false });
-    const achievement = listed.data.find(
-      (entry) => entry.achievementId === 'contract_unlock',
-    );
-    expect(achievement?.unlockedAt).toBeInstanceOf(Date);
-    expect(achievement?.rarity).toBe('common');
-  });
-
-  it('lists and creates achievements', async () => {
-    const created = await callContract(
-      server.http,
-      gamification.createAchievement,
-      {
-        body: {
-          id: 'contract_test',
-          name: 'Contract',
-          description: 'Created by a contract test',
-          category: 'test',
-          rarity: 'epic',
-          icon: '🧪',
-          condition: { type: 'commands', threshold: 999 },
-          reward_xp: 1,
-        },
-      },
-    );
-    const all = await callContract(
-      server.http,
-      gamification.getAllAchievements,
-      {},
-    );
-    const wordle = all.data.find(
-      (achievement) => achievement.category === 'wordle',
-    );
-
-    expect(created.data.id).toBe('contract_test');
-    expect(created.data.condition).toBe(
-      JSON.stringify({ type: 'commands', threshold: 999 }),
-    );
-    expect(all.data.map((a) => a.id)).toContain('contract_test');
-    expect(wordle?.condition).toBeNull();
-    expect(
-      gamification.createAchievement.body?.safeParse({
-        id: 'missing_condition',
-        name: 'Missing condition',
-        description: '',
-        category: 'test',
-        rarity: 'common',
-        icon: '🧪',
-        reward_xp: 0,
-      }).success,
-    ).toBe(false);
   });
 
   it('records a game result and reports it in stats and leaderboard', async () => {
@@ -177,29 +95,5 @@ describe('gamification contracts', () => {
     expect(board.data.map((entry) => [entry.user_id, entry.wins])).toEqual([
       ['u3', 1],
     ]);
-  });
-});
-
-describe('evolutive achievement contracts', () => {
-  it('evolves and lists evolutive achievements with a timeline', async () => {
-    const evolved = await callContract(server.http, evolutive.checkAndEvolve, {
-      params: { userId: 'u1', guildId },
-    });
-    const listed = await callContract(
-      server.http,
-      evolutive.getUserEvolutiveAchievements,
-      { params: { userId: 'u1', guildId } },
-    );
-    const timeline = await callContract(
-      server.http,
-      evolutive.getEvolutionTimeline,
-      { params: { userId: 'u1', guildId } },
-    );
-
-    expect(Array.isArray(evolved.data)).toBe(true);
-    for (const achievement of listed.data) {
-      expect(achievement.unlockedAt).toBeInstanceOf(Date);
-    }
-    expect(timeline.data.length).toBe(listed.data.length);
   });
 });

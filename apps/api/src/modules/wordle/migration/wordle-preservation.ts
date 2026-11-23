@@ -14,7 +14,6 @@ const SOURCE_TABLES = [
   'wordle_guild_config',
   'achievements',
   'user_achievements',
-  'evolutive_achievements',
   'user_levels',
 ] as const;
 

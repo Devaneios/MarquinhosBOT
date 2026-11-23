@@ -58,11 +58,11 @@ accepted-guess events, or board evidence. Current and best lifetime statistics
 are exposed by `WordleHistoryService` in
 [`progression/wordle-history.service.ts`](../apps/api/src/modules/wordle/progression/wordle-history.service.ts).
 
-Achievements keep their original unlock timestamp and definition. Retired IDs
-remain visible as historical unlocks and are not awarded XP again. Current
-answer-, timing-, and drawing-based achievements still require eligible
-evidence-backed boards; aggregate legacy totals only advance lifetime counters
-and streaks.
+Achievements in the current catalog keep their original unlock timestamp
+and use the current catalog definition. API startup removes definitions and
+unlocks outside this catalog. Current answer-, timing-, and drawing-based
+achievements still require eligible evidence-backed boards. Aggregate legacy
+totals only advance lifetime counters and streaks.
 
 ## Cutover receipt and startup
 

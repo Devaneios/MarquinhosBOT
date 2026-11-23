@@ -200,22 +200,6 @@ export class MarquinhosApiService {
     });
   }
 
-  async getUserAchievements(userId: string, guildId: string) {
-    return callContract(this.client, gamification.getUserAchievements, {
-      params: { userId, guildId },
-    });
-  }
-
-  async unlockAchievement(
-    userId: string,
-    guildId: string,
-    achievementId: string,
-  ) {
-    return callContract(this.client, gamification.unlockAchievement, {
-      body: { userId, guildId, achievementId },
-    });
-  }
-
   async recordActivityDeepLink(userId: string, guildId: string, game: GameId) {
     return callContract(this.client, activity.recordDeepLink, {
       body: { userId, guildId, game },

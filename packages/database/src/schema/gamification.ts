@@ -140,20 +140,3 @@ export const userGameResults = pgTable(
     index('idx_user_game_results_user_game').on(t.user_id, t.game_result_id),
   ],
 );
-
-export const evolutiveAchievements = pgTable(
-  'evolutive_achievements',
-  {
-    user_id: text('user_id').notNull(),
-    guild_id: text('guild_id').notNull(),
-    base_id: text('base_id').notNull(),
-    current_rarity: text('current_rarity')
-      .$type<'common' | 'rare' | 'epic' | 'legendary' | 'mythical'>()
-      .notNull()
-      .default('common'),
-    unlocked_at: bigint('unlocked_at', { mode: 'number' }).notNull(),
-    last_evolved: bigint('last_evolved', { mode: 'number' }),
-    evolution_log: text('evolution_log').notNull().default('[]'),
-  },
-  (t) => [primaryKey({ columns: [t.user_id, t.guild_id, t.base_id] })],
-);

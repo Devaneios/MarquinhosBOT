@@ -1,90 +1,12 @@
-import {
-  achievementConditionSchema,
-  achievementRaritySchema,
-  type AchievementCondition,
-} from '@marquinhos/contracts/http/routes/gamification';
+import { achievementRaritySchema } from '@marquinhos/contracts/http/routes/gamification';
 import type { Db, DbExecutor } from '@marquinhos/database/client';
-import {
-  achievements,
-  userAchievements,
-  userLevels,
-  userStats,
-} from '@marquinhos/database/schema';
+import { achievements, userAchievements } from '@marquinhos/database/schema';
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { achievementXpForRarity } from '@marquinhos/domain/games/wordle/achievements/rewards';
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
-import {
-  and,
-  asc,
-  count,
-  desc,
-  eq,
-  inArray,
-  isNull,
-  ne,
-  notInArray,
-  sql,
-} from 'drizzle-orm';
+import { and, inArray, isNull, notInArray, sql } from 'drizzle-orm';
 import { LevelingService } from 'modules/gamification/leveling.service';
-import type { Achievement, UserAchievement } from 'modules/gamification/types';
-
-const DEFAULT_ACHIEVEMENTS = [
-  {
-    id: 'first_command',
-    name: 'Primeiro Passo',
-    description: 'Execute seu primeiro comando',
-    category: 'commands',
-    rarity: 'common',
-    icon: '👋',
-    condition: { type: 'commands', threshold: 1 },
-  },
-  {
-    id: 'commands_10',
-    name: 'Iniciante',
-    description: 'Execute 10 comandos',
-    category: 'commands',
-    rarity: 'common',
-    icon: '⚡',
-    condition: { type: 'commands', threshold: 10 },
-  },
-  {
-    id: 'commands_100',
-    name: 'Veterano',
-    description: 'Execute 100 comandos',
-    category: 'commands',
-    rarity: 'rare',
-    icon: '🏆',
-    condition: { type: 'commands', threshold: 100 },
-  },
-  {
-    id: 'level_10',
-    name: 'Escalador',
-    description: 'Alcance o nível 10',
-    category: 'levels',
-    rarity: 'rare',
-    icon: '🧗',
-    condition: { type: 'level', threshold: 10 },
-  },
-  {
-    id: 'music_lover',
-    name: 'Amante da Música',
-    description: 'Registre 50 scrobbles',
-    category: 'music',
-    rarity: 'epic',
-    icon: '🎵',
-    condition: { type: 'scrobbles', threshold: 50 },
-  },
-  {
-    id: 'scrobbles_100',
-    name: 'DJ Marquinhos',
-    description: 'Registre 100 scrobbles',
-    category: 'music',
-    rarity: 'epic',
-    icon: '📊',
-    condition: { type: 'scrobbles', threshold: 100 },
-  },
-];
 
 @Injectable()
 export class AchievementService {
@@ -94,40 +16,15 @@ export class AchievementService {
   ) {}
 
   async initializeDefaults(): Promise<void> {
-    // Generic defaults are seeded once; after that the rows are the operator's.
-    const [generic] = await this.database
-      .select({ count: count() })
-      .from(achievements)
-      .where(ne(achievements.category, 'wordle'));
-    if (!generic?.count) {
-      await this.database
-        .insert(achievements)
-        .values(
-          DEFAULT_ACHIEVEMENTS.map((a) => ({
-            ...a,
-            condition: JSON.stringify(a.condition),
-          })),
-        )
-        .onConflictDoNothing();
-    }
-    // The catalog is authoritative for its own rows (condition is null): those
-    // it no longer lists are archived, keeping their unlocks, and come back if
-    // the ID returns.
+    // The handcrafted Wordle catalog is the complete achievement set.
     await this.database.transaction(async (tx) => {
+      const catalogIds = WORDLE_ACHIEVEMENT_CATALOG.map(({ id }) => id);
       await tx
-        .update(achievements)
-        .set({ archived_at: Date.now() })
-        .where(
-          and(
-            eq(achievements.category, 'wordle'),
-            isNull(achievements.condition),
-            isNull(achievements.archived_at),
-            notInArray(
-              achievements.id,
-              WORDLE_ACHIEVEMENT_CATALOG.map(({ id }) => id),
-            ),
-          ),
-        );
+        .delete(userAchievements)
+        .where(notInArray(userAchievements.achievement_id, catalogIds));
+      await tx
+        .delete(achievements)
+        .where(notInArray(achievements.id, catalogIds));
       const catalogRows = WORDLE_ACHIEVEMENT_CATALOG.map((definition) => ({
         id: definition.id,
         name: definition.name,
@@ -147,115 +44,15 @@ export class AchievementService {
           set: {
             name: sql`excluded.name`,
             description: sql`excluded.description`,
+            category: sql`excluded.category`,
             rarity: sql`excluded.rarity`,
             icon: sql`excluded.icon`,
+            condition: sql`excluded.condition`,
             reward_xp: sql`excluded.reward_xp`,
             archived_at: null,
           },
-          setWhere: and(
-            eq(achievements.category, 'wordle'),
-            isNull(achievements.condition),
-          ),
         });
     });
-  }
-
-  async checkAndAwardAchievements(
-    userId: string,
-    guildId: string,
-    exec: DbExecutor = this.database,
-  ): Promise<string[]> {
-    const [stats] = await exec
-      .select()
-      .from(userStats)
-      .where(
-        and(eq(userStats.user_id, userId), eq(userStats.guild_id, guildId)),
-      );
-
-    const [userLevel] = await exec
-      .select()
-      .from(userLevels)
-      .where(
-        and(eq(userLevels.user_id, userId), eq(userLevels.guild_id, guildId)),
-      );
-
-    if (!stats || !userLevel) return [];
-
-    const candidates = (await exec
-      .select({
-        id: achievements.id,
-        name: achievements.name,
-        description: achievements.description,
-        category: achievements.category,
-        rarity: achievements.rarity,
-        icon: achievements.icon,
-        condition: achievements.condition,
-        reward_xp: achievements.reward_xp,
-      })
-      .from(achievements)
-      .leftJoin(
-        userAchievements,
-        and(
-          eq(userAchievements.achievement_id, achievements.id),
-          eq(userAchievements.user_id, userId),
-          eq(userAchievements.guild_id, guildId),
-        ),
-      )
-      .where(
-        and(
-          isNull(userAchievements.achievement_id),
-          ne(achievements.category, 'wordle'),
-          isNull(achievements.archived_at),
-        ),
-      )) as Achievement[];
-
-    const unlocked: string[] = [];
-
-    for (const achievement of candidates) {
-      let condition: AchievementCondition;
-      try {
-        if (achievement.condition === null)
-          throw new Error('Generic achievement condition is missing');
-        condition = achievementConditionSchema.parse(
-          JSON.parse(achievement.condition),
-        );
-      } catch (e) {
-        console.error(
-          `[gamification] Malformed condition on achievement '${achievement.id}':`,
-          e,
-        );
-        continue;
-      }
-
-      let met = false;
-
-      switch (condition.type) {
-        case 'commands':
-          met = stats.total_commands >= condition.threshold;
-          break;
-        case 'scrobbles':
-          met = stats.total_scrobbles >= condition.threshold;
-          break;
-        case 'level':
-          met = userLevel.level >= condition.threshold;
-          break;
-        case 'games_won':
-          met = stats.games_won >= condition.threshold;
-          break;
-        case 'total_games':
-          met = stats.total_games >= condition.threshold;
-          break;
-      }
-
-      if (
-        met &&
-        (await this.unlockAchievement(userId, guildId, achievement.id, exec))
-      ) {
-        unlocked.push(achievement.id);
-      }
-    }
-
-    return unlocked;
   }
 
   async unlockAchievement(
@@ -346,65 +143,5 @@ export class AchievementService {
       const row = insertedById.get(id);
       return row ? [{ id: row.id, unlockedAt: row.unlockedAt }] : [];
     });
-  }
-
-  async getUserAchievements(
-    userId: string,
-    guildId: string,
-  ): Promise<UserAchievement[]> {
-    return (await this.database
-      .select({
-        user_id: userAchievements.user_id,
-        guild_id: userAchievements.guild_id,
-        achievement_id: userAchievements.achievement_id,
-        unlocked_at: userAchievements.unlocked_at,
-        name: achievements.name,
-        description: achievements.description,
-        category: achievements.category,
-        rarity: achievements.rarity,
-        icon: achievements.icon,
-        reward_xp: achievements.reward_xp,
-      })
-      .from(userAchievements)
-      .innerJoin(
-        achievements,
-        eq(achievements.id, userAchievements.achievement_id),
-      )
-      .where(
-        and(
-          eq(userAchievements.user_id, userId),
-          eq(userAchievements.guild_id, guildId),
-          isNull(achievements.archived_at),
-        ),
-      )
-      .orderBy(desc(userAchievements.unlocked_at))) as UserAchievement[];
-  }
-
-  async getAllAchievements(): Promise<Achievement[]> {
-    return (await this.database
-      .select()
-      .from(achievements)
-      .where(isNull(achievements.archived_at))
-      .orderBy(
-        asc(achievements.rarity),
-        asc(achievements.id),
-      )) as Achievement[];
-  }
-
-  async createAchievement(data: {
-    id: string;
-    name: string;
-    description: string;
-    category: string;
-    rarity: string;
-    icon: string;
-    condition: AchievementCondition;
-    reward_xp: number;
-  }): Promise<Achievement> {
-    const [row] = await this.database
-      .insert(achievements)
-      .values({ ...data, condition: JSON.stringify(data.condition) })
-      .returning();
-    return row as Achievement;
   }
 }

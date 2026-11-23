@@ -65,7 +65,6 @@ curl -X POST http://localhost:3000/api/gamification/xp \
 | `/api/user`                   | `modules/user/user.controller.ts`                  | User profile/settings                         |
 | `/api/scrobble`               | `modules/scrobble/scrobble.controller.ts`          | Last.fm scrobble ingestion                    |
 | `/api/gamification`           | `modules/gamification/gamification.controller.ts`  | XP, levels, leaderboard, game results         |
-| `/api/evolutive-achievements` | `modules/gamification/`                             | Tiered achievement progression               |
 | `/api/games/maze`             | `modules/maze/maze.controller.ts`                  | Maze minigame sessions                        |
 | `/api/wordle`                 | `modules/wordle/wordle.controller.ts`               | Wordle guesses and word list review           |
 | `/api/ai-chat`                | `modules/ai-chat/ai-chat.controller.ts`            | Threads, research jobs, and traces            |
@@ -88,7 +87,7 @@ curl -X POST http://localhost:3000/api/gamification/xp \
 - **Runtime**: NestJS 12 on Bun, using `@nestjs/platform-express`; `src/main.ts` boots HTTP and Colyseus on one listener.
 - **Auth**: `BotAuthGuard`, `DiscordUserAuthGuard`, and `ActivityAuthGuard` preserve the bot, web-user, and Activity token checks. Bot keys use a timing-safe buffer comparison.
 - **Persistence**: PostgreSQL through Drizzle (`postgres.js` driver) at `DATABASE_URL`. The schema lives in `packages/database/src/schema/`; `pnpm --filter @marquinhos/database db:generate` turns schema changes into SQL migrations under `packages/database/drizzle/`, which `runMigrations()` applies at boot. Periodic cleanups (scrobble queue TTL, AI trace/research/thread retention) run from `packages/database/src/maintenance.ts`. Tests get throwaway databases from `@marquinhos/database/testing`.
-- **Gamification**: `modules/gamification/` handles XP awards, level-up detection, cooldowns, and tiered achievement progression through injected providers.
+- **Gamification**: `modules/gamification/` handles XP awards, level-up detection, cooldowns, and the handcrafted Wordle achievement catalog.
 - **Wordle**: `modules/wordle/` shares daily answers and player sessions between the bot and Activity. The image build generates `valid-guesses.txt` from `wordlist.txt`, `devaneios-wordlist.txt`, and their plural forms. Startup loads the validation bank into memory. See the [daily Wordle implementation reference](../../docs/wordle.md) and [operations guide](../../docs/wordle-operations.md).
 - **AI features**: three separate paths share one set of tools and one trace recorder.
   - _Tag flow_ (`AiChatService`): two-layer intent classification, persona response per category, then a revision pass. Runs on Chat Completions. Unchanged by the `/ia` work.

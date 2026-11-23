@@ -246,6 +246,13 @@
       "when": 1794778899724,
       "tag": "0034_wordle_album_projection_queue",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1795371078890,
+      "tag": "0035_wordle_achievements_only",
+      "breakpoints": true
     }
   ]
 }
