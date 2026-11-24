@@ -38,13 +38,17 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-function renderBoard(WordleBoard: typeof import('./WordleBoard').WordleBoard) {
+function renderBoard(
+  WordleBoard: typeof import('./WordleBoard').WordleBoard,
+  identity?: { accessToken: string; guildId: string; userId: string },
+) {
   return render(
     <MemoryRouter>
       <WordleBoard
         session={{ token: 'token-1', roomKey: 'wordle-user-1' }}
         config={keyboardConfig}
         onSaveConfig={async () => {}}
+        {...identity}
       />
     </MemoryRouter>,
   );
@@ -117,6 +121,35 @@ describe('WordleBoard focus keyboard', () => {
 });
 
 describe('WordleBoard screen transitions', () => {
+  it('keeps the achievement collection accessible with the profile editors and album hidden', async () => {
+    const { WordleBoard } = await import(`./WordleBoard.tsx?${Math.random()}`);
+    renderBoard(WordleBoard, {
+      accessToken: 'activity-token',
+      guildId: 'guild-1',
+      userId: 'user-1',
+    });
+    initializeBoard();
+
+    const albumVisible =
+      screen.queryByRole('button', { name: 'Abrir álbum da comunidade' }) !==
+      null;
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Abrir conquistas do Terminhos' }),
+    );
+    expect(screen.getByRole('heading', { name: 'Conquistas' })).toBeTruthy();
+    expect({
+      albumVisible,
+      showcaseVisible:
+        screen.queryByRole('region', { name: 'Vitrine pessoal' }) !== null,
+      rewardsVisible:
+        screen.queryByRole('region', { name: 'Recompensas pessoais' }) !== null,
+    }).toEqual({
+      albumVisible: false,
+      showcaseVisible: false,
+      rewardsVisible: false,
+    });
+  });
+
   it('shows a new achievement even if the initial collection failed to load', async () => {
     jest.useFakeTimers();
     const { WordleBoard } = await import(`./WordleBoard.tsx?${Math.random()}`);

@@ -48,6 +48,8 @@ import { WordleAlbumScreen } from './WordleAlbumScreen';
 import { WordleConnectingAnimation } from './WordleConnectingAnimation';
 import { WordleSettingsScreen } from './WordleSettingsScreen';
 
+const ENABLE_SHOWCASE_REWARDS_AND_ALBUM = false;
+
 export function WordleBoard({
   session,
   config,
@@ -65,6 +67,8 @@ export function WordleBoard({
 }) {
   const navigateHome = useNavigateHome();
   const { t } = useTranslation(['wordle', 'common']);
+  const canEditProfile = ENABLE_SHOWCASE_REWARDS_AND_ALBUM && !!accessToken;
+  const canOpenAlbum = canEditProfile && !!guildId;
   const loadShowcase = useCallback(
     () => getWordleShowcase(accessToken!),
     [accessToken],
@@ -220,17 +224,19 @@ export function WordleBoard({
         achievements={achievements}
         stats={stats}
         showcase={
-          accessToken ? { load: loadShowcase, save: saveShowcase } : undefined
+          canEditProfile
+            ? { load: loadShowcase, save: saveShowcase }
+            : undefined
         }
         rewards={
-          accessToken ? { load: loadRewards, equip: equipReward } : undefined
+          canEditProfile ? { load: loadRewards, equip: equipReward } : undefined
         }
         onBack={() => transitionTo('nav-back', () => setSubScreen('playing'))}
       />
     );
   }
 
-  if (screen === 'album') {
+  if (canOpenAlbum && screen === 'album') {
     return (
       <WordleAlbumScreen
         load={loadAlbum}
@@ -289,7 +295,7 @@ export function WordleBoard({
         onBack={navigateHome}
         right={
           <>
-            {accessToken && guildId && (
+            {canOpenAlbum && (
               <button
                 type="button"
                 className={`${backChipClass} px-3`}
