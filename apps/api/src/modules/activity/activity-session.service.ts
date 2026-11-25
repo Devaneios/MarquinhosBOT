@@ -1,3 +1,4 @@
+import { readPongSessionOptions } from '@marquinhos/contracts/activity/games/pong';
 import type * as contract from '@marquinhos/contracts/http/routes/activity';
 import {
   isPongRulesetId,
@@ -58,14 +59,7 @@ export class ActivitySessionService {
         normalizePongMatchConfig({
           ruleset: isPongRulesetId(ruleset) ? ruleset : 'classic-1v1',
           ...(winningScore !== undefined ? { targetScore: winningScore } : {}),
-          ...(options?.bestOf === 1 ||
-          options?.bestOf === 3 ||
-          options?.bestOf === 5
-            ? { bestOf: options.bestOf }
-            : {}),
-          ...(typeof options?.ranked === 'boolean'
-            ? { ranked: options.ranked }
-            : {}),
+          ...readPongSessionOptions(options),
         });
       } catch (error) {
         throw new InvalidActivitySessionError(

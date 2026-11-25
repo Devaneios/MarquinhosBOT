@@ -49,6 +49,21 @@ describe('ActivitySessionService', () => {
     ).toThrow(new InvalidActivitySessionError('Invalid Pong ruleset'));
   });
 
+  it('uses the Pong default for an invalid best-of without discarding ranked', () => {
+    const session = service().issueSession(user, {
+      instanceId: 'inst-1',
+      guildId: 'guild-1',
+      mode: 'single',
+      game: 'pong',
+      options: { bestOf: 2, ranked: false },
+    });
+
+    expect(testWsSessionTokens.verify(session.token)?.options).toEqual({
+      bestOf: 2,
+      ranked: false,
+    });
+  });
+
   it('creates a room with a six-character id from the room alphabet', () => {
     const room = service().createRoom(user, {
       instanceId: 'inst-1',

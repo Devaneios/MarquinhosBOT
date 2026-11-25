@@ -5,6 +5,10 @@ import {
   restartStatusMessageSchema,
 } from '../protocol';
 
+export const trucoSessionOptionsSchema = z.object({
+  winningScore: z.number().int().min(1).max(24),
+});
+
 export const cardSchema = z.object({
   id: z.string(),
   suit: z.string().optional(),

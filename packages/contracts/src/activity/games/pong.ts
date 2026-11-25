@@ -72,6 +72,20 @@ export const lobbyConfigPayloadSchema = z.object({
   ranked: z.boolean().optional().catch(undefined),
 });
 
+// Invalid or omitted fields fall back independently to the ruleset defaults.
+export const pongSessionOptionsSchema = lobbyConfigPayloadSchema.pick({
+  bestOf: true,
+  ranked: true,
+});
+
+export function readPongSessionOptions(options: Record<string, unknown> = {}) {
+  const { bestOf, ranked } = pongSessionOptionsSchema.parse(options);
+  return {
+    ...(bestOf === undefined ? {} : { bestOf }),
+    ...(ranked === undefined ? {} : { ranked }),
+  };
+}
+
 export const clientMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('input'), payload: inputPayloadSchema }),
   z.object({

@@ -1,6 +1,7 @@
 import {
   inputPayloadSchema,
   lobbyConfigPayloadSchema,
+  readPongSessionOptions,
   readyPayloadSchema,
   type PongServerMessage,
 } from '@marquinhos/contracts/activity/games/pong';
@@ -18,16 +19,12 @@ const INPUT_RATE_LIMIT_WINDOW_MS = 1000;
 const INPUT_RATE_LIMIT_MAX = 120;
 
 function pongConfig(ctx: AdapterContext): Partial<PongArenaEngineConfig> {
-  const options = ctx.options ?? {};
   return {
     ruleset: isPongRulesetId(ctx.ruleset) ? ctx.ruleset : 'classic-1v1',
     ...(ctx.winningScore !== undefined
       ? { targetScore: ctx.winningScore }
       : {}),
-    ...(options.bestOf === 1 || options.bestOf === 3 || options.bestOf === 5
-      ? { bestOf: options.bestOf }
-      : {}),
-    ...(typeof options.ranked === 'boolean' ? { ranked: options.ranked } : {}),
+    ...readPongSessionOptions(ctx.options),
   };
 }
 

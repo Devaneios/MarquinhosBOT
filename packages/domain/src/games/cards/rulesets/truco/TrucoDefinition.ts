@@ -6,6 +6,7 @@ import type {
   TrickResult,
   TrucoView,
 } from '@marquinhos/contracts/activity/games/cards';
+import { trucoSessionOptionsSchema } from '@marquinhos/contracts/activity/games/cards';
 import type { Card } from '@marquinhos/domain/games/cards/core/card';
 import { spanishSuitedDeck } from '@marquinhos/domain/games/cards/core/deckFactory';
 import {
@@ -88,10 +89,6 @@ export interface TrucoState {
 const playCardArgsSchema = z.object({ cardId: z.string().min(1) });
 
 type PlayCardArgs = z.infer<typeof playCardArgsSchema>;
-
-const trucoOptionsSchema = z.object({
-  winningScore: z.number().int().min(1).max(24),
-});
 
 function teamOfSeat(seats: readonly Seat[], seatIndex: number): Team {
   return seats.find((s) => s.seatIndex === seatIndex)?.teamId === 'B'
@@ -361,7 +358,7 @@ function buildTrucoDefinition(
       }));
       // The ruleset reads what it understands out of the forwarded match options
       // and ignores the rest.
-      const requested = trucoOptionsSchema.safeParse(options);
+      const requested = trucoSessionOptionsSchema.safeParse(options);
       const winningScore = requested.success
         ? requested.data.winningScore
         : DEFAULT_WINNING_SCORE;
