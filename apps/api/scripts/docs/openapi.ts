@@ -166,7 +166,7 @@ function parametersFor(
   schema.parse(example);
   // Query values enter Express as text. Use the parsed shape for coercing
   // fields so OpenAPI clients can serialize numbers into query strings.
-  const { properties, required } = schemaFor(
+  const { properties } = schemaFor(
     schema,
     location === 'query' ? 'output' : 'input',
   );
@@ -180,13 +180,17 @@ function parametersFor(
     example?: unknown;
   };
   return Object.entries(properties).map(
-    ([name, property]): OpenApiParameter => ({
-      name,
-      in: location,
-      required: location === 'path' || (required?.includes(name) ?? false),
-      schema: property,
-      example: example?.[name],
-    }),
+    ([name, property]): OpenApiParameter => {
+      const remaining = { ...example };
+      delete remaining[name];
+      return {
+        name,
+        in: location,
+        required: location === 'path' || !schema.safeParse(remaining).success,
+        schema: property,
+        example: example?.[name],
+      };
+    },
   );
 }
 
