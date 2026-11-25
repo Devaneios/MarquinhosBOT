@@ -387,11 +387,8 @@ function buildTrucoDefinition(
 
     moves: {
       play_card: {
-        parseArgs(raw): PlayCardArgs | null {
-          const parsed = playCardArgsSchema.safeParse(raw);
-          return parsed.success ? parsed.data : null;
-        },
-        validate(state, playerId, args) {
+        argsSchema: playCardArgsSchema,
+        validate(state, playerId, args: PlayCardArgs) {
           if (state.pending)
             return moveRejected('Aguardando resposta ao truco');
           const seat = seatFor(state, playerId);
@@ -405,7 +402,7 @@ function buildTrucoDefinition(
           }
           return MOVE_OK;
         },
-        apply(state, playerId, args) {
+        apply(state, playerId, args: PlayCardArgs) {
           const seat = seatFor(state, playerId)!;
           const zones = state.zones.clone();
           zones

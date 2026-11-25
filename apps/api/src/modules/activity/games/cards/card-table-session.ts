@@ -215,13 +215,13 @@ export class CardTableSession<TState> {
     // Where `unknown` stops: the raw client payload is parsed into the move's
     // own arg type before any rule logic sees it.
     let args: unknown;
-    if (moveDef.parseArgs) {
-      const parsed = moveDef.parseArgs(rawArgs);
-      if (parsed === null) {
+    if (moveDef.argsSchema) {
+      const parsed = moveDef.argsSchema.safeParse(rawArgs);
+      if (!parsed.success) {
         this.reject(userId, 'Argumentos inválidos para esta jogada');
         return;
       }
-      args = parsed;
+      args = parsed.data;
     }
 
     const result = moveDef.validate(this.state, userId, args);

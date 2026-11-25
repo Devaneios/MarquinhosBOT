@@ -7,6 +7,7 @@ import {
 import { describe, expect, it, mock } from 'bun:test';
 import { CardTableSession } from 'modules/activity/games/cards/card-table-session';
 import type { PerClientBroadcaster } from 'modules/activity/games/cards/per-client-broadcaster';
+import { z } from 'zod';
 
 interface StubState {
   players: string[];
@@ -26,10 +27,6 @@ const emptyTable: TableView = {
   handOver: false,
 };
 
-interface AddArgs {
-  amount: number;
-}
-
 // A deliberately minimal ruleset: the session has to drive seating, gating,
 // forfeits and the turn clock without knowing anything about the game.
 function stubDefinition(
@@ -47,10 +44,7 @@ function stubDefinition(
     }),
     moves: {
       add: {
-        parseArgs: (raw): AddArgs | null => {
-          const amount = (raw as { amount?: unknown } | undefined)?.amount;
-          return typeof amount === 'number' ? { amount } : null;
-        },
+        argsSchema: z.object({ amount: z.number() }),
         validate: (_state, _playerId, args) =>
           args.amount <= 0 ? moveRejected('amount must be positive') : MOVE_OK,
         apply: (state, playerId, args) => {

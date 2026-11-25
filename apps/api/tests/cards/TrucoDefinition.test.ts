@@ -87,8 +87,7 @@ function handOf(state: TrucoState, seatIndex: number): Card[] {
 
 function play(state: TrucoState, playerId: string, cardId: string): TrucoState {
   const move = trucoDefinition.moves.play_card!;
-  const args = move.parseArgs!({ cardId });
-  expect(args).not.toBeNull();
+  const args = move.argsSchema!.parse({ cardId });
   expect(move.validate(state, playerId, args).ok).toBe(true);
   return move.apply(state, playerId, args);
 }
@@ -172,10 +171,9 @@ describe('trucoDefinition.setup', () => {
 
 describe('play_card move', () => {
   it('rejects a payload with no card id before any rule logic runs', () => {
-    expect(trucoDefinition.moves.play_card!.parseArgs!({})).toBeNull();
-    expect(
-      trucoDefinition.moves.play_card!.parseArgs!({ cardId: 7 }),
-    ).toBeNull();
+    const schema = trucoDefinition.moves.play_card!.argsSchema!;
+    expect(schema.safeParse({}).success).toBe(false);
+    expect(schema.safeParse({ cardId: 7 }).success).toBe(false);
   });
 
   it('rejects a play from a seat whose turn it is not', () => {

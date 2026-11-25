@@ -32,6 +32,8 @@ import type {
   TableView,
 } from '@marquinhos/contracts/activity/games/cards';
 
+import type { ZodType } from 'zod';
+
 // A discriminated result rather than `true | { reason }`: rulesets touch this on
 // every move, and `if (result !== true)` reads like a mistake even when it isn't.
 export type MoveResult = { ok: true } | { ok: false; reason: string };
@@ -43,11 +45,9 @@ export function moveRejected(reason: string): MoveResult {
 }
 
 export interface MoveDefinition<TState, TArgs = void> {
-  // Turns the raw client payload into this move's arg type, or null to reject it
-  // before any rule logic runs. This is the boundary where `unknown` stops:
-  // without it every validate()/apply() casts an untrusted payload to a shape it
-  // merely hopes is right. Argless moves omit it and get `void` args.
-  parseArgs?(raw: unknown): TArgs | null;
+  // Parses the wire payload before rule logic runs and exposes its shape to
+  // documentation generators. Argless moves omit the schema.
+  argsSchema?: ZodType<TArgs>;
   validate(state: TState, playerId: string, args: TArgs): MoveResult;
   // Must not mutate `state` — see the mutability contract above.
   apply(state: TState, playerId: string, args: TArgs): TState;
