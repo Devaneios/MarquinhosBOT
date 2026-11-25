@@ -1,6 +1,12 @@
 import type { Db } from '@marquinhos/database/client';
 import {
+  wordleCommunityDailyPresence,
+  wordleCommunityFirstSolves,
+  wordleCommunityWinAnnouncements,
   wordleGlobalDays,
+  wordleGlobalDrafts,
+  wordleGlobalOccurrences,
+  wordleGlobalSessions,
   wordleUsedWords,
   wordlistReview,
 } from '@marquinhos/database/schema';
@@ -31,18 +37,20 @@ export class WordleGlobalDayService {
 
   async getOrCreate(
     date: string,
+    mode: 'keep' | 'replace' = 'keep',
   ): Promise<{ word: string; wordDate: string; wordLength: number }> {
-    // Days are never changed once created, so an existing one needs no lock.
-    const [stored] = await this.database
-      .select()
-      .from(wordleGlobalDays)
-      .where(eq(wordleGlobalDays.word_date, date));
-    if (stored)
-      return {
-        word: stored.word,
-        wordDate: date,
-        wordLength: stored.word_length,
-      };
+    if (mode === 'keep') {
+      const [stored] = await this.database
+        .select()
+        .from(wordleGlobalDays)
+        .where(eq(wordleGlobalDays.word_date, date));
+      if (stored)
+        return {
+          word: stored.word,
+          wordDate: date,
+          wordLength: stored.word_length,
+        };
+    }
     return this.database.transaction(async (tx) => {
       // Serialize selection across dates as the used-word pool is global too.
       await tx.execute(
@@ -52,7 +60,7 @@ export class WordleGlobalDayService {
         .select()
         .from(wordleGlobalDays)
         .where(eq(wordleGlobalDays.word_date, date));
-      if (existing)
+      if (existing && mode === 'keep')
         return {
           word: existing.word,
           wordDate: date,
@@ -77,6 +85,7 @@ export class WordleGlobalDayService {
           (word) =>
             word.length >= 5 &&
             word.length <= 6 &&
+            word !== existing?.word &&
             !used.has(word) &&
             !banned.has(word),
         );
@@ -97,12 +106,39 @@ export class WordleGlobalDayService {
       if (word === undefined)
         throw new Error('No available words left in the wordlist');
       const createdAt = Math.floor(this.now() / 1000);
-      await tx.insert(wordleGlobalDays).values({
+      const day = {
         word_date: date,
         word,
         word_length: word.length,
         created_at: createdAt,
-      });
+      };
+      if (existing) {
+        // Gameplay and draft writes hold a shared lock on the day.
+        await tx
+          .update(wordleGlobalDays)
+          .set(day)
+          .where(eq(wordleGlobalDays.word_date, date));
+        await tx
+          .delete(wordleGlobalDrafts)
+          .where(eq(wordleGlobalDrafts.word_date, date));
+        await tx
+          .delete(wordleGlobalSessions)
+          .where(eq(wordleGlobalSessions.word_date, date));
+        await tx
+          .delete(wordleGlobalOccurrences)
+          .where(eq(wordleGlobalOccurrences.word_date, date));
+        await tx
+          .delete(wordleCommunityDailyPresence)
+          .where(eq(wordleCommunityDailyPresence.word_date, date));
+        await tx
+          .delete(wordleCommunityFirstSolves)
+          .where(eq(wordleCommunityFirstSolves.word_date, date));
+        await tx
+          .delete(wordleCommunityWinAnnouncements)
+          .where(eq(wordleCommunityWinAnnouncements.word_date, date));
+      } else {
+        await tx.insert(wordleGlobalDays).values(day);
+      }
       await tx
         .insert(wordleUsedWords)
         .values({ word, used_at: createdAt })

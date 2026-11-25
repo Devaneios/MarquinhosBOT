@@ -1,5 +1,6 @@
 import '@/i18n';
 import type { ActivityMessage } from '@/platform/realtime/colyseus/connection';
+import { AchievementBanners } from '@/shared/achievements/AchievementBanners';
 import type { WordleUserConfig } from '@marquinhos/contracts/wordle';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, jest, mock } from 'bun:test';
@@ -43,14 +44,16 @@ function renderBoard(
   identity?: { accessToken: string; guildId: string; userId: string },
 ) {
   return render(
-    <MemoryRouter>
-      <WordleBoard
-        session={{ token: 'token-1', roomKey: 'wordle-user-1' }}
-        config={keyboardConfig}
-        onSaveConfig={async () => {}}
-        {...identity}
-      />
-    </MemoryRouter>,
+    <AchievementBanners>
+      <MemoryRouter>
+        <WordleBoard
+          session={{ token: 'token-1', roomKey: 'wordle-user-1' }}
+          config={keyboardConfig}
+          onSaveConfig={async () => {}}
+          {...identity}
+        />
+      </MemoryRouter>
+    </AchievementBanners>,
   );
 }
 
@@ -415,17 +418,17 @@ describe('WordleBoard screen transitions', () => {
       expect(screen.getByText('Primeira palavra')).toBeTruthy();
       expect(screen.getByText('+25 XP')).toBeTruthy();
 
-      fireEvent.click(
-        screen.getByRole('button', { name: /fechar conquista desbloqueada/i }),
-      );
-      expect(screen.queryByText(/conquista desbloqueada/i)).toBeNull();
-
       const cta = screen.getByRole('button', { name: /ver conquistas/i });
       expect(cta).toBeTruthy();
       fireEvent.click(cta);
       expect(screen.getByRole('heading', { name: /conquistas/i })).toBeTruthy();
       expect(screen.getByText('1 de 1 desbloqueadas')).toBeTruthy();
+      expect(screen.getByText(/conquista desbloqueada/i)).toBeTruthy();
       expect(screen.getByText('Desbloqueada')).toBeTruthy();
+      fireEvent.click(
+        screen.getByRole('button', { name: /fechar conquista desbloqueada/i }),
+      );
+      expect(screen.queryByRole('status')).toBeNull();
 
       fireEvent.click(screen.getByRole('button', { name: /voltar/i }));
       expect(screen.queryByRole('heading', { name: /conquistas/i })).toBeNull();
@@ -434,10 +437,39 @@ describe('WordleBoard screen transitions', () => {
     }
   });
 
-  it('queues multiple unlocked achievements one at a time', async () => {
+  it('publishes a sample banner on each click of the development button', async () => {
+    const previousDev = process.env.DEV;
+    process.env.DEV = 'true';
+    try {
+      const { WordleBoard } = await import(
+        `./WordleBoard.tsx?${Math.random()}`
+      );
+      renderBoard(WordleBoard);
+      initializeBoard();
+
+      const button = screen.getByRole('button', {
+        name: 'Testar banner de conquista',
+      });
+      fireEvent.click(button);
+      fireEvent.click(button);
+
+      expect(
+        screen.getAllByRole('status').map((banner) => banner.textContent),
+      ).toEqual([
+        expect.stringContaining('Conquista de teste'),
+        expect.stringContaining('Conquista de teste'),
+      ]);
+    } finally {
+      if (previousDev === undefined) delete process.env.DEV;
+      else process.env.DEV = previousDev;
+    }
+  });
+
+  it('stacks unlocked achievements and dismisses them in order', async () => {
     const { WordleBoard } = await import(`./WordleBoard.tsx?${Math.random()}`);
     renderBoard(WordleBoard);
     initializeBoard();
+    jest.useFakeTimers();
 
     act(() => {
       deliverMessage({
@@ -495,19 +527,24 @@ describe('WordleBoard screen transitions', () => {
       });
     });
 
-    expect(screen.getByText('Primeira palavra')).toBeTruthy();
-    expect(screen.queryByText('Na mosca')).toBeNull();
-    expect(screen.getByText('+1 na fila')).toBeTruthy();
+    expect(
+      screen.getAllByRole('status').map((banner) => banner.textContent),
+    ).toEqual([
+      expect.stringContaining('Na mosca'),
+      expect.stringContaining('Primeira palavra'),
+    ]);
 
-    fireEvent.click(
-      screen.getByRole('button', { name: /fechar conquista desbloqueada/i }),
-    );
+    act(() => jest.advanceTimersByTime(4500));
+    expect(screen.getByText('Primeira palavra')).toBeTruthy();
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+
+    act(() => jest.advanceTimersByTime(760));
     expect(screen.queryByText('Primeira palavra')).toBeNull();
     expect(screen.getByText('Na mosca')).toBeTruthy();
 
-    fireEvent.click(
-      screen.getByRole('button', { name: /fechar conquista desbloqueada/i }),
-    );
+    act(() => jest.advanceTimersByTime(40));
+    expect(screen.queryByRole('status')).toBeNull();
+    act(() => jest.advanceTimersByTime(760));
     expect(screen.queryByText('Na mosca')).toBeNull();
   });
 });

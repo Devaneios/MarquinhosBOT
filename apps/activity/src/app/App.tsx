@@ -3,6 +3,7 @@ import { ActivityMinimizedOverlay } from '@/platform/discord/ActivityMinimizedOv
 import { isMobilePlatform } from '@/platform/discord/sdk';
 import { useDiscordIdentity } from '@/platform/discord/useDiscordIdentity';
 import { useIsActivityMinimized } from '@/platform/discord/useIsActivityMinimized';
+import { AchievementBanners } from '@/shared/achievements/AchievementBanners';
 import { devlog } from '@/shared/logging/devlog';
 import { useDeferredValue, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -33,39 +34,41 @@ function App() {
   }, [identity.status]);
 
   return (
-    <div className="app-shell relative flex h-full w-full flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,176,0,0.12),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_20%),var(--color-marquinhos-bg)] text-marquinhos-text">
-      {shownPhase === 'loading' && (
-        <ConnectingScreen
-          subtitleKey="connectingSubtitle"
-          subtitleNs="common"
-        />
-      )}
-
-      {shownPhase === 'error' && identity.status === 'error' && (
-        <ErrorScreen
-          message={identity.error}
-          onRetryAuth={identity.reauth}
-          hint={t('authTimeoutHint')}
-        />
-      )}
-
-      {shownPhase === 'ready' &&
-        identity.status === 'ready' &&
-        initialPath !== null && (
-          <ErrorBoundary>
-            <MemoryRouter initialEntries={[initialPath]}>
-              <AppRoutes
-                identity={identity.identity}
-                onAuthInvalid={identity.reauth}
-              />
-            </MemoryRouter>
-          </ErrorBoundary>
+    <AchievementBanners>
+      <div className="app-shell relative flex h-full w-full flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,176,0,0.12),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_20%),var(--color-marquinhos-bg)] text-marquinhos-text">
+        {shownPhase === 'loading' && (
+          <ConnectingScreen
+            subtitleKey="connectingSubtitle"
+            subtitleNs="common"
+          />
         )}
 
-      {import.meta.env.DEV && !isMobilePlatform() && <DevConsole />}
+        {shownPhase === 'error' && identity.status === 'error' && (
+          <ErrorScreen
+            message={identity.error}
+            onRetryAuth={identity.reauth}
+            hint={t('authTimeoutHint')}
+          />
+        )}
 
-      {isMinimized && <ActivityMinimizedOverlay />}
-    </div>
+        {shownPhase === 'ready' &&
+          identity.status === 'ready' &&
+          initialPath !== null && (
+            <ErrorBoundary>
+              <MemoryRouter initialEntries={[initialPath]}>
+                <AppRoutes
+                  identity={identity.identity}
+                  onAuthInvalid={identity.reauth}
+                />
+              </MemoryRouter>
+            </ErrorBoundary>
+          )}
+
+        {import.meta.env.DEV && !isMobilePlatform() && <DevConsole />}
+
+        {isMinimized && <ActivityMinimizedOverlay />}
+      </div>
+    </AchievementBanners>
   );
 }
 

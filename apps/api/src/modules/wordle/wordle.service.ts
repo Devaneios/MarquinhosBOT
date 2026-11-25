@@ -12,6 +12,7 @@ import {
 } from '@marquinhos/database/schema';
 import { Inject, Injectable } from '@nestjs/common';
 import { logger } from 'common/logging/logger';
+import { AppConfig } from 'config/app.config';
 import { DB } from 'database/database.tokens';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { WordleParticipationService } from 'modules/wordle/community/wordle-participation.service';
@@ -58,6 +59,7 @@ export class WordleService {
     private readonly history: WordleHistoryService,
     @Inject(WORDLE_TODAY) private readonly today: () => string,
     @Inject(WORDLE_NOW) private readonly now: () => number,
+    private readonly config: AppConfig,
   ) {}
 
   currentDate(): string {
@@ -412,6 +414,9 @@ export class WordleService {
   }
 
   forceNewWord(_guildId: string): Promise<ForceNewWordResult> {
+    if (this.config.nodeEnv === 'development') {
+      return this.globalDay.getOrCreate(this.today(), 'replace');
+    }
     throw new GlobalWordleCannotForce(
       'A palavra global não pode ser trocada antes da virada.',
     );

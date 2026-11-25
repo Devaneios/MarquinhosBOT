@@ -374,6 +374,53 @@ describe('wordle contracts', () => {
     ).rejects.toMatchObject({ response: { status: 409 } });
   });
 
+  it('replaces the global word and resets the current round in development', async () => {
+    const development = await startNestContractServer({
+      imports: [WordleModule],
+    });
+    const previousEnv = process.env.NODE_ENV;
+    try {
+      const userId = randomUUID();
+      const { data: stats } = await callContract(
+        development.http,
+        wordle.getStats,
+        {
+          params: { guildId },
+        },
+      );
+      const [day] = await db
+        .select()
+        .from(wordleGlobalDays)
+        .where(eq(wordleGlobalDays.word_date, stats.wordDate));
+      if (!day) throw new Error('Missing daily word');
+      await callContract(development.http, wordle.submitGuess, {
+        body: { userId, guildId, guess: day.word },
+      });
+
+      process.env.NODE_ENV = 'development';
+      const { data: replacement } = await callContract(
+        development.http,
+        wordle.forceNewWord,
+        { body: { guildId } },
+      );
+      expect(replacement.wordDate).toBe(day.word_date);
+      expect(replacement.word).not.toBe(day.word);
+      expect(replacement.stats.playersCount).toBe(0);
+      const session = await callContract(
+        development.http,
+        wordle.getUserSession,
+        {
+          params: { userId, guildId },
+        },
+      );
+      expect(session.data).toBeNull();
+    } finally {
+      if (previousEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = previousEnv;
+      await development.close();
+    }
+  });
+
   it('serves the word pool and the review queue', async () => {
     const { db } = await import('@marquinhos/database/client');
     const { sql } = await import('drizzle-orm');

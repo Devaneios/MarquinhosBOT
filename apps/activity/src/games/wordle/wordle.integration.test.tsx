@@ -1,10 +1,12 @@
 import '@/i18n';
+import { AchievementBanners } from '@/shared/achievements/AchievementBanners';
 import {
   act,
   fireEvent,
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react';
 import { expect, it, mock } from 'bun:test';
 import { request } from 'node:http';
@@ -110,18 +112,20 @@ async function playGame({
     const mountBoard = () =>
       render(
         <StrictMode>
-          <MemoryRouter>
-            <WordleBoard
-              session={{ token: ready.token, roomKey: ready.roomKey }}
-              config={{
-                invertActionKeys: false,
-                enableSounds: false,
-                enableSpaceKey: false,
-                enableArrowKeys: false,
-              }}
-              onSaveConfig={async () => {}}
-            />
-          </MemoryRouter>
+          <AchievementBanners>
+            <MemoryRouter>
+              <WordleBoard
+                session={{ token: ready.token, roomKey: ready.roomKey }}
+                config={{
+                  invertActionKeys: false,
+                  enableSounds: false,
+                  enableSpaceKey: false,
+                  enableArrowKeys: false,
+                }}
+                onSaveConfig={async () => {}}
+              />
+            </MemoryRouter>
+          </AchievementBanners>
         </StrictMode>,
       );
     let rendered = mountBoard();
@@ -207,23 +211,19 @@ async function playGame({
       rendered.unmount();
       rendered = mountBoard();
     }
-    expect(
-      await screen.findByText(
-        botWrong ? 'Segunda é a certa' : 'Palpite certeiro',
-        {},
-        { timeout: 20_000 },
-      ),
-    ).toBeTruthy();
-    expect(screen.getByText(botWrong ? '+25 XP' : '+75 XP')).toBeTruthy();
-    expect(screen.getByText(/conquista desbloqueada/i)).toBeTruthy();
+    const earned = await screen.findByText(
+      botWrong ? 'Segunda é a certa' : 'Palpite certeiro',
+      {},
+      { timeout: 20_000 },
+    );
+    const announcement = within(earned.closest('[role="status"]')!);
+    expect(announcement.getByText(botWrong ? '+25 XP' : '+75 XP')).toBeTruthy();
+    expect(announcement.getByText(/conquista desbloqueada/i)).toBeTruthy();
     if (checkCollection) {
-      fireEvent.click(
-        screen.getByRole('button', { name: /fechar conquista desbloqueada/i }),
-      );
       fireEvent.click(screen.getByRole('button', { name: /ver conquistas/i }));
       expect(screen.getByRole('heading', { name: /conquistas/i })).toBeTruthy();
       expect(screen.getByText(/1 de \d+ desbloqueadas/i)).toBeTruthy();
-      expect(screen.getByText('Palpite certeiro')).toBeTruthy();
+      expect(screen.getAllByText('Palpite certeiro')).toHaveLength(2);
       expect(screen.getByText('Desbloqueada')).toBeTruthy();
       fireEvent.click(screen.getByRole('button', { name: /voltar/i }));
       expect(screen.queryByRole('heading', { name: /conquistas/i })).toBeNull();
