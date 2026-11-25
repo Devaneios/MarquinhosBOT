@@ -7,7 +7,6 @@ export type HttpSecurity =
   | 'discordUserBearer'
   | 'discordActivityBearer'
   | 'discordActivityBody'
-  | 'discordOAuthCode'
   | 'refreshTokenHeader';
 
 export interface HttpHeaderDocumentation {
@@ -39,7 +38,10 @@ export interface EndpointDocumentation {
     >
   >;
   errors: Readonly<
-    Record<number, { description: string; example: { message: string } }>
+    Record<
+      number,
+      { description: string; example: unknown; schema?: z.ZodType }
+    >
   >;
 }
 

@@ -48,7 +48,7 @@ export const login = defineContract({
     description:
       'Exchange a Discord authorization code for encrypted account credentials. A signed state, when supplied, must verify. The API creates a local user record on first login.',
     tags: ['Authentication'],
-    security: ['discordOAuthCode'],
+    security: [],
     examples: {
       query: {
         code: 'example-discord-authorization-code',
