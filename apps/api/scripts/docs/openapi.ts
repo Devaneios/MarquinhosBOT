@@ -231,7 +231,7 @@ function operationFor(operationId: string, contract: EndpointContract) {
   const responses: Record<string, object> = {};
   for (const [
     status,
-    { description, example, headers, contentType },
+    { description, example, headers, contentType, schema = contract.response },
   ] of Object.entries(docs.success)) {
     if (
       !/^2\d\d$/.test(status) ||
@@ -240,7 +240,7 @@ function operationFor(operationId: string, contract: EndpointContract) {
     ) {
       throw new Error(`Invalid success response metadata for HTTP ${status}`);
     }
-    contract.response.parse(example);
+    schema.parse(example);
     responses[status] = {
       description,
       ...(headers && {
@@ -253,7 +253,7 @@ function operationFor(operationId: string, contract: EndpointContract) {
       }),
       content: {
         [contentType ?? 'application/json']: {
-          schema: schemaFor(contract.response, 'output'),
+          schema: schemaFor(schema, 'output'),
           example,
         },
       },

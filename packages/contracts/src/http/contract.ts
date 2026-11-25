@@ -32,6 +32,7 @@ export interface EndpointDocumentation {
       {
         description: string;
         example: unknown;
+        schema?: z.ZodType;
         contentType?: string;
         headers?: Readonly<Record<string, HttpHeaderDocumentation>>;
       }
