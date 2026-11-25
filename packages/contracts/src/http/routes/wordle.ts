@@ -436,6 +436,55 @@ export const updateShowcase = defineContract({
   response: envelope(z.array(requiredString).max(3)),
 });
 
+const gameplayTags = ['Daily Wordle'] as const;
+const botSecurity = ['botBearer'] as const;
+const exampleGuildId = '123456789012345678';
+const exampleUserId = '234567890123456789';
+const exampleDate = '2026-11-25';
+const examplePlayer = { guildId: exampleGuildId, userId: exampleUserId };
+const exampleGuild = { guildId: exampleGuildId };
+const exampleGuess = {
+  guess: 'carta',
+  feedback: ['correct', 'present', 'present', 'absent', 'correct'],
+};
+const exampleRequestId = 'e4307af4-82b1-4b6f-8ab0-08ae5b60bbbf';
+const exampleDraft = {
+  date: exampleDate,
+  rowIndex: 1,
+  cells: ['c', 'a', '', '', ''],
+  activeIndex: 2,
+};
+const exampleStats = {
+  wordDate: exampleDate,
+  wordLength: 5,
+  playersCount: 8,
+  winnersCount: 4,
+  avgAttempts: 3.5,
+};
+const wordleBotErrors = {
+  401: {
+    description: 'The bot credential was absent or invalid.',
+    example: { message: 'Token not authorized' },
+  },
+  500: {
+    description:
+      'The Wordle operation failed unexpectedly or the bot key was unavailable.',
+    example: { message: 'Erro interno.' },
+  },
+};
+const wordleBodyTooLarge = {
+  description: 'The JSON request exceeded the API body size limit.',
+  example: { message: 'Request body too large' },
+};
+const wordleGuildInput = {
+  description: 'The guild or other route input did not pass validation.',
+  example: { message: 'guildId é obrigatório.' },
+};
+const wordlePlayerInput = {
+  description: 'The user or guild identifier did not pass validation.',
+  example: { message: 'userId e guildId são obrigatórios.' },
+};
+
 export const submitGuess = defineContract({
   method: 'POST',
   path: '/api/wordle/guess',
@@ -447,6 +496,47 @@ export const submitGuess = defineContract({
     date: z.iso.date().optional(),
   }),
   response: envelope(wordleGuessResultSchema),
+  docs: {
+    description:
+      'Submit a guess to the player’s shared daily round. Send the same request ID when retrying an accepted action so the API can replay its receipt. The optional date identifies the intended daily round.',
+    tags: gameplayTags,
+    security: botSecurity,
+    examples: {
+      body: {
+        ...examplePlayer,
+        guess: exampleGuess.guess,
+        requestId: exampleRequestId,
+        date: exampleDate,
+      },
+    },
+    success: {
+      200: {
+        description:
+          'Accepted guess, letter feedback, and updated round state.',
+        example: {
+          data: {
+            ...exampleGuess,
+            guesses: [exampleGuess],
+            solved: false,
+            attempts: 1,
+            wordLength: 5,
+            requestId: exampleRequestId,
+          },
+        },
+      },
+    },
+    errors: {
+      ...wordleBotErrors,
+      400: {
+        description:
+          'The input, guess, or selected round did not meet the gameplay rules.',
+        example: {
+          message: 'Palavra não encontrada na lista de palavras válidas.',
+        },
+      },
+      413: wordleBodyTooLarge,
+    },
+  },
 });
 
 export const recordPresence = defineContract({
@@ -454,6 +544,25 @@ export const recordPresence = defineContract({
   path: '/api/wordle/presence',
   body: z.object({ userId: requiredString, guildId: requiredString }),
   response: envelope(z.object({ recorded: z.literal(true) })),
+  docs: {
+    description:
+      'Record that the user opened or played the daily round in this guild. The bot can call this before any guess is accepted.',
+    tags: gameplayTags,
+    security: botSecurity,
+    examples: { body: examplePlayer },
+    success: {
+      200: {
+        description:
+          'Daily participation was recorded for the supplied user and guild.',
+        example: { data: { recorded: true } },
+      },
+    },
+    errors: {
+      ...wordleBotErrors,
+      400: wordlePlayerInput,
+      413: wordleBodyTooLarge,
+    },
+  },
 });
 
 export const writeDraft = defineContract({
@@ -466,6 +575,33 @@ export const writeDraft = defineContract({
     })
     .merge(wordleDraftWriteSchema),
   response: envelope(wordleDraftWriteResultSchema),
+  docs: {
+    description:
+      'Save the unfinished row for a dated round using its expected revision. Read the draft in a conflict response before sending a new write. A closed response means the round can no longer accept drafts.',
+    tags: gameplayTags,
+    security: botSecurity,
+    examples: {
+      body: { ...examplePlayer, ...exampleDraft, expectedRevision: 0 },
+    },
+    success: {
+      200: {
+        description:
+          'Draft saved, a revision conflict detected, or draft writes closed for this round.',
+        example: {
+          data: { status: 'saved', draft: { ...exampleDraft, revision: 1 } },
+        },
+      },
+    },
+    errors: {
+      ...wordleBotErrors,
+      400: {
+        description:
+          'The draft position, cell count, date, revision, or player identifiers failed validation.',
+        example: { message: 'Rascunho inválido.' },
+      },
+      413: wordleBodyTooLarge,
+    },
+  },
 });
 
 export const getStats = defineContract({
@@ -473,6 +609,20 @@ export const getStats = defineContract({
   path: '/api/wordle/stats/:guildId',
   params: guildParams,
   response: envelope(wordleDailyStatsSchema),
+  docs: {
+    description:
+      'Read counts and average winning attempts for the current daily round in the supplied guild. The date follows the configured Wordle calendar.',
+    tags: gameplayTags,
+    security: botSecurity,
+    examples: { params: exampleGuild },
+    success: {
+      200: {
+        description: 'Current round date, length, and participation summary.',
+        example: { data: exampleStats },
+      },
+    },
+    errors: { ...wordleBotErrors, 400: wordleGuildInput },
+  },
 });
 
 export const getAchievements = defineContract({
@@ -487,6 +637,33 @@ export const getUserSession = defineContract({
   path: '/api/wordle/session/:userId/:guildId',
   params: userGuildParams,
   response: envelope(wordleSessionSchema.nullable()),
+  docs: {
+    description:
+      'Restore the player’s accepted rows for the current global daily Wordle round using the supplied guild context.',
+    tags: gameplayTags,
+    security: botSecurity,
+    examples: { params: examplePlayer },
+    success: {
+      200: {
+        description:
+          'Current session or null when the player has no saved session.',
+        example: {
+          data: {
+            id: 'a2f6d7af-93d8-4c31-9046-c224e4cef6c4',
+            user_id: exampleUserId,
+            guild_id: exampleGuildId,
+            word_date: exampleDate,
+            guesses: [exampleGuess],
+            solved: false,
+            solved_from_draft: false,
+            attempts: 1,
+            created_at: 1795629600000,
+          },
+        },
+      },
+    },
+    errors: { ...wordleBotErrors, 400: wordlePlayerInput },
+  },
 });
 
 export const getDayGuesses = defineContract({
@@ -495,6 +672,28 @@ export const getDayGuesses = defineContract({
   params: guildParams,
   query: z.object({ date: z.iso.date().optional() }),
   response: envelope(wordleDayGuessesSchema.nullable()),
+  docs: {
+    description:
+      'Read the answer and accepted rows used by the bot to build a guild summary for the requested day. Omitting the date reads the current round.',
+    tags: gameplayTags,
+    security: botSecurity,
+    examples: { params: exampleGuild, query: { date: exampleDate } },
+    success: {
+      200: {
+        description:
+          'Day answer and collected guess rows, or null if the day has no word.',
+        example: {
+          data: {
+            word: 'crava',
+            wordDate: exampleDate,
+            wordLength: 5,
+            guesses: [exampleGuess],
+          },
+        },
+      },
+    },
+    errors: { ...wordleBotErrors, 400: wordleGuildInput },
+  },
 });
 
 export const rotateDailyWord = defineContract({
@@ -534,6 +733,27 @@ export const getLeaderboard = defineContract({
     ]),
     groupStreak: z.number(),
   }),
+  docs: {
+    description:
+      'Read ten ranking entries for a guild with an optional offset. Daily rankings can target a specific date and return attempts and solved state. Longer periods return days played and average score.',
+    tags: gameplayTags,
+    security: botSecurity,
+    examples: {
+      params: exampleGuild,
+      query: { period: 'daily', date: exampleDate, offset: 0 },
+    },
+    success: {
+      200: {
+        description:
+          'Ranking entries for the selected period and the guild’s group streak.',
+        example: {
+          data: [{ userId: exampleUserId, attempts: 3, solved: true }],
+          groupStreak: 5,
+        },
+      },
+    },
+    errors: { ...wordleBotErrors, 400: wordleGuildInput },
+  },
 });
 
 export const validateGuess = defineContract({
@@ -548,6 +768,33 @@ export const validateGuess = defineContract({
       message: z.string(),
     }),
   ),
+  docs: {
+    description:
+      'Check the normalized guess against the current word length and the accepted word bank. This operation does not record a guess.',
+    tags: gameplayTags,
+    security: botSecurity,
+    examples: { params: exampleGuild, query: { guess: exampleGuess.guess } },
+    success: {
+      200: {
+        description:
+          'Validity, expected word length, and a message suitable for the Discord interaction.',
+        example: {
+          data: {
+            valid: true,
+            wordLength: 5,
+            message: '"carta" é uma palavra válida',
+          },
+        },
+      },
+    },
+    errors: {
+      ...wordleBotErrors,
+      400: {
+        description: 'The guild ID or guess did not pass validation.',
+        example: { message: 'guildId e guess são obrigatórios.' },
+      },
+    },
+  },
 });
 
 export const setConfig = defineContract({
@@ -585,6 +832,20 @@ export const getStreak = defineContract({
   response: envelope(
     z.object({ currentStreak: z.number(), maxStreak: z.number() }),
   ),
+  docs: {
+    description:
+      'Read the current and longest consecutive victory sequences for the player.',
+    tags: gameplayTags,
+    security: botSecurity,
+    examples: { params: examplePlayer },
+    success: {
+      200: {
+        description: 'Current victory streak and recorded best.',
+        example: { data: { currentStreak: 3, maxStreak: 8 } },
+      },
+    },
+    errors: { ...wordleBotErrors, 400: wordlePlayerInput },
+  },
 });
 
 export const getWordlistPoolStats = defineContract({
