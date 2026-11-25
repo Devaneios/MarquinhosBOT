@@ -2,6 +2,47 @@ import { z } from 'zod';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
+export type HttpSecurity =
+  | 'botBearer'
+  | 'discordUserBearer'
+  | 'discordActivityBearer'
+  | 'discordActivityBody'
+  | 'discordOAuthCode'
+  | 'refreshTokenHeader';
+
+export interface HttpHeaderDocumentation {
+  description: string;
+  schema: z.ZodType;
+  example: string;
+  required?: boolean;
+}
+
+export interface EndpointDocumentation {
+  description: string;
+  tags: readonly [string, ...string[]];
+  security: readonly HttpSecurity[];
+  requestHeaders?: Readonly<Record<string, HttpHeaderDocumentation>>;
+  examples?: {
+    params?: Record<string, string>;
+    query?: Record<string, unknown>;
+    body?: unknown;
+  };
+  success: Readonly<
+    Record<
+      number,
+      {
+        description: string;
+        example: unknown;
+        contentType?: string;
+        headers?: Readonly<Record<string, HttpHeaderDocumentation>>;
+      }
+    >
+  >;
+  errors: Readonly<
+    Record<number, { description: string; example: { message: string } }>
+  >;
+}
+
 export interface EndpointContract {
   method: HttpMethod;
   path: `/api/${string}`;
@@ -9,6 +50,7 @@ export interface EndpointContract {
   query?: z.ZodType;
   body?: z.ZodType;
   response: z.ZodType;
+  docs?: EndpointDocumentation;
 }
 
 export function defineContract<const C extends EndpointContract>(
