@@ -1,0 +1,23 @@
+{
+  "name": "@marquinhos/docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "pnpm --workspace-root gen:openapi apps/docs/public/openapi.json && pnpm --workspace-root gen:asyncapi apps/docs/public/asyncapi.json && pnpm --workspace-root gen:commands && cp ../activity/public/favicon.svg public/favicon.svg",
+    "dev": "pnpm generate && astro dev",
+    "build": "pnpm generate && astro build && node scripts/verify-reference-pages.mjs",
+    "preview": "astro preview"
+  },
+  "devDependencies": {
+    "@astrojs/markdown-remark": "7.3.0",
+    "@astrojs/starlight": "0.43.1",
+    "@scalar/starlight": "0.2.27",
+    "astro": "7.4.13",
+    "astro-mermaid": "2.2.0",
+    "mermaid": "^11.17.2",
+    "starlight-links-validator": "0.27.0",
+    "starlight-typedoc": "0.23.3",
+    "typedoc": "0.28.20",
+    "typedoc-plugin-markdown": "4.14.1"
+  }
+}

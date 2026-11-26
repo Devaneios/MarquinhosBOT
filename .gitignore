@@ -177,3 +177,8 @@ docs/achievement-art/sheet.png
 
 # Documentation generated from application source
 apps/docs/src/content/docs/reference/commands.md
+apps/docs/.astro/
+apps/docs/public/openapi.json
+apps/docs/public/asyncapi.json
+apps/docs/public/favicon.svg
+apps/docs/src/content/docs/reference/typescript/
