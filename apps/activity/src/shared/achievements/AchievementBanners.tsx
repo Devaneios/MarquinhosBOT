@@ -28,7 +28,7 @@ type Banner = AchievementBanner & { id: number };
 
 const VISIBLE_BANNERS = 3;
 const DISPLAY_MS = 4500;
-const EXIT_MS = 760;
+const EXIT_MS = 1100;
 const STAGGER_MS = EXIT_MS + 40;
 
 const PublishAchievements = createContext<

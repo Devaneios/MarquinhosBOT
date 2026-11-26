@@ -15,6 +15,7 @@ interface Fragment {
   life: number;
   drift: number;
   rise: number;
+  gravity: number;
   color: string;
   cutout: string;
 }
@@ -95,7 +96,7 @@ export function animateBannerPixels(
       const cornerWave = Math.min(diagonalProgress, 1 - diagonalProgress) * 2;
       const release = exiting
         ? Math.round(
-            (cornerWave * (exitDuration ?? 0) * 0.5 + (noise % 12)) / 16,
+            (cornerWave * (exitDuration ?? 0) * 0.48 + (noise % 12)) / 16,
           ) * 16
         : (seed >>> 0) % CORNER_CYCLE_MS;
       fragments.push({
@@ -104,9 +105,10 @@ export function animateBannerPixels(
         width: exiting ? cellWidth : pixelSize,
         height: exiting ? cellHeight : pixelSize,
         release,
-        life: exiting ? 180 + (noise % 32) * 4 : 1850 + (noise % 450),
+        life: exiting ? 470 + (noise % 16) * 4 : 1850 + (noise % 450),
         drift: sideEdge ? outward * normalTravel : tangentTravel,
         rise: sideEdge ? -tangentTravel : -verticalOutward * normalTravel,
+        gravity: exiting ? 12 + (noise % 13) : 0,
         color: exiting
           ? (fragmentColors[noise % fragmentColors.length] ?? palette.base)
           : palette.highlight,
@@ -142,14 +144,17 @@ export function animateBannerPixels(
       if (progress >= 1 || !context) continue;
 
       const distance = progress * (2 - progress);
-      context.globalAlpha = exiting
-        ? Math.min(1, (1 - progress) * 1.65)
-        : 0.85 * (1 - progress);
+      context.globalAlpha = exiting ? 1 - progress : 0.85 * (1 - progress);
       context.fillStyle = fragment.color;
       const x =
         Math.round((fragment.x + fragment.drift * distance) * ratio) / ratio;
       const y =
-        Math.round((fragment.y - fragment.rise * distance) * ratio) / ratio;
+        Math.round(
+          (fragment.y -
+            fragment.rise * distance +
+            fragment.gravity * progress * progress) *
+            ratio,
+        ) / ratio;
       const width = Math.round(fragment.width * ratio) / ratio;
       const height = Math.round(fragment.height * ratio) / ratio;
       context.fillRect(x, y, width, height);
