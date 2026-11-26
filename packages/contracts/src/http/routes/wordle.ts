@@ -300,11 +300,58 @@ const notificationConfigSchema = z.object({
   collective: z.boolean(),
   weekly: z.boolean(),
 });
+const botSecurity = ['botBearer'] as const;
+const exampleGuildId = '123456789012345678';
+const exampleGuild = { guildId: exampleGuildId };
+const exampleChannelId = '345678901234567890';
+const notificationTags = ['Wordle notifications'] as const;
+const notificationConfigExample = {
+  channelId: exampleChannelId,
+  collective: true,
+  weekly: true,
+};
+const deliveryId = '24';
+const leaseId = '89db4463-d60a-455c-a9ce-3d509e890a6b';
+const notificationMessageId = '456789012345678901';
+const weeklyEventKey = 'weekly:2026-11-16';
+const notificationErrors = {
+  401: {
+    description: 'The bot credential was absent or invalid.',
+    example: { message: 'Token not authorized' },
+  },
+  500: {
+    description: 'The API failed to read or update the notification queue.',
+    example: { message: 'Internal Server Error' },
+  },
+};
+const notificationGuildInput = {
+  description: 'The guild ID did not pass validation.',
+  example: { message: 'Invalid community' },
+};
+const notificationBodyTooLarge = {
+  description: 'The notification request exceeded the API JSON size limit.',
+  example: { message: 'Request body too large' },
+};
+
 export const getNotificationConfig = defineContract({
   method: 'GET',
   path: '/api/wordle/admin/notifications/:guildId',
   params: guildParams,
   response: envelope(notificationConfigSchema),
+  docs: {
+    description:
+      'Read the delivery channel and switches for collective milestones and weekly summaries. Unconfigured guilds return a null channel and both switches off.',
+    tags: notificationTags,
+    security: botSecurity,
+    examples: { params: exampleGuild },
+    success: {
+      200: {
+        description: 'Current notification settings for the guild.',
+        example: { data: notificationConfigExample },
+      },
+    },
+    errors: { ...notificationErrors, 400: notificationGuildInput },
+  },
 });
 export const setNotificationConfig = defineContract({
   method: 'PUT',
@@ -312,6 +359,27 @@ export const setNotificationConfig = defineContract({
   params: guildParams,
   body: notificationConfigSchema,
   response: envelope(notificationConfigSchema),
+  docs: {
+    description:
+      'Replace the guild’s notification settings. Individual delivery requires a channel and at least one enabled event category.',
+    tags: notificationTags,
+    security: botSecurity,
+    examples: { params: exampleGuild, body: notificationConfigExample },
+    success: {
+      200: {
+        description: 'The saved channel and delivery switches.',
+        example: { data: notificationConfigExample },
+      },
+    },
+    errors: {
+      ...notificationErrors,
+      400: {
+        description: 'The guild or notification settings failed validation.',
+        example: { message: 'Invalid configuration' },
+      },
+      413: notificationBodyTooLarge,
+    },
+  },
 });
 export const claimNotification = defineContract({
   method: 'POST',
@@ -330,6 +398,31 @@ export const claimNotification = defineContract({
       })
       .nullable(),
   ),
+  docs: {
+    description:
+      'Reserve one eligible pending notification for Discord delivery. The claim returns a lease ID that the worker must submit when settling the attempt.',
+    tags: notificationTags,
+    security: botSecurity,
+    examples: { params: exampleGuild },
+    success: {
+      200: {
+        description:
+          'A sending lease with its channel and event payload, or null when nothing is eligible.',
+        example: {
+          data: {
+            id: deliveryId,
+            eventKey: weeklyEventKey,
+            kind: 'weekly',
+            payload: { pages: '2', goals: '1', week: '2026-11-16' },
+            status: 'sending',
+            leaseId,
+            channelId: exampleChannelId,
+          },
+        },
+      },
+    },
+    errors: { ...notificationErrors, 400: notificationGuildInput },
+  },
 });
 export const settleNotification = defineContract({
   method: 'POST',
@@ -349,6 +442,36 @@ export const settleNotification = defineContract({
     }),
   ]),
   response: envelope(z.object({ recorded: z.boolean() })),
+  docs: {
+    description:
+      'Record a delivery outcome against the active lease. Delivered requires a Discord message ID, ambiguous moves the event to manual reconciliation, and not_sent releases it for another attempt. Retry-later and skip apply to weekly gallery deliveries.',
+    tags: notificationTags,
+    security: botSecurity,
+    examples: {
+      params: exampleGuild,
+      body: {
+        id: deliveryId,
+        leaseId,
+        result: 'delivered',
+        messageId: notificationMessageId,
+      },
+    },
+    success: {
+      200: {
+        description: 'True when the outcome changed a matching active lease.',
+        example: { data: { recorded: true } },
+      },
+    },
+    errors: {
+      ...notificationErrors,
+      400: {
+        description:
+          'The guild, lease, or result did not satisfy the settlement contract.',
+        example: { message: 'Invalid delivery' },
+      },
+      413: notificationBodyTooLarge,
+    },
+  },
 });
 
 export const listUncertainNotifications = defineContract({
@@ -366,6 +489,31 @@ export const listUncertainNotifications = defineContract({
       }),
     ),
   ),
+  docs: {
+    description:
+      'List deliveries whose Discord outcome is unknown so an operator can check the target channel before retrying.',
+    tags: notificationTags,
+    security: botSecurity,
+    examples: { params: exampleGuild },
+    success: {
+      200: {
+        description:
+          'Uncertain events with their kind, channel, and attempt start time.',
+        example: {
+          data: [
+            {
+              id: deliveryId,
+              kind: 'weekly',
+              eventKey: weeklyEventKey,
+              channelId: exampleChannelId,
+              startedAt: 1795629600000,
+            },
+          ],
+        },
+      },
+    },
+    errors: { ...notificationErrors, 400: notificationGuildInput },
+  },
 });
 export const resolveNotification = defineContract({
   method: 'POST',
@@ -380,6 +528,36 @@ export const resolveNotification = defineContract({
     z.object({ id: requiredString, result: z.literal('confirmed_absent') }),
   ]),
   response: envelope(z.object({ recorded: z.boolean() })),
+  docs: {
+    description:
+      'Reconcile an uncertain event after checking Discord. Found records the existing message ID. Confirmed absent puts the event back into the pending queue.',
+    tags: notificationTags,
+    security: botSecurity,
+    examples: {
+      params: exampleGuild,
+      body: {
+        id: deliveryId,
+        result: 'found',
+        messageId: notificationMessageId,
+      },
+    },
+    success: {
+      200: {
+        description:
+          'True when the event was still uncertain and the reconciliation was applied.',
+        example: { data: { recorded: true } },
+      },
+    },
+    errors: {
+      ...notificationErrors,
+      400: {
+        description:
+          'The guild or reconciliation result did not pass validation.',
+        example: { message: 'Invalid reconciliation' },
+      },
+      413: notificationBodyTooLarge,
+    },
+  },
 });
 export const updateReward = defineContract({
   method: 'PUT',
@@ -437,12 +615,9 @@ export const updateShowcase = defineContract({
 });
 
 const gameplayTags = ['Daily Wordle'] as const;
-const botSecurity = ['botBearer'] as const;
-const exampleGuildId = '123456789012345678';
 const exampleUserId = '234567890123456789';
 const exampleDate = '2026-11-25';
 const examplePlayer = { guildId: exampleGuildId, userId: exampleUserId };
-const exampleGuild = { guildId: exampleGuildId };
 const exampleGuess = {
   guess: 'carta',
   feedback: ['correct', 'present', 'present', 'absent', 'correct'],
@@ -698,7 +873,6 @@ export const getDayGuesses = defineContract({
 
 const wordleAdminTags = ['Wordle administration'] as const;
 const exampleWord = { word: 'crava', wordDate: exampleDate, wordLength: 5 };
-const exampleChannelId = '345678901234567890';
 const exampleChannel = { channelId: exampleChannelId };
 
 export const rotateDailyWord = defineContract({
