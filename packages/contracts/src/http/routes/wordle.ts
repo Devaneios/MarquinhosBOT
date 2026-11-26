@@ -114,10 +114,54 @@ export type WordleLeaderboardPeriod = z.output<
 
 const messageOnly = z.object({ message: z.string() });
 
+const playerTags = ['Wordle player profile'] as const;
+const activitySecurity = ['discordActivityBearer'] as const;
+const configExample = {
+  invertActionKeys: false,
+  enableSounds: false,
+  enableSpaceKey: true,
+  enableArrowKeys: true,
+};
+const showcaseExample = ['wordle_v2_wins_1'];
+const rewardsExample = { owned: [], title: null, frame: null, badges: [] };
+const playerReadErrors = {
+  401: {
+    description:
+      'The Activity bearer token is missing or no longer resolves to a Discord user.',
+    example: { message: 'Unauthorized' },
+  },
+  429: {
+    description: 'The caller exceeded the API request limit.',
+    example: { message: 'ThrottlerException: Too Many Requests' },
+  },
+  500: {
+    description: 'Discord identity verification or persistence failed.',
+    example: { message: 'Internal Server Error' },
+  },
+};
+const playerBodyTooLarge = {
+  description: 'The JSON request exceeded the API body size limit.',
+  example: { message: 'Request body too large' },
+};
+
 export const getUserConfig = defineContract({
   method: 'GET',
   path: '/api/wordle/user-config',
   response: z.object({ data: wordleUserConfigSchema }),
+  docs: {
+    description:
+      'Read the keyboard and sound preferences stored for the authenticated Activity user. New players receive defaults with all four options disabled.',
+    tags: playerTags,
+    security: activitySecurity,
+
+    success: {
+      200: {
+        description: 'Current Terminhos input and audio preferences.',
+        example: { data: configExample },
+      },
+    },
+    errors: playerReadErrors,
+  },
 });
 
 export const updateUserConfig = defineContract({
@@ -125,12 +169,51 @@ export const updateUserConfig = defineContract({
   path: '/api/wordle/user-config',
   body: wordleUserConfigSchema,
   response: z.object({ data: wordleUserConfigSchema }),
+  docs: {
+    description:
+      'Replace the authenticated player’s keyboard and sound preferences. Arrow key navigation requires the space key option to be enabled.',
+    tags: playerTags,
+    security: activitySecurity,
+    examples: { body: configExample },
+    success: {
+      200: {
+        description: 'Saved input and audio preferences.',
+        example: { data: configExample },
+      },
+    },
+    errors: {
+      ...playerReadErrors,
+      400: {
+        description:
+          'Preferences must satisfy the keyboard option dependency and contain boolean values.',
+        example: {
+          message:
+            'Wordle config fields must be booleans, and arrow keys require space.',
+        },
+      },
+      413: playerBodyTooLarge,
+    },
+  },
 });
 
 export const getShowcase = defineContract({
   method: 'GET',
   path: '/api/wordle/showcase',
   response: envelope(z.array(requiredString).max(3)),
+  docs: {
+    description:
+      'Read the authenticated player’s ordered achievement showcase. It can contain up to three unlocked achievements.',
+    tags: playerTags,
+    security: activitySecurity,
+
+    success: {
+      200: {
+        description: 'Selected achievement IDs in display order.',
+        example: { data: showcaseExample },
+      },
+    },
+    errors: playerReadErrors,
+  },
 });
 
 const rewardsStateSchema = z.object({
@@ -143,6 +226,20 @@ export const getRewards = defineContract({
   method: 'GET',
   path: '/api/wordle/rewards',
   response: envelope(rewardsStateSchema),
+  docs: {
+    description:
+      'Reconcile the authenticated player’s eligible rewards, then read the owned IDs, equipped title and frame, and earned community goal badges.',
+    tags: playerTags,
+    security: activitySecurity,
+
+    success: {
+      200: {
+        description: 'Current reward inventory and equipped items.',
+        example: { data: rewardsExample },
+      },
+    },
+    errors: playerReadErrors,
+  },
 });
 
 const goalSchema = z.object({
@@ -569,6 +666,28 @@ export const updateReward = defineContract({
     })
     .strict(),
   response: envelope(rewardsStateSchema),
+  docs: {
+    description:
+      'Equip an owned title or frame of the requested kind. Supply a null reward ID to clear that slot. The API reconciles the reward inventory before applying the change.',
+    tags: playerTags,
+    security: activitySecurity,
+    examples: { body: { kind: 'frame', rewardId: null } },
+    success: {
+      200: {
+        description: 'Reward inventory and updated equipped items.',
+        example: { data: rewardsExample },
+      },
+    },
+    errors: {
+      ...playerReadErrors,
+      400: {
+        description:
+          'The reward is unknown, does not match the slot, or is not owned by the authenticated player.',
+        example: { message: 'Reward not owned' },
+      },
+      413: playerBodyTooLarge,
+    },
+  },
 });
 
 export const getAlbum = defineContract({
@@ -612,6 +731,28 @@ export const updateShowcase = defineContract({
   path: '/api/wordle/showcase',
   body: z.object({ achievements: z.array(requiredString).max(3) }).strict(),
   response: envelope(z.array(requiredString).max(3)),
+  docs: {
+    description:
+      'Replace the ordered showcase with up to three distinct achievements unlocked by the authenticated player. An empty list clears it.',
+    tags: playerTags,
+    security: activitySecurity,
+    examples: { body: { achievements: showcaseExample } },
+    success: {
+      200: {
+        description: 'Saved achievement IDs in display order.',
+        example: { data: showcaseExample },
+      },
+    },
+    errors: {
+      ...playerReadErrors,
+      400: {
+        description:
+          'The selection is malformed, contains duplicate IDs, or includes an achievement the player has not unlocked.',
+        example: { message: 'Achievement not unlocked' },
+      },
+      413: playerBodyTooLarge,
+    },
+  },
 });
 
 const gameplayTags = ['Daily Wordle'] as const;
@@ -805,6 +946,34 @@ export const getAchievements = defineContract({
   path: '/api/wordle/achievements/:guildId/:userId',
   params: userGuildParams,
   response: envelope(wordleAchievementsOverviewSchema),
+  docs: {
+    description:
+      'Read the player overview for display in Discord. Achievement evidence is filtered for public viewers and the response includes statistics, showcase, and equipped cosmetics.',
+    tags: playerTags,
+    security: botSecurity,
+    examples: { params: examplePlayer },
+    success: {
+      200: {
+        description: 'Public player overview in the requested guild context.',
+        example: {
+          data: {
+            achievements: [],
+            stats: {
+              played: 0,
+              wins: 0,
+              winRate: 0,
+              currentStreak: 0,
+              bestStreak: 0,
+              distribution: [0, 0, 0, 0, 0, 0, 0, 0],
+            },
+            showcase: [],
+            cosmetics: { title: null, frame: null, badges: [] },
+          },
+        },
+      },
+    },
+    errors: { ...wordleBotErrors, 400: wordlePlayerInput },
+  },
 });
 
 export const getUserSession = defineContract({
