@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
+const base = process.env.DOCS_GITHUB_PAGES === '1' ? '/MarquinhosBOT' : '';
+
 for (const [route, spec] of [
   ['api-reference', 'openapi.json'],
   ['event-reference', 'asyncapi.json'],
@@ -8,7 +10,10 @@ for (const [route, spec] of [
     new URL(`../dist/${route}/index.html`, import.meta.url),
     'utf8',
   );
-  if (!html.includes('data-scalar-client') || !html.includes(`/${spec}`)) {
+  if (
+    !html.includes('data-scalar-client') ||
+    !html.includes(`${base}/${spec}`)
+  ) {
     throw new Error(`/${route}/ does not mount Scalar with /${spec}`);
   }
 

@@ -5,3 +5,7 @@ From the repository root, run `pnpm --filter @marquinhos/docs dev` to generate t
 Contributor guides live in `src/content/docs/contributors`. The generated Discord reference follows the Sapphire registry. The curated TypeScript reference starts at `src/public-api.ts`.
 
 Pagefind indexes the Starlight content. Use Scalar's search inside HTTP API or Activity events to find individual operations and messages. Those entries load in the browser using the version-pinned Scalar script.
+
+## GitHub Pages
+
+Run `pnpm --filter @marquinhos/docs build:pages` to build for `https://devaneios.github.io/MarquinhosBOT/`. Publish the contents of `dist/` to the root of `gh-pages` with a `.nojekyll` file so GitHub serves Astro's `_astro` assets. The branch contains the published build.

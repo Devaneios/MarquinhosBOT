@@ -6,6 +6,7 @@
     "generate": "pnpm --workspace-root gen:openapi apps/docs/public/openapi.json && pnpm --workspace-root gen:asyncapi apps/docs/public/asyncapi.json && pnpm --workspace-root gen:commands && cp ../activity/public/favicon.svg public/favicon.svg",
     "dev": "pnpm generate && astro dev",
     "build": "pnpm generate && astro build && node scripts/verify-reference-pages.mjs",
+    "build:pages": "DOCS_GITHUB_PAGES=1 pnpm build",
     "preview": "astro preview"
   },
   "devDependencies": {

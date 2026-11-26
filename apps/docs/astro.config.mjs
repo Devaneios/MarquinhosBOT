@@ -8,7 +8,11 @@ import starlightTypeDoc, { typeDocSidebarGroup } from 'starlight-typedoc';
 const scalarCdn =
   'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.84.0/dist/browser/standalone.js';
 
+const pages = process.env.DOCS_GITHUB_PAGES === '1';
+const base = pages ? '/MarquinhosBOT' : '';
+
 export default defineConfig({
+  ...(pages && { site: 'https://devaneios.github.io', base }),
   integrations: [
     mermaid(),
     starlight({
@@ -33,12 +37,12 @@ export default defineConfig({
       ],
       plugins: [
         scalarStarlight({
-          configuration: { url: '/openapi.json', cdn: scalarCdn },
+          configuration: { url: `${base}/openapi.json`, cdn: scalarCdn },
           pathname: '/api-reference',
           label: 'HTTP API',
         }),
         scalarStarlight({
-          configuration: { url: '/asyncapi.json', cdn: scalarCdn },
+          configuration: { url: `${base}/asyncapi.json`, cdn: scalarCdn },
           pathname: '/event-reference',
           label: 'Activity events',
         }),
@@ -48,7 +52,9 @@ export default defineConfig({
           output: 'reference/typescript',
           sidebar: { label: 'TypeScript API', collapsed: true },
         }),
-        linksValidator({ exclude: ['/api-reference/', '/event-reference/'] }),
+        linksValidator({
+          exclude: [`${base}/api-reference/`, `${base}/event-reference/`],
+        }),
       ],
     }),
   ],
