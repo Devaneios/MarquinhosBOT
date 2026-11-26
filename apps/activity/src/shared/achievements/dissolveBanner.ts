@@ -1,6 +1,10 @@
+import {
+  ACHIEVEMENT_RARITY_PALETTES,
+  type AchievementRarity,
+} from './rarityPalette';
+
 const PIXEL_SIZE = 4;
 const CORNER_CYCLE_MS = 2400;
-const FRAGMENT_COLORS = ['#b9815d', '#e9b67f', '#ffe3af', '#fff1d3'];
 
 interface Fragment {
   x: number;
@@ -19,6 +23,7 @@ export function animateBannerPixels(
   banner: HTMLElement,
   trail: HTMLCanvasElement,
   exitDuration: number | null,
+  rarity: AchievementRarity,
 ) {
   const { offsetWidth: width, offsetHeight: height } = banner;
   if (width === 0 || height === 0) return;
@@ -27,6 +32,13 @@ export function animateBannerPixels(
   if (!context) return;
 
   const exiting = exitDuration !== null;
+  const palette = ACHIEVEMENT_RARITY_PALETTES[rarity];
+  const fragmentColors = [
+    palette.highlight,
+    palette.base,
+    palette.shadow,
+    palette.deep,
+  ];
   const pixelSize = exiting ? PIXEL_SIZE : 3;
   const padding = exiting ? 88 : 64;
   const ratio = window.devicePixelRatio || 1;
@@ -96,8 +108,8 @@ export function animateBannerPixels(
         drift: sideEdge ? outward * normalTravel : tangentTravel,
         rise: sideEdge ? -tangentTravel : -verticalOutward * normalTravel,
         color: exiting
-          ? (FRAGMENT_COLORS[noise % FRAGMENT_COLORS.length] ?? '#e9b67f')
-          : '#f4e7d2',
+          ? (fragmentColors[noise % fragmentColors.length] ?? palette.base)
+          : palette.highlight,
         cutout: `M${x} ${y}h${cellWidth}v${cellHeight}h-${cellWidth}Z`,
       });
     }

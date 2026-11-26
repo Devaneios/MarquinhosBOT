@@ -601,10 +601,10 @@ html:active-view-transition-type(nav-back)::view-transition-new(root) {
   inset: 0;
   background: linear-gradient(
     155deg,
-    color-mix(in srgb, var(--banner-rarity-color) 55%, #e8e8e8),
+    var(--banner-rarity-highlight),
     var(--banner-rarity-color) 44%,
-    color-mix(in srgb, var(--banner-rarity-color) 62%, #121213) 85%,
-    color-mix(in srgb, var(--banner-rarity-color) 35%, #121213)
+    var(--banner-rarity-shadow) 85%,
+    var(--banner-rarity-deep)
   );
   clip-path: polygon(
     0 8px,
@@ -816,11 +816,11 @@ html:active-view-transition-type(nav-back)::view-transition-new(root) {
   padding: 2px 4px;
   border-left: 2px solid var(--banner-rarity-color);
   background: color-mix(in srgb, var(--banner-rarity-color) 18%, #4b3033);
-  color: color-mix(in srgb, var(--banner-rarity-color) 55%, #fff1d3);
+  color: var(--banner-rarity-highlight);
 }
 
 .achievement-banner-title {
-  color: color-mix(in srgb, var(--banner-rarity-color) 62%, #e8e8e8);
+  color: var(--banner-rarity-highlight);
 }
 
 .achievement-banner-motion:not([inert]) button {

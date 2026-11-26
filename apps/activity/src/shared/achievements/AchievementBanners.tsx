@@ -1,4 +1,3 @@
-import type { WordleAchievementStatus } from '@marquinhos/contracts/wordle';
 import {
   createContext,
   useCallback,
@@ -11,8 +10,10 @@ import {
   type ReactNode,
 } from 'react';
 import { animateBannerPixels } from './dissolveBanner';
-
-type AchievementRarity = WordleAchievementStatus['rarity'];
+import {
+  ACHIEVEMENT_RARITY_PALETTES,
+  type AchievementRarity,
+} from './rarityPalette';
 
 interface AchievementBanner {
   title: string;
@@ -22,13 +23,6 @@ interface AchievementBanner {
   dismissLabel: string;
   icon: ReactNode;
 }
-
-const RARITY_COLORS: Record<AchievementRarity, string> = {
-  common: '#818384',
-  rare: '#5facfb',
-  epic: '#e5484d',
-  legendary: '#ffb000',
-};
 
 type Banner = AchievementBanner & { id: number };
 
@@ -88,6 +82,7 @@ function AchievementBannerCard({
   delay: number;
   onRemove: (id: number) => void;
 }) {
+  const palette = ACHIEVEMENT_RARITY_PALETTES[banner.rarity];
   const [displayMs] = useState(() => DISPLAY_MS + delay);
   const [leaving, setLeaving] = useState(false);
   const card = useRef<HTMLDivElement>(null);
@@ -98,19 +93,20 @@ function AchievementBannerCard({
     const canvas = trail.current;
     if (!bannerElement || !canvas) return;
 
-    if (leaving) return animateBannerPixels(bannerElement, canvas, EXIT_MS);
+    if (leaving)
+      return animateBannerPixels(bannerElement, canvas, EXIT_MS, banner.rarity);
 
-    let stop = animateBannerPixels(bannerElement, canvas, null);
+    let stop = animateBannerPixels(bannerElement, canvas, null, banner.rarity);
     const observer = new ResizeObserver(() => {
       stop?.();
-      stop = animateBannerPixels(bannerElement, canvas, null);
+      stop = animateBannerPixels(bannerElement, canvas, null, banner.rarity);
     });
     observer.observe(bannerElement);
     return () => {
       observer.disconnect();
       stop?.();
     };
-  }, [leaving]);
+  }, [banner.rarity, leaving]);
 
   useEffect(() => {
     if (leaving) {
@@ -144,7 +140,10 @@ function AchievementBannerCard({
               className="achievement-banner"
               style={
                 {
-                  '--banner-rarity-color': RARITY_COLORS[banner.rarity],
+                  '--banner-rarity-color': palette.base,
+                  '--banner-rarity-highlight': palette.highlight,
+                  '--banner-rarity-shadow': palette.shadow,
+                  '--banner-rarity-deep': palette.deep,
                 } as CSSProperties
               }
             >

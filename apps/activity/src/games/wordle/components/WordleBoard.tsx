@@ -49,6 +49,12 @@ import { WordleConnectingAnimation } from './WordleConnectingAnimation';
 import { WordleSettingsScreen } from './WordleSettingsScreen';
 
 const ENABLE_SHOWCASE_REWARDS_AND_ALBUM = false;
+const ACHIEVEMENT_BANNER_TEST_CASES = [
+  { rarity: 'common', icon: '/achievements/wins_1.png' },
+  { rarity: 'rare', icon: '/achievements/wins_50.png' },
+  { rarity: 'epic', icon: '/achievements/wins_100.png' },
+  { rarity: 'legendary', icon: '/achievements/wins_365.png' },
+] as const;
 
 export function WordleBoard({
   session,
@@ -304,21 +310,18 @@ export function WordleBoard({
                 title={t('wordle:testAchievementBannerAriaLabel')}
                 aria-label={t('wordle:testAchievementBannerAriaLabel')}
                 onClick={() => {
-                  publishAchievements([
-                    {
+                  publishAchievements(
+                    ACHIEVEMENT_BANNER_TEST_CASES.map(({ rarity, icon }) => ({
                       title: t('wordle:achievementUnlockedToast'),
-                      name: t('wordle:testAchievementBannerName'),
+                      name: `${t('wordle:testAchievementBannerName')} · ${t(
+                        `wordle:rarity.${rarity}`,
+                      )}`,
                       reward: t('wordle:achievementRewardXp', { xp: 25 }),
-                      rarity: 'common',
+                      rarity,
                       dismissLabel: t('wordle:dismissAchievementToast'),
-                      icon: (
-                        <AchievementIcon
-                          icon="/achievements/wins_1.png"
-                          className="h-8 w-8"
-                        />
-                      ),
-                    },
-                  ]);
+                      icon: <AchievementIcon icon={icon} className="h-8 w-8" />,
+                    })),
+                  );
                 }}
               >
                 {t('wordle:testAchievementBanner')}
