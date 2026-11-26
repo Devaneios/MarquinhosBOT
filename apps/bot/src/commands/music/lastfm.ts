@@ -1,19 +1,12 @@
 import { env } from '@marquinhos/config/environment';
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { baseEmbed } from '@marquinhos/utils/discord';
 import { Command } from '@sapphire/framework';
 
 export class LastfmCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'lastfm', cooldownDelay: 10_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Mostra informações sobre a integração com o last.fm'),
-    );
+    super(context, commandDefinitions['lastfm']);
   }
 
   override async chatInputRun(

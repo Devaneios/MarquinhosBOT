@@ -1,21 +1,12 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { baseEmbed, requireGuildMember } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
-import { PermissionsBitField } from 'discord.js';
 
 export class DisconnectAllCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'encerrar-chamada', cooldownDelay: 10_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Remove todo mundo da chamada atual')
-        .setDefaultMemberPermissions(PermissionsBitField.Flags.MoveMembers),
-    );
+    super(context, commandDefinitions['encerrar-chamada']);
   }
 
   override async chatInputRun(

@@ -1,3 +1,4 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { logger } from '@marquinhos/utils/logger';
@@ -6,7 +7,6 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  ChannelType,
   MessageFlags,
 } from 'discord.js';
 import { buildTermoAchievementsReply } from './termoAchievements';
@@ -15,28 +15,7 @@ import { buildShareButtonId, selectShareAchievement } from './termoShare';
 const api = MarquinhosApiService.getInstance();
 export class TermoCompartilharCommand extends MarquinhosCommand {
   constructor(context: Command.LoaderContext) {
-    super(context, { name: 'termo-compartilhar', cooldownDelay: 5000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Prévia para compartilhar uma conquista do Terminhos')
-        .addStringOption((option) =>
-          option
-            .setName('conquista')
-            .setDescription('Nome ou ID de uma conquista desbloqueada')
-            .setRequired(true),
-        )
-        .addChannelOption((option) =>
-          option
-            .setName('canal')
-            .setDescription('Canal onde publicar após confirmar')
-            .addChannelTypes(ChannelType.GuildText)
-            .setRequired(true),
-        ),
-    );
+    super(context, commandDefinitions['termo-compartilhar']);
   }
 
   override async chatInputRun(

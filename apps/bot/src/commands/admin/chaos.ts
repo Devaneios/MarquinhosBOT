@@ -1,3 +1,4 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { coerceNumberProperty } from '@marquinhos/utils/coercion';
 import { requireGuildMember } from '@marquinhos/utils/discord';
@@ -15,22 +16,7 @@ export const activeChaosTimers = new Set<NodeJS.Timeout>();
 
 export class ChaosCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'chaos', cooldownDelay: 10_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Instaura o CHAOS nos canais de voz')
-        .setDefaultMemberPermissions(0)
-        .addStringOption((option) =>
-          option
-            .setName('nivel_do_chaos')
-            .setDescription('O quão caótico você precisa que fique.')
-            .setRequired(false),
-        ),
-    );
+    super(context, commandDefinitions['chaos']);
   }
 
   override async chatInputRun(

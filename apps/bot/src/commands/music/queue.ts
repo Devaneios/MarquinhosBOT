@@ -1,3 +1,4 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { Command } from '@sapphire/framework';
 import { Track, useQueue } from 'discord-player';
@@ -5,18 +6,7 @@ import { ChatInputCommandInteraction } from 'discord.js';
 
 export class QueueCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, {
-      name: 'fila',
-      preconditions: ['BotNotInOtherChannel'],
-    });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Mostra a fila de músicas'),
-    );
+    super(context, commandDefinitions['fila']);
   }
 
   override async chatInputRun(interaction: ChatInputCommandInteraction) {

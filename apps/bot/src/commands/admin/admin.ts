@@ -5,6 +5,7 @@ import { sendTermoStatusBroadcast } from '@marquinhos/commands/games/termoLeader
 import { collectVerifiedLeaderboard } from '@marquinhos/commands/games/termoLeaderboardMembers';
 import { GuildConfig } from '@marquinhos/config/guild';
 import { GameManager } from '@marquinhos/game/core/GameManager';
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
@@ -24,7 +25,6 @@ import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
 import {
   AttachmentBuilder,
-  ChannelType,
   EmbedBuilder,
   MessageFlags,
   PermissionFlagsBits,
@@ -47,207 +47,7 @@ const api = MarquinhosApiService.getInstance();
 
 export class AdminCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'admin', cooldownDelay: 5_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Comandos administrativos')
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-        .addSubcommand((sub) =>
-          sub
-            .setName('status')
-            .setDescription(
-              'Mostra o status atual do bot (API, sessões, erros, uptime)',
-            ),
-        )
-        .addSubcommandGroup((group) =>
-          group
-            .setName('termo')
-            .setDescription('Gerenciar o jogo Termo')
-            .addSubcommand((sub) =>
-              sub
-                .setName('novo')
-                .setDescription(
-                  'Força uma nova palavra para o Termo (uso em testes)',
-                ),
-            )
-            .addSubcommand((sub) =>
-              sub
-                .setName('canal')
-                .setDescription(
-                  'Define o canal onde o Termo envia mensagens públicas',
-                )
-                .addChannelOption((opt) =>
-                  opt
-                    .setName('canal')
-                    .setDescription('Canal de texto para o Termo')
-                    .addChannelTypes(ChannelType.GuildText)
-                    .setRequired(true),
-                ),
-            )
-            .addSubcommand((sub) =>
-              sub
-                .setName('status')
-                .setDescription(
-                  'Envia o status de hoje no canal do Termo (sem revelar a palavra)',
-                ),
-            )
-            .addSubcommand((sub) =>
-              sub
-                .setName('leaderboard')
-                .setDescription('Veja o ranking do Terminhos')
-                .addStringOption((opt) =>
-                  opt
-                    .setName('periodo')
-                    .setDescription('Período do ranking')
-                    .setRequired(true)
-                    .addChoices(
-                      { name: 'Hoje', value: 'daily' },
-                      { name: 'Esta semana', value: 'weekly' },
-                      { name: 'Este mês', value: 'monthly' },
-                      { name: 'Histórico', value: 'all-time' },
-                    ),
-                ),
-            )
-            .addSubcommand((sub) =>
-              sub
-                .setName('meta')
-                .setDescription('Agenda uma meta coletiva para o Terminhos')
-                .addIntegerOption((opt) =>
-                  opt
-                    .setName('alvo')
-                    .setDescription('Participações distintas necessárias')
-                    .setRequired(true)
-                    .setMinValue(1)
-                    .setMaxValue(100000),
-                )
-                .addStringOption((opt) =>
-                  opt
-                    .setName('inicio')
-                    .setDescription('Primeiro dia, AAAA-MM-DD (Recife)')
-                    .setRequired(true),
-                )
-                .addStringOption((opt) =>
-                  opt
-                    .setName('fim')
-                    .setDescription('Último dia, AAAA-MM-DD (Recife)')
-                    .setRequired(true),
-                ),
-            )
-            .addSubcommand((sub) =>
-              sub
-                .setName('anuncios')
-                .setDescription('Configura anúncios comunitários do Terminhos')
-                .addBooleanOption((opt) =>
-                  opt
-                    .setName('coletivo')
-                    .setDescription('Anunciar páginas e metas concluídas')
-                    .setRequired(true),
-                )
-                .addBooleanOption((opt) =>
-                  opt
-                    .setName('resumo')
-                    .setDescription('Publicar resumo e galeria semanais')
-                    .setRequired(true),
-                )
-                .addChannelOption((opt) =>
-                  opt
-                    .setName('canal')
-                    .setDescription(
-                      'Canal de anúncios; omita para manter pendentes',
-                    )
-                    .addChannelTypes(ChannelType.GuildText),
-                ),
-            )
-            .addSubcommand((sub) =>
-              sub
-                .setName('incertos')
-                .setDescription('Lista anúncios que precisam de conferência'),
-            )
-            .addSubcommand((sub) =>
-              sub
-                .setName('conciliar')
-                .setDescription(
-                  'Registra o resultado da conferência de um anúncio',
-                )
-                .addStringOption((opt) =>
-                  opt
-                    .setName('id')
-                    .setDescription('ID do anúncio listado em incertos')
-                    .setRequired(true),
-                )
-                .addStringOption((opt) =>
-                  opt
-                    .setName('resultado')
-                    .setDescription('Confirme após verificar o canal')
-                    .setRequired(true)
-                    .addChoices(
-                      { name: 'Mensagem encontrada', value: 'found' },
-                      {
-                        name: 'Confirmado que não foi enviada',
-                        value: 'confirmed_absent',
-                      },
-                    ),
-                )
-                .addStringOption((opt) =>
-                  opt
-                    .setName('mensagem')
-                    .setDescription('ID da mensagem encontrada, quando houver'),
-                ),
-            )
-            .addSubcommand((sub) =>
-              sub
-                .setName('bingo')
-                .setDescription('Agenda uma cartela comunitária de bingo')
-                .addStringOption((opt) =>
-                  opt
-                    .setName('inicio')
-                    .setDescription('Primeiro dia, AAAA-MM-DD (Recife)')
-                    .setRequired(true),
-                )
-                .addStringOption((opt) =>
-                  opt
-                    .setName('fim')
-                    .setDescription('Último dia, AAAA-MM-DD (Recife)')
-                    .setRequired(true),
-                )
-                .addBooleanOption((opt) =>
-                  opt
-                    .setName('multiplas')
-                    .setDescription('Uma ação pode preencher várias casas?')
-                    .setRequired(true),
-                ),
-            )
-            .addSubcommand((sub) =>
-              sub
-                .setName('conversa')
-                .setDescription(
-                  'Inicia uma conversa sobre uma partida encerrada',
-                )
-                .addStringOption((opt) =>
-                  opt
-                    .setName('dia')
-                    .setDescription('Data da partida encerrada, AAAA-MM-DD')
-                    .setRequired(true),
-                ),
-            ),
-        )
-        .addSubcommandGroup((group) =>
-          group
-            .setName('wordlist')
-            .setDescription('Gerenciar a wordlist do Termo')
-            .addSubcommand((sub) =>
-              sub
-                .setName('review')
-                .setDescription(
-                  'Revisa a próxima palavra pendente da wordlist.txt',
-                ),
-            ),
-        ),
-    );
+    super(context, commandDefinitions['admin']);
   }
 
   override async chatInputRun(

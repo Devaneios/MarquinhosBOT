@@ -1,4 +1,5 @@
 import { buildLevelEmbed } from '@marquinhos/formatters/level';
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { logger } from '@marquinhos/utils/logger';
@@ -8,21 +9,7 @@ const apiService = MarquinhosApiService.getInstance();
 
 export class LevelCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'level', cooldownDelay: 10_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Mostra seu nível e XP atual')
-        .addUserOption((option) =>
-          option
-            .setName('usuario')
-            .setDescription('Usuário para verificar o nível (opcional)')
-            .setRequired(false),
-        ),
-    );
+    super(context, commandDefinitions['level']);
   }
 
   override async chatInputRun(

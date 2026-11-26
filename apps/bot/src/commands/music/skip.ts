@@ -1,3 +1,4 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
@@ -6,16 +7,7 @@ import { ChatInputCommandInteraction } from 'discord.js';
 
 export class SkipCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, {
-      name: 'pular',
-      preconditions: ['UserInVoiceChannel', 'BotNotInOtherChannel'],
-    });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder.setName(this.commandName).setDescription('Pula a música atual'),
-    );
+    super(context, commandDefinitions['pular']);
   }
 
   override async chatInputRun(interaction: ChatInputCommandInteraction) {

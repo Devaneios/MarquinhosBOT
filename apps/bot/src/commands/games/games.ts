@@ -6,6 +6,7 @@ import {
   PlayerStatus,
 } from '@marquinhos/game/core/GameTypes';
 import { GameUtils } from '@marquinhos/game/core/GameUtils';
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { logger } from '@marquinhos/utils/logger';
@@ -56,57 +57,7 @@ const GAME_REGISTRY: Record<
 
 export class GamesCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'games', cooldownDelay: 0 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription(
-          'Central de jogos do Marquinhos - 7 mini games disponíveis!',
-        )
-        .addSubcommand((sub) =>
-          sub.setName('list').setDescription('Ver todos os jogos disponíveis'),
-        )
-        .addSubcommand((sub) =>
-          sub
-            .setName('play')
-            .setDescription('Iniciar um jogo específico')
-            .addStringOption((opt) =>
-              opt
-                .setName('game')
-                .setDescription('Escolha o jogo')
-                .setRequired(true)
-                .addChoices(
-                  { name: '🎰 Caça-níqueis', value: 'slots' },
-                  { name: '🃏 Blackjack', value: 'blackjack' },
-                  { name: '🎲 Dados Mágicos', value: 'dice' },
-                  { name: '🔫 Roleta Russa', value: 'roulette' },
-                  { name: '⭕ Jogo da Velha', value: 'tic_tac_toe' },
-                  {
-                    name: '✂️ Pedra, Papel, Tesoura',
-                    value: 'rock_paper_scissors',
-                  },
-                  { name: '🏃 Labirinto', value: 'maze' },
-                ),
-            )
-            .addUserOption((opt) =>
-              opt
-                .setName('oponente')
-                .setDescription('Marque um oponente para jogos multiplayer')
-                .setRequired(false),
-            ),
-        )
-        .addSubcommand((sub) =>
-          sub.setName('stats').setDescription('Ver suas estatísticas de jogos'),
-        )
-        .addSubcommand((sub) =>
-          sub
-            .setName('ranking')
-            .setDescription('Ver ranking dos melhores jogadores'),
-        ),
-    );
+    super(context, commandDefinitions['games']);
   }
 
   override async chatInputRun(interaction: ChatInputCommandInteraction) {

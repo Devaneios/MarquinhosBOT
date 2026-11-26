@@ -1,3 +1,4 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { baseEmbed } from '@marquinhos/utils/discord';
@@ -8,23 +9,7 @@ const apiService = MarquinhosApiService.getInstance();
 
 export class LeaderboardCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'leaderboard', cooldownDelay: 30_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Mostra o ranking de níveis do servidor')
-        .addIntegerOption((option) =>
-          option
-            .setName('limite')
-            .setDescription('Número de usuários para mostrar (padrão: 10)')
-            .setMinValue(5)
-            .setMaxValue(25)
-            .setRequired(false),
-        ),
-    );
+    super(context, commandDefinitions['leaderboard']);
   }
 
   override async chatInputRun(

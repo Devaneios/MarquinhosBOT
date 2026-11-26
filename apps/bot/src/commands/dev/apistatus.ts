@@ -1,3 +1,4 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { baseEmbed } from '@marquinhos/utils/discord';
@@ -7,15 +8,7 @@ const api = MarquinhosApiService.getInstance();
 
 export class ApiStatusCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'apistatus', cooldownDelay: 10_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Checks whether the Marquinhos API is available'),
-    );
+    super(context, commandDefinitions['apistatus']);
   }
 
   override async chatInputRun(

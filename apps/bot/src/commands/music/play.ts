@@ -1,3 +1,4 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { requireGuildMember } from '@marquinhos/utils/discord';
 import { Command } from '@sapphire/framework';
@@ -6,29 +7,7 @@ import { handlePlay } from './utils';
 
 export class PlayCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, {
-      name: 'play',
-      preconditions: [
-        'UserInVoiceChannel',
-        'BotNotInOtherChannel',
-        'CanSpeak',
-        'CanJoin',
-      ],
-    });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Toca uma música')
-        .addStringOption((option) =>
-          option
-            .setName('musica')
-            .setDescription('A música a ser tocada')
-            .setRequired(true),
-        ),
-    );
+    super(context, commandDefinitions['play']);
   }
 
   override async chatInputRun(interaction: ChatInputCommandInteraction) {

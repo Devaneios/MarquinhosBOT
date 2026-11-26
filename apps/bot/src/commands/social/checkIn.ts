@@ -1,3 +1,4 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { baseEmbed, requireGuildMember } from '@marquinhos/utils/discord';
 import { Command } from '@sapphire/framework';
@@ -20,15 +21,7 @@ const WEEKDAY_LOCALE_CONFIG: Intl.DateTimeFormatOptions = {
 
 export class CheckInCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'check-in', cooldownDelay: 10_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Receba um carimbo no seu passaporte do servidor!'),
-    );
+    super(context, commandDefinitions['check-in']);
   }
 
   override async chatInputRun(

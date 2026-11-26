@@ -1,5 +1,6 @@
 import { isDevelopmentChannelAllowed } from '@marquinhos/config/developmentScope';
 import { env } from '@marquinhos/config/environment';
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { SpreadsheetService } from '@marquinhos/services/spreadsheet';
 import { AvatarConfig } from '@marquinhos/types';
@@ -20,38 +21,7 @@ let avatarCacheExpiry = 0;
 
 export class AvatarCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'avatar', cooldownDelay: 10_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Gerencia o avatar do bot')
-        .setDefaultMemberPermissions(0)
-        .addSubcommand((subcommand) =>
-          subcommand
-            .setName('listar')
-            .setDescription('Lista todos os avatares disponíveis'),
-        )
-        .addSubcommand((subcommand) =>
-          subcommand
-            .setName('selecionar')
-            .setDescription('Seleciona um avatar específico')
-            .addStringOption((option) =>
-              option
-                .setName('nome')
-                .setDescription('O nome do avatar')
-                .setRequired(true)
-                .setAutocomplete(true),
-            ),
-        )
-        .addSubcommand((subcommand) =>
-          subcommand
-            .setName('feriado')
-            .setDescription('Atualiza para o avatar de feriado atual'),
-        ),
-    );
+    super(context, commandDefinitions['avatar']);
   }
 
   override async chatInputRun(

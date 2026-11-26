@@ -1,3 +1,4 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { Command } from '@sapphire/framework';
 import { useQueue } from 'discord-player';
@@ -5,18 +6,7 @@ import { ChatInputCommandInteraction } from 'discord.js';
 
 export class ClearQueueCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, {
-      name: 'limpar-fila',
-      preconditions: ['UserInVoiceChannel'],
-    });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Mostra a fila de músicas'),
-    );
+    super(context, commandDefinitions['limpar-fila']);
   }
 
   override async chatInputRun(interaction: ChatInputCommandInteraction) {

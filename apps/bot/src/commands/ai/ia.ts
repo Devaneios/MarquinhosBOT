@@ -1,3 +1,4 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import {
   buildThreadName,
@@ -31,43 +32,7 @@ const THREADABLE = [ChannelType.GuildText, ChannelType.GuildAnnouncement];
 
 export class IaCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'ia', cooldownDelay: 0 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Fala com a IA do Marquinhos numa thread dedicada')
-        .addSubcommand((sub) =>
-          sub
-            .setName('perguntar')
-            .setDescription(
-              'Abre uma thread e responde sua pergunta, mantendo o contexto da conversa',
-            )
-            .addStringOption((opt) =>
-              opt
-                .setName('pergunta')
-                .setDescription('O que você quer saber')
-                .setRequired(true)
-                .setMaxLength(1000),
-            ),
-        )
-        .addSubcommand((sub) =>
-          sub
-            .setName('pesquisar')
-            .setDescription(
-              'Pesquisa profunda: busca na web, lê as páginas e entrega um relatório com fontes',
-            )
-            .addStringOption((opt) =>
-              opt
-                .setName('tema')
-                .setDescription('O tema que você quer que eu pesquise')
-                .setRequired(true)
-                .setMaxLength(500),
-            ),
-        ),
-    );
+    super(context, commandDefinitions['ia']);
   }
 
   override async chatInputRun(interaction: ChatInputCommandInteraction) {

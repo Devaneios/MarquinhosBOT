@@ -5,6 +5,7 @@ import {
   buildTermoAchievementsEmbed,
   summarizeTermoAchievements,
 } from '@marquinhos/formatters/termoAchievements';
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import {
@@ -124,29 +125,7 @@ export async function buildTermoAchievementsReply(
 
 export class TermoAchievementsCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'termo-conquistas', cooldownDelay: 5_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Veja as conquistas e estatísticas do Terminhos')
-        .addUserOption((option) =>
-          option
-            .setName('usuario')
-            .setDescription('Pessoa para ver as conquistas (opcional)')
-            .setRequired(false),
-        )
-        .addStringOption((option) =>
-          option
-            .setName('conquista')
-            .setDescription(
-              'Nome ou ID da conquista para ver o desenho e os detalhes',
-            )
-            .setRequired(false),
-        ),
-    );
+    super(context, commandDefinitions['termo-conquistas']);
   }
 
   override async chatInputRun(interaction: ChatInputCommandInteraction) {

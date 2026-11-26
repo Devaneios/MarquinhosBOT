@@ -1,26 +1,11 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { baseEmbed } from '@marquinhos/utils/discord';
 import { Command } from '@sapphire/framework';
-import { PermissionsBitField } from 'discord.js';
 
 export class DisconnectCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'desconectar', cooldownDelay: 5_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Remove uma pessoa específica do canal de voz')
-        .setDefaultMemberPermissions(PermissionsBitField.Flags.MoveMembers)
-        .addUserOption((option) =>
-          option
-            .setName('usuario')
-            .setDescription('O usuário que será desconectado')
-            .setRequired(true),
-        ),
-    );
+    super(context, commandDefinitions['desconectar']);
   }
 
   override async chatInputRun(

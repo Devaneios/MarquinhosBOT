@@ -1,3 +1,4 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { baseEmbed } from '@marquinhos/utils/discord';
 import { resourcePath } from '@marquinhos/utils/resources';
@@ -6,15 +7,7 @@ import { AttachmentBuilder } from 'discord.js';
 
 export class TimeCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'horario', cooldownDelay: 10_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Eu te digo que horas são. Só isso.....'),
-    );
+    super(context, commandDefinitions['horario']);
   }
 
   override async chatInputRun(

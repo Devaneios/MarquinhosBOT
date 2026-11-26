@@ -1,6 +1,7 @@
 import { HttpError } from '@marquinhos/api-client/bot';
 import { isDevelopmentChannelAllowed } from '@marquinhos/config/developmentScope';
 import type { WordleGuessResult } from '@marquinhos/contracts/http/routes/wordle';
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { MarquinhosApiService } from '@marquinhos/services/marquinhosApi';
 import { requireGuildMember } from '@marquinhos/utils/discord';
@@ -23,21 +24,7 @@ const latestAutocompleteDraft = new Map<string, symbol>();
 
 export class TermoCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'termo', cooldownDelay: 3_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Jogue o Terminhos, o Termo do Marquinhos!')
-        .addStringOption((opt) =>
-          opt
-            .setName('palpite')
-            .setDescription('Sua tentativa')
-            .setAutocomplete(true),
-        ),
-    );
+    super(context, commandDefinitions['termo']);
   }
 
   override async chatInputRun(interaction: ChatInputCommandInteraction) {

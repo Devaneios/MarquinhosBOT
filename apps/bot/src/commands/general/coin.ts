@@ -1,3 +1,4 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { FlipCoinResult } from '@marquinhos/types';
 import { baseEmbed } from '@marquinhos/utils/discord';
@@ -15,15 +16,7 @@ import {
 
 export class CoinCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'moeda', cooldownDelay: 10_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Tiro cara ou coroa numa moeda semi-viciada.'),
-    );
+    super(context, commandDefinitions['moeda']);
   }
 
   override async chatInputRun(

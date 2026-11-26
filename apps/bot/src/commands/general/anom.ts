@@ -1,3 +1,4 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { baseEmbed } from '@marquinhos/utils/discord';
 import { Command } from '@sapphire/framework';
@@ -7,8 +8,6 @@ import {
   type GuildTextBasedChannel,
   type User,
 } from 'discord.js';
-
-const EMBED_DESCRIPTION_MAX_LENGTH = 4096;
 
 function canSendIn(channel: GuildTextBasedChannel, user: User): boolean {
   return (
@@ -23,31 +22,7 @@ function canSendIn(channel: GuildTextBasedChannel, user: User): boolean {
 
 export class AnomCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'anom', cooldownDelay: 10_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription(
-          'Envio uma mensagem em anônimo pra um canal. (Quase) Ninguém vai saber quem deixou a mensagem.',
-        )
-        .addChannelOption((option) =>
-          option
-            .setName('canal')
-            .setDescription('Canal que você quer que eu envie a mensagem')
-            .setRequired(true)
-            .addChannelTypes(ChannelType.GuildText),
-        )
-        .addStringOption((option) =>
-          option
-            .setName('mensagem')
-            .setDescription('O que você quer que eu envie')
-            .setRequired(true)
-            .setMaxLength(EMBED_DESCRIPTION_MAX_LENGTH),
-        ),
-    );
+    super(context, commandDefinitions['anom']);
   }
 
   override async chatInputRun(

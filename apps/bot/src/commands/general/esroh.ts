@@ -1,16 +1,11 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { resourcePath } from '@marquinhos/utils/resources';
 import { Command } from '@sapphire/framework';
 
 export class EsrohCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'olavac', cooldownDelay: 10_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder.setName(this.commandName).setDescription('Oirártnoc?'),
-    );
+    super(context, commandDefinitions['olavac']);
   }
 
   override async chatInputRun(

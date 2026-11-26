@@ -1,4 +1,5 @@
 import { getVoiceConnection } from '@discordjs/voice';
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { resolveGuildMember } from '@marquinhos/utils/discord';
 import { Command } from '@sapphire/framework';
@@ -7,23 +8,7 @@ import { MessageFlags } from 'discord.js';
 
 export class ImportunateCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'importunar', cooldownDelay: 10_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription(
-          'Eu vou lá no canal de voz atazanar a vida de quem tu quiser.',
-        )
-        .addUserOption((option) =>
-          option
-            .setName('importunado')
-            .setDescription('Quem você quer que eu irrite?')
-            .setRequired(true),
-        ),
-    );
+    super(context, commandDefinitions['importunar']);
   }
 
   override async chatInputRun(

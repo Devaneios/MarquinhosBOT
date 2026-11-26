@@ -1,3 +1,4 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { resourcePath } from '@marquinhos/utils/resources';
 import { Command } from '@sapphire/framework';
@@ -5,13 +6,7 @@ import { MessageFlags } from 'discord.js';
 
 export class CatCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'gato', cooldownDelay: 10_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder.setName(this.commandName).setDescription('GATO'),
-    );
+    super(context, commandDefinitions['gato']);
   }
 
   override async chatInputRun(

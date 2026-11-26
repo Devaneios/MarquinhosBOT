@@ -1,28 +1,13 @@
+import { commandDefinitions } from '@marquinhos/lib/commandDefinitions';
 import { MarquinhosCommand } from '@marquinhos/lib/MarquinhosCommand';
 import { baseEmbed, requireGuildMember } from '@marquinhos/utils/discord';
 import { logger } from '@marquinhos/utils/logger';
 import { Command } from '@sapphire/framework';
-import { ChannelType, PermissionsBitField } from 'discord.js';
+import { ChannelType } from 'discord.js';
 
 export class MoveAllCommand extends MarquinhosCommand {
   public constructor(context: Command.LoaderContext) {
-    super(context, { name: 'mover-todos', cooldownDelay: 10_000 });
-  }
-
-  override registerApplicationCommands(registry: Command.Registry) {
-    registry.registerChatInputCommand((builder) =>
-      builder
-        .setName(this.commandName)
-        .setDescription('Move todos do canal pra o canal escolhido')
-        .setDefaultMemberPermissions(PermissionsBitField.Flags.MoveMembers)
-        .addChannelOption((option) =>
-          option
-            .setName('canal')
-            .setDescription('Canal escolhido para os membros serem movidos')
-            .setRequired(true)
-            .addChannelTypes(ChannelType.GuildVoice),
-        ),
-    );
+    super(context, commandDefinitions['mover-todos']);
   }
 
   override async chatInputRun(
