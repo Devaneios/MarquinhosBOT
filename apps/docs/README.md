@@ -8,4 +8,6 @@ Pagefind indexes the Starlight content. Use Scalar's search inside HTTP API or A
 
 ## GitHub Pages
 
-Run `pnpm --filter @marquinhos/docs build:pages` to build for `https://devaneios.github.io/MarquinhosBOT/`. Publish the contents of `dist/` to the root of `gh-pages` with a `.nojekyll` file so GitHub serves Astro's `_astro` assets. The branch contains the published build.
+The Documentation workflow builds and deploys to `https://devaneios.github.io/MarquinhosBOT/` on every push to `main`. The repository's Pages publishing source must be **GitHub Actions**. Pull requests run the same build for validation.
+
+Run `pnpm --filter @marquinhos/docs build:pages` locally to verify the GitHub Pages build, including the repository base path.

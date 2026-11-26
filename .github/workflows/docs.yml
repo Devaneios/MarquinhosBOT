@@ -1,6 +1,8 @@
 name: Documentation
 
 on:
+  push:
+    branches: [main]
   pull_request:
     paths:
       - 'apps/api/**'
@@ -21,6 +23,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: documentation-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -36,4 +42,22 @@ jobs:
           node-version: '22'
       - run: npm install -g pnpm@11.10.0
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @marquinhos/docs build
+      - run: pnpm --filter @marquinhos/docs build:pages
+      - if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: apps/docs/dist
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
