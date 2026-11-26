@@ -696,11 +696,34 @@ export const getDayGuesses = defineContract({
   },
 });
 
+const wordleAdminTags = ['Wordle administration'] as const;
+const exampleWord = { word: 'crava', wordDate: exampleDate, wordLength: 5 };
+const exampleChannelId = '345678901234567890';
+const exampleChannel = { channelId: exampleChannelId };
+
 export const rotateDailyWord = defineContract({
   method: 'POST',
   path: '/api/wordle/rotate',
   body: z.object({ guildId: requiredString }),
   response: envelope(forceNewWordResultSchema),
+  docs: {
+    description:
+      'Ensure the global word for the current Wordle calendar date exists. Repeated requests for that date reuse the stored word. The guild ID is accepted for bot compatibility.',
+    tags: wordleAdminTags,
+    security: botSecurity,
+    examples: { body: exampleGuild },
+    success: {
+      200: {
+        description: 'Current daily answer and its date and length.',
+        example: { data: exampleWord },
+      },
+    },
+    errors: {
+      ...wordleBotErrors,
+      400: wordleGuildInput,
+      413: wordleBodyTooLarge,
+    },
+  },
 });
 
 export const forceNewWord = defineContract({
@@ -710,6 +733,42 @@ export const forceNewWord = defineContract({
   response: envelope(
     forceNewWordResultSchema.extend({ stats: wordleDailyStatsSchema }),
   ),
+  docs: {
+    description:
+      'In development, replace the current global word and reset the current round. Other environments reject the operation. A replacement affects the shared daily round across guilds.',
+    tags: wordleAdminTags,
+    security: botSecurity,
+    examples: { body: exampleGuild },
+    success: {
+      200: {
+        description:
+          'Replacement word and current guild stats after replacement.',
+        example: {
+          data: {
+            ...exampleWord,
+            stats: {
+              ...exampleStats,
+              playersCount: 0,
+              winnersCount: 0,
+              avgAttempts: 0,
+            },
+          },
+        },
+      },
+    },
+    errors: {
+      ...wordleBotErrors,
+      400: wordleGuildInput,
+      409: {
+        description:
+          'Global Wordle replacement is unavailable outside development.',
+        example: {
+          message: 'A palavra global não pode ser trocada antes da virada.',
+        },
+      },
+      413: wordleBodyTooLarge,
+    },
+  },
 });
 
 export const getLeaderboard = defineContract({
@@ -802,6 +861,27 @@ export const setConfig = defineContract({
   path: '/api/wordle/config',
   body: z.object({ guildId: requiredString, channelId: requiredString }),
   response: messageOnly,
+  docs: {
+    description:
+      'Set the Discord channel for a guild’s Terminhos announcements. Saving another channel replaces the previous guild configuration.',
+    tags: wordleAdminTags,
+    security: botSecurity,
+    examples: { body: { ...exampleGuild, ...exampleChannel } },
+    success: {
+      200: {
+        description: 'The channel configuration was saved.',
+        example: { message: 'Configuração salva.' },
+      },
+    },
+    errors: {
+      ...wordleBotErrors,
+      400: {
+        description: 'A guild ID and channel ID are required.',
+        example: { message: 'guildId e channelId são obrigatórios.' },
+      },
+      413: wordleBodyTooLarge,
+    },
+  },
 });
 
 export const getConfig = defineContract({
@@ -809,6 +889,21 @@ export const getConfig = defineContract({
   path: '/api/wordle/config/:guildId',
   params: guildParams,
   response: envelope(z.object({ channelId: z.string() }).nullable()),
+  docs: {
+    description:
+      'Read the configured Terminhos announcement channel for a guild.',
+    tags: wordleAdminTags,
+    security: botSecurity,
+    examples: { params: exampleGuild },
+    success: {
+      200: {
+        description:
+          'Current announcement channel or null when no channel is configured.',
+        example: { data: exampleChannel },
+      },
+    },
+    errors: { ...wordleBotErrors, 400: wordleGuildInput },
+  },
 });
 
 export const markAnnounced = defineContract({
@@ -816,6 +911,25 @@ export const markAnnounced = defineContract({
   path: '/api/wordle/mark-announced',
   body: z.object({ userId: requiredString, guildId: requiredString }),
   response: envelope(z.object({ claimed: z.boolean() })),
+  docs: {
+    description:
+      'Atomically claim the right to announce a player’s current-day win in a guild. A player is eligible when they were present in the guild before or at the time of the solve.',
+    tags: wordleAdminTags,
+    security: botSecurity,
+    examples: { body: examplePlayer },
+    success: {
+      200: {
+        description:
+          'True only when this call created the guild’s announcement claim.',
+        example: { data: { claimed: true } },
+      },
+    },
+    errors: {
+      ...wordleBotErrors,
+      400: wordlePlayerInput,
+      413: wordleBodyTooLarge,
+    },
+  },
 });
 
 export const getUnannouncedWins = defineContract({
@@ -823,6 +937,41 @@ export const getUnannouncedWins = defineContract({
   path: '/api/wordle/unannounced/:guildId',
   params: guildParams,
   response: envelope(z.array(unannouncedWordleWinSchema)),
+  docs: {
+    description:
+      'List current-day wins eligible for announcement in a guild that have no existing announcement claim. Claim each win before posting to avoid duplicate announcements.',
+    tags: wordleAdminTags,
+    security: botSecurity,
+    examples: { params: exampleGuild },
+    success: {
+      200: {
+        description:
+          'Players and scored rows for wins still available to claim.',
+        example: {
+          data: [
+            {
+              userId: exampleUserId,
+              attempts: 2,
+              guesses: [
+                exampleGuess,
+                {
+                  guess: 'crava',
+                  feedback: [
+                    'correct',
+                    'correct',
+                    'correct',
+                    'correct',
+                    'correct',
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    },
+    errors: { ...wordleBotErrors, 400: wordleGuildInput },
+  },
 });
 
 export const getStreak = defineContract({
@@ -854,12 +1003,43 @@ export const getWordlistPoolStats = defineContract({
   response: envelope(
     z.object({ total: z.number(), used: z.number(), remaining: z.number() }),
   ),
+  docs: {
+    description:
+      'Count answer candidates of supported length and previously used words. The reported remaining count is the difference, floored at zero.',
+    tags: wordleAdminTags,
+    security: botSecurity,
+
+    success: {
+      200: {
+        description: 'Total candidates, used-word count, and remaining count.',
+        example: { data: { total: 3500, used: 320, remaining: 3180 } },
+      },
+    },
+    errors: wordleBotErrors,
+  },
 });
 
 export const getNextReviewWord = defineContract({
   method: 'GET',
   path: '/api/wordle/review/next',
   response: envelope(wordleReviewWordResultSchema),
+  docs: {
+    description:
+      'Seed the review queue from the answer list when needed, then return the earliest unreviewed word and progress through the queue.',
+    tags: wordleAdminTags,
+    security: botSecurity,
+
+    success: {
+      200: {
+        description:
+          'Current review word and counts, or a completed state with a null word.',
+        example: {
+          data: { word: 'crava', index: 413, total: 3500, done: false },
+        },
+      },
+    },
+    errors: wordleBotErrors,
+  },
 });
 
 export const submitReviewDecision = defineContract({
@@ -870,4 +1050,30 @@ export const submitReviewDecision = defineContract({
     decision: z.enum(['keep', 'remove']),
   }),
   response: envelope(wordleReviewWordResultSchema),
+  docs: {
+    description:
+      'Record a keep or remove decision for the normalized candidate, update the active ban list, and return the next pending review item.',
+    tags: wordleAdminTags,
+    security: botSecurity,
+    examples: { body: { word: 'crava', decision: 'keep' } },
+    success: {
+      200: {
+        description: 'Review queue after recording the decision.',
+        example: {
+          data: { word: 'creme', index: 414, total: 3500, done: false },
+        },
+      },
+    },
+    errors: {
+      ...wordleBotErrors,
+      400: {
+        description:
+          'The request requires a word and a keep or remove decision.',
+        example: {
+          message: 'word e decision ("keep" ou "remove") são obrigatórios.',
+        },
+      },
+      413: wordleBodyTooLarge,
+    },
+  },
 });
