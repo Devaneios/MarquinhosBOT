@@ -1,0 +1,39 @@
+name: Documentation
+
+on:
+  pull_request:
+    paths:
+      - 'apps/api/**'
+      - 'apps/activity/**'
+      - 'apps/bot/**'
+      - 'apps/docs/**'
+      - 'packages/**'
+      - 'docs/**'
+      - 'dev/**'
+      - 'AGENTS.md'
+      - 'README.md'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ASTRO_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install -g pnpm@11.10.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @marquinhos/docs build
