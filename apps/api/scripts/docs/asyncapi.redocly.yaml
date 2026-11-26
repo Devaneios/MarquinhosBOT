@@ -1,0 +1,4 @@
+rules:
+  struct: error
+  no-unresolved-refs: error
+  security-defined: error
