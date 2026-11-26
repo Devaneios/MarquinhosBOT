@@ -314,6 +314,18 @@ export class HttpClient {
   }
 }
 
+/**
+ * Send a contract request with the bot client's configured base URL and credentials.
+ * The contract controls the method, path, and response parser. The client can retry
+ * transient failures for idempotent methods. Enable write retries only when the
+ * caller can safely replay the same operation.
+ *
+ * @throws {@link HttpError} if the HTTP request fails after its retry budget.
+ * @throws If a path parameter is missing or the returned payload violates the response schema.
+ *
+ * @example
+ * `await callContract(http, wordle.getUserSession, { params: { userId, guildId } })`
+ */
 export function callContract<C extends EndpointContract>(
   http: HttpClient,
   contract: C,

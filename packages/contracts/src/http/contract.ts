@@ -105,6 +105,13 @@ export const isoDate = z.union([z.date(), z.string()]).pipe(z.coerce.date());
 
 export const errorBodySchema = z.object({ message: z.string() });
 
+/**
+ * Render the contract path with encoded parameters and a serialized query string.
+ * Undefined query values are omitted. This helper performs no I/O and does not
+ * validate or attach credentials. The caller supplies the request's query values.
+ *
+ * @throws If a required path placeholder has no corresponding value.
+ */
 export function contractUrl(
   contract: EndpointContract,
   params: Record<string, string> | undefined,

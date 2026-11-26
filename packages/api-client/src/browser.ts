@@ -16,6 +16,14 @@ export class HttpError extends Error {
   }
 }
 
+/**
+ * Send one browser request and parse its JSON response through the shared contract.
+ * The base URL already includes the API prefix. Supply the route's Discord credential
+ * in the request or headers as specified by the contract. No retry is attempted.
+ *
+ * @throws {@link HttpError} for a non-success HTTP status.
+ * @throws If URL construction, transport, JSON decoding, or response validation fails.
+ */
 export function fetchContract<C extends EndpointContract>(
   apiBase: string,
   contract: C,

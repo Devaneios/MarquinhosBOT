@@ -1,5 +1,15 @@
 import type { LetterFeedback } from '@marquinhos/contracts/wordle';
 
+/**
+ * Score an already normalized guess against the answer without mutating either input.
+ * Exact matches consume letters before misplaced matches, and each answer letter
+ * can be consumed once. The caller validates the guess and keeps the answer private.
+ * Invalid guesses are not rejected here.
+ *
+ * @example
+ * `computeFeedback('arara', 'carta')` returns
+ * `['present', 'present', 'absent', 'absent', 'correct']`.
+ */
 export function computeFeedback(guess: string, word: string): LetterFeedback[] {
   const result: LetterFeedback[] = new Array(guess.length).fill('absent');
   const wordChars = word.split('');

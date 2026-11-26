@@ -26,7 +26,13 @@ function audioChoices(directory = resourcePath('sounds')) {
     .map((file) => file.slice(0, -4));
 }
 
-/** The published slash command definitions and the Sapphire options used to enforce them. */
+/**
+ * Metadata used by Sapphire and the offline command reference. Each definition
+ * builds the same Discord payload in both callers, with an explicit name so the
+ * development bot can prefix it. Building needs no Discord session. The audio
+ * builder reads local assets and throws if its sounds directory cannot be read.
+ * Registration still depends on the entries loaded by registerSapphireCommands.
+ */
 export const commandDefinitions = {
   admin: {
     source: 'commands/admin/admin.ts',

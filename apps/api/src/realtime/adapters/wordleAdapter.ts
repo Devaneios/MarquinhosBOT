@@ -108,6 +108,12 @@ async function sendInit(
   });
 }
 
+/**
+ * Bind authenticated room messages to the shared daily Wordle service. Only admitted
+ * players can submit guesses and drafts. Accepted writes persist across surfaces,
+ * while stale round messages trigger a refreshed snapshot. Gameplay rejections use
+ * protocol error messages. Service failures propagate to the room's async handler.
+ */
 export const wordleAdapter: GameRoomAdapter<WordleService> = {
   // Every player solves their own private daily puzzle — there is no shared
   // 2-player match to cap, so this is set high enough that MatchRoom's
