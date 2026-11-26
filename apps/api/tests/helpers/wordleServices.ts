@@ -22,6 +22,7 @@ import { getRecifeDate } from '../../src/modules/wordle/wordle-date';
 import { WordleService } from '../../src/modules/wordle/wordle.service';
 import { WordBankService } from '../../src/modules/wordle/words/word-bank.service';
 import { WordleWordlistReviewService } from '../../src/modules/wordle/words/wordle-wordlist-review.service';
+import { createTestAppConfig } from './testAppConfig';
 
 export function createWordleTestServices(
   database: Db = db,
@@ -97,6 +98,7 @@ export function createWordleTestServices(
     new WordleHistoryService(database),
     today,
     now,
+    createTestAppConfig(),
   );
 
   return {
