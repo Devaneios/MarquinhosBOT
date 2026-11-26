@@ -5,7 +5,8 @@ import {
   type HttpHeaderDocumentation,
 } from '@marquinhos/contracts/http/contract';
 import { Glob } from 'bun';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import ts from 'typescript';
 import { z } from 'zod';
@@ -339,9 +340,36 @@ export async function buildOpenApi() {
   };
 }
 
+async function validateOpenApi(contents: string) {
+  const directory = await mkdtemp(resolve(tmpdir(), 'marquinhos-openapi-'));
+  const candidate = resolve(directory, 'openapi.json');
+  try {
+    await writeFile(candidate, contents);
+    const result = Bun.spawnSync(
+      [
+        resolve(import.meta.dir, '../../../../node_modules/.bin/redocly'),
+        'lint',
+        '--config',
+        resolve(import.meta.dir, 'redocly.yaml'),
+        candidate,
+      ],
+      {
+        env: { ...process.env, REDOCLY_TELEMETRY: 'off' },
+        stdout: 'inherit',
+        stderr: 'inherit',
+      },
+    );
+    if (!result.success) throw new Error('OpenAPI lint failed');
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+}
+
 if (import.meta.main) {
   const output = resolve(process.argv[2] ?? 'openapi.json');
   const spec = await buildOpenApi();
+  const contents = `${JSON.stringify(spec, null, 2)}\n`;
+  await validateOpenApi(contents);
   await mkdir(dirname(output), { recursive: true });
-  await writeFile(output, `${JSON.stringify(spec, null, 2)}\n`);
+  await writeFile(output, contents);
 }

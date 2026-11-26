@@ -1,0 +1,12 @@
+rules:
+  struct: error
+  no-unresolved-refs: error
+  no-invalid-media-type-examples:
+    severity: error
+    allowAdditionalProperties: true
+  no-invalid-parameter-examples: error
+  operation-operationId: error
+  operation-operationId-unique: error
+  operation-2xx-response: error
+  path-parameters-defined: error
+  security-defined: error
