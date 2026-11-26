@@ -1,22 +1,34 @@
+import type { WordleAchievementStatus } from '@marquinhos/contracts/wordle';
 import {
   createContext,
-  type ReactNode,
   useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
+  type ReactNode,
 } from 'react';
 import { animateBannerPixels } from './dissolveBanner';
+
+type AchievementRarity = WordleAchievementStatus['rarity'];
 
 interface AchievementBanner {
   title: string;
   name: string;
   reward: string;
+  rarity: AchievementRarity;
   dismissLabel: string;
   icon: ReactNode;
 }
+
+const RARITY_COLORS: Record<AchievementRarity, string> = {
+  common: '#818384',
+  rare: '#5facfb',
+  epic: '#e5484d',
+  legendary: '#ffb000',
+};
 
 type Banner = AchievementBanner & { id: number };
 
@@ -127,7 +139,15 @@ function AchievementBannerCard({
               className="achievement-banner-trail"
               aria-hidden="true"
             />
-            <div ref={card} className="achievement-banner">
+            <div
+              ref={card}
+              className="achievement-banner"
+              style={
+                {
+                  '--banner-rarity-color': RARITY_COLORS[banner.rarity],
+                } as CSSProperties
+              }
+            >
               <div
                 aria-hidden="true"
                 className="achievement-banner-icon notch-4"
@@ -135,7 +155,7 @@ function AchievementBannerCard({
                 {banner.icon}
               </div>
               <div role="status" className="min-w-0">
-                <p className="font-pixel text-[9px] uppercase tracking-[0.06em] text-marquinhos-accent">
+                <p className="achievement-banner-title font-pixel text-[9px] uppercase tracking-[0.06em]">
                   {banner.title}
                 </p>
                 <p

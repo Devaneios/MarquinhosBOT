@@ -134,12 +134,13 @@ export function animateBannerPixels(
         ? Math.min(1, (1 - progress) * 1.65)
         : 0.85 * (1 - progress);
       context.fillStyle = fragment.color;
-      context.fillRect(
-        Math.round(fragment.x + fragment.drift * distance),
-        Math.round(fragment.y - fragment.rise * distance),
-        fragment.width,
-        fragment.height,
-      );
+      const x =
+        Math.round((fragment.x + fragment.drift * distance) * ratio) / ratio;
+      const y =
+        Math.round((fragment.y - fragment.rise * distance) * ratio) / ratio;
+      const width = Math.round(fragment.width * ratio) / ratio;
+      const height = Math.round(fragment.height * ratio) / ratio;
+      context.fillRect(x, y, width, height);
       hasParticles = true;
     }
     if (cutouts !== previousCutouts) {

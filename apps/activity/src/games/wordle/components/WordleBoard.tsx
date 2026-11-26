@@ -175,6 +175,7 @@ export function WordleBoard({
         title: t('wordle:achievementUnlockedToast'),
         name: achievement.name,
         reward: t('wordle:achievementRewardXp', { xp: achievement.rewardXp }),
+        rarity: achievement.rarity,
         dismissLabel: t('wordle:dismissAchievementToast'),
         icon: <AchievementIcon icon={achievement.icon} className="h-8 w-8" />,
       })),
@@ -308,6 +309,7 @@ export function WordleBoard({
                       title: t('wordle:achievementUnlockedToast'),
                       name: t('wordle:testAchievementBannerName'),
                       reward: t('wordle:achievementRewardXp', { xp: 25 }),
+                      rarity: 'common',
                       dismissLabel: t('wordle:dismissAchievementToast'),
                       icon: (
                         <AchievementIcon

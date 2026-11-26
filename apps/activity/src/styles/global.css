@@ -601,10 +601,10 @@ html:active-view-transition-type(nav-back)::view-transition-new(root) {
   inset: 0;
   background: linear-gradient(
     155deg,
-    #e8b365,
-    #805039 44%,
-    #583149 85%,
-    #b66c70
+    color-mix(in srgb, var(--banner-rarity-color) 55%, #e8e8e8),
+    var(--banner-rarity-color) 44%,
+    color-mix(in srgb, var(--banner-rarity-color) 62%, #121213) 85%,
+    color-mix(in srgb, var(--banner-rarity-color) 35%, #121213)
   );
   clip-path: polygon(
     0 8px,
@@ -699,10 +699,15 @@ html:active-view-transition-type(nav-back)::view-transition-new(root) {
   inset: 2px;
   background:
     repeating-linear-gradient(0deg, transparent 0 3px, #0f0a152b 3px 4px),
-    linear-gradient(115deg, #392337, #241a2a 48%, #1d1826);
+    linear-gradient(
+      115deg,
+      color-mix(in srgb, var(--banner-rarity-color) 22%, #392337),
+      color-mix(in srgb, var(--banner-rarity-color) 12%, #241a2a) 48%,
+      color-mix(in srgb, var(--banner-rarity-color) 17%, #1d1826)
+    );
   box-shadow:
     inset 0 0 0 2px #170f1b,
-    inset 0 4px #634334;
+    inset 0 4px color-mix(in srgb, var(--banner-rarity-color) 32%, #634334);
   clip-path: polygon(
     0 6px,
     6px 6px,
@@ -794,11 +799,14 @@ html:active-view-transition-type(nav-back)::view-transition-new(root) {
   width: 48px;
   height: 48px;
   place-items: center;
-  border: 2px solid #9b6350;
-  background: radial-gradient(#493346, #1a1422 72%);
+  border: 2px solid color-mix(in srgb, var(--banner-rarity-color) 58%, #1c141e);
+  background: radial-gradient(
+    color-mix(in srgb, var(--banner-rarity-color) 20%, #493346),
+    color-mix(in srgb, var(--banner-rarity-color) 10%, #1a1422) 72%
+  );
   box-shadow:
     inset 0 0 0 2px #1c141e,
-    inset 0 -4px #301e30;
+    inset 0 -4px color-mix(in srgb, var(--banner-rarity-color) 18%, #301e30);
   image-rendering: pixelated;
 }
 
@@ -806,9 +814,13 @@ html:active-view-transition-type(nav-back)::view-transition-new(root) {
   width: fit-content;
   margin-top: 2px;
   padding: 2px 4px;
-  border-left: 2px solid #ce9259;
-  background: #4b3033;
-  color: #ffcf83;
+  border-left: 2px solid var(--banner-rarity-color);
+  background: color-mix(in srgb, var(--banner-rarity-color) 18%, #4b3033);
+  color: color-mix(in srgb, var(--banner-rarity-color) 55%, #fff1d3);
+}
+
+.achievement-banner-title {
+  color: color-mix(in srgb, var(--banner-rarity-color) 62%, #e8e8e8);
 }
 
 .achievement-banner-motion:not([inert]) button {
