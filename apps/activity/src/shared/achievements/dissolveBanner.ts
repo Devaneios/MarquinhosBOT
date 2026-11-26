@@ -1,5 +1,5 @@
 const PIXEL_SIZE = 4;
-const CORNER_CYCLE_MS = 820;
+const CORNER_CYCLE_MS = 2400;
 const FRAGMENT_COLORS = ['#b9815d', '#e9b67f', '#ffe3af', '#fff1d3'];
 
 interface Fragment {
@@ -27,7 +27,8 @@ export function animateBannerPixels(
   if (!context) return;
 
   const exiting = exitDuration !== null;
-  const padding = exiting ? 88 : 28;
+  const pixelSize = exiting ? PIXEL_SIZE : 3;
+  const padding = exiting ? 88 : 64;
   const ratio = window.devicePixelRatio || 1;
   const trailWidth = width + 2 * padding;
   const trailHeight = height + 2 * padding;
@@ -41,10 +42,10 @@ export function animateBannerPixels(
 
   const start = performance.now();
   const fragments: Fragment[] = [];
-  for (let y = 0; y < height; y += PIXEL_SIZE) {
-    for (let x = 0; x < width; x += PIXEL_SIZE) {
-      const cellWidth = Math.min(PIXEL_SIZE, width - x);
-      const cellHeight = Math.min(PIXEL_SIZE, height - y);
+  for (let y = 0; y < height; y += pixelSize) {
+    for (let x = 0; x < width; x += pixelSize) {
+      const cellWidth = Math.min(pixelSize, width - x);
+      const cellHeight = Math.min(pixelSize, height - y);
       const horizontal = Math.min(x, width - x - cellWidth);
       const vertical = Math.min(y, height - y - cellHeight);
       const depth = Math.min(horizontal, vertical);
@@ -54,37 +55,46 @@ export function animateBannerPixels(
       if (depth < 4 && corner < 8) continue;
       const seed = ((x + 1) * 73856093) ^ ((y + 1) * 19349663);
       const noise = (seed >>> 0) % 100;
-      if (exiting) {
-        if (
-          depth >= 20 + Math.max(0, 18 - corner / 2) ||
-          (depth >= 8 && noise < depth)
-        )
-          continue;
-      } else if (rightHalf !== lowerHalf || depth >= 8 || corner >= 24) {
+      // Keep these source bands aligned with the worn notches in global.css.
+      const fromTopLeftNotch =
+        (y === 0 && x >= 12 && x < 36) || (x === 0 && y >= 28 && y < 52);
+      const fromBottomRightNotch =
+        (y + cellHeight >= height &&
+          width - x - cellWidth >= 12 &&
+          width - x - cellWidth < 36) ||
+        (x + cellWidth >= width &&
+          height - y - cellHeight >= 28 &&
+          height - y - cellHeight < 52);
+      if (!exiting && !(fromTopLeftNotch || fromBottomRightNotch)) {
         continue;
       }
 
       const outward = rightHalf ? 1 : -1;
       const sideEdge = horizontal < vertical;
-      const tangent = 3 + (noise % 5);
-      const travel = 10 + (noise % 13);
+      const travel = exiting ? 10 + (noise % 13) : 22 + (noise % 19);
+      const verticalOutward = lowerHalf ? 1 : -1;
+      const tangentOutward = noise % 2 === 0 ? 1 : -1;
+      const angleNoise = ((seed >>> 8) % 100) / 100;
+      const angle = (angleNoise * 2 - 1) * (Math.PI / 3);
+      const normalTravel = travel * Math.cos(angle);
+      const tangentTravel = travel * Math.sin(angle) * tangentOutward;
+      const diagonalProgress =
+        (x / width + y / height + cellWidth / width + cellHeight / height) / 2;
+      const cornerWave = Math.min(diagonalProgress, 1 - diagonalProgress) * 2;
       const release = exiting
-        ? Math.round((28 + corner * 0.83 + depth * 5.2 + noise * 0.66) / 16) *
-          16
-        : seed >>> 0;
+        ? Math.round(
+            (cornerWave * (exitDuration ?? 0) * 0.5 + (noise % 12)) / 16,
+          ) * 16
+        : (seed >>> 0) % CORNER_CYCLE_MS;
       fragments.push({
         x,
         y,
-        width: cellWidth,
-        height: cellHeight,
+        width: exiting ? cellWidth : pixelSize,
+        height: exiting ? cellHeight : pixelSize,
         release,
-        life: exiting ? 210 + (noise % 37) * 5 : 500 + (noise % 125),
-        drift: exiting
-          ? (noise % 19) - 9 + outward * Math.max(0, 20 - horizontal)
-          : outward * (sideEdge ? travel : tangent),
-        rise: exiting
-          ? 20 + ((seed >>> 9) % 57)
-          : -outward * (sideEdge ? tangent : travel),
+        life: exiting ? 180 + (noise % 32) * 4 : 1850 + (noise % 450),
+        drift: sideEdge ? outward * normalTravel : tangentTravel,
+        rise: sideEdge ? -tangentTravel : -verticalOutward * normalTravel,
         color: exiting
           ? (FRAGMENT_COLORS[noise % FRAGMENT_COLORS.length] ?? '#e9b67f')
           : '#f4e7d2',
@@ -95,16 +105,6 @@ export function animateBannerPixels(
 
   if (fragments.length === 0) return;
   fragments.sort((a, b) => a.release - b.release);
-  if (!exiting) {
-    const upperLeft = fragments.filter((fragment) => fragment.x < width / 2);
-    const lowerRight = fragments.filter((fragment) => fragment.x >= width / 2);
-    upperLeft.forEach((fragment, index) => {
-      fragment.release = (index / upperLeft.length) * CORNER_CYCLE_MS;
-    });
-    lowerRight.forEach((fragment, index) => {
-      fragment.release = ((index + 0.5) / lowerRight.length) * CORNER_CYCLE_MS;
-    });
-  }
   // Each fragment is drawn in the same coordinate space as its cutout.
   const outline = `M0 0H${width}V${height}H0Z`;
   let previousCutouts = '';
@@ -126,7 +126,7 @@ export function animateBannerPixels(
       if (exiting && age < 0) break;
       const wrappedAge = age < 0 ? age + CORNER_CYCLE_MS : age;
       const progress = wrappedAge / fragment.life;
-      if (exiting || progress < 1) cutouts += fragment.cutout;
+      if (exiting) cutouts += fragment.cutout;
       if (progress >= 1 || !context) continue;
 
       const distance = progress * (2 - progress);
