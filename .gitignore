@@ -174,3 +174,6 @@ docs/achievement-art/sheet.png
 *.njsproj
 *.sln
 *.sw?
+
+# Documentation generated from application source
+apps/docs/src/content/docs/reference/commands.md

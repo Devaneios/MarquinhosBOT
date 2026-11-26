@@ -3,7 +3,7 @@
     "target": "ESNext",
     "module": "esnext",
     "lib": ["ESNext"],
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "dist",
     "moduleResolution": "bundler",
     "types": ["bun"],
@@ -21,6 +21,6 @@
       "@marquinhos/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "scripts/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

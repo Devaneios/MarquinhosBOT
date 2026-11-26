@@ -3,6 +3,7 @@
   "private": true,
   "packageManager": "pnpm@11.10.0",
   "scripts": {
+    "gen:commands": "bun --no-env-file apps/bot/scripts/gen-commands.ts",
     "gen:asyncapi": "bun --no-env-file apps/api/scripts/docs/asyncapi.ts",
     "gen:openapi": "bun --no-env-file apps/api/scripts/docs/openapi.ts",
     "build": "turbo run build",
