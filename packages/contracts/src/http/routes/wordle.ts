@@ -242,6 +242,62 @@ export const getRewards = defineContract({
   },
 });
 
+const botSecurity = ['botBearer'] as const;
+const exampleGuildId = '123456789012345678';
+const exampleGuild = { guildId: exampleGuildId };
+const exampleUserId = '234567890123456789';
+const communityTags = ['Wordle communities'] as const;
+const communityMemberErrors = {
+  ...playerReadErrors,
+  400: {
+    description: 'The guild or operation input failed validation.',
+    example: { message: 'Invalid request' },
+  },
+  403: {
+    description: 'The Discord user is outside the requested community.',
+    example: { message: 'Not a community member' },
+  },
+  503: {
+    description: 'Discord guild membership could not be verified.',
+    example: { message: 'Discord membership unavailable' },
+  },
+};
+const communityBotErrors = {
+  401: {
+    description: 'The bot credential was absent or invalid.',
+    example: { message: 'Token not authorized' },
+  },
+  500: {
+    description:
+      'The community operation failed or the bot key is unavailable.',
+    example: { message: 'Internal Server Error' },
+  },
+};
+const eventDatesExample = { firstDate: '2026-11-23', lastDate: '2026-11-29' };
+const startsAt = 1795402800000;
+const endsAt = 1796007600000;
+const goalExample = {
+  id: '22520fba-4be6-4b83-8755-5d45428ab1a2',
+  guildId: exampleGuildId,
+  target: 50,
+  startsAt,
+  endsAt,
+  status: 'active',
+};
+const challengeId = '3fc2dc66-26e6-4609-af38-e77c9808a46a';
+const challengeExample = {
+  id: challengeId,
+  guildId: exampleGuildId,
+  creatorId: exampleUserId,
+  patternId: 'letter_a',
+  opensAt: startsAt,
+  closesAt: startsAt + 86400000,
+  status: 'open',
+  participants: [exampleUserId],
+  joined: true,
+};
+const galleryExample = { weekKey: '2026-11-16', entries: [] };
+
 const goalSchema = z.object({
   id: requiredString,
   guildId: requiredString,
@@ -264,6 +320,27 @@ export const listGoals = defineContract({
       }),
     ),
   ),
+  docs: {
+    description:
+      'Read the guild’s collective goals with counted progress and contributing players. The authenticated caller must be a member of that guild.',
+    tags: communityTags,
+    security: activitySecurity,
+    examples: { params: exampleGuild },
+    success: {
+      200: {
+        description: 'Community goals and progress per goal.',
+        example: {
+          data: [
+            {
+              ...goalExample,
+              progress: { count: 1, contributors: [exampleUserId] },
+            },
+          ],
+        },
+      },
+    },
+    errors: communityMemberErrors,
+  },
 });
 
 const challengeSchema = z.object({
@@ -282,6 +359,21 @@ export const listChallenges = defineContract({
   path: '/api/wordle/challenges/:guildId',
   params: guildParams,
   response: envelope(z.array(challengeSchema)),
+  docs: {
+    description:
+      'Read a guild’s pattern challenges and whether the authenticated member has joined each one.',
+    tags: communityTags,
+    security: activitySecurity,
+    examples: { params: exampleGuild },
+    success: {
+      200: {
+        description:
+          'Challenge windows, participants, and the caller’s join state.',
+        example: { data: [challengeExample] },
+      },
+    },
+    errors: communityMemberErrors,
+  },
 });
 export const createChallenge = defineContract({
   method: 'POST',
@@ -294,12 +386,61 @@ export const createChallenge = defineContract({
     })
     .strict(),
   response: envelope(challengeSchema),
+  docs: {
+    description:
+      'Start a guild challenge for a pattern the authenticated member has unlocked. The API checks the closing time and applies limits to open challenges and recent challenges by that member.',
+    tags: communityTags,
+    security: activitySecurity,
+    examples: {
+      params: exampleGuild,
+      body: {
+        patternId: challengeExample.patternId,
+        closesAt: challengeExample.closesAt,
+      },
+    },
+    success: {
+      201: {
+        description: 'Created challenge and its membership state.',
+        example: { data: challengeExample },
+      },
+    },
+    errors: {
+      ...communityMemberErrors,
+      400: {
+        description:
+          'The pattern, closing time, ownership, or creation limit did not permit this challenge.',
+        example: { message: 'Pattern not unlocked' },
+      },
+      413: playerBodyTooLarge,
+    },
+  },
 });
 export const joinChallenge = defineContract({
   method: 'POST',
   path: '/api/wordle/challenges/:guildId/:challengeId/join',
   params: z.object({ guildId: requiredString, challengeId: requiredString }),
   response: envelope(z.object({ joined: z.literal(true) })),
+  docs: {
+    description:
+      'Enroll the authenticated guild member in an open pattern challenge. A repeated join is treated as the same membership.',
+    tags: communityTags,
+    security: activitySecurity,
+    examples: { params: { ...exampleGuild, challengeId } },
+    success: {
+      200: {
+        description: 'The member is enrolled in the challenge.',
+        example: { data: { joined: true } },
+      },
+    },
+    errors: {
+      ...communityMemberErrors,
+      400: {
+        description:
+          'The challenge was missing, closed, or invalid for this guild.',
+        example: { message: 'Challenge closed or missing' },
+      },
+    },
+  },
 });
 
 const bingoConditionSchema = z.discriminatedUnion('kind', [
@@ -331,11 +472,68 @@ const bingoCardSchema = z.object({
     complete: z.boolean(),
   }),
 });
+const bingoExample = {
+  id: '9da53a03-c7c0-4296-a3b6-d6c8d7a63c13',
+  guildId: exampleGuildId,
+  version: 1,
+  startsAt,
+  endsAt,
+  allowMulti: false,
+  status: 'active',
+  cells: [
+    { id: 'participation_1', condition: { kind: 'participation', target: 1 } },
+    {
+      id: 'letter_1',
+      condition: { kind: 'pattern', family: 'letter', target: 1 },
+    },
+    { id: 'participation_3', condition: { kind: 'participation', target: 3 } },
+    {
+      id: 'digit_1',
+      condition: { kind: 'pattern', family: 'digit', target: 1 },
+    },
+    {
+      id: 'shape_1',
+      condition: { kind: 'pattern', family: 'shape', target: 1 },
+    },
+    {
+      id: 'tetromino_1',
+      condition: { kind: 'pattern', family: 'tetromino', target: 1 },
+    },
+    { id: 'participation_5', condition: { kind: 'participation', target: 5 } },
+    {
+      id: 'letter_2',
+      condition: { kind: 'pattern', family: 'letter', target: 2 },
+    },
+    { id: 'participation_7', condition: { kind: 'participation', target: 7 } },
+  ],
+  progress: {
+    counts: Array.from({ length: 9 }, () => 0),
+    filled: Array.from({ length: 9 }, () => false),
+    lines: [],
+    complete: false,
+  },
+};
+
 export const listBingo = defineContract({
   method: 'GET',
   path: '/api/wordle/bingo/:guildId',
   params: guildParams,
   response: envelope(z.array(bingoCardSchema)),
+  docs: {
+    description:
+      'Read the guild’s bingo cards, public cell conditions, and collective progress, including filled lines.',
+    tags: communityTags,
+    security: activitySecurity,
+    examples: { params: exampleGuild },
+    success: {
+      200: {
+        description:
+          'Cards for the guild with nine cells each and progress snapshots.',
+        example: { data: [bingoExample] },
+      },
+    },
+    errors: communityMemberErrors,
+  },
 });
 export const createBingo = defineContract({
   method: 'POST',
@@ -349,6 +547,29 @@ export const createBingo = defineContract({
     })
     .strict(),
   response: envelope(bingoCardSchema),
+  docs: {
+    description:
+      'Publish a new bingo card for an inclusive Wordle calendar date range. The allowMulti flag controls whether a single qualifying event may contribute to multiple cells.',
+    tags: communityTags,
+    security: botSecurity,
+    examples: {
+      body: { ...exampleGuild, ...eventDatesExample, allowMulti: false },
+    },
+    success: {
+      201: {
+        description: 'New card with generated conditions and current progress.',
+        example: { data: bingoExample },
+      },
+    },
+    errors: {
+      ...communityBotErrors,
+      400: {
+        description: 'The guild, date range, or card options are invalid.',
+        example: { message: 'Invalid bingo dates' },
+      },
+      413: playerBodyTooLarge,
+    },
+  },
 });
 
 const gallerySchema = z.object({
@@ -370,6 +591,20 @@ export const getGallery = defineContract({
   path: '/api/wordle/gallery/:guildId',
   params: guildParams,
   response: envelope(gallerySchema),
+  docs: {
+    description:
+      'Read the pattern gallery for the most recent completed Wordle week in this guild. Access requires current Discord guild membership.',
+    tags: communityTags,
+    security: activitySecurity,
+    examples: { params: exampleGuild },
+    success: {
+      200: {
+        description: 'Gallery for the completed week, which can be empty.',
+        example: { data: galleryExample },
+      },
+    },
+    errors: communityMemberErrors,
+  },
 });
 export const getBotGallery = defineContract({
   method: 'GET',
@@ -377,6 +612,27 @@ export const getBotGallery = defineContract({
   params: guildParams,
   query: z.object({ week: z.iso.date() }),
   response: envelope(gallerySchema),
+  docs: {
+    description:
+      'Read pattern evidence for a selected completed Wordle week so the bot can render a guild recap. Use the Monday date as the week key.',
+    tags: communityTags,
+    security: botSecurity,
+    examples: { params: exampleGuild, query: { week: galleryExample.weekKey } },
+    success: {
+      200: {
+        description: 'Guild gallery for the selected week.',
+        example: { data: galleryExample },
+      },
+    },
+    errors: {
+      ...communityBotErrors,
+      400: {
+        description:
+          'The week key is invalid or the requested week has not closed.',
+        example: { message: 'Gallery week is still open' },
+      },
+    },
+  },
 });
 export const createGoal = defineContract({
   method: 'POST',
@@ -390,6 +646,34 @@ export const createGoal = defineContract({
     })
     .strict(),
   response: envelope(goalSchema),
+  docs: {
+    description:
+      'Schedule a collective guild goal with a target and an inclusive Wordle calendar date range. The API stores the corresponding start and end instants.',
+    tags: communityTags,
+    security: botSecurity,
+    examples: {
+      body: {
+        ...exampleGuild,
+        ...eventDatesExample,
+        target: goalExample.target,
+      },
+    },
+    success: {
+      201: {
+        description: 'The created community goal.',
+        example: { data: goalExample },
+      },
+    },
+    errors: {
+      ...communityBotErrors,
+      400: {
+        description:
+          'The guild, target, or goal dates did not pass validation.',
+        example: { message: 'Invalid goal dates or target' },
+      },
+      413: playerBodyTooLarge,
+    },
+  },
 });
 
 const notificationConfigSchema = z.object({
@@ -397,9 +681,6 @@ const notificationConfigSchema = z.object({
   collective: z.boolean(),
   weekly: z.boolean(),
 });
-const botSecurity = ['botBearer'] as const;
-const exampleGuildId = '123456789012345678';
-const exampleGuild = { guildId: exampleGuildId };
 const exampleChannelId = '345678901234567890';
 const notificationTags = ['Wordle notifications'] as const;
 const notificationConfigExample = {
@@ -724,6 +1005,21 @@ export const getAlbum = defineContract({
       }),
     ),
   ),
+  docs: {
+    description:
+      'Read the guild’s pattern album, including masks, contributors, first contributions, and family milestones where available.',
+    tags: communityTags,
+    security: activitySecurity,
+    examples: { params: exampleGuild },
+    success: {
+      200: {
+        description:
+          'Published album pages, or an empty list for a guild without pages.',
+        example: { data: [] },
+      },
+    },
+    errors: communityMemberErrors,
+  },
 });
 
 export const updateShowcase = defineContract({
@@ -756,7 +1052,6 @@ export const updateShowcase = defineContract({
 });
 
 const gameplayTags = ['Daily Wordle'] as const;
-const exampleUserId = '234567890123456789';
 const exampleDate = '2026-11-25';
 const examplePlayer = { guildId: exampleGuildId, userId: exampleUserId };
 const exampleGuess = {
