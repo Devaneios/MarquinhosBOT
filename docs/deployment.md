@@ -37,6 +37,8 @@ Add the required variables `BACKUP_DIR`, `CORS_ORIGINS`, `DISCORD_CLIENT_ID`, `D
 
 ## Runner bootstrap
 
+Deploy runs the shared CI checks on a GitHub-hosted runner with disposable PostgreSQL and Redis services before the deployment job starts on the target host.
+
 Install a self-hosted GitHub Actions runner with the `devaneios-runner` label on development and `hostinger-runner` on production. The runner account must be in the Docker group and have Docker Compose v2 available. Create `BACKUP_DIR` with owner access for that account. The API sandbox mirror path defaults to `/opt/marquinhos/sandbox-mirror`; create and maintain it with `apps/api/scripts/sync-sandbox-mirror.sh` under a host timer before deploying the API.
 
 Run the first release with the Deploy workflow’s `all` input. Later `develop` pushes select the changed component automatically, and a release tag selects the components changed since the previous `v*` tag. The first tag deploys everything. To redeploy production manually, dispatch the workflow from the release tag. The tagged commit must contain the updated workflow, and GitHub environment protection rules must allow `v*` tags. API deploys write a compressed snapshot of the SQLite volume and a `pg_dump` custom-format dump to `BACKUP_DIR`, retain fourteen days of backups, start PostgreSQL if it is not running, recreate only the API container, and roll back its image if the HTTP health check fails. The dump must pass `pg_restore --list` before it counts as a backup; if it does not, the deploy stops before the API is touched. The API applies pending migrations from `packages/database/drizzle` at startup.
