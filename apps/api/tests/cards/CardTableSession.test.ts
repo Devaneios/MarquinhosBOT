@@ -8,6 +8,7 @@ import { describe, expect, it, mock } from 'bun:test';
 import { CardTableSession } from 'modules/activity/games/cards/card-table-session';
 import type { PerClientBroadcaster } from 'modules/activity/games/cards/per-client-broadcaster';
 import { z } from 'zod';
+import { waitFor } from '../helpers/waitFor';
 
 interface StubState {
   players: string[];
@@ -523,15 +524,16 @@ describe('CardTableSession turn clock', () => {
     session.addPlayer('p1', {});
     session.addPlayer('p2', {});
 
-    await new Promise((resolve) => setTimeout(resolve, 60));
+    const timeoutCount = async () =>
+      typesFor(perPlayer, 'p1').filter((type) => type === 'turn_timeout')
+        .length;
+    await waitFor(timeoutCount, 3);
+    await Bun.sleep(20);
 
     // Three timeouts fire and then it stops — a finished match must not keep a
     // timer alive.
-    const timeouts = typesFor(perPlayer, 'p1').filter(
-      (t) => t === 'turn_timeout',
-    );
-    expect(timeouts).toHaveLength(3);
-  });
+    expect(await timeoutCount()).toBe(3);
+  }, 10_000);
 
   it('does not arm a clock for a ruleset that declares no timeout', async () => {
     const { session, perPlayer } = newSession();

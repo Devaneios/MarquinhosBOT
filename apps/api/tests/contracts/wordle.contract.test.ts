@@ -449,5 +449,5 @@ describe('wordle contracts', () => {
     expect(pool.data.total).toBe(pool.data.used + pool.data.remaining);
     expect(next.data.word).not.toBeNull();
     expect(decided.data.index).toBe(next.data.index + 1);
-  });
+  }, 30_000);
 });

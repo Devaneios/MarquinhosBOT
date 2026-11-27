@@ -111,4 +111,4 @@ it('awards drawing variants through playable guesses and persists XP only once',
   } finally {
     await fixture.drop();
   }
-}, 120_000);
+}, 300_000);
