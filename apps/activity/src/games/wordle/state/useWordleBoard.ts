@@ -217,6 +217,7 @@ export function useWordleBoard(
     enableArrowKeys = false,
   }: WordleBoardOptions,
 ) {
+  const [achievementsEnabled, setAchievementsEnabled] = useState(true);
   const [wordLength, setWordLength] = useState<number | null>(null);
   const [guesses, setGuesses] = useState<GuessRow[]>([]);
   const [revealedCount, setRevealedCount] = useState(0);
@@ -346,6 +347,9 @@ export function useWordleBoard(
               return;
             }
           }
+          setAchievementsEnabled(
+            message.payload.achievementOverview?.enabled !== false,
+          );
           latestBoardRef.current = {
             date: message.payload.date,
             attempts: message.payload.attempts,
@@ -486,6 +490,7 @@ export function useWordleBoard(
             if (!message.payload.pending || id <= message.payload.requestId)
               achievementRequestsRef.current.delete(id);
           }
+          setAchievementsEnabled(message.payload.overview.enabled !== false);
           dispatchAchievements({
             type: 'refresh',
             overview: message.payload.overview,
@@ -602,7 +607,12 @@ export function useWordleBoard(
   }, [pendingGuess, connectionState, send]);
 
   useEffect(() => {
-    if (!achievementRefreshNeeded || connectionState !== 'connected') return;
+    if (
+      !achievementsEnabled ||
+      !achievementRefreshNeeded ||
+      connectionState !== 'connected'
+    )
+      return;
     const timer = window.setInterval(() => {
       if (Date.now() < guessRefreshHoldUntilRef.current) return;
       const requestId = ++achievementRequestIdRef.current;
@@ -620,7 +630,7 @@ export function useWordleBoard(
       } satisfies WordleClientMessage);
     }, ACHIEVEMENT_REFRESH_INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, [achievementRefreshNeeded, connectionState, send]);
+  }, [achievementsEnabled, achievementRefreshNeeded, connectionState, send]);
 
   useEffect(() => {
     const drainDraftQueue = () => {
@@ -940,6 +950,7 @@ export function useWordleBoard(
   }, []);
 
   return {
+    achievementsEnabled,
     wordLength,
     guesses,
     revealingRow,

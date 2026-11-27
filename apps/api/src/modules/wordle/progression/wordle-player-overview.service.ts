@@ -27,6 +27,7 @@ export class WordlePlayerOverviewService {
       guildId,
       PUBLIC_VIEWER_ID,
     );
+    if (overview.enabled === false) return overview;
     await this.rewards.reconcile(userId);
     const cosmetics = await this.rewards.get(userId);
     const achievements = overview.achievements.map((achievement) =>

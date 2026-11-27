@@ -24,6 +24,7 @@ import { achievementXpForRarity } from '@marquinhos/domain/games/wordle/achievem
 import { stripDiacritics } from '@marquinhos/domain/shared/text/stripDiacritics';
 import { Inject, Injectable } from '@nestjs/common';
 import { logger } from 'common/logging/logger';
+import { AppConfig } from 'config/app.config';
 import { DB } from 'database/database.tokens';
 import {
   and,
@@ -63,6 +64,7 @@ export class WordleGlobalAchievementService {
     private readonly historyService: WordleHistoryService,
     @Inject(WORDLE_NOW)
     private readonly now: () => number = Date.now,
+    private readonly config: AppConfig,
   ) {}
 
   private async loadHistory(userId: string, exec: DbExecutor) {
@@ -143,6 +145,13 @@ export class WordleGlobalAchievementService {
     guildId: string,
     viewerId: string,
   ): Promise<WordleAchievementsOverview> {
+    if (!this.config.wordleAchievementsEnabled) {
+      return {
+        enabled: false,
+        achievements: [],
+        stats: await this.getStats(userId),
+      };
+    }
     return this.database.transaction(async (tx) => {
       const loaded = await this.loadHistory(userId, tx);
       const { history, options } = loaded;
@@ -258,6 +267,7 @@ export class WordleGlobalAchievementService {
             : null,
         }));
       return wordleAchievementsOverviewSchema.parse({
+        enabled: true,
         achievements: [...collection, ...retired],
         stats: options.aggregateStats,
       });
@@ -275,6 +285,7 @@ export class WordleGlobalAchievementService {
     userId: string,
     guildId: string,
   ): Promise<{ unlockedIds: string[] }> {
+    if (!this.config.wordleAchievementsEnabled) return { unlockedIds: [] };
     const outcome = await this.database.transaction(async (tx) => {
       await lockWordleAchievements(tx, userId);
       const { rows, history, options, legacyUnlocks, now } =

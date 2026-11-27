@@ -17,7 +17,13 @@ import { createTestDb, type TestDb } from '@marquinhos/database/testing';
 import { matchWordlePatterns } from '@marquinhos/domain/games/wordle/achievements/engine/matchPatterns';
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { eq } from 'drizzle-orm';
-import { createWordleTestGlobalAchievementService } from './helpers/wordleServices';
+import { WordleGlobalAchievementService } from '../src/modules/wordle/progression/wordle-global-achievement.service';
+import { WordleHistoryService } from '../src/modules/wordle/progression/wordle-history.service';
+import { createTestAppConfig } from './helpers/testAppConfig';
+import {
+  createWordleTestGlobalAchievementService,
+  createWordleTestServices,
+} from './helpers/wordleServices';
 
 let testDb: TestDb;
 beforeAll(async () => {
@@ -58,6 +64,29 @@ afterAll(async () => {
 });
 
 describe('global Wordle achievements', () => {
+  it('returns stats without exposing or awarding achievements when disabled', async () => {
+    const dependencies = createWordleTestServices(testDb.db);
+    const service = new WordleGlobalAchievementService(
+      testDb.db,
+      dependencies.leveling,
+      dependencies.album,
+      new WordleHistoryService(testDb.db),
+      Date.now,
+      createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'false' }),
+    );
+    expect(await service.checkAndAward('player', 'guild')).toEqual({
+      unlockedIds: [],
+    });
+    expect(
+      await service.getOverview('player', 'guild', 'player'),
+    ).toMatchObject({ enabled: false, achievements: [] });
+    const rows = await testDb.db
+      .select()
+      .from(wordleGlobalAchievements)
+      .where(eq(wordleGlobalAchievements.user_id, 'player'));
+    expect(rows).toEqual([]);
+  });
+
   it('shows a global collection and withholds today’s evidence from other players', async () => {
     const date = '2026-11-01';
     const feedback = [

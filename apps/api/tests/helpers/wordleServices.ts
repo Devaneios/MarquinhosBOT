@@ -46,6 +46,7 @@ export function createWordleTestServices(
     album,
     new WordleHistoryService(database),
     now,
+    createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' }),
   );
   const globalDrafts = new WordleGlobalDraftService(
     database,
@@ -60,6 +61,7 @@ export function createWordleTestServices(
   const globalCoordinator = new WordleGlobalGameCoordinator(
     globalGameplay,
     globalAchievements,
+    createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' }),
   );
   const globalDay = new WordleGlobalDayService(
     database,

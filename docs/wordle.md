@@ -127,3 +127,22 @@ Account deletion removes both legacy and global user progress, including
 `wordle_legacy_progress`. It retains shared daily answers and the global used
 word pool, which are not owned by an individual user. See
 [`UserService.deleteAllData()`](../apps/api/src/modules/user/user.service.ts).
+
+### Achievement feature flag
+
+`WORDLE_ACHIEVEMENTS_ENABLED` defaults to `false` in the API. Set it to `true`
+and restart the API to enable achievement evaluation, XP awards, the Activity
+collection and unlock banners. The bot keeps `/termo-conquistas` registered and
+responds with an unavailable message while the flag is off. No client rebuild
+or separate bot setting is required.
+
+While disabled, overviews return `enabled: false`, an empty collection and player
+statistics. Activity reads this state from server overviews and suppresses
+achievement refresh polling and presentation. Server reconciliation leaves
+pending awards untouched; accepted guesses and draft recovery still persist.
+When enabled later, the next accepted guess or reconciliation evaluates eligible
+saved history, including play while disabled. This is not a fresh-start boundary.
+Existing unlocks, evidence and XP are preserved. Catalog seeding and database
+migrations still run: this flag does not replace the global Wordle cutover or
+undo migration cleanup. Showcase, rewards and album retain their existing hidden
+Activity entry points.

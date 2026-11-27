@@ -35,6 +35,7 @@ const productionEnvironmentSchema = z.object({
   SEARXNG_URL: z.string().url().optional(),
   SPOTIFY_CLIENT_ID: z.string().min(1),
   SPOTIFY_CLIENT_SECRET: z.string().min(1),
+  WORDLE_ACHIEVEMENTS_ENABLED: z.enum(['true', 'false']).optional(),
   WORDLE_TIMEZONE: z
     .string()
     .optional()

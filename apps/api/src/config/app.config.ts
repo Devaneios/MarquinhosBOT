@@ -17,6 +17,11 @@ export class AppConfig {
     return Number.isFinite(parsed) ? parsed : fallback;
   }
 
+  /** Enables Wordle achievement awards and collection presentation after API restart. */
+  get wordleAchievementsEnabled(): boolean {
+    return this.read('WORDLE_ACHIEVEMENTS_ENABLED')?.toLowerCase() === 'true';
+  }
+
   get httpPort(): number {
     return this.readNumber('HTTP_PORT', 3000) || 3000;
   }

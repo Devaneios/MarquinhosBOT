@@ -45,6 +45,16 @@ export async function buildTermoAchievementsReply(
 ): Promise<TermoAchievementsReply> {
   const response = await apiService.getWordleAchievements(target.id, guildId);
   const overview: WordleAchievementsOverview = response.data;
+  if (overview.enabled === false) {
+    return {
+      embeds: [
+        baseEmbed(client).setDescription(
+          'As conquistas do Terminhos estão temporariamente indisponíveis.',
+        ),
+      ],
+      files: [],
+    };
+  }
   if (selection !== undefined) {
     const query = selection.trim().toLocaleLowerCase('pt-BR');
     const achievement = overview.achievements.find(

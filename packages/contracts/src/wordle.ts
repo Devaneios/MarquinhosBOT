@@ -134,6 +134,8 @@ export const wordleGoalBadgeSchema = z.object({
   endsAt: z.number(),
 });
 export const wordleAchievementsOverviewSchema = z.object({
+  /** False hides the collection and pauses awards; omitted by older servers. */
+  enabled: z.boolean().optional(),
   achievements: z.array(wordleAchievementStatusSchema),
   stats: wordlePlayerStatsSchema,
   showcase: z.array(z.string()).max(3).optional(),

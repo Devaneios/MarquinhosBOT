@@ -125,6 +125,7 @@ export function WordleBoard({
     'playing' | 'settings' | 'achievements' | 'album'
   >('playing');
   const {
+    achievementsEnabled,
     achievements,
     activeIndex,
     backspace,
@@ -168,6 +169,7 @@ export function WordleBoard({
   }, [entered, screen]);
 
   useEffect(() => {
+    if (!achievementsEnabled) return;
     const fresh = unlockedAchievements.filter(
       (achievement) => !publishedAchievements.current.has(achievement),
     );
@@ -187,7 +189,13 @@ export function WordleBoard({
       })),
     );
     playAchievementChime(config.enableSounds);
-  }, [config.enableSounds, publishAchievements, t, unlockedAchievements]);
+  }, [
+    achievementsEnabled,
+    config.enableSounds,
+    publishAchievements,
+    t,
+    unlockedAchievements,
+  ]);
 
   const keyboardRows = useMemo(
     () =>
@@ -226,7 +234,7 @@ export function WordleBoard({
     );
   }
 
-  if (screen === 'achievements') {
+  if (achievementsEnabled && screen === 'achievements') {
     return (
       <WordleAchievementsScreen
         achievements={achievements}
@@ -341,21 +349,23 @@ export function WordleBoard({
                 📖
               </button>
             )}
-            <button
-              type="button"
-              className={`${backChipClass} px-3`}
-              aria-label={t('wordle:achievementsAriaLabel')}
-              title={t('wordle:achievementsAriaLabel')}
-              onClick={openAchievements}
-            >
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                className="h-4 w-4 fill-current"
+            {achievementsEnabled && (
+              <button
+                type="button"
+                className={`${backChipClass} px-3`}
+                aria-label={t('wordle:achievementsAriaLabel')}
+                title={t('wordle:achievementsAriaLabel')}
+                onClick={openAchievements}
               >
-                <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V19H7v2h10v-2h-4v-3.1a5.01 5.01 0 0 0 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2M5 8V7h2v3.82C5.84 10.4 5 9.3 5 8m14 0c0 1.3-.84 2.4-2 2.82V7h2z" />
-              </svg>
-            </button>
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4 fill-current"
+                >
+                  <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V19H7v2h10v-2h-4v-3.1a5.01 5.01 0 0 0 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2M5 8V7h2v3.82C5.84 10.4 5 9.3 5 8m14 0c0 1.3-.84 2.4-2 2.82V7h2z" />
+                </svg>
+              </button>
+            )}
             <button
               type="button"
               className={`${backChipClass} px-3`}
@@ -395,16 +405,19 @@ export function WordleBoard({
                   {t('wordle:solved', { count: guesses.length })}
                 </div>
                 <div className="flex items-center gap-2">
-                  {(hasUnlockedInSession ||
-                    achievements.some((item) => item.unlockedAt !== null)) && (
-                    <button
-                      type="button"
-                      onClick={openAchievements}
-                      className="notch-4 border border-marquinhos-accent/60 bg-marquinhos-accent/15 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-marquinhos-accent transition-colors hover:bg-marquinhos-accent/25"
-                    >
-                      {t('wordle:viewAchievementsCta')}
-                    </button>
-                  )}
+                  {achievementsEnabled &&
+                    (hasUnlockedInSession ||
+                      achievements.some(
+                        (item) => item.unlockedAt !== null,
+                      )) && (
+                      <button
+                        type="button"
+                        onClick={openAchievements}
+                        className="notch-4 border border-marquinhos-accent/60 bg-marquinhos-accent/15 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-marquinhos-accent transition-colors hover:bg-marquinhos-accent/25"
+                      >
+                        {t('wordle:viewAchievementsCta')}
+                      </button>
+                    )}
                   <div
                     className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em]"
                     style={{

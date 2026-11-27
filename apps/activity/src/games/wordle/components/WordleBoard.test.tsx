@@ -124,6 +124,39 @@ describe('WordleBoard focus keyboard', () => {
 });
 
 describe('WordleBoard screen transitions', () => {
+  it('hides the collection when the API disables achievements', async () => {
+    const { WordleBoard } = await import(`./WordleBoard.tsx?${Math.random()}`);
+    renderBoard(WordleBoard);
+    act(() =>
+      deliverMessage({
+        type: 'init',
+        payload: {
+          wordLength: 5,
+          date: '2026-10-29',
+          guesses: [],
+          solved: false,
+          attempts: 0,
+          achievementOverview: {
+            enabled: false,
+            achievements: [],
+            stats: {
+              played: 0,
+              wins: 0,
+              winRate: 0,
+              currentStreak: 0,
+              bestStreak: 0,
+              distribution: [0, 0, 0, 0, 0, 0, 0, 0],
+            },
+          },
+        },
+      }),
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Abrir conquistas do Terminhos' }),
+    ).toBeNull();
+    expect(screen.getByRole('textbox', { name: /letra 1/i })).toBeTruthy();
+  });
+
   it('keeps the achievement collection accessible with the profile editors and album hidden', async () => {
     const { WordleBoard } = await import(`./WordleBoard.tsx?${Math.random()}`);
     renderBoard(WordleBoard, {

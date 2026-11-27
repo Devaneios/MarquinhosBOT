@@ -12,6 +12,7 @@ import { WordleReconcileJob } from '../src/jobs/wordle-reconcile.job';
 import { WordleGlobalGameCoordinator } from '../src/modules/wordle/gameplay/wordle-global-game-coordinator';
 import { WordleGlobalGameplayService } from '../src/modules/wordle/gameplay/wordle-global-gameplay.service';
 import { lockWordleAchievements } from '../src/modules/wordle/progression/wordle-achievement-lock';
+import { createTestAppConfig } from './helpers/testAppConfig';
 import {
   createWordleTestGlobalAchievementService,
   createWordleTestServices,
@@ -40,6 +41,45 @@ afterAll(async () => {
 });
 
 describe('global game coordinator', () => {
+  it('keeps guesses playable and awards pending while achievements are disabled', async () => {
+    const gameplay = new WordleGlobalGameplayService(
+      testDb.db,
+      (guess) => guess,
+      () => now,
+    );
+    let awardCalls = 0;
+    const service = new WordleGlobalGameCoordinator(
+      gameplay,
+      {
+        checkAndAward: async () => {
+          awardCalls++;
+          return { unlockedIds: [] };
+        },
+        getOverview: async () => {
+          throw new Error('Disabled collection must not load');
+        },
+      },
+      createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'false' }),
+    );
+    const result = await service.submitGuess(
+      'flag-disabled-player',
+      'server-a',
+      date,
+      'termo',
+    );
+    expect(result).toMatchObject({ solved: true, attempts: 1 });
+    expect(result).not.toHaveProperty('achievementUpdate');
+    expect(await service.reconcile('flag-disabled-player', 'server-a')).toEqual(
+      { unlockedIds: [] },
+    );
+    await service.reconcilePending();
+    expect(awardCalls).toBe(0);
+    expect(await service.hasPendingAwards('flag-disabled-player')).toBe(false);
+    expect(
+      (await gameplay.pendingAwards('flag-disabled-player')).length,
+    ).toBeGreaterThan(0);
+  });
+
   it('replays a lost winning response without another attempt or reward', async () => {
     const requestId = '1e934f2b-a691-4c08-94f4-d82df6968b27';
     const service = new WordleGlobalGameCoordinator(
@@ -49,6 +89,7 @@ describe('global game coordinator', () => {
         () => now,
       ),
       createWordleTestGlobalAchievementService(() => now, testDb.db),
+      createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' }),
     );
     const first = await service.submitGuess(
       'lost-response-player',
@@ -177,6 +218,7 @@ describe('global game coordinator', () => {
     const service = new WordleGlobalGameCoordinator(
       gameplay,
       createWordleTestGlobalAchievementService(() => now, testDb.db),
+      createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' }),
     );
     const results = await Promise.all([
       service.submitGuess(
@@ -225,14 +267,18 @@ describe('global game coordinator', () => {
       (guess) => guess,
       () => now,
     );
-    const failing = new WordleGlobalGameCoordinator(gameplay, {
-      checkAndAward: async () => {
-        throw new Error('temporary failure');
+    const failing = new WordleGlobalGameCoordinator(
+      gameplay,
+      {
+        checkAndAward: async () => {
+          throw new Error('temporary failure');
+        },
+        getOverview: async () => {
+          throw new Error('temporary failure');
+        },
       },
-      getOverview: async () => {
-        throw new Error('temporary failure');
-      },
-    });
+      createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' }),
+    );
     await failing.submitGuess(
       'retry-guild-player',
       'original-guild',
@@ -244,6 +290,7 @@ describe('global game coordinator', () => {
     const retry = new WordleGlobalGameCoordinator(
       gameplay,
       createWordleTestGlobalAchievementService(() => now, testDb.db),
+      createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' }),
     );
     const replay = await retry.submitGuess(
       'retry-guild-player',
@@ -347,6 +394,7 @@ describe('global game coordinator', () => {
         () => now,
       ),
       createWordleTestGlobalAchievementService(() => now, testDb.db),
+      createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' }),
     );
     const result = await service.submitGuess(
       'baseline-player',
@@ -372,14 +420,18 @@ describe('global game coordinator', () => {
       (guess) => guess,
       () => now,
     );
-    const interrupted = new WordleGlobalGameCoordinator(gameplay, {
-      checkAndAward: async () => {
-        throw new Error('temporary outage');
+    const interrupted = new WordleGlobalGameCoordinator(
+      gameplay,
+      {
+        checkAndAward: async () => {
+          throw new Error('temporary outage');
+        },
+        getOverview: async () => {
+          throw new Error('temporary outage');
+        },
       },
-      getOverview: async () => {
-        throw new Error('temporary outage');
-      },
-    });
+      createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' }),
+    );
     expect(
       await interrupted.submitGuess(
         'background-player',
@@ -448,15 +500,19 @@ describe('global game coordinator', () => {
       testDb.db,
     );
     let fail = true;
-    const coordinator = new WordleGlobalGameCoordinator(gameplay, {
-      checkAndAward: async (userId, guildId) => {
-        if (userId === 'retry-player' && fail)
-          throw new Error('temporary outage');
-        return awards.checkAndAward(userId, guildId);
+    const coordinator = new WordleGlobalGameCoordinator(
+      gameplay,
+      {
+        checkAndAward: async (userId, guildId) => {
+          if (userId === 'retry-player' && fail)
+            throw new Error('temporary outage');
+          return awards.checkAndAward(userId, guildId);
+        },
+        getOverview: (userId, guildId, viewerId) =>
+          awards.getOverview(userId, guildId, viewerId),
       },
-      getOverview: (userId, guildId, viewerId) =>
-        awards.getOverview(userId, guildId, viewerId),
-    });
+      createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' }),
+    );
     await coordinator.reconcilePending();
     expect(
       await testDb.db
@@ -498,7 +554,11 @@ describe('global game coordinator', () => {
       () => now,
       testDb.db,
     );
-    const coordinator = new WordleGlobalGameCoordinator(gameplay, awards);
+    const coordinator = new WordleGlobalGameCoordinator(
+      gameplay,
+      awards,
+      createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' }),
+    );
     await Promise.all([
       coordinator.reconcilePending(),
       coordinator.reconcile('race-player', 'race-guild'),
@@ -577,7 +637,11 @@ describe('global game coordinator', () => {
       () => now,
       testDb.db,
     );
-    const service = new WordleGlobalGameCoordinator(gameplay, awards);
+    const service = new WordleGlobalGameCoordinator(
+      gameplay,
+      awards,
+      createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' }),
+    );
     const result = await service.submitGuess(
       'player',
       'server-a',
@@ -610,14 +674,18 @@ describe('global game coordinator', () => {
       () => now,
       testDb.db,
     );
-    const failing = new WordleGlobalGameCoordinator(gameplay, {
-      checkAndAward: async () => {
-        throw new Error('unavailable');
+    const failing = new WordleGlobalGameCoordinator(
+      gameplay,
+      {
+        checkAndAward: async () => {
+          throw new Error('unavailable');
+        },
+        getOverview: async () => {
+          throw new Error('unavailable');
+        },
       },
-      getOverview: async () => {
-        throw new Error('unavailable');
-      },
-    });
+      createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' }),
+    );
     const result = await failing.submitGuess(
       'recover',
       'server-a',
@@ -629,7 +697,11 @@ describe('global game coordinator', () => {
       solved: true,
       attempts: 1,
     });
-    const retry = new WordleGlobalGameCoordinator(gameplay, awards);
+    const retry = new WordleGlobalGameCoordinator(
+      gameplay,
+      awards,
+      createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' }),
+    );
     expect((await retry.reconcile('recover', 'server-a')).unlockedIds).toEqual([
       'wordle_v2_solved_exactly_1',
     ]);
@@ -645,15 +717,19 @@ describe('global game coordinator', () => {
       () => now,
     );
     let awardCalls = 0;
-    const service = new WordleGlobalGameCoordinator(gameplay, {
-      checkAndAward: async () => {
-        awardCalls++;
-        return { unlockedIds: [] };
+    const service = new WordleGlobalGameCoordinator(
+      gameplay,
+      {
+        checkAndAward: async () => {
+          awardCalls++;
+          return { unlockedIds: [] };
+        },
+        getOverview: async () => {
+          throw new Error('not expected');
+        },
       },
-      getOverview: async () => {
-        throw new Error('not expected');
-      },
-    });
+      createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' }),
+    );
     expect(
       await service.submitGuess('invalid', 'server-a', date, 'bad'),
     ).toEqual({

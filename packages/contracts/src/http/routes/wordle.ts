@@ -1243,7 +1243,7 @@ export const getAchievements = defineContract({
   response: envelope(wordleAchievementsOverviewSchema),
   docs: {
     description:
-      'Read the player overview for display in Discord. Achievement evidence is filtered for public viewers and the response includes statistics, showcase, and equipped cosmetics.',
+      'Read the player overview for display in Discord. When achievements are disabled, enabled is false, the collection is empty, and statistics remain available; showcase and cosmetics are omitted. Achievement evidence is filtered for public viewers and the response includes statistics, showcase, and equipped cosmetics.',
     tags: playerTags,
     security: botSecurity,
     examples: { params: examplePlayer },

@@ -1,6 +1,7 @@
 import type { WordleAchievementsOverview } from '@marquinhos/contracts/wordle';
 import { Inject, Injectable } from '@nestjs/common';
 import { logger } from 'common/logging/logger';
+import { AppConfig } from 'config/app.config';
 import { WordleGlobalAchievementService } from 'modules/wordle/progression/wordle-global-achievement.service';
 import {
   WordleGlobalGameplayService,
@@ -26,6 +27,7 @@ export class WordleGlobalGameCoordinator {
     private readonly game: WordleGlobalGameplayService,
     @Inject(WordleGlobalAchievementService)
     private readonly awards: GlobalAwards,
+    private readonly config: AppConfig,
   ) {}
 
   async submitGuess(
@@ -86,6 +88,7 @@ export class WordleGlobalGameCoordinator {
   ) {
     if ('error' in result) return result;
     const { replayGuildId, replayDate, ...publicResult } = result;
+    if (!this.config.wordleAchievementsEnabled) return publicResult;
     try {
       const award = await this.awards.checkAndAward(
         userId,
@@ -117,6 +120,7 @@ export class WordleGlobalGameCoordinator {
     userId: string,
     guildId: string,
   ): Promise<{ unlockedIds: string[] }> {
+    if (!this.config.wordleAchievementsEnabled) return { unlockedIds: [] };
     const pending = await this.game.pendingAwards(userId);
     const unlockedIds: string[] = [];
     for (const item of pending) {
@@ -131,6 +135,7 @@ export class WordleGlobalGameCoordinator {
   }
 
   async reconcilePending(): Promise<void> {
+    if (!this.config.wordleAchievementsEnabled) return;
     for (const item of await this.game.pendingAwards()) {
       if (!item.guildId) continue;
       try {
@@ -148,6 +153,9 @@ export class WordleGlobalGameCoordinator {
   }
 
   async hasPendingAwards(userId: string): Promise<boolean> {
-    return (await this.game.pendingAwards(userId)).length > 0;
+    return (
+      this.config.wordleAchievementsEnabled &&
+      (await this.game.pendingAwards(userId)).length > 0
+    );
   }
 }
