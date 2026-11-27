@@ -170,7 +170,7 @@ function AchievementBannerCard({
               <button
                 type="button"
                 aria-label={banner.dismissLabel}
-                className="notch-4 h-8 w-8 self-start text-xs text-marquinhos-text-dim hover:bg-white/10 hover:text-marquinhos-text"
+                className="notch-4 h-6 w-6 self-start text-[10px] text-marquinhos-text-dim hover:bg-white/10 hover:text-marquinhos-text"
                 onClick={() => setLeaving(true)}
               >
                 ✕
