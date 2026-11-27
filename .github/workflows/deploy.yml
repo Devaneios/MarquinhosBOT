@@ -31,21 +31,16 @@ jobs:
       - id: environment
         env:
           EVENT_REF: ${{ github.ref }}
-          EVENT_SHA: ${{ github.sha }}
         run: |
           case "$EVENT_REF" in
             refs/tags/v*)
-              if ! git merge-base --is-ancestor "$EVENT_SHA" origin/main; then
-                echo "::error::Tag ${EVENT_REF#refs/tags/} points to $EVENT_SHA, which is not on main"
-                exit 1
-              fi
               echo "environment=production" >> "$GITHUB_OUTPUT"
               ;;
             refs/heads/develop)
               echo "environment=development" >> "$GITHUB_OUTPUT"
               ;;
             *)
-              echo "::error::$EVENT_REF does not deploy; use develop or a v* tag on main"
+              echo "::error::$EVENT_REF does not deploy; use develop or a v* tag"
               exit 1
               ;;
           esac

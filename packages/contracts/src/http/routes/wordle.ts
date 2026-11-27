@@ -1432,7 +1432,7 @@ export const getLeaderboard = defineContract({
   }),
   docs: {
     description:
-      'Read ten ranking entries for a guild with an optional offset. Daily rankings can target a specific date and return attempts and solved state. Longer periods return days played and average score.',
+      'Read ten ranking entries for a guild with an optional offset. Daily rankings can target a specific date and return attempts and solved state. They rank wins first, then fewer attempts, real solves before draft wins, and earlier solve times (unknown times last), with creation time and user ID as stable fallbacks. Longer periods return days played and average score.',
     tags: gameplayTags,
     security: botSecurity,
     examples: {

@@ -40,6 +40,10 @@ export class WordleGlobalLeaderboardService {
     return receipt?.date ?? '0001-01-01';
   }
 
+  /**
+   * Daily ties use solve time after score and draft precedence. Unknown solve
+   * times sort last; creation time and user ID keep remaining ties stable.
+   */
   async getLeaderboard(
     guildId: string,
     period: Period,
@@ -58,7 +62,7 @@ export class WordleGlobalLeaderboardService {
           SELECT user_id, ${rankedAttempts(sql``)} AS attempts, solved FROM wordle_sessions
           WHERE guild_id = ${guildId} AND word_date = ${today}
             AND (attempts > 0 OR solved_from_draft)
-          ORDER BY solved DESC, ${rankedAttempts(sql``)} ASC, solved_from_draft ASC, created_at ASC, user_id ASC
+          ORDER BY solved DESC, ${rankedAttempts(sql``)} ASC, solved_from_draft ASC, solved_at ASC NULLS LAST, created_at ASC, user_id ASC
           LIMIT ${limit} OFFSET ${offset}
         `);
         return rows.map((row) => ({
@@ -77,7 +81,7 @@ export class WordleGlobalLeaderboardService {
         JOIN wordle_global_sessions s ON s.user_id = p.user_id AND s.word_date = p.word_date
         WHERE p.guild_id = ${guildId} AND p.word_date = ${today}
           AND (s.attempts > 0 OR s.solved_from_draft)
-        ORDER BY s.solved DESC, ${rankedAttempts(sql`s.`)} ASC, s.solved_from_draft ASC, s.created_at ASC, s.user_id ASC
+        ORDER BY s.solved DESC, ${rankedAttempts(sql`s.`)} ASC, s.solved_from_draft ASC, s.solved_at ASC NULLS LAST, s.created_at ASC, s.user_id ASC
         LIMIT ${limit} OFFSET ${offset}
       `);
       return rows.map((row) => ({

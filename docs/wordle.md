@@ -64,6 +64,15 @@ unlocks outside this catalog. Current answer-, timing-, and drawing-based
 achievements still require eligible evidence-backed boards. Aggregate legacy
 totals only advance lifetime counters and streaks.
 
+## Daily leaderboard ordering
+
+Daily community rankings put wins first, then fewer attempts. A draft win counts
+as one attempt and follows a real first-guess solve. Equal results are ordered
+by the time the answer was solved, so starting earlier does not win a tie.
+Unknown historical solve times sort after known times for the same score;
+creation time and user ID break remaining ties. This applies to both global
+results and historical guild boards. No historical solve times are invented.
+
 ## Cutover receipt and startup
 
 The standalone audit and cutover tools take an explicit source tag and date.

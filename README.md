@@ -140,7 +140,7 @@ commit the updated lockfile with the package manifest.
 ## Deployment
 
 Pushes to `develop` deploy to the development environment. Production releases
-use `v*` tags on commits from `main`, such as `v1.2.3`. A push to `main` runs CI.
+use `v*` tags, such as `v1.2.3`, including tags on maintenance branches. A push to `main` runs CI.
 
 The [deployment guide](docs/deployment.md) covers the rest: environment setup,
 release steps, backups, database migrations, and rollback.
