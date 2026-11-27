@@ -47,18 +47,16 @@ describe('Wordle album projection recovery', () => {
       collective: true,
       weekly: false,
     });
-    await database.db
-      .insert(wordleGlobalOccurrences)
-      .values(
-        patterns.map((pattern_id) => ({
-          user_id: 'player',
-          word_date: '2026-10-01',
-          pattern_id,
-          session_id: 'session',
-          occurred_at: 100,
-          evidence: {},
-        })),
-      );
+    await database.db.insert(wordleGlobalOccurrences).values(
+      patterns.map((pattern_id) => ({
+        user_id: 'player',
+        word_date: '2026-10-01',
+        pattern_id,
+        session_id: 'session',
+        occurred_at: 100,
+        evidence: {},
+      })),
+    );
     const failure = spyOn(
       services.albumMilestones,
       'reconcile',
@@ -99,24 +97,20 @@ describe('Wordle album projection recovery', () => {
   });
 
   it('queues existing discoveries during migration', async () => {
-    await database.db
-      .insert(wordleGlobalOccurrences)
-      .values({
-        user_id: 'player',
-        word_date: '2026-10-01',
-        pattern_id: 'letter_a',
-        session_id: 'session',
-        occurred_at: 100,
-        evidence: {},
-      });
-    await database.db
-      .insert(wordleCommunityDailyPresence)
-      .values({
-        user_id: 'player',
-        guild_id: 'guild',
-        word_date: '2026-10-01',
-        first_seen_at: 1,
-      });
+    await database.db.insert(wordleGlobalOccurrences).values({
+      user_id: 'player',
+      word_date: '2026-10-01',
+      pattern_id: 'letter_a',
+      session_id: 'session',
+      occurred_at: 100,
+      evidence: {},
+    });
+    await database.db.insert(wordleCommunityDailyPresence).values({
+      user_id: 'player',
+      guild_id: 'guild',
+      word_date: '2026-10-01',
+      first_seen_at: 1,
+    });
     await database.db.execute(
       sql.raw('DROP TABLE wordle_album_projection_queue'),
     );
@@ -243,16 +237,14 @@ describe('Wordle album projection recovery', () => {
   });
   it('retries a failed projection after a player joins a community', async () => {
     const services = createWordleTestServices(database.db);
-    await database.db
-      .insert(wordleGlobalOccurrences)
-      .values({
-        user_id: 'player',
-        word_date: '2026-10-01',
-        pattern_id: 'letter_a',
-        session_id: 'session',
-        occurred_at: 100,
-        evidence: {},
-      });
+    await database.db.insert(wordleGlobalOccurrences).values({
+      user_id: 'player',
+      word_date: '2026-10-01',
+      pattern_id: 'letter_a',
+      session_id: 'session',
+      occurred_at: 100,
+      evidence: {},
+    });
     const failure = spyOn(services.album, 'pages').mockRejectedValueOnce(
       new Error('temporary outage'),
     );
@@ -283,40 +275,34 @@ describe('Wordle album projection recovery', () => {
       now: () => now,
       today: () => '2026-11-01',
     });
-    await database.db
-      .insert(wordleGlobalDays)
-      .values({
-        word_date: '2026-11-01',
-        word: 'termo',
-        word_length: 5,
-        created_at: 1,
-      });
-    await database.db
-      .insert(wordleGlobalSessions)
-      .values({
-        id: 'draw-session',
-        user_id: 'artist',
-        word_date: '2026-11-01',
-        attempts: 1,
-        guesses: JSON.stringify([
-          {
-            guess: 'terma',
-            feedback: ['correct', 'correct', 'correct', 'correct', 'absent'],
-          },
-        ]),
-        created_at: 1,
-      });
-    await database.db
-      .insert(achievements)
-      .values({
-        id: 'wordle_v2_pattern_tetromino_i',
-        name: 'I',
-        description: 'I',
-        category: 'wordle',
-        rarity: 'common',
-        icon: 'x',
-        reward_xp: 25,
-      });
+    await database.db.insert(wordleGlobalDays).values({
+      word_date: '2026-11-01',
+      word: 'termo',
+      word_length: 5,
+      created_at: 1,
+    });
+    await database.db.insert(wordleGlobalSessions).values({
+      id: 'draw-session',
+      user_id: 'artist',
+      word_date: '2026-11-01',
+      attempts: 1,
+      guesses: JSON.stringify([
+        {
+          guess: 'terma',
+          feedback: ['correct', 'correct', 'correct', 'correct', 'absent'],
+        },
+      ]),
+      created_at: 1,
+    });
+    await database.db.insert(achievements).values({
+      id: 'wordle_v2_pattern_tetromino_i',
+      name: 'I',
+      description: 'I',
+      category: 'wordle',
+      rarity: 'common',
+      icon: 'x',
+      reward_xp: 25,
+    });
     await recordWordlePresence(
       database.db,
       services.album,

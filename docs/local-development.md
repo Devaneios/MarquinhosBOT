@@ -151,17 +151,18 @@ account can create databases. Install the bot's native dependencies on the host
 as well. The [development image](../dev/Dockerfile) lists the system libraries
 used by the container setup.
 
+Set `TEST_REDIS_URL` to the Redis instance used for tests, as in CI.
+
 From the repository root, run the same checks as the
 [CI workflow](../.github/workflows/ci.yml).
 
 ```sh
-pnpm run test:deploy-env
-pnpm run typecheck
-pnpm run lint
-pnpm run test
-pnpm run test:dev
-pnpm run build
+pnpm run check:pipeline
 ```
+
+This runs deployment environment tests, the pipeline's Prettier check,
+typecheck, lint, workspace tests, development tooling checks, and builds in
+pipeline order, stopping at the first failure.
 
 `test:deploy-env` checks deployment environment generation. `test:dev` runs the
 development tooling and gateway tests, then typechecks the development tooling.

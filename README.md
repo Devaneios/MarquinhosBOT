@@ -109,6 +109,7 @@ Run these from the repository root.
 | Check types                            | `pnpm run typecheck`    |
 | Run linters                            | `pnpm run lint`         |
 | Run workspace tests                    | `pnpm run test`         |
+| Run all pipeline checks                 | `pnpm run check:pipeline` |
 | Build the apps                         | `pnpm run build`        |
 
 `dev:test` uses dummy credentials and disposable test databases, so you don't

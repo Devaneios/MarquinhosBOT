@@ -16,14 +16,12 @@ describe('Wordle draft finalization recovery', () => {
     try {
       const date = '2026-11-01';
       const now = Date.parse('2026-11-01T15:00:00Z');
-      await database.db
-        .insert(wordleGlobalDays)
-        .values({
-          word_date: date,
-          word: 'termo',
-          word_length: 5,
-          created_at: 1,
-        });
+      await database.db.insert(wordleGlobalDays).values({
+        word_date: date,
+        word: 'termo',
+        word_length: 5,
+        created_at: 1,
+      });
       for (const user of ['a-failed', 'b-healthy']) {
         await createWordleTestPresence(
           database.db,
