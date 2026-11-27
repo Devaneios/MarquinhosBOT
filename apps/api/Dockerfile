@@ -1,4 +1,4 @@
-FROM node:22-alpine AS deps
+FROM node:24-alpine AS deps
 RUN apk add --no-cache python3 make g++
 RUN npm install -g pnpm@11.10.0
 WORKDIR /app
@@ -16,7 +16,7 @@ RUN bun run scripts/build-valid-guesses.ts
 FROM oven/bun:1.4.2-alpine AS runtime
 ARG DOCKER_GID=999
 WORKDIR /app
-RUN apk add --no-cache docker-cli
+RUN apk upgrade --no-cache && apk add --no-cache docker-cli
 RUN addgroup -S marquinhos && adduser -S marquinhos -G marquinhos \
     && ( getent group ${DOCKER_GID} > /dev/null || addgroup -g ${DOCKER_GID} dockerhost ) \
     && addgroup marquinhos "$(getent group ${DOCKER_GID} | cut -d: -f1)"

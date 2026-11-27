@@ -1,4 +1,4 @@
-FROM node:22-alpine AS deps
+FROM node:24-alpine AS deps
 RUN npm install -g pnpm@11.10.0
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -16,7 +16,8 @@ ENV VITE_DISCORD_CLIENT_ID=$VITE_DISCORD_CLIENT_ID
 WORKDIR /app/apps/activity
 RUN bun run build
 
-FROM nginx:1.27-alpine
+FROM nginx:1.29-alpine3.22
+RUN apk upgrade --no-cache
 COPY deploy/nginx/activity.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/apps/activity/dist /usr/share/nginx/html
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

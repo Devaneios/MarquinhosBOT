@@ -2,7 +2,7 @@
 
 The development stack runs on your machine. Docker provides Bun 1.4.2 and the
 native dependencies used by the bot; you do not need to install those libraries
-on the host. Install Node 22, pnpm 11.10.0, and Bun 1.4.2 on the host, then run `pnpm install --frozen-lockfile` for local workspace commands. Docker
+on the host. Install Node 24, pnpm 11.10.0, and Bun 1.4.2 on the host, then run `pnpm install --frozen-lockfile` for local workspace commands. Docker
 Compose must support `env_file.required` (Compose 2.24 or newer).
 
 ## Configure once

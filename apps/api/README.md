@@ -18,7 +18,7 @@ REST API backend for the Marquinhos Discord bot ecosystem. Serves gamification (
 ## Prerequisites
 
 - [Bun](https://bun.sh) 1.3.x — runtime, package manager, and test runner
-- Node.js 22.x (only needed for editor tooling / type-checking with `tsc`)
+- Node.js 24.x (only needed for editor tooling / type-checking with `tsc`)
 - PostgreSQL 17 (the development stack runs it in Docker; tests need `TEST_DATABASE_URL` pointing at a server whose user may create databases)
 - Docker (optional, for containerized runs)
 

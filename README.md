@@ -30,7 +30,7 @@ for those steps.
 
 ## Run it locally
 
-You'll need Node 22, pnpm 11.10.0, Bun 1.4.2, and Docker with Compose 2.24 or
+You'll need Node 24, pnpm 11.10.0, Bun 1.4.2, and Docker with Compose 2.24 or
 newer. The pnpm version is pinned in [package.json](package.json), and the
 [CI workflow](.github/workflows/ci.yml) records the runtime versions.
 

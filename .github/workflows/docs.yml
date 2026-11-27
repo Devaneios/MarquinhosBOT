@@ -39,7 +39,7 @@ jobs:
           bun-version: 1.4.2
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
       - run: npm install -g pnpm@11.10.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @marquinhos/docs build:pages

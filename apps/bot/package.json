@@ -41,7 +41,7 @@
     "font-color-contrast": "^11.1.0",
     "googleapis": "^171.4.0",
     "mediaplex": "^1.0.0",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.5",
     "winston": "^3.19.0",
     "zod": "^4.3.6"
   },
