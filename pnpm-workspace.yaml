@@ -63,3 +63,6 @@ minimumReleaseAgeExclude:
   - qs@6.16.1
   - glob@14.0.2
   - minimatch@11.0.1
+
+patchedDependencies:
+  typedoc@0.28.20: patches/typedoc@0.28.20.patch

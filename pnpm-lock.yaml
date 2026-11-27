@@ -23,6 +23,9 @@ overrides:
   uuid@<11.1.1: 11.1.1
   zod@<4.6.6: 4.6.7
 
+patchedDependencies:
+  typedoc@0.28.20: 73d63871962ddc1d43e9030cdc04f700d373a826bbe21aa9a431af6745aa181b
+
 importers:
 
   .:
@@ -482,13 +485,13 @@ importers:
         version: 0.27.0(@astrojs/starlight@0.43.1(@astrojs/markdown-remark@7.3.0)(astro@7.4.13(@astrojs/markdown-remark@7.3.0)(@types/node@26.6.2)(esbuild@0.28.2)(ioredis@5.11.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(typescript@6.0.3))(astro@7.4.13(@astrojs/markdown-remark@7.3.0)(@types/node@26.6.2)(esbuild@0.28.2)(ioredis@5.11.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
       starlight-typedoc:
         specifier: 0.23.3
-        version: 0.23.3(@astrojs/starlight@0.43.1(@astrojs/markdown-remark@7.3.0)(astro@7.4.13(@astrojs/markdown-remark@7.3.0)(@types/node@26.6.2)(esbuild@0.28.2)(ioredis@5.11.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(typescript@6.0.3))(astro@7.4.13(@astrojs/markdown-remark@7.3.0)(@types/node@26.6.2)(esbuild@0.28.2)(ioredis@5.11.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(typedoc-plugin-markdown@4.14.1(typedoc@0.28.20(typescript@6.0.3)))(typedoc@0.28.20(typescript@6.0.3))
+        version: 0.23.3(@astrojs/starlight@0.43.1(@astrojs/markdown-remark@7.3.0)(astro@7.4.13(@astrojs/markdown-remark@7.3.0)(@types/node@26.6.2)(esbuild@0.28.2)(ioredis@5.11.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(typescript@6.0.3))(astro@7.4.13(@astrojs/markdown-remark@7.3.0)(@types/node@26.6.2)(esbuild@0.28.2)(ioredis@5.11.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(typedoc-plugin-markdown@4.14.1(typedoc@0.28.20(patch_hash=73d63871962ddc1d43e9030cdc04f700d373a826bbe21aa9a431af6745aa181b)(typescript@6.0.3)))(typedoc@0.28.20(patch_hash=73d63871962ddc1d43e9030cdc04f700d373a826bbe21aa9a431af6745aa181b)(typescript@6.0.3))
       typedoc:
         specifier: 0.28.20
-        version: 0.28.20(typescript@6.0.3)
+        version: 0.28.20(patch_hash=73d63871962ddc1d43e9030cdc04f700d373a826bbe21aa9a431af6745aa181b)(typescript@6.0.3)
       typedoc-plugin-markdown:
         specifier: 4.14.1
-        version: 4.14.1(typedoc@0.28.20(typescript@6.0.3))
+        version: 4.14.1(typedoc@0.28.20(patch_hash=73d63871962ddc1d43e9030cdc04f700d373a826bbe21aa9a431af6745aa181b)(typescript@6.0.3))
 
   packages/api-client:
     dependencies:
@@ -14933,13 +14936,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  starlight-typedoc@0.23.3(@astrojs/starlight@0.43.1(@astrojs/markdown-remark@7.3.0)(astro@7.4.13(@astrojs/markdown-remark@7.3.0)(@types/node@26.6.2)(esbuild@0.28.2)(ioredis@5.11.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(typescript@6.0.3))(astro@7.4.13(@astrojs/markdown-remark@7.3.0)(@types/node@26.6.2)(esbuild@0.28.2)(ioredis@5.11.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(typedoc-plugin-markdown@4.14.1(typedoc@0.28.20(typescript@6.0.3)))(typedoc@0.28.20(typescript@6.0.3)):
+  starlight-typedoc@0.23.3(@astrojs/starlight@0.43.1(@astrojs/markdown-remark@7.3.0)(astro@7.4.13(@astrojs/markdown-remark@7.3.0)(@types/node@26.6.2)(esbuild@0.28.2)(ioredis@5.11.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(typescript@6.0.3))(astro@7.4.13(@astrojs/markdown-remark@7.3.0)(@types/node@26.6.2)(esbuild@0.28.2)(ioredis@5.11.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(typedoc-plugin-markdown@4.14.1(typedoc@0.28.20(patch_hash=73d63871962ddc1d43e9030cdc04f700d373a826bbe21aa9a431af6745aa181b)(typescript@6.0.3)))(typedoc@0.28.20(patch_hash=73d63871962ddc1d43e9030cdc04f700d373a826bbe21aa9a431af6745aa181b)(typescript@6.0.3)):
     dependencies:
       '@astrojs/starlight': 0.43.1(@astrojs/markdown-remark@7.3.0)(astro@7.4.13(@astrojs/markdown-remark@7.3.0)(@types/node@26.6.2)(esbuild@0.28.2)(ioredis@5.11.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(typescript@6.0.3)
       astro: 7.4.13(@astrojs/markdown-remark@7.3.0)(@types/node@26.6.2)(esbuild@0.28.2)(ioredis@5.11.1)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
       github-slugger: 2.0.0
-      typedoc: 0.28.20(typescript@6.0.3)
-      typedoc-plugin-markdown: 4.14.1(typedoc@0.28.20(typescript@6.0.3))
+      typedoc: 0.28.20(patch_hash=73d63871962ddc1d43e9030cdc04f700d373a826bbe21aa9a431af6745aa181b)(typescript@6.0.3)
+      typedoc-plugin-markdown: 4.14.1(typedoc@0.28.20(patch_hash=73d63871962ddc1d43e9030cdc04f700d373a826bbe21aa9a431af6745aa181b)(typescript@6.0.3))
 
   statuses@2.0.2: {}
 
@@ -15295,11 +15298,11 @@ snapshots:
 
   typedarray@0.0.6: {}
 
-  typedoc-plugin-markdown@4.14.1(typedoc@0.28.20(typescript@6.0.3)):
+  typedoc-plugin-markdown@4.14.1(typedoc@0.28.20(patch_hash=73d63871962ddc1d43e9030cdc04f700d373a826bbe21aa9a431af6745aa181b)(typescript@6.0.3)):
     dependencies:
-      typedoc: 0.28.20(typescript@6.0.3)
+      typedoc: 0.28.20(patch_hash=73d63871962ddc1d43e9030cdc04f700d373a826bbe21aa9a431af6745aa181b)(typescript@6.0.3)
 
-  typedoc@0.28.20(typescript@6.0.3):
+  typedoc@0.28.20(patch_hash=73d63871962ddc1d43e9030cdc04f700d373a826bbe21aa9a431af6745aa181b)(typescript@6.0.3):
     dependencies:
       '@gerrit0/mini-shiki': 3.23.0
       lunr: 2.3.9
