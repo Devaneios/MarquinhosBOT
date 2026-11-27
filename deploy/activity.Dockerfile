@@ -2,6 +2,7 @@ FROM node:24-alpine AS deps
 RUN npm install -g pnpm@11.10.0
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
 COPY apps ./apps
 COPY packages ./packages
 RUN HUSKY=0 pnpm install --filter 'marquinhos-activity-client...' --frozen-lockfile

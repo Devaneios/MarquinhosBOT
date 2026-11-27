@@ -3,6 +3,7 @@ RUN apk add --no-cache python3 make g++
 RUN npm install -g pnpm@11.10.0
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
 COPY apps ./apps
 COPY packages ./packages
 RUN HUSKY=0 pnpm install --filter 'marquinhos-web-api...' --frozen-lockfile
