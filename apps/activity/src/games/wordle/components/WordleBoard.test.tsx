@@ -470,7 +470,8 @@ describe('WordleBoard screen transitions', () => {
     }
   });
 
-  it('publishes a sample banner on each click of the development button', async () => {
+  it('queues all four rarity previews on each click with at most three visible', async () => {
+    jest.useFakeTimers();
     const previousDev = process.env.DEV;
     process.env.DEV = 'true';
     try {
@@ -489,8 +490,32 @@ describe('WordleBoard screen transitions', () => {
       expect(
         screen.getAllByRole('status').map((banner) => banner.textContent),
       ).toEqual([
-        expect.stringContaining('Conquista de teste'),
-        expect.stringContaining('Conquista de teste'),
+        expect.stringContaining('Épica'),
+        expect.stringContaining('Rara'),
+        expect.stringContaining('Comum'),
+      ]);
+      for (const button of screen.getAllByRole('button', {
+        name: /fechar conquista desbloqueada/i,
+      }))
+        fireEvent.click(button);
+      act(() => jest.advanceTimersByTime(1100));
+      expect(
+        screen.getAllByRole('status').map((banner) => banner.textContent),
+      ).toEqual([
+        expect.stringContaining('Rara'),
+        expect.stringContaining('Comum'),
+        expect.stringContaining('Lendária'),
+      ]);
+      for (const button of screen.getAllByRole('button', {
+        name: /fechar conquista desbloqueada/i,
+      }))
+        fireEvent.click(button);
+      act(() => jest.advanceTimersByTime(1100));
+      expect(
+        screen.getAllByRole('status').map((banner) => banner.textContent),
+      ).toEqual([
+        expect.stringContaining('Lendária'),
+        expect.stringContaining('Épica'),
       ]);
     } finally {
       if (previousDev === undefined) delete process.env.DEV;
@@ -571,13 +596,13 @@ describe('WordleBoard screen transitions', () => {
     expect(screen.getByText('Primeira palavra')).toBeTruthy();
     expect(screen.getAllByRole('status')).toHaveLength(1);
 
-    act(() => jest.advanceTimersByTime(760));
+    act(() => jest.advanceTimersByTime(1100));
     expect(screen.queryByText('Primeira palavra')).toBeNull();
     expect(screen.getByText('Na mosca')).toBeTruthy();
 
     act(() => jest.advanceTimersByTime(40));
     expect(screen.queryByRole('status')).toBeNull();
-    act(() => jest.advanceTimersByTime(760));
+    act(() => jest.advanceTimersByTime(1100));
     expect(screen.queryByText('Na mosca')).toBeNull();
   });
 });

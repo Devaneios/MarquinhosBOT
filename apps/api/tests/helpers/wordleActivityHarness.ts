@@ -222,7 +222,7 @@ try {
         .join(',') !== (botWrong ? '1,2' : '1') ||
       events.some((event) => !event.achievement_reconciled) ||
       unlocks.length !== 1 ||
-      levels[0]?.total_xp !== (botWrong ? 25 : 75) ||
+      levels[0]?.total_xp !== (botWrong ? 75 : 150) ||
       (process.env.WORDLE_E2E_FAIL_AWARD === '1' && !simulatedAwardFailure) ||
       (process.env.WORDLE_E2E_BACKGROUND_AWARD === '1' &&
         !backgroundAwardGranted) ||

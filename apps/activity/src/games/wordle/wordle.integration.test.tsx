@@ -59,6 +59,7 @@ async function playGame({
         MARQUINHOS_SECRET_KEY: 'test',
         OPENAI_API_KEY: 'test',
         NODE_ENV: 'test',
+        WORDLE_ACHIEVEMENTS_ENABLED: 'true',
         WORDLE_E2E_DROP_FIRST: dropFirst ? '1' : '0',
         WORDLE_E2E_FAIL_AWARD: failAward ? '1' : '0',
         WORDLE_E2E_BACKGROUND_AWARD: backgroundAward ? '1' : '0',
@@ -217,7 +218,9 @@ async function playGame({
       { timeout: 20_000 },
     );
     const announcement = within(earned.closest('[role="status"]')!);
-    expect(announcement.getByText(botWrong ? '+25 XP' : '+75 XP')).toBeTruthy();
+    expect(
+      announcement.getByText(botWrong ? '+75 XP' : '+150 XP'),
+    ).toBeTruthy();
     expect(announcement.getByText(/conquista desbloqueada/i)).toBeTruthy();
     if (checkCollection) {
       fireEvent.click(screen.getByRole('button', { name: /ver conquistas/i }));
