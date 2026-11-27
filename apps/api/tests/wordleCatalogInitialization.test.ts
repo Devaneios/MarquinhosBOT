@@ -8,7 +8,7 @@ import {
 import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achievements/catalog';
 import { achievementXpForRarity } from '@marquinhos/domain/games/wordle/achievements/rewards';
 import { afterAll, describe, expect, it } from 'bun:test';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { AchievementService } from 'modules/gamification/achievement.service';
 import { LevelingService } from 'modules/gamification/leveling.service';
 
@@ -75,7 +75,7 @@ afterAll(async () => {
 });
 
 describe('Wordle catalog initialization', () => {
-  it('seeds only handcrafted Wordle definitions and removes other achievements', async () => {
+  it('archives retired definitions and preserves legacy Wordle unlocks', async () => {
     await defaults.initializeDefaults();
     await db
       .insert(achievements)
@@ -100,12 +100,22 @@ describe('Wordle catalog initialization', () => {
     const once = await db
       .select()
       .from(achievements)
-      .where(inArray(achievements.id, catalogIds));
+      .where(
+        and(
+          inArray(achievements.id, catalogIds),
+          isNull(achievements.archived_at),
+        ),
+      );
     await defaults.initializeDefaults();
     const twice = await db
       .select()
       .from(achievements)
-      .where(inArray(achievements.id, catalogIds));
+      .where(
+        and(
+          inArray(achievements.id, catalogIds),
+          isNull(achievements.archived_at),
+        ),
+      );
 
     expect(once).toHaveLength(catalogIds.length);
     expect(byId(twice)).toEqual(byId(once));
@@ -133,8 +143,8 @@ describe('Wordle catalog initialization', () => {
       })),
     );
 
-    const removedDefinitions = await db
-      .select({ id: achievements.id })
+    const retiredDefinitions = await db
+      .select({ id: achievements.id, archived_at: achievements.archived_at })
       .from(achievements)
       .where(
         inArray(achievements.id, [
@@ -143,10 +153,15 @@ describe('Wordle catalog initialization', () => {
           retiredAchievement.id,
         ]),
       );
-    expect(removedDefinitions).toEqual([]);
+    expect(retiredDefinitions).toHaveLength(3);
+    expect(retiredDefinitions.every((row) => row.archived_at !== null)).toBe(
+      true,
+    );
     expect(
-      await db.select().from(userAchievements).where(playerFilter),
-    ).toEqual([]);
+      (await db.select().from(userAchievements).where(playerFilter))
+        .map((row) => row.achievement_id)
+        .sort(),
+    ).toEqual([operatorWordleAchievement.id, retiredAchievement.id].sort());
   });
 
   it('refreshes active catalog metadata from the handcrafted definition', async () => {
@@ -199,7 +214,7 @@ describe('Wordle catalog initialization', () => {
     }
   });
 
-  it('removes Wordle rows missing from the catalog and their unlocks', async () => {
+  it('archives Wordle rows missing from the catalog and retains their unlocks', async () => {
     await defaults.initializeDefaults();
     await db
       .insert(achievements)
@@ -215,7 +230,7 @@ describe('Wordle catalog initialization', () => {
       .onConflictDoNothing();
 
     await defaults.initializeDefaults();
-    const removed = await db
+    const retired = await db
       .select()
       .from(achievements)
       .where(
@@ -224,13 +239,18 @@ describe('Wordle catalog initialization', () => {
           operatorWordleAchievement.id,
         ]),
       );
-    expect(removed).toEqual([]);
+    expect(retired).toHaveLength(2);
+    expect(retired.every((row) => row.archived_at !== null)).toBe(true);
 
     const unlocks = await db
       .select({ id: userAchievements.achievement_id })
       .from(userAchievements)
-      .where(playerFilter);
-    expect(unlocks).toEqual([]);
+      .where(playerFilter)
+      .orderBy(userAchievements.achievement_id);
+    expect(unlocks).toEqual([
+      { id: operatorWordleAchievement.id },
+      { id: retiredAchievement.id },
+    ]);
     expect(
       await defaults.unlockAchievement(
         player.user_id,
@@ -248,7 +268,8 @@ describe('Wordle catalog initialization', () => {
           operatorWordleAchievement.id,
         ]),
       );
-    expect(operatorRows).toEqual([]);
+    expect(operatorRows).toHaveLength(2);
+    expect(operatorRows.every((row) => row.archived_at !== null)).toBe(true);
   });
 
   it('restores a returning catalog ID without granting its XP again', async () => {

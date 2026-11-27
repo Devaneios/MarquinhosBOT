@@ -57,7 +57,7 @@ it('uses the current Wordle reward when a retained legacy definition has differe
       .from(achievements)
       .where(eq(achievements.id, 'wordle_v2_solved_exactly_1'));
     expect(result.unlockedIds).toContain('wordle_v2_solved_exactly_1');
-    expect(level?.total_xp).toBe(75);
+    expect(level?.total_xp).toBe(150);
     expect(retained?.reward_xp).toBe(999);
   } finally {
     await fixture.drop();

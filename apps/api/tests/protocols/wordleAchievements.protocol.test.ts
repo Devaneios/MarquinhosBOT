@@ -44,9 +44,9 @@ it('replays a saved guess after midnight before loading the new board', async ()
       name: 'Palpite certeiro',
       description: 'Acerte de primeira',
       category: 'wordle',
-      rarity: 'rare',
+      rarity: 'epic',
       icon: 'x',
-      reward_xp: 75,
+      reward_xp: 150,
     })
     .onConflictDoNothing();
   const services = createWordleTestServices(database.db, {
@@ -136,7 +136,7 @@ it('replays a saved guess after midnight before loading the new board', async ()
       .select()
       .from(userLevels)
       .where(eq(userLevels.user_id, identity.userId));
-    expect(level?.total_xp).toBe(75);
+    expect(level?.total_xp).toBe(150);
   } finally {
     await server.shutdown();
   }
@@ -155,9 +155,9 @@ it('refreshes an open session after a failed award is recovered by the backgroun
       name: 'Palpite certeiro',
       description: 'Acerte de primeira',
       category: 'wordle',
-      rarity: 'rare',
+      rarity: 'epic',
       icon: 'x',
-      reward_xp: 75,
+      reward_xp: 150,
     })
     .onConflictDoNothing();
   await database.db
@@ -290,7 +290,7 @@ it('refreshes an open session after a failed award is recovered by the backgroun
       .select()
       .from(userLevels)
       .where(eq(userLevels.user_id, identity.userId));
-    expect(level?.total_xp).toBe(75);
+    expect(level?.total_xp).toBe(150);
   } finally {
     await server.shutdown();
   }
@@ -312,9 +312,9 @@ it('persists an earned achievement and restores it on reconnect through the Word
       name: 'Palpite certeiro',
       description: 'Acerte de primeira',
       category: 'wordle',
-      rarity: 'rare',
+      rarity: 'epic',
       icon: 'x',
-      reward_xp: 75,
+      reward_xp: 150,
     })
     .onConflictDoNothing();
   const dependencies = createRealtimeTestDependencies(database.db);
@@ -388,7 +388,7 @@ it('persists an earned achievement and restores it on reconnect through the Word
       .select()
       .from(userLevels)
       .where(eq(userLevels.user_id, identity.userId));
-    expect(level).toMatchObject({ guild_id: identity.guildId, total_xp: 75 });
+    expect(level).toMatchObject({ guild_id: identity.guildId, total_xp: 150 });
 
     const reconnected = await server.connectTo(room, {
       token: mintWsSessionToken(identity),
@@ -410,7 +410,7 @@ it('persists an earned achievement and restores it on reconnect through the Word
       .select()
       .from(userLevels)
       .where(eq(userLevels.user_id, identity.userId));
-    expect(afterReconnect?.total_xp).toBe(75);
+    expect(afterReconnect?.total_xp).toBe(150);
   } finally {
     await server.shutdown();
   }

@@ -5,7 +5,7 @@ import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achi
 import { achievementXpForRarity } from '@marquinhos/domain/games/wordle/achievements/rewards';
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from 'database/database.tokens';
-import { and, inArray, isNull, notInArray, sql } from 'drizzle-orm';
+import { and, inArray, isNull, ne, notInArray, sql } from 'drizzle-orm';
 import { LevelingService } from 'modules/gamification/leveling.service';
 
 @Injectable()
@@ -16,15 +16,34 @@ export class AchievementService {
   ) {}
 
   async initializeDefaults(): Promise<void> {
-    // The handcrafted Wordle catalog is the complete achievement set.
+    // The handcrafted Wordle catalog is the complete active achievement set.
     await this.database.transaction(async (tx) => {
       const catalogIds = WORDLE_ACHIEVEMENT_CATALOG.map(({ id }) => id);
       await tx
-        .delete(userAchievements)
-        .where(notInArray(userAchievements.achievement_id, catalogIds));
-      await tx
-        .delete(achievements)
-        .where(notInArray(achievements.id, catalogIds));
+        .update(achievements)
+        .set({ archived_at: Date.now() })
+        .where(
+          and(
+            isNull(achievements.archived_at),
+            notInArray(achievements.id, catalogIds),
+          ),
+        );
+      const retiredGenericIds = (
+        await tx
+          .select({ id: achievements.id })
+          .from(achievements)
+          .where(
+            and(
+              ne(achievements.category, 'wordle'),
+              notInArray(achievements.id, catalogIds),
+            ),
+          )
+      ).map(({ id }) => id);
+      if (retiredGenericIds.length > 0) {
+        await tx
+          .delete(userAchievements)
+          .where(inArray(userAchievements.achievement_id, retiredGenericIds));
+      }
       const catalogRows = WORDLE_ACHIEVEMENT_CATALOG.map((definition) => ({
         id: definition.id,
         name: definition.name,

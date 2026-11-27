@@ -10,8 +10,10 @@ import { WORDLE_ACHIEVEMENT_CATALOG } from '@marquinhos/domain/games/wordle/achi
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
+import { AppConfig } from '../../src/config/app.config';
 import { WordleModule } from '../../src/modules/wordle/wordle.module';
 import { startNestContractServer } from '../helpers/contractServer';
+import { createTestAppConfig } from '../helpers/testAppConfig';
 import { installWordleAchievementCatalog } from '../helpers/wordleAchievementCatalog';
 
 let server: Awaited<ReturnType<typeof startNestContractServer>>;
@@ -22,7 +24,13 @@ const userId = randomUUID();
 
 beforeAll(async () => {
   restoreCatalog = await installWordleAchievementCatalog();
-  server = await startNestContractServer({ imports: [WordleModule] });
+  server = await startNestContractServer(
+    { imports: [WordleModule] },
+    (builder) =>
+      builder
+        .overrideProvider(AppConfig)
+        .useValue(createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' })),
+  );
   server.http.interceptors.request.use((config) => {
     if (!omitAuth) return config;
     const headers = new Headers(config.headers);

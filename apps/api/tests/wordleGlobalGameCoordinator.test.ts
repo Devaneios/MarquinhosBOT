@@ -31,9 +31,9 @@ beforeAll(async () => {
     name: 'Palpite certeiro',
     description: 'Acerte de primeira',
     category: 'wordle',
-    rarity: 'rare',
+    rarity: 'epic',
     icon: 'x',
-    reward_xp: 75,
+    reward_xp: 150,
   });
 });
 afterAll(async () => {
@@ -124,7 +124,7 @@ describe('global game coordinator', () => {
       .select()
       .from(userLevels)
       .where(eq(userLevels.user_id, 'lost-response-player'));
-    expect(level?.total_xp).toBe(75);
+    expect(level?.total_xp).toBe(150);
   });
   it('replays a saved guess after the day or validation bank changes', async () => {
     const requestId = '5e934f2b-a691-4c08-94f4-d82df6968b27';
@@ -248,7 +248,7 @@ describe('global game coordinator', () => {
       .select()
       .from(userLevels)
       .where(eq(userLevels.user_id, 'concurrent-retry-player'));
-    expect(level?.total_xp).toBe(75);
+    expect(level?.total_xp).toBe(150);
     expect(
       await service.submitGuess(
         'concurrent-retry-player',
@@ -305,7 +305,7 @@ describe('global game coordinator', () => {
       .select()
       .from(userLevels)
       .where(eq(userLevels.user_id, 'retry-guild-player'));
-    expect(level).toMatchObject({ guild_id: 'original-guild', total_xp: 75 });
+    expect(level).toMatchObject({ guild_id: 'original-guild', total_xp: 150 });
   });
   it('waits for an in-flight award before capturing its baseline', async () => {
     await testDb.db.insert(achievements).values({
@@ -483,7 +483,7 @@ describe('global game coordinator', () => {
       .where(eq(userLevels.user_id, 'background-player'));
     expect(level).toMatchObject({
       guild_id: 'original-community',
-      total_xp: 75,
+      total_xp: 150,
     });
   });
   it('continues processing other players when an award fails and retries it later', async () => {
@@ -572,7 +572,7 @@ describe('global game coordinator', () => {
       .from(userLevels)
       .where(eq(userLevels.user_id, 'race-player'));
     expect(earned).toHaveLength(1);
-    expect(level?.total_xp).toBe(75);
+    expect(level?.total_xp).toBe(150);
   });
   it('keeps the overview available if reconciliation temporarily fails', async () => {
     const { wordle, globalCoordinator } = createWordleTestServices(testDb.db, {

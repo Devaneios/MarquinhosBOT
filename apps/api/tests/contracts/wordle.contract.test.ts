@@ -9,9 +9,11 @@ import {
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
+import { AppConfig } from '../../src/config/app.config';
 import { WordleNotificationService } from '../../src/modules/wordle/notifications/wordle-notification.service';
 import { WordleModule } from '../../src/modules/wordle/wordle.module';
 import { startNestContractServer } from '../helpers/contractServer';
+import { createTestAppConfig } from '../helpers/testAppConfig';
 import { createWordleTestWordBankService } from '../helpers/wordleServices';
 
 const { callContract } = await import('@marquinhos/api-client/bot');
@@ -23,7 +25,13 @@ let server: Awaited<ReturnType<typeof startNestContractServer>>;
 let validGuess = '';
 
 beforeAll(async () => {
-  server = await startNestContractServer({ imports: [WordleModule] });
+  server = await startNestContractServer(
+    { imports: [WordleModule] },
+    (builder) =>
+      builder
+        .overrideProvider(AppConfig)
+        .useValue(createTestAppConfig({ WORDLE_ACHIEVEMENTS_ENABLED: 'true' })),
+  );
   const stats = await callContract(server.http, wordle.getStats, {
     params: { guildId },
   });
@@ -375,10 +383,13 @@ describe('wordle contracts', () => {
   });
 
   it('replaces the global word and resets the current round in development', async () => {
-    const development = await startNestContractServer({
-      imports: [WordleModule],
-    });
-    const previousEnv = process.env.NODE_ENV;
+    const development = await startNestContractServer(
+      { imports: [WordleModule] },
+      (builder) =>
+        builder
+          .overrideProvider(AppConfig)
+          .useValue(createTestAppConfig({ NODE_ENV: 'development' })),
+    );
     try {
       const userId = randomUUID();
       const { data: stats } = await callContract(
@@ -397,7 +408,6 @@ describe('wordle contracts', () => {
         body: { userId, guildId, guess: day.word },
       });
 
-      process.env.NODE_ENV = 'development';
       const { data: replacement } = await callContract(
         development.http,
         wordle.forceNewWord,
@@ -415,8 +425,6 @@ describe('wordle contracts', () => {
       );
       expect(session.data).toBeNull();
     } finally {
-      if (previousEnv === undefined) delete process.env.NODE_ENV;
-      else process.env.NODE_ENV = previousEnv;
       await development.close();
     }
   });
