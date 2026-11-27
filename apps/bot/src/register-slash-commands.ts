@@ -1,4 +1,5 @@
 import { env } from '@marquinhos/config/environment';
+import { preserveActivityEntryPoint } from '@marquinhos/lib/preserveActivityEntryPoint';
 import { registerSapphireCommands } from '@marquinhos/lib/registerSapphirePieces';
 import { logger } from '@marquinhos/utils/logger';
 import {
@@ -77,7 +78,8 @@ export async function registerCommands() {
     loadDefaultErrorListeners: false,
   });
 
-  registerSapphireCommands();
+  preserveActivityEntryPoint(client.rest, env.MARQUINHOS_CLIENT_ID);
+  await registerSapphireCommands();
 
   const failures: string[] = [];
   const publishedNames = new Set<string>();
@@ -137,7 +139,7 @@ export async function registerCommands() {
   });
 
   logger.info(
-    'Using bulk overwrite — the global command list on Discord will be replaced by exactly the commands found in this codebase.',
+    'Using bulk overwrite for global commands and preserving the existing Activity entry point.',
   );
   logger.info('Connecting to Discord...');
 

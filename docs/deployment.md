@@ -43,6 +43,8 @@ The Compose CPU limits support hosts with one vCPU. The API can use up to one vC
 
 Install a self-hosted GitHub Actions runner with the `devaneios-runner` label on development and `hostinger-runner` on production. The runner account must be in the Docker group and have Docker Compose v2 available. Create `BACKUP_DIR` with owner access for that account. The API sandbox mirror path defaults to `/opt/marquinhos/sandbox-mirror`; create and maintain it with `apps/api/scripts/sync-sandbox-mirror.sh` under a host timer before deploying the API.
 
+Before the first release that uses global Wordle, complete the [Wordle cutover runbook](wordle-global-migration.md). Rehearse it on a restored backup, then schedule the live cutover with Wordle writers stopped. The API applies schema migrations at startup and requires a verified `global-only-v003` receipt before it can become healthy. A new database also needs an explicit `fresh` receipt from the runbook.
+
 Run the first release with the Deploy workflow’s `all` input. Later `develop` pushes select the changed component automatically, and a release tag selects the components changed since the previous `v*` tag. The first tag deploys everything. To redeploy production manually, dispatch the workflow from the release tag. The tagged commit must contain the updated workflow, and GitHub environment protection rules must allow `v*` tags. API deploys write a compressed snapshot of the SQLite volume and a `pg_dump` custom-format dump to `BACKUP_DIR`, retain fourteen days of backups, start PostgreSQL if it is not running, recreate only the API container, and roll back its image if the HTTP health check fails. The dump must pass `pg_restore --list` before it counts as a backup; if it does not, the deploy stops before the API is touched. The API applies pending migrations from `packages/database/drizzle` at startup.
 
 ## Cloudflare and Discord
@@ -50,6 +52,8 @@ Run the first release with the Deploy workflow’s `all` input. Later `develop` 
 Create one remotely managed Cloudflare Tunnel per deployed environment. A host-level connector reaches the gateway at `http://127.0.0.1:5173`. A separately managed connector container on the `marquinhos` Docker network can use `http://gateway:80`. Use the destination matching your connector placement; this Compose file does not start cloudflared.
 
 In the Discord Developer Portal, map the Activity root to the gateway hostname and map `/api` and `/colyseus` to the same gateway hostname. The gateway routes API and Colyseus requests internally while serving the Activity build for browser routes.
+
+The deploy refreshes global slash commands and preserves the existing Activity launch command, including its handler and visibility settings.
 
 ## Rollback
 

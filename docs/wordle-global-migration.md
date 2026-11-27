@@ -123,8 +123,9 @@ on the rehearsal copy before scheduling another attempt.
    continuation match the inventory. Confirm unlocks for active catalog IDs
    retain their dates, XP balances match the inventory, and unsupported
    historical timing or first-solver evidence has not appeared. API startup
-   removes achievements and unlocks outside the active catalog, and migration
-   `0035_wordle_achievements_only` drops the evolutive achievements table.
+   archives retired achievement definitions and retains their unlocks.
+   Migration `0035_wordle_achievements_only` drops the evolutive achievements
+   table.
 7. Rehearse one new global solve and its community projections on the restored
    copy, including history, achievements, leaderboard, and announcement
    behavior. Record any new post-cutover XP separately and confirm it comes
