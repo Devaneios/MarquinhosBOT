@@ -185,7 +185,7 @@ wordleTest(
       expect(response.achievementUpdate.unlockedIds).toContain(
         'wordle_v2_solved_exactly_1',
       );
-      expect(await fixture.persistence()).toEqual({ unlocks: 1, xp: 75 });
+      expect(await fixture.persistence()).toEqual({ unlocks: 1, xp: 150 });
     } finally {
       await room?.leave();
       await gateway?.close();

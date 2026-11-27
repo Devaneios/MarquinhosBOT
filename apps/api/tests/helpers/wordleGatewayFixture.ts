@@ -46,9 +46,9 @@ export async function startWordleGatewayFixture() {
       name: 'Palpite certeiro',
       description: 'Acerte de primeira',
       category: 'wordle',
-      rarity: 'rare',
+      rarity: 'epic',
       icon: '🏅',
-      reward_xp: 75,
+      reward_xp: 150,
     });
     const module = await Test.createTestingModule({
       imports: [HttpInfrastructureModule],
